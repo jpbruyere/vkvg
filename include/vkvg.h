@@ -2,8 +2,7 @@
 #define VKVG_H
 
 #include <vulkan/vulkan.h>
-#include "vectors.h"
-#include "math.h"
+#include <math.h>
 
 #define VKVG_SAMPLES VK_SAMPLE_COUNT_8_BIT
 

@@ -1,5 +1,6 @@
 ﻿#include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
+#include "shaders.h"
 
 void _create_pipeline_cache     (VkvgDevice dev);
 void _setupRenderPass           (VkvgDevice dev);
@@ -232,14 +233,23 @@ void _setupPipelines(VkvgDevice dev)
         .vertexAttributeDescriptionCount = 2,
         .pVertexAttributeDescriptions = vertexInputAttributs };
 
+    VkShaderModule modVert, modFrag;
+    VkShaderModuleCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+                                            .pCode = triangle_vert_spv,
+                                            .codeSize = triangle_vert_spv_len };
+    VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modVert));
+    createInfo.pCode = triangle_frag_spv;
+    createInfo.codeSize = triangle_frag_spv_len;
+    VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFrag));
+
     VkPipelineShaderStageCreateInfo vertStage = { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = vkh_load_module(dev->vkDev, "shaders/triangle.vert.spv"),
+        .module = modVert,
         .pName = "main",
     };
     VkPipelineShaderStageCreateInfo fragStage = { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = vkh_load_module(dev->vkDev, "shaders/triangle.frag.spv"),
+        .module = modFrag,
         .pName = "main",
     };
 

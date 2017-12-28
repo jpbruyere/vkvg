@@ -1,7 +1,7 @@
 #include "vkvg_buff.h"
-#include "vkhelpers.h"
+#include "vkvg_device_internal.h"
 
-void _set_size_and_map(VkhDevice pDev, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, vkvg_buff *buff){
+void _set_size_and_map(VkvgDevice pDev, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, vkvg_buff *buff){
     VkMemoryRequirements memReq;
     vkGetBufferMemoryRequirements(pDev->vkDev, buff->buffer, &memReq);
     VkMemoryAllocateInfo memAllocInfo = { .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -18,7 +18,7 @@ void _set_size_and_map(VkhDevice pDev, VkBufferUsageFlags usage, VkMemoryPropert
     VK_CHECK_RESULT(vkMapMemory(buff->pDev->vkDev, buff->memory, 0, VK_WHOLE_SIZE, 0, &buff->mapped));
 }
 
-void vkvg_buffer_create(VkhDevice pDev, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, vkvg_buff *buff){
+void vkvg_buffer_create(VkvgDevice pDev, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, vkvg_buff *buff){
     buff->pDev = pDev;
     VkBufferCreateInfo bufCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
