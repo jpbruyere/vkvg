@@ -63,7 +63,7 @@ FOREACH(SHADER ${SHADERS})
 	SET(SHADER_OUTPUTS ${SHADER_OUTPUTS} ${shader-output})
 ENDFOREACH()
 
-ADD_CUSTOM_TARGET(CompileShaders ALL DEPENDS ${SHADER_OUTPUTS})
+#ADD_CUSTOM_TARGET(CompileShaders ALL DEPENDS ${SHADER_OUTPUTS})
 
 ADD_CUSTOM_TARGET(BuildShaderHeader ALL DEPENDS ${SHADER_OUTPUTS})
 #	COMMENT "Clear ${SHADERS_H}"
@@ -93,7 +93,7 @@ FILE(GLOB VKVG_SRC src/*.c vkh/*.c)
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${VKVG_SRC} ${SHADERS})
 
 add_dependencies(${PROJECT_NAME} BuildShaderHeader)
-add_dependencies(BuildShaderHeader CompileShaders)
+#add_dependencies(BuildShaderHeader CompileShaders)
 
 SET_TARGET_PROPERTIES(vkvg PROPERTIES
 		VERSION ${PROJECT_VERSION}

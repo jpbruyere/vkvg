@@ -11,7 +11,10 @@ typedef struct _vkvg_device_t{
     VkRenderPass			renderPass;
 
     VkQueue					queue;
+    uint32_t                qFam;
     VkCommandPool			cmdPool;
+    VkCommandBuffer         cmd;
+    VkFence                 fence;
 
     VkPipeline				pipeline;
     VkPipeline				pipelineClipping;

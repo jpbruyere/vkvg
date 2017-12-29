@@ -68,7 +68,7 @@ void _add_triangle_indices(VkvgContext ctx, uint32_t i0, uint32_t i1, uint32_t i
     ctx->indCount+=3;
 }
 void _create_cmd_buff (VkvgContext ctx){
-    ctx->cmd = vkh_cmd_buff_create(ctx->pSurf->dev->vkDev, ctx->pSurf->dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    ctx->cmd = vkh_cmd_buff_create(ctx->pSurf->dev->vkDev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }
 void _record_draw_cmd (VkvgContext ctx){
     if (ctx->indCount == ctx->curIndStart)
@@ -230,11 +230,20 @@ void _update_font_descriptor_set (VkvgContext ctx){
     };
     vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
-
+void _createDescriptorPool (VkvgContext ctx) {
+    VkvgDevice dev = ctx->pSurf->dev;
+    VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 };
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+                                                            .maxSets = 4,
+                                                            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+                                                            .poolSizeCount = 1,
+                                                            .pPoolSizes = &descriptorPoolSize };
+    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &ctx->descriptorPool));
+}
 void _init_descriptor_sets (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                                                              .descriptorPool = dev->descriptorPool,
+                                                              .descriptorPool = ctx->descriptorPool,
                                                               .descriptorSetCount = 1,
                                                               .pSetLayouts = &dev->dslFont };
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsFont));

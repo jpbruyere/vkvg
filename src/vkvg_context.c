@@ -9,6 +9,7 @@ static uint32_t dlpCount = 0;
 
 VkvgContext vkvg_create(VkvgSurface surf)
 {
+    VkvgDevice dev = surf->dev;
     VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
     ctx->sizePoints     = VKVG_PTS_SIZE;
@@ -34,13 +35,16 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     ctx->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
 
-    ctx->flushFence = vkh_fence_create(ctx->pSurf->dev->vkDev);
+    ctx->flushFence = vkh_fence_create(dev->vkDev);
 
     ctx->points = (vec2*)       malloc (VKVG_VBO_SIZE*sizeof(vec2));
     ctx->pathes = (uint32_t*)   malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
 
+    ctx->cmdPool = vkh_cmd_pool_create (dev->vkDev, dev->qFam, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
     _create_vertices_buff   (ctx);
     _create_cmd_buff        (ctx);
+    _createDescriptorPool   (ctx);
     _init_descriptor_sets   (ctx);
     _update_font_descriptor_set (ctx);
     _init_cmd_buff          (ctx);
@@ -89,10 +93,13 @@ void vkvg_destroy (VkvgContext ctx)
 
     VkDevice dev = ctx->pSurf->dev->vkDev;
     vkDestroyFence      (dev, ctx->flushFence,NULL);
-    vkFreeCommandBuffers(dev, ctx->pSurf->dev->cmdPool, 1, &ctx->cmd);
+    vkFreeCommandBuffers(dev, ctx->cmdPool, 1, &ctx->cmd);
+    vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
     VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc};
-    vkFreeDescriptorSets(dev, ctx->pSurf->dev->descriptorPool,2,dss);
+    vkFreeDescriptorSets    (dev, ctx->descriptorPool,2,dss);
+
+    vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
 
     vkvg_buffer_destroy (&ctx->indices);
     vkvg_buffer_destroy (&ctx->vertices);

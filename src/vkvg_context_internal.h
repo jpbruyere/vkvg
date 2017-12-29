@@ -66,12 +66,15 @@ typedef struct _vkvg_context_t {
     VkvgContext     pNext;
 
     VkvgSurface		pSurf;
-    VkCommandBuffer cmd;
     VkFence			flushFence;
     uint32_t        stencilRef;
     VkhImage        source;
-    VkDescriptorSet	dsFont;
-    VkDescriptorSet	dsSrc;
+
+    VkCommandPool		cmdPool;
+    VkCommandBuffer     cmd;
+    VkDescriptorPool	descriptorPool;
+    VkDescriptorSet     dsFont;
+    VkDescriptorSet     dsSrc;
 
     //vk buffers, holds data until flush
     vkvg_buff	indices;
@@ -133,9 +136,10 @@ void _clear_path			(VkvgContext ctx);
 bool _path_is_closed		(VkvgContext ctx, uint32_t ptrPath);
 uint32_t _get_last_point_of_closed_path (VkvgContext ctx, uint32_t ptrPath);
 
+void _createDescriptorPool          (VkvgContext ctx);
 void _init_descriptor_sets          (VkvgContext ctx);
 void _update_source_descriptor_set  (VkvgContext ctx);
-void _update_font_descriptor_set   (VkvgContext ctx);
+void _update_font_descriptor_set    (VkvgContext ctx);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){
     return v1.x*v2.y-v1.y*v2.x;

@@ -13,8 +13,6 @@ typedef struct _vkvg_surface_t {
     VkhImage	img;
     VkhImage	imgMS;
     VkhImage	stencilMS;
-    VkSemaphore semaphore;
-    VkCommandBuffer cmd;
 }vkvg_surface;
 
 void _clear_stencil (VkvgSurface surf);

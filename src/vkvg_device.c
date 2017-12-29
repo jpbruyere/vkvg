@@ -6,7 +6,6 @@ void _create_pipeline_cache     (VkvgDevice dev);
 void _setupRenderPass           (VkvgDevice dev);
 void _setupPipelines            (VkvgDevice dev);
 void _createDescriptorSetLayout (VkvgDevice dev);
-void _createDescriptorSet       (VkvgDevice dev);
 
 VkvgDevice vkvg_device_create(VkDevice vkdev, VkQueue queue, uint32_t qFam, VkPhysicalDeviceMemoryProperties memprops)
 {
@@ -19,7 +18,12 @@ VkvgDevice vkvg_device_create(VkDevice vkdev, VkQueue queue, uint32_t qFam, VkPh
     dev->phyMemProps = memprops;
 
     dev->queue = queue;
-    dev->cmdPool = vkh_cmd_pool_create (dev->vkDev, qFam, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    dev->qFam  = qFam;
+    dev->lastCtx = NULL;
+
+    dev->cmdPool = vkh_cmd_pool_create      (dev->vkDev, qFam, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    dev->cmd = vkh_cmd_buff_create          (dev->vkDev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    dev->fence = vkh_fence_create_signaled  (dev->vkDev);
 
     _create_pipeline_cache(dev);
 
@@ -28,7 +32,6 @@ VkvgDevice vkvg_device_create(VkDevice vkdev, VkQueue queue, uint32_t qFam, VkPh
     _setupRenderPass (dev);
 
     _createDescriptorSetLayout (dev);
-    _createDescriptorSet (dev);
 
     _setupPipelines (dev);
     return dev;
@@ -38,7 +41,6 @@ void vkvg_device_destroy(VkvgDevice dev)
 {
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);
-    vkDestroyDescriptorPool         (dev->vkDev, dev->descriptorPool,NULL);
 
     vkDestroyPipeline               (dev->vkDev, dev->pipeline, NULL);
     vkDestroyPipeline               (dev->vkDev, dev->pipelineClipping, NULL);
@@ -49,7 +51,13 @@ void vkvg_device_destroy(VkvgDevice dev)
     vkDestroyPipelineLayout         (dev->vkDev, dev->pipelineLayout, NULL);
     vkDestroyPipelineCache          (dev->vkDev, dev->pipelineCache, NULL);
     vkDestroyRenderPass             (dev->vkDev, dev->renderPass, NULL);
+
+    vkWaitForFences                 (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
+
+    vkDestroyFence                  (dev->vkDev, dev->fence,NULL);
+    vkFreeCommandBuffers            (dev->vkDev, dev->cmdPool, 1, &dev->cmd);
     vkDestroyCommandPool            (dev->vkDev, dev->cmdPool, NULL);
+
     _destroy_font_cache(dev);
     free(dev);
 }
@@ -325,13 +333,4 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
     VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }
 
-void _createDescriptorSet (VkvgDevice dev) {
-    VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 };
 
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                                                            .maxSets = 4,
-                                                            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-                                                            .poolSizeCount = 1,
-                                                            .pPoolSizes = &descriptorPoolSize };
-    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &dev->descriptorPool));
-}
