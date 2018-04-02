@@ -4,7 +4,7 @@
 #include "vkvg_internal.h"
 #include "vkvg.h"
 #include "vkvg_buff.h"
-#include "vkh_image.h"
+#include "vkh.h"
 #include "vkvg_fonts.h"
 
 #define VKVG_PTS_SIZE				4096

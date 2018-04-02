@@ -16,8 +16,8 @@ VkvgPattern _init_pattern (VkvgDevice dev){
 
 void _update_descSet (VkvgPattern pat){
     _font_cache_t* cache = pat->dev->fontCache;
-    VkDescriptorImageInfo descFontTex   = {cache->cacheTex->sampler, cache->cacheTex->view,VK_IMAGE_LAYOUT_GENERAL};
-    VkDescriptorImageInfo descSrcTex    = {pat->img->sampler, pat->img->view, VK_IMAGE_LAYOUT_GENERAL};
+    VkDescriptorImageInfo descFontTex   = vkh_image_get_descriptor (cache->cacheTex,VK_IMAGE_LAYOUT_GENERAL);
+    VkDescriptorImageInfo descSrcTex    = vkh_image_get_descriptor (pat->img,       VK_IMAGE_LAYOUT_GENERAL);
 
     VkWriteDescriptorSet writeDescriptorSet[] = {
         {

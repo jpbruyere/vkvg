@@ -3,7 +3,7 @@
 
 #include "vkvg_internal.h"
 #include "vkvg.h"
-#include "vkh_image.h"
+#include "vkh.h"
 
 typedef struct _vkvg_surface_t {
     VkvgDevice	dev;

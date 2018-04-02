@@ -112,8 +112,8 @@ void _explicit_ms_resolve (VkvgContext ctx){
     };
 
     vkCmdResolveImage(ctx->cmd,
-                      ctx->pSurf->imgMS->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                      ctx->pSurf->img->image ,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                      vkh_image_get_vkimage (ctx->pSurf->imgMS), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                      vkh_image_get_vkimage (ctx->pSurf->img) ,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                       1,&re);
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ,
             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
@@ -199,10 +199,7 @@ uint32_t _get_last_point_of_closed_path(VkvgContext ctx, uint32_t ptrPath){
 }
 void _update_source_descriptor_set (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;
-    VkDescriptorImageInfo descSrcTex = { .imageView = ctx->source->view,
-                                          .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                          .sampler = ctx->source->sampler };
-
+    VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (ctx->source, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     VkWriteDescriptorSet writeDescriptorSet = {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = ctx->dsSrc,
@@ -216,10 +213,7 @@ void _update_source_descriptor_set (VkvgContext ctx){
 void _update_font_descriptor_set (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;
     _font_cache_t* cache = dev->fontCache;
-    VkDescriptorImageInfo descFontTex = { .imageView = cache->cacheTex->view,
-                                          .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                          .sampler = cache->cacheTex->sampler };
-
+    VkDescriptorImageInfo descFontTex = vkh_image_get_descriptor (cache->cacheTex, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     VkWriteDescriptorSet writeDescriptorSet = {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = ctx->dsFont,

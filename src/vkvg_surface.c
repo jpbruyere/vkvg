@@ -17,7 +17,7 @@ void _clear_stencil (VkvgSurface surf)
     vkh_image_set_layout (cmd, surf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
-    vkCmdClearDepthStencilImage (cmd, surf->stencilMS->image,
+    vkCmdClearDepthStencilImage (cmd, vkh_image_get_vkimage (surf->stencilMS),
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,&clr,1,&range);
 
     vkh_image_set_layout (cmd, surf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
@@ -46,8 +46,9 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
     vkh_image_create_descriptor(surf->stencilMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
     VkImageView attachments[] = {
-        surf->imgMS->view, surf->img->view,
-        surf->stencilMS->view,
+        vkh_image_get_view (surf->imgMS),
+        vkh_image_get_view (surf->img),
+        vkh_image_get_view (surf->stencilMS),
     };
     VkFramebufferCreateInfo frameBufferCreateInfo = { .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
                                                       .renderPass = dev->renderPass,
@@ -74,7 +75,7 @@ void vkvg_surface_destroy(VkvgSurface surf)
 
 VkImage vkvg_surface_get_vk_image(VkvgSurface surf)
 {
-    return surf->img->image;
+    return vkh_image_get_vkimage (surf->img);
 }
 VkImage vkvg_surface_get_vkh_image(VkvgSurface surf)
 {

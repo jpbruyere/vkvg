@@ -455,7 +455,7 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
     vkh_image_create_sampler(ctx->source,VK_FILTER_NEAREST, VK_FILTER_NEAREST,
                              VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
-    if (ctx->source->layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL){
+    if (vkh_image_get_layout (ctx->source) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL){
         vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
         vkh_image_set_layout        (ctx->cmd, ctx->source, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -518,8 +518,8 @@ void vkvg_save (VkvgContext ctx){
                             .dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
                             .extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
     vkCmdCopyImage(ctx->cmd,
-                   ctx->pSurf->stencilMS->image,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   sav->stencilMS->image,       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                   vkh_image_get_vkimage (ctx->pSurf->stencilMS),VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                   vkh_image_get_vkimage (sav->stencilMS),       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                    1, &cregion);
 
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
@@ -579,8 +579,8 @@ void vkvg_restore (VkvgContext ctx){
                             .dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
                             .extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
     vkCmdCopyImage(ctx->cmd,
-                   sav->stencilMS->image,       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   ctx->pSurf->stencilMS->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                   vkh_image_get_vkimage (sav->stencilMS),       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                   vkh_image_get_vkimage (ctx->pSurf->stencilMS),VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                    1, &cregion);
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
           VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);

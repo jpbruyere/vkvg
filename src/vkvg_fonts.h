@@ -15,7 +15,8 @@
 
 #include "vkvg_internal.h"
 #include "vkvg.h"
-#include "vkh_image.h"
+#include "vkh.h"
+//#include "vkh_image.h"
 
 
 ///texture coords of one char
