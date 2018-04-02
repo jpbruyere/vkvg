@@ -20,7 +20,7 @@ VkvgDevice	vkvg_device_create			(VkDevice vkdev, VkQueue queue, uint32_t qFam,
                                         VkPhysicalDeviceMemoryProperties memprops);
 void		vkvg_device_destroy			(VkvgDevice dev);
 
-VkvgSurface vkvg_surface_create			(VkvgDevice dev, int32_t width, uint32_t height);
+VkvgSurface vkvg_surface_create			(VkvgDevice dev, uint32_t width, uint32_t height);
 void		vkvg_surface_destroy		(VkvgSurface surf);
 VkImage		vkvg_surface_get_vk_image	(VkvgSurface surf);
 VkImage		vkvg_surface_get_vkh_image	(VkvgSurface surf);

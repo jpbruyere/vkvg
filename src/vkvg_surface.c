@@ -27,7 +27,7 @@ void _clear_stencil (VkvgSurface surf)
     vkh_cmd_submit (dev->queue, &cmd, dev->fence);
 }
 
-VkvgSurface vkvg_surface_create(VkvgDevice dev, int32_t width, uint32_t height){
+VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height){
     VkvgSurface surf = (vkvg_surface*)calloc(1,sizeof(vkvg_surface));
 
     surf->dev = dev;

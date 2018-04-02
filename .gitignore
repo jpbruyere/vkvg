@@ -1,2 +1,4 @@
 build/
 *.user
+src/shaders.h
+ignore
