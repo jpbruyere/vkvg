@@ -16,8 +16,7 @@ typedef struct _vkvg_surface_t* VkvgSurface;
 typedef struct _vkvg_device_t*  VkvgDevice;
 typedef struct _vkvg_pattern_t* VkvgPattern;
 
-VkvgDevice	vkvg_device_create			(VkDevice vkdev, VkQueue queue, uint32_t qFam,
-                                        VkPhysicalDeviceMemoryProperties memprops);
+VkvgDevice	vkvg_device_create			(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queue, uint32_t qFam);
 void		vkvg_device_destroy			(VkvgDevice dev);
 
 VkvgSurface vkvg_surface_create			(VkvgDevice dev, uint32_t width, uint32_t height);

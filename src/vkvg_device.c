@@ -7,7 +7,7 @@ void _setupRenderPass           (VkvgDevice dev);
 void _setupPipelines            (VkvgDevice dev);
 void _createDescriptorSetLayout (VkvgDevice dev);
 
-VkvgDevice vkvg_device_create(VkDevice vkdev, VkQueue queue, uint32_t qFam, VkPhysicalDeviceMemoryProperties memprops)
+VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queue, uint32_t qFam)
 {
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
@@ -15,7 +15,7 @@ VkvgDevice vkvg_device_create(VkDevice vkdev, VkQueue queue, uint32_t qFam, VkPh
     dev->vdpi = 96;
 
     dev->vkDev = vkdev;
-    dev->phyMemProps = memprops;
+    vkGetPhysicalDeviceMemoryProperties (phy, &dev->phyMemProps);
 
     dev->queue = queue;
     dev->qFam  = qFam;
