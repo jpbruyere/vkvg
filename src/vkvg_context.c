@@ -493,8 +493,8 @@ void vkvg_set_text_direction (vkvg_context* ctx, VkvgDirection direction){
 }
 
 void vkvg_show_text (VkvgContext ctx, const char* text){
-    _show_text(ctx,text);
-    _record_draw_cmd(ctx);
+    _show_text (ctx, text);
+    _record_draw_cmd (ctx);
 }
 
 void vkvg_save (VkvgContext ctx){

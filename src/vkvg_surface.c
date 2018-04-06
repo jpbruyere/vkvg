@@ -77,7 +77,7 @@ VkImage vkvg_surface_get_vk_image(VkvgSurface surf)
 {
     return vkh_image_get_vkimage (surf->img);
 }
-VkImage vkvg_surface_get_vkh_image(VkvgSurface surf)
+/*VkhImage vkvg_surface_get_vkh_image(VkvgSurface surf)
 {
     return surf->img;
-}
+}*/

@@ -32,11 +32,11 @@ float _normalizeAngle(float a)
         return res;
 }
 void _create_vertices_buff (VkvgContext ctx){
-    vkvg_buffer_create ((VkhDevice*)ctx->pSurf->dev,
+    vkvg_buffer_create (ctx->pSurf->dev,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         ctx->sizeVertices * sizeof(Vertex), &ctx->vertices);
-    vkvg_buffer_create ((VkhDevice*)ctx->pSurf->dev,
+    vkvg_buffer_create (ctx->pSurf->dev,
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         ctx->sizeIndices * sizeof(uint32_t), &ctx->indices);
@@ -226,9 +226,9 @@ void _update_font_descriptor_set (VkvgContext ctx){
 }
 void _createDescriptorPool (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;
-    VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 };
+    VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 };
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                                                            .maxSets = 4,
+                                                            .maxSets = 2,
                                                             .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
                                                             .poolSizeCount = 1,
                                                             .pPoolSizes = &descriptorPoolSize };
