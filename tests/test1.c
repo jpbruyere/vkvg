@@ -1,5 +1,5 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "stb_image.h"
 
 #include "vke.h"
 //#include "compute.h"
@@ -146,7 +146,7 @@ VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts)
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
-void vkengine_DumpInfos (VkEngine* e){
+void vkengine_dump_Infos (VkEngine* e){
     printf("max samples = %d\n", getMaxUsableSampleCount(e->gpu_props.limits.framebufferColorSampleCounts));
     printf("max tex2d size = %d\n", e->gpu_props.limits.maxImageDimension2D);
     printf("max tex array layers = %d\n", e->gpu_props.limits.maxImageArrayLayers);
@@ -603,6 +603,12 @@ int main(int argc, char *argv[]) {
     vkvg_move_to(ctx, penX,penY);
     vkvg_show_text (ctx,"ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     penY+=size;
+    vkvg_move_to(ctx, penX,penY);
+    vkvg_show_text (ctx,"this is a test");
+    penY+=size;
+    vkvg_move_to(ctx, penX,penY);
+    vkvg_show_text (ctx,"this is another test to see if label is working");
+    penY+=size;
 
     vkvg_select_font_face(ctx, "mono");
     vkvg_move_to(ctx, penX,penY);
@@ -640,16 +646,22 @@ int main(int argc, char *argv[]) {
 
     ctx = vkvg_create(surf);
 
-    vkvg_set_rgba(ctx,0.0,0.0,0.3,1);
+    vkvg_set_rgba(ctx,0.0,0.0,0.0,1);
     vkvg_paint(ctx);
 
     vkvg_set_source_surface(ctx, surf2, 0, 0);
-
     //vkvg_set_rgba(ctx,0.0,1.0,1.0,1);
     //vkvg_set_rgba(ctx,1.0,1.0,0,1);
     //vkvg_rectangle(ctx,0,0,400,400);
-
     //vkvg_fill (ctx);
+    vkvg_paint(ctx);
+
+    VkvgSurface imgSurf = vkvg_image_surface_create(device, "/mnt/data/images/blason.png");
+    //VkvgSurface imgSurf = vkvg_image_surface_create(device, "/mnt/data/images/2000px-Tux.svg.png");
+    //VkvgSurface imgSurf = vkvg_image_surface_create(device, "/mnt/data/images/path2674.png");
+    //VkvgSurface imgSurf = vkvg_image_surface_create(device, "/mnt/data/images/horse-black-head-shape-of-a-chess-piece_318-52446.jpg");
+
+    vkvg_set_source_surface(ctx, imgSurf, 300, 300);
     vkvg_paint(ctx);
 
     vkvg_destroy(ctx);
@@ -664,6 +676,7 @@ int main(int argc, char *argv[]) {
     vkDeviceWaitIdle(e.dev);
     vke_swapchain_destroy(&e.renderer);
 
+    vkvg_surface_destroy(imgSurf);
     vkvg_surface_destroy(surf);
     vkvg_surface_destroy(surf2);
 

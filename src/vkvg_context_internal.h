@@ -56,7 +56,7 @@ typedef struct _vkvg_context_save_t{
 
     _vkvg_font_t    selectedFont;     //hold current face and size before cache addition
     _vkvg_font_t*   currentFont;      //font ready for lookup
-    VkvgDirection   textDirection;
+    vkvg_direction_t   textDirection;
     push_constants  pushConsts;
 
 }vkvg_context_save_t;
@@ -102,7 +102,7 @@ typedef struct _vkvg_context_t {
 
     _vkvg_font_t  selectedFont;     //hold current face and size before cache addition
     _vkvg_font_t* currentFont;      //font ready for lookup
-    VkvgDirection textDirection;
+    vkvg_direction_t textDirection;
 
     push_constants  pushConsts;
 
@@ -120,8 +120,8 @@ void _vkvg_fill_rectangle   (VkvgContext ctx, float x, float y, float width, flo
 void _create_vertices_buff	(VkvgContext ctx);
 void _add_vertex			(VkvgContext ctx, Vertex v);
 void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
+void _add_triangle_indices	(VkvgContext ctx, uint32_t i0, uint32_t i1,uint32_t i2);
 void _add_tri_indices_for_rect	(VkvgContext ctx, uint32_t i);
-void _add_triangle_indices		(VkvgContext ctx, uint32_t i0, uint32_t i1,uint32_t i2);
 
 void _create_cmd_buff		(VkvgContext ctx);
 void _init_cmd_buff			(VkvgContext ctx);
@@ -136,10 +136,10 @@ void _clear_path			(VkvgContext ctx);
 bool _path_is_closed		(VkvgContext ctx, uint32_t ptrPath);
 uint32_t _get_last_point_of_closed_path (VkvgContext ctx, uint32_t ptrPath);
 
-void _createDescriptorPool          (VkvgContext ctx);
-void _init_descriptor_sets          (VkvgContext ctx);
-void _update_source_descriptor_set  (VkvgContext ctx);
-void _update_font_descriptor_set    (VkvgContext ctx);
+void _createDescriptorPool  (VkvgContext ctx);
+void _init_descriptor_sets  (VkvgContext ctx);
+void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
+void _free_ctx_save         (vkvg_context_save_t* sav);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){
     return v1.x*v2.y-v1.y*v2.x;

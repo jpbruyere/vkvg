@@ -197,32 +197,17 @@ uint32_t _get_last_point_of_closed_path(VkvgContext ctx, uint32_t ptrPath){
         return ctx->pathes[ptrPath+2]-1;    //last p is p prior to first idx of next path
     return ctx->pointCount-1;				//last point of path is last point of point array
 }
-void _update_source_descriptor_set (VkvgContext ctx){
-    VkvgDevice dev = ctx->pSurf->dev;
-    VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (ctx->source, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
+    VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     VkWriteDescriptorSet writeDescriptorSet = {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = ctx->dsSrc,
+            .dstSet = ds,
             .dstBinding = 0,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             .pImageInfo = &descSrcTex
     };
-    vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
-}
-void _update_font_descriptor_set (VkvgContext ctx){
-    VkvgDevice dev = ctx->pSurf->dev;
-    _font_cache_t* cache = dev->fontCache;
-    VkDescriptorImageInfo descFontTex = vkh_image_get_descriptor (cache->cacheTex, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    VkWriteDescriptorSet writeDescriptorSet = {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = ctx->dsFont,
-            .dstBinding = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .pImageInfo = &descFontTex
-    };
-    vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
+    vkUpdateDescriptorSets(ctx->pSurf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
 void _createDescriptorPool (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;
@@ -299,4 +284,12 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
     if (D<0)
         return (s<=0) && (t<=0) && (s+t>=D);
     return (s>=0) && (t>=0) && (s+t<=D);
+}
+
+void _free_ctx_save (vkvg_context_save_t* sav){
+    free(sav->pathes);
+    free(sav->points);
+    free(sav->selectedFont.fontFile);
+    vkh_image_destroy   (sav->stencilMS);
+    free (sav);
 }

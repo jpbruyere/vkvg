@@ -46,7 +46,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _create_cmd_buff        (ctx);
     _createDescriptorPool   (ctx);
     _init_descriptor_sets   (ctx);
-    _update_font_descriptor_set (ctx);
+    _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->cacheTex, ctx->dsFont);
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
 
@@ -77,14 +77,6 @@ void vkvg_flush (VkvgContext ctx){
     _flush_cmd_buff(ctx);
 #endif
 
-}
-
-void _free_ctx_save (vkvg_context_save_t* sav){
-    free(sav->pathes);
-    free(sav->points);
-    free(sav->selectedFont.fontFile);
-    vkh_image_destroy   (sav->stencilMS);
-    free (sav);
 }
 
 void vkvg_destroy (VkvgContext ctx)
@@ -465,7 +457,7 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
         _submit_wait_and_reset_cmd  (ctx);
     }
 
-    _update_source_descriptor_set   (ctx);
+    _update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
     _init_cmd_buff                  (ctx);
 
     vec4 srcRect = {x,y,surf->width,surf->height};
@@ -488,7 +480,7 @@ void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
     _set_font_size (ctx,size);
 }
 
-void vkvg_set_text_direction (vkvg_context* ctx, VkvgDirection direction){
+void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
 
 }
 

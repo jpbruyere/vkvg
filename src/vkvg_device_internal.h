@@ -35,6 +35,11 @@ typedef struct _vkvg_device_t{
     VkvgContext     lastCtx;    //double linked list last elmt
 }vkvg_device;
 
-void _flush_all_contexes    (VkvgDevice dev);
-void _init_all_contexes     (VkvgDevice dev);
+void _create_pipeline_cache     (VkvgDevice dev);
+void _setupRenderPass           (VkvgDevice dev);
+void _setupPipelines            (VkvgDevice dev);
+void _createDescriptorSetLayout (VkvgDevice dev);
+void _flush_all_contexes        (VkvgDevice dev);
+void _init_all_contexes         (VkvgDevice dev);
+void _wait_device_fence         (VkvgDevice dev);
 #endif

@@ -6,10 +6,17 @@
 
 #define VKVG_SAMPLES VK_SAMPLE_COUNT_4_BIT
 
-typedef enum VkvgDirection {
+typedef enum _vkvg_direction {
     VKVG_HORIZONTAL	= 0,
     VKVG_VERTICAL	= 1
-}VkvgDirection;
+}vkvg_direction_t;
+
+typedef enum _vkvg_format {
+    VKVG_FORMAT_ARGB32,
+    VKVG_FORMAT_RGB24,
+    VKVG_FORMAT_A8,
+    VKVG_FORMAT_A1
+} vkvg_format_t;
 
 typedef struct _vkvg_context_t* VkvgContext;
 typedef struct _vkvg_surface_t* VkvgSurface;
@@ -20,6 +27,7 @@ VkvgDevice	vkvg_device_create			(VkPhysicalDevice phy, VkDevice vkdev, VkQueue q
 void		vkvg_device_destroy			(VkvgDevice dev);
 
 VkvgSurface vkvg_surface_create			(VkvgDevice dev, uint32_t width, uint32_t height);
+VkvgSurface vkvg_image_surface_create   (VkvgDevice dev, const char* filePath);
 void		vkvg_surface_destroy		(VkvgSurface surf);
 VkImage		vkvg_surface_get_vk_image	(VkvgSurface surf);
 VkImage		vkvg_surface_get_vkh_image	(VkvgSurface surf);
