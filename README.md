@@ -16,13 +16,13 @@
 
 ### What is vkvg?
 
-**vkvg** is a multiplateform **c** library for drawing 2d vector graphics with [Vulkan](https://www.khronos.org/vulkan/).
+**vkvg** is a multiplatform **c** library for drawing 2D vector graphics with [Vulkan](https://www.khronos.org/vulkan/).
 
-[Cairo](https://www.cairographics.org/) missing a vulkan backend, I decided to start one myself trying to keep my api as close to cairo as possible. Maybe vkvg could serve as a starting point for cairo maintainers to start their vulkan backend.
+[Cairo](https://www.cairographics.org/) is missing a Vulkan backend, so I decided to start one myself trying to keep my api as close to Cairo as possible. Maybe vkvg could serve as a starting point for Cairo maintainers to start their Vulkan backend.
 
 ### Current status: 
 
-vkvg is in early development stage, and no guarantie is given on the possible roadmap.
+vkvg is in early development stage, and no guarantee is given on the possible roadmap:
 
 - Basic shape fill and stroke functional, using ears clipping.
 - Basic painting operation.
@@ -30,7 +30,7 @@ vkvg is in early development stage, and no guarantie is given on the possible ro
 - Context should be thread safe, tests required.
 - Nice logo.
 
-### Roardmap
+### Roadmap
 
 - Offscreen pattern building. 
 
