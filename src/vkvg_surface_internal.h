@@ -9,6 +9,7 @@ typedef struct _vkvg_surface_t {
     VkvgDevice	dev;
     uint32_t	width;
     uint32_t	height;
+    VkFormat    format;
     VkFramebuffer fb;
     VkhImage	img;
     VkhImage	imgMS;

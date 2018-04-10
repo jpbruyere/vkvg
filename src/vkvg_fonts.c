@@ -8,8 +8,7 @@
 int defaultFontCharSize = 12<<6;
 
 void _init_fonts_cache (VkvgDevice dev){
-    _font_cache_t* cache = (_font_cache_t*)malloc(sizeof(_font_cache_t));
-    memset (cache, 0, sizeof(_font_cache_t));
+    _font_cache_t* cache = (_font_cache_t*)calloc(1, sizeof(_font_cache_t));
 
     cache->config = FcInitLoadConfigAndFonts();
 
@@ -87,7 +86,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 
     VkvgContext next = dev->lastCtx;
     while (next != NULL){
-        _update_source_descriptor_set (next);
+        _update_descriptor_set (next, next->source, next->dsSrc);
         next = next->pPrev;
     }
 

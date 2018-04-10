@@ -46,7 +46,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _create_cmd_buff        (ctx);
     _createDescriptorPool   (ctx);
     _init_descriptor_sets   (ctx);
-    _update_font_descriptor_set (ctx);
+    _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->cacheTex, ctx->dsFont);
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
 
@@ -77,14 +77,6 @@ void vkvg_flush (VkvgContext ctx){
     _flush_cmd_buff(ctx);
 #endif
 
-}
-
-void _free_ctx_save (vkvg_context_save_t* sav){
-    free(sav->pathes);
-    free(sav->points);
-    free(sav->selectedFont.fontFile);
-    vkh_image_destroy   (sav->stencilMS);
-    free (sav);
 }
 
 void vkvg_destroy (VkvgContext ctx)
@@ -156,7 +148,7 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
         ctx->pathPtr++;
         _add_curpos(ctx);
     }
-    _add_point(ctx, x, y);
+    _add_point_cp_update(ctx, x, y);
 }
 
 void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2){
@@ -185,14 +177,14 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
         while(a > aa2){
             v.x = cos(a)*radius + xc;
             v.y = sin(a)*radius + yc;
-            _add_point(ctx,v.x,v.y);
+            _add_point_cp_update(ctx,v.x,v.y);
             a-=step;
         }
     }else{
         while(a < aa2){
             v.x = cos(a)*radius + xc;
             v.y = sin(a)*radius + yc;
-            _add_point(ctx,v.x,v.y);
+            _add_point_cp_update(ctx,v.x,v.y);
             a+=step;
         }
     }
@@ -200,7 +192,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     v.x = cos(a)*radius + xc;
     v.y = sin(a)*radius + yc;
     if (!vec2_equ (v,ctx->curPos))
-        _add_point(ctx,v.x,v.y);
+        _add_point_cp_update(ctx,v.x,v.y);
 }
 
 void vkvg_move_to (VkvgContext ctx, float x, float y)
@@ -209,6 +201,10 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 
     ctx->curPos.x = x;
     ctx->curPos.y = y;
+}
+
+void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+    _bezier (ctx, ctx->curPos.x, ctx->curPos.y, x1, y1, x2, y2, x3, y3);
 }
 
 void vkvg_clip_preserve (VkvgContext ctx){
@@ -465,7 +461,7 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
         _submit_wait_and_reset_cmd  (ctx);
     }
 
-    _update_source_descriptor_set   (ctx);
+    _update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
     _init_cmd_buff                  (ctx);
 
     vec4 srcRect = {x,y,surf->width,surf->height};
@@ -488,7 +484,7 @@ void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
     _set_font_size (ctx,size);
 }
 
-void vkvg_set_text_direction (vkvg_context* ctx, VkvgDirection direction){
+void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
 
 }
 
