@@ -112,7 +112,8 @@ typedef struct _vkvg_context_t {
 void _check_pathes_array	(VkvgContext ctx);
 float _normalizeAngle       (float a);
 
-void _add_point				(VkvgContext ctx, float x, float y);
+void _add_point         	(VkvgContext ctx, float x, float y);
+void _add_point_cp_update	(VkvgContext ctx, float x, float y);
 void _add_point_v2			(VkvgContext ctx, vec2 v);
 void _add_curpos			(VkvgContext ctx);
 void _vkvg_fill_rectangle   (VkvgContext ctx, float x, float y, float width, float height);
@@ -147,4 +148,11 @@ static inline float vec2_zcross (vec2 v1, vec2 v2){
 static inline float ecp_zcross (ear_clip_point* p0, ear_clip_point* p1, ear_clip_point* p2){
     return vec2_zcross (vec2_sub (p1->pos, p0->pos), vec2_sub (p2->pos, p0->pos));
 }
+void _recursive_bezier(VkvgContext ctx,
+                       float x1, float y1, float x2, float y2,
+                       float x3, float y3, float x4, float y4,
+                       unsigned level);
+void _bezier (VkvgContext ctx,
+              float x1, float y1, float x2, float y2,
+              float x3, float y3, float x4, float y4);
 #endif

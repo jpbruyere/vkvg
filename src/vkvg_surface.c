@@ -9,8 +9,7 @@ void _clear_stencil (VkvgSurface surf)
     VkvgDevice      dev = surf->dev;
     VkCommandBuffer cmd = dev->cmd;
 
-    vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
-    vkResetFences   (dev->vkDev, 1, &dev->fence);
+    _wait_device_fence (dev);
 
     vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -71,13 +70,13 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
     return surf;
 }
 
-VkvgSurface vkvg_image_surface_create (VkvgDevice dev, const char* filePath) {
+VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath) {
     int w = 0,
         h = 0,
         channels = 0;
-    unsigned char *img = stbi_load(filePath, &w, &h, &channels, 0);
+    unsigned char *img = stbi_load(filePath, &w, &h, &channels, 4);//force 4 components per pixel
     if (img == NULL){
-        fprintf (stderr, "Could not load texture from %s, %s", filePath, stbi_failure_reason());
+        fprintf (stderr, "Could not load texture from %s, %s\n", filePath, stbi_failure_reason());
         return NULL;
     }
 
@@ -89,26 +88,10 @@ VkvgSurface vkvg_image_surface_create (VkvgDevice dev, const char* filePath) {
 
     _init_surface (surf);
 
-    uint32_t imgSize = w * h * channels;
-    VkFormat format;
-    switch (channels) {
-    case 1:
-        format = VK_FORMAT_R8_UNORM;
-        break;
-    case 2:
-        format = VK_FORMAT_R8G8_UNORM;
-        break;
-    case 3:
-        format = VK_FORMAT_R8G8B8_UNORM;
-        break;
-    case 4:
-        format = VK_FORMAT_R8G8B8A8_UNORM;
-        break;
-    }
-
+    uint32_t imgSize = w * h * 4;
     VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
     //original format image
-    VkhImage stagImg= vkh_image_create (surf->dev,format,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
+    VkhImage stagImg= vkh_image_create (surf->dev,VK_FORMAT_R8G8B8A8_UNORM,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
                                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                          VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     //bgra bliting target

@@ -27,7 +27,8 @@ VkvgDevice	vkvg_device_create			(VkPhysicalDevice phy, VkDevice vkdev, VkQueue q
 void		vkvg_device_destroy			(VkvgDevice dev);
 
 VkvgSurface vkvg_surface_create			(VkvgDevice dev, uint32_t width, uint32_t height);
-VkvgSurface vkvg_image_surface_create   (VkvgDevice dev, const char* filePath);
+VkvgSurface vkvg_surface_create_from_image  (VkvgDevice dev, const char* filePath);
+
 void		vkvg_surface_destroy		(VkvgSurface surf);
 VkImage		vkvg_surface_get_vk_image	(VkvgSurface surf);
 VkImage		vkvg_surface_get_vkh_image	(VkvgSurface surf);
@@ -79,6 +80,7 @@ void vkvg_close_path		(VkvgContext ctx);
 void vkvg_line_to			(VkvgContext ctx, float x, float y);
 void vkvg_move_to			(VkvgContext ctx, float x, float y);
 void vkvg_arc				(VkvgContext ctx, float xc, float yc, float radius, float a1, float a2);
+void vkvg_curve_to          (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3);
 void vkvg_stroke			(VkvgContext ctx);
 void vkvg_stroke_preserve	(VkvgContext ctx);
 void vkvg_fill				(VkvgContext ctx);

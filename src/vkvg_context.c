@@ -148,7 +148,7 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
         ctx->pathPtr++;
         _add_curpos(ctx);
     }
-    _add_point(ctx, x, y);
+    _add_point_cp_update(ctx, x, y);
 }
 
 void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2){
@@ -177,14 +177,14 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
         while(a > aa2){
             v.x = cos(a)*radius + xc;
             v.y = sin(a)*radius + yc;
-            _add_point(ctx,v.x,v.y);
+            _add_point_cp_update(ctx,v.x,v.y);
             a-=step;
         }
     }else{
         while(a < aa2){
             v.x = cos(a)*radius + xc;
             v.y = sin(a)*radius + yc;
-            _add_point(ctx,v.x,v.y);
+            _add_point_cp_update(ctx,v.x,v.y);
             a+=step;
         }
     }
@@ -192,7 +192,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     v.x = cos(a)*radius + xc;
     v.y = sin(a)*radius + yc;
     if (!vec2_equ (v,ctx->curPos))
-        _add_point(ctx,v.x,v.y);
+        _add_point_cp_update(ctx,v.x,v.y);
 }
 
 void vkvg_move_to (VkvgContext ctx, float x, float y)
@@ -201,6 +201,10 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 
     ctx->curPos.x = x;
     ctx->curPos.y = y;
+}
+
+void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+    _bezier (ctx, ctx->curPos.x, ctx->curPos.y, x1, y1, x2, y2, x3, y3);
 }
 
 void vkvg_clip_preserve (VkvgContext ctx){

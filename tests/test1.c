@@ -457,6 +457,22 @@ void vkvg_test_fill(VkvgContext ctx){
     vkvg_fill(ctx);
 }
 
+void vkvg_test_curves (VkvgContext ctx) {
+    vkvg_set_rgba   (ctx, 1.0,1.0,1.0,1.0);
+    vkvg_set_linewidth(ctx, 10);
+
+    /*
+    vkvg_move_to    (ctx, 100, 400);
+    vkvg_curve_to   (ctx, 100, 100, 600,700,600,400);
+    */
+    //vkvg_move_to    (ctx, 100, 100);
+    //vkvg_curve_to   (ctx, 1000, 100, 100, 800, 1000, 800);
+    vkvg_move_to    (ctx, 100, 100);
+    vkvg_curve_to   (ctx, 1000, 500, 700, 500, 700, 100);
+
+    vkvg_stroke     (ctx);
+}
+
 void vkvg_rectangle(VkvgContext ctx, float x, float y, float width, float height){
     vkvg_move_to(ctx,x,y);
     vkvg_line_to(ctx,x+width,y);
@@ -502,60 +518,16 @@ void vkvg_test_stroke(VkvgContext ctx){
     vkvg_stroke(ctx);
 }
 
-
-
-int main(int argc, char *argv[]) {
-    dumpLayerExts();
-
-    VkEngine e = {};
-
-    EngineInit(&e);
-
-    device = vkvg_device_create(e.phy, e.dev, e.renderer.queue, e.renderer.qFam);
-
-    surf = vkvg_surface_create (device,1024,800);
-
-    vkeCheckPhyPropBlitSource (&e);
-    glfwSetKeyCallback(e.renderer.window, key_callback);
-
-    vke_swapchain_create(&e);
-
-    VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
-    VkvgContext ctx = vkvg_create(surf2);
-    VkvgContext ctx2 = vkvg_create(surf);
-    vkvg_destroy(ctx2);
-    /*vkvg_destroy(ctx);
-    ctx = vkvg_create(surf);
-    vkvg_destroy(ctx);
-
-
-    ctx = vkvg_create(surf);*/
-    vkvg_set_rgba(ctx,0.5,0,0,1);
-    vkvg_rectangle(ctx,0,0,1024,800);
-    vkvg_fill (ctx);
-
-    vkvg_set_rgba(ctx,1,1,0,1);
-    vkvg_rectangle(ctx,200,200,400,400);
-    vkvg_fill (ctx);
-    vkvg_set_rgba(ctx,0,0,1,1);
-    vkvg_rectangle(ctx,300,300,400,400);
-    vkvg_stroke(ctx);
-    //vkvg_clip_preserve(ctx);
-    //vkvg_clip(ctx);
-    //vkvg_fill_preserve(ctx);
-    //vkvg_set_rgba(ctx,1,0,1,1);
-
-
-    //vkvg_select_font_face(ctx, "/usr/local/share/fonts/DroidSansMono.ttf");
-
-    //vkvg_select_font_face(ctx, "/usr/share/fonts/truetype/unifont/unifont.ttf");
-
+void test_text (VkvgContext ctx) {
     int size = 19;
     int penY = 50;
     int penX = 10;
 
     /*vkvg_rectangle(ctx,30,0,100,400);
     vkvg_clip(ctx);*/
+
+    //vkvg_select_font_face(ctx, "/usr/local/share/fonts/DroidSansMono.ttf");
+    //vkvg_select_font_face(ctx, "/usr/share/fonts/truetype/unifont/unifont.ttf");
 
     vkvg_set_font_size(ctx,size-10);
     vkvg_select_font_face(ctx, "droid");
@@ -615,23 +587,8 @@ int main(int argc, char *argv[]) {
     vkvg_show_text (ctx,"ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     penY+=size;
 
-
-    //vkvg_show_text (ctx,"ABCDABCD");
-    //vkvg_show_text (ctx,"j");
-
-    vkvg_test_fill(ctx);
-
-
-    //vkvg_rectangle(ctx,300,300,400,400);
-    //vkvg_clip(ctx);
-
-
-    vkvg_test_stroke(ctx);
-
-    //vkvg_reset_clip(ctx);
-    /*vkvg_set_rgba(ctx,1.0,0.0,0.0,0.1);
     vkvg_move_to(ctx, 80,400);
-    vkvg_show_text (ctx,"Ленивый рыжий кот");*/
+    vkvg_show_text (ctx,"Ленивый рыжий кот");
 
 
     /*vkvg_move_to(ctx, 150,250);
@@ -641,28 +598,61 @@ int main(int argc, char *argv[]) {
     vkvg_move_to(ctx, 150,350);
     vkvg_show_text (ctx,"懶惰的姜貓");*/
 
+    //vkvg_show_text (ctx,"ABCDABCD");
+    //vkvg_show_text (ctx,"j");
+}
 
-    vkvg_destroy(ctx);
-
-    ctx = vkvg_create(surf);
-
-    vkvg_set_rgba(ctx,0.0,0.0,0.0,1);
-    vkvg_paint(ctx);
-
-    vkvg_set_source_surface(ctx, surf2, 0, 0);
-    //vkvg_set_rgba(ctx,0.0,1.0,1.0,1);
-    //vkvg_set_rgba(ctx,1.0,1.0,0,1);
-    //vkvg_rectangle(ctx,0,0,400,400);
-    //vkvg_fill (ctx);
-    vkvg_paint(ctx);
-
-    VkvgSurface imgSurf = vkvg_image_surface_create(device, "/mnt/data/images/blason.png");
-    //VkvgSurface imgSurf = vkvg_image_surface_create(device, "/mnt/data/images/2000px-Tux.svg.png");
-    //VkvgSurface imgSurf = vkvg_image_surface_create(device, "/mnt/data/images/path2674.png");
-    //VkvgSurface imgSurf = vkvg_image_surface_create(device, "/mnt/data/images/horse-black-head-shape-of-a-chess-piece_318-52446.jpg");
+void test_img_surface (VkvgContext ctx) {
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/blason.png");
+    //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/2000px-Tux.svg.png");
+    //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/path2674.png");
+    //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/horse-black-head-shape-of-a-chess-piece_318-52446.jpg");
 
     vkvg_set_source_surface(ctx, imgSurf, 300, 300);
     vkvg_paint(ctx);
+    vkvg_flush(ctx);
+    vkvg_surface_destroy(imgSurf);
+}
+
+int main(int argc, char *argv[]) {
+    dumpLayerExts();
+
+    VkEngine e = {};
+
+    EngineInit(&e);
+
+    device = vkvg_device_create(e.phy, e.dev, e.renderer.queue, e.renderer.qFam);
+
+    surf = vkvg_surface_create (device,1024,800);
+
+    vkeCheckPhyPropBlitSource (&e);
+    glfwSetKeyCallback(e.renderer.window, key_callback);
+
+    vke_swapchain_create(&e);
+
+    VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
+    VkvgContext ctx = vkvg_create(surf);
+
+    vkvg_set_rgba(ctx,0.01,0.01,0.1,1);
+    //vkvg_paint(ctx);
+    vkvg_rectangle(ctx,0,0,1024,800);
+    vkvg_fill (ctx);
+
+    vkvg_test_fill(ctx);
+    vkvg_test_stroke(ctx);
+    vkvg_test_curves(ctx);
+    test_text(ctx);
+
+    //test_img_surface(ctx);
+
+    //vkvg_destroy(ctx);
+    //ctx = vkvg_create(surf);
+
+    //vkvg_set_rgba(ctx,0.0,0.0,0.0,1);
+    //vkvg_paint(ctx);
+
+    //vkvg_set_source_surface(ctx, surf2, 0, 0);
+    //vkvg_paint(ctx);
 
     vkvg_destroy(ctx);
 
@@ -676,7 +666,6 @@ int main(int argc, char *argv[]) {
     vkDeviceWaitIdle(e.dev);
     vke_swapchain_destroy(&e.renderer);
 
-    vkvg_surface_destroy(imgSurf);
     vkvg_surface_destroy(surf);
     vkvg_surface_destroy(surf2);
 
