@@ -473,14 +473,6 @@ void vkvg_test_curves (VkvgContext ctx) {
     vkvg_stroke     (ctx);
 }
 
-void vkvg_rectangle(VkvgContext ctx, float x, float y, float width, float height){
-    vkvg_move_to(ctx,x,y);
-    vkvg_line_to(ctx,x+width,y);
-    vkvg_line_to(ctx,x+width,y+height);
-    vkvg_line_to(ctx,x,y+height);
-    vkvg_close_path(ctx);
-}
-
 void vkvg_test_stroke(VkvgContext ctx){
     vkvg_set_linewidth(ctx, 2);
     vkvg_set_rgba(ctx,1,0,0,1);
@@ -633,9 +625,9 @@ int main(int argc, char *argv[]) {
     VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
     VkvgContext ctx = vkvg_create(surf);
 
-    vkvg_set_rgba(ctx,0.01,0.01,0.1,1);
+    vkvg_set_rgba(ctx,0.02,0.02,0.1,1);
     //vkvg_paint(ctx);
-    vkvg_rectangle(ctx,0,0,1024,800);
+    vkvg_rectangle (ctx,0,0,1024,800);
     vkvg_fill (ctx);
 
     vkvg_test_fill(ctx);

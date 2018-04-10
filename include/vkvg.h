@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <math.h>
 
-#define VKVG_SAMPLES VK_SAMPLE_COUNT_4_BIT
+#define VKVG_SAMPLES 4
 
 typedef enum _vkvg_direction {
     VKVG_HORIZONTAL	= 0,
@@ -81,6 +81,7 @@ void vkvg_line_to			(VkvgContext ctx, float x, float y);
 void vkvg_move_to			(VkvgContext ctx, float x, float y);
 void vkvg_arc				(VkvgContext ctx, float xc, float yc, float radius, float a1, float a2);
 void vkvg_curve_to          (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3);
+void vkvg_rectangle         (VkvgContext ctx, float x, float y, float w, float h);
 void vkvg_stroke			(VkvgContext ctx);
 void vkvg_stroke_preserve	(VkvgContext ctx);
 void vkvg_fill				(VkvgContext ctx);

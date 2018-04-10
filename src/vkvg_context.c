@@ -202,11 +202,27 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
     ctx->curPos.x = x;
     ctx->curPos.y = y;
 }
-
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
     _bezier (ctx, ctx->curPos.x, ctx->curPos.y, x1, y1, x2, y2, x3, y3);
 }
+void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
+    _finish_path (ctx);
 
+    //set start to current idx in point array
+    ctx->pathes[ctx->pathPtr] = ctx->pointCount;
+    _check_pathes_array(ctx);
+    ctx->pathPtr++;
+
+    _add_point (ctx, x, y);
+    _add_point (ctx, x + w, y);
+    _add_point (ctx, x + w, y + h);
+    _add_point (ctx, x, y + h);
+
+    vkvg_close_path (ctx);
+
+    ctx->curPos.x = x;
+    ctx->curPos.y = y;
+}
 void vkvg_clip_preserve (VkvgContext ctx){
     vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
     vkvg_fill_preserve(ctx);
