@@ -594,6 +594,55 @@ void test_text (VkvgContext ctx) {
     //vkvg_show_text (ctx,"j");
 }
 
+void vkvg_test_stroke2(VkvgContext ctx){
+    vkvg_set_linewidth(ctx,20);
+    vkvg_set_rgba(ctx,1,0,0,1);
+    vkvg_move_to(ctx,200,200);
+    vkvg_line_to(ctx,400,200);
+    vkvg_line_to(ctx,400,400);
+    vkvg_line_to(ctx,200,400);
+    vkvg_close_path(ctx);
+    vkvg_stroke(ctx);
+    vkvg_set_rgba(ctx,0.5,1,0,1);
+    vkvg_move_to(ctx,300,300);
+    vkvg_line_to(ctx,500,300);
+    vkvg_line_to(ctx,500,500);
+    vkvg_line_to(ctx,300,500);
+    vkvg_close_path(ctx);
+    vkvg_stroke(ctx);
+    vkvg_set_linewidth(ctx,10);
+    vkvg_set_rgba(ctx,0.5,0.6,1,1);
+    vkvg_move_to(ctx,700,475);
+    vkvg_line_to(ctx,400,475);
+    vkvg_stroke(ctx);
+    vkvg_set_rgba(ctx,1,0,1,1);
+    vkvg_move_to(ctx,700,500);
+
+    vkvg_arc(ctx, 600,500,100,M_PI, 2.0*M_PI);
+    vkvg_stroke(ctx);
+
+
+    vkvg_set_linewidth(ctx,20);
+    vkvg_set_rgba(ctx,1,1,0,1);
+    vkvg_move_to(ctx,100,50);
+    vkvg_line_to(ctx,400,50);
+    vkvg_stroke(ctx);
+}
+void vkvg_test_fill2(VkvgContext ctx){
+    vkvg_set_rgba(ctx,1,0,0,1);
+    vkvg_move_to(ctx,200,200);
+    vkvg_line_to(ctx,250,150);
+    vkvg_line_to(ctx,200,100);
+    vkvg_line_to(ctx,300,150);
+    vkvg_line_to(ctx,700,100);
+    vkvg_line_to(ctx,400,200);
+    vkvg_line_to(ctx,400,400);
+    vkvg_line_to(ctx,200,400);
+    vkvg_line_to(ctx,300,300);
+    vkvg_close_path(ctx);
+    vkvg_fill(ctx);
+}
+
 void test_img_surface (VkvgContext ctx) {
     VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/blason.png");
     //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/2000px-Tux.svg.png");
@@ -623,28 +672,29 @@ int main(int argc, char *argv[]) {
     vke_swapchain_create(&e);
 
     VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
-    VkvgContext ctx = vkvg_create(surf);
+    VkvgContext ctx = vkvg_create(surf2);
+
+    //test_img_surface(ctx);
 
     vkvg_set_rgba(ctx,0.02,0.02,0.1,1);
     //vkvg_paint(ctx);
     vkvg_rectangle (ctx,0,0,1024,800);
     vkvg_fill (ctx);
 
+    vkvg_test_fill2(ctx);
     vkvg_test_fill(ctx);
     vkvg_test_stroke(ctx);
     vkvg_test_curves(ctx);
     test_text(ctx);
 
-    //test_img_surface(ctx);
+    vkvg_destroy(ctx);
+    ctx = vkvg_create(surf);
 
-    //vkvg_destroy(ctx);
-    //ctx = vkvg_create(surf);
+    vkvg_set_rgba(ctx,0.0,0.0,0.0,1);
+    vkvg_paint(ctx);
 
-    //vkvg_set_rgba(ctx,0.0,0.0,0.0,1);
-    //vkvg_paint(ctx);
-
-    //vkvg_set_source_surface(ctx, surf2, 0, 0);
-    //vkvg_paint(ctx);
+    vkvg_set_source_surface(ctx, surf2, 0, 0);
+    vkvg_paint(ctx);
 
     vkvg_destroy(ctx);
 

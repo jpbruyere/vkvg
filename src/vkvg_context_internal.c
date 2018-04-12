@@ -89,6 +89,13 @@ void _record_draw_cmd (VkvgContext ctx){
     if (ctx->indCount == ctx->curIndStart)
         return;
     vkCmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
+
+    //DEBUG
+    /*vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
+    vkCmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
+    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);*/
+    //////////
+
     ctx->curIndStart = ctx->indCount;
 }
 
@@ -152,7 +159,7 @@ void _init_cmd_buff (VkvgContext ctx){
     //clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
     //clearValues[1].depthStencil = { 1.0f, 0 };
     VkClearValue clearValues[4] = {
-        { 0.0f, 0.0f, 0.0f, 1.0f },
+        { 0.0f, 1.0f, 0.0f, 1.0f },
         { 0.0f, 0.0f, 0.0f, 1.0f },
         { 1.0f, 0 },
         { 1.0f, 0 }
@@ -161,9 +168,9 @@ void _init_cmd_buff (VkvgContext ctx){
                                                   .renderPass = ctx->pSurf->dev->renderPass,
                                                   .framebuffer = ctx->pSurf->fb,
                                                   .renderArea.extent = {ctx->pSurf->width,ctx->pSurf->height},
-                                                };
-                                                  //.clearValueCount = 4,
-                                                  //.pClearValues = clearValues};
+
+                                                  .clearValueCount = 4,
+                                                  .pClearValues = clearValues};
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     vkCmdBeginRenderPass (ctx->cmd, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     VkViewport viewport = {0,0,ctx->pSurf->width,ctx->pSurf->height,0,1};
