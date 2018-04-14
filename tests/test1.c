@@ -458,15 +458,15 @@ void vkvg_test_fill(VkvgContext ctx){
 }
 
 void vkvg_test_curves (VkvgContext ctx) {
-    vkvg_set_rgba   (ctx, 1.0,1.0,1.0,1.0);
+    vkvg_set_rgba   (ctx, 0.5,0.0,1.0,0.5);
     vkvg_set_linewidth(ctx, 10);
 
-    /*
+
     vkvg_move_to    (ctx, 100, 400);
     vkvg_curve_to   (ctx, 100, 100, 600,700,600,400);
-    */
-    //vkvg_move_to    (ctx, 100, 100);
-    //vkvg_curve_to   (ctx, 1000, 100, 100, 800, 1000, 800);
+
+    vkvg_move_to    (ctx, 100, 100);
+    vkvg_curve_to   (ctx, 1000, 100, 100, 800, 1000, 800);
     vkvg_move_to    (ctx, 100, 100);
     vkvg_curve_to   (ctx, 1000, 500, 700, 500, 700, 100);
 
@@ -683,8 +683,9 @@ int main(int argc, char *argv[]) {
     VkvgContext ctx = vkvg_create(surf2);
 
     vkvg_set_rgba(ctx,0.02,0.02,0.3,1.0);
-    //vkvg_paint(ctx);
-    vkvg_rectangle (ctx,0,0,1024,800);
+    vkvg_paint(ctx);
+    vkvg_set_rgba (ctx,0.02,0.8,0.3,1.0);
+    vkvg_rectangle (ctx,200,200,300,300);
     vkvg_fill (ctx);
 
     vkvg_test_fill2(ctx);

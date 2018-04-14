@@ -427,6 +427,7 @@ void _vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float width, float
 }
 void vkvg_paint (VkvgContext ctx){
     _vkvg_fill_rectangle (ctx, 0, 0, ctx->pSurf->width, ctx->pSurf->height);
+    _record_draw_cmd (ctx);
 }
 
 void vkvg_set_rgba (VkvgContext ctx, float r, float g, float b, float a)
