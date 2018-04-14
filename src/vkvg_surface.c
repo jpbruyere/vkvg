@@ -146,6 +146,11 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 
     //create tmp context with rendering pipeline to create the multisample img
     VkvgContext ctx = vkvg_create (surf);
+
+    VkClearAttachment ca = {VK_IMAGE_ASPECT_COLOR_BIT,0, { 0.0f, 0.0f, 0.0f, 0.0f }};
+    VkClearRect cr = {{{0,0},{surf->width,surf->height}},0,1};
+    vkCmdClearAttachments(ctx->cmd, 1, &ca, 1, &cr);
+
     vec4 srcRect = {0,0,surf->width,surf->height};
     ctx->pushConsts.source = srcRect;
     ctx->pushConsts.srcType = VKVG_SRC_PATTERN;

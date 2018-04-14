@@ -27,9 +27,9 @@ void _setupRenderPass(VkvgDevice dev)
                     .format = FB_COLOR_FORMAT,
                     .samples = VKVG_SAMPLES,
                     .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-                    .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                    .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-                    .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+                    .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                    .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                    .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
     VkAttachmentDescription attColorResolve = {
                     .format = FB_COLOR_FORMAT,
@@ -43,10 +43,10 @@ void _setupRenderPass(VkvgDevice dev)
     VkAttachmentDescription attDS = {
                     .format = VK_FORMAT_S8_UINT,
                     .samples = VKVG_SAMPLES,
-                    .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                    .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-                    .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-                    .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+                    .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                    .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 /*    VkAttachmentDescription attDSResolve = {
                     .format = VK_FORMAT_S8_UINT,
@@ -164,8 +164,8 @@ void _setupPipelines(VkvgDevice dev)
     if (VKVG_SAMPLES != VK_SAMPLE_COUNT_1_BIT){
         multisampleState.sampleShadingEnable = VK_TRUE;
         multisampleState.minSampleShading = 0.25f;
-        multisampleState.alphaToCoverageEnable = VK_FALSE;
-        multisampleState.alphaToOneEnable = VK_FALSE;
+        //multisampleState.alphaToCoverageEnable = VK_FALSE;
+        //multisampleState.alphaToOneEnable = VK_FALSE;
     }
     VkVertexInputBindingDescription vertexInputBinding = { .binding = 0,
                 .stride = sizeof(Vertex),
@@ -182,7 +182,7 @@ void _setupPipelines(VkvgDevice dev)
         .vertexAttributeDescriptionCount = 2,
         .pVertexAttributeDescriptions = vertexInputAttributs };
 
-    VkShaderModule modVert, modFrag;
+    VkShaderModule modVert, modFrag, modFragWired;
     VkShaderModuleCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
                                             .pCode = triangle_vert_spv,
                                             .codeSize = triangle_vert_spv_len };
@@ -190,6 +190,9 @@ void _setupPipelines(VkvgDevice dev)
     createInfo.pCode = triangle_frag_spv;
     createInfo.codeSize = triangle_frag_spv_len;
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFrag));
+    createInfo.pCode = wired_frag_spv;
+    createInfo.codeSize = wired_frag_spv_len;
+    VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFragWired));
 
     VkPipelineShaderStageCreateInfo vertStage = { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
@@ -238,16 +241,20 @@ void _setupPipelines(VkvgDevice dev)
     blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipeline_OP_SUB));
 
-    inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineWired));
-
     rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
 
-    vkDestroyShaderModule(dev->vkDev, shaderStages[0].module, NULL);
-    vkDestroyShaderModule(dev->vkDev, shaderStages[1].module, NULL);
+    shaderStages[1].module = modFragWired;
+    //pipelineCreateInfo.pStages = shaderStages;
+
+    inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineWired));
+
+    vkDestroyShaderModule(dev->vkDev, modVert, NULL);
+    vkDestroyShaderModule(dev->vkDev, modFrag, NULL);
+    vkDestroyShaderModule(dev->vkDev, modFragWired, NULL);
 }
 
 void _createDescriptorSetLayout (VkvgDevice dev) {

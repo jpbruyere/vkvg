@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <math.h>
 
-#define VKVG_SAMPLES 4
+#define VKVG_SAMPLES 8
 
 typedef enum _vkvg_direction {
     VKVG_HORIZONTAL	= 0,

@@ -31,5 +31,5 @@ void main()
 	}else
 		outSrcRect = pushConsts.source;
 
-	gl_Position = vec4(inPos.xy*pushConsts.scale+pushConsts.translate,0.0, 1.0);
+	gl_Position = vec4(inPos.xy * pushConsts.scale - vec2(1), 0.0, 1.0);
 }
