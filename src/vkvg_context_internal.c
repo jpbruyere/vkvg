@@ -168,9 +168,9 @@ void _init_cmd_buff (VkvgContext ctx){
                                                   .renderPass = ctx->pSurf->dev->renderPass,
                                                   .framebuffer = ctx->pSurf->fb,
                                                   .renderArea.extent = {ctx->pSurf->width,ctx->pSurf->height},
-
                                                   .clearValueCount = 4,
                                                   .pClearValues = clearValues};
+
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     vkCmdBeginRenderPass (ctx->cmd, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     VkViewport viewport = {0,0,ctx->pSurf->width,ctx->pSurf->height,0,1};
@@ -231,6 +231,22 @@ void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
     };
     vkUpdateDescriptorSets(ctx->pSurf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
+
+/*
+ * Reset currently bound descriptor which image could be destroyed
+ */
+void _reset_src_descriptor_set (VkvgContext ctx){
+    VkvgDevice dev = ctx->pSurf->dev;
+    //VkDescriptorSet dss[] = {ctx->dsSrc};
+    vkFreeDescriptorSets    (dev->vkDev, ctx->descriptorPool, 1, &ctx->dsSrc);
+
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                                                              .descriptorPool = ctx->descriptorPool,
+                                                              .descriptorSetCount = 1,
+                                                              .pSetLayouts = &dev->dslSrc };
+    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
+}
+
 void _createDescriptorPool (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;
     VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 };

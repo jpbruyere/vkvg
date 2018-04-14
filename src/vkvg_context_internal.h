@@ -140,6 +140,7 @@ uint32_t _get_last_point_of_closed_path (VkvgContext ctx, uint32_t ptrPath);
 void _createDescriptorPool  (VkvgContext ctx);
 void _init_descriptor_sets  (VkvgContext ctx);
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
+void _reset_src_descriptor_set(VkvgContext ctx);
 void _free_ctx_save         (vkvg_context_save_t* sav);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){

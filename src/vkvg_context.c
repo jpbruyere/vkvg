@@ -23,7 +23,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     push_constants pc = {
             {},
             {2.0f/(float)ctx->pSurf->width,2.0f/(float)ctx->pSurf->height},
-            {-1.f,-1.f},
+            {0.f,0.f},
             VKVG_SRC_SOLID
     };
     ctx->pushConsts = pc;
@@ -49,6 +49,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->cacheTex, ctx->dsFont);
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
+
+
 
     return ctx;
 }
@@ -429,6 +431,12 @@ void vkvg_paint (VkvgContext ctx){
 
 void vkvg_set_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
+    if (ctx->pushConsts.srcType == VKVG_SRC_PATTERN){
+        _flush_cmd_buff             (ctx);
+        _reset_src_descriptor_set   (ctx);
+        _init_cmd_buff              (ctx);
+    }
+
     vec4 c = {r,g,b,a};
     ctx->pushConsts.source = c;
     ctx->pushConsts.srcType = VKVG_SRC_SOLID;
@@ -464,7 +472,8 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
 
     ctx->source = surf->img;
 
-    vkh_image_create_sampler(ctx->source,VK_FILTER_NEAREST, VK_FILTER_NEAREST,
+    if (vkh_image_get_sampler(ctx->source) == VK_NULL_HANDLE)
+        vkh_image_create_sampler(ctx->source,VK_FILTER_NEAREST, VK_FILTER_NEAREST,
                              VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
     if (vkh_image_get_layout (ctx->source) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL){

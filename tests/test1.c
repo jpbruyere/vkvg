@@ -649,7 +649,15 @@ void test_img_surface (VkvgContext ctx) {
     //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/path2674.png");
     //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/horse-black-head-shape-of-a-chess-piece_318-52446.jpg");
 
-    vkvg_set_source_surface(ctx, imgSurf, 300, 300);
+    vkvg_set_source_surface(ctx, imgSurf, 200, 200);
+    vkvg_paint(ctx);
+    vkvg_set_source_surface(ctx, imgSurf, 400, 400);
+    vkvg_paint(ctx);
+    vkvg_flush(ctx);
+    vkvg_surface_destroy(imgSurf);
+
+    imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/path2674.png");
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
     vkvg_paint(ctx);
     vkvg_flush(ctx);
     vkvg_surface_destroy(imgSurf);
@@ -674,9 +682,7 @@ int main(int argc, char *argv[]) {
     VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
     VkvgContext ctx = vkvg_create(surf2);
 
-    //test_img_surface(ctx);
-
-    vkvg_set_rgba(ctx,0.02,0.02,0.1,1);
+    vkvg_set_rgba(ctx,0.02,0.02,0.3,1.0);
     //vkvg_paint(ctx);
     vkvg_rectangle (ctx,0,0,1024,800);
     vkvg_fill (ctx);
@@ -686,6 +692,8 @@ int main(int argc, char *argv[]) {
     vkvg_test_stroke(ctx);
     vkvg_test_curves(ctx);
     test_text(ctx);
+
+    //test_img_surface(ctx);
 
     vkvg_destroy(ctx);
     ctx = vkvg_create(surf);
