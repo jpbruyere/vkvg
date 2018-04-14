@@ -43,6 +43,8 @@ vkvg is in early development stage, and no guarantee is given on the possible ro
 - [GLFW](http://www.glfw.org/) (only for running demo app)
 - CMake
 
+if glslc or xxd are not present, a precompiled version of the shaders is stored in the git tree.
+
 ### Roadmap
 
 - Improve triangulation algorithm.

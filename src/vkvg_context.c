@@ -50,8 +50,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
 
-
-
     return ctx;
 }
 void vkvg_flush (VkvgContext ctx){
