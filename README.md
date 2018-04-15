@@ -45,6 +45,18 @@ vkvg is in early development stage, and no guarantee is given on the possible ro
 
 if glslc or xxd are not present, a precompiled version of the shaders is stored in the git tree.
 
+### Building
+
+```bash
+git clone https://github.com/jpbruyere/vkvg.git     # Download source code from github
+cd vkvg                                             # Enter the source directory
+git submodule update --init --recursive             # Dowload vkhelpers sources
+mkdir build					    # Create build directory
+cd build
+cmake ..					    # Run CMake, optionaly setup glslc path
+make						    # Run Make
+```
+
 ### Roadmap
 
 - Improve triangulation algorithm.
