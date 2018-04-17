@@ -11,6 +11,7 @@
 #include "vkvg_surface_internal.h"
 #include "vkvg_context_internal.h"
 #include "vkvg_device_internal.h"
+#include "vkh_queue.h"
 
 void _check_pathes_array (VkvgContext ctx){
     if (ctx->sizePathes - ctx->pathPtr > VKVG_ARRAY_THRESHOLD)
@@ -99,17 +100,8 @@ void _record_draw_cmd (VkvgContext ctx){
     ctx->curIndStart = ctx->indCount;
 }
 
-void _submit_ctx_cmd (VkvgContext ctx){
-    VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-    VkSubmitInfo submit_info = { .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-                                 .commandBufferCount = 1,
-                                 .signalSemaphoreCount = 0,
-                                 .pSignalSemaphores = NULL,
-                                 .waitSemaphoreCount = 0,
-                                 .pWaitSemaphores = NULL,
-                                 .pWaitDstStageMask = &dstStageMask,
-                                 .pCommandBuffers = &ctx->cmd};
-    VK_CHECK_RESULT(vkQueueSubmit(ctx->pSurf->dev->queue, 1, &submit_info, ctx->flushFence));
+inline void _submit_ctx_cmd(VkvgContext ctx){
+    vkh_cmd_submit (ctx->pSurf->dev->gQueue, &ctx->cmd, ctx->flushFence);
 }
 void _wait_and_reset_ctx_cmd (VkvgContext ctx){
     vkWaitForFences(ctx->pSurf->dev->vkDev,1,&ctx->flushFence,VK_TRUE,UINT64_MAX);
@@ -117,7 +109,7 @@ void _wait_and_reset_ctx_cmd (VkvgContext ctx){
     vkResetCommandBuffer(ctx->cmd,0);
 }
 
-void _submit_wait_and_reset_cmd (VkvgContext ctx){
+inline void _submit_wait_and_reset_cmd (VkvgContext ctx){
     _submit_ctx_cmd(ctx);
     _wait_and_reset_ctx_cmd(ctx);
 }
@@ -249,13 +241,16 @@ void _reset_src_descriptor_set (VkvgContext ctx){
 
 void _createDescriptorPool (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;
-    VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 };
+    const VkDescriptorPoolSize descriptorPoolSize[] = {
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
+        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
+    };
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                                                            .maxSets = 2,
+                                                            .maxSets = 3,
                                                             .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-                                                            .poolSizeCount = 1,
-                                                            .pPoolSizes = &descriptorPoolSize };
-    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &ctx->descriptorPool));
+                                                            .poolSizeCount = 2,
+                                                            .pPoolSizes = descriptorPoolSize };
+    VK_CHECK_RESULT(vkCreateDescriptorPool (dev->vkDev, &descriptorPoolCreateInfo, NULL, &ctx->descriptorPool));
 }
 void _init_descriptor_sets (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;

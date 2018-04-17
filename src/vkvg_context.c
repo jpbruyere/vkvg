@@ -1,6 +1,7 @@
 ﻿#include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
 #include "vkvg_surface_internal.h"
+#include "vkh_queue.h"
 
 #ifdef DEBUG
 static vec2 debugLinePoints[1000];
@@ -40,7 +41,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->points = (vec2*)       malloc (VKVG_VBO_SIZE*sizeof(vec2));
     ctx->pathes = (uint32_t*)   malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
 
-    ctx->cmdPool = vkh_cmd_pool_create (dev->vkDev, dev->qFam, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    ctx->cmdPool = vkh_cmd_pool_create (dev->vkDev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
     _create_vertices_buff   (ctx);
     _create_cmd_buff        (ctx);
@@ -84,6 +85,7 @@ void vkvg_destroy (VkvgContext ctx)
     _flush_cmd_buff(ctx);
 
     VkDevice dev = ctx->pSurf->dev->vkDev;
+
     vkDestroyFence      (dev, ctx->flushFence,NULL);
     vkFreeCommandBuffers(dev, ctx->cmdPool, 1, &ctx->cmd);
     vkDestroyCommandPool(dev, ctx->cmdPool, NULL);

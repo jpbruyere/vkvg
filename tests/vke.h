@@ -9,6 +9,8 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
+#include "vkh.h"
+
 #define APP_SHORT_NAME "vkcrow_test"
 /* Number of samples needs to be the same at image creation,      */
 /* renderpass creation and pipeline creation.                     */
@@ -60,15 +62,11 @@ typedef struct VkComputer_t {
 }VkComputer;
 
 typedef struct VkEngine_t {
-    VkApplicationInfo   infos;
-    VkInstance          inst;
+    VkhApp              app;
     VkPhysicalDevice    phy;
     VkPhysicalDeviceMemoryProperties    memory_properties;
     VkPhysicalDeviceProperties          gpu_props;
     VkDevice            dev;
-
-    uint32_t            EnabledExtensionsCount;
-    const char**        ExtensionNames;
 
     vkh_presenter       renderer;
     VkComputer          computer;

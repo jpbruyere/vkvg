@@ -9,9 +9,10 @@ typedef struct _vkvg_device_t{
     VkDevice				vkDev;
     VkPhysicalDeviceMemoryProperties phyMemProps;
     VkRenderPass			renderPass;
+    VkPhysicalDevice        phy;
 
-    VkQueue					queue;
-    uint32_t                qFam;
+    VkhQueue                gQueue;
+
     VkCommandPool			cmdPool;
     VkCommandBuffer         cmd;
     VkFence                 fence;

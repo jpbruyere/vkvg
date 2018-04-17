@@ -184,11 +184,11 @@ void _setupPipelines(VkvgDevice dev)
 
     VkShaderModule modVert, modFrag, modFragWired;
     VkShaderModuleCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                                            .pCode = triangle_vert_spv,
-                                            .codeSize = triangle_vert_spv_len };
+                                            .pCode = vkvg_main_vert_spv,
+                                            .codeSize = vkvg_main_vert_spv_len };
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modVert));
-    createInfo.pCode = triangle_frag_spv;
-    createInfo.codeSize = triangle_frag_spv_len;
+    createInfo.pCode = vkvg_main_frag_spv;
+    createInfo.codeSize = vkvg_main_frag_spv_len;
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFrag));
     createInfo.pCode = wired_frag_spv;
     createInfo.codeSize = wired_frag_spv_len;

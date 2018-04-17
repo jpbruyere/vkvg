@@ -4,6 +4,8 @@
 #include "vke.h"
 //#include "compute.h"
 #include "vkh.h"
+#include "vkh_app.h"
+#include "vkh_phyinfo.h"
 
 #include "vkvg.h"
 
@@ -181,87 +183,25 @@ void vkengine_get_queues_properties (VkEngine* e, VkQueueFamilyProperties** qFam
 void EngineInit (VkEngine* e) {
     glfwInit();
     assert (glfwVulkanSupported()==GLFW_TRUE);
-    e->ExtensionNames = glfwGetRequiredInstanceExtensions (&e->EnabledExtensionsCount);
 
+    uint32_t enabledExtsCount = 0, phyCount = 0;
+    const char** enabledExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
 
-    e->infos.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    e->infos.pNext = NULL;
-    e->infos.pApplicationName = APP_SHORT_NAME;
-    e->infos.applicationVersion = 1;
-    e->infos.pEngineName = APP_SHORT_NAME;
-    e->infos.engineVersion = 1;
-    e->infos.apiVersion = VK_API_VERSION_1_0;
-    e->renderer.width = 1024;
-    e->renderer.height = 800;
+    e->app = vkh_app_create("vkvgTest", enabledExtsCount, enabledExts);
 
-    const uint32_t enabledLayersCount = 1;
+    VkhPhyInfo* phys = vkh_app_get_phyinfos(e->app, &phyCount);
 
-    //const char* enabledLayers[] = {"VK_LAYER_LUNARG_core_validation"};
-    const char* enabledExtentions[] = {"VK_KHR_surface", "VK_KHR_swapchain","VK_KHR_xcb_surface"};
-    const char* enabledLayers[] = {"VK_LAYER_LUNARG_standard_validation"};
-
-    VkInstanceCreateInfo inst_info = { .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-                                       .pNext = NULL,
-                                       .flags = 0,
-                                       .pApplicationInfo = &e->infos,
-                                       .enabledExtensionCount = e->EnabledExtensionsCount,
-                                       .ppEnabledExtensionNames = e->ExtensionNames,
-                                       .enabledLayerCount = 1,
-                                       .ppEnabledLayerNames = enabledLayers };
-
-    VK_CHECK_RESULT(vkCreateInstance (&inst_info, NULL, &e->inst));
-
-    e->phy = vkh_find_phy (e->inst, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU);
-
-    vkGetPhysicalDeviceMemoryProperties (e->phy, &e->memory_properties);
-    vkGetPhysicalDeviceProperties       (e->phy, &e->gpu_props);
-
-    /*VkImageFormatProperties imgProps = {};
-    vkGetPhysicalDeviceImageFormatProperties(e->phy,
-                                             VK_FORMAT_R8_UNORM,
-                                             VK_IMAGE_TYPE_2D,
-                                             VK_IMAGE_TILING_OPTIMAL,
-                                             VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                                             NULL,&imgProps );*/
-
-    int cQueue = -1, gQueue = -1, tQueue = -1;
-    uint32_t queue_family_count = 0;
-    VkQueueFamilyProperties *qfams;
-    vkengine_get_queues_properties(e,&qfams,&queue_family_count);
-
-    //try to find dedicated queues
-    for (int j=0; j<queue_family_count; j++){
-        switch (qfams[j].queueFlags) {
-        case VK_QUEUE_GRAPHICS_BIT:
-            if (gQueue<0)
-                gQueue = j;
-            break;
-        case VK_QUEUE_COMPUTE_BIT:
-            if (cQueue<0)
-                cQueue = j;
-            break;
-        case VK_QUEUE_TRANSFER_BIT:
-            if (tQueue<0)
-                tQueue = j;
+    VkhPhyInfo pi = NULL;
+    for (int i=0; i<phyCount; i++){
+        pi = phys[i];
+        if (pi->properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU){
+            e->phy = pi->phy;
             break;
         }
     }
-    //try to find suitable queue if no dedicated one found
-    for (int j=0; j<queue_family_count; j++){
-        if ((qfams[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) && (gQueue < 0))
-            gQueue = j;
-        if ((qfams[j].queueFlags & VK_QUEUE_COMPUTE_BIT) && (cQueue < 0))
-            cQueue = j;
-        if ((qfams[j].queueFlags & VK_QUEUE_TRANSFER_BIT) && (tQueue < 0))
-            tQueue = j;
-    }
 
-    free (qfams);
-
-    if (gQueue<0||cQueue<0||tQueue<0){
-        fprintf (stderr, "Missing Queue type\n");
-        exit (-1);
-    }
+    e->memory_properties = pi->memProps;
+    e->gpu_props = pi->properties;
 
     uint32_t qCount = 0;
     VkDeviceQueueCreateInfo pQueueInfos[3];
@@ -269,19 +209,19 @@ void EngineInit (VkEngine* e) {
 
     VkDeviceQueueCreateInfo qiG = { .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                                    .queueCount = 1,
-                                   .queueFamilyIndex = gQueue,
+                                   .queueFamilyIndex = pi->gQueue,
                                    .pQueuePriorities = queue_priorities };
     VkDeviceQueueCreateInfo qiC = { .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                                    .queueCount = 1,
-                                   .queueFamilyIndex = cQueue,
+                                   .queueFamilyIndex = pi->cQueue,
                                    .pQueuePriorities = queue_priorities };
     VkDeviceQueueCreateInfo qiT = { .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                                    .queueCount = 1,
-                                   .queueFamilyIndex = tQueue,
+                                   .queueFamilyIndex = pi->tQueue,
                                    .pQueuePriorities = queue_priorities };
 
-    if (gQueue == cQueue){
-        if(gQueue == tQueue){
+    if (pi->gQueue == pi->cQueue){
+        if(pi->gQueue == pi->tQueue){
             qCount=1;
             pQueueInfos[0] = qiG;
         }else{
@@ -290,7 +230,7 @@ void EngineInit (VkEngine* e) {
             pQueueInfos[1] = qiT;
         }
     }else{
-        if((gQueue == tQueue) || (cQueue==tQueue)){
+        if((pi->gQueue == pi->tQueue) || (pi->cQueue==pi->tQueue)){
             qCount=2;
             pQueueInfos[0] = qiG;
             pQueueInfos[1] = qiC;
@@ -308,7 +248,11 @@ void EngineInit (VkEngine* e) {
 
     VK_CHECK_RESULT(vkCreateDevice(e->phy, &device_info, NULL, &e->dev));
 
-    assert (glfwGetPhysicalDevicePresentationSupport (e->inst, e->phy, gQueue)==GLFW_TRUE);
+
+    assert (glfwGetPhysicalDevicePresentationSupport (e->app->inst, e->phy, pi->gQueue)==GLFW_TRUE);
+
+    e->renderer.width = 1024;
+    e->renderer.height = 800;
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);
@@ -320,20 +264,22 @@ void EngineInit (VkEngine* e) {
 
     r->window = glfwCreateWindow(r->width, r->height, "Window Title", NULL, NULL);
 
-    assert (glfwCreateWindowSurface(e->inst, r->window, NULL, &r->surface)==VK_SUCCESS);
+    assert (glfwCreateWindowSurface(e->app->inst, r->window, NULL, &r->surface)==VK_SUCCESS);
 
     VkBool32 isSupported;
-    vkGetPhysicalDeviceSurfaceSupportKHR(e->phy, gQueue, r->surface, &isSupported);
+    vkGetPhysicalDeviceSurfaceSupportKHR(e->phy, pi->gQueue, r->surface, &isSupported);
     assert (isSupported && "vkGetPhysicalDeviceSurfaceSupportKHR");
 
-    vkGetDeviceQueue(e->dev, gQueue, 0, &e->renderer.queue);
-    e->renderer.qFam = gQueue;
-    vkGetDeviceQueue(e->dev, cQueue, 0, &e->computer.queue);
-    vkGetDeviceQueue(e->dev, tQueue, 0, &e->loader.queue);
+    vkGetDeviceQueue(e->dev, pi->gQueue, 0, &e->renderer.queue);
+    e->renderer.qFam = pi->gQueue;
+    vkGetDeviceQueue(e->dev, pi->cQueue, 0, &e->computer.queue);
+    vkGetDeviceQueue(e->dev, pi->tQueue, 0, &e->loader.queue);
 
-    e->renderer.cmdPool = vkh_cmd_pool_create (e->dev, gQueue, 0);
-    e->computer.cmdPool = vkh_cmd_pool_create (e->dev, cQueue, 0);
-    e->loader.cmdPool = vkh_cmd_pool_create (e->dev, tQueue, 0);
+    e->renderer.cmdPool = vkh_cmd_pool_create (e->dev, pi->gQueue, 0);
+    e->computer.cmdPool = vkh_cmd_pool_create (e->dev, pi->cQueue, 0);
+    e->loader.cmdPool = vkh_cmd_pool_create (e->dev, pi->tQueue, 0);
+
+    vkh_app_free_phyinfos (phyCount, phys);
 
     r->semaPresentEnd = vkh_semaphore_create(e->dev);
     r->semaDrawEnd = vkh_semaphore_create(e->dev);
@@ -353,11 +299,11 @@ void EngineTerminate (VkEngine* e) {
     vkDestroyCommandPool (e->dev, e->loader.cmdPool, NULL);
 
     vkDestroyDevice (e->dev, NULL);
-    vkDestroySurfaceKHR (e->inst, r->surface, NULL);
+    vkDestroySurfaceKHR (e->app->inst, r->surface, NULL);
     glfwDestroyWindow (r->window);
     glfwTerminate ();
 
-    vkDestroyInstance (e->inst, NULL);
+    vkh_app_destroy (e->app);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -442,6 +388,17 @@ void draw(VkEngine* e) {
         /* Make sure command buffer is finished before presenting */
         VK_CHECK_RESULT(vkQueuePresentKHR(r->queue, &present));
     }
+}
+void vkvg_test_clip(VkvgContext ctx){
+    vkvg_move_to(ctx,100,100);
+    vkvg_line_to(ctx,400,350);
+    vkvg_line_to(ctx,900,150);
+    vkvg_line_to(ctx,700,450);
+    vkvg_line_to(ctx,900,750);
+    vkvg_line_to(ctx,500,650);
+    vkvg_line_to(ctx,100,800);
+    vkvg_line_to(ctx,150,400);
+    vkvg_clip(ctx);
 }
 void vkvg_test_fill(VkvgContext ctx){
     vkvg_set_rgba(ctx,0.1,0.1,0.8,1.0);
@@ -684,12 +641,15 @@ int main(int argc, char *argv[]) {
 
     vkvg_set_rgba(ctx,0.02,0.02,0.3,1.0);
     vkvg_paint(ctx);
+
+    vkvg_test_clip(ctx);
+
     vkvg_set_rgba (ctx,0.02,0.8,0.3,1.0);
     vkvg_rectangle (ctx,200,200,300,300);
     vkvg_fill (ctx);
 
     vkvg_test_fill2(ctx);
-    vkvg_test_fill(ctx);
+    //vkvg_test_fill(ctx);
     vkvg_test_stroke(ctx);
     vkvg_test_curves(ctx);
     test_text(ctx);

@@ -4,71 +4,72 @@
 #include "vkvg_pattern.h"
 
 VkvgPattern _init_pattern (VkvgDevice dev){
-    VkvgPattern pat = (vkvg_pattern*)calloc(1,sizeof(vkvg_pattern));
+    VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
     pat->dev = dev;
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                                      .descriptorPool = dev->descriptorPool,
-                                      .descriptorSetCount = 1,
-                                      .pSetLayouts = &dev->dslFont };
-    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &pat->descriptorSet));
     return pat;
-}
-
-void _update_descSet (VkvgPattern pat){
-    _font_cache_t* cache = pat->dev->fontCache;
-    VkDescriptorImageInfo descFontTex   = vkh_image_get_descriptor (cache->cacheTex,VK_IMAGE_LAYOUT_GENERAL);
-    VkDescriptorImageInfo descSrcTex    = vkh_image_get_descriptor (pat->img,       VK_IMAGE_LAYOUT_GENERAL);
-
-    VkWriteDescriptorSet writeDescriptorSet[] = {
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = pat->descriptorSet,
-            .dstBinding = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .pImageInfo = &descFontTex
-        },{
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = pat->descriptorSet,
-            .dstBinding = 1,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .pImageInfo = &descSrcTex
-        }};
-    vkUpdateDescriptorSets(pat->dev->vkDev, 2, &writeDescriptorSet, 0, NULL);
 }
 
 VkvgPattern vkvg_pattern_create(VkvgDevice dev){
     VkvgPattern pat = _init_pattern (dev);
+    pat->type = VKVG_PATTERN_TYPE_SOLID;
+    pat->data = (vkvg_color_t*)calloc(1,sizeof(vkvg_color_t));
     return pat;
 }
 
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf){
     VkvgPattern pat = _init_pattern (surf->dev);
-    pat->img = surf->img;
+    pat->data = surf;
     return pat;
 }
-VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
+VkvgPattern vkvg_pattern_create_linear (VkvgDevice dev, float x0, float y0, float x1, float y1){
+    VkvgPattern pat = _init_pattern (dev);
 
+    vkvg_gradient_t* grad = (vkvg_gradient_t*)calloc(1,sizeof(vkvg_gradient_t));
+
+    vec2 cp0 = {x0, y0}, cp1 = {x1, y1};
+    grad->cp[0] = cp0;
+    grad->cp[1] = cp1;
+
+    pat->data = grad;
+    return pat;
 }
-VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
+VkvgPattern vkvg_pattern_create_radial (VkvgDevice dev, float cx0, float cy0, float radius0,
                                         float cx1, float cy1, float radius1){
+    VkvgPattern pat = _init_pattern (dev);
 
+    vkvg_gradient_t* grad = (vkvg_gradient_t*)calloc(1,sizeof(vkvg_gradient_t));
+
+    vec2 cp0 = {cx0, cy0}, cp1 = {cx1, cy1}, rads = {radius0, radius1};
+    grad->cp[0] = cp0;
+    grad->cp[1] = cp1;
+    grad->cp[2] = rads;
+
+    pat->data = grad;
+    return pat;
+}
+void vkvg_patter_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a) {
+    if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID){
+
+        return;
+    }
+
+    vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
+    vkvg_color_t c = {r,g,b,a};
+    grad->colors[grad->count] = c;
+    grad->stops[grad->count] = offset;
 }
 void vkvg_pattern_set_extend (VkvgPattern pat, vkvg_extend_t extend){
     pat->extend = extend;
 }
 
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
-    _update_descSet (pat);
 
-    vkCmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pat->dev->pipelineLayout,
-                            0, 1, &pat->descriptorSet, 0, NULL);
 }
 
 void vkvg_pattern_destroy(VkvgPattern pat)
 {
-    vkFreeDescriptorSets(pat->dev, pat->dev->descriptorPool, 1, &pat->descriptorSet);
+    if (pat->type != VKVG_PATTERN_TYPE_SURFACE)
+        free (pat->data);
 
     free(pat);
 }

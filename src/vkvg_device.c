@@ -1,4 +1,5 @@
 ﻿#include "vkvg_device_internal.h"
+#include "vkh_queue.h"
 
 VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queue, uint32_t qFam)
 {
@@ -8,19 +9,15 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queu
     dev->vdpi = 96;
 
     dev->vkDev = vkdev;
+    dev->phy = phy;
+
     vkGetPhysicalDeviceMemoryProperties (phy, &dev->phyMemProps);
 
-    for (int i=0; i<120; i++){
-        VkFormatProperties formatProps = {};
-        vkGetPhysicalDeviceFormatProperties (phy, (VkFormat)i, &formatProps);
-        printf("%d => Buff = %d, Lin = %d, Opt = %d\n", i, formatProps.bufferFeatures, formatProps.linearTilingFeatures, formatProps.optimalTilingFeatures);
-    }
+    dev->gQueue = vkh_queue_find (dev, VK_QUEUE_GRAPHICS_BIT);
 
-    dev->queue  = queue;
-    dev->qFam   = qFam;
     dev->lastCtx= NULL;
 
-    dev->cmdPool= vkh_cmd_pool_create       (dev->vkDev, qFam, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    dev->cmdPool= vkh_cmd_pool_create       (dev->vkDev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
     dev->cmd    = vkh_cmd_buff_create       (dev->vkDev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
     dev->fence  = vkh_fence_create_signaled (dev->vkDev);
 
@@ -33,7 +30,7 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queu
     return dev;
 }
 
-void vkvg_device_destroy(VkvgDevice dev)
+void vkvg_device_destroy (VkvgDevice dev)
 {
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);

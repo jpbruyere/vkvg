@@ -1,6 +1,10 @@
 #ifndef VKVG_H
 #define VKVG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <vulkan/vulkan.h>
 #include <math.h>
 
@@ -17,6 +21,29 @@ typedef enum _vkvg_format {
     VKVG_FORMAT_A8,
     VKVG_FORMAT_A1
 } vkvg_format_t;
+
+typedef enum _vkvg_extend {
+    VKVG_EXTEND_NONE,
+    VKVG_EXTEND_REPEAT,
+    VKVG_EXTEND_REFLECT,
+    VKVG_EXTEND_PAD
+} vkvg_extend_t;
+
+typedef enum _vkvg_pattern_type {
+    VKVG_PATTERN_TYPE_SOLID,
+    VKVG_PATTERN_TYPE_SURFACE,
+    VKVG_PATTERN_TYPE_LINEAR,
+    VKVG_PATTERN_TYPE_RADIAL,
+    VKVG_PATTERN_TYPE_MESH,
+    VKVG_PATTERN_TYPE_RASTER_SOURCE,
+} vkvg_pattern_type_t;
+
+typedef struct _vkvg_color_t{
+    float r;
+    float g;
+    float b;
+    float a;
+} vkvg_color_t;
 
 typedef struct _vkvg_context_t* VkvgContext;
 typedef struct _vkvg_surface_t* VkvgSurface;
@@ -100,5 +127,9 @@ void vkvg_show_text			(VkvgContext ctx, const char* text);
 
 void vkvg_save              (VkvgContext ctx);
 void vkvg_restore           (VkvgContext ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

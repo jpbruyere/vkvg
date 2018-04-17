@@ -26,7 +26,7 @@ void _clear_stencil (VkvgSurface surf)
             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
     vkh_cmd_end (cmd);
 
-    vkh_cmd_submit (dev->queue, &cmd, dev->fence);
+    vkh_cmd_submit (dev->gQueue, &cmd, dev->fence);
 }
 
 void _init_surface (VkvgSurface surf) {
@@ -136,7 +136,7 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
                      vkh_image_get_vkimage (tmpImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
     vkh_cmd_end     (cmd);
-    vkh_cmd_submit  (dev->queue, &cmd, dev->fence);
+    vkh_cmd_submit  (dev->gQueue, &cmd, dev->fence);
 
     _wait_device_fence (dev);
 
