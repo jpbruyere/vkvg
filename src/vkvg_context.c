@@ -51,6 +51,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
 
+    ctx->cmdPoolCompute = vkh_cmd_pool_create (dev->vkDev, dev->cQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    ctx->computeFence   = vkh_fence_create (dev->vkDev);
+
     return ctx;
 }
 void vkvg_flush (VkvgContext ctx){
@@ -85,6 +88,9 @@ void vkvg_destroy (VkvgContext ctx)
     _flush_cmd_buff(ctx);
 
     VkDevice dev = ctx->pSurf->dev->vkDev;
+
+    vkDestroyFence      (dev, ctx->computeFence, NULL);
+    vkDestroyCommandPool(dev, ctx->cmdPoolCompute, NULL);
 
     vkDestroyFence      (dev, ctx->flushFence,NULL);
     vkFreeCommandBuffers(dev, ctx->cmdPool, 1, &ctx->cmd);

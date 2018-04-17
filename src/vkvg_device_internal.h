@@ -5,6 +5,18 @@
 #include "vkvg.h"
 #include "vkvg_fonts.h"
 
+typedef struct _grad_compute_t {
+    int width;
+    int height;
+    int work_size;
+
+    VkPipeline          pipeline;
+    VkPipelineLayout    pipelineLayout;
+    VkDescriptorSetLayout descriptorSetLayout;
+    VkhImage            output;
+    //ubo_t*  ubo;
+}grad_compute_t;
+
 typedef struct _vkvg_device_t{
     VkDevice				vkDev;
     VkPhysicalDeviceMemoryProperties phyMemProps;
@@ -12,6 +24,7 @@ typedef struct _vkvg_device_t{
     VkPhysicalDevice        phy;
 
     VkhQueue                gQueue;
+    VkhQueue                cQueue;
 
     VkCommandPool			cmdPool;
     VkCommandBuffer         cmd;
@@ -29,6 +42,7 @@ typedef struct _vkvg_device_t{
     VkDescriptorSetLayout	dslFont;
     VkDescriptorSetLayout	dslSrc;
 
+    grad_compute_t          gradientPipeline;
     int		hdpi,
             vdpi;
 

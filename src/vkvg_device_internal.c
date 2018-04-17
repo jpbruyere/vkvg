@@ -104,6 +104,38 @@ void _setupRenderPass(VkvgDevice dev)
     VK_CHECK_RESULT(vkCreateRenderPass(dev->vkDev, &renderPassInfo, NULL, &dev->renderPass));
 }
 
+void _init_gradient_pipeline(VkvgDevice dev)
+{
+    VkDescriptorSetLayoutBinding dsLayoutBinding = { .binding = 0,
+                                                    .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                                                    .descriptorCount = 1,
+                                                    .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT };
+    VkDescriptorSetLayoutCreateInfo dsLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+                                                          .bindingCount = 1,
+                                                          .pBindings = &dsLayoutBinding };
+    VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->gradientPipeline.descriptorSetLayout));
+
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+                                                            .setLayoutCount = 1,
+                                                            .pSetLayouts = &dev->gradientPipeline.descriptorSetLayout };
+    VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->gradientPipeline.pipelineLayout));
+
+    VkShaderModule mod;
+    VkShaderModuleCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+                                            .pCode = gradient0_comp_spv,
+                                            .codeSize = gradient0_comp_spv_len };
+    VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &mod));
+    VkPipelineShaderStageCreateInfo shaderStageCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                                                              .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+                                                              .module = mod,
+                                                              .pName = "main" };
+    VkComputePipelineCreateInfo pipelineCreateInfo = { .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+                                                       .stage = shaderStageCreateInfo,
+                                                       .layout = dev->gradientPipeline.pipelineLayout };
+    VK_CHECK_RESULT(vkCreateComputePipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->gradientPipeline.pipeline));
+    vkDestroyShaderModule(dev->vkDev, mod, NULL);
+}
+
 void _setupPipelines(VkvgDevice dev)
 {
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = { .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,

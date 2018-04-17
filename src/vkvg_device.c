@@ -14,6 +14,7 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queu
     vkGetPhysicalDeviceMemoryProperties (phy, &dev->phyMemProps);
 
     dev->gQueue = vkh_queue_find (dev, VK_QUEUE_GRAPHICS_BIT);
+    dev->cQueue = vkh_queue_find (dev, VK_QUEUE_COMPUTE_BIT);
 
     dev->lastCtx= NULL;
 
@@ -27,11 +28,20 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queu
     _createDescriptorSetLayout  (dev);
     _setupPipelines             (dev);
 
+    _init_gradient_pipeline     (dev);
+
     return dev;
 }
 
+void _clean_gradient_pipeline (VkvgDevice dev) {
+    vkDestroyDescriptorSetLayout    (dev->vkDev, dev->gradientPipeline.descriptorSetLayout,NULL);
+    vkDestroyPipeline               (dev->vkDev, dev->gradientPipeline.pipeline, NULL);
+    vkDestroyPipelineLayout         (dev->vkDev, dev->gradientPipeline.pipelineLayout, NULL);
+}
 void vkvg_device_destroy (VkvgDevice dev)
 {
+    _clean_gradient_pipeline        (dev);
+
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);
 

@@ -1,0 +1,24 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
+#define WIDTH 3200
+#define HEIGHT 2400
+#define WORKGROUP_SIZE 32
+layout (local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE, local_size_z = 1 ) in;
+
+layout ( binding = 0, rgba8 ) uniform writeonly image2D buf;
+
+void main() {
+
+	/*
+	In order to fit the work into workgroups, some unnecessary threads are launched.
+	We terminate those threads here.
+	*/
+	if(gl_GlobalInvocationID.x >= WIDTH || gl_GlobalInvocationID.y >= HEIGHT)
+	return;
+
+	float x = float(gl_GlobalInvocationID.x) / float(WIDTH);
+	float y = float(gl_GlobalInvocationID.y) / float(HEIGHT);
+
+	imageStore(buf, ivec2(gl_GlobalInvocationID.xy), vec4(1,0,0,1));
+}

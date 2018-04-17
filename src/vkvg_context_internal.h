@@ -76,6 +76,9 @@ typedef struct _vkvg_context_t {
     VkDescriptorSet     dsFont;
     VkDescriptorSet     dsSrc;
 
+    VkCommandPool		cmdPoolCompute;
+    VkFence             computeFence;
+
     //vk buffers, holds data until flush
     vkvg_buff	indices;
     size_t		sizeIndices;
