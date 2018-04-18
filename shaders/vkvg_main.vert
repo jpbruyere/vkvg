@@ -9,6 +9,7 @@ layout (location = 1) in vec3	inUV;
 layout (location = 0) out vec3	outUV;
 layout (location = 1) out vec4	outSrc;
 layout (location = 2) out flat int outPatType;
+layout (location = 3) out mat3x2 outMat;
 
 out gl_PerVertex
 {
@@ -20,6 +21,7 @@ layout(push_constant) uniform PushConsts {
 	vec2 size;
 	int  srcType;
 	mat3x2 mat;
+	mat3x2 matInv;
 } pc;
 
 #define SOLID			0
@@ -34,14 +36,9 @@ void main()
 	outUV		= inUV;
 	outPatType	= pc.srcType;
 	outSrc		= pc.source;
-
-	//x_new = xx * x + xy * y + x0;
-	//y_new = yx * x + yy * y + y0;
+	outMat		= pc.matInv;
 
 	vec2 p = vec2(
-		//pc.mat[2][0] * inPos.x,
-		//inPos.x,
-		//inPos.y
 		pc.mat[0][0] * inPos.x + pc.mat[1][0] * inPos.y + pc.mat[2][0],
 		pc.mat[0][1] * inPos.x + pc.mat[1][1] * inPos.y + pc.mat[2][1]
 	);

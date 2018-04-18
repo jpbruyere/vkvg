@@ -27,6 +27,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
             {(float)ctx->pSurf->width,(float)ctx->pSurf->height},
             VKVG_PATTERN_TYPE_SOLID,
             0,
+            VKVG_IDENTITY_MATRIX,
             VKVG_IDENTITY_MATRIX
     };
     ctx->pushConsts = pc;
@@ -672,3 +673,23 @@ void vkvg_restore (VkvgContext ctx){
 
     _free_ctx_save(sav);
 }
+
+void vkvg_translate (VkvgContext ctx, float dx, float dy){
+    vkvg_matrix_translate (&ctx->pushConsts.mat, dx, dy);
+    ctx->pushConsts.matInv = ctx->pushConsts.mat;
+    vkvg_matrix_invert (&ctx->pushConsts.matInv);
+    _update_push_constants (ctx);
+}
+void vkvg_scale (VkvgContext ctx, float sx, float sy){
+    vkvg_matrix_scale (&ctx->pushConsts.mat, sx, sy);
+    ctx->pushConsts.matInv = ctx->pushConsts.mat;
+    vkvg_matrix_invert (&ctx->pushConsts.matInv);
+    _update_push_constants (ctx);
+}
+void vkvg_rotate (VkvgContext ctx, float radians){
+    vkvg_matrix_rotate (&ctx->pushConsts.mat, radians);
+    ctx->pushConsts.matInv = ctx->pushConsts.mat;
+    vkvg_matrix_invert (&ctx->pushConsts.matInv);
+    _update_push_constants (ctx);
+}
+

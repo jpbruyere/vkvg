@@ -15,6 +15,7 @@ layout (set=2, binding = 0) uniform _uboGrad {
 layout (location = 0) in vec3	inFontUV;		//if it is a text drawing, inFontUV.z hold fontMap layer
 layout (location = 1) in vec4	inSrc;			//source bounds
 layout (location = 2) in flat int inPatType;
+layout (location = 3) in mat3x2 inMat;
 
 layout (location = 0) out vec4 outFragColor;
 
@@ -36,8 +37,13 @@ void main()
 		c = inSrc;
 		break;
 	case SURFACE:
-		vec2 srcUV = (gl_FragCoord.xy - inSrc.xy) / inSrc.zw;
-		c = texture (source, srcUV);
+		vec2 p = (gl_FragCoord.xy - inSrc.xy);
+		vec2 uv = vec2(
+			inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
+			inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
+		);
+
+		c = texture (source, uv / inSrc.zw);
 		break;
 	case LINEAR:
 		//credit to Nikita Rokotyan for linear grad

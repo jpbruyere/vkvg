@@ -615,19 +615,18 @@ void vkvg_test_fill2(VkvgContext ctx){
 }
 
 void test_img_surface (VkvgContext ctx) {
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/blason.png");
+    VkvgSurface imgSurf;// = vkvg_surface_create_from_image(device, "/mnt/data/images/blason.png");
     //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/2000px-Tux.svg.png");
     //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/path2674.png");
     //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/horse-black-head-shape-of-a-chess-piece_318-52446.jpg");
-
-    vkvg_set_source_surface(ctx, imgSurf, 200, 200);
+    /*vkvg_set_source_surface(ctx, imgSurf, 200, 200);
     vkvg_paint(ctx);
     vkvg_set_source_surface(ctx, imgSurf, 400, 400);
     vkvg_paint(ctx);
     vkvg_flush(ctx);
-    vkvg_surface_destroy(imgSurf);
+    vkvg_surface_destroy(imgSurf);*/
 
-    imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/path2674.png");
+    imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/miroir.jpg");
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
     vkvg_paint(ctx);
     vkvg_flush(ctx);
@@ -662,12 +661,19 @@ int main(int argc, char *argv[]) {
     vkvg_rectangle (ctx,200,200,300,300);
     vkvg_fill (ctx);
 
+    test_text(ctx);
+
     vkvg_test_fill2(ctx);
     //vkvg_test_fill(ctx);
+
+
+    vkvg_translate(ctx, 10,10);
+    vkvg_rotate(ctx, 0.2);
+    vkvg_scale(ctx, 2,2);
+
     vkvg_test_stroke(ctx);
     vkvg_test_gradient (ctx);
     vkvg_test_curves(ctx);
-    test_text(ctx);
 
     //test_img_surface(ctx);
 

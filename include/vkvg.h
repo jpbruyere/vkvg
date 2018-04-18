@@ -137,6 +137,10 @@ void vkvg_show_text			(VkvgContext ctx, const char* text);
 void vkvg_save              (VkvgContext ctx);
 void vkvg_restore           (VkvgContext ctx);
 
+void vkvg_translate         (VkvgContext ctx, float dx, float dy);
+void vkvg_scale             (VkvgContext ctx, float sx, float sy);
+void vkvg_rotate            (VkvgContext ctx, float radians);
+
 //pattern
 VkvgPattern vkvg_pattern_create             ();
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
@@ -148,6 +152,22 @@ void vkvg_patter_add_color_stop (VkvgPattern pat, float offset, float r, float g
 void vkvg_pattern_set_extend    (VkvgPattern pat, vkvg_extend_t extend);
 void vkvg_pattern_destroy       (VkvgPattern pat);
 
+//matrix
+void vkvg_matrix_init_identity (vkvg_matrix_t *matrix);
+void vkvg_matrix_init (vkvg_matrix_t *matrix,
+           float xx, float yx,
+           float xy, float yy,
+           float x0, float y0);
+void vkvg_matrix_init_translate     (vkvg_matrix_t *matrix, float tx, float ty);
+void vkvg_matrix_init_scale         (vkvg_matrix_t *matrix, float sx, float sy);
+void vkvg_matrix_init_rotate        (vkvg_matrix_t *matrix, float radians);
+void vkvg_matrix_translate          (vkvg_matrix_t *matrix, float tx, float ty);
+void vkvg_matrix_scale              (vkvg_matrix_t *matrix, float sx, float sy);
+void vkvg_matrix_rotate             (vkvg_matrix_t *matrix, float radians);
+void vkvg_matrix_multiply           (vkvg_matrix_t *result, const vkvg_matrix_t *a, const vkvg_matrix_t *b);
+void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, float *dy);
+void vkvg_matrix_transform_point    (const vkvg_matrix_t *matrix, float *x, float *y);
+void vkvg_matrix_invert             (vkvg_matrix_t *matrix);
 #ifdef __cplusplus
 }
 #endif
