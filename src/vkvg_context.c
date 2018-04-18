@@ -531,6 +531,13 @@ void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
 void vkvg_set_linewidth (VkvgContext ctx, float width){
     ctx->lineWidth = width;
 }
+void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap){
+    ctx->lineCap = cap;
+}
+void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join){
+    ctx->lineJoint = join;
+}
+
 
 
 void vkvg_select_font_face (VkvgContext ctx, const char* name){
@@ -597,6 +604,10 @@ void vkvg_save (VkvgContext ctx){
     sav->curPos     = ctx->curPos;
     sav->curRGBA    = ctx->curRGBA;
     sav->lineWidth  = ctx->lineWidth;
+    sav->lineCap    = ctx->lineCap;
+    sav->lineWidth  = ctx->lineWidth;
+    sav->mat        = ctx->pushConsts.mat;
+    sav->matInv     = ctx->pushConsts.matInv;
 
     sav->selectedFont = ctx->selectedFont;
     sav->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
@@ -659,6 +670,10 @@ void vkvg_restore (VkvgContext ctx){
     ctx->curPos     = sav->curPos;
     ctx->curRGBA    = sav->curRGBA;
     ctx->lineWidth  = sav->lineWidth;
+    ctx->lineCap    = sav->lineCap;
+    ctx->lineJoint  = sav->lineJoint;
+    ctx->pushConsts.mat     = sav->mat;
+    ctx->pushConsts.matInv  = sav->matInv;
 
     ctx->selectedFont.charSize = sav->selectedFont.charSize;
     strcpy (ctx->selectedFont.fontFile, sav->selectedFont.fontFile);

@@ -55,6 +55,11 @@ typedef struct _vkvg_context_save_t{
     vec4		curRGBA;
     float       lineWidth;
 
+    vkvg_line_cap_t     lineCap;
+    vkvg_line_join_t    lineJoint;
+    vkvg_matrix_t       mat;
+    vkvg_matrix_t       matInv;
+
     _vkvg_font_t    selectedFont;     //hold current face and size before cache addition
     _vkvg_font_t*   currentFont;      //font ready for lookup
     vkvg_direction_t   textDirection;
@@ -103,6 +108,9 @@ typedef struct _vkvg_context_t {
     vec2		curPos;
     vec4		curRGBA;
     float		lineWidth;
+
+    vkvg_line_cap_t     lineCap;
+    vkvg_line_join_t    lineJoint;
 
     _vkvg_font_t  selectedFont;     //hold current face and size before cache addition
     _vkvg_font_t* currentFont;      //font ready for lookup

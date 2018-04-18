@@ -38,6 +38,18 @@ typedef enum _vkvg_pattern_type {
     VKVG_PATTERN_TYPE_RASTER_SOURCE,
 } vkvg_pattern_type_t;
 
+typedef enum _vkvg_line_cap {
+    VKVG_LINE_CAP_BUTT,
+    VKVG_LINE_CAP_ROUND,
+    VKVG_LINE_CAP_SQUARE
+} vkvg_line_cap_t;
+
+typedef enum _vkvg_line_join {
+    VKVG_LINE_JOIN_MITER,
+    VKVG_LINE_JOIN_ROUND,
+    VKVG_LINE_JOIN_BEVEL
+} vkvg_line_join_t;
+
 typedef struct _vkvg_color_t{
     float r;
     float g;
@@ -127,6 +139,8 @@ void vkvg_clip              (VkvgContext ctx);
 void vkvg_clip_preserve     (VkvgContext ctx);
 void vkvg_set_rgba			(VkvgContext ctx, float r, float g, float b, float a);
 void vkvg_set_linewidth		(VkvgContext ctx, float width);
+void vkvg_set_line_cap      (VkvgContext ctx, vkvg_line_cap_t cap);
+void vkvg_set_line_join     (VkvgContext ctx, vkvg_line_join_t join);
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y);
 void vkvg_set_source        (VkvgContext ctx, VkvgPattern pat);
 
