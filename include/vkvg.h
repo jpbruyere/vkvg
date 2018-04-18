@@ -120,6 +120,7 @@ void vkvg_clip_preserve     (VkvgContext ctx);
 void vkvg_set_rgba			(VkvgContext ctx, float r, float g, float b, float a);
 void vkvg_set_linewidth		(VkvgContext ctx, float width);
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y);
+void vkvg_set_source        (VkvgContext ctx, VkvgPattern pat);
 
 void vkvg_select_font_face	(VkvgContext ctx, const char* name);
 void vkvg_set_font_size		(VkvgContext ctx, uint32_t size);
@@ -127,6 +128,17 @@ void vkvg_show_text			(VkvgContext ctx, const char* text);
 
 void vkvg_save              (VkvgContext ctx);
 void vkvg_restore           (VkvgContext ctx);
+
+//pattern
+VkvgPattern vkvg_pattern_create             ();
+VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
+VkvgPattern vkvg_pattern_create_linear      (float x0, float y0, float x1, float y1);
+VkvgPattern vkvg_pattern_create_radial      (float cx0, float cy0, float radius0,
+                                             float cx1, float cy1, float radius1);
+
+void vkvg_patter_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a);
+void vkvg_pattern_set_extend    (VkvgPattern pat, vkvg_extend_t extend);
+void vkvg_pattern_destroy       (VkvgPattern pat);
 
 #ifdef __cplusplus
 }

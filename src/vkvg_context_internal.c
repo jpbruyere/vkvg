@@ -11,6 +11,7 @@
 #include "vkvg_surface_internal.h"
 #include "vkvg_context_internal.h"
 #include "vkvg_device_internal.h"
+#include "vkvg_pattern.h"
 #include "vkh_queue.h"
 
 void _check_pathes_array (VkvgContext ctx){
@@ -46,6 +47,12 @@ float _normalizeAngle(float a)
         return res + 2.0f*M_PI;
     else
         return res;
+}
+void _create_gradient_buff (VkvgContext ctx){
+    vkvg_buffer_create (ctx->pSurf->dev,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        sizeof(vkvg_gradient_t), &ctx->uboGrad);
 }
 void _create_vertices_buff (VkvgContext ctx){
     vkvg_buffer_create (ctx->pSurf->dev,
@@ -176,19 +183,20 @@ void _init_cmd_buff (VkvgContext ctx){
         {-1.f,-1.f},
     };*/
 
-    vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
-                       VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
-    //vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
-    //                   VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_constants),&pc);
+    _update_push_constants (ctx);
 
-    VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc};
+    VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc,ctx->dsGrad};
     vkCmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
-                            0, 2, dss, 0, NULL);
+                            0, 3, dss, 0, NULL);
     VkDeviceSize offsets[1] = { 0 };
     vkCmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
     vkCmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
     vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
     vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, ctx->stencilRef);
+}
+inline void _update_push_constants (VkvgContext ctx) {
+    vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
+                       VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
 }
 
 void _finish_path (VkvgContext ctx){
@@ -223,7 +231,18 @@ void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
     };
     vkUpdateDescriptorSets(ctx->pSurf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
-
+void _update_gradient_desc_set (VkvgContext ctx){
+    VkDescriptorBufferInfo dbi = {ctx->uboGrad.buffer, 0, VK_WHOLE_SIZE};
+    VkWriteDescriptorSet writeDescriptorSet = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = ctx->dsGrad,
+            .dstBinding = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pBufferInfo = &dbi
+    };
+    vkUpdateDescriptorSets(ctx->pSurf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
+}
 /*
  * Reset currently bound descriptor which image could be destroyed
  */
@@ -243,7 +262,7 @@ void _createDescriptorPool (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;
     const VkDescriptorPoolSize descriptorPoolSize[] = {
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
-        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 }
     };
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
                                                             .maxSets = 3,
@@ -261,6 +280,8 @@ void _init_descriptor_sets (VkvgContext ctx){
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsFont));
     descriptorSetAllocateInfo.pSetLayouts = &dev->dslSrc;
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
+    descriptorSetAllocateInfo.pSetLayouts = &dev->dslGrad;
+    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
 void add_line(vkvg_context* ctx, vec2 p1, vec2 p2, vec4 col){
     Vertex v = {{p1.x,p1.y},{0,0,-1}};

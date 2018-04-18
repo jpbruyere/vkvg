@@ -153,10 +153,9 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 
     vec4 srcRect = {0,0,surf->width,surf->height};
     ctx->pushConsts.source = srcRect;
-    ctx->pushConsts.srcType = VKVG_SRC_PATTERN;
-    vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
-                       VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants), &ctx->pushConsts);
+    ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SURFACE;
 
+    _update_push_constants (ctx);
     _update_descriptor_set (ctx, tmpImg, ctx->dsSrc);
 
     vkvg_paint          (ctx);

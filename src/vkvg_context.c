@@ -1,6 +1,7 @@
 ﻿#include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
 #include "vkvg_surface_internal.h"
+#include "vkvg_pattern.h"
 #include "vkh_queue.h"
 
 #ifdef DEBUG
@@ -23,9 +24,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     push_constants pc = {
             {},
-            {2.0f/(float)ctx->pSurf->width,2.0f/(float)ctx->pSurf->height},
-            {0.f,0.f},
-            VKVG_SRC_SOLID
+            {(float)ctx->pSurf->width,(float)ctx->pSurf->height},
+            VKVG_PATTERN_TYPE_SOLID
     };
     ctx->pushConsts = pc;
 
@@ -44,10 +44,12 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->cmdPool = vkh_cmd_pool_create (dev->vkDev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
     _create_vertices_buff   (ctx);
+    _create_gradient_buff   (ctx);
     _create_cmd_buff        (ctx);
     _createDescriptorPool   (ctx);
     _init_descriptor_sets   (ctx);
     _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->cacheTex, ctx->dsFont);
+    _update_gradient_desc_set(ctx);
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
 
@@ -90,11 +92,12 @@ void vkvg_destroy (VkvgContext ctx)
     vkFreeCommandBuffers(dev, ctx->cmdPool, 1, &ctx->cmd);
     vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
-    VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc};
-    vkFreeDescriptorSets    (dev, ctx->descriptorPool,2,dss);
+    VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc, ctx->dsGrad};
+    vkFreeDescriptorSets    (dev, ctx->descriptorPool, 3, dss);
 
     vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
 
+    vkvg_buffer_destroy (&ctx->uboGrad);
     vkvg_buffer_destroy (&ctx->indices);
     vkvg_buffer_destroy (&ctx->vertices);
 
@@ -432,7 +435,7 @@ void vkvg_paint (VkvgContext ctx){
 
 void vkvg_set_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
-    if (ctx->pushConsts.srcType == VKVG_SRC_PATTERN){
+    if (ctx->pushConsts.patternType == VKVG_PATTERN_TYPE_SURFACE){
         _flush_cmd_buff             (ctx);
         _reset_src_descriptor_set   (ctx);
         _init_cmd_buff              (ctx);
@@ -440,9 +443,10 @@ void vkvg_set_rgba (VkvgContext ctx, float r, float g, float b, float a)
 
     vec4 c = {r,g,b,a};
     ctx->pushConsts.source = c;
-    ctx->pushConsts.srcType = VKVG_SRC_SOLID;
-    vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
-                       VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
+    ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SOLID;
+
+    _update_push_constants (ctx);
+
     ctx->curRGBA.x = r;
     ctx->curRGBA.y = g;
     ctx->curRGBA.z = b;
@@ -492,11 +496,35 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
 
     vec4 srcRect = {x,y,surf->width,surf->height};
     ctx->pushConsts.source = srcRect;
-    ctx->pushConsts.srcType = VKVG_SRC_PATTERN;
-    vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
-                       VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
+    ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SURFACE;
+    _update_push_constants (ctx);
 }
+void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
+    if (pat->type == VKVG_PATTERN_TYPE_SOLID){
+        vkvg_color_t* c = (vkvg_color_t*)pat->data;
+        vkvg_set_rgba (ctx, c->r, c->g, c->b, c->a);
+        return;
+    }
+    if (pat->type == VKVG_PATTERN_TYPE_SURFACE){
+        vkvg_set_source_surface (ctx, (VkvgSurface)pat->data, 0, 0);
+        return;
+    }
 
+    _flush_cmd_buff (ctx);
+
+    if (ctx->pushConsts.patternType == VKVG_PATTERN_TYPE_SURFACE)
+        _reset_src_descriptor_set (ctx);
+
+    ctx->pushConsts.patternType = pat->type;
+    vec4 bounds = {ctx->pSurf->width, ctx->pSurf->height, 0, 0};//store img bounds in unused source field
+    ctx->pushConsts.source = bounds;
+    _update_push_constants (ctx);
+
+    vkvg_gradient_t* grad = pat->data;
+    memcpy(ctx->uboGrad.mapped, pat->data, sizeof(vkvg_gradient_t));
+
+    _init_cmd_buff (ctx);
+}
 void vkvg_set_linewidth (VkvgContext ctx, float width){
     ctx->lineWidth = width;
 }

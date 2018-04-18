@@ -28,6 +28,7 @@ typedef struct _vkvg_device_t{
     VkDescriptorPool		descriptorPool;
     VkDescriptorSetLayout	dslFont;
     VkDescriptorSetLayout	dslSrc;
+    VkDescriptorSetLayout	dslGrad;
 
     int		hdpi,
             vdpi;

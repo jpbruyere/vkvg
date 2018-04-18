@@ -389,10 +389,24 @@ void draw(VkEngine* e) {
         VK_CHECK_RESULT(vkQueuePresentKHR(r->queue, &present));
     }
 }
+
+void vkvg_test_gradient (VkvgContext ctx) {
+    VkvgPattern pat = vkvg_pattern_create_linear(100,0,300,0);
+    vkvg_set_linewidth(ctx, 20);
+    vkvg_patter_add_color_stop(pat, 0, 1, 0, 0, 1);
+    vkvg_patter_add_color_stop(pat, 0.5, 0, 1, 0, 1);
+    vkvg_patter_add_color_stop(pat, 1, 0, 0, 1, 1);
+    vkvg_set_source (ctx, pat);
+    vkvg_rectangle(ctx,100,500,200,200);
+    //vkvg_fill (ctx);
+    vkvg_stroke (ctx);
+    vkvg_pattern_destroy (pat);
+}
+
 void vkvg_test_clip(VkvgContext ctx){
-    vkvg_move_to(ctx,100,100);
-    vkvg_line_to(ctx,400,350);
-    vkvg_line_to(ctx,900,150);
+    vkvg_move_to(ctx,10,10);
+    vkvg_line_to(ctx,400,150);
+    vkvg_line_to(ctx,900,10);
     vkvg_line_to(ctx,700,450);
     vkvg_line_to(ctx,900,750);
     vkvg_line_to(ctx,500,650);
@@ -639,10 +653,10 @@ int main(int argc, char *argv[]) {
     VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
     VkvgContext ctx = vkvg_create(surf2);
 
-    vkvg_set_rgba(ctx,0.02,0.02,0.3,1.0);
+    vkvg_set_rgba(ctx,0.0,0.0,0.1,1.0);
     vkvg_paint(ctx);
 
-    vkvg_test_clip(ctx);
+    //vkvg_test_clip(ctx);
 
     vkvg_set_rgba (ctx,0.02,0.8,0.3,1.0);
     vkvg_rectangle (ctx,200,200,300,300);
@@ -651,6 +665,7 @@ int main(int argc, char *argv[]) {
     vkvg_test_fill2(ctx);
     //vkvg_test_fill(ctx);
     vkvg_test_stroke(ctx);
+    vkvg_test_gradient (ctx);
     vkvg_test_curves(ctx);
     test_text(ctx);
 

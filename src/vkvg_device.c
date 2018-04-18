@@ -32,6 +32,7 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queu
 
 void vkvg_device_destroy (VkvgDevice dev)
 {
+    vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslGrad,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);
 

@@ -26,14 +26,10 @@ typedef struct _ear_clip_point{
     struct _ear_clip_point* next;
 }ear_clip_point;
 
-#define VKVG_SRC_SOLID      0
-#define VKVG_SRC_PATTERN    1
-
 typedef struct {
-    vec4    source;
-    vec2    scale;
-    vec2    translate;
-    int     srcType;
+    vec4     source;
+    vec2     size;
+    uint32_t patternType;
 }push_constants;
 
 typedef struct _vkvg_context_save_t{
@@ -75,6 +71,9 @@ typedef struct _vkvg_context_t {
     VkDescriptorPool	descriptorPool;
     VkDescriptorSet     dsFont;
     VkDescriptorSet     dsSrc;
+    VkDescriptorSet     dsGrad;
+
+    vkvg_buff	uboGrad;//uniform buff obj holdings gradient infos
 
     //vk buffers, holds data until flush
     vkvg_buff	indices;
@@ -131,6 +130,7 @@ void _record_draw_cmd		(VkvgContext ctx);
 void _submit_wait_and_reset_cmd(VkvgContext ctx);
 void _submit_ctx_cmd        (VkvgContext ctx);
 void _wait_and_reset_ctx_cmd(VkvgContext ctx);
+void _update_push_constants (VkvgContext ctx);
 
 void _finish_path			(VkvgContext ctx);
 void _clear_path			(VkvgContext ctx);
@@ -140,6 +140,7 @@ uint32_t _get_last_point_of_closed_path (VkvgContext ctx, uint32_t ptrPath);
 void _createDescriptorPool  (VkvgContext ctx);
 void _init_descriptor_sets  (VkvgContext ctx);
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
+void _update_gradient_desc_set (VkvgContext ctx);
 void _reset_src_descriptor_set(VkvgContext ctx);
 void _free_ctx_save         (vkvg_context_save_t* sav);
 
