@@ -392,7 +392,7 @@ void draw(VkEngine* e) {
 
 void vkvg_test_gradient (VkvgContext ctx) {
     VkvgPattern pat = vkvg_pattern_create_linear(100,0,300,0);
-    vkvg_set_linewidth(ctx, 20);
+    vkvg_set_line_width(ctx, 20);
     vkvg_patter_add_color_stop(pat, 0, 1, 0, 0, 1);
     vkvg_patter_add_color_stop(pat, 0.5, 0, 1, 0, 1);
     vkvg_patter_add_color_stop(pat, 1, 0, 0, 1, 1);
@@ -430,7 +430,7 @@ void vkvg_test_fill(VkvgContext ctx){
 
 void vkvg_test_curves (VkvgContext ctx) {
     vkvg_set_rgba   (ctx, 0.5,0.0,1.0,0.5);
-    vkvg_set_linewidth(ctx, 10);
+    vkvg_set_line_width(ctx, 10);
 
 
     vkvg_move_to    (ctx, 100, 400);
@@ -445,7 +445,7 @@ void vkvg_test_curves (VkvgContext ctx) {
 }
 
 void vkvg_test_stroke(VkvgContext ctx){
-    vkvg_set_linewidth(ctx, 2);
+    vkvg_set_line_width(ctx, 2);
     vkvg_set_rgba(ctx,1,0,0,1);
     vkvg_move_to(ctx,200.5,200.5);
     vkvg_line_to(ctx,400.5,200.5);
@@ -463,7 +463,7 @@ void vkvg_test_stroke(VkvgContext ctx){
     vkvg_line_to(ctx,300.5,500.5);
     vkvg_close_path(ctx);
     vkvg_stroke(ctx);
-    vkvg_set_linewidth(ctx, 40);
+    vkvg_set_line_width(ctx, 40);
     vkvg_restore(ctx);
     vkvg_set_rgba(ctx,0.5,0.6,1,1.0);
     vkvg_move_to(ctx,700,475);
@@ -474,7 +474,7 @@ void vkvg_test_stroke(VkvgContext ctx){
     vkvg_arc(ctx, 200,200,100,0, M_PI);
     vkvg_stroke(ctx);
 
-    vkvg_set_linewidth(ctx, 20);
+    vkvg_set_line_width(ctx, 20);
     vkvg_set_rgba(ctx,0.1,0.1,0.1,0.5);
     vkvg_move_to(ctx,100,60);
     vkvg_line_to(ctx,400,600);
@@ -566,7 +566,7 @@ void test_text (VkvgContext ctx) {
 }
 
 void vkvg_test_stroke2(VkvgContext ctx){
-    vkvg_set_linewidth(ctx,20);
+    vkvg_set_line_width(ctx,20);
     vkvg_set_rgba(ctx,1,0,0,1);
     vkvg_move_to(ctx,200,200);
     vkvg_line_to(ctx,400,200);
@@ -581,7 +581,7 @@ void vkvg_test_stroke2(VkvgContext ctx){
     vkvg_line_to(ctx,300,500);
     vkvg_close_path(ctx);
     vkvg_stroke(ctx);
-    vkvg_set_linewidth(ctx,10);
+    vkvg_set_line_width(ctx,10);
     vkvg_set_rgba(ctx,0.5,0.6,1,1);
     vkvg_move_to(ctx,700,475);
     vkvg_line_to(ctx,400,475);
@@ -593,7 +593,7 @@ void vkvg_test_stroke2(VkvgContext ctx){
     vkvg_stroke(ctx);
 
 
-    vkvg_set_linewidth(ctx,20);
+    vkvg_set_line_width(ctx,20);
     vkvg_set_rgba(ctx,1,1,0,1);
     vkvg_move_to(ctx,100,50);
     vkvg_line_to(ctx,400,50);
@@ -633,6 +633,38 @@ void test_img_surface (VkvgContext ctx) {
     vkvg_surface_destroy(imgSurf);
 }
 
+void test_line_caps (VkvgContext ctx) {
+    vkvg_set_line_cap(ctx,VKVG_LINE_CAP_ROUND);
+
+    //vkvg_scale(ctx,4,4);
+
+    vkvg_set_line_width(ctx,40);
+    vkvg_set_rgba(ctx,0,1,0,0.2);
+    vkvg_move_to(ctx,100,100);
+    vkvg_line_to(ctx,400,400);
+    vkvg_stroke(ctx);
+    vkvg_set_line_width(ctx,4);
+    vkvg_set_rgba(ctx,0,1,0,0.2);
+    vkvg_move_to(ctx,400,100);
+    vkvg_line_to(ctx,100,400);
+    vkvg_stroke(ctx);
+
+    vkvg_set_line_cap(ctx,VKVG_LINE_CAP_BUTT);
+
+    vkvg_set_line_width(ctx,20);
+    vkvg_set_rgba(ctx,1,0,0,1);
+    vkvg_move_to(ctx,100,100);
+    vkvg_line_to(ctx,400,400);
+    vkvg_stroke(ctx);
+
+    vkvg_set_line_width(ctx,1);
+    vkvg_set_rgba(ctx,1,1,1,1);
+    vkvg_move_to(ctx,100,100);
+    vkvg_line_to(ctx,400,400);
+    vkvg_stroke(ctx);
+}
+
+
 int main(int argc, char *argv[]) {
     dumpLayerExts();
 
@@ -654,6 +686,8 @@ int main(int argc, char *argv[]) {
 
     vkvg_set_rgba(ctx,0.0,0.0,0.1,1.0);
     vkvg_paint(ctx);
+
+    test_line_caps(ctx);
 
     //vkvg_test_clip(ctx);
 

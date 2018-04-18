@@ -64,6 +64,14 @@ void _create_vertices_buff (VkvgContext ctx){
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         ctx->sizeIndices * sizeof(uint32_t), &ctx->indices);
 }
+const vec3 blankuv = {};
+void _add_vertexf (VkvgContext ctx, float x, float y){
+    Vertex* pVert = (Vertex*)(ctx->vertices.mapped + ctx->vertCount * sizeof(Vertex));
+    pVert->pos.x = x;
+    pVert->pos.y = y;
+    pVert->uv = blankuv;
+    ctx->vertCount++;
+}
 void _add_vertex(VkvgContext ctx, Vertex v){
     Vertex* pVert = (Vertex*)(ctx->vertices.mapped + ctx->vertCount * sizeof(Vertex));
     *pVert = v;
@@ -294,7 +302,7 @@ void add_line(vkvg_context* ctx, vec2 p1, vec2 p2, vec4 col){
     ctx->indCount+=2;
 }
 
-void _build_vb_step (vkvg_context* ctx, Vertex v, double hw, uint32_t iL, uint32_t i, uint32_t iR){
+void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR){
     double alpha = 0;
     vec2 v0n = vec2_line_norm(ctx->points[iL], ctx->points[i]);
     vec2 v1n = vec2_line_norm(ctx->points[i], ctx->points[iR]);
@@ -303,7 +311,7 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, double hw, uint32_t iL, uint32
     bisec = vec2_norm(bisec);
     alpha = acos(v0n.x*v1n.x+v0n.y*v1n.y)/2.0;
 
-    float lh = (float)hw / cos(alpha);
+    float lh = hw / cos(alpha);
     bisec = vec2_perp(bisec);
     bisec = vec2_mult(bisec,lh);
 

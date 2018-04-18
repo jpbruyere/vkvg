@@ -54,6 +54,7 @@ typedef struct {
 }vec2i16;
 
 float		vec2_length	(vec2 v);
+vec2		vec2_create	(float x, float y);
 vec2		vec2_norm	(vec2 a);
 vec2		vec2_perp	(vec2 a);
 vec2		vec2_add	(vec2 a, vec2 b);

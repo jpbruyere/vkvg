@@ -61,6 +61,5 @@ make						    # Run Make
 
 - Improve triangulation algorithm.
 - Offscreen pattern building.
-- Matrix transformations.
 - SVG rendering.
 

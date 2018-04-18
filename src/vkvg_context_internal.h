@@ -132,9 +132,11 @@ void _vkvg_fill_rectangle   (VkvgContext ctx, float x, float y, float width, flo
 
 void _create_vertices_buff	(VkvgContext ctx);
 void _add_vertex			(VkvgContext ctx, Vertex v);
+void _add_vertexf           (VkvgContext ctx, float x, float y);
 void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
 void _add_triangle_indices	(VkvgContext ctx, uint32_t i0, uint32_t i1,uint32_t i2);
 void _add_tri_indices_for_rect	(VkvgContext ctx, uint32_t i);
+void _build_vb_step         (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR);
 
 void _create_cmd_buff		(VkvgContext ctx);
 void _init_cmd_buff			(VkvgContext ctx);

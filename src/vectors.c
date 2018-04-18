@@ -1,5 +1,9 @@
 #include "vectors.h"
 
+inline vec2 vec2_create (float x, float y) {
+    vec2 v = {x,y};
+    return v;
+}
 vec2 vec2_line_norm(vec2 a, vec2 b)
 {
     vec2 d = {b.x - a.x, b.y - a.y};

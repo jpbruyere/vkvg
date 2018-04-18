@@ -366,15 +366,37 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             iL = lastPathPointIdx;
         }else{
             lastPathPointIdx = ctx->pathes[ptrPath+1];
-            vec2 bisec = vec2_line_norm(ctx->points[i], ctx->points[i+1]);
-            bisec = vec2_perp(bisec);
-            bisec = vec2_mult(bisec,hw);
+            vec2 n = vec2_line_norm(ctx->points[i], ctx->points[i+1]);
+            vec2 p0 = ctx->points[i];
+            vec2 vhw = vec2_mult(n,hw);
 
-            v.pos = vec2_add(ctx->points[i], bisec);
+            if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
+                p0 = vec2_sub(p0, vhw);
+
+            vhw = vec2_perp(vhw);
+
+            if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
+                float step = M_PI_4 / hw;
+                float a = acos(n.x) + M_PI_2;
+                float a1 = a + M_PI;
+
+                a+=step;
+                while (a < a1){
+                    _add_vertexf(ctx, cos(a) * hw + p0.x, sin(a) * hw + p0.y);
+                    a+=step;
+                }
+                uint32_t p0Idx = ctx->vertCount;
+                for (int p = firstIdx; p < p0Idx; p++)
+                    _add_triangle_indices(ctx, p+1, p, p0Idx+1);
+                firstIdx = p0Idx;
+            }
+
+            v.pos = vec2_add(p0, vhw);
             _add_vertex(ctx, v);
-            v.pos = vec2_sub(ctx->points[i], bisec);
+            v.pos = vec2_sub(p0, vhw);
             _add_vertex(ctx, v);
             _add_tri_indices_for_rect(ctx, firstIdx);
+
 
             iL = i++;
         }
@@ -386,14 +408,35 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         }
 
         if (!_path_is_closed(ctx,ptrPath)){
-            vec2 bisec = vec2_line_norm(ctx->points[i-1], ctx->points[i]);
-            bisec = vec2_perp(bisec);
-            bisec = vec2_mult(bisec,hw);
+            vec2 n = vec2_line_norm(ctx->points[i-1], ctx->points[i]);
+            vec2 p0 = ctx->points[i];
+            vec2 vhw = vec2_mult(n, hw);
 
-            v.pos = vec2_add(ctx->points[i], bisec);
+            if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
+                p0 = vec2_add(p0, vhw);
+
+            vhw = vec2_perp(vhw);
+
+            v.pos = vec2_add(p0, vhw);
             _add_vertex(ctx, v);
-            v.pos = vec2_sub(ctx->points[i], bisec);
+            v.pos = vec2_sub(p0, vhw);
             _add_vertex(ctx, v);
+
+            if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
+                firstIdx = ctx->vertCount;
+                float step = M_PI_4 / hw;
+                float a = acos(n.x) + M_PI_2;
+                float a1 = a - M_PI;
+
+                a-=step;
+                while (a > a1){
+                    _add_vertexf(ctx, cos(a) * hw + p0.x, sin(a) * hw + p0.y);
+                    a-=step;
+                }
+                uint32_t p0Idx = ctx->vertCount-1;
+                for (int p = firstIdx-1; p < p0Idx; p++)
+                    _add_triangle_indices(ctx, p+1, p, firstIdx-2);
+            }
 
             i++;
         }else{
@@ -528,7 +571,7 @@ void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
 
     _init_cmd_buff (ctx);
 }
-void vkvg_set_linewidth (VkvgContext ctx, float width){
+void vkvg_set_line_width (VkvgContext ctx, float width){
     ctx->lineWidth = width;
 }
 void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap){
