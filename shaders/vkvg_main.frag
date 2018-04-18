@@ -40,6 +40,7 @@ void main()
 		c = texture (source, srcUV);
 		break;
 	case LINEAR:
+		//credit to Nikita Rokotyan for linear grad
 		float  alpha = atan( -uboGrad.cp[1].y + uboGrad.cp[0].y, uboGrad.cp[1].x - uboGrad.cp[0].x );
 		float  gradientStartPosRotatedX = uboGrad.cp[0].x*cos(alpha) - uboGrad.cp[0].y*sin(alpha);
 		float  gradientEndPosRotatedX   = uboGrad.cp[1].x*cos(alpha) - uboGrad.cp[1].y*sin(alpha);

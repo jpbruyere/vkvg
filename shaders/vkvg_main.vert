@@ -19,7 +19,8 @@ layout(push_constant) uniform PushConsts {
 	vec4 source;
 	vec2 size;
 	int  srcType;
-} pushConsts;
+	mat3x2 mat;
+} pc;
 
 #define SOLID			0
 #define SURFACE			1
@@ -31,8 +32,19 @@ layout(push_constant) uniform PushConsts {
 void main()
 {
 	outUV		= inUV;
-	outPatType	= pushConsts.srcType;
-	outSrc		= pushConsts.source;
+	outPatType	= pc.srcType;
+	outSrc		= pc.source;
 
-	gl_Position = vec4(inPos.xy * vec2(2) / pushConsts.size - vec2(1), 0.0, 1.0);
+	//x_new = xx * x + xy * y + x0;
+	//y_new = yx * x + yy * y + y0;
+
+	vec2 p = vec2(
+		//pc.mat[2][0] * inPos.x,
+		//inPos.x,
+		//inPos.y
+		pc.mat[0][0] * inPos.x + pc.mat[1][0] * inPos.y + pc.mat[2][0],
+		pc.mat[0][1] * inPos.x + pc.mat[1][1] * inPos.y + pc.mat[2][1]
+	);
+
+	gl_Position = vec4(p * vec2(2) / pc.size - vec2(1), 0.0, 1.0);
 }

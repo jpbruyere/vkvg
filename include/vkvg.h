@@ -45,6 +45,14 @@ typedef struct _vkvg_color_t{
     float a;
 } vkvg_color_t;
 
+#define VKVG_IDENTITY_MATRIX {1,0,0,1,0,0}
+
+typedef struct {
+    float xx; float yx;
+    float xy; float yy;
+    float x0; float y0;
+} vkvg_matrix_t;
+
 typedef struct _vkvg_context_t* VkvgContext;
 typedef struct _vkvg_surface_t* VkvgSurface;
 typedef struct _vkvg_device_t*  VkvgDevice;

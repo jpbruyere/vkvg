@@ -25,7 +25,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
     push_constants pc = {
             {},
             {(float)ctx->pSurf->width,(float)ctx->pSurf->height},
-            VKVG_PATTERN_TYPE_SOLID
+            VKVG_PATTERN_TYPE_SOLID,
+            0,
+            VKVG_IDENTITY_MATRIX
     };
     ctx->pushConsts = pc;
 
