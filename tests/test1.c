@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ * Software, and to permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 //#define STB_IMAGE_IMPLEMENTATION
 //#include "stb_image.h"
 
@@ -635,10 +657,10 @@ void test_img_surface (VkvgContext ctx) {
 
 void test_line_caps (VkvgContext ctx) {
 
-    float x = 50, y = 20, dx = 40, dy = 60;
-    //vkvg_scale(ctx,4,4);
+    float x = 20, y = 20, dx = 30, dy = 60;
+    vkvg_scale(ctx,2,2);
 
-    vkvg_set_line_width(ctx,36);
+    vkvg_set_line_width(ctx,26);
     vkvg_set_rgba(ctx,0,0,0,1);
     vkvg_move_to(ctx,x,y);
     vkvg_rel_line_to(ctx,0,dy);
@@ -662,9 +684,9 @@ void test_line_caps (VkvgContext ctx) {
     vkvg_rel_line_to(ctx,-dx,-dy);
     vkvg_rel_move_to(ctx,3*dx,dy/2);
     vkvg_rel_line_to(ctx,-dx,0);
-    /*vkvg_rel_line_to(ctx,0,-dy);
-    vkvg_rel_move_to(ctx,dx,dy/2);
-    vkvg_rel_line_to(ctx,dx,0);*/
+    //vkvg_rel_line_to(ctx,0,-dy);
+    //vkvg_rel_move_to(ctx,dx,dy/2);
+    //vkvg_rel_line_to(ctx,dx,0);
     vkvg_stroke(ctx);
 
     vkvg_set_line_cap(ctx,VKVG_LINE_CAP_BUTT);
@@ -722,14 +744,14 @@ int main(int argc, char *argv[]) {
     VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
     VkvgContext ctx = vkvg_create(surf2);
 
-    vkvg_set_rgba(ctx,0.8,0.8,1.0,1.0);
+    vkvg_set_rgba(ctx,0.01,0.1,0.3,1.0);
     vkvg_paint(ctx);
 
-    test_line_caps(ctx);
+    //test_line_caps(ctx);
     //test_line_join(ctx);
 
     //vkvg_test_clip(ctx);
-/*
+
     vkvg_set_rgba (ctx,0.02,0.8,0.3,1.0);
     vkvg_rectangle (ctx,200,200,300,300);
     vkvg_fill (ctx);
@@ -748,7 +770,7 @@ int main(int argc, char *argv[]) {
     vkvg_test_curves(ctx);
 
     //test_img_surface(ctx);
-*/
+
     vkvg_destroy(ctx);
     ctx = vkvg_create(surf);
 
