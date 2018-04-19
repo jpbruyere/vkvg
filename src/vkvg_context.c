@@ -389,7 +389,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 if (n.y < 0){
                     a = asin(n.y);
                     if (n.x < 0)
-                        a += M_PI/8;
+                        a = acos(-n.x) -M_PI_2;
                     else
                         a += M_PI_2;
                 }
@@ -439,12 +439,12 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
                 firstIdx = ctx->vertCount;
-                float step = M_PI_2 / hw;
+                float step = M_PI_4 / hw;
                 float a = acos(n.x)+ M_PI_2;
                 if (n.y < 0){
                     a = asin(n.y);
                     if (n.x < 0)
-                        a += M_PI/8;
+                        a = acos(-n.x) -M_PI_2;
                     else
                         a += M_PI_2;
                 }
