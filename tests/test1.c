@@ -634,36 +634,74 @@ void test_img_surface (VkvgContext ctx) {
 }
 
 void test_line_caps (VkvgContext ctx) {
-    vkvg_set_line_cap(ctx,VKVG_LINE_CAP_ROUND);
 
+    float x = 50, y = 20, dx = 40, dy = 60;
     //vkvg_scale(ctx,4,4);
 
-    vkvg_set_line_width(ctx,40);
-    vkvg_set_rgba(ctx,0,1,0,0.2);
-    vkvg_move_to(ctx,100,100);
-    vkvg_line_to(ctx,400,400);
+    vkvg_set_line_width(ctx,36);
+    vkvg_set_rgba(ctx,0,0,0,1);
+    vkvg_move_to(ctx,x,y);
+    vkvg_rel_line_to(ctx,0,dy);
     vkvg_stroke(ctx);
-    vkvg_set_line_width(ctx,4);
-    vkvg_set_rgba(ctx,0,1,0,0.2);
-    vkvg_move_to(ctx,400,100);
-    vkvg_line_to(ctx,100,400);
+    vkvg_set_line_cap(ctx,VKVG_LINE_CAP_SQUARE);
+    vkvg_rel_move_to(ctx,dx,-dy);
+    vkvg_rel_line_to(ctx,0,dy);
+    vkvg_stroke(ctx);
+    vkvg_set_line_cap(ctx,VKVG_LINE_CAP_ROUND);
+    vkvg_rel_move_to(ctx,dx,-dy);
+    vkvg_rel_line_to(ctx,0,dy);
+    vkvg_rel_move_to(ctx,dx,-dy);
+    vkvg_rel_line_to(ctx,dx,dy);
+    vkvg_rel_move_to(ctx,dx,-dy/2);
+    vkvg_rel_line_to(ctx,dx,0);
+    vkvg_rel_move_to(ctx,dx,dy/2);
+    vkvg_rel_line_to(ctx,dx,-dy);
+    vkvg_rel_move_to(ctx,dx,dy);
+    vkvg_rel_line_to(ctx,0,-dy);
+    vkvg_rel_move_to(ctx,2*dx,dy);
+    vkvg_rel_line_to(ctx,-dx,-dy);
+    vkvg_rel_move_to(ctx,3*dx,dy/2);
+    vkvg_rel_line_to(ctx,-dx,0);
+    /*vkvg_rel_line_to(ctx,0,-dy);
+    vkvg_rel_move_to(ctx,dx,dy/2);
+    vkvg_rel_line_to(ctx,dx,0);*/
     vkvg_stroke(ctx);
 
     vkvg_set_line_cap(ctx,VKVG_LINE_CAP_BUTT);
-
-    vkvg_set_line_width(ctx,20);
-    vkvg_set_rgba(ctx,1,0,0,1);
-    vkvg_move_to(ctx,100,100);
-    vkvg_line_to(ctx,400,400);
-    vkvg_stroke(ctx);
-
     vkvg_set_line_width(ctx,1);
-    vkvg_set_rgba(ctx,1,1,1,1);
-    vkvg_move_to(ctx,100,100);
-    vkvg_line_to(ctx,400,400);
+    vkvg_set_rgba(ctx,1,0,0,1);
+    vkvg_move_to(ctx,x,y);
+    vkvg_rel_line_to(ctx,0,dy);
+    vkvg_rel_move_to(ctx,dx,-dy);
+    vkvg_rel_line_to(ctx,0,dy);
+    vkvg_rel_move_to(ctx,dx,-dy);
+    vkvg_rel_line_to(ctx,0,dy);
     vkvg_stroke(ctx);
 }
 
+void test_line_join (VkvgContext ctx){
+    float x = 50, y = 200, dx = 100, dy = 30;
+
+    //vkvg_scale(ctx,4,4);
+
+    vkvg_set_line_width(ctx,30);
+    vkvg_set_rgba(ctx,0,0,0,1);
+    vkvg_move_to(ctx,x,y);
+    vkvg_rel_line_to(ctx,50,-40);
+    vkvg_rel_line_to(ctx,50,40);
+    vkvg_stroke(ctx);
+    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
+    vkvg_rel_move_to(ctx,-100,60);
+    vkvg_rel_line_to(ctx,50,-40);
+    vkvg_rel_line_to(ctx,50,40);
+    vkvg_stroke(ctx);
+    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
+    vkvg_rel_move_to(ctx,-100,60);
+    vkvg_rel_line_to(ctx,50,-50);
+    vkvg_rel_line_to(ctx,50,50);
+    vkvg_stroke(ctx);
+    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_MITER);
+}
 
 int main(int argc, char *argv[]) {
     dumpLayerExts();
@@ -684,19 +722,19 @@ int main(int argc, char *argv[]) {
     VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
     VkvgContext ctx = vkvg_create(surf2);
 
-    vkvg_set_rgba(ctx,0.0,0.0,0.1,1.0);
+    vkvg_set_rgba(ctx,0.8,0.8,1.0,1.0);
     vkvg_paint(ctx);
 
     test_line_caps(ctx);
+    //test_line_join(ctx);
 
     //vkvg_test_clip(ctx);
-
+/*
     vkvg_set_rgba (ctx,0.02,0.8,0.3,1.0);
     vkvg_rectangle (ctx,200,200,300,300);
     vkvg_fill (ctx);
 
     test_text(ctx);
-
     vkvg_test_fill2(ctx);
     //vkvg_test_fill(ctx);
 
@@ -710,7 +748,7 @@ int main(int argc, char *argv[]) {
     vkvg_test_curves(ctx);
 
     //test_img_surface(ctx);
-
+*/
     vkvg_destroy(ctx);
     ctx = vkvg_create(surf);
 

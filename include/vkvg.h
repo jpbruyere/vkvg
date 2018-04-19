@@ -125,7 +125,9 @@ void vkvg_flush				(VkvgContext ctx);
 
 void vkvg_close_path		(VkvgContext ctx);
 void vkvg_line_to			(VkvgContext ctx, float x, float y);
+void vkvg_rel_line_to       (VkvgContext ctx, float x, float y);
 void vkvg_move_to			(VkvgContext ctx, float x, float y);
+void vkvg_rel_move_to		(VkvgContext ctx, float x, float y);
 void vkvg_arc				(VkvgContext ctx, float xc, float yc, float radius, float a1, float a2);
 void vkvg_curve_to          (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3);
 void vkvg_rectangle         (VkvgContext ctx, float x, float y, float w, float h);

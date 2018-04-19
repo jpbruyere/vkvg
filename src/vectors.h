@@ -72,4 +72,5 @@ vec2d		vec2d_mult	(vec2d a, double m);
 vec2d		vec2d_line_norm(vec2d a, vec2d b);
 
 vec2		vec2d_to_vec2(vec2d vd);
+void        vec2_inv    (vec2* v);
 #endif

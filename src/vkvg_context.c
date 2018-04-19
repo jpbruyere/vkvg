@@ -146,7 +146,9 @@ void vkvg_close_path (VkvgContext ctx){
         ctx->pathPtr++;
     }
 }
-
+void vkvg_rel_line_to (VkvgContext ctx, float x, float y){
+    vkvg_line_to(ctx, ctx->curPos.x + x, ctx->curPos.y + y);
+}
 void vkvg_line_to (VkvgContext ctx, float x, float y)
 {
     if (ctx->pathPtr % 2 == 0){//current path is empty
@@ -202,7 +204,10 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     if (!vec2_equ (v,ctx->curPos))
         _add_point_cp_update(ctx,v.x,v.y);
 }
-
+void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
+{
+    vkvg_move_to(ctx, ctx->curPos.x + x, ctx->curPos.y + y);
+}
 void vkvg_move_to (VkvgContext ctx, float x, float y)
 {
     _finish_path(ctx);
@@ -213,6 +218,10 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
     _bezier (ctx, ctx->curPos.x, ctx->curPos.y, x1, y1, x2, y2, x3, y3);
 }
+void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+    vkvg_curve_to (ctx, ctx->curPos.x + x1, ctx->curPos.y + y1, ctx->curPos.x + x2, ctx->curPos.y + y2, ctx->curPos.x + x3, ctx->curPos.y + y3);
+}
+
 void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
     _finish_path (ctx);
 
@@ -356,8 +365,6 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
     uint32_t lastPathPointIdx, iL, iR;
 
-
-
     while (ptrPath < ctx->pathPtr){
         uint32_t firstIdx = ctx->vertCount;
 
@@ -367,6 +374,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         }else{
             lastPathPointIdx = ctx->pathes[ptrPath+1];
             vec2 n = vec2_line_norm(ctx->points[i], ctx->points[i+1]);
+
             vec2 p0 = ctx->points[i];
             vec2 vhw = vec2_mult(n,hw);
 
@@ -376,8 +384,16 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             vhw = vec2_perp(vhw);
 
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-                float step = M_PI_4 / hw;
+                float step = M_PI_2 / hw;
                 float a = acos(n.x) + M_PI_2;
+                if (n.y < 0){
+                    a = asin(n.y);
+                    if (n.x < 0)
+                        a += M_PI/8;
+                    else
+                        a += M_PI_2;
+                }
+
                 float a1 = a + M_PI;
 
                 a+=step;
@@ -387,7 +403,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 }
                 uint32_t p0Idx = ctx->vertCount;
                 for (int p = firstIdx; p < p0Idx; p++)
-                    _add_triangle_indices(ctx, p+1, p, p0Idx+1);
+                    _add_triangle_indices(ctx, p0Idx+1, p, p+1);
                 firstIdx = p0Idx;
             }
 
@@ -396,7 +412,6 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             v.pos = vec2_sub(p0, vhw);
             _add_vertex(ctx, v);
             _add_tri_indices_for_rect(ctx, firstIdx);
-
 
             iL = i++;
         }
@@ -424,17 +439,27 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
                 firstIdx = ctx->vertCount;
-                float step = M_PI_4 / hw;
-                float a = acos(n.x) + M_PI_2;
+                float step = M_PI_2 / hw;
+                float a = acos(n.x)+ M_PI_2;
+                if (n.y < 0){
+                    a = asin(n.y);
+                    if (n.x < 0)
+                        a += M_PI/8;
+                    else
+                        a += M_PI_2;
+                }
                 float a1 = a - M_PI;
-
                 a-=step;
-                while (a > a1){
+                while ( a > a1){
                     _add_vertexf(ctx, cos(a) * hw + p0.x, sin(a) * hw + p0.y);
                     a-=step;
                 }
+
+                //printf("x = %f; y = %f ; acos(n.x)=%f ;  ", n.x, n.y, acos(n.x));
+                //printf("sin(acos(n.x))=%f ;  \n", (acos(n.x)));
+
                 uint32_t p0Idx = ctx->vertCount-1;
-                for (int p = firstIdx-1; p < p0Idx; p++)
+                for (int p = firstIdx-1 ; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p+1, p, firstIdx-2);
             }
 

@@ -80,3 +80,7 @@ bool vec2_equ (vec2 a, vec2 b){
         return true;
     return false;
 }
+void vec2_inv (vec2* v){
+    v->x = -v->x;
+    v->y = -v->y;
+}
