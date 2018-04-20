@@ -324,14 +324,16 @@ void add_line(vkvg_context* ctx, vec2 p1, vec2 p2, vec4 col){
 }
 
 void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR){
-    double alpha = 0;
     vec2 v0n = vec2_line_norm(ctx->points[iL], ctx->points[i]);
     vec2 v1n = vec2_line_norm(ctx->points[i], ctx->points[iR]);
 
-    vec2 bisec = vec2_add(v0n,v1n);
+    vec2 bisec = vec2_norm(vec2_add(v0n,v1n));
 
-    bisec = vec2_norm(bisec);
-    alpha = acos(v0n.x*v1n.x+v0n.y*v1n.y)/2.0;
+    float alpha = acos(v0n.x * v1n.x + v0n.y * v1n.y)/2;
+    float cross = v0n.x * v1n.y - v0n.y * v1n.x;
+
+    if (cross<0)
+        alpha = -alpha;
 
     float lh = hw / cos(alpha);
     bisec = vec2_perp(bisec);
@@ -347,9 +349,15 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
         _add_tri_indices_for_rect(ctx, idx);
     }else{
         vec2 vp = vec2_perp(v0n);
-        v.pos = vec2_add (ctx->points[i], vec2_mult (vp, hw));
-        _add_vertex(ctx, v);
-        v.pos = vec2_sub (ctx->points[i], bisec);
+        if (cross<0){
+            v.pos = vec2_sub (ctx->points[i], vec2_mult (vp, hw));
+            _add_vertex(ctx, v);
+            v.pos = vec2_add (ctx->points[i], bisec);
+        }else{
+            v.pos = vec2_add (ctx->points[i], vec2_mult (vp, hw));
+            _add_vertex(ctx, v);
+            v.pos = vec2_sub (ctx->points[i], bisec);
+        }
         _add_vertex(ctx, v);
 
         if (ctx->lineJoint == VKVG_LINE_JOIN_BEVEL){
@@ -358,13 +366,25 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
             _add_triangle_indices(ctx, idx+1, idx+3, idx+4);
         }else if (ctx->lineJoint == VKVG_LINE_JOIN_ROUND){
             float step = M_PI / hw;
-            float a = acos(-vp.x) + M_PI;
-            float a1 = a + alpha*2;//acos(v0n.x) + M_PI;
+            float a = acos(vp.x);
+            if (vp.y < 0)
+                a = -a;
 
-            a+=step;
-            while (a < a1){
-                _add_vertexf(ctx, cos(a) * hw + ctx->points[i].x, sin(a) * hw + ctx->points[i].y);
+            if (cross<0){
+                a+=M_PI;
+                float a1 = a + alpha*2;
+                a-=step;
+                while (a > a1){
+                    _add_vertexf(ctx, cos(a) * hw + ctx->points[i].x, sin(a) * hw + ctx->points[i].y);
+                    a-=step;
+                }
+            }else{
+                float a1 = a + alpha*2;
                 a+=step;
+                while (a < a1){
+                    _add_vertexf(ctx, cos(a) * hw + ctx->points[i].x, sin(a) * hw + ctx->points[i].y);
+                    a+=step;
+                }
             }
             uint32_t p0Idx = ctx->vertCount;
             _add_triangle_indices(ctx, idx, idx+2, idx+1);
@@ -374,8 +394,12 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
             _add_triangle_indices(ctx, p0Idx, p0Idx+1, idx+1);
             _add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
         }
+
         vp = vec2_mult (vec2_perp(v1n), hw);
-        v.pos = vec2_add (ctx->points[i], vp);
+        if (cross<0)
+            v.pos = vec2_sub (ctx->points[i], vp);
+        else
+            v.pos = vec2_add (ctx->points[i], vp);
         _add_vertex(ctx, v);
 
     }
