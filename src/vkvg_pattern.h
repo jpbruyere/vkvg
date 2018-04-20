@@ -33,7 +33,7 @@ typedef struct _vkvg_pattern_t {
 }vkvg_pattern_t;
 
 typedef struct _vkvg_gradient_t {
-    vec4            cp[3];
+    vec4            cp[3];//two first are normal cp, third are radiuses for radial
     vkvg_color_t    colors[16];
     vec4            stops[16];
     uint32_t        count;

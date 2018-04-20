@@ -41,14 +41,22 @@ void _check_pathes_array (VkvgContext ctx){
     ctx->sizePathes += VKVG_PATHES_SIZE;
     ctx->pathes = (uint32_t*) realloc (ctx->pathes, ctx->sizePathes*sizeof(uint32_t));
 }
+inline bool _current_path_is_empty (VkvgContext ctx) {
+    return ctx->pathPtr % 2 == 0;
+}
 void _add_point (VkvgContext ctx, float x, float y){
     vec2 v = {x,y};
     ctx->points[ctx->pointCount] = v;
     ctx->pointCount++;
 }
+inline void _set_current_point (VkvgContext ctx, vec2 cp) {
+    ctx->curPos = cp;
+    ctx->curPosExists = true;
+}
 void _add_point_cp_update(VkvgContext ctx, float x, float y){
     ctx->curPos.x = x;
     ctx->curPos.y = y;
+    ctx->curPosExists = true;
     ctx->points[ctx->pointCount] = ctx->curPos;
     ctx->pointCount++;
 }
@@ -239,6 +247,7 @@ void _finish_path (VkvgContext ctx){
 void _clear_path (VkvgContext ctx){
     ctx->pathPtr = 0;
     ctx->pointCount = 0;
+    ctx->curPosExists = false;
 }
 bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
     return (ctx->pathes[ptrPath] == ctx->pathes[ptrPath+1]);

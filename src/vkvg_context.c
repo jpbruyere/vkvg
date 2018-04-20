@@ -173,58 +173,66 @@ void vkvg_rel_line_to (VkvgContext ctx, float x, float y){
 }
 void vkvg_line_to (VkvgContext ctx, float x, float y)
 {
-    if (ctx->pathPtr % 2 == 0){//current path is empty
-        //set start to current idx in point array
-        ctx->pathes[ctx->pathPtr] = ctx->pointCount;
-        _check_pathes_array(ctx);
-        ctx->pathPtr++;
-        _add_curpos(ctx);
-    }
-    _add_point_cp_update(ctx, x, y);
+    vec2 p = {x,y};
+    if (ctx->curPosExists){
+        if (vec2_equ(ctx->curPos,p))
+            return;
+        if (_current_path_is_empty (ctx)){
+            _start_sub_path (ctx);
+            _add_curpos(ctx);
+        }
+
+        _add_point_cp_update(ctx, x, y);
+    }else
+        vkvg_move_to(ctx, x,y);
 }
 
+//this function expect that current path is empty (ctx->pathPtr % 2 == 0)
+void _start_sub_path (VkvgContext ctx){
+    //set start to current idx in point array
+    ctx->pathes[ctx->pathPtr] = ctx->pointCount;
+    _check_pathes_array(ctx);
+    ctx->pathPtr++;
+}
 void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2){
-    float aDiff = a2 - a1;
-    float aa1, aa2;
+    while (a2 < a1)
+        a2 += 2*M_PI;
+
+    vec2 v = {cos(a1)*radius + xc, sin(a1)*radius + yc};
+
     float step = M_PI/radius;
+    float a = a1;
 
-    aa1 = _normalizeAngle(a1);
-    aa2 = aa1 + aDiff;
+    if (ctx->curPosExists){
+        vkvg_line_to(ctx, v.x, v.y);
+        a+=step;
+    }else
+        _set_current_point(ctx, v);
 
-    //if (aa1 > aa2)
-     //   aa2 += M_PI * 2.0;
-    float a = aa1;
-    vec2 v = {cos(a)*radius + xc, sin(a)*radius + yc};
+    if (a2 - a1 == 0)
+        return;
 
-    if (ctx->pathPtr % 2 == 0){//current path is empty
-        //set start to current idx in point array
-        ctx->pathes[ctx->pathPtr] = ctx->pointCount;
-        _check_pathes_array(ctx);
-        ctx->pathPtr++;
-        if (!vec2_equ(v,ctx->curPos))
-            _add_curpos(ctx);
+    if (_current_path_is_empty (ctx))
+        _start_sub_path (ctx);
+
+    while(a < a2){
+        v.x = cos(a)*radius + xc;
+        v.y = sin(a)*radius + yc;
+        _add_point (ctx,v.x,v.y);
+        a+=step;
     }
 
-    if (aDiff < 0){
-        while(a > aa2){
-            v.x = cos(a)*radius + xc;
-            v.y = sin(a)*radius + yc;
-            _add_point_cp_update(ctx,v.x,v.y);
-            a-=step;
-        }
-    }else{
-        while(a < aa2){
-            v.x = cos(a)*radius + xc;
-            v.y = sin(a)*radius + yc;
-            _add_point_cp_update(ctx,v.x,v.y);
-            a+=step;
-        }
-    }
-    a = aa2;
+    a = a2;
+    vec2 lastP = v;
     v.x = cos(a)*radius + xc;
     v.y = sin(a)*radius + yc;
-    if (!vec2_equ (v,ctx->curPos))
+    if (vec2_equ (v,lastP))
+        _set_current_point(ctx, v);
+    else
         _add_point_cp_update(ctx,v.x,v.y);
+}
+void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
+
 }
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
@@ -236,6 +244,7 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 
     ctx->curPos.x = x;
     ctx->curPos.y = y;
+    ctx->curPosExists = true;
 }
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
     _bezier (ctx, ctx->curPos.x, ctx->curPos.y, x1, y1, x2, y2, x3, y3);
@@ -512,7 +521,7 @@ void vkvg_paint (VkvgContext ctx){
     _record_draw_cmd (ctx);
 }
 
-void vkvg_set_rgba (VkvgContext ctx, float r, float g, float b, float a)
+void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
     if (ctx->pushConsts.patternType == VKVG_PATTERN_TYPE_SURFACE){
         _flush_cmd_buff             (ctx);
@@ -581,7 +590,7 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
     if (pat->type == VKVG_PATTERN_TYPE_SOLID){
         vkvg_color_t* c = (vkvg_color_t*)pat->data;
-        vkvg_set_rgba (ctx, c->r, c->g, c->b, c->a);
+        vkvg_set_source_rgba (ctx, c->r, c->g, c->b, c->a);
         return;
     }
     if (pat->type == VKVG_PATTERN_TYPE_SURFACE){
@@ -599,8 +608,15 @@ void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
     ctx->pushConsts.source = bounds;
     _update_push_constants (ctx);
 
-    vkvg_gradient_t* grad = pat->data;
-    memcpy(ctx->uboGrad.mapped, pat->data, sizeof(vkvg_gradient_t));
+    //transform control point with current ctx matrix
+    vkvg_gradient_t grad = {};
+    memcpy(&grad, pat->data, sizeof(vkvg_gradient_t));
+
+    vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
+    vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
+    //to do, scale radial radiuses in cp[2]
+
+    memcpy(ctx->uboGrad.mapped, &grad, sizeof(vkvg_gradient_t));
 
     _init_cmd_buff (ctx);
 }
@@ -678,6 +694,7 @@ void vkvg_save (VkvgContext ctx){
     memcpy (sav->pathes, ctx->pathes, sav->pathPtr * sizeof(uint32_t));
 
     sav->curPos     = ctx->curPos;
+    sav->curPosExists=ctx->curPosExists;
     sav->curRGBA    = ctx->curRGBA;
     sav->lineWidth  = ctx->lineWidth;
     sav->lineCap    = ctx->lineCap;
@@ -744,6 +761,7 @@ void vkvg_restore (VkvgContext ctx){
     memcpy (ctx->pathes, sav->pathes, ctx->pathPtr * sizeof(uint32_t));
 
     ctx->curPos     = sav->curPos;
+    ctx->curPosExists=sav->curPosExists;
     ctx->curRGBA    = sav->curRGBA;
     ctx->lineWidth  = sav->lineWidth;
     ctx->lineCap    = sav->lineCap;

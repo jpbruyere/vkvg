@@ -419,9 +419,9 @@ void vkvg_test_gradient (VkvgContext ctx) {
     vkvg_patter_add_color_stop(pat, 0.5, 0, 1, 0, 1);
     vkvg_patter_add_color_stop(pat, 1, 0, 0, 1, 1);
     vkvg_set_source (ctx, pat);
-    vkvg_rectangle(ctx,100,500,200,200);
-    //vkvg_fill (ctx);
-    vkvg_stroke (ctx);
+    vkvg_rectangle(ctx,100,100,200,200);
+    vkvg_fill (ctx);
+    //vkvg_stroke (ctx);
     vkvg_pattern_destroy (pat);
 }
 
@@ -437,7 +437,7 @@ void vkvg_test_clip(VkvgContext ctx){
     vkvg_clip(ctx);
 }
 void vkvg_test_fill(VkvgContext ctx){
-    vkvg_set_rgba(ctx,0.1,0.1,0.8,1.0);
+    vkvg_set_source_rgba(ctx,0.1,0.1,0.8,1.0);
     vkvg_move_to(ctx,100,100);
     vkvg_line_to(ctx,400,350);
     vkvg_line_to(ctx,900,150);
@@ -451,7 +451,7 @@ void vkvg_test_fill(VkvgContext ctx){
 }
 
 void vkvg_test_curves (VkvgContext ctx) {
-    vkvg_set_rgba   (ctx, 0.5,0.0,1.0,0.5);
+    vkvg_set_source_rgba   (ctx, 0.5,0.0,1.0,0.5);
     vkvg_set_line_width(ctx, 10);
 
 
@@ -460,7 +460,7 @@ void vkvg_test_curves (VkvgContext ctx) {
 
     vkvg_move_to    (ctx, 100, 100);
     vkvg_curve_to   (ctx, 1000, 100, 100, 800, 1000, 800);
-    vkvg_move_to    (ctx, 100, 100);
+    vkvg_move_to    (ctx, 100, 150);
     vkvg_curve_to   (ctx, 1000, 500, 700, 500, 700, 100);
 
     vkvg_stroke     (ctx);
@@ -468,7 +468,7 @@ void vkvg_test_curves (VkvgContext ctx) {
 
 void vkvg_test_stroke(VkvgContext ctx){
     vkvg_set_line_width(ctx, 2);
-    vkvg_set_rgba(ctx,1,0,0,1);
+    vkvg_set_source_rgba(ctx,1,0,0,1);
     vkvg_move_to(ctx,200.5,200.5);
     vkvg_line_to(ctx,400.5,200.5);
     vkvg_line_to(ctx,400.5,400.5);
@@ -476,9 +476,9 @@ void vkvg_test_stroke(VkvgContext ctx){
     vkvg_close_path(ctx);
     vkvg_save (ctx);
     vkvg_stroke_preserve(ctx);
-    vkvg_set_rgba(ctx,0,0.2,0.35,1);
+    vkvg_set_source_rgba(ctx,0,0.2,0.35,1);
     vkvg_fill(ctx);
-    vkvg_set_rgba(ctx,0.5,1,0,1);
+    vkvg_set_source_rgba(ctx,0.5,1,0,1);
     vkvg_move_to(ctx,300.5,300.5);
     vkvg_line_to(ctx,500.5,300.5);
     vkvg_line_to(ctx,500.5,500.5);
@@ -487,17 +487,17 @@ void vkvg_test_stroke(VkvgContext ctx){
     vkvg_stroke(ctx);
     vkvg_set_line_width(ctx, 40);
     vkvg_restore(ctx);
-    vkvg_set_rgba(ctx,0.5,0.6,1,1.0);
+    vkvg_set_source_rgba(ctx,0.5,0.6,1,1.0);
     vkvg_move_to(ctx,700,475);
     vkvg_line_to(ctx,400,475);
     vkvg_stroke(ctx);
-    vkvg_set_rgba(ctx,0,0.5,0.5,0.5);
+    vkvg_set_source_rgba(ctx,0,0.5,0.5,0.5);
     vkvg_move_to(ctx,300,200);
     vkvg_arc(ctx, 200,200,100,0, M_PI);
     vkvg_stroke(ctx);
 
     vkvg_set_line_width(ctx, 20);
-    vkvg_set_rgba(ctx,0.1,0.1,0.1,0.5);
+    vkvg_set_source_rgba(ctx,0.1,0.1,0.1,0.5);
     vkvg_move_to(ctx,100,60);
     vkvg_line_to(ctx,400,600);
     vkvg_stroke(ctx);
@@ -517,13 +517,13 @@ void test_text (VkvgContext ctx) {
     vkvg_set_font_size(ctx,size-10);
     vkvg_select_font_face(ctx, "droid");
     vkvg_move_to(ctx, penX,penY);
-    vkvg_set_rgba(ctx,0.7,0.7,0.7,1);
+    vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
     vkvg_show_text (ctx,"abcdefghijk");
     penY+=size;
 
 
     vkvg_select_font_face(ctx, "times");
-    vkvg_set_rgba(ctx,0.9,0.7,0.7,1);
+    vkvg_set_source_rgba(ctx,0.9,0.7,0.7,1);
     vkvg_move_to(ctx, penX,penY);
     vkvg_show_text (ctx,"abcdefghijklmnopqrstuvwxyz");
     penY+=size;
@@ -589,14 +589,14 @@ void test_text (VkvgContext ctx) {
 
 void vkvg_test_stroke2(VkvgContext ctx){
     vkvg_set_line_width(ctx,20);
-    vkvg_set_rgba(ctx,1,0,0,1);
+    vkvg_set_source_rgba(ctx,1,0,0,1);
     vkvg_move_to(ctx,200,200);
     vkvg_line_to(ctx,400,200);
     vkvg_line_to(ctx,400,400);
     vkvg_line_to(ctx,200,400);
     vkvg_close_path(ctx);
     vkvg_stroke(ctx);
-    vkvg_set_rgba(ctx,0.5,1,0,1);
+    vkvg_set_source_rgba(ctx,0.5,1,0,1);
     vkvg_move_to(ctx,300,300);
     vkvg_line_to(ctx,500,300);
     vkvg_line_to(ctx,500,500);
@@ -604,11 +604,11 @@ void vkvg_test_stroke2(VkvgContext ctx){
     vkvg_close_path(ctx);
     vkvg_stroke(ctx);
     vkvg_set_line_width(ctx,10);
-    vkvg_set_rgba(ctx,0.5,0.6,1,1);
+    vkvg_set_source_rgba(ctx,0.5,0.6,1,1);
     vkvg_move_to(ctx,700,475);
     vkvg_line_to(ctx,400,475);
     vkvg_stroke(ctx);
-    vkvg_set_rgba(ctx,1,0,1,1);
+    vkvg_set_source_rgba(ctx,1,0,1,1);
     vkvg_move_to(ctx,700,500);
 
     vkvg_arc(ctx, 600,500,100,M_PI, 2.0*M_PI);
@@ -616,13 +616,13 @@ void vkvg_test_stroke2(VkvgContext ctx){
 
 
     vkvg_set_line_width(ctx,20);
-    vkvg_set_rgba(ctx,1,1,0,1);
+    vkvg_set_source_rgba(ctx,1,1,0,1);
     vkvg_move_to(ctx,100,50);
     vkvg_line_to(ctx,400,50);
     vkvg_stroke(ctx);
 }
 void vkvg_test_fill2(VkvgContext ctx){
-    vkvg_set_rgba(ctx,1,0,0,1);
+    vkvg_set_source_rgba(ctx,1,0,0,1);
     vkvg_move_to(ctx,200,200);
     vkvg_line_to(ctx,250,150);
     vkvg_line_to(ctx,200,100);
@@ -659,8 +659,9 @@ void test_line_caps (VkvgContext ctx) {
 
     float x = 20, y = 20, dx = 30, dy = 60;
 
+    //vkvg_scale(ctx,5,5);
     vkvg_set_line_width(ctx,26);
-    vkvg_set_rgba(ctx,0,0,0,1);
+    vkvg_set_source_rgba(ctx,0,0,0,1);
     vkvg_move_to(ctx,x,y);
     vkvg_rel_line_to(ctx,0,dy);
     vkvg_stroke(ctx);
@@ -690,7 +691,7 @@ void test_line_caps (VkvgContext ctx) {
 
     vkvg_set_line_cap(ctx,VKVG_LINE_CAP_BUTT);
     vkvg_set_line_width(ctx,1);
-    vkvg_set_rgba(ctx,1,0,0,1);
+    vkvg_set_source_rgba(ctx,1,0,0,1);
     vkvg_move_to(ctx,x,y);
     vkvg_rel_line_to(ctx,0,dy);
     vkvg_rel_move_to(ctx,dx,-dy);
@@ -703,10 +704,10 @@ void test_line_caps (VkvgContext ctx) {
 void test_line_join (VkvgContext ctx){
     float x = 50, y = 150, dx = 150, dy = 140;
 
-    vkvg_scale(ctx,2,2);
+    //vkvg_scale(ctx,2,2);
 
     vkvg_set_line_width(ctx,40);
-    vkvg_set_rgba(ctx,0,0,0,1);
+    vkvg_set_source_rgba(ctx,0,0,0,1);
 
 
     vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
@@ -734,7 +735,7 @@ void test_line_join (VkvgContext ctx){
     vkvg_close_path(ctx);
     vkvg_stroke(ctx);
 
-    /*vkvg_rel_line_to(ctx,dx,-dy);
+    vkvg_rel_line_to(ctx,dx,-dy);
     vkvg_rel_line_to(ctx,dx,dy);
     vkvg_stroke(ctx);
     vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
@@ -747,7 +748,109 @@ void test_line_join (VkvgContext ctx){
     vkvg_rel_line_to(ctx,dx,-dy);
     vkvg_rel_line_to(ctx,dx,dy);
     vkvg_stroke(ctx);
-    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_MITER);*/
+    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_MITER);
+}
+
+void multi_test1 () {
+    VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
+    VkvgContext ctx = vkvg_create(surf2);
+
+    vkvg_set_source_rgba(ctx,0.01,0.1,0.3,1.0);
+    vkvg_paint(ctx);
+//    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
+
+
+    //test_line_join(ctx);
+
+    //vkvg_test_clip(ctx);
+
+    vkvg_set_source_rgba (ctx,0.02,0.8,0.3,1.0);
+    vkvg_rectangle (ctx,200,200,300,300);
+    vkvg_fill (ctx);
+
+    test_line_caps(ctx);
+
+
+    test_text(ctx);
+    vkvg_test_fill2(ctx);
+    //vkvg_test_fill(ctx);
+
+//    vkvg_translate(ctx, 10,10);
+//    vkvg_rotate(ctx, 0.2);
+    //vkvg_scale(ctx, 2,2);
+
+    //vkvg_test_stroke(ctx);
+//    vkvg_test_gradient (ctx);
+    vkvg_test_curves(ctx);
+
+    //test_img_surface(ctx);
+
+    vkvg_destroy(ctx);
+    ctx = vkvg_create(surf);
+
+    vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
+    vkvg_paint(ctx);
+
+    vkvg_set_source_surface(ctx, surf2, 0, 0);
+    vkvg_paint(ctx);
+
+    vkvg_destroy(ctx);
+    vkvg_surface_destroy(surf2);
+}
+
+void cairo_print_arc (VkvgContext cr) {
+    float xc = 128.0;
+    float yc = 128.0;
+    float radius = 100.0;
+    float angle1 = 45.0  * (M_PI/180.0);  /* angles are specified */
+    float angle2 = 180.0 * (M_PI/180.0);  /* in radians           */
+
+    vkvg_set_source_rgba(cr, 0, 0, 0, 1);
+    vkvg_set_line_width (cr, 10.0);
+    vkvg_arc (cr, xc, yc, radius, angle1, angle2);
+    vkvg_stroke (cr);
+
+    /* draw helping lines */
+    vkvg_set_source_rgba(cr, 1, 0.2, 0.2, 0.6);
+    vkvg_set_line_width (cr, 6.0);
+
+    vkvg_arc (cr, xc, yc, 10.0, 0, 2*M_PI);
+    vkvg_fill (cr);
+
+    vkvg_arc (cr, xc, yc, radius, angle1, angle1);
+    vkvg_line_to (cr, xc, yc);
+    vkvg_arc (cr, xc, yc, radius, angle2, angle2);
+    //vkvg_line_to (cr, xc, yc);
+    vkvg_stroke (cr);
+}
+void cairo_tests () {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
+    vkvg_paint(ctx);
+    cairo_print_arc(ctx);
+    vkvg_destroy(ctx);
+}
+
+void test_grad_transforms () {
+    VkvgContext ctx = vkvg_create(surf);
+
+    vkvg_translate(ctx,-100,-100);
+    vkvg_rotate(ctx,1.5);
+    //vkvg_translate(ctx,100,100);
+
+    //vkvg_scale(ctx,0.2,0.2);
+    VkvgPattern pat = vkvg_pattern_create_linear(0,0,200,0);
+    vkvg_set_line_width(ctx, 20);
+    vkvg_patter_add_color_stop(pat, 0, 1, 0, 0, 1);
+    vkvg_patter_add_color_stop(pat, 0.5, 0, 1, 0, 1);
+    vkvg_patter_add_color_stop(pat, 1, 0, 0, 1, 1);
+    vkvg_set_source (ctx, pat);
+    vkvg_rectangle(ctx,0,0,200,200);
+    vkvg_fill (ctx);
+    //vkvg_stroke (ctx);
+    vkvg_pattern_destroy (pat);
+
+    vkvg_destroy(ctx);
 }
 
 int main(int argc, char *argv[]) {
@@ -766,46 +869,10 @@ int main(int argc, char *argv[]) {
 
     vke_swapchain_create(&e);
 
-    VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
-    VkvgContext ctx = vkvg_create(surf2);
+    //multi_test1();
 
-    vkvg_set_rgba(ctx,0.01,0.1,0.3,1.0);
-    vkvg_paint(ctx);
-
-    //test_line_caps(ctx);
-    //test_line_join(ctx);
-
-    //vkvg_test_clip(ctx);
-
-    vkvg_set_rgba (ctx,0.02,0.8,0.3,1.0);
-    vkvg_rectangle (ctx,200,200,300,300);
-    vkvg_fill (ctx);
-
-    test_text(ctx);
-    vkvg_test_fill2(ctx);
-    //vkvg_test_fill(ctx);
-
-
-    vkvg_translate(ctx, 10,10);
-    vkvg_rotate(ctx, 0.2);
-    vkvg_scale(ctx, 2,2);
-
-    vkvg_test_stroke(ctx);
-    vkvg_test_gradient (ctx);
-    vkvg_test_curves(ctx);
-
-    //test_img_surface(ctx);
-
-    vkvg_destroy(ctx);
-    ctx = vkvg_create(surf);
-
-    vkvg_set_rgba(ctx,0.0,0.0,0.0,1);
-    vkvg_paint(ctx);
-
-    vkvg_set_source_surface(ctx, surf2, 0, 0);
-    vkvg_paint(ctx);
-
-    vkvg_destroy(ctx);
+    //test_grad_transforms();
+    cairo_tests();
 
     setupSimpleBlit(&e.renderer);
 
@@ -818,7 +885,6 @@ int main(int argc, char *argv[]) {
     vke_swapchain_destroy(&e.renderer);
 
     vkvg_surface_destroy(surf);
-    vkvg_surface_destroy(surf2);
 
     vkvg_device_destroy(device);
 

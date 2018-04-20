@@ -73,7 +73,7 @@ void main()
 		float  gradientEndPosRotatedX   = uboGrad.cp[1].x*cos(alpha) - uboGrad.cp[1].y*sin(alpha);
 		float  d = gradientEndPosRotatedX - gradientStartPosRotatedX;
 
-		float y = inSrc.y - gl_FragCoord.y;
+		float y = gl_FragCoord.y;//inSrc.y - gl_FragCoord.y;
 		float x = gl_FragCoord.x;
 		float xLocRotated = x*cos( alpha ) - y*sin( alpha );
 

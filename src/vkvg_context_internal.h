@@ -73,6 +73,7 @@ typedef struct _vkvg_context_save_t{
     size_t		sizePathes;
 
     vec2		curPos;
+    bool        curPosExists;
     vec4		curRGBA;
     float       lineWidth;
 
@@ -127,6 +128,7 @@ typedef struct _vkvg_context_t {
     size_t		sizePathes;
 
     vec2		curPos;
+    bool        curPosExists;
     vec4		curRGBA;
     float		lineWidth;
 
@@ -142,9 +144,11 @@ typedef struct _vkvg_context_t {
     vkvg_context_save_t* pSavedCtxs;//last ctx saved ptr
 }vkvg_context;
 
+bool _current_path_is_empty (VkvgContext ctx);
 void _check_pathes_array	(VkvgContext ctx);
 float _normalizeAngle       (float a);
 
+void _set_current_point     (VkvgContext ctx, vec2 cp);
 void _add_point         	(VkvgContext ctx, float x, float y);
 void _add_point_cp_update	(VkvgContext ctx, float x, float y);
 void _add_point_v2			(VkvgContext ctx, vec2 v);
