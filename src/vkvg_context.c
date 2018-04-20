@@ -408,14 +408,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
                 float step = M_PI_2 / hw;
                 float a = acos(n.x) + M_PI_2;
-                if (n.y < 0){
-                    a = asin(n.y);
-                    if (n.x < 0)
-                        a = acos(-n.x) -M_PI_2;
-                    else
-                        a += M_PI_2;
-                }
-
+                if (n.y < 0)
+                    a = M_PI-a;
                 float a1 = a + M_PI;
 
                 a+=step;
@@ -461,24 +455,16 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
                 firstIdx = ctx->vertCount;
-                float step = M_PI_4 / hw;
+                float step = M_PI_2 / hw;
                 float a = acos(n.x)+ M_PI_2;
-                if (n.y < 0){
-                    a = asin(n.y);
-                    if (n.x < 0)
-                        a = acos(-n.x) -M_PI_2;
-                    else
-                        a += M_PI_2;
-                }
+                if (n.y < 0)
+                    a = M_PI-a;
                 float a1 = a - M_PI;
                 a-=step;
                 while ( a > a1){
                     _add_vertexf(ctx, cos(a) * hw + p0.x, sin(a) * hw + p0.y);
                     a-=step;
                 }
-
-                //printf("x = %f; y = %f ; acos(n.x)=%f ;  ", n.x, n.y, acos(n.x));
-                //printf("sin(acos(n.x))=%f ;  \n", (acos(n.x)));
 
                 uint32_t p0Idx = ctx->vertCount-1;
                 for (int p = firstIdx-1 ; p < p0Idx; p++)
