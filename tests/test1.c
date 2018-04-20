@@ -798,6 +798,32 @@ void multi_test1 () {
     vkvg_surface_destroy(surf2);
 }
 
+void cairo_print_arc_neg (VkvgContext cr){
+    float xc = 128.0;
+    float yc = 128.0;
+    float radius = 100.0;
+    float angle1 = 45.0  * (M_PI/180.0);  /* angles are specified */
+    float angle2 = 180.0 * (M_PI/180.0);  /* in radians           */
+
+    vkvg_set_source_rgba(cr, 0, 0, 0, 1);
+    vkvg_set_line_width (cr, 10.0);
+    vkvg_arc_negative (cr, xc, yc, radius, angle1, angle2);
+    vkvg_stroke (cr);
+
+    /* draw helping lines */
+    vkvg_set_source_rgba (cr, 1, 0.2, 0.2, 0.6);
+    vkvg_set_line_width (cr, 6.0);
+
+    vkvg_arc (cr, xc, yc, 10.0, 0, 2*M_PI);
+    vkvg_fill (cr);
+
+    vkvg_arc (cr, xc, yc, radius, angle1, angle1);
+    vkvg_line_to (cr, xc, yc);
+    vkvg_arc (cr, xc, yc, radius, angle2, angle2);
+    //vkvg_line_to (cr, xc, yc);
+    vkvg_stroke (cr);
+
+}
 void cairo_print_arc (VkvgContext cr) {
     float xc = 128.0;
     float yc = 128.0;
@@ -828,6 +854,8 @@ void cairo_tests () {
     vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
     vkvg_paint(ctx);
     cairo_print_arc(ctx);
+    vkvg_translate(ctx,200,0);
+    cairo_print_arc_neg(ctx);
     vkvg_destroy(ctx);
 }
 

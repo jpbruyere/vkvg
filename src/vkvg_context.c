@@ -45,7 +45,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->pSurf          = surf;
 
     push_constants pc = {
-            {},
+            {0,0,0,1},
             {(float)ctx->pSurf->width,(float)ctx->pSurf->height},
             VKVG_PATTERN_TYPE_SOLID,
             0,
@@ -209,7 +209,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     }else
         _set_current_point(ctx, v);
 
-    if (a2 - a1 == 0)
+    if (a2 == a1)
         return;
 
     if (_current_path_is_empty (ctx))
@@ -232,7 +232,41 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
         _add_point_cp_update(ctx,v.x,v.y);
 }
 void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
+    while (a2 > a1)
+        a2 -= 2*M_PI;
 
+    vec2 v = {cos(a1)*radius + xc, sin(a1)*radius + yc};
+
+    float step = M_PI/radius;
+    float a = a1;
+
+    if (ctx->curPosExists){
+        vkvg_line_to(ctx, v.x, v.y);
+        a+=step;
+    }else
+        _set_current_point(ctx, v);
+
+    if (a2 == a1)
+        return;
+
+    if (_current_path_is_empty (ctx))
+        _start_sub_path (ctx);
+
+    while(a > a2){
+        v.x = cos(a)*radius + xc;
+        v.y = sin(a)*radius + yc;
+        _add_point (ctx,v.x,v.y);
+        a-=step;
+    }
+
+    a = a2;
+    vec2 lastP = v;
+    v.x = cos(a)*radius + xc;
+    v.y = sin(a)*radius + yc;
+    if (vec2_equ (v,lastP))
+        _set_current_point(ctx, v);
+    else
+        _add_point_cp_update(ctx,v.x,v.y);
 }
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
@@ -523,42 +557,23 @@ void vkvg_paint (VkvgContext ctx){
 
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
-    if (ctx->pushConsts.patternType == VKVG_PATTERN_TYPE_SURFACE){
-        _flush_cmd_buff             (ctx);
-        _reset_src_descriptor_set   (ctx);
-        _init_cmd_buff              (ctx);
-    }
+    uint32_t lastPat = ctx->pushConsts.patternType;
 
     vec4 c = {r,g,b,a};
     ctx->pushConsts.source = c;
     ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SOLID;
 
-    _update_push_constants (ctx);
+    if (lastPat == VKVG_PATTERN_TYPE_SURFACE){
+        _flush_cmd_buff             (ctx);
+        _reset_src_descriptor_set   (ctx);
+        _init_cmd_buff              (ctx);//push csts updated by init
+    }else
+        _update_push_constants (ctx);
 
     ctx->curRGBA.x = r;
     ctx->curRGBA.y = g;
     ctx->curRGBA.z = b;
     ctx->curRGBA.w = a;
-    /*
-    _flush_cmd_buff(ctx);
-
-    vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-    VkClearColorValue clr = {r,g,b,a};
-    VkImageSubresourceRange range = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
-
-    set_image_layout        (ctx->cmd, ctx->source->image, VK_IMAGE_ASPECT_COLOR_BIT,
-            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-    vkCmdClearColorImage    (ctx->cmd, ctx->source->image,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,&clr,1,&range);
-    set_image_layout        (ctx->cmd, ctx->source->image, VK_IMAGE_ASPECT_COLOR_BIT,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-    vkh_cmd_end                 (ctx->cmd);
-
-    _submit_wait_and_reset_cmd  (ctx);
-    _init_cmd_buff              (ctx);
-    */
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
     _flush_cmd_buff(ctx);
@@ -580,12 +595,12 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
     }
 
     _update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
-    _init_cmd_buff                  (ctx);
 
     vec4 srcRect = {x,y,surf->width,surf->height};
     ctx->pushConsts.source = srcRect;
     ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SURFACE;
-    _update_push_constants (ctx);
+
+    _init_cmd_buff                  (ctx);
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
     if (pat->type == VKVG_PATTERN_TYPE_SOLID){

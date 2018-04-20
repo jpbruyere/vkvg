@@ -214,14 +214,6 @@ void _init_cmd_buff (VkvgContext ctx){
     VkRect2D scissor = {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
     vkCmdSetScissor(ctx->cmd, 0, 1, &scissor);
 
-    /*push_constants pc = {
-        {(float)ctx->pSurf->width,(float)ctx->pSurf->height},
-        {2.0f/(float)ctx->pSurf->width,2.0f/(float)ctx->pSurf->height},
-        {-1.f,-1.f},
-    };*/
-
-    _update_push_constants (ctx);
-
     VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc,ctx->dsGrad};
     vkCmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
                             0, 3, dss, 0, NULL);
@@ -230,6 +222,8 @@ void _init_cmd_buff (VkvgContext ctx){
     vkCmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
     vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
     vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, ctx->stencilRef);
+
+    _update_push_constants  (ctx);
 }
 inline void _update_push_constants (VkvgContext ctx) {
     vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
