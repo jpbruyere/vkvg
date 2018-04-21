@@ -108,15 +108,15 @@ typedef struct _vkvg_context_t {
     vkvg_buff	uboGrad;//uniform buff obj holdings gradient infos
 
     //vk buffers, holds data until flush
-    vkvg_buff	indices;
-    size_t		sizeIndices;
-    uint32_t	indCount;
+    vkvg_buff	indices;        //index buffer with persistent map memory
+    size_t		sizeIndices;    //reserved size
+    uint32_t	indCount;       //current indice count
 
     uint32_t	curIndStart;
 
-    vkvg_buff	vertices;
-    size_t		sizeVertices;
-    uint32_t	vertCount;
+    vkvg_buff	vertices;       //vertex buffer with persistent mapped memory
+    size_t		sizeVertices;   //reserved size
+    uint32_t	vertCount;      //effective vertices count
 
     //pathes, exists until stroke of fill
     vec2*		points;     //points array
@@ -124,12 +124,16 @@ typedef struct _vkvg_context_t {
     uint32_t	pointCount; //effective points count
 
     uint32_t	pathPtr;
+    //pathes array is a list of couple (start,end) point idx refering to point array
+    //it split points list in subpathes and tell if path is closed.
+    //if path is closed, end index is the same as start.
+    //(I should use a boolean instead to keep last point in array)
     uint32_t*	pathes;
     size_t		sizePathes;
 
-    vec2		curPos;
+    vec2		curPos;     //current position handling
     bool        curPosExists;
-    vec4		curRGBA;
+    vec4		curRGBA;    //is store in pushConsts => may be removed.
     float		lineWidth;
 
     vkvg_line_cap_t     lineCap;

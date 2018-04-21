@@ -155,7 +155,6 @@ void vkvg_destroy (VkvgContext ctx)
     free(ctx);
 }
 
-
 void vkvg_close_path (VkvgContext ctx){
     if (ctx->pathPtr % 2 == 0)//current path is empty
         return;
@@ -335,46 +334,39 @@ void vkvg_clip (VkvgContext ctx){
 void vkvg_fill_preserve (VkvgContext ctx){
     if (ctx->pathPtr == 0)      //nothing to fill
         return;
-    if (ctx->pathPtr % 2 != 0)  //current path is no close
+    if (ctx->pathPtr % 2 != 0)  //current path is not finished, close it
         vkvg_close_path(ctx);
-    if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)
+    if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);
 
-    uint32_t lastPathPointIdx, i = 0, ptrPath = 0;;
+    uint32_t ptrPath = 0;;
     Vertex v = {};
     v.uv.z = -1;
 
     while (ptrPath < ctx->pathPtr){
-        if (!_path_is_closed(ctx,ptrPath)){
-            ptrPath+=2;
-            continue;
-        }
+        if (!_path_is_closed(ctx, ptrPath))
+            //close path
+            ctx->pathes[ptrPath+1] = ctx->pathes[ptrPath];
+
         uint32_t firstPtIdx = ctx->pathes[ptrPath];
-        lastPathPointIdx = _get_last_point_of_closed_path (ctx, ptrPath);
-        uint32_t pathPointCount = lastPathPointIdx - ctx->pathes[ptrPath] + 1;
+        uint32_t lastPtIdx = _get_last_point_of_closed_path (ctx, ptrPath);
+        uint32_t pathPointCount = lastPtIdx - ctx->pathes[ptrPath] + 1;
         uint32_t firstVertIdx = ctx->vertCount;
 
         ear_clip_point ecps[pathPointCount];
         uint32_t ecps_count = pathPointCount;
-        i = 0;
+        uint32_t i = 0;
 
+        //init points link list
         while (i < pathPointCount-1){
             v.pos = ctx->points[i+firstPtIdx];
-            ear_clip_point ecp = {
-                v.pos,
-                i+firstVertIdx,
-                &ecps[i+1]
-            };
+            ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
             ecps[i] = ecp;
             _add_vertex(ctx, v);
             i++;
         }
         v.pos = ctx->points[i+firstPtIdx];
-        ear_clip_point ecp = {
-            v.pos,
-            i+firstVertIdx,
-            ecps
-        };
+        ear_clip_point ecp = {v.pos, i+firstVertIdx, ecps};
         ecps[i] = ecp;
         _add_vertex(ctx, v);
 
@@ -390,22 +382,21 @@ void vkvg_fill_preserve (VkvgContext ctx){
             ear_clip_point* vP = v2->next;
             bool isEar = true;
             while (vP!=v1){
-                if (ptInTriangle(vP->pos,v0->pos,v2->pos,v1->pos)){
+                if (ptInTriangle (vP->pos, v0->pos, v2->pos, v1->pos)){
                     isEar = false;
                     break;
                 }
                 vP = vP->next;
             }
             if (isEar){
-                _add_triangle_indices(ctx, v0->idx,v1->idx,v2->idx);
+                _add_triangle_indices (ctx, v0->idx, v1->idx, v2->idx);
                 v1->next = v2;
                 ecps_count --;
             }else
                 ecp_current = ecp_current->next;
         }
-        if (ecps_count == 3){
-            _add_triangle_indices(ctx, ecp_current->next->idx,ecp_current->idx,ecp_current->next->next->idx);
-        }
+        if (ecps_count == 3)
+            _add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
 
         ptrPath+=2;
     }

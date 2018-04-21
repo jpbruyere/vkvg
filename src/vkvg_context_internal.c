@@ -250,7 +250,7 @@ void _clear_path (VkvgContext ctx){
     ctx->pointCount = 0;
     ctx->curPosExists = false;
 }
-bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
+inline bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
     return (ctx->pathes[ptrPath] == ctx->pathes[ptrPath+1]);
 }
 uint32_t _get_last_point_of_closed_path(VkvgContext ctx, uint32_t ptrPath){
