@@ -349,15 +349,17 @@ void vkvg_fill_preserve (VkvgContext ctx){
             ptrPath+=2;
             continue;
         }
+        uint32_t firstPtIdx = ctx->pathes[ptrPath];
         lastPathPointIdx = _get_last_point_of_closed_path (ctx, ptrPath);
         uint32_t pathPointCount = lastPathPointIdx - ctx->pathes[ptrPath] + 1;
         uint32_t firstVertIdx = ctx->vertCount;
 
         ear_clip_point ecps[pathPointCount];
         uint32_t ecps_count = pathPointCount;
+        i = 0;
 
-        while (i < lastPathPointIdx){
-            v.pos = ctx->points[i];
+        while (i < pathPointCount-1){
+            v.pos = ctx->points[i+firstPtIdx];
             ear_clip_point ecp = {
                 v.pos,
                 i+firstVertIdx,
@@ -367,7 +369,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
             _add_vertex(ctx, v);
             i++;
         }
-        v.pos = ctx->points[i];
+        v.pos = ctx->points[i+firstPtIdx];
         ear_clip_point ecp = {
             v.pos,
             i+firstVertIdx,
