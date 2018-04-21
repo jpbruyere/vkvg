@@ -145,6 +145,7 @@ typedef struct _vkvg_context_t {
 }vkvg_context;
 
 bool _current_path_is_empty (VkvgContext ctx);
+void _start_sub_path        (VkvgContext ctx);
 void _check_pathes_array	(VkvgContext ctx);
 float _normalizeAngle       (float a);
 

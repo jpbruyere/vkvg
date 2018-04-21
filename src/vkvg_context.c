@@ -163,6 +163,9 @@ void vkvg_close_path (VkvgContext ctx){
     if (ctx->pointCount - ctx->pathes [ctx->pathPtr-1] > 2){
         //set end idx of path to the same as start idx
         ctx->pathes[ctx->pathPtr] = ctx->pathes [ctx->pathPtr-1];
+        //if last point of path is same pos as first point, remove it
+        if (vec2_equ(ctx->points[ctx->pointCount-1], ctx->points[ctx->pathes[ctx->pathPtr]]))
+            ctx->pointCount--;
         //start new path
         _check_pathes_array(ctx);
         ctx->pathPtr++;
@@ -187,13 +190,6 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
         vkvg_move_to(ctx, x,y);
 }
 
-//this function expect that current path is empty (ctx->pathPtr % 2 == 0)
-void _start_sub_path (VkvgContext ctx){
-    //set start to current idx in point array
-    ctx->pathes[ctx->pathPtr] = ctx->pointCount;
-    _check_pathes_array(ctx);
-    ctx->pathPtr++;
-}
 void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2){
     while (a2 < a1)
         a2 += 2*M_PI;
@@ -281,7 +277,19 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
     ctx->curPosExists = true;
 }
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
-    _bezier (ctx, ctx->curPos.x, ctx->curPos.y, x1, y1, x2, y2, x3, y3);
+    vec2 p = ctx->curPos;
+    vec2 p1 = {x1,y1};
+
+    if (_current_path_is_empty(ctx)){
+        _start_sub_path(ctx);
+        if (!ctx->curPosExists)
+            p = p1;
+        if (!vec2_equ (p,p1))
+            _add_point (ctx, p.x, p.y);
+    }
+
+    _recursive_bezier       (ctx, p.x, p.y, x1, y1, x2, y2, x3, y3, 0);
+    _add_point_cp_update    (ctx, x3, y3);
 }
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
     vkvg_curve_to (ctx, ctx->curPos.x + x1, ctx->curPos.y + y1, ctx->curPos.x + x2, ctx->curPos.y + y2, ctx->curPos.x + x3, ctx->curPos.y + y3);
@@ -315,14 +323,6 @@ void vkvg_clip_preserve (VkvgContext ctx){
     vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, ctx->stencilRef);
 }
 void vkvg_reset_clip (VkvgContext ctx){
-    /*
-    VkClearValue  clearValue = {0};
-    VkClearAttachment clrAtt = {VK_IMAGE_ASPECT_STENCIL_BIT, 2 ,clearValue};
-    VkClearRect clr = {{{0,0},{ctx->pSurf->width,ctx->pSurf->height}},0,1};
-    ctx->stencilRef=0;
-    vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, ctx->stencilRef);
-    vkCmdClearAttachments (ctx->cmd ,1,&clrAtt,1,&clr);
-    */
     _flush_cmd_buff(ctx);
     _clear_stencil(ctx->pSurf);
     ctx->stencilRef=0;
@@ -555,6 +555,9 @@ void vkvg_paint (VkvgContext ctx){
     _record_draw_cmd (ctx);
 }
 
+inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
+    vkvg_set_source_rgba (ctx, r, g, b, 1);
+}
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
     uint32_t lastPat = ctx->pushConsts.patternType;

@@ -450,7 +450,7 @@ void vkvg_test_fill(VkvgContext ctx){
     vkvg_fill(ctx);
 }
 
-void vkvg_test_curves (VkvgContext ctx) {
+void vkvg_test_curves2 (VkvgContext ctx) {
     vkvg_set_source_rgba   (ctx, 0.5,0.0,1.0,0.5);
     vkvg_set_line_width(ctx, 10);
 
@@ -465,7 +465,32 @@ void vkvg_test_curves (VkvgContext ctx) {
 
     vkvg_stroke     (ctx);
 }
+void vkvg_test_curves (VkvgContext ctx){
 
+    vkvg_set_line_width(ctx, 10);
+    vkvg_set_source_rgb   (ctx, 0,0,0);
+
+    vkvg_arc(ctx, 150, 100, 10, 0, M_PI*2);
+    vkvg_fill(ctx);
+    vkvg_arc(ctx, 200, 200, 10, 0, M_PI*2);
+    vkvg_fill(ctx);
+
+    vkvg_set_source_rgba   (ctx, 0.5,0.0,1.0,0.5);
+    vkvg_move_to(ctx,100,100);
+    vkvg_line_to(ctx,200,100);
+    vkvg_curve_to(ctx,250,100,300,150,300,200);
+    vkvg_line_to(ctx,300,300);
+    vkvg_curve_to(ctx,300,350,250,400,200,400);
+    vkvg_line_to(ctx,100,400);
+    vkvg_curve_to(ctx,50,400,10,350,10,300);
+    vkvg_line_to(ctx,10,200);
+    vkvg_curve_to(ctx,10,150,50,100,100,100);
+    vkvg_close_path(ctx);
+    //vkvg_curve_to(ctx, 150,100,200,150,200,200);
+    vkvg_fill_preserve(ctx);
+    vkvg_set_source_rgba   (ctx, 1,1,1.0,0.5);
+    vkvg_stroke(ctx);
+}
 void vkvg_test_stroke(VkvgContext ctx){
     vkvg_set_line_width(ctx, 2);
     vkvg_set_source_rgba(ctx,1,0,0,1);
@@ -502,7 +527,6 @@ void vkvg_test_stroke(VkvgContext ctx){
     vkvg_line_to(ctx,400,600);
     vkvg_stroke(ctx);
 }
-
 void test_text (VkvgContext ctx) {
     int size = 19;
     int penY = 50;
@@ -586,7 +610,6 @@ void test_text (VkvgContext ctx) {
     //vkvg_show_text (ctx,"ABCDABCD");
     //vkvg_show_text (ctx,"j");
 }
-
 void vkvg_test_stroke2(VkvgContext ctx){
     vkvg_set_line_width(ctx,20);
     vkvg_set_source_rgba(ctx,1,0,0,1);
@@ -635,7 +658,6 @@ void vkvg_test_fill2(VkvgContext ctx){
     vkvg_close_path(ctx);
     vkvg_fill(ctx);
 }
-
 void test_img_surface (VkvgContext ctx) {
     VkvgSurface imgSurf;// = vkvg_surface_create_from_image(device, "/mnt/data/images/blason.png");
     //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/2000px-Tux.svg.png");
@@ -654,7 +676,6 @@ void test_img_surface (VkvgContext ctx) {
     vkvg_flush(ctx);
     vkvg_surface_destroy(imgSurf);
 }
-
 void test_line_caps (VkvgContext ctx) {
 
     float x = 20, y = 20, dx = 30, dy = 60;
@@ -700,7 +721,6 @@ void test_line_caps (VkvgContext ctx) {
     vkvg_rel_line_to(ctx,0,dy);
     vkvg_stroke(ctx);
 }
-
 void test_line_join (VkvgContext ctx){
     float x = 50, y = 150, dx = 150, dy = 140;
 
@@ -750,6 +770,21 @@ void test_line_join (VkvgContext ctx){
     vkvg_stroke(ctx);
     vkvg_set_line_join(ctx,VKVG_LINE_JOIN_MITER);
 }
+void test_colinear () {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
+    vkvg_paint(ctx);
+
+    vkvg_set_source_rgba(ctx,0,0,0,1);
+    vkvg_set_line_width(ctx,10);
+
+    vkvg_move_to(ctx,100,100);
+    vkvg_line_to(ctx,100,200);
+    vkvg_line_to(ctx,100,100);
+    vkvg_stroke(ctx);
+
+    vkvg_destroy(ctx);
+}
 
 void multi_test1 () {
     VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
@@ -760,7 +795,7 @@ void multi_test1 () {
 //    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
 
 
-    //test_line_join(ctx);
+    test_line_join(ctx);
 
     //vkvg_test_clip(ctx);
 
@@ -773,14 +808,14 @@ void multi_test1 () {
 
     test_text(ctx);
     vkvg_test_fill2(ctx);
-    //vkvg_test_fill(ctx);
+    vkvg_test_fill(ctx);
 
 //    vkvg_translate(ctx, 10,10);
 //    vkvg_rotate(ctx, 0.2);
     //vkvg_scale(ctx, 2,2);
 
-    //vkvg_test_stroke(ctx);
-//    vkvg_test_gradient (ctx);
+    vkvg_test_stroke(ctx);
+    vkvg_test_gradient (ctx);
     vkvg_test_curves(ctx);
 
     //test_img_surface(ctx);
@@ -798,6 +833,81 @@ void multi_test1 () {
     vkvg_surface_destroy(surf2);
 }
 
+void cairo_test_clip (VkvgContext cr){
+    vkvg_arc (cr, 128.0, 128.0, 76.8, 0, 2 * M_PI);
+    vkvg_clip (cr);
+
+    //vkvg_new_path (cr);  /* current path is not
+    //                         consumed by vkvg_clip() */
+    vkvg_set_source_rgba(cr, 0, 0, 0, 1);
+    vkvg_rectangle (cr, 0, 0, 256, 256);
+    vkvg_fill (cr);
+    vkvg_set_source_rgba (cr, 0, 1, 0, 1);
+    vkvg_move_to (cr, 0, 0);
+    vkvg_line_to (cr, 256, 256);
+    vkvg_move_to (cr, 256, 0);
+    vkvg_line_to (cr, 0, 256);
+    vkvg_set_line_width (cr, 10.0);
+    vkvg_stroke (cr);
+}
+
+void cairo_test_rounded_rect (VkvgContext cr) {
+    /* a custom shape that could be wrapped in a function */
+    float x0      = 25.6,   /* parameters like vkvg_rectangle */
+           y0      = 25.6,
+           rect_width  = 204.8,
+           rect_height = 204.8,
+           radius = 102.4;   /* and an approximate curvature radius */
+
+    float x1,y1;
+
+    x1=x0+rect_width;
+    y1=y0+rect_height;
+    if (!rect_width || !rect_height)
+        return;
+    if (rect_width/2<radius) {
+        if (rect_height/2<radius) {
+            vkvg_move_to  (cr, x0, (y0 + y1)/2);
+            vkvg_curve_to (cr, x0 ,y0, x0, y0, (x0 + x1)/2, y0);
+            vkvg_curve_to (cr, x1, y0, x1, y0, x1, (y0 + y1)/2);
+            vkvg_curve_to (cr, x1, y1, x1, y1, (x1 + x0)/2, y1);
+            vkvg_curve_to (cr, x0, y1, x0, y1, x0, (y0 + y1)/2);
+        } else {
+            vkvg_move_to  (cr, x0, y0 + radius);
+            vkvg_curve_to (cr, x0 ,y0, x0, y0, (x0 + x1)/2, y0);
+            vkvg_curve_to (cr, x1, y0, x1, y0, x1, y0 + radius);
+            vkvg_line_to (cr, x1 , y1 - radius);
+            vkvg_curve_to (cr, x1, y1, x1, y1, (x1 + x0)/2, y1);
+            vkvg_curve_to (cr, x0, y1, x0, y1, x0, y1- radius);
+        }
+    } else {
+        if (rect_height/2<radius) {
+            vkvg_move_to  (cr, x0, (y0 + y1)/2);
+            vkvg_curve_to (cr, x0 , y0, x0 , y0, x0 + radius, y0);
+            vkvg_line_to (cr, x1 - radius, y0);
+            vkvg_curve_to (cr, x1, y0, x1, y0, x1, (y0 + y1)/2);
+            vkvg_curve_to (cr, x1, y1, x1, y1, x1 - radius, y1);
+            vkvg_line_to (cr, x0 + radius, y1);
+            vkvg_curve_to (cr, x0, y1, x0, y1, x0, (y0 + y1)/2);
+        } else {
+            vkvg_move_to  (cr, x0, y0 + radius);
+            vkvg_curve_to (cr, x0 , y0, x0 , y0, x0 + radius, y0);
+            vkvg_line_to (cr, x1 - radius, y0);
+            vkvg_curve_to (cr, x1, y0, x1, y0, x1, y0 + radius);
+            vkvg_line_to (cr, x1 , y1 - radius);
+            vkvg_curve_to (cr, x1, y1, x1, y1, x1 - radius, y1);
+            vkvg_line_to (cr, x0 + radius, y1);
+            vkvg_curve_to (cr, x0, y1, x0, y1, x0, y1- radius);
+        }
+    }
+    vkvg_close_path (cr);
+
+    vkvg_set_source_rgb (cr, 0.5, 0.5, 1);
+    vkvg_fill_preserve (cr);
+    vkvg_set_source_rgba (cr, 0.5, 0, 0, 0.5);
+    vkvg_set_line_width (cr, 10.0);
+    vkvg_stroke (cr);
+}
 void cairo_print_arc_neg (VkvgContext cr){
     float xc = 128.0;
     float yc = 128.0;
@@ -853,9 +963,11 @@ void cairo_tests () {
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
     vkvg_paint(ctx);
-    cairo_print_arc(ctx);
-    vkvg_translate(ctx,200,0);
-    cairo_print_arc_neg(ctx);
+    //cairo_print_arc(ctx);
+    //cairo_print_arc_neg(ctx);
+    //cairo_test_clip(ctx);
+    cairo_test_rounded_rect(ctx);
+    //vkvg_test_curves(ctx);
     vkvg_destroy(ctx);
 }
 
@@ -900,7 +1012,10 @@ int main(int argc, char *argv[]) {
     //multi_test1();
 
     //test_grad_transforms();
+
     cairo_tests();
+
+    //test_colinear();
 
     setupSimpleBlit(&e.renderer);
 

@@ -44,6 +44,13 @@ void _check_pathes_array (VkvgContext ctx){
 inline bool _current_path_is_empty (VkvgContext ctx) {
     return ctx->pathPtr % 2 == 0;
 }
+//this function expect that current path is empty
+void _start_sub_path (VkvgContext ctx) {
+    //set start to current idx in point array
+    ctx->pathes[ctx->pathPtr] = ctx->pointCount;
+    _check_pathes_array(ctx);
+    ctx->pathPtr++;
+}
 void _add_point (VkvgContext ctx, float x, float y){
     vec2 v = {x,y};
     ctx->points[ctx->pointCount] = v;
@@ -622,19 +629,3 @@ void _recursive_bezier (VkvgContext ctx,
     _recursive_bezier(ctx, x1234, y1234, x234, y234, x34, y34, x4, y4, level + 1);
 }
 
-//------------------------------------------------------------------------
-void _bezier (VkvgContext ctx,
-              float x1, float y1,
-              float x2, float y2,
-              float x3, float y3,
-              float x4, float y4) {
-    if (ctx->pathPtr % 2 == 0){//current path is empty
-        //set start to current idx in point array
-        ctx->pathes[ctx->pathPtr] = ctx->pointCount;
-        _check_pathes_array(ctx);
-        ctx->pathPtr++;
-    }
-    _add_point              (ctx, x1, y1);
-    _recursive_bezier       (ctx, x1, y1, x2, y2, x3, y3, x4, y4, 0);
-    _add_point_cp_update    (ctx, x4, y4);
-}
