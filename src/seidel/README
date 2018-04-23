@@ -1,0 +1,92 @@
+This program is an implementation of a fast polygon
+triangulation algorithm based on the paper "A simple and fast
+incremental randomized algorithm for computing trapezoidal
+decompositions and for triangulating polygons" by Raimund Seidel.
+
+
+The algorithm handles simple polygons with holes. The input is
+specified as contours. The outermost contour is anti-clockwise, while
+all the inner contours must be clockwise. No point should be repeated
+in the input. A sample input file 'data_1' is provided.
+
+
+The output is a list of triangles. Each triangle gives a pair
+(i, j, k) where i, j, and k are indices of the vertices specified in
+the input array. (The index numbering starts from 1, since the first
+location v[0] in the input array of vertices is unused). The number of
+output triangles produced for a polygon with n points is,
+	(n - 2) + 2*(#holes)
+
+
+The algorithm also generates a qyery structure which can be
+used to answer point-location queries very fast.
+
+int triangulate_polygon(...)
+Time for triangulation: O(n log*n)
+		
+int is_point_inside_polygon(...)	
+Time for query: O(log n)
+
+Both the routines are defined in 'tri.c'. See that file for
+interfacing details.  If not used stand_alone, include the header file
+"interface.h" which contains the declarations for these
+functions. Inclusion of "triangulation.h" is not necessary.
+
+
+The implementation uses statically allocated arrays. Choose
+appropriate value for SEGSIZE /* in triangulate.h */ depending on
+input size.
+
+
+There sould not be any compilation problem. If log2() is not
+defined in your math library, you will have to supply the definition.
+
+	
+USAGE:
+	triangulate <filename> /* For standalone */
+
+
+------------------------------------------------------------------
+Bibliography:
+
+
+@article{Sei91,
+  AUTHOR = "R. Seidel",
+  TITLE = "A simple and Fast Randomized Algorithm for Computing Trapezoidal Decompositions and for Triangulating Polygons",
+  JOURNAL = "Computational Geometry Theory \& Applications",
+  PAGES = "51-64",
+  NUMBER = 1,    
+  YEAR = 1991,
+  VOLUME = 1 }
+
+
+@book{o-cgc-94
+, author =      "J. O'Rourke"
+, title =       "Computational Geometry in {C}"
+, publisher =   "Cambridge University Press"
+, year =        1994
+, note =        "ISBN 0-521-44592-2/Pb \$24.95,
+                ISBN 0-521-44034-3/Hc \$49.95.
+                Cambridge University Press
+                40 West 20th Street
+                New York, NY 10011-4211
+                1-800-872-7423
+                346+xi pages, 228 exercises, 200 figures, 219 references"
+, update =      "94.05 orourke, 94.01 orourke"
+, annote =      "Textbook"
+}
+
+
+
+Implementation report: Narkhede A. and Manocha D., Fast polygon
+ triangulation algorithm based on Seidel's Algorithm, UNC-CH, 1994.
+
+-------------------------------------------------------------------
+
+This code is free for non-commercial use only.
+
+UNC-CH GIVES NO WARRANTY, EXPRESSED OR IMPLIED, FOR THE SOFTWARE
+AND/OR DOCUMENTATION PROVIDED, INCLUDING, WITHOUT LIMITATION, WARRANTY
+OF MERCHANTABILITY AND WARRANTY OF FITNESS FOR A PARTICULAR PURPOSE.
+
+- Atul Narkhede (narkhede@cs.unc.edu)

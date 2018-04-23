@@ -696,18 +696,21 @@ int main(int argc, char *argv[]) {
     surf = vkvg_surface_create (device,1024,800);
 
 
-    multi_test1();
+    //multi_test1();
 
     //test_grad_transforms();
 
-    cairo_tests();
+
 
     //test_colinear();
+
+    cairo_tests();
 
     vke_init_blit_renderer(e, vkvg_surface_get_vk_image(surf));
 
     while (!glfwWindowShouldClose(e->renderer.window)) {
         glfwPollEvents();
+
         draw(e, vkvg_surface_get_vk_image(surf));
     }
 

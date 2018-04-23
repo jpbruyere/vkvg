@@ -85,7 +85,7 @@ if(GLSLC AND XXD)
 	#add_definitions( -DDEBUG_VK_PERF=true )
 endif()
 
-FILE(GLOB VKVG_SRC src/*.c)
+FILE(GLOB VKVG_SRC src/*.c) #src/seidel/*.c)
 
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${VKVG_SRC} ${SHADERS})
 
