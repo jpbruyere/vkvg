@@ -393,7 +393,7 @@ void draw(VkEngine* e, VkImage blitSource) {
                                 &r->currentScBufferIndex);
     if ((err == VK_ERROR_OUT_OF_DATE_KHR) || (err == VK_SUBOPTIMAL_KHR)){
         vke_swapchain_create(e);
-        vke_init_blit_renderer(r, blitSource);
+        vke_init_blit_renderer(e, blitSource);
     }else{
         VK_CHECK_RESULT(err);
         submitCommandBuffer (r->queue, &r->cmdBuffs[r->currentScBufferIndex], &r->semaPresentEnd, &r->semaDrawEnd);
