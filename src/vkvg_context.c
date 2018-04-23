@@ -361,7 +361,6 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
         triangulate_polygon(1, cpt, triIn, triOut);
 
-
         for (int i=0; i<pathPointCount;i++){
             v.pos = ctx->points[i+firstPtIdx];
             _add_vertex(ctx, v);

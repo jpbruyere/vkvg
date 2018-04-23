@@ -100,6 +100,7 @@ VkvgSurface vkvg_surface_create_from_image  (VkvgDevice dev, const char* filePat
 void		vkvg_surface_destroy		(VkvgSurface surf);
 VkImage		vkvg_surface_get_vk_image	(VkvgSurface surf);
 VkImage		vkvg_surface_get_vkh_image	(VkvgSurface surf);
+void        vkvg_surface_write_to_png   (VkvgSurface surf, const char* path);
 
 //mimic from cairo, to facilitate usage of vkvg as cairo vulkan backend
 typedef enum _vkvg_operator {

@@ -25,6 +25,8 @@
 #include "vkvg_context_internal.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 void _clear_stencil (VkvgSurface surf)
 {
@@ -199,6 +201,47 @@ void vkvg_surface_destroy(VkvgSurface surf)
 VkImage vkvg_surface_get_vk_image(VkvgSurface surf)
 {
     return vkh_image_get_vkimage (surf->img);
+}
+
+void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
+    uint32_t stride = surf->width * 4;
+    VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
+    VkvgDevice dev = surf->dev;
+
+    //RGBA to blit to, surf img is bgra
+    VkhImage stagImg= vkh_image_create (surf->dev,VK_FORMAT_R8G8B8A8_UNORM,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
+                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+
+    VkCommandBuffer cmd = dev->cmd;
+    _wait_device_fence (dev);
+
+    vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout (cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+    VkImageBlit blit = {
+        .srcSubresource = imgSubResLayers,
+        .srcOffsets[1] = {surf->width, surf->height, 1},
+        .dstSubresource = imgSubResLayers,
+        .dstOffsets[1] = {surf->width, surf->height, 1},
+    };
+    vkCmdBlitImage  (cmd,
+                     vkh_image_get_vkimage (surf->img), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                     vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+
+    vkh_cmd_end     (cmd);
+    vkh_cmd_submit  (dev->gQueue, &cmd, dev->fence);
+    _wait_device_fence (dev);
+
+    void* img = vkh_image_map (stagImg);
+
+    stbi_write_png (path, surf->width, surf->height, 4, img, stride);
+
+    vkh_image_unmap (stagImg);
+    vkh_image_destroy (stagImg);
 }
 /*VkhImage vkvg_surface_get_vkh_image(VkvgSurface surf)
 {
