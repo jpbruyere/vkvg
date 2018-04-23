@@ -190,10 +190,10 @@ static int init_query_structure(segnum)
 
   tr[t1].hi = tr[t2].hi = tr[t4].lo = qs[i1].yval;
   tr[t1].lo = tr[t2].lo = tr[t3].hi = qs[i3].yval;
-  tr[t4].hi.y = (double) (INFINITY);
-  tr[t4].hi.x = (double) (INFINITY);
-  tr[t3].lo.y = (double) -1* (INFINITY);
-  tr[t3].lo.x = (double) -1* (INFINITY);
+  tr[t4].hi.y = (float) (INFINITY);
+  tr[t4].hi.x = (float) (INFINITY);
+  tr[t3].lo.y = (float) -1* (INFINITY);
+  tr[t3].lo.x = (float) -1* (INFINITY);
   tr[t1].rseg = tr[t2].lseg = segnum;
   tr[t1].u0 = tr[t2].u0 = t4;
   tr[t1].d0 = tr[t2].d0 = t3;
@@ -228,7 +228,7 @@ static int is_left_of(segnum, v)
      point_t *v;
 {
   segment_t *s = &seg[segnum];
-  double area;
+  float area;
 
   if (_greater_than(&s->v1, &s->v0)) /* seg. going upwards */
     {
@@ -842,7 +842,7 @@ static int add_segment(segnum)
       else
     {
       int tmpseg = tr[tr[t].d0].rseg;
-      double y0, yt;
+      float y0, yt;
       point_t tmppt;
       int tnext, i_d0, i_d1;
 

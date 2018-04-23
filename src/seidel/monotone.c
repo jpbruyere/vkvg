@@ -58,7 +58,7 @@ static int new_chain_element()
 }
 
 
-static double get_angle(vp0, vpnext, vp1)
+static float get_angle(vp0, vpnext, vp1)
      point_t *vp0;
      point_t *vpnext;
      point_t *vp1;
@@ -88,7 +88,7 @@ static int get_vertex_positions(v0, v1, ip, iq)
 {
   vertexchain_t *vp0, *vp1;
   register int i;
-  double angle, temp;
+  float angle, temp;
   int tp, tq;
 
   vp0 = &vert[v0];

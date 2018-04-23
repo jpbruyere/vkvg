@@ -25,6 +25,7 @@
 #include "vkvg_surface_internal.h"
 #include "vkvg_pattern.h"
 #include "vkh_queue.h"
+#include "seidel/interface.h"
 
 #ifdef DEBUG
 static vec2 debugLinePoints[1000];
@@ -353,50 +354,26 @@ void vkvg_fill_preserve (VkvgContext ctx){
         uint32_t pathPointCount = lastPtIdx - ctx->pathes[ptrPath] + 1;
         uint32_t firstVertIdx = ctx->vertCount;
 
-        ear_clip_point ecps[pathPointCount];
-        uint32_t ecps_count = pathPointCount;
-        uint32_t i = 0;
+        float triIn[pathPointCount+1][2];
+        memcpy(&triIn[1], &ctx->points[firstPtIdx], 2* sizeof(float) * pathPointCount);
+        int cpt[] = {pathPointCount};
+        int triOut[pathPointCount-2][3];
 
-        //init points link list
-        while (i < pathPointCount-1){
+        triangulate_polygon(1, cpt, triIn, triOut);
+
+
+        for (int i=0; i<pathPointCount;i++){
             v.pos = ctx->points[i+firstPtIdx];
-            ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
-            ecps[i] = ecp;
             _add_vertex(ctx, v);
-            i++;
         }
-        v.pos = ctx->points[i+firstPtIdx];
-        ear_clip_point ecp = {v.pos, i+firstVertIdx, ecps};
-        ecps[i] = ecp;
-        _add_vertex(ctx, v);
 
-        ear_clip_point* ecp_current = ecps;
-
-        while (ecps_count > 3) {
-            ear_clip_point* v0 = ecp_current->next,
-                    *v1 = ecp_current, *v2 = ecp_current->next->next;
-            if (ecp_zcross (v0, v2, v1)<0){
-                ecp_current = ecp_current->next;
-                continue;
-            }
-            ear_clip_point* vP = v2->next;
-            bool isEar = true;
-            while (vP!=v1){
-                if (ptInTriangle (vP->pos, v0->pos, v2->pos, v1->pos)){
-                    isEar = false;
-                    break;
-                }
-                vP = vP->next;
-            }
-            if (isEar){
-                _add_triangle_indices (ctx, v0->idx, v1->idx, v2->idx);
-                v1->next = v2;
-                ecps_count --;
-            }else
-                ecp_current = ecp_current->next;
+        firstVertIdx--;//indices start at 1
+        for (int i=0; i<pathPointCount-2;i++){
+            _add_triangle_indices (ctx,
+                    triOut[i][2] + firstVertIdx,
+                    triOut[i][1] + firstVertIdx,
+                    triOut[i][0] + firstVertIdx);
         }
-        if (ecps_count == 3)
-            _add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
 
         ptrPath+=2;
     }

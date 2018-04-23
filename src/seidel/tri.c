@@ -72,7 +72,7 @@ int main(argc, argv)
 int triangulate_polygon(ncontours, cntr, vertices, triangles)
      int ncontours;
      int cntr[];
-     double (*vertices)[2];
+     float (*vertices)[2];
      int (*triangles)[3];
 {
   register int i;
@@ -142,7 +142,7 @@ int triangulate_polygon(ncontours, cntr, vertices, triangles)
  */
 
 int is_point_inside_polygon(vertex)
-     double vertex[2];
+     float vertex[2];
 {
   point_t v;
   int trnum, rseg;

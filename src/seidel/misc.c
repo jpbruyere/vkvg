@@ -2,11 +2,11 @@
 #include <sys/time.h>
 #include <math.h>
 
-#ifdef __STDC__
-extern double log2(double);
+/*#ifdef __STDC__
+extern float log2(float);
 #else
-extern double log2();
-#endif
+extern float log2();
+#endif*/
 
 static int choose_idx;
 static int permute[SEGSIZE];
@@ -130,9 +130,9 @@ int math_logstar_n(n)
      int n;
 {
   register int i;
-  double v;
+  float v;
 
-  for (i = 0, v = (double) n; v >= 1; i++)
+  for (i = 0, v = (float) n; v >= 1; i++)
     v = log2(v);
 
   return (i - 1);
@@ -144,10 +144,10 @@ int math_N(n, h)
      int h;
 {
   register int i;
-  double v;
+  float v;
 
   for (i = 0, v = (int) n; i < h; i++)
     v = log2(v);
 
-  return (int) ceil((double) 1.0*n/v);
+  return (int) ceil((float) 1.0*n/v);
 }

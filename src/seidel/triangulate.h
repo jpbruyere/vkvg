@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 typedef struct {
-  double x, y;
+  float x, y;
 } point_t, vector_t;
 
 
