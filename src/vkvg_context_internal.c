@@ -185,10 +185,6 @@ void _explicit_ms_resolve (VkvgContext ctx){
 }
 
 void _flush_cmd_buff (VkvgContext ctx){
-    if (ctx->indCount == 0){
-        vkResetCommandBuffer(ctx->cmd,0);
-        return;
-    }
     _record_draw_cmd        (ctx);
     vkCmdEndRenderPass      (ctx->cmd);
     //_explicit_ms_resolve    (ctx);
@@ -197,7 +193,10 @@ void _flush_cmd_buff (VkvgContext ctx){
     _submit_wait_and_reset_cmd(ctx);
 }
 void _init_cmd_buff (VkvgContext ctx){
-    ctx->vertCount = ctx->indCount = ctx->curIndStart = 0;
+    //full surf quad triangles is at the beginning
+    ctx->vertCount = 4;
+    ctx->indCount = 6;
+    ctx->curIndStart = 6;
     //VkClearValue clearValues[2];
     //clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
     //clearValues[1].depthStencil = { 1.0f, 0 };

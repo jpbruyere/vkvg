@@ -75,6 +75,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _init_descriptor_sets   (ctx);
     _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->cacheTex, ctx->dsFont);
     _update_gradient_desc_set(ctx);
+
+    //add full screen quad at the beginning, recurently used
+    _vkvg_fill_rectangle (ctx,0,0,ctx->pSurf->width,ctx->pSurf->height);
+
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
 
@@ -339,6 +343,8 @@ void vkvg_fill_preserve (VkvgContext ctx){
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);
 
+    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
+
     uint32_t ptrPath = 0;;
     Vertex v = {};
     v.uv.z = -1;
@@ -353,54 +359,21 @@ void vkvg_fill_preserve (VkvgContext ctx){
         uint32_t pathPointCount = lastPtIdx - ctx->pathes[ptrPath] + 1;
         uint32_t firstVertIdx = ctx->vertCount;
 
-        ear_clip_point ecps[pathPointCount];
-        uint32_t ecps_count = pathPointCount;
-        uint32_t i = 0;
 
-        //init points link list
-        while (i < pathPointCount-1){
-            v.pos = ctx->points[i+firstPtIdx];
-            ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
-            ecps[i] = ecp;
-            _add_vertex(ctx, v);
-            i++;
+        for (int i = 0; i < pathPointCount; i++) {
+             v.pos = ctx->points[i+firstPtIdx];
+             _add_vertex(ctx, v);
         }
-        v.pos = ctx->points[i+firstPtIdx];
-        ear_clip_point ecp = {v.pos, i+firstVertIdx, ecps};
-        ecps[i] = ecp;
-        _add_vertex(ctx, v);
 
-        ear_clip_point* ecp_current = ecps;
-
-        while (ecps_count > 3) {
-            ear_clip_point* v0 = ecp_current->next,
-                    *v1 = ecp_current, *v2 = ecp_current->next->next;
-            if (ecp_zcross (v0, v2, v1)<0){
-                ecp_current = ecp_current->next;
-                continue;
-            }
-            ear_clip_point* vP = v2->next;
-            bool isEar = true;
-            while (vP!=v1){
-                if (ptInTriangle (vP->pos, v0->pos, v2->pos, v1->pos)){
-                    isEar = false;
-                    break;
-                }
-                vP = vP->next;
-            }
-            if (isEar){
-                _add_triangle_indices (ctx, v0->idx, v1->idx, v2->idx);
-                v1->next = v2;
-                ecps_count --;
-            }else
-                ecp_current = ecp_current->next;
-        }
-        if (ecps_count == 3)
-            _add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
+        vkCmdDraw (ctx->cmd,pathPointCount,1,firstVertIdx,0);
 
         ptrPath+=2;
     }
-    _record_draw_cmd(ctx);
+
+    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
+    vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, 0xff);
+    vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+    vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, 0x0);
 }
 void vkvg_fill (VkvgContext ctx){
     vkvg_fill_preserve(ctx);
@@ -545,7 +518,7 @@ void _vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float width, float
 }
 void vkvg_paint (VkvgContext ctx){
     _vkvg_fill_rectangle (ctx, 0, 0, ctx->pSurf->width, ctx->pSurf->height);
-    _record_draw_cmd (ctx);
+    _record_draw_cmd(ctx);
 }
 
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {

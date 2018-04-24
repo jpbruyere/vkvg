@@ -132,7 +132,7 @@ void _setupPipelines(VkvgDevice dev)
                 .renderPass = dev->renderPass };
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-                .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST };
+                .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN };
 
     VkPipelineRasterizationStateCreateInfo rasterizationState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
                 .polygonMode = VK_POLYGON_MODE_FILL,
@@ -158,8 +158,9 @@ void _setupPipelines(VkvgDevice dev)
                 .pAttachments = &blendAttachmentState };
 
                                         /*failOp,passOp,depthFailOp,compareOp, compareMask, writeMask, reference;*/
+    VkStencilOpState polyFillOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_INVERT,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,0x0,0xf,0};
     VkStencilOpState clipingOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_INCREMENT_AND_CLAMP,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,0x0,0xf,0};
-    VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_REPLACE,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,0xf,0x0,0};
+    VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_ZERO,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,0xf,0xf,0};
 
     VkPipelineDepthStencilStateCreateInfo dsStateCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
                 .depthTestEnable = VK_FALSE,
@@ -255,9 +256,13 @@ void _setupPipelines(VkvgDevice dev)
 
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineClipping));
 
+    dsStateCreateInfo.back = dsStateCreateInfo.front = polyFillOpState;
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelinePolyFill));
+
     //dsStateCreateInfo.back.writeMask = dsStateCreateInfo.front.writeMask = 0;
     dsStateCreateInfo.back = dsStateCreateInfo.front = stencilOpState;
     blendAttachmentState.colorWriteMask=0xf;
+    inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipeline));
 
     blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;

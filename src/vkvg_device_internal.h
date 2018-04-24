@@ -39,6 +39,7 @@ typedef struct _vkvg_device_t{
     VkFence                 fence;
 
     VkPipeline				pipeline;
+    VkPipeline				pipelinePolyFill;
     VkPipeline				pipelineClipping;
     VkPipeline				pipeline_OP_SUB;
     VkPipeline				pipelineWired;
