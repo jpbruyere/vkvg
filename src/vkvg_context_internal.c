@@ -41,39 +41,56 @@ void _check_pathes_array (VkvgContext ctx){
     ctx->sizePathes += VKVG_PATHES_SIZE;
     ctx->pathes = (uint32_t*) realloc (ctx->pathes, ctx->sizePathes*sizeof(uint32_t));
 }
+//when empty, ptr is even, else it's odd
+//when empty, no current point is defined.
 inline bool _current_path_is_empty (VkvgContext ctx) {
     return ctx->pathPtr % 2 == 0;
 }
+//this function expect that current point exists
+inline vec2 _get_current_position (VkvgContext ctx) {
+    return ctx->points[ctx->pointCount-1];
+}
 //this function expect that current path is empty
-void _start_sub_path (VkvgContext ctx) {
+void _start_sub_path (VkvgContext ctx, float x, float y) {
     //set start to current idx in point array
     ctx->pathes[ctx->pathPtr] = ctx->pointCount;
+    _add_point(ctx, x, y);
     _check_pathes_array(ctx);
     ctx->pathPtr++;
+}
+void _finish_path (VkvgContext ctx){
+    if (_current_path_is_empty(ctx))
+        return;
+    if (ctx->pathes[ctx->pathPtr-1] == ctx->pointCount - 1){
+        //only current pos is in path
+        ctx->pathPtr--;
+        return;
+    }
+
+    //set end index of current path to last point in points array
+    ctx->pathes[ctx->pathPtr] = ctx->pointCount - 1;
+    _check_pathes_array(ctx);
+    ctx->pathPtr++;
+}
+void _clear_path (VkvgContext ctx){
+    ctx->pathPtr = 0;
+    ctx->pointCount = 0;
+}
+inline bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
+    return (ctx->pathes[ptrPath] == ctx->pathes[ptrPath+1]);
+}
+uint32_t _get_last_point_of_closed_path(VkvgContext ctx, uint32_t ptrPath){
+    if (ptrPath+2 < ctx->pathPtr)			//this is not the last path
+        return ctx->pathes[ptrPath+2]-1;    //last p is p prior to first idx of next path
+    return ctx->pointCount-1;				//last point of path is last point of point array
 }
 void _add_point (VkvgContext ctx, float x, float y){
     vec2 v = {x,y};
     ctx->points[ctx->pointCount] = v;
     ctx->pointCount++;
 }
-inline void _set_current_point (VkvgContext ctx, vec2 cp) {
-    ctx->curPos = cp;
-    ctx->curPosExists = true;
-}
-void _add_point_cp_update(VkvgContext ctx, float x, float y){
-    ctx->curPos.x = x;
-    ctx->curPos.y = y;
-    ctx->curPosExists = true;
-    ctx->points[ctx->pointCount] = ctx->curPos;
-    ctx->pointCount++;
-}
-void _add_point_v2(VkvgContext ctx, vec2 v){
-    ctx->curPos = v;
-    ctx->points[ctx->pointCount] = ctx->curPos;
-    ctx->pointCount++;
-}
-void _add_curpos (VkvgContext ctx){
-    ctx->points[ctx->pointCount] = ctx->curPos;
+void _add_point_vec2(VkvgContext ctx, vec2 v){
+    ctx->points[ctx->pointCount] = v;
     ctx->pointCount++;
 }
 float _normalizeAngle(float a)
@@ -185,10 +202,6 @@ void _explicit_ms_resolve (VkvgContext ctx){
 }
 
 void _flush_cmd_buff (VkvgContext ctx){
-    if (ctx->indCount == 0){
-        vkResetCommandBuffer(ctx->cmd,0);
-        return;
-    }
     _record_draw_cmd        (ctx);
     vkCmdEndRenderPass      (ctx->cmd);
     //_explicit_ms_resolve    (ctx);
@@ -197,7 +210,10 @@ void _flush_cmd_buff (VkvgContext ctx){
     _submit_wait_and_reset_cmd(ctx);
 }
 void _init_cmd_buff (VkvgContext ctx){
-    ctx->vertCount = ctx->indCount = ctx->curIndStart = 0;
+    //full surf quad triangles is at the beginning
+    ctx->vertCount = 4;
+    ctx->indCount = 6;
+    ctx->curIndStart = 6;
     //VkClearValue clearValues[2];
     //clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
     //clearValues[1].depthStencil = { 1.0f, 0 };
@@ -228,36 +244,22 @@ void _init_cmd_buff (VkvgContext ctx){
     vkCmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
     vkCmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
     vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
-    vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, ctx->stencilRef);
+    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, 0);
 
     _update_push_constants  (ctx);
+}
+//compute inverse mat used in shader when context matrix has changed
+//then trigger push constants command
+void _set_mat_inv_and_vkCmdPush (VkvgContext ctx) {
+    ctx->pushConsts.matInv = ctx->pushConsts.mat;
+    vkvg_matrix_invert (&ctx->pushConsts.matInv);
+    _update_push_constants (ctx);
 }
 inline void _update_push_constants (VkvgContext ctx) {
     vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
 }
 
-void _finish_path (VkvgContext ctx){
-    if (ctx->pathPtr % 2 == 0)//current path is empty
-        return;
-    //set end index of current path to last point in points array
-    ctx->pathes[ctx->pathPtr] = ctx->pointCount - 1;
-    _check_pathes_array(ctx);
-    ctx->pathPtr++;
-}
-void _clear_path (VkvgContext ctx){
-    ctx->pathPtr = 0;
-    ctx->pointCount = 0;
-    ctx->curPosExists = false;
-}
-inline bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
-    return (ctx->pathes[ptrPath] == ctx->pathes[ptrPath+1]);
-}
-uint32_t _get_last_point_of_closed_path(VkvgContext ctx, uint32_t ptrPath){
-    if (ptrPath+2 < ctx->pathPtr)			//this is not the last path
-        return ctx->pathes[ptrPath+2]-1;    //last p is p prior to first idx of next path
-    return ctx->pointCount-1;				//last point of path is last point of point array
-}
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
     VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     VkWriteDescriptorSet writeDescriptorSet = {

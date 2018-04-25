@@ -144,7 +144,9 @@ void vkvg_destroy			(VkvgContext ctx);
 
 void vkvg_flush				(VkvgContext ctx);
 
+void vkvg_new_path          (VkvgContext ctx);
 void vkvg_close_path		(VkvgContext ctx);
+void vkvg_new_sub_path      (VkvgContext ctx);
 void vkvg_line_to			(VkvgContext ctx, float x, float y);
 void vkvg_rel_line_to       (VkvgContext ctx, float x, float y);
 void vkvg_move_to			(VkvgContext ctx, float x, float y);
@@ -179,6 +181,10 @@ void vkvg_restore           (VkvgContext ctx);
 void vkvg_translate         (VkvgContext ctx, float dx, float dy);
 void vkvg_scale             (VkvgContext ctx, float sx, float sy);
 void vkvg_rotate            (VkvgContext ctx, float radians);
+void vkvg_transform         (VkvgContext ctx, const vkvg_matrix_t* matrix);
+void vkvg_set_matrix        (VkvgContext ctx, const vkvg_matrix_t* matrix);
+void vkvg_get_matrix        (VkvgContext ctx, const vkvg_matrix_t* matrix);
+void vkvg_identity_matrix   (VkvgContext ctx);
 
 //pattern
 VkvgPattern vkvg_pattern_create             ();

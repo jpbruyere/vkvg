@@ -19,8 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef VKE_H
-#define VKE_H
+#ifndef VKENGINE_H
+#define VKENGINE_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -32,12 +32,9 @@
 
 #include "vkh.h"
 
-#define APP_SHORT_NAME "vkcrow_test"
 /* Number of samples needs to be the same at image creation,      */
 /* renderpass creation and pipeline creation.                     */
 #define FENCE_TIMEOUT 100000000
-
-//#include "vkh_presenter.h"
 
 typedef struct ImageBuffer_t {
     VkImage     image;
@@ -93,4 +90,19 @@ typedef struct VkEngine_t {
     VkComputer          computer;
     VkLoader            loader;
 }VkEngine;
+
+VkEngine*   vke_create  ();
+void        vke_destroy (VkEngine* e);
+
+void initPhySurface(VkEngine* e, VkFormat preferedFormat, VkPresentModeKHR presentMode);
+
+VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts);
+
+void vkengine_dump_Infos (VkEngine* e);
+void vkengine_get_queues_properties (VkEngine* e, VkQueueFamilyProperties** qFamProps, uint32_t* count);
+
+
+void vke_init_blit_renderer(VkEngine* e, VkImage blitSource);
+void submitCommandBuffer(VkQueue queue, VkCommandBuffer *pCmdBuff, VkSemaphore* pWaitSemaphore, VkSemaphore* pSignalSemaphore);
+void draw(VkEngine* e, VkImage blitSource);
 #endif

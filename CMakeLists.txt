@@ -125,7 +125,7 @@ INSTALL(TARGETS vkvg
 
 if (GLFW3_FOUND)
 	#build test app
-	ADD_EXECUTABLE(${PROJECT_NAME}_test tests/test1.c)
+	ADD_EXECUTABLE(${PROJECT_NAME}_test tests/test1.c tests/vkengine.c)
 	TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME}_test PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
