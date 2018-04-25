@@ -248,6 +248,13 @@ void _init_cmd_buff (VkvgContext ctx){
 
     _update_push_constants  (ctx);
 }
+//compute inverse mat used in shader when context matrix has changed
+//then trigger push constants command
+void _set_mat_inv_and_vkCmdPush (VkvgContext ctx) {
+    ctx->pushConsts.matInv = ctx->pushConsts.mat;
+    vkvg_matrix_invert (&ctx->pushConsts.matInv);
+    _update_push_constants (ctx);
+}
 inline void _update_push_constants (VkvgContext ctx) {
     vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);

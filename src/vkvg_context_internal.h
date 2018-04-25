@@ -177,6 +177,7 @@ void _submit_wait_and_reset_cmd(VkvgContext ctx);
 void _submit_ctx_cmd        (VkvgContext ctx);
 void _wait_and_reset_ctx_cmd(VkvgContext ctx);
 void _update_push_constants (VkvgContext ctx);
+void _set_mat_inv_and_vkCmdPush (VkvgContext ctx);
 
 void _createDescriptorPool  (VkvgContext ctx);
 void _init_descriptor_sets  (VkvgContext ctx);

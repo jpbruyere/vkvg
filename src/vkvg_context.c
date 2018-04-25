@@ -163,6 +163,10 @@ void vkvg_new_sub_path (VkvgContext ctx){
 void vkvg_new_path (VkvgContext ctx){
     _clear_path(ctx);
 }
+//path closing is done by setting the endpoint of the path to the same index
+//as the start point.
+//I'll test if closing by adding a new point with the same x,y as the start point
+//would not make more sense.
 void vkvg_close_path (VkvgContext ctx){
     if (_current_path_is_empty(ctx))
         return;
@@ -748,20 +752,31 @@ void vkvg_restore (VkvgContext ctx){
 
 void vkvg_translate (VkvgContext ctx, float dx, float dy){
     vkvg_matrix_translate (&ctx->pushConsts.mat, dx, dy);
-    ctx->pushConsts.matInv = ctx->pushConsts.mat;
-    vkvg_matrix_invert (&ctx->pushConsts.matInv);
-    _update_push_constants (ctx);
+    _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_scale (VkvgContext ctx, float sx, float sy){
     vkvg_matrix_scale (&ctx->pushConsts.mat, sx, sy);
-    ctx->pushConsts.matInv = ctx->pushConsts.mat;
-    vkvg_matrix_invert (&ctx->pushConsts.matInv);
-    _update_push_constants (ctx);
+    _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_rotate (VkvgContext ctx, float radians){
     vkvg_matrix_rotate (&ctx->pushConsts.mat, radians);
-    ctx->pushConsts.matInv = ctx->pushConsts.mat;
-    vkvg_matrix_invert (&ctx->pushConsts.matInv);
-    _update_push_constants (ctx);
+    _set_mat_inv_and_vkCmdPush (ctx);
 }
-
+void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix) {
+    vkvg_matrix_t res;
+    vkvg_matrix_multiply (&res, &ctx->pushConsts.mat, matrix);
+    ctx->pushConsts.mat = res;
+    _set_mat_inv_and_vkCmdPush (ctx);
+}
+void vkvg_identity_matrix (VkvgContext ctx) {
+    vkvg_matrix_t im = VKVG_IDENTITY_MATRIX;
+    ctx->pushConsts.mat = im;
+    _set_mat_inv_and_vkCmdPush (ctx);
+}
+void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
+    ctx->pushConsts.mat = (*matrix);
+    _set_mat_inv_and_vkCmdPush (ctx);
+}
+void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
+    memcpy (matrix, &ctx->pushConsts.mat, sizeof(vkvg_matrix_t));
+}
