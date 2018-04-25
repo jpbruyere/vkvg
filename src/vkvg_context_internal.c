@@ -61,6 +61,12 @@ void _start_sub_path (VkvgContext ctx, float x, float y) {
 void _finish_path (VkvgContext ctx){
     if (_current_path_is_empty(ctx))
         return;
+    if (ctx->pathes[ctx->pathPtr-1] == ctx->pointCount - 1){
+        //only current pos is in path
+        ctx->pathPtr--;
+        return;
+    }
+
     //set end index of current path to last point in points array
     ctx->pathes[ctx->pathPtr] = ctx->pointCount - 1;
     _check_pathes_array(ctx);
