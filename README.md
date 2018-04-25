@@ -18,18 +18,20 @@
 
 **vkvg** is a multiplatform **c** library for drawing 2D vector graphics with [Vulkan](https://www.khronos.org/vulkan/).
 
-[Cairo](https://www.cairographics.org/) was missing a Vulkan backend, so I decided to start one myself trying to keep my api as close to Cairo as possible. Maybe vkvg could serve as a starting point for Cairo maintainers to start their Vulkan backend.
+[Cairo](https://www.cairographics.org/) was missing a Vulkan backend, so I decided to start one myself trying to keep my api as close to Cairo as possible. 
 
 ### Current status:
 
-vkvg is in early development stage, and no guarantee is given on the possible roadmap:
+**vkvg** is in early development stage, **0.1** beta release is on the road.
 
-- Basic shape fill and stroke functional, using ears clipping.
+- Fill (with stencil even-odd technic) and Stroke functional.
 - Basic painting operation.
 - Font system with caching operational.
-- Context should be thread safe, tests required.
-- Image loading with [stb lib](https://github.com/nothings/stb)
-- Nice logo.
+- Linear Gradients.
+- Line caps and joins.
+- Context should be thread safe, extensive tests required.
+- Image loading and writing with [stb lib](https://github.com/nothings/stb)
+- Test includes svg rendering with [nanoSVG](https://github.com/memononen/nanosvg)
 
 ### Requirements:
 
@@ -59,7 +61,12 @@ make						    # Run Make
 
 ### Roadmap
 
-- Improve triangulation algorithm.
+- Radial gradients.
 - Offscreen pattern building.
-- SVG rendering.
+- Avoid line joins inside curves and arc.
+- Structured unit testing.
+- Perf and memory checks.
+- Code clean and comment.
+- Documentations.
+
 

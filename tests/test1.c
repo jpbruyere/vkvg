@@ -714,28 +714,36 @@ void cairo_print_arc (VkvgContext cr) {
     vkvg_arc (cr, xc, yc, radius, angle1, angle1);
     vkvg_line_to (cr, xc, yc);
     vkvg_arc (cr, xc, yc, radius, angle2, angle2);
-    //vkvg_line_to (cr, xc, yc);
     vkvg_stroke (cr);
 }
 void cairo_tests () {
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
     vkvg_paint(ctx);
-    //cairo_print_arc(ctx);
-    //cairo_test_clip(ctx);
-    //vkvg_translate(ctx,200,0);
+
+    cairo_print_arc(ctx);
+
+    vkvg_translate(ctx,200,0);
     cairo_test_fill_rule(ctx);
 
-    //cairo_test_rounded_rect(ctx);
-    //vkvg_translate(ctx,250,0);
-    //cairo_test_curves(ctx);
-//    vkvg_translate(ctx,200,0);
-//    cairo_test_fill_and_stroke2(ctx);
-//    vkvg_translate(ctx,-650,300);
-    //vkvg_translate(ctx,250,0);
-    //cairo_print_arc_neg(ctx);
+    vkvg_translate(ctx,250,0);
+    cairo_test_rounded_rect(ctx);
 
-    //vkvg_test_fill_and_stroke(ctx);
+    vkvg_translate(ctx,250,0);
+    cairo_test_curves(ctx);
+
+    vkvg_translate(ctx,-700,250);
+    cairo_test_fill_and_stroke2(ctx);
+
+    vkvg_translate(ctx,250,0);
+    cairo_print_arc_neg(ctx);
+
+    /*vkvg_translate(ctx,250,0);
+    cairo_test_clip(ctx);
+
+    vkvg_translate(ctx,250,0);
+    vkvg_test_fill_and_stroke(ctx);*/
+
     vkvg_destroy(ctx);
 }
 
@@ -774,13 +782,18 @@ void test_svg () {
     vkvg_set_source_rgba(ctx,1.0,1.0,1.0,1);
     vkvg_paint(ctx);
 
-    int cpt = 0;
 
-    // Load
+    vkvg_scale(ctx,0.5,0.5);
+    vkvg_matrix_t m;
+    vkvg_get_matrix(ctx, &m);
+    vkvg_set_matrix(ctx, &m);
+
     NSVGimage* svg;
     NSVGshape* shape;
     NSVGpath* path;
-    svg = nsvgParseFromFile("/mnt/data/images/svg/tiger.svg", "px", 96);
+    svg = nsvgParseFromFile("/mnt/data/images/svg/tux.svg", "px", 96);
+    //svg = nsvgParseFromFile("/mnt/data/images/svg/world.svg", "px", 96);
+    //svg = nsvgParseFromFile("/mnt/data/images/svg/tiger.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/WMD-biological.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/Skull_and_crossbones.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/IconAlerte.svg", "px", 96);
@@ -822,16 +835,18 @@ void test_svg () {
             vkvg_fill_preserve (ctx);
         }
 
-        if (shape->stroke.type == NSVG_PAINT_COLOR){
+        if (shape->stroke.type == NSVG_PAINT_COLOR)
             svg_set_color(ctx, shape->stroke.color, o);
-            vkvg_stroke(ctx);
+        else if (shape->stroke.type == NSVG_PAINT_LINEAR_GRADIENT){
+            NSVGgradient* g = shape->stroke.gradient;
+            svg_set_color(ctx, g->stops[0].color, o);
         }
-        //vkvg_stroke(ctx);
-        //cpt++;
-        //if (cpt>290)
-        //    break;
+
+        vkvg_stroke(ctx);
+
         vkvg_flush(ctx);
     }
+
     nsvgDelete(svg);
 
     vkvg_destroy(ctx);
@@ -845,13 +860,13 @@ int main(int argc, char *argv[]) {
     device = vkvg_device_create(e->phy, e->dev, e->renderer.queue, e->renderer.qFam);
     surf = vkvg_surface_create (device,1024,800);
 
-    test_svg();
+    //test_svg();
 
     //multi_test1();
 
     //test_grad_transforms();
 
-    //cairo_tests();
+    cairo_tests();
 
     //test_colinear();
 
