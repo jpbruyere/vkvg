@@ -551,16 +551,15 @@ void cairo_test_fill_rule (VkvgContext cr){
 void cairo_test_clip (VkvgContext cr){
     vkvg_arc (cr, 128.0, 128.0, 76.8, 0, 2 * M_PI);
     vkvg_clip (cr);
-
     //vkvg_new_path (cr);  /* current path is not
     //                         consumed by vkvg_clip() */
     vkvg_set_source_rgba(cr, 0, 0, 0, 1);
     vkvg_rectangle (cr, 0, 0, 256, 256);
     vkvg_fill (cr);
     vkvg_set_source_rgba (cr, 0, 1, 0, 1);
-    vkvg_move_to (cr, 0, 0);
+    vkvg_move_to (cr, -100, -100);
     vkvg_line_to (cr, 256, 256);
-    vkvg_move_to (cr, 256, 0);
+    vkvg_move_to (cr, 356, -100);
     vkvg_line_to (cr, 0, 256);
     vkvg_set_line_width (cr, 10.0);
     vkvg_stroke (cr);
@@ -721,6 +720,25 @@ void cairo_tests () {
     vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
     vkvg_paint(ctx);
 
+    /*vkvg_set_source_rgba(ctx,0,1,0,1);
+    vkvg_rectangle(ctx,100,100,200,200);
+    //vkvg_fill(ctx);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgba(ctx,1,0,0,1);
+    vkvg_paint(ctx);
+    //vkvg_rectangle(ctx,00,00,1024,800);
+    //vkvg_fill(ctx);
+
+    vkvg_reset_clip(ctx);
+    vkvg_set_source_rgba(ctx,0,0,1,1);
+    vkvg_set_line_width(ctx,20);
+    vkvg_move_to(ctx,0,0);
+    vkvg_rel_line_to(ctx,800,800);
+    vkvg_stroke(ctx);*/
+
+    //cairo_test_clip(ctx);
+
     cairo_print_arc(ctx);
 
     vkvg_translate(ctx,200,0);
@@ -737,12 +755,6 @@ void cairo_tests () {
 
     vkvg_translate(ctx,250,0);
     cairo_print_arc_neg(ctx);
-
-    /*vkvg_translate(ctx,250,0);
-    cairo_test_clip(ctx);
-
-    vkvg_translate(ctx,250,0);
-    vkvg_test_fill_and_stroke(ctx);*/
 
     vkvg_destroy(ctx);
 }

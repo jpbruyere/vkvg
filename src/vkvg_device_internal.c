@@ -158,10 +158,6 @@ void _setupPipelines(VkvgDevice dev)
                 .pAttachments = &blendAttachmentState };
 
                                         /*failOp,passOp,depthFailOp,compareOp, compareMask, writeMask, reference;*/
-    /*VkStencilOpState polyFillOpState ={VK_STENCIL_OP_KEEP,VK_STENCIL_OP_INVERT,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,0x0,0xf,0};
-    VkStencilOpState clipingOpState = {VK_STENCIL_OP_REPLACE,VK_STENCIL_OP_ZERO,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_ALL_BIT,0x2};
-    VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_ZERO,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,0xf,0xf,0xf};*/
-
     VkStencilOpState polyFillOpState ={VK_STENCIL_OP_KEEP,VK_STENCIL_OP_INVERT,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_CLIP_BIT,STENCIL_FILL_BIT,0};
     VkStencilOpState clipingOpState = {VK_STENCIL_OP_REPLACE,VK_STENCIL_OP_ZERO,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_NOT_EQUAL,STENCIL_FILL_BIT,STENCIL_ALL_BIT,0x2};
     VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_ZERO,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_FILL_BIT,0x1};
@@ -265,7 +261,6 @@ void _setupPipelines(VkvgDevice dev)
     dsStateCreateInfo.back = dsStateCreateInfo.front = clipingOpState;
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineClipping));
 
-    //dsStateCreateInfo.back.writeMask = dsStateCreateInfo.front.writeMask = 0;
     dsStateCreateInfo.back = dsStateCreateInfo.front = stencilOpState;
     blendAttachmentState.colorWriteMask=0xf;
     dynamicState.dynamicStateCount = 3;

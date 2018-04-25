@@ -47,8 +47,6 @@ typedef struct {
     uint32_t patternType;
     uint32_t pad;
     vkvg_matrix_t mat;
-    //uint32_t pad2;
-    //uint32_t pad3;
     vkvg_matrix_t matInv;
 }push_constants;
 
@@ -89,7 +87,6 @@ typedef struct _vkvg_context_t {
 
     VkvgSurface		pSurf;
     VkFence			flushFence;
-    //uint32_t        stencilRef;
     VkhImage        source;
 
     VkCommandPool		cmdPool;
