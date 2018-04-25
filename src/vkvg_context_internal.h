@@ -41,12 +41,6 @@ typedef struct{
     vec3 uv;
 }Vertex;
 
-typedef struct _ear_clip_point{
-    vec2 pos;
-    uint32_t idx;
-    struct _ear_clip_point* next;
-}ear_clip_point;
-
 typedef struct {
     vec4     source;
     vec2     size;
@@ -95,7 +89,7 @@ typedef struct _vkvg_context_t {
 
     VkvgSurface		pSurf;
     VkFence			flushFence;
-    uint32_t        stencilRef;
+    //uint32_t        stencilRef;
     VkhImage        source;
 
     VkCommandPool		cmdPool;
@@ -182,15 +176,12 @@ void _set_mat_inv_and_vkCmdPush (VkvgContext ctx);
 void _createDescriptorPool  (VkvgContext ctx);
 void _init_descriptor_sets  (VkvgContext ctx);
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
-void _update_gradient_desc_set (VkvgContext ctx);
+void _update_gradient_desc_set(VkvgContext ctx);
 void _reset_src_descriptor_set(VkvgContext ctx);
 void _free_ctx_save         (vkvg_context_save_t* sav);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){
     return v1.x*v2.y-v1.y*v2.x;
-}
-static inline float ecp_zcross (ear_clip_point* p0, ear_clip_point* p1, ear_clip_point* p2){
-    return vec2_zcross (vec2_sub (p1->pos, p0->pos), vec2_sub (p2->pos, p0->pos));
 }
 void _recursive_bezier(VkvgContext ctx,
                        float x1, float y1, float x2, float y2,

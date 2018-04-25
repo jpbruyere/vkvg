@@ -297,19 +297,11 @@ void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 
     vkvg_close_path (ctx);
 }
-void vkvg_clip_preserve (VkvgContext ctx){
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
-    vkvg_fill_preserve(ctx);
-    vkvg_flush(ctx);
-    //should test current operator to bind correct pipeline
-    ctx->stencilRef++;
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
-    vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, ctx->stencilRef);
-}
+
 void vkvg_reset_clip (VkvgContext ctx){
     _flush_cmd_buff(ctx);
     _clear_stencil(ctx->pSurf);
-    ctx->stencilRef=0;
+    //ctx->stencilRef=0;
     _init_cmd_buff(ctx);
 }
 void vkvg_clip (VkvgContext ctx){
@@ -325,14 +317,7 @@ void vkvg_fill (VkvgContext ctx){
     vkvg_fill_preserve(ctx);
     _clear_path(ctx);
 }
-void vkvg_fill_preserve (VkvgContext ctx){
-    if (ctx->pathPtr == 0)      //nothing to fill
-        return;
-    _finish_path(ctx);
-
-    if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
-        vkvg_flush(ctx);
-
+void _poly_fill (VkvgContext ctx){
     vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
     uint32_t ptrPath = 0;;
@@ -358,11 +343,42 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
         ptrPath+=2;
     }
+}
+void vkvg_clip_preserve (VkvgContext ctx){
+    if (ctx->pathPtr == 0)      //nothing to fill
+        return;
+    _finish_path(ctx);
+
+    if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
+        vkvg_flush(ctx);
+
+    _poly_fill (ctx);
+
+    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+    vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+    //vkvg_flush(ctx);
+    //should test current operator to bind correct pipeline
+    //ctx->stencilRef++;
+    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
+    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    //vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, ctx->stencilRef);
+}
+void vkvg_fill_preserve (VkvgContext ctx){
+    if (ctx->pathPtr == 0)      //nothing to fill
+        return;
+    _finish_path(ctx);
+
+    if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
+        vkvg_flush(ctx);
+
+    _poly_fill (ctx);
 
     vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
-    vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, 0xff);
+    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+    //vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, 0xff);
     vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
-    vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, 0x0);
+    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    //vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, 0x0);
 }
 void vkvg_stroke_preserve (VkvgContext ctx)
 {
@@ -505,6 +521,7 @@ void _vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float width, float
 void vkvg_paint (VkvgContext ctx){
 //    _vkvg_fill_rectangle (ctx, 0, 0, ctx->pSurf->width, ctx->pSurf->height);
 //    _record_draw_cmd(ctx);
+    //vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, 0x2);
     vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
 }
 
@@ -601,10 +618,7 @@ void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join){
     ctx->lineJoint = join;
 }
 
-
-
 void vkvg_select_font_face (VkvgContext ctx, const char* name){
-
     _select_font_face (ctx, name);
 }
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
@@ -651,7 +665,7 @@ void vkvg_save (VkvgContext ctx){
     VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
     _submit_ctx_cmd(ctx);
 
-    sav->stencilRef = ctx->stencilRef;
+    //sav->stencilRef = ctx->stencilRef;
     sav->sizePoints = ctx->sizePoints;
     sav->pointCount = ctx->pointCount;
 
@@ -714,7 +728,7 @@ void vkvg_restore (VkvgContext ctx){
     VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
     _submit_ctx_cmd(ctx);
 
-    ctx->stencilRef = sav->stencilRef;
+    //ctx->stencilRef = sav->stencilRef;
     ctx->sizePoints = sav->sizePoints;
     ctx->pointCount = sav->pointCount;
 

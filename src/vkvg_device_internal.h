@@ -26,6 +26,10 @@
 #include "vkvg.h"
 #include "vkvg_fonts.h"
 
+#define STENCIL_FILL_BIT    0x1
+#define STENCIL_CLIP_BIT    0x2
+#define STENCIL_ALL_BIT     0x3
+
 typedef struct _vkvg_device_t{
     VkDevice				vkDev;
     VkPhysicalDeviceMemoryProperties phyMemProps;
