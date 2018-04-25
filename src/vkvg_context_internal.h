@@ -131,8 +131,6 @@ typedef struct _vkvg_context_t {
     uint32_t*	pathes;
     size_t		sizePathes;
 
-    vec2		curPos;     //current position handling
-    bool        curPosExists;
     vec4		curRGBA;    //is store in pushConsts => may be removed.
     float		lineWidth;
 
@@ -149,15 +147,18 @@ typedef struct _vkvg_context_t {
 }vkvg_context;
 
 bool _current_path_is_empty (VkvgContext ctx);
-void _start_sub_path        (VkvgContext ctx);
+void _start_sub_path        (VkvgContext ctx, float x, float y);
 void _check_pathes_array	(VkvgContext ctx);
+void _finish_path			(VkvgContext ctx);
+void _clear_path			(VkvgContext ctx);
+bool _path_is_closed		(VkvgContext ctx, uint32_t ptrPath);
+uint32_t _get_last_point_of_closed_path (VkvgContext ctx, uint32_t ptrPath);
+
 float _normalizeAngle       (float a);
 
-void _set_current_point     (VkvgContext ctx, vec2 cp);
+vec2 _get_current_position  (VkvgContext ctx);
 void _add_point         	(VkvgContext ctx, float x, float y);
-void _add_point_cp_update	(VkvgContext ctx, float x, float y);
-void _add_point_v2			(VkvgContext ctx, vec2 v);
-void _add_curpos			(VkvgContext ctx);
+void _add_point_vec2			(VkvgContext ctx, vec2 v);
 void _vkvg_fill_rectangle   (VkvgContext ctx, float x, float y, float width, float height);
 
 void _create_vertices_buff	(VkvgContext ctx);
@@ -176,11 +177,6 @@ void _submit_wait_and_reset_cmd(VkvgContext ctx);
 void _submit_ctx_cmd        (VkvgContext ctx);
 void _wait_and_reset_ctx_cmd(VkvgContext ctx);
 void _update_push_constants (VkvgContext ctx);
-
-void _finish_path			(VkvgContext ctx);
-void _clear_path			(VkvgContext ctx);
-bool _path_is_closed		(VkvgContext ctx, uint32_t ptrPath);
-uint32_t _get_last_point_of_closed_path (VkvgContext ctx, uint32_t ptrPath);
 
 void _createDescriptorPool  (VkvgContext ctx);
 void _init_descriptor_sets  (VkvgContext ctx);

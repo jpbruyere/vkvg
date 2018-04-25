@@ -40,7 +40,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->sizeVertices   = VKVG_VBO_SIZE;
     ctx->sizeIndices    = VKVG_IBO_SIZE;
     ctx->sizePathes     = VKVG_PATHES_SIZE;
-    ctx->curPos.x       = ctx->curPos.y = 0;
     ctx->lineWidth      = 1;
     ctx->pSurf          = surf;
 
@@ -158,39 +157,37 @@ void vkvg_destroy (VkvgContext ctx)
 
     free(ctx);
 }
-
+void vkvg_new_sub_path (VkvgContext ctx){
+    _finish_path(ctx);
+}
 void vkvg_close_path (VkvgContext ctx){
-    if (ctx->pathPtr % 2 == 0)//current path is empty
+    if (_current_path_is_empty(ctx))
         return;
     //check if at least 3 points are present
     if (ctx->pointCount - ctx->pathes [ctx->pathPtr-1] > 2){
         //set end idx of path to the same as start idx
         ctx->pathes[ctx->pathPtr] = ctx->pathes [ctx->pathPtr-1];
         //if last point of path is same pos as first point, remove it
-        if (vec2_equ(ctx->points[ctx->pointCount-1], ctx->points[ctx->pathes[ctx->pathPtr]]))
-            ctx->pointCount--;
-        //start new path
+        //if (vec2_equ(ctx->points[ctx->pointCount-1], ctx->points[ctx->pathes[ctx->pathPtr]]))
+        //    ctx->pointCount--;
         _check_pathes_array(ctx);
         ctx->pathPtr++;
-    }
+    }else
+        _finish_path(ctx);
 }
 void vkvg_rel_line_to (VkvgContext ctx, float x, float y){
-    vkvg_line_to(ctx, ctx->curPos.x + x, ctx->curPos.y + y);
+    vec2 cp = _get_current_position(ctx);
+    vkvg_line_to(ctx, cp.x + x, cp.y + y);
 }
 void vkvg_line_to (VkvgContext ctx, float x, float y)
 {
     vec2 p = {x,y};
-    if (ctx->curPosExists){
-        if (vec2_equ(ctx->curPos,p))
-            return;
-        if (_current_path_is_empty (ctx)){
-            _start_sub_path (ctx);
-            _add_curpos(ctx);
-        }
-
-        _add_point_cp_update(ctx, x, y);
-    }else
+    if (_current_path_is_empty(ctx))
         vkvg_move_to(ctx, x,y);
+    else if (vec2_equ(_get_current_position(ctx),p))
+        return;
+
+    _add_point(ctx,x,y);
 }
 
 void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2){
@@ -202,22 +199,20 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     float step = M_PI/radius;
     float a = a1;
 
-    if (ctx->curPosExists){
+    if (_current_path_is_empty(ctx))
+        vkvg_move_to(ctx, v.x, v.y);
+    else
         vkvg_line_to(ctx, v.x, v.y);
-        a+=step;
-    }else
-        _set_current_point(ctx, v);
+
+    a+=step;
 
     if (a2 == a1)
         return;
 
-    if (_current_path_is_empty (ctx))
-        _start_sub_path (ctx);
-
     while(a < a2){
         v.x = cos(a)*radius + xc;
         v.y = sin(a)*radius + yc;
-        _add_point (ctx,v.x,v.y);
+        _add_point (ctx, v.x, v.y);
         a+=step;
     }
 
@@ -225,10 +220,8 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     vec2 lastP = v;
     v.x = cos(a)*radius + xc;
     v.y = sin(a)*radius + yc;
-    if (vec2_equ (v,lastP))
-        _set_current_point(ctx, v);
-    else
-        _add_point_cp_update(ctx,v.x,v.y);
+    if (!vec2_equ (v,lastP))//this test should not be required
+        _add_point (ctx, v.x, v.y);
 }
 void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
     while (a2 > a1)
@@ -239,17 +232,16 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
     float step = M_PI/radius;
     float a = a1;
 
-    if (ctx->curPosExists){
+    if (_current_path_is_empty(ctx))
+        vkvg_move_to(ctx, v.x, v.y);
+    else {
         vkvg_line_to(ctx, v.x, v.y);
-        a+=step;
-    }else
-        _set_current_point(ctx, v);
+    }
 
-    if (a2 == a1)
+    a-=step;
+
+    if (a2 == a1)//double check if this test should not be in the previous if
         return;
-
-    if (_current_path_is_empty (ctx))
-        _start_sub_path (ctx);
 
     while(a > a2){
         v.x = cos(a)*radius + xc;
@@ -262,59 +254,41 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
     vec2 lastP = v;
     v.x = cos(a)*radius + xc;
     v.y = sin(a)*radius + yc;
-    if (vec2_equ (v,lastP))
-        _set_current_point(ctx, v);
-    else
-        _add_point_cp_update(ctx,v.x,v.y);
+    //if (!vec2_equ (v,lastP))
+        _add_point (ctx, v.x, v.y);
 }
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
-    vkvg_move_to(ctx, ctx->curPos.x + x, ctx->curPos.y + y);
+    vec2 cp = _get_current_position(ctx);
+    vkvg_move_to(ctx, cp.x + x, cp.y + y);
 }
 void vkvg_move_to (VkvgContext ctx, float x, float y)
 {
     _finish_path(ctx);
-
-    ctx->curPos.x = x;
-    ctx->curPos.y = y;
-    ctx->curPosExists = true;
+    _start_sub_path(ctx, x, y);
 }
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
-    vec2 p = ctx->curPos;
-    vec2 p1 = {x1,y1};
+    if (_current_path_is_empty(ctx))
+        vkvg_move_to(ctx, x1, y1);
 
-    if (_current_path_is_empty(ctx)){
-        _start_sub_path(ctx);
-        if (!ctx->curPosExists)
-            p = p1;
-        if (!vec2_equ (p,p1))
-            _add_point (ctx, p.x, p.y);
-    }
-
-    _recursive_bezier       (ctx, p.x, p.y, x1, y1, x2, y2, x3, y3, 0);
-    _add_point_cp_update    (ctx, x3, y3);
+    vec2 cp = _get_current_position(ctx);
+    _recursive_bezier       (ctx, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
+    _add_point(ctx,x3,y3);
 }
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
-    vkvg_curve_to (ctx, ctx->curPos.x + x1, ctx->curPos.y + y1, ctx->curPos.x + x2, ctx->curPos.y + y2, ctx->curPos.x + x3, ctx->curPos.y + y3);
+    vec2 cp = _get_current_position(ctx);
+    vkvg_curve_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
 }
 
 void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
     _finish_path (ctx);
 
-    //set start to current idx in point array
-    ctx->pathes[ctx->pathPtr] = ctx->pointCount;
-    _check_pathes_array(ctx);
-    ctx->pathPtr++;
-
-    _add_point (ctx, x, y);
+    _start_sub_path(ctx, x, y);
     _add_point (ctx, x + w, y);
     _add_point (ctx, x + w, y + h);
     _add_point (ctx, x, y + h);
 
     vkvg_close_path (ctx);
-
-    ctx->curPos.x = x;
-    ctx->curPos.y = y;
 }
 void vkvg_clip_preserve (VkvgContext ctx){
     vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
@@ -335,11 +309,20 @@ void vkvg_clip (VkvgContext ctx){
     vkvg_clip_preserve(ctx);
     _clear_path(ctx);
 }
+void vkvg_stroke (VkvgContext ctx)
+{
+    vkvg_stroke_preserve(ctx);
+    _clear_path(ctx);
+}
+void vkvg_fill (VkvgContext ctx){
+    vkvg_fill_preserve(ctx);
+    _clear_path(ctx);
+}
 void vkvg_fill_preserve (VkvgContext ctx){
     if (ctx->pathPtr == 0)      //nothing to fill
         return;
-    if (ctx->pathPtr % 2 != 0)  //current path is not finished, close it
-        vkvg_close_path(ctx);
+    _finish_path(ctx);
+
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);
 
@@ -351,7 +334,6 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
     while (ptrPath < ctx->pathPtr){
         if (!_path_is_closed(ctx, ptrPath))
-            //close path
             ctx->pathes[ptrPath+1] = ctx->pathes[ptrPath];
 
         uint32_t firstPtIdx = ctx->pathes[ptrPath];
@@ -365,7 +347,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
              _add_vertex(ctx, v);
         }
 
-        vkCmdDraw (ctx->cmd,pathPointCount,1,firstVertIdx,0);
+        vkCmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx ,0);
 
         ptrPath+=2;
     }
@@ -375,16 +357,12 @@ void vkvg_fill_preserve (VkvgContext ctx){
     vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
     vkCmdSetStencilReference(ctx->cmd,VK_STENCIL_FRONT_AND_BACK, 0x0);
 }
-void vkvg_fill (VkvgContext ctx){
-    vkvg_fill_preserve(ctx);
-    _clear_path(ctx);
-}
 void vkvg_stroke_preserve (VkvgContext ctx)
 {
-    _finish_path(ctx);
-
     if (ctx->pathPtr == 0)//nothing to stroke
         return;
+    _finish_path(ctx);
+
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)
         vkvg_flush(ctx);
 
@@ -398,9 +376,14 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
     while (ptrPath < ctx->pathPtr){
         uint32_t firstIdx = ctx->vertCount;
+        i = ctx->pathes[ptrPath];
 
         if (_path_is_closed(ctx,ptrPath)){
             lastPathPointIdx = _get_last_point_of_closed_path(ctx,ptrPath);
+            //prevent closing on the same position, this could be generalize
+            //to prevent processing of two consecutive point at the same position
+            if (vec2_equ(ctx->points[i], ctx->points[lastPathPointIdx]))
+                lastPathPointIdx--;
             iL = lastPathPointIdx;
         }else{
             lastPathPointIdx = ctx->pathes[ptrPath+1];
@@ -436,6 +419,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             _add_vertex(ctx, v);
             v.pos = vec2_sub(p0, vhw);
             _add_vertex(ctx, v);
+
             _add_tri_indices_for_rect(ctx, firstIdx);
 
             iL = i++;
@@ -497,11 +481,6 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     }
     _record_draw_cmd(ctx);
 }
-void vkvg_stroke (VkvgContext ctx)
-{
-    vkvg_stroke_preserve(ctx);
-    _clear_path(ctx);
-}
 void _vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float width, float height){
     Vertex v[4] =
     {
@@ -517,8 +496,9 @@ void _vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float width, float
     _add_tri_indices_for_rect(ctx, firstIdx);
 }
 void vkvg_paint (VkvgContext ctx){
-    _vkvg_fill_rectangle (ctx, 0, 0, ctx->pSurf->width, ctx->pSurf->height);
-    _record_draw_cmd(ctx);
+//    _vkvg_fill_rectangle (ctx, 0, 0, ctx->pSurf->width, ctx->pSurf->height);
+//    _record_draw_cmd(ctx);
+    vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
 }
 
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
@@ -677,8 +657,6 @@ void vkvg_save (VkvgContext ctx){
     sav->pathes = (uint32_t*)malloc (sav->pathPtr * sizeof(uint32_t));
     memcpy (sav->pathes, ctx->pathes, sav->pathPtr * sizeof(uint32_t));
 
-    sav->curPos     = ctx->curPos;
-    sav->curPosExists=ctx->curPosExists;
     sav->curRGBA    = ctx->curRGBA;
     sav->lineWidth  = ctx->lineWidth;
     sav->lineCap    = ctx->lineCap;
@@ -744,8 +722,6 @@ void vkvg_restore (VkvgContext ctx){
     memset (ctx->pathes, 0, ctx->sizePathes * sizeof(uint32_t));
     memcpy (ctx->pathes, sav->pathes, ctx->pathPtr * sizeof(uint32_t));
 
-    ctx->curPos     = sav->curPos;
-    ctx->curPosExists=sav->curPosExists;
     ctx->curRGBA    = sav->curRGBA;
     ctx->lineWidth  = sav->lineWidth;
     ctx->lineCap    = sav->lineCap;

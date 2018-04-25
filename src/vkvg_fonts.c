@@ -356,7 +356,10 @@ void _show_text (VkvgContext ctx, const char* text){
 
 
     Vertex v = {};
-    vec2 pen = ctx->curPos;
+    vec2 pen = {0,0};
+
+    if (!_current_path_is_empty(ctx))
+        pen = _get_current_position(ctx);
 
     for (int i=0; i < glyph_count; ++i) {
         _char_ref* cr = f->charLookup[glyph_info[i].codepoint];
@@ -399,6 +402,9 @@ void _show_text (VkvgContext ctx, const char* text){
         pen.x += (glyph_pos[i].x_advance >> 6);
         pen.y -= (glyph_pos[i].y_advance >> 6);
     }
+
+    vkvg_move_to(ctx, pen.x, pen.y);
+
     _flush_chars_to_tex(dev,f);
     //_show_texture(ctx); return;
 }

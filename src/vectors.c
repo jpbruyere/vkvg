@@ -22,6 +22,8 @@
 
 #include "vectors.h"
 
+#define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
+
 inline vec2 vec2_create (float x, float y) {
     vec2 v = {x,y};
     return v;
@@ -98,7 +100,7 @@ vec2d vec2d_sub (vec2d a, vec2d b){
     return r;
 }
 bool vec2_equ (vec2 a, vec2 b){
-    if ((a.x == b.x) && (a.y == b.y))
+    if ((ROUNDF(a.x,10000) == ROUNDF(b.x,10000)) && (ROUNDF(a.y,10000) == ROUNDF(b.y,10000)))
         return true;
     return false;
 }

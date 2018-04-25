@@ -182,6 +182,7 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 
     vkvg_paint          (ctx);
     vkvg_destroy        (ctx);
+
     vkh_image_destroy   (tmpImg);
 
     return surf;
