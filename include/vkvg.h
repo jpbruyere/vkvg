@@ -144,6 +144,7 @@ void vkvg_destroy			(VkvgContext ctx);
 
 void vkvg_flush				(VkvgContext ctx);
 
+void vkvg_new_path          (VkvgContext ctx);
 void vkvg_close_path		(VkvgContext ctx);
 void vkvg_new_sub_path      (VkvgContext ctx);
 void vkvg_line_to			(VkvgContext ctx, float x, float y);

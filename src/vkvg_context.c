@@ -160,6 +160,9 @@ void vkvg_destroy (VkvgContext ctx)
 void vkvg_new_sub_path (VkvgContext ctx){
     _finish_path(ctx);
 }
+void vkvg_new_path (VkvgContext ctx){
+    _clear_path(ctx);
+}
 void vkvg_close_path (VkvgContext ctx){
     if (_current_path_is_empty(ctx))
         return;
@@ -168,8 +171,8 @@ void vkvg_close_path (VkvgContext ctx){
         //set end idx of path to the same as start idx
         ctx->pathes[ctx->pathPtr] = ctx->pathes [ctx->pathPtr-1];
         //if last point of path is same pos as first point, remove it
-        //if (vec2_equ(ctx->points[ctx->pointCount-1], ctx->points[ctx->pathes[ctx->pathPtr]]))
-        //    ctx->pointCount--;
+        if (vec2_equ(ctx->points[ctx->pointCount-1], ctx->points[ctx->pathes[ctx->pathPtr]]))
+            ctx->pointCount--;
         _check_pathes_array(ctx);
         ctx->pathPtr++;
     }else
