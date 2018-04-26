@@ -191,7 +191,7 @@ void vkengine_get_queues_properties (VkEngine* e, VkQueueFamilyProperties** qFam
     (*qFamProps) = (VkQueueFamilyProperties*)malloc((*count) * sizeof(VkQueueFamilyProperties));
     vkGetPhysicalDeviceQueueFamilyProperties (e->phy, count, (*qFamProps));
 }
-VkEngine* vke_create () {
+VkEngine* vke_create (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t height) {
     VkEngine* e = (VkEngine*)calloc(1,sizeof(VkEngine));
     glfwInit();
     assert (glfwVulkanSupported()==GLFW_TRUE);
@@ -206,7 +206,7 @@ VkEngine* vke_create () {
     VkhPhyInfo pi = NULL;
     for (int i=0; i<phyCount; i++){
         pi = phys[i];
-        if (pi->properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU){
+        if (pi->properties.deviceType == preferedGPU){
             e->phy = pi->phy;
             break;
         }
@@ -263,8 +263,8 @@ VkEngine* vke_create () {
 
     assert (glfwGetPhysicalDevicePresentationSupport (e->app->inst, e->phy, pi->gQueue)==GLFW_TRUE);
 
-    e->renderer.width = 1024;
-    e->renderer.height = 800;
+    e->renderer.width = width;
+    e->renderer.height = height;
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);

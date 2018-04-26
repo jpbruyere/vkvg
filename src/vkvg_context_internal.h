@@ -28,10 +28,10 @@
 #include "vkh.h"
 #include "vkvg_fonts.h"
 
-#define VKVG_PTS_SIZE				4096
+#define VKVG_PTS_SIZE				16384
 #define VKVG_VBO_SIZE				VKVG_PTS_SIZE * 2
 #define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 2
-#define VKVG_PATHES_SIZE			128
+#define VKVG_PATHES_SIZE			256
 #define VKVG_ARRAY_THRESHOLD		4
 
 #define ROUND_DOWN(v,p) (floorf(v * p) / p)
@@ -66,13 +66,10 @@ typedef struct _vkvg_context_save_t{
 
     vec2		curPos;
     bool        curPosExists;
-    vec4		curRGBA;
     float       lineWidth;
 
     vkvg_line_cap_t     lineCap;
     vkvg_line_join_t    lineJoint;
-    vkvg_matrix_t       mat;
-    vkvg_matrix_t       matInv;
 
     _vkvg_font_t    selectedFont;     //hold current face and size before cache addition
     _vkvg_font_t*   currentFont;      //font ready for lookup

@@ -87,4 +87,6 @@ void _destroy_font_cache	(VkvgDevice dev);
 void _select_font_face		(VkvgContext ctx, const char* name);
 void _set_font_size         (VkvgContext ctx, uint32_t size);
 void _show_text				(VkvgContext ctx, const char* text);
+void _text_extents           (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents);
+void _font_extents           (VkvgContext ctx, vkvg_font_extents_t* extents);
 #endif

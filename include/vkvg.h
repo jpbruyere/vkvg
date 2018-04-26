@@ -86,6 +86,23 @@ typedef struct {
     float x0; float y0;
 } vkvg_matrix_t;
 
+typedef struct {
+    float ascent;
+    float descent;
+    float height;
+    float max_x_advance;
+    float max_y_advance;
+} vkvg_font_extents_t;
+
+typedef struct {
+    float x_bearing;
+    float y_bearing;
+    float width;
+    float height;
+    float x_advance;
+    float y_advance;
+} vkvg_text_extents_t;
+
 typedef struct _vkvg_context_t* VkvgContext;
 typedef struct _vkvg_surface_t* VkvgSurface;
 typedef struct _vkvg_device_t*  VkvgDevice;
@@ -171,10 +188,6 @@ void vkvg_set_line_join     (VkvgContext ctx, vkvg_line_join_t join);
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y);
 void vkvg_set_source        (VkvgContext ctx, VkvgPattern pat);
 
-void vkvg_select_font_face	(VkvgContext ctx, const char* name);
-void vkvg_set_font_size		(VkvgContext ctx, uint32_t size);
-void vkvg_show_text			(VkvgContext ctx, const char* text);
-
 void vkvg_save              (VkvgContext ctx);
 void vkvg_restore           (VkvgContext ctx);
 
@@ -185,6 +198,13 @@ void vkvg_transform         (VkvgContext ctx, const vkvg_matrix_t* matrix);
 void vkvg_set_matrix        (VkvgContext ctx, const vkvg_matrix_t* matrix);
 void vkvg_get_matrix        (VkvgContext ctx, const vkvg_matrix_t* matrix);
 void vkvg_identity_matrix   (VkvgContext ctx);
+
+//text
+void vkvg_select_font_face	(VkvgContext ctx, const char* name);
+void vkvg_set_font_size		(VkvgContext ctx, uint32_t size);
+void vkvg_show_text			(VkvgContext ctx, const char* text);
+void vkvg_text_extents      (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents);
+void vkvg_font_extents      (VkvgContext ctx, vkvg_font_extents_t* extents);
 
 //pattern
 VkvgPattern vkvg_pattern_create             ();

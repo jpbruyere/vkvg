@@ -454,12 +454,12 @@ void _free_ctx_save (vkvg_context_save_t* sav){
 
 
 #define m_approximation_scale   1.0
-#define m_angle_tolerance       0.5
-#define m_distance_tolerance    0.25
-#define m_cusp_limit            0.2
-#define curve_recursion_limit   32
-#define curve_collinearity_epsilon 0.01
-#define curve_angle_tolerance_epsilon 0.01
+#define m_angle_tolerance       0.05
+#define m_distance_tolerance    0.1
+#define m_cusp_limit            0.25
+#define curve_recursion_limit   16
+#define curve_collinearity_epsilon 0.001
+#define curve_angle_tolerance_epsilon 0.1
 
 void _recursive_bezier (VkvgContext ctx,
                         float x1, float y1, float x2, float y2,

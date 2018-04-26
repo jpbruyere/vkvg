@@ -293,14 +293,13 @@ _vkvg_font_t* _tryFindVkvgFont (VkvgContext ctx){
     return NULL;
 }
 
-void _show_text (VkvgContext ctx, const char* text){
+void _update_current_font (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;
-
     if (ctx->currentFont == NULL){
         ctx->currentFont = _tryFindVkvgFont (ctx);
         if (ctx->currentFont == NULL){
-            _font_cache_t*  cache = (_font_cache_t*)dev->fontCache;
             //create new font in cache
+            _font_cache_t*  cache = dev->fontCache;
             cache->fontsCount++;
             if (cache->fontsCount == 1)
                 cache->fonts = (_vkvg_font_t*) malloc (cache->fontsCount * sizeof(_vkvg_font_t));
@@ -330,12 +329,14 @@ void _show_text (VkvgContext ctx, const char* text){
             ctx->currentFont = &cache->fonts[cache->fontsCount-1];
         }
     }
+}
 
+hb_buffer_t * _get_hb_buffer (VkvgContext ctx, const char* text) {
     hb_buffer_t *buf = hb_buffer_create();
 
     const char *lng  = "fr";
     hb_script_t script = HB_SCRIPT_LATIN;
-    script = hb_script_from_string(text,strlen(text));
+    script = hb_script_from_string (text, strlen (text));
     hb_direction_t dir = hb_script_get_horizontal_direction(script);
     //dir = HB_DIRECTION_TTB;
     hb_buffer_set_direction (buf, dir);
@@ -343,17 +344,64 @@ void _show_text (VkvgContext ctx, const char* text){
     hb_buffer_set_language  (buf, hb_language_from_string(lng,strlen(lng)));
     hb_buffer_add_utf8      (buf, text, strlen(text), 0, strlen(text));
 
-    _vkvg_font_t* f = ctx->currentFont;
-    hb_shape (f->hb_font, buf, NULL, 0);
+    hb_shape (ctx->currentFont->hb_font, buf, NULL, 0);
+    return buf;
+}
+void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
+    _update_current_font (ctx);
 
-    unsigned int         glyph_count;
-    hb_glyph_info_t     *glyph_info   = hb_buffer_get_glyph_infos (buf, &glyph_count);
-    hb_glyph_position_t *glyph_pos    = hb_buffer_get_glyph_positions (buf, &glyph_count);
+    //TODO: ensure correct metrics are returned (scalled/unscalled, etc..)
+    FT_BBox* bbox = &ctx->currentFont->face->bbox;
+    FT_Size_Metrics* metrics = &ctx->currentFont->face->size->metrics;
+    extents->ascent = metrics->ascender >> 6;
+    extents->descent= metrics->descender >> 6;
+    extents->height = metrics->height >> 6;
+    extents->max_x_advance = bbox->xMax >> 6;
+    extents->max_y_advance = bbox->yMax >> 6;
+}
+
+void _text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents) {
+    _update_current_font (ctx);
+
+    hb_buffer_t*    buf = _get_hb_buffer (ctx, text);
+    _vkvg_font_t*   f   = ctx->currentFont;
+    VkvgDevice      dev = ctx->pSurf->dev;
+    unsigned int    glyph_count;
+
+    hb_glyph_position_t *glyph_pos = hb_buffer_get_glyph_positions   (buf, &glyph_count);
 
     unsigned int string_width_in_pixels = 0;
     for (int i=0; i < glyph_count; ++i)
         string_width_in_pixels += glyph_pos[i].x_advance >> 6;
 
+    FT_Size_Metrics* metrics = &ctx->currentFont->face->size->metrics;
+    extents->x_advance = string_width_in_pixels;
+    extents->y_advance = glyph_pos[glyph_count-1].y_advance >> 6;
+    extents->x_bearing = -(glyph_pos[0].x_offset >> 6);
+    extents->y_bearing = -(glyph_pos[0].y_offset >> 6);
+
+    extents->height = (metrics->ascender + metrics->descender) >> 6;
+    extents->width  = extents->x_advance;
+
+    //todo: populate other fields
+    hb_buffer_destroy (buf);
+}
+void _show_text (VkvgContext ctx, const char* text){
+
+    _update_current_font (ctx);
+
+    hb_buffer_t*    buf = _get_hb_buffer (ctx, text);
+    _vkvg_font_t*   f   = ctx->currentFont;
+    VkvgDevice      dev = ctx->pSurf->dev;
+
+    unsigned int         glyph_count;
+    hb_glyph_position_t *glyph_pos    = hb_buffer_get_glyph_positions   (buf, &glyph_count);
+
+    unsigned int string_width_in_pixels = 0;
+    for (int i=0; i < glyph_count; ++i)
+        string_width_in_pixels += glyph_pos[i].x_advance >> 6;
+
+    hb_glyph_info_t     *glyph_info   = hb_buffer_get_glyph_infos       (buf, &glyph_count);
 
     Vertex v = {};
     vec2 pen = {0,0};
@@ -406,10 +454,11 @@ void _show_text (VkvgContext ctx, const char* text){
     vkvg_move_to(ctx, pen.x, pen.y);
 
     _flush_chars_to_tex(dev,f);
+    hb_buffer_destroy (buf);
     //_show_texture(ctx); return;
 }
 
-
+//debug function
 void _show_texture (vkvg_context* ctx){
     Vertex vs[] = {
         {{0,0},                             {0,0,1}},

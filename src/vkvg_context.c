@@ -175,8 +175,8 @@ void vkvg_close_path (VkvgContext ctx){
         //set end idx of path to the same as start idx
         ctx->pathes[ctx->pathPtr] = ctx->pathes [ctx->pathPtr-1];
         //if last point of path is same pos as first point, remove it
-        if (vec2_equ(ctx->points[ctx->pointCount-1], ctx->points[ctx->pathes[ctx->pathPtr]]))
-            ctx->pointCount--;
+        //if (vec2_equ(ctx->points[ctx->pointCount-1], ctx->points[ctx->pathes[ctx->pathPtr]]))
+        //    ctx->pointCount--;
         _check_pathes_array(ctx);
         ctx->pathPtr++;
     }else
@@ -227,7 +227,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     vec2 lastP = v;
     v.x = cos(a)*radius + xc;
     v.y = sin(a)*radius + yc;
-    if (!vec2_equ (v,lastP))//this test should not be required
+    //if (!vec2_equ (v,lastP))//this test should not be required
         _add_point (ctx, v.x, v.y);
 }
 void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
@@ -280,6 +280,9 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
 
     vec2 cp = _get_current_position(ctx);
     _recursive_bezier       (ctx, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
+    /*cp.x = x3;
+    cp.y = y3;
+    if (!vec2_equ(ctx->points[ctx->pointCount-1],cp))*/
     _add_point(ctx,x3,y3);
 }
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
@@ -534,11 +537,6 @@ void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
         _init_cmd_buff              (ctx);//push csts updated by init
     }else
         _update_push_constants (ctx);
-
-    ctx->curRGBA.x = r;
-    ctx->curRGBA.y = g;
-    ctx->curRGBA.z = b;
-    ctx->curRGBA.w = a;
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
     _flush_cmd_buff(ctx);
@@ -626,6 +624,13 @@ void vkvg_show_text (VkvgContext ctx, const char* text){
     _record_draw_cmd (ctx);
 }
 
+void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
+    _text_extents(ctx, text, extents);
+}
+void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
+    _font_extents(ctx, extents);
+}
+
 void vkvg_save (VkvgContext ctx){
     _flush_cmd_buff(ctx);
 
@@ -669,12 +674,9 @@ void vkvg_save (VkvgContext ctx){
     sav->pathes = (uint32_t*)malloc (sav->pathPtr * sizeof(uint32_t));
     memcpy (sav->pathes, ctx->pathes, sav->pathPtr * sizeof(uint32_t));
 
-    sav->curRGBA    = ctx->curRGBA;
     sav->lineWidth  = ctx->lineWidth;
     sav->lineCap    = ctx->lineCap;
     sav->lineWidth  = ctx->lineWidth;
-    sav->mat        = ctx->pushConsts.mat;
-    sav->matInv     = ctx->pushConsts.matInv;
 
     sav->selectedFont = ctx->selectedFont;
     sav->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
@@ -733,12 +735,9 @@ void vkvg_restore (VkvgContext ctx){
     memset (ctx->pathes, 0, ctx->sizePathes * sizeof(uint32_t));
     memcpy (ctx->pathes, sav->pathes, ctx->pathPtr * sizeof(uint32_t));
 
-    ctx->curRGBA    = sav->curRGBA;
     ctx->lineWidth  = sav->lineWidth;
     ctx->lineCap    = sav->lineCap;
     ctx->lineJoint  = sav->lineJoint;
-    ctx->pushConsts.mat     = sav->mat;
-    ctx->pushConsts.matInv  = sav->matInv;
 
     ctx->selectedFont.charSize = sav->selectedFont.charSize;
     strcpy (ctx->selectedFont.fontFile, sav->selectedFont.fontFile);

@@ -91,7 +91,7 @@ typedef struct VkEngine_t {
     VkLoader            loader;
 }VkEngine;
 
-VkEngine*   vke_create  ();
+VkEngine*   vke_create  (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t height);
 void        vke_destroy (VkEngine* e);
 
 void initPhySurface(VkEngine* e, VkFormat preferedFormat, VkPresentModeKHR presentMode);

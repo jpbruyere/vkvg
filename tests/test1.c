@@ -101,19 +101,19 @@ void vkvg_test_fill_and_stroke (VkvgContext ctx){
     vkvg_stroke (ctx);
 }
 void vkvg_test_curves2 (VkvgContext ctx) {
-    vkvg_set_source_rgba   (ctx, 0.5,0.0,1.0,0.5);
-    vkvg_set_line_width(ctx, 10);
-
 
     vkvg_move_to    (ctx, 100, 400);
     vkvg_curve_to   (ctx, 100, 100, 600,700,600,400);
-
-    vkvg_move_to    (ctx, 100, 100);
     vkvg_curve_to   (ctx, 1000, 100, 100, 800, 1000, 800);
-    vkvg_move_to    (ctx, 100, 150);
     vkvg_curve_to   (ctx, 1000, 500, 700, 500, 700, 100);
+    vkvg_close_path(ctx);
 
-    vkvg_stroke     (ctx);
+    //vkvg_set_source_rgba   (ctx, 0.5,0.0,1.0,0.5);
+    //vkvg_fill_preserve(ctx);
+
+    vkvg_set_source_rgba   (ctx, 0,0,0,1);
+    vkvg_set_line_width(ctx, 40);
+    vkvg_stroke(ctx);
 }
 void vkvg_test_curves (VkvgContext ctx){
 
@@ -186,12 +186,19 @@ void test_text (VkvgContext ctx) {
     //vkvg_select_font_face(ctx, "/usr/local/share/fonts/DroidSansMono.ttf");
     //vkvg_select_font_face(ctx, "/usr/share/fonts/truetype/unifont/unifont.ttf");
 
-    vkvg_set_font_size(ctx,size-10);
+    vkvg_set_font_size(ctx,12);
     vkvg_select_font_face(ctx, "droid");
+    vkvg_font_extents_t fe;
+    vkvg_font_extents (ctx,&fe);
     vkvg_move_to(ctx, penX,penY);
     vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
+    vkvg_text_extents_t te;
+    vkvg_text_extents(ctx,"abcdefghijk",&te);
     vkvg_show_text (ctx,"abcdefghijk");
-    penY+=size;
+    penX+= te.x_advance;
+    vkvg_move_to(ctx, penX,penY);
+    vkvg_show_text (ctx,"*abcdefghijk2");
+    penY+=2*size;
 
 
     vkvg_select_font_face(ctx, "times");
@@ -454,8 +461,8 @@ void multi_test1 () {
     vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1.0);
     vkvg_paint(ctx);
 
-    vkvg_test_fill(ctx);
-    vkvg_test_fill2(ctx);
+    //vkvg_test_fill(ctx);
+    //vkvg_test_fill2(ctx);
 
 //    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
 
@@ -484,19 +491,19 @@ void multi_test1 () {
     test_text(ctx);
 
 
-    vkvg_test_stroke(ctx);
+    //vkvg_test_stroke(ctx);
 
 //    vkvg_translate(ctx, 10,10);
 //    vkvg_rotate(ctx, 0.2);
     //vkvg_scale(ctx, 2,2);
 
 
-    vkvg_test_gradient (ctx);
-    vkvg_test_curves(ctx);
-    vkvg_test_curves2(ctx);
+    //vkvg_test_gradient (ctx);
+    //vkvg_test_curves(ctx);
+    //vkvg_test_curves2(ctx);
 
     //test_img_surface(ctx);
-    test_line_caps(ctx);
+    //test_line_caps(ctx);
 
     vkvg_destroy(ctx);
     ctx = vkvg_create(surf);
@@ -546,6 +553,34 @@ void cairo_test_fill_rule (VkvgContext cr){
     vkvg_fill_preserve(cr);
 
     vkvg_set_source_rgb (cr, 0, 0, 0);
+    vkvg_stroke (cr);
+}
+void cairo_test_text (VkvgContext cr) {
+    vkvg_text_extents_t extents;
+
+    const char *utf8 = "vkvg";
+    float x,y;
+
+    vkvg_select_font_face (cr, "times");
+    vkvg_set_font_size (cr, 100.0);
+    vkvg_text_extents (cr, utf8, &extents);
+    vkvg_set_source_rgb(cr,0,0,0);
+
+    x=25.0;
+    y=150.0;
+
+    vkvg_move_to (cr, x,y);
+    vkvg_show_text (cr, utf8);
+
+    /* draw helping lines */
+    vkvg_set_source_rgba (cr, 1, 0.2, 0.2, 0.6);
+    vkvg_set_line_width (cr, 6.0);
+    vkvg_arc (cr, x, y, 10.0, 0, 2*M_PI);
+    vkvg_fill (cr);
+    vkvg_move_to (cr, x,y);
+    vkvg_rel_line_to (cr, 0, -extents.height);
+    vkvg_rel_line_to (cr, extents.width, 0);
+    vkvg_rel_line_to (cr, extents.x_bearing, -extents.y_bearing);
     vkvg_stroke (cr);
 }
 void cairo_test_clip (VkvgContext cr){
@@ -756,6 +791,9 @@ void cairo_tests () {
     vkvg_translate(ctx,250,0);
     cairo_print_arc_neg(ctx);
 
+    vkvg_translate(ctx,250,0);
+    cairo_test_text(ctx);
+
     vkvg_destroy(ctx);
 }
 
@@ -794,23 +832,22 @@ void test_svg () {
     vkvg_set_source_rgba(ctx,1.0,1.0,1.0,1);
     vkvg_paint(ctx);
 
-
-    vkvg_scale(ctx,0.5,0.5);
-    vkvg_matrix_t m;
-    vkvg_get_matrix(ctx, &m);
-    vkvg_set_matrix(ctx, &m);
-
     NSVGimage* svg;
     NSVGshape* shape;
     NSVGpath* path;
-    svg = nsvgParseFromFile("/mnt/data/images/svg/tux.svg", "px", 96);
+    //svg = nsvgParseFromFile("/mnt/data/images/svg/tux.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/world.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/tiger.svg", "px", 96);
+    //svg = nsvgParseFromFile("/mnt/data/images/svg/koch_curve.svg", "px", 96);
+    //svg = nsvgParseFromFile("/mnt/data/images/svg/diamond1.svg", "px", 96);
+    //svg = nsvgParseFromFile("/mnt/data/images/svg/diamond2.svg", "px", 96);
+    //svg = nsvgParseFromFile("/home/jp/yahweh-protosinaitic.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/WMD-biological.svg", "px", 96);
-    //svg = nsvgParseFromFile("/mnt/data/images/svg/Skull_and_crossbones.svg", "px", 96);
+    svg = nsvgParseFromFile("/mnt/data/images/svg/Skull_and_crossbones.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/IconAlerte.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/Svg_example4.svg", "px", 96);
 
+    //vkvg_scale(ctx, 3,3);
     vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
 
     for (shape = svg->shapes; shape != NULL; shape = shape->next) {
@@ -824,7 +861,7 @@ void test_svg () {
         for (path = shape->paths; path != NULL; path = path->next) {
             float* p = path->pts;
             vkvg_move_to(ctx, p[0],p[1]);
-            for (int i = 1; i < path->npts-4; i += 3) {
+            for (int i = 1; i < path->npts-2; i += 3) {
                 p = &path->pts[i*2];
                 vkvg_curve_to(ctx, p[0],p[1], p[2],p[3], p[4],p[5]);
             }
@@ -855,18 +892,17 @@ void test_svg () {
         }
 
         vkvg_stroke(ctx);
-
-        vkvg_flush(ctx);
     }
 
     nsvgDelete(svg);
+
 
     vkvg_destroy(ctx);
 }
 
 int main(int argc, char *argv[]) {
 
-    VkEngine* e = vke_create();
+    VkEngine* e = vke_create (VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, 1024, 800);
     vke_set_key_callback (e, key_callback);
 
     device = vkvg_device_create(e->phy, e->dev, e->renderer.queue, e->renderer.qFam);
