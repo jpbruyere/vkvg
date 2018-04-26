@@ -62,7 +62,11 @@ make						    # Run Make
 ### Roadmap
 
 - Radial gradients.
+- Dashed lines.
 - Offscreen pattern building.
+- Optimize vulkan memory allocations by sub-allocating from a single shared memory chunk per type.
+- Optimize command submissions.
+- Test SDF font rendering.
 - Avoid line joins inside curves and arc.
 - Structured unit testing.
 - Perf and memory checks.
