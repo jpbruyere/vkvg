@@ -726,6 +726,48 @@ void cairo_print_arc_neg (VkvgContext cr){
     vkvg_stroke (cr);
 
 }
+void cairo_test_line_caps (VkvgContext cr) {
+    vkvg_set_source_rgb (cr, 0, 0, 0);
+    vkvg_set_line_width (cr, 30.0);
+    vkvg_set_line_cap  (cr, VKVG_LINE_CAP_BUTT); /* default */
+    vkvg_move_to (cr, 64.0, 50.0); vkvg_line_to (cr, 64.0, 200.0);
+    vkvg_stroke (cr);
+    vkvg_set_line_cap  (cr, VKVG_LINE_CAP_ROUND);
+    vkvg_move_to (cr, 128.0, 50.0); vkvg_line_to (cr, 128.0, 200.0);
+    vkvg_stroke (cr);
+    vkvg_set_line_cap  (cr, VKVG_LINE_CAP_SQUARE);
+    vkvg_move_to (cr, 192.0, 50.0); vkvg_line_to (cr, 192.0, 200.0);
+    vkvg_stroke (cr);
+
+    /* draw helping lines */
+    vkvg_set_source_rgb (cr, 1, 0.2, 0.2);
+    vkvg_set_line_width (cr, 2.56);
+    vkvg_move_to (cr, 64.0, 50.0); vkvg_line_to (cr, 64.0, 200.0);
+    vkvg_move_to (cr, 128.0, 50.0);  vkvg_line_to (cr, 128.0, 200.0);
+    vkvg_move_to (cr, 192.0, 50.0); vkvg_line_to (cr, 192.0, 200.0);
+    vkvg_stroke (cr);
+}
+void cairo_test_line_joins (VkvgContext cr) {
+    vkvg_set_source_rgb (cr, 0, 0, 0);
+    vkvg_set_line_width (cr, 40.96);
+    vkvg_move_to (cr, 76.8, 84.48);
+    vkvg_rel_line_to (cr, 51.2, -51.2);
+    vkvg_rel_line_to (cr, 51.2, 51.2);
+    vkvg_set_line_join (cr, VKVG_LINE_JOIN_MITER); /* default */
+    vkvg_stroke (cr);
+
+    vkvg_move_to (cr, 76.8, 161.28);
+    vkvg_rel_line_to (cr, 51.2, -51.2);
+    vkvg_rel_line_to (cr, 51.2, 51.2);
+    vkvg_set_line_join (cr, VKVG_LINE_JOIN_BEVEL);
+    vkvg_stroke (cr);
+
+    vkvg_move_to (cr, 76.8, 238.08);
+    vkvg_rel_line_to (cr, 51.2, -51.2);
+    vkvg_rel_line_to (cr, 51.2, 51.2);
+    vkvg_set_line_join (cr, VKVG_LINE_JOIN_ROUND);
+    vkvg_stroke (cr);
+}
 void cairo_print_arc (VkvgContext cr) {
     float xc = 128.0;
     float yc = 128.0;
@@ -793,6 +835,12 @@ void cairo_tests () {
 
     vkvg_translate(ctx,250,0);
     cairo_test_text(ctx);
+
+    vkvg_translate(ctx,-500,250);
+    cairo_test_line_caps(ctx);
+
+    vkvg_translate(ctx,250,0);
+    cairo_test_line_joins(ctx);
 
     vkvg_destroy(ctx);
 }
@@ -902,7 +950,7 @@ void test_svg () {
 
 int main(int argc, char *argv[]) {
 
-    VkEngine* e = vke_create (VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, 1024, 800);
+    VkEngine* e = vke_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, 1024, 800);
     vke_set_key_callback (e, key_callback);
 
     device = vkvg_device_create(e->phy, e->dev, e->renderer.queue, e->renderer.qFam);
