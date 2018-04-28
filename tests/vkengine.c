@@ -197,7 +197,7 @@ VkEngine* vke_create (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t
     assert (glfwVulkanSupported()==GLFW_TRUE);
 
     uint32_t enabledExtsCount = 0, phyCount = 0;
-    const char** enabledExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
+    const char ** enabledExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
 
     e->app = vkh_app_create("vkvgTest", enabledExtsCount, enabledExts);
 
@@ -254,9 +254,23 @@ VkEngine* vke_create (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t
         }
     }
 
+    char const * dex [] = {"VK_KHR_swapchain"};
+#if DEBUG
+    uint32_t dlayCpt = 1;
+    static char const * dlay [] = {"VK_LAYER_LUNARG_standard_validation"};
+#else
+    uint32_t dlayCpt = 0;
+    static char const * dlay [] = {};
+#endif
+
     VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                        .queueCreateInfoCount = qCount,
-                                       .pQueueCreateInfos = &pQueueInfos};
+                                       .pQueueCreateInfos = &pQueueInfos,
+                                       .enabledLayerCount = dlayCpt,
+                                       .ppEnabledLayerNames = dlay,
+                                       .enabledExtensionCount = 1,
+                                       .ppEnabledExtensionNames = dex
+                                     };
 
     VK_CHECK_RESULT(vkCreateDevice(e->phy, &device_info, NULL, &e->dev));
 

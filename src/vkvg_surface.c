@@ -35,7 +35,7 @@ void _clear_stencil (VkvgSurface surf)
 
     vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-    VkClearDepthStencilValue clr = {1.0f,0};
+    VkClearDepthStencilValue clr = {0,0};
     VkImageSubresourceRange range = {VK_IMAGE_ASPECT_STENCIL_BIT,0,1,0,1};
 
     vkh_image_set_layout (cmd, surf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,

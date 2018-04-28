@@ -64,10 +64,9 @@ typedef struct _vkvg_context_save_t{
     uint32_t*	pathes;
     size_t		sizePathes;
 
-    vec2		curPos;
-    bool        curPosExists;
     float       lineWidth;
 
+    vkvg_operator_t     curOperator;
     vkvg_line_cap_t     lineCap;
     vkvg_line_join_t    lineJoint;
 
@@ -84,14 +83,14 @@ typedef struct _vkvg_context_t {
 
     VkvgSurface		pSurf;
     VkFence			flushFence;
-    VkhImage        source;
+    VkhImage        source;     //source of painting operation
 
-    VkCommandPool		cmdPool;
-    VkCommandBuffer     cmd;
+    VkCommandPool		cmdPool;//local pools ensure thread safety
+    VkCommandBuffer     cmd;    //single cmd buff for context operations
     VkDescriptorPool	descriptorPool;
-    VkDescriptorSet     dsFont;
-    VkDescriptorSet     dsSrc;
-    VkDescriptorSet     dsGrad;
+    VkDescriptorSet     dsFont; //fonts glyphs texture atlas descriptor (local for thread safety)
+    VkDescriptorSet     dsSrc;  //source ds
+    VkDescriptorSet     dsGrad; //gradient uniform buffer
 
     vkvg_buff	uboGrad;//uniform buff obj holdings gradient infos
 
@@ -115,15 +114,15 @@ typedef struct _vkvg_context_t {
     //pathes array is a list of couple (start,end) point idx refering to point array
     //it split points list in subpathes and tell if path is closed.
     //if path is closed, end index is the same as start.
-    //(I should use a boolean instead to keep last point in array)
+    //(TODO: I should use a boolean or smthg else instead to keep last point in array)
     uint32_t*	pathes;
     size_t		sizePathes;
 
-    vec4		curRGBA;    //is store in pushConsts => may be removed.
     float		lineWidth;
 
+    vkvg_operator_t     curOperator;
     vkvg_line_cap_t     lineCap;
-    vkvg_line_join_t    lineJoint;
+    vkvg_line_join_t    lineJoin;
 
     _vkvg_font_t  selectedFont;     //hold current face and size before cache addition
     _vkvg_font_t* currentFont;      //font ready for lookup
@@ -157,6 +156,7 @@ void _add_triangle_indices	(VkvgContext ctx, uint32_t i0, uint32_t i1,uint32_t i
 void _add_tri_indices_for_rect	(VkvgContext ctx, uint32_t i);
 void _build_vb_step         (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR);
 
+void _bind_draw_pipeline    (VkvgContext ctx);
 void _create_cmd_buff		(VkvgContext ctx);
 void _init_cmd_buff			(VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);

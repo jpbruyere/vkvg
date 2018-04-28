@@ -187,6 +187,12 @@ void vkvg_set_line_cap      (VkvgContext ctx, vkvg_line_cap_t cap);
 void vkvg_set_line_join     (VkvgContext ctx, vkvg_line_join_t join);
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y);
 void vkvg_set_source        (VkvgContext ctx, VkvgPattern pat);
+void vkvg_set_operator      (VkvgContext ctx, vkvg_operator_t op);
+
+float               vkvg_get_line_width     (VkvgContext ctx);
+vkvg_line_cap_t     vkvg_get_line_cap       (VkvgContext ctx);
+vkvg_line_join_t    vkvg_get_line_join      (VkvgContext ctx);
+vkvg_operator_t     vkvg_get_operator       (VkvgContext ctx);
 
 void vkvg_save              (VkvgContext ctx);
 void vkvg_restore           (VkvgContext ctx);

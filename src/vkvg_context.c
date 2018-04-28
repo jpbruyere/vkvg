@@ -42,6 +42,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->sizePathes     = VKVG_PATHES_SIZE;
     ctx->lineWidth      = 1;
     ctx->pSurf          = surf;
+    ctx->curOperator    = VKVG_OPERATOR_OVER;
 
     push_constants pc = {
             {0,0,0,1},
@@ -360,7 +361,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
     vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
 
     //should test current operator to bind correct pipeline
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
+    _bind_draw_pipeline (ctx);
     vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 }
 void vkvg_fill_preserve (VkvgContext ctx){
@@ -373,7 +374,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
     _poly_fill (ctx);
 
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
+    _bind_draw_pipeline (ctx);
     vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
     vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
     vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -605,7 +606,23 @@ void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap){
     ctx->lineCap = cap;
 }
 void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join){
-    ctx->lineJoint = join;
+    ctx->lineJoin = join;
+}
+void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op){
+    ctx->curOperator = op;
+    _bind_draw_pipeline (ctx);
+}
+float vkvg_get_line_width (VkvgContext ctx){
+    return ctx->lineWidth;
+}
+vkvg_line_cap_t vkvg_get_line_cap (VkvgContext ctx){
+    return ctx->lineCap;
+}
+vkvg_line_join_t vkvg_get_line_join (VkvgContext ctx){
+    return ctx->lineJoin;
+}
+vkvg_operator_t vkvg_get_operator (VkvgContext ctx){
+    return ctx->curOperator;
 }
 
 void vkvg_select_font_face (VkvgContext ctx, const char* name){
@@ -675,6 +692,7 @@ void vkvg_save (VkvgContext ctx){
     memcpy (sav->pathes, ctx->pathes, sav->pathPtr * sizeof(uint32_t));
 
     sav->lineWidth  = ctx->lineWidth;
+    sav->curOperator= ctx->curOperator;
     sav->lineCap    = ctx->lineCap;
     sav->lineWidth  = ctx->lineWidth;
 
@@ -736,8 +754,9 @@ void vkvg_restore (VkvgContext ctx){
     memcpy (ctx->pathes, sav->pathes, ctx->pathPtr * sizeof(uint32_t));
 
     ctx->lineWidth  = sav->lineWidth;
+    ctx->curOperator= sav->curOperator;
     ctx->lineCap    = sav->lineCap;
-    ctx->lineJoint  = sav->lineJoint;
+    ctx->lineJoin  = sav->lineJoint;
 
     ctx->selectedFont.charSize = sav->selectedFont.charSize;
     strcpy (ctx->selectedFont.fontFile, sav->selectedFont.fontFile);

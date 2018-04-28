@@ -88,3 +88,7 @@ void main()
 
 	outFragColor = c;
 }
+
+void op_CLEAR () {
+	outFragColor = vec4 (0);
+}

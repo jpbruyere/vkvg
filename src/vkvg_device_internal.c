@@ -264,13 +264,19 @@ void _setupPipelines(VkvgDevice dev)
     dsStateCreateInfo.back = dsStateCreateInfo.front = stencilOpState;
     blendAttachmentState.colorWriteMask=0xf;
     dynamicState.dynamicStateCount = 3;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipeline));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_OVER));
 
     blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipeline_OP_SUB));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
+
+    blendAttachmentState.blendEnable = VK_FALSE;
+    //rasterizationState.polygonMode = VK_POLYGON_MODE_POINT;
+    //shaderStages[1].pName = "op_CLEAR";
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
 
     rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    shaderStages[1].pName = "main";
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
 
     shaderStages[1].module = modFragWired;

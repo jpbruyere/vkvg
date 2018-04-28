@@ -59,9 +59,12 @@ void vkvg_device_destroy (VkvgDevice dev)
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);
 
     vkDestroyPipeline               (dev->vkDev, dev->pipelinePolyFill, NULL);
-    vkDestroyPipeline               (dev->vkDev, dev->pipeline, NULL);
     vkDestroyPipeline               (dev->vkDev, dev->pipelineClipping, NULL);
-    vkDestroyPipeline               (dev->vkDev, dev->pipeline_OP_SUB, NULL);
+
+    vkDestroyPipeline               (dev->vkDev, dev->pipe_OVER,    NULL);
+    vkDestroyPipeline               (dev->vkDev, dev->pipe_SUB,     NULL);
+    vkDestroyPipeline               (dev->vkDev, dev->pipe_CLEAR,   NULL);
+
     vkDestroyPipeline               (dev->vkDev, dev->pipelineWired, NULL);
     vkDestroyPipeline               (dev->vkDev, dev->pipelineLineList, NULL);
 

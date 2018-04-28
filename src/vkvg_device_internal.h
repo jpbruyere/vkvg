@@ -42,10 +42,12 @@ typedef struct _vkvg_device_t{
     VkCommandBuffer         cmd;
     VkFence                 fence;
 
-    VkPipeline				pipeline;
+    VkPipeline				pipe_OVER;
+    VkPipeline				pipe_SUB;
+    VkPipeline				pipe_CLEAR;
+
     VkPipeline				pipelinePolyFill;
     VkPipeline				pipelineClipping;
-    VkPipeline				pipeline_OP_SUB;
     VkPipeline				pipelineWired;
     VkPipeline				pipelineLineList;
 

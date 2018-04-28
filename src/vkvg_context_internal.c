@@ -209,6 +209,21 @@ void _flush_cmd_buff (VkvgContext ctx){
 
     _submit_wait_and_reset_cmd(ctx);
 }
+//bind correct draw pipeline depending on current OPERATOR
+void _bind_draw_pipeline (VkvgContext ctx) {
+    switch (ctx->curOperator) {
+    case VKVG_OPERATOR_OVER:
+        vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+        break;
+    case VKVG_OPERATOR_CLEAR:
+        vkvg_set_source_rgba(ctx,0,0,0,0);
+        vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_CLEAR);
+        break;
+    default:
+        vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+        break;
+    }
+}
 void _init_cmd_buff (VkvgContext ctx){
     //full surf quad triangles is at the beginning
     ctx->vertCount = 4;
@@ -226,9 +241,9 @@ void _init_cmd_buff (VkvgContext ctx){
     VkRenderPassBeginInfo renderPassBeginInfo = { .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
                                                   .renderPass = ctx->pSurf->dev->renderPass,
                                                   .framebuffer = ctx->pSurf->fb,
-                                                  .renderArea.extent = {ctx->pSurf->width,ctx->pSurf->height},
-                                                  .clearValueCount = 4,
-                                                  .pClearValues = clearValues};
+                                                  .renderArea.extent = {ctx->pSurf->width,ctx->pSurf->height}};
+                                                  //.clearValueCount = 4,
+                                                  //.pClearValues = clearValues};
 
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     vkCmdBeginRenderPass (ctx->cmd, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -243,8 +258,9 @@ void _init_cmd_buff (VkvgContext ctx){
     VkDeviceSize offsets[1] = { 0 };
     vkCmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
     vkCmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);
-    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, 0);
+
+    _bind_draw_pipeline (ctx);
+    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
     _update_push_constants  (ctx);
 }
@@ -353,7 +369,7 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
 
     uint32_t idx = ctx->vertCount;
 
-    if (ctx->lineJoint == VKVG_LINE_JOIN_MITER){
+    if (ctx->lineJoin == VKVG_LINE_JOIN_MITER){
         v.pos = vec2_add(ctx->points[i], bisec);
         _add_vertex(ctx, v);
         v.pos = vec2_sub(ctx->points[i], bisec);
@@ -372,11 +388,11 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
         }
         _add_vertex(ctx, v);
 
-        if (ctx->lineJoint == VKVG_LINE_JOIN_BEVEL){
+        if (ctx->lineJoin == VKVG_LINE_JOIN_BEVEL){
             _add_triangle_indices(ctx, idx, idx+2, idx+1);
             _add_triangle_indices(ctx, idx+2, idx+3, idx+1);
             _add_triangle_indices(ctx, idx+1, idx+3, idx+4);
-        }else if (ctx->lineJoint == VKVG_LINE_JOIN_ROUND){
+        }else if (ctx->lineJoin == VKVG_LINE_JOIN_ROUND){
             float step = M_PI / hw;
             float a = acos(vp.x);
             if (vp.y < 0)

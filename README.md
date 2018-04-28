@@ -33,6 +33,12 @@
 - Image loading and writing with [stb lib](https://github.com/nothings/stb)
 - Test includes svg rendering with [nanoSVG](https://github.com/memononen/nanosvg)
 
+<p align="center">
+  <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png">
+    <img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" width="500">
+  </a>
+</p>
+
 ### Requirements:
 
 - [Vulkan](https://www.khronos.org/vulkan/)
@@ -63,6 +69,8 @@ make						    # Run Make
 
 - Radial gradients.
 - Dashed lines.
+- Operators.
+- Improve stroke algorithms.
 - Offscreen pattern building.
 - Optimize vulkan memory allocations by sub-allocating from a single shared memory chunk per type.
 - Optimize command submissions.

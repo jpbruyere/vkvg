@@ -455,14 +455,14 @@ void test_colinear () {
 }
 
 void multi_test1 () {
-    VkvgSurface surf2 = vkvg_surface_create (device,1024,800);;
+    VkvgSurface surf2 = vkvg_surface_create (device,800,800);;
     VkvgContext ctx = vkvg_create(surf2);
 
     vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1.0);
     vkvg_paint(ctx);
 
-    //vkvg_test_fill(ctx);
-    //vkvg_test_fill2(ctx);
+    vkvg_test_fill(ctx);
+    vkvg_test_fill2(ctx);
 
 //    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
 
@@ -491,7 +491,7 @@ void multi_test1 () {
     test_text(ctx);
 
 
-    //vkvg_test_stroke(ctx);
+    vkvg_test_stroke(ctx);
 
 //    vkvg_translate(ctx, 10,10);
 //    vkvg_rotate(ctx, 0.2);
@@ -499,8 +499,14 @@ void multi_test1 () {
 
 
     //vkvg_test_gradient (ctx);
-    //vkvg_test_curves(ctx);
-    //vkvg_test_curves2(ctx);
+
+    vkvg_test_curves(ctx);
+    vkvg_test_curves2(ctx);
+
+    /*vkvg_set_operator(ctx, VKVG_OPERATOR_CLEAR);
+    vkvg_rectangle(ctx,100,100,300,300);
+    vkvg_fill(ctx);
+    vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);*/
 
     //test_img_surface(ctx);
     //test_line_caps(ctx);
@@ -508,10 +514,15 @@ void multi_test1 () {
     vkvg_destroy(ctx);
     ctx = vkvg_create(surf);
 
-    vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
+    vkvg_set_source_rgba(ctx,0.0,1.0,0.0,1);
     vkvg_paint(ctx);
+//    vkvg_set_source_rgba(ctx,0.0,0.0,1.0,1);
+//    vkvg_rectangle(ctx,100,100,500,500);
+//    vkvg_fill(ctx);
 
     vkvg_set_source_surface(ctx, surf2, 0, 0);
+    //vkvg_rectangle(ctx,100,100,400,400);
+    //vkvg_fill(ctx);
     vkvg_paint(ctx);
 
     vkvg_destroy(ctx);
@@ -797,9 +808,11 @@ void cairo_tests () {
     vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
     vkvg_paint(ctx);
 
-    /*vkvg_set_source_rgba(ctx,0,1,0,1);
-    vkvg_rectangle(ctx,100,100,200,200);
-    //vkvg_fill(ctx);
+    /*
+    vkvg_set_source_rgba(ctx,0,1,0,1);
+    vkvg_rectangle(ctx,0,0,600,600);
+    vkvg_fill(ctx);
+
     vkvg_clip(ctx);
 
     vkvg_set_source_rgba(ctx,1,0,0,1);
@@ -814,7 +827,8 @@ void cairo_tests () {
     vkvg_rel_line_to(ctx,800,800);
     vkvg_stroke(ctx);*/
 
-    //cairo_test_clip(ctx);
+//    cairo_test_clip(ctx);
+//    vkvg_reset_clip(ctx);
 
     cairo_print_arc(ctx);
 
@@ -824,10 +838,14 @@ void cairo_tests () {
     vkvg_translate(ctx,250,0);
     cairo_test_rounded_rect(ctx);
 
-    vkvg_translate(ctx,250,0);
-    cairo_test_curves(ctx);
+/*
+    vkvg_set_operator(ctx, VKVG_OPERATOR_CLEAR);
+    vkvg_rectangle(ctx,100,100,500,500);
+    vkvg_fill(ctx);
+    vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
+*/
 
-    vkvg_translate(ctx,-700,250);
+    vkvg_translate(ctx,-450,250);
     cairo_test_fill_and_stroke2(ctx);
 
     vkvg_translate(ctx,250,0);
@@ -837,10 +855,13 @@ void cairo_tests () {
     cairo_test_text(ctx);
 
     vkvg_translate(ctx,-500,250);
-    cairo_test_line_caps(ctx);
+    cairo_test_curves(ctx);
 
     vkvg_translate(ctx,250,0);
     cairo_test_line_joins(ctx);
+
+    vkvg_translate(ctx,250,0);
+    cairo_test_line_caps(ctx);
 
     vkvg_destroy(ctx);
 }
@@ -885,13 +906,13 @@ void test_svg () {
     NSVGpath* path;
     //svg = nsvgParseFromFile("/mnt/data/images/svg/tux.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/world.svg", "px", 96);
-    //svg = nsvgParseFromFile("/mnt/data/images/svg/tiger.svg", "px", 96);
+    svg = nsvgParseFromFile("/mnt/data/images/svg/tiger.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/koch_curve.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/diamond1.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/diamond2.svg", "px", 96);
     //svg = nsvgParseFromFile("/home/jp/yahweh-protosinaitic.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/WMD-biological.svg", "px", 96);
-    svg = nsvgParseFromFile("/mnt/data/images/svg/Skull_and_crossbones.svg", "px", 96);
+    //svg = nsvgParseFromFile("/mnt/data/images/svg/Skull_and_crossbones.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/IconAlerte.svg", "px", 96);
     //svg = nsvgParseFromFile("/mnt/data/images/svg/Svg_example4.svg", "px", 96);
 
@@ -949,6 +970,8 @@ void test_svg () {
 }
 
 int main(int argc, char *argv[]) {
+
+    //dumpLayerExts();
 
     VkEngine* e = vke_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, 1024, 800);
     vke_set_key_callback (e, key_callback);
