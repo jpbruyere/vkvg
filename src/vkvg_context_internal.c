@@ -275,7 +275,96 @@ inline void _update_push_constants (VkvgContext ctx) {
     vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
 }
+void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
+    VkvgPattern lastPat = ctx->pattern;
+    ctx->pattern = pat;
 
+    ctx->pushConsts.patternType = pat->type;
+
+    switch (pat->type)  {
+    case VKVG_PATTERN_TYPE_SOLID:
+        memcpy (&ctx->pushConsts.source, ctx->pattern->data, sizeof(vkvg_color_t));
+
+        if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
+            _flush_cmd_buff             (ctx);
+            _reset_src_descriptor_set   (ctx);
+            _init_cmd_buff              (ctx);//push csts updated by init
+        }else
+            _update_push_constants (ctx);
+
+        break;
+    case VKVG_PATTERN_TYPE_SURFACE:
+        _flush_cmd_buff(ctx);
+
+        VkvgSurface surf = (VkvgSurface)pat->data;
+        ctx->source = surf->img;
+
+        //if (vkh_image_get_sampler (ctx->source) == VK_NULL_HANDLE){
+            VkSamplerAddressMode addrMode;
+            VkFilter filter = VK_FILTER_NEAREST;
+            switch (pat->extend) {
+            case VKVG_EXTEND_NONE:
+                addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+                break;
+            case VKVG_EXTEND_PAD:
+                addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+                break;
+            case VKVG_EXTEND_REPEAT:
+                addrMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+                break;
+            case VKVG_EXTEND_REFLECT:
+                addrMode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+                break;
+            }
+            switch (pat->filter) {
+            case VKVG_FILTER_BILINEAR:
+            case VKVG_FILTER_BEST:
+                filter = VK_FILTER_LINEAR;
+                break;
+            }
+            vkh_image_create_sampler(ctx->source, filter, filter,
+                                 VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
+        //}
+        if (vkh_image_get_layout (ctx->source) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL){
+            vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+            vkh_image_set_layout        (ctx->cmd, ctx->source, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            vkh_cmd_end                 (ctx->cmd);
+
+            _submit_wait_and_reset_cmd  (ctx);
+        }
+
+        _update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
+
+        vec4 srcRect = {0,0,surf->width,surf->height};
+        ctx->pushConsts.source = srcRect;
+
+        _init_cmd_buff                  (ctx);
+        break;
+    case VKVG_PATTERN_TYPE_LINEAR:
+        _flush_cmd_buff (ctx);
+
+        if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
+            _reset_src_descriptor_set (ctx);
+
+        vec4 bounds = {ctx->pSurf->width, ctx->pSurf->height, 0, 0};//store img bounds in unused source field
+        ctx->pushConsts.source = bounds;
+
+        //transform control point with current ctx matrix
+        vkvg_gradient_t grad = {};
+        memcpy(&grad, pat->data, sizeof(vkvg_gradient_t));
+
+        vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
+        vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
+        //to do, scale radial radiuses in cp[2]
+
+        memcpy(ctx->uboGrad.mapped, &grad, sizeof(vkvg_gradient_t));
+
+        _init_cmd_buff (ctx);
+        break;
+    }
+}
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
     VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     VkWriteDescriptorSet writeDescriptorSet = {

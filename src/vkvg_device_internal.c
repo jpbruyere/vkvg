@@ -49,14 +49,14 @@ void _setupRenderPass(VkvgDevice dev)
                     .format = FB_COLOR_FORMAT,
                     .samples = VKVG_SAMPLES,
                     .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-                    .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                    .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
     VkAttachmentDescription attColorResolve = {
                     .format = FB_COLOR_FORMAT,
                     .samples = VK_SAMPLE_COUNT_1_BIT,
-                    .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                    .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
                     .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -65,8 +65,8 @@ void _setupRenderPass(VkvgDevice dev)
     VkAttachmentDescription attDS = {
                     .format = VK_FORMAT_S8_UINT,
                     .samples = VKVG_SAMPLES,
-                    .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-                    .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                    .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+                    .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };

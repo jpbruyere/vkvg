@@ -50,6 +50,15 @@ typedef enum _vkvg_extend {
     VKVG_EXTEND_PAD
 } vkvg_extend_t;
 
+typedef enum _vkvg_filter {
+    VKVG_FILTER_FAST,
+    VKVG_FILTER_GOOD,
+    VKVG_FILTER_BEST,
+    VKVG_FILTER_NEAREST,
+    VKVG_FILTER_BILINEAR,
+    VKVG_FILTER_GAUSSIAN,
+} vkvg_filter_t;
+
 typedef enum _vkvg_pattern_type {
     VKVG_PATTERN_TYPE_SOLID,
     VKVG_PATTERN_TYPE_SURFACE,
@@ -214,14 +223,20 @@ void vkvg_font_extents      (VkvgContext ctx, vkvg_font_extents_t* extents);
 
 //pattern
 VkvgPattern vkvg_pattern_create             ();
+VkvgPattern vkvg_pattern_create_rgba        (float r, float g, float b, float a);
+VkvgPattern vkvg_pattern_create_rgb         (float r, float g, float b);
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
 VkvgPattern vkvg_pattern_create_linear      (float x0, float y0, float x1, float y1);
 VkvgPattern vkvg_pattern_create_radial      (float cx0, float cy0, float radius0,
                                              float cx1, float cy1, float radius1);
+void        vkvg_pattern_destroy            (VkvgPattern pat);
 
 void vkvg_patter_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a);
 void vkvg_pattern_set_extend    (VkvgPattern pat, vkvg_extend_t extend);
-void vkvg_pattern_destroy       (VkvgPattern pat);
+void vkvg_pattern_set_filter    (VkvgPattern pat, vkvg_filter_t filter);
+
+vkvg_extend_t   vkvg_pattern_get_extend (VkvgPattern pat);
+vkvg_filter_t   vkvg_pattern_get_filter (VkvgPattern pat);
 
 //matrix
 void vkvg_matrix_init_identity (vkvg_matrix_t *matrix);
@@ -239,6 +254,7 @@ void vkvg_matrix_multiply           (vkvg_matrix_t *result, const vkvg_matrix_t 
 void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, float *dy);
 void vkvg_matrix_transform_point    (const vkvg_matrix_t *matrix, float *x, float *y);
 void vkvg_matrix_invert             (vkvg_matrix_t *matrix);
+
 #ifdef __cplusplus
 }
 #endif

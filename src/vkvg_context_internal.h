@@ -53,7 +53,6 @@ typedef struct {
 typedef struct _vkvg_context_save_t{
     struct _vkvg_context_save_t* pNext;
 
-    VkhImage    source;
     VkhImage    stencilMS;
     uint32_t    stencilRef;
     vec2*		points;     //points array
@@ -74,6 +73,7 @@ typedef struct _vkvg_context_save_t{
     _vkvg_font_t*   currentFont;      //font ready for lookup
     vkvg_direction_t   textDirection;
     push_constants  pushConsts;
+    VkvgPattern     pattern;
 
 }vkvg_context_save_t;
 
@@ -129,6 +129,7 @@ typedef struct _vkvg_context_t {
     vkvg_direction_t textDirection;
 
     push_constants  pushConsts;
+    VkvgPattern     pattern;
 
     vkvg_context_save_t* pSavedCtxs;//last ctx saved ptr
 }vkvg_context;
@@ -165,6 +166,7 @@ void _submit_wait_and_reset_cmd(VkvgContext ctx);
 void _submit_ctx_cmd        (VkvgContext ctx);
 void _wait_and_reset_ctx_cmd(VkvgContext ctx);
 void _update_push_constants (VkvgContext ctx);
+void _update_cur_pattern    (VkvgContext ctx, VkvgPattern pat);
 void _set_mat_inv_and_vkCmdPush (VkvgContext ctx);
 
 void _createDescriptorPool  (VkvgContext ctx);

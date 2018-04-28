@@ -28,18 +28,36 @@
 VkvgPattern vkvg_pattern_create(){
     VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
     pat->type = VKVG_PATTERN_TYPE_SOLID;
+    pat->extend = VKVG_EXTEND_NONE;
     pat->data = (vkvg_color_t*)calloc(1,sizeof(vkvg_color_t));
     return pat;
 }
-
+VkvgPattern vkvg_pattern_create_rgba (float r, float g, float b, float a){
+    VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
+    pat->type = VKVG_PATTERN_TYPE_SOLID;
+    pat->extend = VKVG_EXTEND_NONE;
+    vkvg_color_t* c = (vkvg_color_t*)calloc(1,sizeof(vkvg_color_t));
+    c->r = r;
+    c->g = g;
+    c->b = b;
+    c->a = a;
+    pat->data = c;
+    return pat;
+}
+VkvgPattern vkvg_pattern_create_rgb (float r, float g, float b){
+    return vkvg_pattern_create_rgba (r,g,b,1.f);
+}
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf){
     VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
+    pat->type = VKVG_PATTERN_TYPE_SURFACE;
+    pat->extend = VKVG_EXTEND_NONE;
     pat->data = surf;
     return pat;
 }
 VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
     VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
     pat->type = VKVG_PATTERN_TYPE_LINEAR;
+    pat->extend = VKVG_EXTEND_PAD;
     vkvg_gradient_t* grad = (vkvg_gradient_t*)calloc(1,sizeof(vkvg_gradient_t));
 
     vec4 cp0 = {x0, y0}, cp1 = {x1, y1};
@@ -77,6 +95,16 @@ void vkvg_patter_add_color_stop (VkvgPattern pat, float offset, float r, float g
 }
 void vkvg_pattern_set_extend (VkvgPattern pat, vkvg_extend_t extend){
     pat->extend = extend;
+}
+void vkvg_pattern_set_filter (VkvgPattern pat, vkvg_filter_t filter){
+    pat->filter = filter;
+}
+
+vkvg_extend_t vkvg_pattern_get_extend (VkvgPattern pat){
+    return pat->extend;
+}
+vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat){
+    return pat->filter;
 }
 
 void vkvg_pattern_destroy(VkvgPattern pat)

@@ -520,84 +520,18 @@ void _vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float width, float
 void vkvg_paint (VkvgContext ctx){
     vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
 }
-
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
     vkvg_set_source_rgba (ctx, r, g, b, 1);
 }
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
-    uint32_t lastPat = ctx->pushConsts.patternType;
-
-    vec4 c = {r,g,b,a};
-    ctx->pushConsts.source = c;
-    ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SOLID;
-
-    if (lastPat == VKVG_PATTERN_TYPE_SURFACE){
-        _flush_cmd_buff             (ctx);
-        _reset_src_descriptor_set   (ctx);
-        _init_cmd_buff              (ctx);//push csts updated by init
-    }else
-        _update_push_constants (ctx);
+    _update_cur_pattern (ctx, vkvg_pattern_create_rgba (r,g,b,a));
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
-    _flush_cmd_buff(ctx);
-
-    ctx->source = surf->img;
-
-    if (vkh_image_get_sampler(ctx->source) == VK_NULL_HANDLE)
-        vkh_image_create_sampler(ctx->source,VK_FILTER_NEAREST, VK_FILTER_NEAREST,
-                             VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-
-    if (vkh_image_get_layout (ctx->source) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL){
-        vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-        vkh_image_set_layout        (ctx->cmd, ctx->source, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-        vkh_cmd_end                 (ctx->cmd);
-
-        _submit_wait_and_reset_cmd  (ctx);
-    }
-
-    _update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
-
-    vec4 srcRect = {x,y,surf->width,surf->height};
-    ctx->pushConsts.source = srcRect;
-    ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SURFACE;
-
-    _init_cmd_buff                  (ctx);
+    _update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
-    if (pat->type == VKVG_PATTERN_TYPE_SOLID){
-        vkvg_color_t* c = (vkvg_color_t*)pat->data;
-        vkvg_set_source_rgba (ctx, c->r, c->g, c->b, c->a);
-        return;
-    }
-    if (pat->type == VKVG_PATTERN_TYPE_SURFACE){
-        vkvg_set_source_surface (ctx, (VkvgSurface)pat->data, 0, 0);
-        return;
-    }
-
-    _flush_cmd_buff (ctx);
-
-    if (ctx->pushConsts.patternType == VKVG_PATTERN_TYPE_SURFACE)
-        _reset_src_descriptor_set (ctx);
-
-    ctx->pushConsts.patternType = pat->type;
-    vec4 bounds = {ctx->pSurf->width, ctx->pSurf->height, 0, 0};//store img bounds in unused source field
-    ctx->pushConsts.source = bounds;
-    _update_push_constants (ctx);
-
-    //transform control point with current ctx matrix
-    vkvg_gradient_t grad = {};
-    memcpy(&grad, pat->data, sizeof(vkvg_gradient_t));
-
-    vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
-    vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
-    //to do, scale radial radiuses in cp[2]
-
-    memcpy(ctx->uboGrad.mapped, &grad, sizeof(vkvg_gradient_t));
-
-    _init_cmd_buff (ctx);
+    _update_cur_pattern (ctx, pat);
 }
 void vkvg_set_line_width (VkvgContext ctx, float width){
     ctx->lineWidth = width;
@@ -703,7 +637,7 @@ void vkvg_save (VkvgContext ctx){
     sav->currentFont  = ctx->currentFont;
     sav->textDirection= ctx->textDirection;
     sav->pushConsts   = ctx->pushConsts;
-    sav->source       = ctx->source;
+    sav->pattern      = ctx->pattern;
 
     sav->pNext      = ctx->pSavedCtxs;
     ctx->pSavedCtxs = sav;
@@ -714,10 +648,15 @@ void vkvg_save (VkvgContext ctx){
 void vkvg_restore (VkvgContext ctx){
     if (ctx->pSavedCtxs == NULL)
         return;
-    _flush_cmd_buff(ctx);
 
     vkvg_context_save_t* sav = ctx->pSavedCtxs;
     ctx->pSavedCtxs = sav->pNext;
+
+    ctx->pushConsts   = sav->pushConsts;
+
+    _update_cur_pattern(ctx, sav->pattern);
+
+    _flush_cmd_buff(ctx);
 
     vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -763,8 +702,6 @@ void vkvg_restore (VkvgContext ctx){
 
     ctx->currentFont  = sav->currentFont;
     ctx->textDirection= sav->textDirection;
-    ctx->pushConsts   = sav->pushConsts;
-    ctx->source       = sav->source;
 
     _wait_and_reset_ctx_cmd (ctx);
     _init_cmd_buff          (ctx);

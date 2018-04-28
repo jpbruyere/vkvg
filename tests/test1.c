@@ -493,7 +493,7 @@ void multi_test1 () {
 
     vkvg_test_stroke(ctx);
 
-//    vkvg_translate(ctx, 10,10);
+    vkvg_translate(ctx, 100,50);
 //    vkvg_rotate(ctx, 0.2);
     //vkvg_scale(ctx, 2,2);
 
@@ -514,15 +514,22 @@ void multi_test1 () {
     vkvg_destroy(ctx);
     ctx = vkvg_create(surf);
 
-    vkvg_set_source_rgba(ctx,0.0,1.0,0.0,1);
+    vkvg_set_source_rgba(ctx,1.0,0.0,0.0,1);
     vkvg_paint(ctx);
 //    vkvg_set_source_rgba(ctx,0.0,0.0,1.0,1);
 //    vkvg_rectangle(ctx,100,100,500,500);
 //    vkvg_fill(ctx);
 
-    vkvg_set_source_surface(ctx, surf2, 0, 0);
+    VkvgPattern pat = vkvg_pattern_create_for_surface(surf2);
+    vkvg_pattern_set_extend(pat, VKVG_EXTEND_NONE);
+    vkvg_pattern_set_filter(pat, VKVG_FILTER_BILINEAR);
+    vkvg_set_source (ctx, pat);
     //vkvg_rectangle(ctx,100,100,400,400);
     //vkvg_fill(ctx);
+    vkvg_paint(ctx);
+    vkvg_translate(ctx,200,200);
+    vkvg_paint(ctx);
+    vkvg_rotate(ctx,0.7);
     vkvg_paint(ctx);
 
     vkvg_destroy(ctx);
