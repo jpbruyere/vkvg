@@ -364,6 +364,9 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         _init_cmd_buff (ctx);
         break;
     }
+
+    if (lastPat)
+        vkvg_pattern_destroy    (lastPat);
 }
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
     VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

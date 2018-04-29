@@ -30,6 +30,9 @@ VkvgPattern vkvg_pattern_create(){
     pat->type = VKVG_PATTERN_TYPE_SOLID;
     pat->extend = VKVG_EXTEND_NONE;
     pat->data = (vkvg_color_t*)calloc(1,sizeof(vkvg_color_t));
+
+    pat->references = 1;
+
     return pat;
 }
 VkvgPattern vkvg_pattern_create_rgba (float r, float g, float b, float a){
@@ -42,6 +45,9 @@ VkvgPattern vkvg_pattern_create_rgba (float r, float g, float b, float a){
     c->b = b;
     c->a = a;
     pat->data = c;
+
+    pat->references = 1;
+
     return pat;
 }
 VkvgPattern vkvg_pattern_create_rgb (float r, float g, float b){
@@ -52,6 +58,10 @@ VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf){
     pat->type = VKVG_PATTERN_TYPE_SURFACE;
     pat->extend = VKVG_EXTEND_NONE;
     pat->data = surf;
+
+    pat->references = 1;
+    vkvg_surface_reference (surf);
+
     return pat;
 }
 VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
@@ -65,6 +75,9 @@ VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
     grad->cp[1] = cp1;
 
     pat->data = grad;
+
+    pat->references = 1;
+
     return pat;
 }
 VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
@@ -79,7 +92,17 @@ VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
     grad->cp[2] = rads;
 
     pat->data = grad;
+
+    pat->references = 1;
+
     return pat;
+}
+VkvgPattern vkvg_pattern_reference (VkvgPattern pat) {
+    pat->references++;
+    return pat;
+}
+uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat) {
+    return pat->references;
 }
 void vkvg_patter_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a) {
     if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID){
@@ -109,7 +132,14 @@ vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat){
 
 void vkvg_pattern_destroy(VkvgPattern pat)
 {
-    if (pat->type != VKVG_PATTERN_TYPE_SURFACE)
+    pat->references--;
+    if (pat->references > 0)
+        return;
+
+    if (pat->type == VKVG_PATTERN_TYPE_SURFACE) {
+        VkvgSurface surf = (VkvgSurface)pat->data;
+        vkvg_surface_destroy (surf);
+    }else
         free (pat->data);
 
     free(pat);

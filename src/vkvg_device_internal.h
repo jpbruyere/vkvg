@@ -33,11 +33,12 @@
 typedef struct _vkvg_device_t{
     VkDevice				vkDev;
     VkPhysicalDeviceMemoryProperties phyMemProps;
-    VkRenderPass			renderPass;
     VkPhysicalDevice        phy;
 
     VkhQueue                gQueue;
+    VkRenderPass			renderPass;
 
+    uint32_t                references;
     VkCommandPool			cmdPool;
     VkCommandBuffer         cmd;
     VkFence                 fence;

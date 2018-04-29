@@ -82,6 +82,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
 
+    ctx->references = 1;
+
     return ctx;
 }
 void vkvg_flush (VkvgContext ctx){
@@ -113,6 +115,10 @@ void vkvg_flush (VkvgContext ctx){
 
 void vkvg_destroy (VkvgContext ctx)
 {
+    ctx->references--;
+    if (ctx->references > 0)
+        return;
+
     _flush_cmd_buff(ctx);
 
     VkDevice dev = ctx->pSurf->dev->vkDev;
@@ -142,6 +148,8 @@ void vkvg_destroy (VkvgContext ctx)
         vkvg_context_save_t* cur = next;
         next = cur->pNext;
         _free_ctx_save (cur);
+        if (cur->pattern)
+            vkvg_pattern_destroy (cur->pattern);
     }
 
     if (ctx->pSurf->dev->lastCtx == ctx){
@@ -158,6 +166,14 @@ void vkvg_destroy (VkvgContext ctx)
 
     free(ctx);
 }
+VkvgContext vkvg_reference (VkvgContext ctx) {
+    ctx->references++;
+    return ctx;
+}
+uint32_t vkvg_get_reference_count (VkvgContext ctx) {
+    return ctx->references;
+}
+
 void vkvg_new_sub_path (VkvgContext ctx){
     _finish_path(ctx);
 }
@@ -532,6 +548,7 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
     _update_cur_pattern (ctx, pat);
+    vkvg_pattern_reference  (pat);
 }
 void vkvg_set_line_width (VkvgContext ctx, float width){
     ctx->lineWidth = width;
@@ -641,6 +658,9 @@ void vkvg_save (VkvgContext ctx){
 
     sav->pNext      = ctx->pSavedCtxs;
     ctx->pSavedCtxs = sav;
+
+    if (ctx->pattern)
+        vkvg_pattern_reference (ctx->pattern);
 
     _wait_and_reset_ctx_cmd (ctx);
     _init_cmd_buff          (ctx);

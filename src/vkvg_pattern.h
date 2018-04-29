@@ -30,6 +30,7 @@ typedef struct _vkvg_pattern_t {
     vkvg_pattern_type_t type;
     vkvg_extend_t       extend;
     vkvg_filter_t       filter;
+    uint32_t            references;
     void*               data;
 }vkvg_pattern_t;
 

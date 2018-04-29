@@ -91,6 +91,9 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
 
     _init_surface (surf);
 
+    surf->references = 1;
+    vkvg_device_reference (surf->dev);
+
     return surf;
 }
 
@@ -187,16 +190,32 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 
     vkh_image_destroy   (tmpImg);
 
+    surf->references = 1;
+    vkvg_device_reference (surf->dev);
+
     return surf;
 }
 
 void vkvg_surface_destroy(VkvgSurface surf)
 {
+    surf->references--;
+    if (surf->references > 0)
+        return;
     vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
     vkh_image_destroy(surf->img);
     vkh_image_destroy(surf->imgMS);
     vkh_image_destroy(surf->stencilMS);
+
+    vkvg_device_destroy (surf->dev);
     free(surf);
+}
+
+VkvgSurface vkvg_surface_reference (VkvgSurface surf) {
+    surf->references++;
+    return surf;
+}
+uint32_t vkvg_surface_get_reference_count (VkvgSurface surf) {
+    return surf->references;
 }
 
 VkImage vkvg_surface_get_vk_image(VkvgSurface surf)

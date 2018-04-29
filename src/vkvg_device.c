@@ -49,11 +49,17 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queu
     _createDescriptorSetLayout  (dev);
     _setupPipelines             (dev);
 
+    dev->references = 1;
+
     return dev;
 }
 
 void vkvg_device_destroy (VkvgDevice dev)
 {
+    dev->references--;
+    if (dev->references > 0)
+        return;
+
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslGrad,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);
@@ -80,4 +86,12 @@ void vkvg_device_destroy (VkvgDevice dev)
 
     _destroy_font_cache(dev);
     free(dev);
+}
+
+VkvgDevice vkvg_device_reference (VkvgDevice dev) {
+    dev->references++;
+    return dev;
+}
+uint32_t vkvg_device_get_reference_count (VkvgDevice dev) {
+    return dev->references;
 }

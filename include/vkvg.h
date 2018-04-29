@@ -119,9 +119,13 @@ typedef struct _vkvg_pattern_t* VkvgPattern;
 
 VkvgDevice	vkvg_device_create			(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queue, uint32_t qFam);
 void		vkvg_device_destroy			(VkvgDevice dev);
+VkvgDevice  vkvg_device_reference           (VkvgDevice dev);
+uint32_t    vkvg_device_get_reference_count (VkvgDevice dev);
 
 VkvgSurface vkvg_surface_create			(VkvgDevice dev, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_create_from_image  (VkvgDevice dev, const char* filePath);
+VkvgSurface vkvg_surface_reference          (VkvgSurface surf);
+uint32_t    vkvg_surface_get_reference_count(VkvgSurface surf);
 
 void		vkvg_surface_destroy		(VkvgSurface surf);
 VkImage		vkvg_surface_get_vk_image	(VkvgSurface surf);
@@ -166,8 +170,10 @@ typedef enum _vkvg_operator {
 } vkvg_operator_t;
 
 /*Context*/
-VkvgContext vkvg_create		(VkvgSurface surf);
-void vkvg_destroy			(VkvgContext ctx);
+VkvgContext vkvg_create             (VkvgSurface surf);
+void        vkvg_destroy			(VkvgContext ctx);
+VkvgContext vkvg_reference          (VkvgContext ctx);
+uint32_t    vkvg_get_reference_count(VkvgContext ctx);
 
 void vkvg_flush				(VkvgContext ctx);
 
@@ -224,6 +230,8 @@ void vkvg_font_extents      (VkvgContext ctx, vkvg_font_extents_t* extents);
 
 //pattern
 VkvgPattern vkvg_pattern_create             ();
+VkvgPattern vkvg_pattern_reference          (VkvgPattern pat);
+uint32_t    vkvg_pattern_get_reference_count(VkvgPattern pat);
 VkvgPattern vkvg_pattern_create_rgba        (float r, float g, float b, float a);
 VkvgPattern vkvg_pattern_create_rgb         (float r, float g, float b);
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);

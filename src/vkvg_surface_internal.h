@@ -35,6 +35,7 @@ typedef struct _vkvg_surface_t {
     VkhImage	img;
     VkhImage	imgMS;
     VkhImage	stencilMS;
+    uint32_t    references;
 }vkvg_surface;
 
 void _clear_stencil (VkvgSurface surf);
