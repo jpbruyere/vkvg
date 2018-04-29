@@ -187,7 +187,7 @@ void _record_draw_cmd (VkvgContext ctx){
     //DEBUG
     /*vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
     vkCmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);*/
+    _bind_draw_pipeline(ctx);*/
     //////////
 
     ctx->curIndStart = ctx->indCount;
@@ -522,6 +522,9 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
     vec2 v0n = vec2_line_norm(ctx->points[iL], ctx->points[i]);
     vec2 v1n = vec2_line_norm(ctx->points[i], ctx->points[iR]);
 
+    if (vec2_equ(v0n,v1n))
+        return;
+
     vec2 bisec = vec2_norm(vec2_add(v0n,v1n));
 
     float alpha = acos(v0n.x * v1n.x + v0n.y * v1n.y)/2;
@@ -635,7 +638,7 @@ void _free_ctx_save (vkvg_context_save_t* sav){
     free (sav);
 }
 
-
+/*
 #define m_approximation_scale   1.0
 #define m_angle_tolerance       0.01
 #define m_distance_tolerance    1.0
@@ -643,12 +646,12 @@ void _free_ctx_save (vkvg_context_save_t* sav){
 #define curve_recursion_limit   10
 #define curve_collinearity_epsilon 1.7
 #define curve_angle_tolerance_epsilon 0.001
-
+*/
 void _recursive_bezier (VkvgContext ctx,
                         float x1, float y1, float x2, float y2,
                         float x3, float y3, float x4, float y4,
                         unsigned level) {
-    if(level > curve_recursion_limit)
+    if(level > ctx->curve_recursion_limit)
     {
         return;
     }
@@ -680,16 +683,16 @@ void _recursive_bezier (VkvgContext ctx,
 
         float da1, da2;
 
-        if(d2 > curve_collinearity_epsilon && d3 > curve_collinearity_epsilon)
+        if(d2 > ctx->curve_collinearity_epsilon && d3 > ctx->curve_collinearity_epsilon)
         {
             // Regular care
             //-----------------
-            if((d2 + d3)*(d2 + d3) <= m_distance_tolerance * (dx*dx + dy*dy))
+            if((d2 + d3)*(d2 + d3) <= ctx->m_distance_tolerance * (dx*dx + dy*dy))
             {
                 // If the curvature doesn't exceed the distance_tolerance value
                 // we tend to finish subdivisions.
                 //----------------------
-                if(m_angle_tolerance < curve_angle_tolerance_epsilon)
+                if(ctx->m_angle_tolerance < ctx->curve_angle_tolerance_epsilon)
                 {
                     _add_point (ctx, x1234, y1234);
                     return;
@@ -703,7 +706,7 @@ void _recursive_bezier (VkvgContext ctx,
                 if(da1 >= M_PI) da1 = M_2_PI - da1;
                 if(da2 >= M_PI) da2 = M_2_PI - da2;
 
-                if(da1 + da2 < m_angle_tolerance)
+                if(da1 + da2 < ctx->m_angle_tolerance)
                 {
                     // Finally we can stop the recursion
                     //----------------------
@@ -711,15 +714,15 @@ void _recursive_bezier (VkvgContext ctx,
                     return;
                 }
 
-                if(m_cusp_limit != 0.0)
+                if(ctx->m_cusp_limit != 0.0)
                 {
-                    if(da1 > m_cusp_limit)
+                    if(da1 > ctx->m_cusp_limit)
                     {
                         _add_point (ctx, x2, y2);
                         return;
                     }
 
-                    if(da2 > m_cusp_limit)
+                    if(da2 > ctx->m_cusp_limit)
                     {
                         _add_point (ctx, x3, y3);
                         return;
@@ -727,13 +730,13 @@ void _recursive_bezier (VkvgContext ctx,
                 }
             }
         } else {
-            if(d2 > curve_collinearity_epsilon)
+            if(d2 > ctx->curve_collinearity_epsilon)
             {
                 // p1,p3,p4 are collinear, p2 is considerable
                 //----------------------
-                if(d2 * d2 <= m_distance_tolerance * (dx*dx + dy*dy))
+                if(d2 * d2 <= ctx->m_distance_tolerance * (dx*dx + dy*dy))
                 {
-                    if(m_angle_tolerance < curve_angle_tolerance_epsilon)
+                    if(ctx->m_angle_tolerance < ctx->curve_angle_tolerance_epsilon)
                     {
                         _add_point (ctx, x1234, y1234);
                         return;
@@ -744,28 +747,28 @@ void _recursive_bezier (VkvgContext ctx,
                     da1 = fabs(atan2(y3 - y2, x3 - x2) - atan2(y2 - y1, x2 - x1));
                     if(da1 >= M_PI) da1 = M_2_PI - da1;
 
-                    if(da1 < m_angle_tolerance)
+                    if(da1 < ctx->m_angle_tolerance)
                     {
                         _add_point (ctx, x2, y2);
                         _add_point (ctx, x3, y3);
                         return;
                     }
 
-                    if(m_cusp_limit != 0.0)
+                    if(ctx->m_cusp_limit != 0.0)
                     {
-                        if(da1 > m_cusp_limit)
+                        if(da1 > ctx->m_cusp_limit)
                         {
                             _add_point (ctx, x2, y2);
                             return;
                         }
                     }
                 }
-            } else if(d3 > curve_collinearity_epsilon) {
+            } else if(d3 > ctx->curve_collinearity_epsilon) {
                 // p1,p2,p4 are collinear, p3 is considerable
                 //----------------------
-                if(d3 * d3 <= m_distance_tolerance * (dx*dx + dy*dy))
+                if(d3 * d3 <= ctx->m_distance_tolerance * (dx*dx + dy*dy))
                 {
-                    if(m_angle_tolerance < curve_angle_tolerance_epsilon)
+                    if(ctx->m_angle_tolerance < ctx->curve_angle_tolerance_epsilon)
                     {
                         _add_point (ctx, x1234, y1234);
                         return;
@@ -776,16 +779,16 @@ void _recursive_bezier (VkvgContext ctx,
                     da1 = fabs(atan2(y4 - y3, x4 - x3) - atan2(y3 - y2, x3 - x2));
                     if(da1 >= M_PI) da1 = M_2_PI - da1;
 
-                    if(da1 < m_angle_tolerance)
+                    if(da1 < ctx->m_angle_tolerance)
                     {
                         _add_point (ctx, x2, y2);
                         _add_point (ctx, x3, y3);
                         return;
                     }
 
-                    if(m_cusp_limit != 0.0)
+                    if(ctx->m_cusp_limit != 0.0)
                     {
-                        if(da1 > m_cusp_limit)
+                        if(da1 > ctx->m_cusp_limit)
                         {
                             _add_point (ctx, x3, y3);
                             return;
@@ -799,7 +802,7 @@ void _recursive_bezier (VkvgContext ctx,
                 //-----------------
                 dx = x1234 - (x1 + x4) / 2;
                 dy = y1234 - (y1 + y4) / 2;
-                if(dx*dx + dy*dy <= m_distance_tolerance)
+                if(dx*dx + dy*dy <= ctx->m_distance_tolerance)
                 {
                     _add_point (ctx, x1234, y1234);
                     return;

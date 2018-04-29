@@ -28,7 +28,7 @@
 #include "vkh.h"
 #include "vkvg_fonts.h"
 
-#define VKVG_PTS_SIZE				16384
+#define VKVG_PTS_SIZE				32768
 #define VKVG_VBO_SIZE				VKVG_PTS_SIZE * 2
 #define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 2
 #define VKVG_PATHES_SIZE			256
@@ -137,6 +137,14 @@ typedef struct _vkvg_context_t {
     vkvg_context_save_t* pSavedCtxs;//last ctx saved ptr
 
     VkClearRect         clearRect;
+    //debug curves
+    float m_approximation_scale;
+    float m_angle_tolerance;
+    float m_distance_tolerance;
+    float m_cusp_limit;
+    float curve_recursion_limit;
+    float curve_collinearity_epsilon;
+    float curve_angle_tolerance_epsilon;
 }vkvg_context;
 
 bool _current_path_is_empty (VkvgContext ctx);

@@ -31,6 +31,16 @@ static vec2 debugLinePoints[1000];
 static uint32_t dlpCount = 0;
 #endif
 
+void _init_debug_curves (VkvgContext ctx) {
+    ctx->m_approximation_scale = 1.0;
+    ctx->m_angle_tolerance = 0.05;
+    ctx->m_distance_tolerance = 0.1;
+    ctx->m_cusp_limit = 0.25;
+    ctx->curve_recursion_limit = 16;
+    ctx->curve_collinearity_epsilon = 0.001;
+    ctx->curve_angle_tolerance_epsilon = 0.1;
+}
+
 VkvgContext vkvg_create(VkvgSurface surf)
 {
     LOG(LOG_INFO, "CREATE Context: surf = %lu\n", surf);
@@ -88,6 +98,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _clear_path             (ctx);
 
     ctx->references = 1;
+
+    _init_debug_curves      (ctx);
 
     return ctx;
 }
