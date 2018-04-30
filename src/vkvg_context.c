@@ -77,7 +77,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _update_gradient_desc_set(ctx);
 
     //add full screen quad at the beginning, recurently used
-    _vkvg_fill_rectangle (ctx,0,0,ctx->pSurf->width,ctx->pSurf->height);
+    _vao_add_rectangle (ctx,0,0,ctx->pSurf->width,ctx->pSurf->height);
 
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
@@ -518,20 +518,6 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         ptrPath+=2;
     }
     _record_draw_cmd(ctx);
-}
-void _vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float width, float height){
-    Vertex v[4] =
-    {
-        {{x,y},             {0,0,-1}},
-        {{x,y+height},      {0,0,-1}},
-        {{x+width,y},       {0,0,-1}},
-        {{x+width,y+height},{0,0,-1}}
-    };
-    uint32_t firstIdx = ctx->vertCount;
-    Vertex* pVert = (Vertex*)(ctx->vertices.mapped + ctx->vertCount * sizeof(Vertex));
-    memcpy (pVert,v,4*sizeof(Vertex));
-    ctx->vertCount+=4;
-    _add_tri_indices_for_rect(ctx, firstIdx);
 }
 void vkvg_paint (VkvgContext ctx){
     vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);

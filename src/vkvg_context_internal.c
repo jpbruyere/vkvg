@@ -151,6 +151,20 @@ void _add_triangle_indices(VkvgContext ctx, uint32_t i0, uint32_t i1, uint32_t i
     inds[2] = i2;
     ctx->indCount+=3;
 }
+void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
+    Vertex v[4] =
+    {
+        {{x,y},             {0,0,-1}},
+        {{x,y+height},      {0,0,-1}},
+        {{x+width,y},       {0,0,-1}},
+        {{x+width,y+height},{0,0,-1}}
+    };
+    uint32_t firstIdx = ctx->vertCount;
+    Vertex* pVert = (Vertex*)(ctx->vertices.mapped + ctx->vertCount * sizeof(Vertex));
+    memcpy (pVert,v,4*sizeof(Vertex));
+    ctx->vertCount+=4;
+    _add_tri_indices_for_rect(ctx, firstIdx);
+}
 void _create_cmd_buff (VkvgContext ctx){
     ctx->cmd = vkh_cmd_buff_create(ctx->pSurf->dev->vkDev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }

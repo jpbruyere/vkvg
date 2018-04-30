@@ -148,7 +148,6 @@ float _normalizeAngle       (float a);
 vec2 _get_current_position  (VkvgContext ctx);
 void _add_point         	(VkvgContext ctx, float x, float y);
 void _add_point_vec2			(VkvgContext ctx, vec2 v);
-void _vkvg_fill_rectangle   (VkvgContext ctx, float x, float y, float width, float height);
 
 void _create_vertices_buff	(VkvgContext ctx);
 void _add_vertex			(VkvgContext ctx, Vertex v);
@@ -157,6 +156,7 @@ void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
 void _add_triangle_indices	(VkvgContext ctx, uint32_t i0, uint32_t i1,uint32_t i2);
 void _add_tri_indices_for_rect	(VkvgContext ctx, uint32_t i);
 void _build_vb_step         (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR);
+void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, float height);
 
 void _bind_draw_pipeline    (VkvgContext ctx);
 void _create_cmd_buff		(VkvgContext ctx);
