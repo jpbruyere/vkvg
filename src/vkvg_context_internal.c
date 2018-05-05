@@ -166,7 +166,7 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
     _add_tri_indices_for_rect(ctx, firstIdx);
 }
 void _create_cmd_buff (VkvgContext ctx){
-    ctx->cmd = vkh_cmd_buff_create(ctx->pSurf->dev->vkDev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    ctx->cmd = vkh_cmd_buff_create(ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }
 void _record_draw_cmd (VkvgContext ctx){
     if (ctx->indCount == ctx->curIndStart)

@@ -22,26 +22,29 @@
 
 #include "vkvg_device_internal.h"
 #include "vkh_queue.h"
+#include "vkh_phyinfo.h"
 
-VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, VkQueue queue, uint32_t qFam)
+VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev)
 {
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
-    dev->hdpi = 96;
-    dev->vdpi = 96;
+    dev->hdpi   = 96;
+    dev->vdpi   = 96;
+    dev->vkDev  = vkdev;
+    dev->phy    = phy;
 
-    dev->vkDev = vkdev;
-    dev->phy = phy;
+    VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 
-    vkGetPhysicalDeviceMemoryProperties (phy, &dev->phyMemProps);
+    dev->phyMemProps = phyInfos->memProps;
+    dev->gQueue = vkh_queue_create (dev, phyInfos->gQueue, 0, phyInfos->queues[phyInfos->gQueue].queueFlags);
 
-    dev->gQueue = vkh_queue_find (dev, VK_QUEUE_GRAPHICS_BIT);
+    vkh_phyinfo_destroy (phyInfos);
 
     dev->lastCtx= NULL;
 
-    dev->cmdPool= vkh_cmd_pool_create       (dev->vkDev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    dev->cmd    = vkh_cmd_buff_create       (dev->vkDev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-    dev->fence  = vkh_fence_create_signaled (dev->vkDev);
+    dev->cmdPool= vkh_cmd_pool_create       (dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    dev->cmd    = vkh_cmd_buff_create       (dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    dev->fence  = vkh_fence_create_signaled (dev);
 
     _create_pipeline_cache      (dev);
     _init_fonts_cache           (dev);

@@ -25,6 +25,7 @@
 #include "string.h" //for nanosvg
 #define NANOSVG_IMPLEMENTATION	// Expands implementation
 #include "nanosvg.h"
+#include "vkh_device.h"
 
 VkvgDevice device;
 VkvgSurface surf = NULL;
@@ -810,11 +811,20 @@ void cairo_print_arc (VkvgContext cr) {
     vkvg_arc (cr, xc, yc, radius, angle2, angle2);
     vkvg_stroke (cr);
 }
+static float rotation = 0.f;
 void cairo_tests () {
+    rotation+=0.01f;
+
+    vkvg_matrix_t mat;
+    vkvg_matrix_init_translate (&mat, 512,400);
+    vkvg_matrix_rotate(&mat,rotation);
+    vkvg_matrix_translate(&mat,-512,-400);
+
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
     vkvg_paint(ctx);
 
+    vkvg_set_matrix(ctx,&mat);
     /*
     vkvg_set_source_rgba(ctx,0,1,0,1);
     vkvg_rectangle(ctx,0,0,600,600);
@@ -980,11 +990,12 @@ int main(int argc, char *argv[]) {
 
     //dumpLayerExts();
 
-    VkEngine* e = vke_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, 1024, 800);
+    vk_engine_t* e = vke_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, 1024, 800);
+    VkhPresenter r = e->renderer;
     vke_set_key_callback (e, key_callback);
 
-    device = vkvg_device_create(e->phy, e->dev, e->renderer.queue, e->renderer.qFam);
-    surf = vkvg_surface_create (device,1024,800);
+    device  = vkvg_device_create (e->dev->phy, e->dev->dev);
+    surf    = vkvg_surface_create(device, 1024, 800);
 
     //test_svg();
 
@@ -992,21 +1003,21 @@ int main(int argc, char *argv[]) {
 
     //test_grad_transforms();
 
-    cairo_tests();
-
     //test_colinear();
 
-    vke_init_blit_renderer(e, vkvg_surface_get_vk_image(surf));
+    vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
 
-    while (!glfwWindowShouldClose(e->renderer.window)) {
+    while (!vke_should_close (e)) {
         glfwPollEvents();
-        draw(e, vkvg_surface_get_vk_image(surf));
+        cairo_tests();
+        if (!vkh_presenter_draw (r))
+            vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
     }
 
-    vkDeviceWaitIdle(e->dev);
+    vkDeviceWaitIdle(e->dev->dev);
 
-    vkvg_surface_destroy(surf);
-    vkvg_device_destroy(device);
+    vkvg_surface_destroy    (surf);
+    vkvg_device_destroy     (device);
 
     vke_destroy (e);
 

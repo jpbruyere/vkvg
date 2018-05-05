@@ -36,73 +36,31 @@
 /* renderpass creation and pipeline creation.                     */
 #define FENCE_TIMEOUT 100000000
 
-typedef struct ImageBuffer_t {
-    VkImage     image;
-    VkImageView view;
-}ImageBuffer;
 
-typedef struct vkh_presenter_t {
-    VkQueue         queue;
-    VkCommandPool   cmdPool;
-    uint32_t        qFam;
-    VkDevice        dev;
-
-    GLFWwindow*     window;
-    VkSurfaceKHR    surface;
-
-    VkSemaphore     semaPresentEnd;
-    VkSemaphore     semaDrawEnd;
-
-    VkFormat        format;
-    VkColorSpaceKHR colorSpace;
-    VkPresentModeKHR presentMode;
-    uint32_t        width;
-    uint32_t        height;
-
-    uint32_t        imgCount;
-    uint32_t        currentScBufferIndex;
-
-    VkRenderPass    renderPass;
-    VkSwapchainKHR  swapChain;
-    ImageBuffer*    ScBuffers;
-    VkCommandBuffer* cmdBuffs;
-    VkFramebuffer*  frameBuffs;
-}vkh_presenter;
-
-typedef struct VkLoader_t {
-    VkQueue queue;
-    VkCommandPool cmdPool;
-}VkLoader;
-
-typedef struct VkComputer_t {
-    VkQueue queue;
-    VkCommandPool cmdPool;
-}VkComputer;
-
-typedef struct VkEngine_t {
+typedef struct _vk_engine_t {
     VkhApp              app;
-    VkPhysicalDevice    phy;
     VkPhysicalDeviceMemoryProperties    memory_properties;
     VkPhysicalDeviceProperties          gpu_props;
-    VkDevice            dev;
+    VkhDevice           dev;
+    GLFWwindow*         window;
 
-    vkh_presenter       renderer;
-    VkComputer          computer;
-    VkLoader            loader;
-}VkEngine;
+    VkhPresenter        renderer;
+}vk_engine_t;
 
-VkEngine*   vke_create  (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t height);
-void        vke_destroy (VkEngine* e);
+vk_engine_t*   vke_create  (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t height);
+void        vke_destroy (vk_engine_t* e);
 
-void initPhySurface(VkEngine* e, VkFormat preferedFormat, VkPresentModeKHR presentMode);
+void initPhySurface(VkhPresenter r, VkFormat preferedFormat, VkPresentModeKHR presentMode);
 
 VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts);
 
-void vkengine_dump_Infos (VkEngine* e);
-void vkengine_get_queues_properties (VkEngine* e, VkQueueFamilyProperties** qFamProps, uint32_t* count);
+void vkengine_dump_Infos (vk_engine_t* e);
+void vkengine_get_queues_properties (vk_engine_t* e, VkQueueFamilyProperties** qFamProps, uint32_t* count);
 
 
-void vke_init_blit_renderer(VkEngine* e, VkImage blitSource);
-void submitCommandBuffer(VkQueue queue, VkCommandBuffer *pCmdBuff, VkSemaphore* pWaitSemaphore, VkSemaphore* pSignalSemaphore);
-void draw(VkEngine* e, VkImage blitSource);
+//void vke_init_blit_renderer (VkhPresenter r, VkImage blitSource);
+bool vke_should_close       (vk_engine_t* e);
+
+//void submitCommandBuffer(VkQueue queue, VkCommandBuffer *pCmdBuff, VkSemaphore* pWaitSemaphore, VkSemaphore* pSignalSemaphore);
+//void draw(vk_engine_t* e, VkImage blitSource);
 #endif

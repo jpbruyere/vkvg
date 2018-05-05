@@ -61,12 +61,12 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     ctx->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
 
-    ctx->flushFence = vkh_fence_create(dev->vkDev);
+    ctx->flushFence = vkh_fence_create(dev);
 
     ctx->points = (vec2*)       malloc (VKVG_VBO_SIZE*sizeof(vec2));
     ctx->pathes = (uint32_t*)   malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
 
-    ctx->cmdPool = vkh_cmd_pool_create (dev->vkDev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    ctx->cmdPool = vkh_cmd_pool_create (dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
     _create_vertices_buff   (ctx);
     _create_gradient_buff   (ctx);

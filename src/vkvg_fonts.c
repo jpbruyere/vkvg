@@ -43,7 +43,7 @@ void _init_fonts_cache (VkvgDevice dev){
     vkh_image_create_descriptor (cache->cacheTex, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
                                  VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
-    cache->uploadFence = vkh_fence_create_signaled(dev->vkDev);
+    cache->uploadFence = vkh_fence_create_signaled(dev);
 
     uint32_t buffLength = FONT_PAGE_SIZE*FONT_PAGE_SIZE*sizeof(uint8_t);
     cache->buff = vkh_buffer_create(dev,VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -51,7 +51,7 @@ void _init_fonts_cache (VkvgDevice dev){
                       buffLength);
     vkh_buffer_map(cache->buff);
 
-    cache->cmd = vkh_cmd_buff_create(dev->vkDev,dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    cache->cmd = vkh_cmd_buff_create(dev,dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
     cache->hostBuff = (uint8_t*)malloc(FONT_PAGE_SIZE*FONT_PAGE_SIZE*sizeof(uint8_t));
     cache->pensY = (int*)calloc(cache->cacheTexLength, sizeof(int));
