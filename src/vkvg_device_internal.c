@@ -52,16 +52,17 @@ void _setupRenderPass(VkvgDevice dev)
                     .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-                    .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+                    .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    .finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL };
     VkAttachmentDescription attColorResolve = {
                     .format = FB_COLOR_FORMAT,
                     .samples = VK_SAMPLE_COUNT_1_BIT,
-                    .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-                    .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                    .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                    .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-                    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                    .finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL };
+                    .initialLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                    .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
     VkAttachmentDescription attDS = {
                     .format = VK_FORMAT_S8_UINT,
                     .samples = VKVG_SAMPLES,
@@ -69,6 +70,7 @@ void _setupRenderPass(VkvgDevice dev)
                     .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                    .initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                     .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 /*    VkAttachmentDescription attDSResolve = {
                     .format = VK_FORMAT_S8_UINT,
@@ -255,36 +257,36 @@ void _setupPipelines(VkvgDevice dev)
     pipelineCreateInfo.layout = dev->pipelineLayout;
 
 
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelinePolyFill));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipelinePolyFill));
 
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     dsStateCreateInfo.back = dsStateCreateInfo.front = clipingOpState;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineClipping));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipelineClipping));
 
     dsStateCreateInfo.back = dsStateCreateInfo.front = stencilOpState;
     blendAttachmentState.colorWriteMask=0xf;
     dynamicState.dynamicStateCount = 3;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_OVER));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipe_OVER));
 
     blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
 
     blendAttachmentState.blendEnable = VK_FALSE;
     //rasterizationState.polygonMode = VK_POLYGON_MODE_POINT;
     //shaderStages[1].pName = "op_CLEAR";
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
 
     rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     shaderStages[1].pName = "main";
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
 
     shaderStages[1].module = modFragWired;
     //pipelineCreateInfo.pStages = shaderStages;
 
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineWired));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipelineWired));
 
     vkDestroyShaderModule(dev->vkDev, modVert, NULL);
     vkDestroyShaderModule(dev->vkDev, modFrag, NULL);

@@ -41,13 +41,13 @@ void _clear_stencil (VkvgSurface surf)
     VkImageSubresourceRange range = {VK_IMAGE_ASPECT_STENCIL_BIT,0,1,0,1};
 
     vkh_image_set_layout (cmd, surf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     vkCmdClearDepthStencilImage (cmd, vkh_image_get_vkimage (surf->stencilMS),
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,&clr,1,&range);
 
     vkh_image_set_layout (cmd, surf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
     vkh_cmd_end (cmd);
 
     vkh_cmd_submit (dev->gQueue, &cmd, dev->fence);
@@ -82,6 +82,10 @@ void _init_surface (VkvgSurface surf) {
 
     _clear_stencil(surf);
 }
+
+void vkvg_surface_test (VkvgSurface* pSurf, VkvgSurface surf) {
+    pSurf = &surf;
+}
 VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height){
     VkvgSurface surf = (vkvg_surface*)calloc(1,sizeof(vkvg_surface));
 
@@ -96,30 +100,20 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
 
     return surf;
 }
-
-VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath) {
-    int w = 0,
-        h = 0,
-        channels = 0;
-    unsigned char *img = stbi_load(filePath, &w, &h, &channels, 4);//force 4 components per pixel
-    if (img == NULL){
-        fprintf (stderr, "Could not load texture from %s, %s\n", filePath, stbi_failure_reason());
-        return NULL;
-    }
-
+VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height) {
     VkvgSurface surf = (vkvg_surface*)calloc(1,sizeof(vkvg_surface));
 
     surf->dev = dev;
-    surf->width = w;
-    surf->height = h;
+    surf->width = width;
+    surf->height = height;
 
     _init_surface (surf);
 
-    uint32_t imgSize = w * h * 4;
+    uint32_t imgSize = width * height * 4;
     VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
     //original format image
     VkhImage stagImg= vkh_image_create (surf->dev,VK_FORMAT_R8G8B8A8_UNORM,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
-                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                          VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     //bgra bliting target
     VkhImage tmpImg = vkh_image_create (surf->dev,surf->format,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
@@ -132,13 +126,17 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
     VK_CHECK_RESULT (vkh_buffer_map (buff));
     memcpy (vkh_buffer_get_mapped_pointer (buff), img, imgSize);
 
+    /*unsigned char* mapImg = vkh_image_map (stagImg);
+    memcpy (mapImg, img, imgSize);
+    vkh_image_unmap (stagImg);*/
+
     VkCommandBuffer cmd = dev->cmd;
 
     _wait_device_fence (dev);
 
     vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
 
     VkBufferImageCopy bufferCopyRegion = { .imageSubresource = imgSubResLayers,
@@ -148,7 +146,7 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
         vkh_image_get_vkimage (stagImg), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
 
     vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
     vkh_image_set_layout (cmd, tmpImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
@@ -162,6 +160,9 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
                      vkh_image_get_vkimage (stagImg), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                      vkh_image_get_vkimage (tmpImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
+    vkh_image_set_layout (cmd, tmpImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
     vkh_cmd_end     (cmd);
     vkh_cmd_submit  (dev->gQueue, &cmd, dev->fence);
 
@@ -174,9 +175,9 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
     //create tmp context with rendering pipeline to create the multisample img
     VkvgContext ctx = vkvg_create (surf);
 
-    VkClearAttachment ca = {VK_IMAGE_ASPECT_COLOR_BIT,0, { 0.0f, 0.0f, 0.0f, 0.0f }};
+/*    VkClearAttachment ca = {VK_IMAGE_ASPECT_COLOR_BIT,0, { 0.0f, 0.0f, 0.0f, 0.0f }};
     VkClearRect cr = {{{0,0},{surf->width,surf->height}},0,1};
-    vkCmdClearAttachments(ctx->cmd, 1, &ca, 1, &cr);
+    vkCmdClearAttachments(ctx->cmd, 1, &ca, 1, &cr);*/
 
     vec4 srcRect = {0,0,surf->width,surf->height};
     ctx->pushConsts.source = srcRect;
@@ -192,6 +193,22 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 
     surf->references = 1;
     vkvg_device_reference (surf->dev);
+
+    return surf;
+}
+VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath) {
+    int w = 0,
+        h = 0,
+        channels = 0;
+    unsigned char *img = stbi_load(filePath, &w, &h, &channels, 4);//force 4 components per pixel
+    if (img == NULL){
+        fprintf (stderr, "Could not load texture from %s, %s\n", filePath, stbi_failure_reason());
+        return NULL;
+    }
+
+    VkvgSurface surf = vkvg_surface_create_from_bitmap(dev, img, w, h);
+
+    stbi_image_free (img);
 
     return surf;
 }

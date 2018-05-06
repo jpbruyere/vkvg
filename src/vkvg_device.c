@@ -24,7 +24,7 @@
 #include "vkh_queue.h"
 #include "vkh_phyinfo.h"
 
-VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev)
+VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
 {
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
@@ -36,7 +36,7 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev)
     VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 
     dev->phyMemProps = phyInfos->memProps;
-    dev->gQueue = vkh_queue_create (dev, phyInfos->gQueue, 0, phyInfos->queues[phyInfos->gQueue].queueFlags);
+    dev->gQueue = vkh_queue_create (dev, qFamIdx, qIndex, phyInfos->queues[qFamIdx].queueFlags);
 
     vkh_phyinfo_destroy (phyInfos);
 
@@ -46,7 +46,7 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev)
     dev->cmd    = vkh_cmd_buff_create       (dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
     dev->fence  = vkh_fence_create_signaled (dev);
 
-    _create_pipeline_cache      (dev);
+    //_create_pipeline_cache      (dev);
     _init_fonts_cache           (dev);
     _setupRenderPass            (dev);
     _createDescriptorSetLayout  (dev);
@@ -78,7 +78,7 @@ void vkvg_device_destroy (VkvgDevice dev)
     vkDestroyPipeline               (dev->vkDev, dev->pipelineLineList, NULL);
 
     vkDestroyPipelineLayout         (dev->vkDev, dev->pipelineLayout, NULL);
-    vkDestroyPipelineCache          (dev->vkDev, dev->pipelineCache, NULL);
+    //vkDestroyPipelineCache          (dev->vkDev, dev->pipelineCache, NULL);
     vkDestroyRenderPass             (dev->vkDev, dev->renderPass, NULL);
 
     vkWaitForFences                 (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);

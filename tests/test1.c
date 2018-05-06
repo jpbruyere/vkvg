@@ -26,6 +26,7 @@
 #define NANOSVG_IMPLEMENTATION	// Expands implementation
 #include "nanosvg.h"
 #include "vkh_device.h"
+#include "vkh_presenter.h"
 
 VkvgDevice device;
 VkvgSurface surf = NULL;
@@ -329,8 +330,8 @@ void test_img_surface (VkvgContext ctx) {
     imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/miroir.jpg");
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
     vkvg_paint(ctx);
-    vkvg_flush(ctx);
-    vkvg_set_source_rgba(ctx,0,0,0,1);
+    //vkvg_flush(ctx);
+    vkvg_set_source_rgba(ctx,1,0,0,1);
     vkvg_surface_destroy(imgSurf);
 }
 void test_line_caps (VkvgContext ctx) {
@@ -457,7 +458,7 @@ void test_colinear () {
 
 void multi_test1 () {
     VkvgSurface surf2 = vkvg_surface_create (device,800,800);;
-    VkvgContext ctx = vkvg_create(surf2);
+    VkvgContext ctx = vkvg_create (surf2);
 
     vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1.0);
     vkvg_paint(ctx);
@@ -532,7 +533,7 @@ void multi_test1 () {
     vkvg_paint(ctx);
     vkvg_rotate(ctx,0.7);
     vkvg_paint(ctx);
-
+    vkvg_pattern_destroy (pat);
     vkvg_destroy(ctx);
     vkvg_surface_destroy(surf2);
 }
@@ -846,6 +847,7 @@ void cairo_tests () {
 
 //    cairo_test_clip(ctx);
 //    vkvg_reset_clip(ctx);
+    //test_img_surface (ctx);
 
     cairo_print_arc(ctx);
 
@@ -855,12 +857,14 @@ void cairo_tests () {
     vkvg_translate(ctx,250,0);
     cairo_test_rounded_rect(ctx);
 
+
 /*
     vkvg_set_operator(ctx, VKVG_OPERATOR_CLEAR);
     vkvg_rectangle(ctx,100,100,500,500);
     vkvg_fill(ctx);
     vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
 */
+
 
     vkvg_translate(ctx,-450,250);
     cairo_test_fill_and_stroke2(ctx);
@@ -986,20 +990,49 @@ void test_svg () {
     vkvg_destroy(ctx);
 }
 
+void test_painting () {
+    VkvgSurface surf2 = vkvg_surface_create (device,400,400);;
+    VkvgContext ctx = vkvg_create (surf2);
+
+    vkvg_set_source_rgba(ctx,1.0,0.,0.,1.0);
+    vkvg_paint (ctx);
+
+    vkvg_destroy (ctx);
+    ctx = vkvg_create (surf);
+
+    vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1.0);
+    vkvg_paint (ctx);
+
+    //vkvg_set_source_surface(ctx,surf2,0,0);
+
+    //VkvgPattern pat = vkvg_get_source (ctx);
+    VkvgPattern pat = vkvg_pattern_create_for_surface(surf2);
+    vkvg_pattern_set_extend (pat,VKVG_EXTEND_REFLECT);
+    vkvg_set_source(ctx,pat);
+    //vkvg_paint (ctx);
+    //vkvg_set_source_rgba(ctx,0,1,0,1.0);
+    vkvg_rectangle(ctx,100,100,200,200);
+    vkvg_fill(ctx);
+
+    vkvg_destroy (ctx);
+    vkvg_surface_destroy (surf2);
+    vkvg_pattern_destroy (pat);
+}
+
 int main(int argc, char *argv[]) {
 
     //dumpLayerExts();
 
-    vk_engine_t* e = vke_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, 1024, 800);
+    vk_engine_t* e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, 1024, 800);
     VkhPresenter r = e->renderer;
-    vke_set_key_callback (e, key_callback);
+    vkengine_set_key_callback (e, key_callback);
 
-    device  = vkvg_device_create (e->dev->phy, e->dev->dev);
+    device  = vkvg_device_create (r->dev->phy, r->dev->dev, r->qFam, 0);
     surf    = vkvg_surface_create(device, 1024, 800);
 
     //test_svg();
 
-    //multi_test1();
+    //
 
     //test_grad_transforms();
 
@@ -1007,9 +1040,11 @@ int main(int argc, char *argv[]) {
 
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
 
-    while (!vke_should_close (e)) {
+    while (!vkengine_should_close (e)) {
         glfwPollEvents();
         cairo_tests();
+        //multi_test1();
+        //test_painting();
         if (!vkh_presenter_draw (r))
             vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
     }
@@ -1019,7 +1054,7 @@ int main(int argc, char *argv[]) {
     vkvg_surface_destroy    (surf);
     vkvg_device_destroy     (device);
 
-    vke_destroy (e);
+    vkengine_destroy (e);
 
     return 0;
 }

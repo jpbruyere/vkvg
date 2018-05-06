@@ -28,13 +28,11 @@
 #include "vkh_image.h"
 #include "vkh_device.h"
 
-
-bool vkeCheckPhyPropBlitSource (vk_engine_t *e) {
+bool vkeCheckPhyPropBlitSource (VkEngine e) {
     VkFormatProperties formatProps;
     vkGetPhysicalDeviceFormatProperties(e->dev->phy, e->renderer->format, &formatProps);
     assert((formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
 }
-
 
 VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts)
 {
@@ -47,7 +45,7 @@ VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts)
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
-void vkengine_dump_Infos (vk_engine_t* e){
+void vkengine_dump_Infos (VkEngine e){
     printf("max samples = %d\n", getMaxUsableSampleCount(e->gpu_props.limits.framebufferColorSampleCounts));
     printf("max tex2d size = %d\n", e->gpu_props.limits.maxImageDimension2D);
     printf("max tex array layers = %d\n", e->gpu_props.limits.maxImageArrayLayers);
@@ -74,7 +72,7 @@ void vkengine_dump_Infos (vk_engine_t* e){
         printf("\n");
     }
 }
-vk_engine_t* vke_create (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t height) {
+vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t height) {
     vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 
     glfwInit();
@@ -175,16 +173,16 @@ vk_engine_t* vke_create (VkPhysicalDeviceType preferedGPU, uint32_t width, uint3
 
     vkh_app_free_phyinfos (phyCount, phys);
 
-
     return e;
 }
 
-void vke_destroy (vk_engine_t* e) {
+void vkengine_destroy (VkEngine e) {
     vkDeviceWaitIdle(e->dev->dev);
 
-    vkDestroySurfaceKHR (e->app->inst, e->renderer->surface, NULL);
+    VkSurfaceKHR surf = e->renderer->surface;
 
     vkh_presenter_destroy (e->renderer);
+    vkDestroySurfaceKHR (e->app->inst, surf, NULL);
 
     vkDestroyDevice (e->dev->dev, NULL);
 
@@ -195,25 +193,49 @@ void vke_destroy (vk_engine_t* e) {
 
     free(e);
 }
+void vkengine_close (VkEngine e) {
+    glfwSetWindowShouldClose(e->window, GLFW_TRUE);
+}
+void vkengine_blitter_run (VkEngine e, VkImage img) {
+    VkhPresenter p = e->renderer;
+    vkh_presenter_build_blit_cmd (p, img);
 
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (action != GLFW_PRESS)
-        return;
-    switch (key) {
-    case GLFW_KEY_ESCAPE :
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-        break;
+    while (!vkengine_should_close (e)) {
+        glfwPollEvents();
+        if (!vkh_presenter_draw (p))
+            vkh_presenter_build_blit_cmd (p, img);
     }
 }
-static void char_callback (GLFWwindow* window, uint32_t c){}
-static void mouse_move_callback(GLFWwindow* window, double x, double y){}
-static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif){}
-
-inline bool vke_should_close (vk_engine_t* e) {
+inline bool vkengine_should_close (VkEngine e) {
     return glfwWindowShouldClose (e->window);
 }
-void vke_set_key_callback (vk_engine_t* e, GLFWkeyfun key_callback){
-    glfwSetKeyCallback (e->window, key_callback);
+
+VkDevice vkengine_get_device (VkEngine e){
+    return e->dev->dev;
+}
+VkPhysicalDevice vkengine_get_physical_device (VkEngine e){
+    return e->dev->phy;
+}
+VkQueue vkengine_get_queue (VkEngine e){
+    return e->renderer->queue;
+}
+uint32_t vkengine_get_queue_fam_idx (VkEngine e){
+    return e->renderer->qFam;
 }
 
+void vkengine_set_key_callback (VkEngine e, GLFWkeyfun key_callback){
+    glfwSetKeyCallback (e->window, key_callback);
+}
+void vkengine_set_mouse_but_callback (VkEngine e, GLFWmousebuttonfun onMouseBut){
+    glfwSetMouseButtonCallback(e->window, onMouseBut);
+}
+void vkengine_set_cursor_pos_callback (VkEngine e, GLFWcursorposfun onMouseMove){
+    glfwSetCursorPosCallback(e->window, onMouseMove);
+}
+void vkengine_set_scroll_callback (VkEngine e, GLFWscrollfun onScroll){
+    glfwSetScrollCallback(e->window, onScroll);
+}
+void vkengine_set_char_callback (VkEngine e, GLFWcharfun onChar){
+    glfwSetCharCallback(e->window, onChar);
+}
 

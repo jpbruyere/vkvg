@@ -117,7 +117,7 @@ typedef struct _vkvg_surface_t* VkvgSurface;
 typedef struct _vkvg_device_t*  VkvgDevice;
 typedef struct _vkvg_pattern_t* VkvgPattern;
 
-VkvgDevice	vkvg_device_create			(VkPhysicalDevice phy, VkDevice vkdev);
+VkvgDevice	vkvg_device_create			(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex);
 void		vkvg_device_destroy			(VkvgDevice dev);
 VkvgDevice  vkvg_device_reference           (VkvgDevice dev);
 uint32_t    vkvg_device_get_reference_count (VkvgDevice dev);
@@ -209,6 +209,7 @@ float               vkvg_get_line_width     (VkvgContext ctx);
 vkvg_line_cap_t     vkvg_get_line_cap       (VkvgContext ctx);
 vkvg_line_join_t    vkvg_get_line_join      (VkvgContext ctx);
 vkvg_operator_t     vkvg_get_operator       (VkvgContext ctx);
+VkvgPattern         vkvg_get_source         (VkvgContext ctx);
 
 void vkvg_save              (VkvgContext ctx);
 void vkvg_restore           (VkvgContext ctx);

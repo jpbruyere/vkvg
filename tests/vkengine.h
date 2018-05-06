@@ -36,6 +36,7 @@
 /* renderpass creation and pipeline creation.                     */
 #define FENCE_TIMEOUT 100000000
 
+typedef struct _vk_engine_t* VkEngine;
 
 typedef struct _vk_engine_t {
     VkhApp              app;
@@ -43,24 +44,25 @@ typedef struct _vk_engine_t {
     VkPhysicalDeviceProperties          gpu_props;
     VkhDevice           dev;
     GLFWwindow*         window;
-
     VkhPresenter        renderer;
 }vk_engine_t;
 
-vk_engine_t*   vke_create  (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t height);
-void        vke_destroy (vk_engine_t* e);
+vk_engine_t*   vkengine_create  (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t height);
 
-void initPhySurface(VkhPresenter r, VkFormat preferedFormat, VkPresentModeKHR presentMode);
+void vkengine_destroy       (VkEngine e);
+bool vkengine_should_close  (VkEngine e);
+void vkengine_close         (VkEngine e);
+void vkengine_dump_Infos    (VkEngine e);
+VkDevice            vkengine_get_device         (VkEngine e);
+VkPhysicalDevice    vkengine_get_physical_device(VkEngine e);
+VkQueue             vkengine_get_queue          (VkEngine e);
+uint32_t            vkengine_get_queue_fam_idx  (VkEngine e);
 
-VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts);
-
-void vkengine_dump_Infos (vk_engine_t* e);
 void vkengine_get_queues_properties (vk_engine_t* e, VkQueueFamilyProperties** qFamProps, uint32_t* count);
 
-
-//void vke_init_blit_renderer (VkhPresenter r, VkImage blitSource);
-bool vke_should_close       (vk_engine_t* e);
-
-//void submitCommandBuffer(VkQueue queue, VkCommandBuffer *pCmdBuff, VkSemaphore* pWaitSemaphore, VkSemaphore* pSignalSemaphore);
-//void draw(vk_engine_t* e, VkImage blitSource);
+void vkengine_set_key_callback          (VkEngine e, GLFWkeyfun key_callback);
+void vkengine_set_mouse_but_callback    (VkEngine e, GLFWmousebuttonfun onMouseBut);
+void vkengine_set_cursor_pos_callback   (VkEngine e, GLFWcursorposfun onMouseMove);
+void vkengine_set_scroll_callback       (VkEngine e, GLFWscrollfun onScroll);
+void vkengine_set_char_callback         (VkEngine e, GLFWcharfun onChar);
 #endif
