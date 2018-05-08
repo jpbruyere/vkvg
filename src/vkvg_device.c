@@ -23,13 +23,14 @@
 #include "vkvg_device_internal.h"
 #include "vkh_queue.h"
 #include "vkh_phyinfo.h"
+#include "vk_mem_alloc.h"
 
 VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
 {
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
-    dev->hdpi   = 96;
-    dev->vdpi   = 96;
+    dev->hdpi   = 72;
+    dev->vdpi   = 72;
     dev->vkDev  = vkdev;
     dev->phy    = phy;
 
@@ -39,6 +40,12 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFa
     dev->gQueue = vkh_queue_create (dev, qFamIdx, qIndex, phyInfos->queues[qFamIdx].queueFlags);
 
     vkh_phyinfo_destroy (phyInfos);
+
+    VmaAllocatorCreateInfo allocatorInfo = {
+        .physicalDevice = phy,
+        .device = vkdev
+    };
+    vmaCreateAllocator(&allocatorInfo, &dev->allocator);
 
     dev->lastCtx= NULL;
 
@@ -88,6 +95,9 @@ void vkvg_device_destroy (VkvgDevice dev)
     vkDestroyCommandPool            (dev->vkDev, dev->cmdPool, NULL);
 
     _destroy_font_cache(dev);
+
+    vmaDestroyAllocator (dev->allocator);
+
     free(dev);
 }
 

@@ -42,12 +42,12 @@ typedef struct{
 }Vertex;
 
 typedef struct {
-    vec4     source;
-    vec2     size;
-    uint32_t patternType;
-    uint32_t pad;
-    vkvg_matrix_t mat;
-    vkvg_matrix_t matInv;
+    vec4            source;
+    vec2            size;
+    uint32_t        patternType;
+    uint32_t        pad;
+    vkvg_matrix_t   mat;
+    vkvg_matrix_t   matInv;
 }push_constants;
 
 typedef struct _vkvg_context_save_t{

@@ -20,8 +20,8 @@
  * THE SOFTWARE.
  */
 
-#include "vkengine.h"
 #include "vkh.h"
+#include "vkengine.h"
 #include "vkh_app.h"
 #include "vkh_phyinfo.h"
 #include "vkh_presenter.h"

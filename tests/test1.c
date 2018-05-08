@@ -523,7 +523,7 @@ void multi_test1 () {
 //    vkvg_fill(ctx);
 
     VkvgPattern pat = vkvg_pattern_create_for_surface(surf2);
-    vkvg_pattern_set_extend(pat, VKVG_EXTEND_NONE);
+    vkvg_pattern_set_extend(pat, VKVG_EXTEND_REFLECT);
     vkvg_pattern_set_filter(pat, VKVG_FILTER_BILINEAR);
     vkvg_set_source (ctx, pat);
     //vkvg_rectangle(ctx,100,100,400,400);
@@ -989,7 +989,38 @@ void test_svg () {
 
     vkvg_destroy(ctx);
 }
+void test_1 () {
+    const char* text = "This is a petit test {}";
 
+    VkvgContext ctx = vkvg_create (surf);
+
+    vkvg_set_source_rgba(ctx,0,0,0,1.0);
+    vkvg_paint (ctx);
+    vkvg_set_source_rgba(ctx,1,1,1,1.0);
+
+    vkvg_select_font_face(ctx, "mono");
+    vkvg_set_font_size(ctx, 12);
+
+    vkvg_font_extents_t f = {};
+    vkvg_font_extents(ctx, &f);
+
+    vkvg_text_extents_t t = {};
+    vkvg_text_extents(ctx, text, &t);
+
+    vkvg_move_to(ctx,100,100);
+    vkvg_show_text(ctx, text);
+
+    vkvg_move_to(ctx,100,100.5 - f.ascent);
+    vkvg_line_to(ctx,100+t.width,100.5 - f.ascent);
+
+    vkvg_move_to(ctx,100,100.5 - f.descent);
+    vkvg_line_to(ctx,100+t.width,100.5 - f.descent);
+
+    vkvg_stroke(ctx);
+
+    vkvg_flush(ctx);
+    vkvg_destroy (ctx);
+}
 void test_painting () {
     VkvgSurface surf2 = vkvg_surface_create (device,400,400);;
     VkvgContext ctx = vkvg_create (surf2);
@@ -1031,7 +1062,7 @@ int main(int argc, char *argv[]) {
     surf    = vkvg_surface_create(device, 1024, 800);
 
     //test_svg();
-
+    //test_img_surface();
     //
 
     //test_grad_transforms();
@@ -1042,6 +1073,7 @@ int main(int argc, char *argv[]) {
 
     while (!vkengine_should_close (e)) {
         glfwPollEvents();
+        //test_1();
         cairo_tests();
         //multi_test1();
         //test_painting();

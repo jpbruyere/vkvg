@@ -89,7 +89,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 void vkvg_flush (VkvgContext ctx){
     _flush_cmd_buff(ctx);
     _init_cmd_buff(ctx);
-
+/*
 #ifdef DEBUG
 
     vec4 red = {0,0,1,1};
@@ -110,7 +110,7 @@ void vkvg_flush (VkvgContext ctx){
     vkCmdDrawIndexed(ctx->cmd, ctx->indCount-ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
     _flush_cmd_buff(ctx);
 #endif
-
+*/
 }
 
 void vkvg_destroy (VkvgContext ctx)
@@ -510,7 +510,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             iR = ctx->pathes[ptrPath];
             _build_vb_step(ctx,v,hw,iL,i,iR);
 
-            uint32_t* inds = (uint32_t*)(ctx->indices.mapped + ((ctx->indCount-6) * sizeof(uint32_t)));
+            uint32_t* inds = (uint32_t*)(ctx->indices.allocInfo.pMappedData + ((ctx->indCount-6) * sizeof(uint32_t)));
             uint32_t ii = firstIdx;
             inds[1] = ii;
             inds[4] = ii;
@@ -534,6 +534,9 @@ void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
     _update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
+    ctx->pushConsts.source.x = x;
+    ctx->pushConsts.source.y = y;
+    _update_push_constants (ctx);
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
     _update_cur_pattern (ctx, pat);

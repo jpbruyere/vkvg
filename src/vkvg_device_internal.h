@@ -34,6 +34,7 @@ typedef struct _vkvg_device_t{
     VkDevice				vkDev;
     VkPhysicalDeviceMemoryProperties phyMemProps;
     VkPhysicalDevice        phy;
+    VmaAllocator            allocator;
 
     VkhQueue                gQueue;
     VkRenderPass			renderPass;

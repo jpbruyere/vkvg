@@ -104,38 +104,38 @@ float _normalizeAngle(float a)
 void _create_gradient_buff (VkvgContext ctx){
     vkvg_buffer_create (ctx->pSurf->dev,
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU,
         sizeof(vkvg_gradient_t), &ctx->uboGrad);
 }
 void _create_vertices_buff (VkvgContext ctx){
     vkvg_buffer_create (ctx->pSurf->dev,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU,
         ctx->sizeVertices * sizeof(Vertex), &ctx->vertices);
     vkvg_buffer_create (ctx->pSurf->dev,
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU,
         ctx->sizeIndices * sizeof(uint32_t), &ctx->indices);
 }
 const vec3 blankuv = {};
 void _add_vertexf (VkvgContext ctx, float x, float y){
-    Vertex* pVert = (Vertex*)(ctx->vertices.mapped + ctx->vertCount * sizeof(Vertex));
+    Vertex* pVert = (Vertex*)(ctx->vertices.allocInfo.pMappedData + ctx->vertCount * sizeof(Vertex));
     pVert->pos.x = x;
     pVert->pos.y = y;
     pVert->uv = blankuv;
     ctx->vertCount++;
 }
 void _add_vertex(VkvgContext ctx, Vertex v){
-    Vertex* pVert = (Vertex*)(ctx->vertices.mapped + ctx->vertCount * sizeof(Vertex));
+    Vertex* pVert = (Vertex*)(ctx->vertices.allocInfo.pMappedData + ctx->vertCount * sizeof(Vertex));
     *pVert = v;
     ctx->vertCount++;
 }
 void _set_vertex(VkvgContext ctx, uint32_t idx, Vertex v){
-    Vertex* pVert = (Vertex*)(ctx->vertices.mapped + idx * sizeof(Vertex));
+    Vertex* pVert = (Vertex*)(ctx->vertices.allocInfo.pMappedData + idx * sizeof(Vertex));
     *pVert = v;
 }
 void _add_tri_indices_for_rect (VkvgContext ctx, uint32_t i){
-    uint32_t* inds = (uint32_t*)(ctx->indices.mapped + (ctx->indCount * sizeof(uint32_t)));
+    uint32_t* inds = (uint32_t*)(ctx->indices.allocInfo.pMappedData + (ctx->indCount * sizeof(uint32_t)));
     inds[0] = i;
     inds[1] = i+2;
     inds[2] = i+1;
@@ -145,7 +145,7 @@ void _add_tri_indices_for_rect (VkvgContext ctx, uint32_t i){
     ctx->indCount+=6;
 }
 void _add_triangle_indices(VkvgContext ctx, uint32_t i0, uint32_t i1, uint32_t i2){
-    uint32_t* inds = (uint32_t*)(ctx->indices.mapped + (ctx->indCount * sizeof(uint32_t)));
+    uint32_t* inds = (uint32_t*)(ctx->indices.allocInfo.pMappedData + (ctx->indCount * sizeof(uint32_t)));
     inds[0] = i0;
     inds[1] = i1;
     inds[2] = i2;
@@ -160,7 +160,7 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
         {{x+width,y+height},{0,0,-1}}
     };
     uint32_t firstIdx = ctx->vertCount;
-    Vertex* pVert = (Vertex*)(ctx->vertices.mapped + ctx->vertCount * sizeof(Vertex));
+    Vertex* pVert = (Vertex*)(ctx->vertices.allocInfo.pMappedData + ctx->vertCount * sizeof(Vertex));
     memcpy (pVert,v,4*sizeof(Vertex));
     ctx->vertCount+=4;
     _add_tri_indices_for_rect(ctx, firstIdx);
@@ -373,7 +373,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
         //to do, scale radial radiuses in cp[2]
 
-        memcpy(ctx->uboGrad.mapped, &grad, sizeof(vkvg_gradient_t));
+        memcpy(ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
 
         _init_cmd_buff (ctx);
         break;
@@ -451,7 +451,7 @@ void add_line(vkvg_context* ctx, vec2 p1, vec2 p2, vec4 col){
     _add_vertex(ctx, v);
     v.pos = p2;
     _add_vertex(ctx, v);
-    uint32_t* inds = (uint32_t*)(ctx->indices.mapped + (ctx->indCount * sizeof(uint32_t)));
+    uint32_t* inds = (uint32_t*)(ctx->indices.allocInfo.pMappedData  + (ctx->indCount * sizeof(uint32_t)));
     inds[0] = ctx->vertCount - 2;
     inds[1] = ctx->vertCount - 1;
     ctx->indCount+=2;

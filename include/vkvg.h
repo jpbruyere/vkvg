@@ -129,6 +129,8 @@ uint32_t    vkvg_surface_get_reference_count(VkvgSurface surf);
 
 void		vkvg_surface_destroy		(VkvgSurface surf);
 VkImage		vkvg_surface_get_vk_image	(VkvgSurface surf);
+uint32_t   	vkvg_surface_get_width      (VkvgSurface surf);
+uint32_t	vkvg_surface_get_height     (VkvgSurface surf);
 VkImage		vkvg_surface_get_vkh_image	(VkvgSurface surf);
 void        vkvg_surface_write_to_png   (VkvgSurface surf, const char* path);
 
