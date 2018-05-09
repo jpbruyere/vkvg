@@ -27,6 +27,8 @@
 
 VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
 {
+    LOG(LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
+
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
     dev->hdpi   = 72;
@@ -69,6 +71,8 @@ void vkvg_device_destroy (VkvgDevice dev)
     dev->references--;
     if (dev->references > 0)
         return;
+
+    LOG(LOG_INFO, "DESTROY Device\n");
 
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslGrad,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);

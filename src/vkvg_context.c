@@ -33,6 +33,8 @@ static uint32_t dlpCount = 0;
 
 VkvgContext vkvg_create(VkvgSurface surf)
 {
+    LOG(LOG_INFO, "CREATE Context: surf = %lu\n", surf);
+
     VkvgDevice dev = surf->dev;
     VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
@@ -361,6 +363,7 @@ void _poly_fill (VkvgContext ctx){
              _add_vertex(ctx, v);
         }
 
+        LOG(LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
         vkCmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx ,0);
 
         ptrPath+=2;
@@ -388,6 +391,8 @@ void vkvg_fill_preserve (VkvgContext ctx){
         return;
     _finish_path(ctx);
 
+    LOG(LOG_INFO, "FILL: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
+
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);
 
@@ -404,6 +409,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         return;
     _finish_path(ctx);
 
+    LOG(LOG_INFO, "STROKE: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
+
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)
         vkvg_flush(ctx);
 
@@ -419,8 +426,11 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         uint32_t firstIdx = ctx->vertCount;
         i = ctx->pathes[ptrPath];
 
+        LOG(LOG_INFO_PATH, "\tPATH: start = %d; ", ctx->pathes[ptrPath], ctx->pathes[ptrPath+1]);
+
         if (_path_is_closed(ctx,ptrPath)){
             lastPathPointIdx = _get_last_point_of_closed_path(ctx,ptrPath);
+            LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
             //prevent closing on the same position, this could be generalize
             //to prevent processing of two consecutive point at the same position
             if (vec2_equ(ctx->points[i], ctx->points[lastPathPointIdx]))
@@ -428,6 +438,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             iL = lastPathPointIdx;
         }else{
             lastPathPointIdx = ctx->pathes[ptrPath+1];
+            LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
+
             vec2 n = vec2_line_norm(ctx->points[i], ctx->points[i+1]);
 
             vec2 p0 = ctx->points[i];
@@ -596,21 +608,23 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 }
 
 void vkvg_save (VkvgContext ctx){
+    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %lu\n", ctx);
+
     _flush_cmd_buff(ctx);
 
     VkvgDevice dev = ctx->pSurf->dev;
     vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
     sav->stencilMS = vkh_image_ms_create(dev,VK_FORMAT_S8_UINT,VKVG_SAMPLES,ctx->pSurf->width,ctx->pSurf->height,
-                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                        VMA_MEMORY_USAGE_GPU_ONLY,
                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
     vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
     vkh_image_set_layout (ctx->cmd, sav->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+            VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
                             .dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
@@ -665,6 +679,8 @@ void vkvg_restore (VkvgContext ctx){
     if (ctx->pSavedCtxs == NULL)
         return;
 
+    LOG(LOG_INFO, "RESTORE CONTEXT: ctx = %lu\n", ctx);
+
     vkvg_context_save_t* sav = ctx->pSavedCtxs;
     ctx->pSavedCtxs = sav->pNext;
 
@@ -677,9 +693,9 @@ void vkvg_restore (VkvgContext ctx){
     vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
     vkh_image_set_layout (ctx->cmd, sav->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+            VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
                             .dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},

@@ -31,6 +31,19 @@ extern "C" {
 
 #define VKVG_SAMPLES 8
 
+#define LOG_ERR			0x00
+#define LOG_DEBUG		0x10
+#define LOG_INFO		0x20
+#define LOG_INFO_PATH   0x40
+#define LOG_FULL		0xff
+
+#ifdef DEBUG
+static uint8_t log_level	= LOG_INFO | LOG_DEBUG;
+#define LOG(level,...) (log_level & level) ? fprintf (stdout, __VA_ARGS__):true;
+#else
+#define LOG
+#endif
+
 typedef enum _vkvg_direction {
     VKVG_HORIZONTAL	= 0,
     VKVG_VERTICAL	= 1

@@ -169,6 +169,7 @@ void _create_cmd_buff (VkvgContext ctx){
     ctx->cmd = vkh_cmd_buff_create(ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }
 void _record_draw_cmd (VkvgContext ctx){
+    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vert cpt = %d; ind cpt = %d; ind drawn = %d\n", ctx, ctx->vertCount - 4, ctx->indCount - 6, ctx->indCount - ctx->curIndStart);
     if (ctx->indCount == ctx->curIndStart)
         return;
     vkCmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
@@ -216,6 +217,7 @@ void _explicit_ms_resolve (VkvgContext ctx){
 }
 
 void _flush_cmd_buff (VkvgContext ctx){
+    LOG(LOG_INFO, "FLUSH Context: ctx = %lu; vert cpt = %d; ind cpt = %d\n", ctx, ctx->vertCount -4, ctx->indCount - 6);
     _record_draw_cmd        (ctx);
     vkCmdEndRenderPass      (ctx->cmd);
     //_explicit_ms_resolve    (ctx);
