@@ -177,7 +177,7 @@ void _record_draw_cmd (VkvgContext ctx){
     //DEBUG
     /*vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
     vkCmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipeline);*/
+    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);*/
     //////////
 
     ctx->curIndStart = ctx->indCount;
@@ -578,12 +578,12 @@ void _free_ctx_save (vkvg_context_save_t* sav){
 
 
 #define m_approximation_scale   1.0
-#define m_angle_tolerance       0.05
-#define m_distance_tolerance    0.1
-#define m_cusp_limit            0.25
-#define curve_recursion_limit   16
-#define curve_collinearity_epsilon 0.001
-#define curve_angle_tolerance_epsilon 0.1
+#define m_angle_tolerance       0.01
+#define m_distance_tolerance    1.0
+#define m_cusp_limit            0.01
+#define curve_recursion_limit   10
+#define curve_collinearity_epsilon 1.7
+#define curve_angle_tolerance_epsilon 0.001
 
 void _recursive_bezier (VkvgContext ctx,
                         float x1, float y1, float x2, float y2,
