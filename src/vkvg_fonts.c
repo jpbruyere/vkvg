@@ -36,6 +36,8 @@ void _init_fonts_cache (VkvgDevice dev){
 
     assert(!FT_Init_FreeType(&cache->library));
 
+    FT_Library_SetLcdFilter (cache->library, FT_RENDER_MODE_LCD);
+
     cache->cacheTexLength = FONT_CACHE_INIT_LAYERS;
     cache->cacheTex = vkh_tex2d_array_create (dev, VK_FORMAT_R8_UNORM, FONT_PAGE_SIZE, FONT_PAGE_SIZE,
                             cache->cacheTexLength ,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -221,13 +223,14 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 }
 
 _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
-    assert(!FT_Load_Glyph(f->face, gindex, FT_LOAD_RENDER));
+    assert(!FT_Load_Glyph(f->face, gindex, FT_LOAD_RENDER | FT_LOAD_TARGET_LCD));
+    //assert(!FT_Load_Glyph(f->face, gindex, FT_LOAD_RENDER));
 
     FT_GlyphSlot slot = f->face->glyph;
     FT_Bitmap   bmp  = slot->bitmap;
     uint8_t*    data = dev->fontCache->hostBuff;
 
-    if (dev->fontCache->stagingX + f->curLine.penX + bmp.width > FONT_PAGE_SIZE){
+    if (dev->fontCache->stagingX + f->curLine.penX + bmp.pitch > FONT_PAGE_SIZE){
         _flush_chars_to_tex (dev, f);
         _init_next_line_in_tex_cache (dev, f);
     }
@@ -236,7 +239,7 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
     for(int y=0; y<bmp.rows; y++) {
         for(int x=0; x<bmp.width; x++)
             data[ penX + x + y * FONT_PAGE_SIZE ] =
-                bmp.buffer[x + y * bmp.width];
+                bmp.buffer[x + y * bmp.pitch];
     }
 
     _char_ref* cr = (_char_ref*)malloc(sizeof(_char_ref));
@@ -251,7 +254,7 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
     cr->bmpDiff.y = slot->bitmap_top;
 
     f->charLookup[gindex] = cr;
-    dev->fontCache->stagingX += bmp.width;
+    dev->fontCache->stagingX += bmp.pitch;
     return cr;
 }
 
@@ -434,7 +437,7 @@ void _show_text (VkvgContext ctx, const char* text){
             v.uv.y += uvHeight;
             _add_vertex(ctx,v);
 
-            v.pos.x += cr->bounds.width;
+            v.pos.x += cr->bounds.width/3.f;
             v.pos.y = p0.y;
             v.uv.x += uvWidth;
             v.uv.y = cr->bounds.y;
@@ -456,23 +459,25 @@ void _show_text (VkvgContext ctx, const char* text){
     _flush_chars_to_tex(dev,f);
     hb_buffer_destroy (buf);
     //_show_texture(ctx); return;
+    //vkvg_flush(ctx);
 }
 
 //debug function
 void _show_texture (vkvg_context* ctx){
     Vertex vs[] = {
-        {{0,0},                             {0,0,1}},
-        {{0,FONT_PAGE_SIZE},                {0,1,1}},
-        {{FONT_PAGE_SIZE,0},                {1,0,1}},
-        {{FONT_PAGE_SIZE,FONT_PAGE_SIZE},   {1,1,1}}
+        {{0,0},                             {0,0,0}},
+        {{0,FONT_PAGE_SIZE},                {0,1,0}},
+        {{FONT_PAGE_SIZE,0},                {1,0,0}},
+        {{FONT_PAGE_SIZE,FONT_PAGE_SIZE},   {1,1,0}}
     };
+    uint32_t idx = ctx->vertCount;
 
     _add_vertex(ctx,vs[0]);
     _add_vertex(ctx,vs[1]);
     _add_vertex(ctx,vs[2]);
     _add_vertex(ctx,vs[3]);
 
-    _add_tri_indices_for_rect (ctx, 0);
+    _add_tri_indices_for_rect (ctx, idx);
 }
 /*void testfonts(){
     FT_Library      library;

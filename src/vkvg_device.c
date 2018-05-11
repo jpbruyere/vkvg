@@ -31,8 +31,8 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFa
 
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
-    dev->hdpi   = 72;
-    dev->vdpi   = 72;
+    dev->hdpi   = 96;
+    dev->vdpi   = 96;
     dev->vkDev  = vkdev;
     dev->phy    = phy;
 

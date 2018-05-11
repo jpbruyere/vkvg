@@ -83,8 +83,23 @@ void main()
 		break;
 	}
 
-	if (inFontUV.z >= 0.0)
-		c *= texture(fontMap, inFontUV).r;
+	if (inFontUV.z >= 0.0){
+		//vec3 fuv = vec3 (inFontUV.x, inFontUV.y, inFontUV.z);
+		vec3 fc = vec3 (texture(fontMap, inFontUV).r,
+						textureOffset (fontMap, inFontUV, ivec2(1,0)).r,
+						textureOffset (fontMap, inFontUV, ivec2(2,0)).r);
+
+		float alpha = fc.r + fc.g + fc.b;
+		if (alpha == 0)
+			discard;
+		vec3 bck = vec3(1) - c.rgb;
+		c = vec4(mix(bck, c.rgb, fc), 1.0);//c.a * alpha/3.0);
+		//c = vec4(c.rgb * fc, alpha/3.0);
+
+		/*c.r = texture(fontMap, inFontUV).r;
+		c.g = c.b = c.r;
+		c.a = 1;*/
+	}
 
 	outFragColor = c;
 }

@@ -178,25 +178,32 @@ void vkvg_test_stroke(VkvgContext ctx){
     vkvg_stroke(ctx);
 }
 void test_text (VkvgContext ctx) {
-    int size = 19;
-    int penY = 50;
-    int penX = 10;
+    int size = 40;
+    int penY = 250;
+    int penX = 100;
 
     /*vkvg_rectangle(ctx,30,0,100,400);
     vkvg_clip(ctx);*/
 
     //vkvg_select_font_face(ctx, "/usr/local/share/fonts/DroidSansMono.ttf");
     //vkvg_select_font_face(ctx, "/usr/share/fonts/truetype/unifont/unifont.ttf");
-
     vkvg_set_font_size(ctx,12);
-    vkvg_select_font_face(ctx, "droid");
-    vkvg_font_extents_t fe;
-    vkvg_font_extents (ctx,&fe);
+    vkvg_select_font_face(ctx, "times");
+
+    vkvg_set_source_rgba(ctx,0.9,0.9,0.9,1.0);
+    vkvg_paint(ctx);
     vkvg_move_to(ctx, penX,penY);
-    vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
-    vkvg_text_extents_t te;
-    vkvg_text_extents(ctx,"abcdefghijk",&te);
-    vkvg_show_text (ctx,"abcdefghijk");
+    vkvg_set_source_rgba(ctx,0.1,0.1,0.1,1);
+
+    //vkvg_font_extents_t fe;
+    //vkvg_font_extents (ctx,&fe);
+    //vkvg_text_extents_t te;
+    //vkvg_text_extents(ctx,"abcdefghijk",&te);
+    //vkvg_show_text (ctx,"ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    //vkvg_show_text (ctx,"AAAAAVVVVV");
+    vkvg_show_text (ctx,"abcdefghiiiiiiiiiiiiiiii jk");
+    return;
+/*
     penX+= te.x_advance;
     vkvg_move_to(ctx, penX,penY);
     vkvg_show_text (ctx,"*abcdefghijk2");
@@ -255,7 +262,7 @@ void test_text (VkvgContext ctx) {
 
     vkvg_move_to(ctx, 80,400);
     vkvg_show_text (ctx,"Ленивый рыжий кот");
-
+*/
 
     /*vkvg_move_to(ctx, 150,250);
     vkvg_show_text (ctx,"test string é€");
@@ -266,6 +273,7 @@ void test_text (VkvgContext ctx) {
 
     //vkvg_show_text (ctx,"ABCDABCD");
     //vkvg_show_text (ctx,"j");
+
 }
 void vkvg_test_stroke2(VkvgContext ctx){
     vkvg_set_line_width(ctx,20);
@@ -457,14 +465,15 @@ void test_colinear () {
 }
 
 void multi_test1 () {
-    VkvgSurface surf2 = vkvg_surface_create (device,800,800);;
-    VkvgContext ctx = vkvg_create (surf2);
+    //VkvgSurface surf2 = vkvg_surface_create (device,800,800);;
+    VkvgContext ctx = vkvg_create (surf);
 
-    vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1.0);
-    vkvg_paint(ctx);
+    //vkvg_set_source_rgba(ctx,1,1,1,1.0);
+//    vkvg_set_source_rgba(ctx,0.8,0.8,0.8,1.0);
+//    vkvg_paint(ctx);
 
-    vkvg_test_fill(ctx);
-    vkvg_test_fill2(ctx);
+    //vkvg_test_fill(ctx);
+    //vkvg_test_fill2(ctx);
 
 //    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
 
@@ -493,17 +502,17 @@ void multi_test1 () {
     test_text(ctx);
 
 
-    vkvg_test_stroke(ctx);
+    //vkvg_test_stroke(ctx);
 
-    vkvg_translate(ctx, 100,50);
+    //vkvg_translate(ctx, 100,50);
 //    vkvg_rotate(ctx, 0.2);
     //vkvg_scale(ctx, 2,2);
 
 
     //vkvg_test_gradient (ctx);
 
-    vkvg_test_curves(ctx);
-    vkvg_test_curves2(ctx);
+    //vkvg_test_curves(ctx);
+    //vkvg_test_curves2(ctx);
 
     /*vkvg_set_operator(ctx, VKVG_OPERATOR_CLEAR);
     vkvg_rectangle(ctx,100,100,300,300);
@@ -514,6 +523,9 @@ void multi_test1 () {
     //test_line_caps(ctx);
 
     vkvg_destroy(ctx);
+
+    return;
+
     ctx = vkvg_create(surf);
 
     vkvg_set_source_rgba(ctx,1.0,0.0,0.0,1);
@@ -522,7 +534,7 @@ void multi_test1 () {
 //    vkvg_rectangle(ctx,100,100,500,500);
 //    vkvg_fill(ctx);
 
-    VkvgPattern pat = vkvg_pattern_create_for_surface(surf2);
+/*    VkvgPattern pat = vkvg_pattern_create_for_surface(surf2);
     vkvg_pattern_set_extend(pat, VKVG_EXTEND_REFLECT);
     vkvg_pattern_set_filter(pat, VKVG_FILTER_BILINEAR);
     vkvg_set_source (ctx, pat);
@@ -535,7 +547,7 @@ void multi_test1 () {
     vkvg_paint(ctx);
     vkvg_pattern_destroy (pat);
     vkvg_destroy(ctx);
-    vkvg_surface_destroy(surf2);
+    vkvg_surface_destroy(surf2);*/
 }
 
 void cairo_test_fill_rule (VkvgContext cr){
@@ -1074,8 +1086,8 @@ int main(int argc, char *argv[]) {
     while (!vkengine_should_close (e)) {
         glfwPollEvents();
         //test_1();
-        cairo_tests();
-        //multi_test1();
+        //cairo_tests();
+        multi_test1();
         //test_painting();
         if (!vkh_presenter_draw (r))
             vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
