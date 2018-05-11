@@ -24,6 +24,7 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <freetype/ftlcdfil.h>
 
 #include <hb.h>
 #include <hb-ft.h>

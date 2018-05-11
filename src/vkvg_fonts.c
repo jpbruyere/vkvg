@@ -36,7 +36,7 @@ void _init_fonts_cache (VkvgDevice dev){
 
     assert(!FT_Init_FreeType(&cache->library));
 
-    FT_Library_SetLcdFilter (cache->library, FT_RENDER_MODE_LCD);
+    FT_Library_SetLcdFilter (cache->library, FT_LCD_FILTER_DEFAULT);
 
     cache->cacheTexLength = FONT_CACHE_INIT_LAYERS;
     cache->cacheTex = vkh_tex2d_array_create (dev, VK_FORMAT_R8_UNORM, FONT_PAGE_SIZE, FONT_PAGE_SIZE,

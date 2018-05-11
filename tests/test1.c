@@ -27,6 +27,7 @@
 #include "nanosvg.h"
 #include "vkh_device.h"
 #include "vkh_presenter.h"
+#include "vectors.h"
 
 VkvgDevice device;
 VkvgSurface surf = NULL;
@@ -177,6 +178,45 @@ void vkvg_test_stroke(VkvgContext ctx){
     vkvg_line_to(ctx,400,600);
     vkvg_stroke(ctx);
 }
+void drawTextTest (VkvgContext ctx, int x, int *y, const char* fontFace, uint32_t fontSize, vec4 background, vec4 foreground) {
+    const char * string = "abcdefghiiiiiiiiiiiiiiii jk";
+    vkvg_select_font_face   (ctx, fontFace);
+    vkvg_set_font_size      (ctx, fontSize);
+
+    vkvg_font_extents_t fe;
+    vkvg_font_extents (ctx,&fe);
+    vkvg_text_extents_t te;
+    vkvg_text_extents(ctx,string,&te);
+
+    vkvg_rectangle(ctx, x , (*y) - fe.ascent, te.width, fe.ascent + fe.descent);
+    vkvg_set_source_rgba(ctx, background.r, background.g, background.b, background.a);
+    vkvg_fill(ctx);
+
+    vkvg_set_source_rgba(ctx, foreground.r, foreground.g, foreground.b, foreground.a);
+    vkvg_move_to(ctx, x, (*y));
+    vkvg_show_text(ctx, string);
+    (*y) += fe.ascent + fe.descent;
+}
+void test_text2 (VkvgContext ctx) {
+    int penY = 250;
+    int penX = 100;
+    vec4 bg = {1,1,1,1};
+    vec4 fg = {0,0,0,1};
+
+    const char* font = "droid";
+
+    vkvg_set_source_rgba(ctx,0.2,0.2,0.2,1.0);
+    vkvg_paint(ctx);
+
+    drawTextTest(ctx, penX, &penY, font, 12, bg, fg);
+    drawTextTest(ctx, penX, &penY, font, 12, fg, bg);
+    drawTextTest(ctx, penX, &penY, font, 10, bg, fg);
+    drawTextTest(ctx, penX, &penY, font, 10, fg, bg);
+    drawTextTest(ctx, penX, &penY, font, 8, bg, fg);
+    drawTextTest(ctx, penX, &penY, font, 8, fg, bg);
+    drawTextTest(ctx, penX, &penY, font, 6, bg, fg);
+    drawTextTest(ctx, penX, &penY, font, 6, fg, bg);
+}
 void test_text (VkvgContext ctx) {
     int size = 40;
     int penY = 250;
@@ -187,10 +227,10 @@ void test_text (VkvgContext ctx) {
 
     //vkvg_select_font_face(ctx, "/usr/local/share/fonts/DroidSansMono.ttf");
     //vkvg_select_font_face(ctx, "/usr/share/fonts/truetype/unifont/unifont.ttf");
-    vkvg_set_font_size(ctx,12);
-    vkvg_select_font_face(ctx, "times");
+    vkvg_set_font_size(ctx,10);
+    vkvg_select_font_face(ctx, "mono");
 
-    vkvg_set_source_rgba(ctx,0.9,0.9,0.9,1.0);
+    vkvg_set_source_rgba(ctx,1.0,1.0,1.0,1.0);
     vkvg_paint(ctx);
     vkvg_move_to(ctx, penX,penY);
     vkvg_set_source_rgba(ctx,0.1,0.1,0.1,1);
@@ -499,7 +539,8 @@ void multi_test1 () {
 //    vkvg_fill (ctx);
 
 
-    test_text(ctx);
+    //test_text(ctx);
+    test_text2(ctx);
 
 
     //vkvg_test_stroke(ctx);
@@ -1071,7 +1112,12 @@ int main(int argc, char *argv[]) {
     vkengine_set_key_callback (e, key_callback);
 
     device  = vkvg_device_create (r->dev->phy, r->dev->dev, r->qFam, 0);
-    surf    = vkvg_surface_create(device, 1024, 800);
+    surf    = vkvg_surface_create(device, 512, 512);
+
+    multi_test1();
+
+    //vkvg_surface_write_to_png(surf, "/mnt/data/test1.png");
+
 
     //test_svg();
     //test_img_surface();
@@ -1087,7 +1133,7 @@ int main(int argc, char *argv[]) {
         glfwPollEvents();
         //test_1();
         //cairo_tests();
-        multi_test1();
+        //multi_test1();
         //test_painting();
         if (!vkh_presenter_draw (r))
             vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
