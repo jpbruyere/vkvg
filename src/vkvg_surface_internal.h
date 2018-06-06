@@ -38,5 +38,5 @@ typedef struct _vkvg_surface_t {
     uint32_t    references;
 }vkvg_surface;
 
-void _clear_stencil (VkvgSurface surf);
+void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect);
 #endif

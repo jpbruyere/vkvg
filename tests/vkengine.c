@@ -146,13 +146,16 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     }
 
     char const * dex [] = {"VK_KHR_swapchain"};
-#if DEBUG
+/*#if DEBUG
     uint32_t dlayCpt = 1;
     static char const * dlay [] = {"VK_LAYER_LUNARG_standard_validation"};
-#else
+#else*/
     uint32_t dlayCpt = 0;
     static char const * dlay [] = {};
-#endif
+//#endif
+    VkPhysicalDeviceFeatures enabledFeatures = {
+        .fillModeNonSolid = true,
+    };
 
     VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                        .queueCreateInfoCount = qCount,
@@ -160,7 +163,8 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
                                        .enabledLayerCount = dlayCpt,
                                        .ppEnabledLayerNames = dlay,
                                        .enabledExtensionCount = 1,
-                                       .ppEnabledExtensionNames = dex
+                                       .ppEnabledExtensionNames = dex,
+                                       .pEnabledFeatures = &enabledFeatures
                                      };
 
     VkDevice dev;

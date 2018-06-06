@@ -328,6 +328,7 @@ void test_img_surface (VkvgContext ctx) {
     vkvg_surface_destroy(imgSurf);*/
 
     imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/miroir.jpg");
+    fflush(stdout);
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
     vkvg_paint(ctx);
     //vkvg_flush(ctx);
@@ -1050,6 +1051,27 @@ void test_painting () {
     vkvg_pattern_destroy (pat);
 }
 
+void simple_paint () {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgba(ctx,1,0,0,1);
+    vkvg_paint(ctx);
+    vkvg_destroy(ctx);
+}
+void simple_rectangle_fill () {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgba(ctx,0,1,0,1);
+    vkvg_rectangle(ctx,100,100,200,200);
+    vkvg_fill(ctx);
+    vkvg_destroy(ctx);
+}
+void simple_rectangle_stroke () {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgba(ctx,0,0,1,1);
+    vkvg_set_line_width(ctx,10.f);
+    vkvg_rectangle(ctx,100,100,200,200);
+    vkvg_stroke(ctx);
+    vkvg_destroy(ctx);
+}
 int main(int argc, char *argv[]) {
 
     //dumpLayerExts();
@@ -1062,11 +1084,16 @@ int main(int argc, char *argv[]) {
     surf    = vkvg_surface_create(device, 1024, 800);
 
     //test_svg();
-    //test_img_surface();
     //
 
-    //test_grad_transforms();
+    VkvgContext ctx = vkvg_create(surf);
+    test_img_surface(ctx);
+    vkvg_destroy(ctx);
 
+    //test_grad_transforms();
+    //simple_paint();
+    //simple_rectangle_stroke();
+    //simple_rectangle_fill();
     //test_colinear();
 
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
@@ -1074,7 +1101,8 @@ int main(int argc, char *argv[]) {
     while (!vkengine_should_close (e)) {
         glfwPollEvents();
         //test_1();
-        cairo_tests();
+        //cairo_tests();
+
         //multi_test1();
         //test_painting();
         if (!vkh_presenter_draw (r))

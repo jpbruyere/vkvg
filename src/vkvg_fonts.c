@@ -77,10 +77,12 @@ void _increase_font_tex_array (VkvgDevice dev){
 
     vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-    vkh_image_set_layout_subres(cache->cmd, newImg, subresNew, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout_subres(cache->cmd, newImg, subresNew,
+                                VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres,
+                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, cache->cacheTexLength},
                             .dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, cache->cacheTexLength},
@@ -89,8 +91,9 @@ void _increase_font_tex_array (VkvgDevice dev){
     vkCmdCopyImage (cache->cmd, vkh_image_get_vkimage (cache->cacheTex), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                 vkh_image_get_vkimage (newImg), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &cregion);
 
-    vkh_image_set_layout_subres(cache->cmd, newImg, subresNew, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                     VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+    vkh_image_set_layout_subres(cache->cmd, newImg, subresNew,
+                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
     VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
 
@@ -196,8 +199,9 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
     vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     VkImageSubresourceRange subres      = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,f->curLine.pageIdx,1};
-    vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres,
+                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     VkBufferImageCopy bufferCopyRegion = { .imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT,0,f->curLine.pageIdx,1},
                                            .bufferRowLength = FONT_PAGE_SIZE,
@@ -208,8 +212,9 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
     vkCmdCopyBufferToImage(cache->cmd, vkh_buffer_get_vkbuffer (cache->buff),
                            vkh_image_get_vkimage (cache->cacheTex), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
 
-    vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                     VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+    vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres,
+                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
     VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
 

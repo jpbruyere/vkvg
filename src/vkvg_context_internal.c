@@ -34,6 +34,7 @@
 #include "vkvg_device_internal.h"
 #include "vkvg_pattern.h"
 #include "vkh_queue.h"
+#include "vkh_image.h"
 
 void _check_pathes_array (VkvgContext ctx){
     if (ctx->sizePathes - ctx->pathPtr > VKVG_ARRAY_THRESHOLD)
@@ -197,10 +198,12 @@ inline void _submit_wait_and_reset_cmd (VkvgContext ctx){
     _wait_and_reset_ctx_cmd(ctx);
 }
 void _explicit_ms_resolve (VkvgContext ctx){
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->img, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout (ctx->cmd, ctx->pSurf->img, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     VkImageResolve re = {
         .extent = {ctx->pSurf->width, ctx->pSurf->height,1},
@@ -212,19 +215,24 @@ void _explicit_ms_resolve (VkvgContext ctx){
                       vkh_image_get_vkimage (ctx->pSurf->imgMS), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                       vkh_image_get_vkimage (ctx->pSurf->img) ,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                       1,&re);
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ,
-            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+    vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ,
+                          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
-void _flush_cmd_buff (VkvgContext ctx){
+void _end_render_pass (VkvgContext ctx) {
     LOG(LOG_INFO, "FLUSH Context: ctx = %lu; vert cpt = %d; ind cpt = %d\n", ctx, ctx->vertCount -4, ctx->indCount - 6);
     _record_draw_cmd        (ctx);
     vkCmdEndRenderPass      (ctx->cmd);
+}
+void _flush_cmd_buff (VkvgContext ctx){
+    _end_render_pass        (ctx);
     //_explicit_ms_resolve    (ctx);
     vkh_cmd_end             (ctx->cmd);
 
     _submit_wait_and_reset_cmd(ctx);
 }
+
 //bind correct draw pipeline depending on current OPERATOR
 void _bind_draw_pipeline (VkvgContext ctx) {
     switch (ctx->curOperator) {
@@ -262,6 +270,17 @@ void _init_cmd_buff (VkvgContext ctx){
                                                   //.pClearValues = clearValues};
 
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+    if (ctx->pSurf->img->layout == VK_IMAGE_LAYOUT_UNDEFINED){
+        vkh_image_set_layout(ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
+                         VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+        vkh_image_set_layout(ctx->cmd, ctx->pSurf->img, VK_IMAGE_ASPECT_COLOR_BIT,
+                         VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    }
+
     vkCmdBeginRenderPass (ctx->cmd, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     VkViewport viewport = {0,0,ctx->pSurf->width,ctx->pSurf->height,0,1};
     vkCmdSetViewport(ctx->cmd, 0, 1, &viewport);
@@ -271,6 +290,7 @@ void _init_cmd_buff (VkvgContext ctx){
     VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc,ctx->dsGrad};
     vkCmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
                             0, 3, dss, 0, NULL);
+
     VkDeviceSize offsets[1] = { 0 };
     vkCmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
     vkCmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
@@ -310,9 +330,22 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
         break;
     case VKVG_PATTERN_TYPE_SURFACE:
-        _flush_cmd_buff(ctx);
-
+    {
         VkvgSurface surf = (VkvgSurface)pat->data;
+
+        //flush ctx in two steps to add the src transition in the cmd buff
+        _end_render_pass    (ctx);
+        //transition source surface for sampling
+        vkh_image_set_layout (ctx->cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
+                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+        vkh_cmd_end             (ctx->cmd);
+        _submit_wait_and_reset_cmd(ctx);
+
+        //_flush_cmd_buff(ctx);
+
+
         ctx->source = surf->img;
 
         //if (vkh_image_get_sampler (ctx->source) == VK_NULL_HANDLE){
@@ -341,15 +374,16 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
             vkh_image_create_sampler(ctx->source, filter, filter,
                                  VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
         //}
-        if (vkh_image_get_layout (ctx->source) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL){
+        /*if (vkh_image_get_layout (ctx->source) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL){
             vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-            vkh_image_set_layout        (ctx->cmd, ctx->source, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-            vkh_cmd_end                 (ctx->cmd);
+            vkh_image_set_layout (ctx->cmd, ctx->source, VK_IMAGE_ASPECT_COLOR_BIT,
+                                  VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                  VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+            vkh_cmd_end (ctx->cmd);
 
             _submit_wait_and_reset_cmd  (ctx);
-        }
+        }*/
 
         _update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
 
@@ -358,6 +392,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
         _init_cmd_buff                  (ctx);
         break;
+    }
     case VKVG_PATTERN_TYPE_LINEAR:
         _flush_cmd_buff (ctx);
 

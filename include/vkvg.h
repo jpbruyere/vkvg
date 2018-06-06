@@ -29,7 +29,7 @@ extern "C" {
 #include <vulkan/vulkan.h>
 #include <math.h>
 
-#define VKVG_SAMPLES 8
+#define VKVG_SAMPLES 4
 
 #define LOG_ERR			0x00
 #define LOG_DEBUG		0x10
@@ -38,7 +38,7 @@ extern "C" {
 #define LOG_FULL		0xff
 
 #ifdef DEBUG
-static uint8_t log_level	= LOG_INFO | LOG_DEBUG;
+static uint8_t log_level	= LOG_ERR;// LOG_INFO | LOG_DEBUG;
 #define LOG(level,...) (log_level & level) ? fprintf (stdout, __VA_ARGS__):true;
 #else
 #define LOG
@@ -137,11 +137,14 @@ uint32_t    vkvg_device_get_reference_count (VkvgDevice dev);
 
 VkvgSurface vkvg_surface_create			(VkvgDevice dev, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_create_from_image  (VkvgDevice dev, const char* filePath);
+// VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_reference          (VkvgSurface surf);
 uint32_t    vkvg_surface_get_reference_count(VkvgSurface surf);
 
 void		vkvg_surface_destroy		(VkvgSurface surf);
+void        vkvg_surface_clear          (VkvgSurface surf);
 VkImage		vkvg_surface_get_vk_image	(VkvgSurface surf);
+VkFormat	vkvg_surface_get_vk_format	(VkvgSurface surf);
 uint32_t   	vkvg_surface_get_width      (VkvgSurface surf);
 uint32_t	vkvg_surface_get_height     (VkvgSurface surf);
 VkImage		vkvg_surface_get_vkh_image	(VkvgSurface surf);

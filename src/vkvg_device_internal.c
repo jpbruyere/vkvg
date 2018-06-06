@@ -53,7 +53,7 @@ void _setupRenderPass(VkvgDevice dev)
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                    .finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL };
+                    .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
     VkAttachmentDescription attColorResolve = {
                     .format = FB_COLOR_FORMAT,
                     .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -61,7 +61,7 @@ void _setupRenderPass(VkvgDevice dev)
                     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-                    .initialLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
                     .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
     VkAttachmentDescription attDS = {
                     .format = VK_FORMAT_S8_UINT,
@@ -72,58 +72,38 @@ void _setupRenderPass(VkvgDevice dev)
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                     .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-/*    VkAttachmentDescription attDSResolve = {
-                    .format = VK_FORMAT_S8_UINT,
-                    .samples = VK_SAMPLE_COUNT_1_BIT,
-                    .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-                    .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                    .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-                    .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
-                    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                    .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };*/
-    VkAttachmentDescription attachments[] = {attColor,attColorResolve,attDS};
-    VkAttachmentReference colorRef = {
-        .attachment = 0,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-    VkAttachmentReference colorResolveRef = {
-        .attachment = 1,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-    VkAttachmentReference dsRef = {
-        .attachment = 2,
-        .layout = VK_IMAGE_LAYOUT_GENERAL };
-    /*VkAttachmentReference dsResolveRef = {
-        .attachment = 3,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };*/
-    VkSubpassDescription subpassDescription = { .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        .colorAttachmentCount = 1,
-                        .pColorAttachments = &colorRef,
-                        .pResolveAttachments = &colorResolveRef,
-                        .pDepthStencilAttachment = &dsRef};
-    VkSubpassDependency dep0 = {
-        .srcSubpass = VK_SUBPASS_EXTERNAL,
-        .dstSubpass = 0,
-        .srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
-        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT };
-    VkSubpassDependency dep1 = {
-        .srcSubpass = 0,
-        .dstSubpass = VK_SUBPASS_EXTERNAL,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
-        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT };
 
-    VkSubpassDependency dependencies[] = {dep0,dep1};
+    VkAttachmentDescription attachments[] = {attColor,attColorResolve,attDS};
+    VkAttachmentReference colorRef  = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+    VkAttachmentReference resolveRef= {1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+    VkAttachmentReference dsRef     = {2, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+
+    VkSubpassDescription subpassDescription = { .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        .colorAttachmentCount   = 1,
+                        .pColorAttachments      = &colorRef,
+                        .pResolveAttachments    = &resolveRef,
+                        .pDepthStencilAttachment= &dsRef};
+
+    /*VkSubpassDependency dependencies[] =
+    {
+        { VK_SUBPASS_EXTERNAL, 0,
+          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          VK_ACCESS_COLOR_ATTACHMENT_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+          VK_DEPENDENCY_BY_REGION_BIT},
+        { 0, VK_SUBPASS_EXTERNAL,
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+          VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT,
+          VK_DEPENDENCY_BY_REGION_BIT},
+    };*/
+
     VkRenderPassCreateInfo renderPassInfo = { .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
                 .attachmentCount = 3,
                 .pAttachments = attachments,
                 .subpassCount = 1,
                 .pSubpasses = &subpassDescription,
-                .dependencyCount = 2,
-                .pDependencies = dependencies };
+    //            .dependencyCount = 2,
+    //            .pDependencies = dependencies
+    };
 
     VK_CHECK_RESULT(vkCreateRenderPass(dev->vkDev, &renderPassInfo, NULL, &dev->renderPass));
 }
@@ -186,12 +166,12 @@ void _setupPipelines(VkvgDevice dev)
 
     VkPipelineMultisampleStateCreateInfo multisampleState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
                 .rasterizationSamples = VKVG_SAMPLES };
-    if (VKVG_SAMPLES != VK_SAMPLE_COUNT_1_BIT){
+    /*if (VKVG_SAMPLES != VK_SAMPLE_COUNT_1_BIT){
         multisampleState.sampleShadingEnable = VK_TRUE;
         multisampleState.minSampleShading = 0.25f;
         //multisampleState.alphaToCoverageEnable = VK_FALSE;
         //multisampleState.alphaToOneEnable = VK_FALSE;
-    }
+    }*/
     VkVertexInputBindingDescription vertexInputBinding = { .binding = 0,
                 .stride = sizeof(Vertex),
                 .inputRate = VK_VERTEX_INPUT_RATE_VERTEX };
@@ -231,7 +211,7 @@ void _setupPipelines(VkvgDevice dev)
     };
 
     // Use specialization constants to pass number of samples to the shader (used for MSAA resolve)
-    VkSpecializationMapEntry specializationEntry = {
+    /*VkSpecializationMapEntry specializationEntry = {
         .constantID = 0,
         .offset = 0,
         .size = sizeof(uint32_t)};
@@ -240,7 +220,7 @@ void _setupPipelines(VkvgDevice dev)
         .mapEntryCount = 1,
         .pMapEntries = &specializationEntry,
         .dataSize = sizeof(specializationData),
-        .pData = &specializationData};
+        .pData = &specializationData};*/
 
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertStage,fragStage};
 
@@ -321,5 +301,5 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 
 void _wait_device_fence (VkvgDevice dev) {
     vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
-    vkResetFences   (dev->vkDev, 1, &dev->fence);
+    vkResetFences (dev->vkDev, 1, &dev->fence);
 }
