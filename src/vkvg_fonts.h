@@ -36,6 +36,7 @@
 
 #include "vkvg_internal.h"
 #include "vkvg.h"
+#include "vkvg_buff.h"
 #include "vkh.h"
 //#include "vkh_image.h"
 
@@ -72,7 +73,7 @@ typedef struct {
     uint8_t*		hostBuff;	//host mem where bitmaps are first loaded
 
     VkCommandBuffer cmd;        //upload cmd buff
-    VkhBuffer       buff;       //stagin buffer
+    vkvg_buff       buff;       //stagin buffer
     VkhImage		cacheTex;	//tex 2d array
     uint8_t         cacheTexLength;  //tex array length
     int*            pensY;      //y pen pos in each texture of array

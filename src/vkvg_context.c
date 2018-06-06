@@ -377,6 +377,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);
 
+    _check_cmd_buff_state(ctx);
     _poly_fill (ctx);
 
     vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
@@ -396,6 +397,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);
 
+    _check_cmd_buff_state(ctx);
     _poly_fill (ctx);
 
     _bind_draw_pipeline (ctx);
@@ -535,6 +537,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     _record_draw_cmd(ctx);
 }
 void vkvg_paint (VkvgContext ctx){
+    _check_cmd_buff_state(ctx);
     vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
 }
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
@@ -548,7 +551,7 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
     _update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
     ctx->pushConsts.source.x = x;
     ctx->pushConsts.source.y = y;
-    _update_push_constants (ctx);
+    ctx->pushCstDirty = true;
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
     _update_cur_pattern (ctx, pat);
@@ -596,6 +599,7 @@ void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
 }
 
 void vkvg_show_text (VkvgContext ctx, const char* text){
+    _check_cmd_buff_state(ctx);
     _show_text (ctx, text);
     _record_draw_cmd (ctx);
 }

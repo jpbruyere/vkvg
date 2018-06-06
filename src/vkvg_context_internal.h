@@ -88,6 +88,8 @@ typedef struct _vkvg_context_t {
 
     VkCommandPool		cmdPool;//local pools ensure thread safety
     VkCommandBuffer     cmd;    //single cmd buff for context operations
+    bool                cmdStarted;//prevent flushing empty renderpass
+    bool                pushCstDirty;//prevent pushing to gpu if not requested
     VkDescriptorPool	descriptorPool;
     VkDescriptorSet     dsFont; //fonts glyphs texture atlas descriptor (local for thread safety)
     VkDescriptorSet     dsSrc;  //source ds
@@ -161,6 +163,7 @@ void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, flo
 void _bind_draw_pipeline    (VkvgContext ctx);
 void _create_cmd_buff		(VkvgContext ctx);
 void _init_cmd_buff			(VkvgContext ctx);
+void _check_cmd_buff_state  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
 void _record_draw_cmd		(VkvgContext ctx);
 void _submit_wait_and_reset_cmd(VkvgContext ctx);

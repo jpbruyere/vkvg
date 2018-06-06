@@ -146,9 +146,10 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
     vkh_image_create_descriptor (tmpImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
                                  VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
     //staging buffer
-    VkhBuffer buff = vkh_buffer_create (dev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, imgSize);
-    VK_CHECK_RESULT (vkh_buffer_map (buff));
-    memcpy (vkh_buffer_get_mapped_pointer (buff), img, imgSize);
+    vkvg_buff buff = {};
+    vkvg_buffer_create(dev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, imgSize, &buff);
+
+    memcpy (buff.allocInfo.pMappedData, img, imgSize);
 
     /*unsigned char* mapImg = vkh_image_map (stagImg);
     memcpy (mapImg, img, imgSize);
@@ -167,7 +168,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
     VkBufferImageCopy bufferCopyRegion = { .imageSubresource = imgSubResLayers,
                                            .imageExtent = {surf->width,surf->height,1}};
 
-    vkCmdCopyBufferToImage(cmd, vkh_buffer_get_vkbuffer (buff),
+    vkCmdCopyBufferToImage(cmd, buff.buffer,
         vkh_image_get_vkimage (stagImg), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
 
     vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -196,8 +197,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
     vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
-    vkh_buffer_unmap    (buff);
-    vkh_buffer_destroy  (buff);
+    vkvg_buffer_destroy (&buff);
     vkh_image_destroy   (stagImg);
 
     //create tmp context with rendering pipeline to create the multisample img
@@ -211,8 +211,9 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
     ctx->pushConsts.source = srcRect;
     ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SURFACE;
 
-    _update_push_constants (ctx);
+    //_update_push_constants (ctx);
     _update_descriptor_set (ctx, tmpImg, ctx->dsSrc);
+    _check_cmd_buff_state  (ctx);
 
     vkvg_paint          (ctx);
     vkvg_destroy        (ctx);

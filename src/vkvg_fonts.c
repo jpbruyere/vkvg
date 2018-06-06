@@ -46,10 +46,11 @@ void _init_fonts_cache (VkvgDevice dev){
     cache->uploadFence = vkh_fence_create_signaled(dev);
 
     uint32_t buffLength = FONT_PAGE_SIZE*FONT_PAGE_SIZE*sizeof(uint8_t);
-    cache->buff = vkh_buffer_create(dev,VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      buffLength);
-    vkh_buffer_map(cache->buff);
+
+    vkvg_buffer_create (dev,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU,
+        buffLength, &cache->buff);
 
     cache->cmd = vkh_cmd_buff_create(dev,dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
@@ -158,8 +159,8 @@ void _destroy_font_cache (VkvgDevice dev){
     free(cache->fonts);
     free(cache->pensY);
 
-    vkh_buffer_unmap    (cache->buff);
-    vkh_buffer_destroy  (cache->buff);
+
+    vkvg_buffer_destroy (&cache->buff);
     vkh_image_destroy   (cache->cacheTex);
     //vkFreeCommandBuffers(dev->vkDev,dev->cmdPool, 1, &cache->cmd);
     vkDestroyFence      (dev->vkDev,cache->uploadFence,NULL);
@@ -194,7 +195,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
     vkResetCommandBuffer(cache->cmd,NULL);
     vkResetFences       (dev->vkDev,1,&cache->uploadFence);
 
-    memcpy(vkh_buffer_get_mapped_pointer (cache->buff), cache->hostBuff, f->curLine.height * FONT_PAGE_SIZE);
+    memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, f->curLine.height * FONT_PAGE_SIZE);
 
     vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -209,7 +210,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
                                            .imageOffset = {f->curLine.penX,f->curLine.penY,0},
                                            .imageExtent = {FONT_PAGE_SIZE-f->curLine.penX,f->curLine.height,1}};
 
-    vkCmdCopyBufferToImage(cache->cmd, vkh_buffer_get_vkbuffer (cache->buff),
+    vkCmdCopyBufferToImage(cache->cmd, cache->buff.buffer,
                            vkh_image_get_vkimage (cache->cacheTex), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
 
     vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres,

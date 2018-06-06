@@ -36,6 +36,12 @@
 #include "vkh_queue.h"
 #include "vkh_image.h"
 
+void _check_cmd_buff_state (VkvgContext ctx) {
+    if (!ctx->cmdStarted)
+        _start_cmd_for_render_pass(ctx);
+    else if (ctx->pushCstDirty)
+        _update_push_constants(ctx);
+}
 void _check_pathes_array (VkvgContext ctx){
     if (ctx->sizePathes - ctx->pathPtr > VKVG_ARRAY_THRESHOLD)
         return;
@@ -173,6 +179,7 @@ void _record_draw_cmd (VkvgContext ctx){
     LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vert cpt = %d; ind cpt = %d; ind drawn = %d\n", ctx, ctx->vertCount - 4, ctx->indCount - 6, ctx->indCount - ctx->curIndStart);
     if (ctx->indCount == ctx->curIndStart)
         return;
+    _check_cmd_buff_state(ctx);
     vkCmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
 
     //DEBUG
@@ -188,16 +195,19 @@ inline void _submit_ctx_cmd(VkvgContext ctx){
     vkh_cmd_submit (ctx->pSurf->dev->gQueue, &ctx->cmd, ctx->flushFence);
 }
 void _wait_and_reset_ctx_cmd (VkvgContext ctx){
+    if (!ctx->cmdStarted)
+        return;
     vkWaitForFences(ctx->pSurf->dev->vkDev,1,&ctx->flushFence,VK_TRUE,UINT64_MAX);
     vkResetFences(ctx->pSurf->dev->vkDev,1,&ctx->flushFence);
     vkResetCommandBuffer(ctx->cmd,0);
+    ctx->cmdStarted = false;
 }
 
 inline void _submit_wait_and_reset_cmd (VkvgContext ctx){
     _submit_ctx_cmd(ctx);
     _wait_and_reset_ctx_cmd(ctx);
 }
-void _explicit_ms_resolve (VkvgContext ctx){
+void _explicit_ms_resolve (VkvgContext ctx){//should init cmd before calling this (unused, using automatic resolve by renderpass)
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
@@ -226,8 +236,9 @@ void _end_render_pass (VkvgContext ctx) {
     vkCmdEndRenderPass      (ctx->cmd);
 }
 void _flush_cmd_buff (VkvgContext ctx){
+    if (!ctx->cmdStarted)
+        return;
     _end_render_pass        (ctx);
-    //_explicit_ms_resolve    (ctx);
     vkh_cmd_end             (ctx->cmd);
 
     _submit_wait_and_reset_cmd(ctx);
@@ -256,12 +267,15 @@ void _init_cmd_buff (VkvgContext ctx){
     //VkClearValue clearValues[2];
     //clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
     //clearValues[1].depthStencil = { 1.0f, 0 };
-    VkClearValue clearValues[4] = {
+    /*VkClearValue clearValues[4] = {
         { 0.0f, 1.0f, 0.0f, 1.0f },
         { 0.0f, 0.0f, 0.0f, 1.0f },
         { 1.0f, 0 },
         { 1.0f, 0 }
-    };
+    };*/
+
+}
+void _start_cmd_for_render_pass (VkvgContext ctx) {
     VkRenderPassBeginInfo renderPassBeginInfo = { .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
                                                   .renderPass = ctx->pSurf->dev->renderPass,
                                                   .framebuffer = ctx->pSurf->fb,
@@ -299,23 +313,26 @@ void _init_cmd_buff (VkvgContext ctx){
     vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
     _update_push_constants  (ctx);
+    ctx->cmdStarted = true;
 }
 //compute inverse mat used in shader when context matrix has changed
 //then trigger push constants command
 void _set_mat_inv_and_vkCmdPush (VkvgContext ctx) {
     ctx->pushConsts.matInv = ctx->pushConsts.mat;
     vkvg_matrix_invert (&ctx->pushConsts.matInv);
-    _update_push_constants (ctx);
+    ctx->pushCstDirty = true;
 }
 inline void _update_push_constants (VkvgContext ctx) {
     vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
+    ctx->pushCstDirty = false;
 }
 void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
     VkvgPattern lastPat = ctx->pattern;
     ctx->pattern = pat;
 
     ctx->pushConsts.patternType = pat->type;
+    ctx->pushCstDirty = true;
 
     switch (pat->type)  {
     case VKVG_PATTERN_TYPE_SOLID:
@@ -324,9 +341,9 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
             _flush_cmd_buff             (ctx);
             _reset_src_descriptor_set   (ctx);
-            _init_cmd_buff              (ctx);//push csts updated by init
-        }else
-            _update_push_constants (ctx);
+            //_init_cmd_buff              (ctx);//push csts updated by init
+        }//else
+            //_update_push_constants (ctx);
 
         break;
     case VKVG_PATTERN_TYPE_SURFACE:
@@ -334,7 +351,13 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         VkvgSurface surf = (VkvgSurface)pat->data;
 
         //flush ctx in two steps to add the src transition in the cmd buff
-        _end_render_pass    (ctx);
+        if (ctx->cmdStarted)//transition of img without appropriate dep in subpass must be done outside renderpass.
+            _end_render_pass    (ctx);
+        else {
+            vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+            ctx->cmdStarted = true;
+        }
+
         //transition source surface for sampling
         vkh_image_set_layout (ctx->cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -342,9 +365,6 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
         vkh_cmd_end             (ctx->cmd);
         _submit_wait_and_reset_cmd(ctx);
-
-        //_flush_cmd_buff(ctx);
-
 
         ctx->source = surf->img;
 
@@ -390,7 +410,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         vec4 srcRect = {0,0,surf->width,surf->height};
         ctx->pushConsts.source = srcRect;
 
-        _init_cmd_buff                  (ctx);
+        //_init_cmd_buff                  (ctx);
         break;
     }
     case VKVG_PATTERN_TYPE_LINEAR:
@@ -412,7 +432,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
         memcpy(ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
 
-        _init_cmd_buff (ctx);
+        //_init_cmd_buff (ctx);
         break;
     }
 

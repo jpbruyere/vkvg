@@ -315,7 +315,8 @@ void vkvg_test_fill2(VkvgContext ctx){
     vkvg_close_path(ctx);
     vkvg_fill(ctx);
 }
-void test_img_surface (VkvgContext ctx) {
+void test_img_surface () {
+    VkvgContext ctx = vkvg_create(surf);
     VkvgSurface imgSurf;// = vkvg_surface_create_from_image(device, "/mnt/data/images/blason.png");
     //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/2000px-Tux.svg.png");
     //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/path2674.png");
@@ -333,7 +334,9 @@ void test_img_surface (VkvgContext ctx) {
     vkvg_paint(ctx);
     //vkvg_flush(ctx);
     vkvg_set_source_rgba(ctx,1,0,0,1);
+
     vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
 }
 void test_line_caps (VkvgContext ctx) {
 
@@ -1086,14 +1089,10 @@ int main(int argc, char *argv[]) {
     //test_svg();
     //
 
-    VkvgContext ctx = vkvg_create(surf);
-    test_img_surface(ctx);
-    vkvg_destroy(ctx);
+
+
 
     //test_grad_transforms();
-    //simple_paint();
-    //simple_rectangle_stroke();
-    //simple_rectangle_fill();
     //test_colinear();
 
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
@@ -1101,8 +1100,11 @@ int main(int argc, char *argv[]) {
     while (!vkengine_should_close (e)) {
         glfwPollEvents();
         //test_1();
-        //cairo_tests();
-
+        cairo_tests();
+        //simple_paint();
+        //simple_rectangle_stroke();
+        //simple_rectangle_fill();
+        //test_img_surface();
         //multi_test1();
         //test_painting();
         if (!vkh_presenter_draw (r))
