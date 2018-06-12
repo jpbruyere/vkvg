@@ -237,40 +237,41 @@ void _setupPipelines(VkvgDevice dev)
     pipelineCreateInfo.layout = dev->pipelineLayout;
 
 
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipelinePolyFill));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelinePolyFill));
 
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     dsStateCreateInfo.back = dsStateCreateInfo.front = clipingOpState;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipelineClipping));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineClipping));
 
     dsStateCreateInfo.back = dsStateCreateInfo.front = stencilOpState;
     blendAttachmentState.colorWriteMask=0xf;
     dynamicState.dynamicStateCount = 3;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipe_OVER));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_OVER));
 
     blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
 
     blendAttachmentState.blendEnable = VK_FALSE;
     //rasterizationState.polygonMode = VK_POLYGON_MODE_POINT;
     //shaderStages[1].pName = "op_CLEAR";
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
 
+
+#if DEBUG
     rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     shaderStages[1].pName = "main";
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
 
     shaderStages[1].module = modFragWired;
-    //pipelineCreateInfo.pStages = shaderStages;
-
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &dev->pipelineWired));
+    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineWired));
+    vkDestroyShaderModule(dev->vkDev, modFragWired, NULL);
+#endif
 
     vkDestroyShaderModule(dev->vkDev, modVert, NULL);
     vkDestroyShaderModule(dev->vkDev, modFrag, NULL);
-    vkDestroyShaderModule(dev->vkDev, modFragWired, NULL);
 }
 
 void _createDescriptorSetLayout (VkvgDevice dev) {
@@ -299,7 +300,7 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
     VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }
 
-void _wait_device_fence (VkvgDevice dev) {
+void _wait_and_reset_device_fence (VkvgDevice dev) {
     vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
     vkResetFences (dev->vkDev, 1, &dev->fence);
 }

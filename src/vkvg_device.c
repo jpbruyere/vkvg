@@ -55,7 +55,7 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFa
     dev->cmd    = vkh_cmd_buff_create       (dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
     dev->fence  = vkh_fence_create_signaled (dev);
 
-    //_create_pipeline_cache      (dev);
+    _create_pipeline_cache      (dev);
     _init_fonts_cache           (dev);
     _setupRenderPass            (dev);
     _createDescriptorSetLayout  (dev);
@@ -85,11 +85,13 @@ void vkvg_device_destroy (VkvgDevice dev)
     vkDestroyPipeline               (dev->vkDev, dev->pipe_SUB,     NULL);
     vkDestroyPipeline               (dev->vkDev, dev->pipe_CLEAR,   NULL);
 
+#if DEBUG
     vkDestroyPipeline               (dev->vkDev, dev->pipelineWired, NULL);
     vkDestroyPipeline               (dev->vkDev, dev->pipelineLineList, NULL);
+#endif
 
     vkDestroyPipelineLayout         (dev->vkDev, dev->pipelineLayout, NULL);
-    //vkDestroyPipelineCache          (dev->vkDev, dev->pipelineCache, NULL);
+    vkDestroyPipelineCache          (dev->vkDev, dev->pipelineCache, NULL);
     vkDestroyRenderPass             (dev->vkDev, dev->renderPass, NULL);
 
     vkWaitForFences                 (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);

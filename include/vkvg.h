@@ -211,6 +211,7 @@ void vkvg_stroke_preserve	(VkvgContext ctx);
 void vkvg_fill				(VkvgContext ctx);
 void vkvg_fill_preserve		(VkvgContext ctx);
 void vkvg_paint             (VkvgContext ctx);
+void vkvg_clear             (VkvgContext ctx);//use vkClearAttachment to speed up clearing surf
 void vkvg_reset_clip        (VkvgContext ctx);
 void vkvg_clip              (VkvgContext ctx);
 void vkvg_clip_preserve     (VkvgContext ctx);

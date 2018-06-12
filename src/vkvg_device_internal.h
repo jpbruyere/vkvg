@@ -42,16 +42,20 @@ typedef struct _vkvg_device_t{
     uint32_t                references;
     VkCommandPool			cmdPool;
     VkCommandBuffer         cmd;
+    //this fence is kept signaled when idle, wait and reset are called before each recording.
     VkFence                 fence;
 
-    VkPipeline				pipe_OVER;
+    VkPipeline				pipe_OVER;  //default operator
     VkPipeline				pipe_SUB;
-    VkPipeline				pipe_CLEAR;
+    VkPipeline				pipe_CLEAR; //clear operator
 
-    VkPipeline				pipelinePolyFill;
-    VkPipeline				pipelineClipping;
+    VkPipeline				pipelinePolyFill;   //
+    VkPipeline				pipelineClipping;   //to update clip
+
+#if DEBUG
     VkPipeline				pipelineWired;
     VkPipeline				pipelineLineList;
+#endif
 
     VkPipelineCache			pipelineCache;
     VkPipelineLayout		pipelineLayout;
@@ -73,5 +77,5 @@ void _setupPipelines            (VkvgDevice dev);
 void _createDescriptorSetLayout (VkvgDevice dev);
 void _flush_all_contexes        (VkvgDevice dev);
 void _init_all_contexes         (VkvgDevice dev);
-void _wait_device_fence         (VkvgDevice dev);
+void _wait_and_reset_device_fence         (VkvgDevice dev);
 #endif

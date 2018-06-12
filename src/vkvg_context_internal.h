@@ -78,13 +78,13 @@ typedef struct _vkvg_context_save_t{
 }vkvg_context_save_t;
 
 typedef struct _vkvg_context_t {
-    VkvgContext     pPrev;      //double linked list of contexts
-    VkvgContext     pNext;
-    uint32_t        references;
+    VkvgContext         pPrev;      //double linked list of contexts
+    VkvgContext         pNext;
+    uint32_t            references;
 
-    VkvgSurface		pSurf;
-    VkFence			flushFence;
-    VkhImage        source;     //source of painting operation
+    VkvgSurface         pSurf;
+    VkFence             flushFence;
+    VkhImage            source;     //source of painting operation
 
     VkCommandPool		cmdPool;//local pools ensure thread safety
     VkCommandBuffer     cmd;    //single cmd buff for context operations
@@ -127,14 +127,16 @@ typedef struct _vkvg_context_t {
     vkvg_line_cap_t     lineCap;
     vkvg_line_join_t    lineJoin;
 
-    _vkvg_font_t  selectedFont;     //hold current face and size before cache addition
-    _vkvg_font_t* currentFont;      //font ready for lookup
-    vkvg_direction_t textDirection;
+    _vkvg_font_t        selectedFont;     //hold current face and size before cache addition
+    _vkvg_font_t*       currentFont;      //font pointing to cached fonts ready for lookup
+    vkvg_direction_t    textDirection;
 
-    push_constants  pushConsts;
-    VkvgPattern     pattern;
+    push_constants      pushConsts;
+    VkvgPattern         pattern;
 
     vkvg_context_save_t* pSavedCtxs;//last ctx saved ptr
+
+    VkClearRect         clearRect;
 }vkvg_context;
 
 bool _current_path_is_empty (VkvgContext ctx);

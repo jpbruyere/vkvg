@@ -172,6 +172,8 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
     ctx->vertCount+=4;
     _add_tri_indices_for_rect(ctx, firstIdx);
 }
+
+
 void _create_cmd_buff (VkvgContext ctx){
     ctx->cmd = vkh_cmd_buff_create(ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }
@@ -190,7 +192,9 @@ void _record_draw_cmd (VkvgContext ctx){
 
     ctx->curIndStart = ctx->indCount;
 }
+void _clear_attachment (VkvgContext ctx) {
 
+}
 inline void _submit_ctx_cmd(VkvgContext ctx){
     vkh_cmd_submit (ctx->pSurf->dev->gQueue, &ctx->cmd, ctx->flushFence);
 }
@@ -292,7 +296,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 
         vkh_image_set_layout(ctx->cmd, ctx->pSurf->img, VK_IMAGE_ASPECT_COLOR_BIT,
                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
 
     vkCmdBeginRenderPass (ctx->cmd, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);

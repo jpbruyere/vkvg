@@ -34,7 +34,7 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
     VkvgDevice      dev = surf->dev;
     VkCommandBuffer cmd = dev->cmd;
 
-    _wait_device_fence (dev);
+    _wait_and_reset_device_fence (dev);
 
     vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -123,6 +123,7 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
 
     return surf;
 }
+//TODO: it would be better to blit in original size and create ms final image with dest surf dims
 VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height) {
     VkvgSurface surf = (vkvg_surface*)calloc(1,sizeof(vkvg_surface));
 
@@ -151,13 +152,9 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
     memcpy (buff.allocInfo.pMappedData, img, imgSize);
 
-    /*unsigned char* mapImg = vkh_image_map (stagImg);
-    memcpy (mapImg, img, imgSize);
-    vkh_image_unmap (stagImg);*/
-
     VkCommandBuffer cmd = dev->cmd;
 
-    _wait_device_fence (dev);
+    _wait_and_reset_device_fence (dev);
 
     vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -195,6 +192,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
     vkh_cmd_end     (cmd);
     vkh_cmd_submit  (dev->gQueue, &cmd, dev->fence);
 
+    //don't reset fence after completion as this is the last cmd. (signaled idle fence)
     vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
     vkvg_buffer_destroy (&buff);
@@ -290,7 +288,7 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
                                          VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
     VkCommandBuffer cmd = dev->cmd;
-    _wait_device_fence (dev);
+    _wait_and_reset_device_fence (dev);
 
     vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -312,7 +310,7 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 
     vkh_cmd_end     (cmd);
     vkh_cmd_submit  (dev->gQueue, &cmd, dev->fence);
-    _wait_device_fence (dev);
+    _wait_and_reset_device_fence (dev);
 
     void* img = vkh_image_map (stagImg);
 

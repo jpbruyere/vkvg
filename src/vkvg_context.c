@@ -56,6 +56,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
     };
     ctx->pushConsts = pc;
 
+    const VkClearRect cr = {{{0},{ctx->pSurf->width, ctx->pSurf->height}},0,1};
+    ctx->clearRect = cr;
+
     ctx->pPrev          = surf->dev->lastCtx;
     if (ctx->pPrev != NULL)
         ctx->pPrev->pNext = ctx;
@@ -322,12 +325,19 @@ void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 
     vkvg_close_path (ctx);
 }
+const VkClearAttachment clearStencil        = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {0}};
+const VkClearAttachment clearColorAttach    = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {0}};
 
 void vkvg_reset_clip (VkvgContext ctx){
-    _flush_cmd_buff(ctx);
-    _clear_surface(ctx->pSurf, VK_IMAGE_ASPECT_STENCIL_BIT);
-    _init_cmd_buff(ctx);
+    _check_cmd_buff_state (ctx);
+    vkCmdClearAttachments(ctx->cmd, 1, &clearStencil, 1, &ctx->clearRect);
 }
+void vkvg_clear (VkvgContext ctx){
+    _check_cmd_buff_state (ctx);
+    VkClearAttachment ca[2] = {clearColorAttach, clearStencil};
+    vkCmdClearAttachments(ctx->cmd, 2, ca, 1, &ctx->clearRect);
+}
+
 void vkvg_clip (VkvgContext ctx){
     vkvg_clip_preserve(ctx);
     _clear_path(ctx);
