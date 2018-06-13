@@ -83,6 +83,16 @@ typedef struct {
     uint8_t			fontsCount;
 }_font_cache_t;
 
+typedef struct _vkvg_text_run_t {
+    hb_buffer_t*        hbBuf;
+    _vkvg_font_t*       font;
+    VkvgDevice          dev;
+    vkvg_text_extents_t extents;
+    const char*         text;
+    unsigned int         glyph_count;
+    hb_glyph_position_t *glyph_pos;
+} vkvg_text_run_t;
+
 void _init_fonts_cache		(VkvgDevice dev);
 void _destroy_font_cache	(VkvgDevice dev);
 void _select_font_face		(VkvgContext ctx, const char* name);
@@ -90,4 +100,8 @@ void _set_font_size         (VkvgContext ctx, uint32_t size);
 void _show_text				(VkvgContext ctx, const char* text);
 void _text_extents           (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents);
 void _font_extents           (VkvgContext ctx, vkvg_font_extents_t* extents);
+
+void _create_text_run   (VkvgContext ctx, const char* text, VkvgText textRun);
+void _destroy_text_run  (VkvgText textRun);
+void _show_text_run     (VkvgContext ctx, VkvgText tr);
 #endif

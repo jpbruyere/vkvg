@@ -125,6 +125,8 @@ typedef struct {
     float y_advance;
 } vkvg_text_extents_t;
 
+typedef struct _vkvg_text_run_t* VkvgText;
+
 typedef struct _vkvg_context_t* VkvgContext;
 typedef struct _vkvg_surface_t* VkvgSurface;
 typedef struct _vkvg_device_t*  VkvgDevice;
@@ -247,6 +249,12 @@ void vkvg_set_font_size		(VkvgContext ctx, uint32_t size);
 void vkvg_show_text			(VkvgContext ctx, const char* text);
 void vkvg_text_extents      (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents);
 void vkvg_font_extents      (VkvgContext ctx, vkvg_font_extents_t* extents);
+
+//text run holds harfbuz datas, and prevent recreating them multiple times for the same line of text.
+VkvgText    vkvg_text_run_create    (VkvgContext ctx, const char* text);
+void        vkvg_text_run_destroy   (VkvgText textRun);
+void        vkvg_show_text_run      (VkvgContext ctx, VkvgText textRun);
+vkvg_text_extents_t* vkvg_text_run_get_extents (VkvgText textRun);
 
 //pattern
 VkvgPattern vkvg_pattern_create             ();

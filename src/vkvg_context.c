@@ -614,6 +614,22 @@ void vkvg_show_text (VkvgContext ctx, const char* text){
     _record_draw_cmd (ctx);
 }
 
+VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
+    VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
+    _create_text_run(ctx, text, tr);
+    return tr;
+}
+void vkvg_text_run_destroy (VkvgText textRun) {
+    _destroy_text_run (textRun);
+    free (textRun);
+}
+void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun) {
+    _show_text_run(ctx, textRun);
+}
+vkvg_text_extents_t* vkvg_text_run_get_extents (VkvgText textRun) {
+    return &textRun->extents;
+}
+
 void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
     _text_extents(ctx, text, extents);
 }
@@ -629,7 +645,7 @@ void vkvg_save (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;
     vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
-    sav->stencilMS = vkh_image_ms_create(dev,VK_FORMAT_S8_UINT,VKVG_SAMPLES,ctx->pSurf->width,ctx->pSurf->height,
+    sav->stencilMS = vkh_image_ms_create (dev,VK_FORMAT_S8_UINT, VKVG_SAMPLES, ctx->pSurf->width, ctx->pSurf->height,
                         VMA_MEMORY_USAGE_GPU_ONLY,
                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 

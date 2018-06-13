@@ -322,7 +322,7 @@ void _update_current_font (VkvgContext ctx) {
             assert(!FT_New_Face(cache->library, nf.fontFile, 0, &nf.face));
             assert(!FT_Set_Char_Size(nf.face, 0, nf.charSize, dev->hdpi, dev->vdpi ));
             nf.hb_font = hb_ft_font_create(nf.face, NULL);
-            nf.charLookup = (_char_ref*)calloc(nf.face->num_glyphs,sizeof(_char_ref));
+            nf.charLookup = (_char_ref**)calloc(nf.face->num_glyphs,sizeof(_char_ref*));
 
             //nf.curLine.height = (nf.face->bbox.xMax - nf.face->bbox.xMin) >> 6;
             if (FT_IS_SCALABLE(nf.face))
@@ -369,45 +369,42 @@ void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
 void _text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents) {
     _update_current_font (ctx);
 
-    hb_buffer_t*    buf = _get_hb_buffer (ctx, text);
-    _vkvg_font_t*   f   = ctx->currentFont;
-    VkvgDevice      dev = ctx->pSurf->dev;
-    unsigned int    glyph_count;
+    vkvg_text_run_t tr = {};
+    _create_text_run (ctx, text, &tr);
 
-    hb_glyph_position_t *glyph_pos = hb_buffer_get_glyph_positions   (buf, &glyph_count);
+    *extents = tr.extents;
 
-    unsigned int string_width_in_pixels = 0;
-    for (int i=0; i < glyph_count; ++i)
-        string_width_in_pixels += glyph_pos[i].x_advance >> 6;
-
-    FT_Size_Metrics* metrics = &ctx->currentFont->face->size->metrics;
-    extents->x_advance = string_width_in_pixels;
-    extents->y_advance = glyph_pos[glyph_count-1].y_advance >> 6;
-    extents->x_bearing = -(glyph_pos[0].x_offset >> 6);
-    extents->y_bearing = -(glyph_pos[0].y_offset >> 6);
-
-    extents->height = (metrics->ascender + metrics->descender) >> 6;
-    extents->width  = extents->x_advance;
-
-    //todo: populate other fields
-    hb_buffer_destroy (buf);
+    _destroy_text_run (&tr);
 }
-void _show_text (VkvgContext ctx, const char* text){
+void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
 
     _update_current_font (ctx);
 
-    hb_buffer_t*    buf = _get_hb_buffer (ctx, text);
-    _vkvg_font_t*   f   = ctx->currentFont;
-    VkvgDevice      dev = ctx->pSurf->dev;
+    textRun->hbBuf = _get_hb_buffer (ctx, text);
+    textRun->font = ctx->currentFont;
+    textRun->dev = ctx->pSurf->dev;
 
-    unsigned int         glyph_count;
-    hb_glyph_position_t *glyph_pos    = hb_buffer_get_glyph_positions   (buf, &glyph_count);
+    textRun->glyph_pos = hb_buffer_get_glyph_positions   (textRun->hbBuf, &textRun->glyph_count);
 
     unsigned int string_width_in_pixels = 0;
-    for (int i=0; i < glyph_count; ++i)
-        string_width_in_pixels += glyph_pos[i].x_advance >> 6;
+    for (int i=0; i < textRun->glyph_count; ++i)
+        string_width_in_pixels += textRun->glyph_pos[i].x_advance >> 6;
 
-    hb_glyph_info_t     *glyph_info   = hb_buffer_get_glyph_infos       (buf, &glyph_count);
+    FT_Size_Metrics* metrics = &ctx->currentFont->face->size->metrics;
+    textRun->extents.x_advance = string_width_in_pixels;
+    textRun->extents.y_advance = textRun->glyph_pos[textRun->glyph_count-1].y_advance >> 6;
+    textRun->extents.x_bearing = -(textRun->glyph_pos[0].x_offset >> 6);
+    textRun->extents.y_bearing = -(textRun->glyph_pos[0].y_offset >> 6);
+
+    textRun->extents.height = (metrics->ascender + metrics->descender) >> 6;
+    textRun->extents.width  = textRun->extents.x_advance;
+}
+void _destroy_text_run (VkvgText textRun) {
+    hb_buffer_destroy (textRun->hbBuf);
+}
+void _show_text_run (VkvgContext ctx, VkvgText tr) {
+    unsigned int glyph_count;
+    hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos (tr->hbBuf, &glyph_count);
 
     Vertex v = {};
     vec2 pen = {0,0};
@@ -416,17 +413,17 @@ void _show_text (VkvgContext ctx, const char* text){
         pen = _get_current_position(ctx);
 
     for (int i=0; i < glyph_count; ++i) {
-        _char_ref* cr = f->charLookup[glyph_info[i].codepoint];
+        _char_ref* cr = tr->font->charLookup[glyph_info[i].codepoint];
 
         if (cr==NULL)
-            cr = _prepare_char(dev,f,glyph_info[i].codepoint);
+            cr = _prepare_char(tr->dev, tr->font, glyph_info[i].codepoint);
 
         //continue;
         if (cr!=NULL){
             float uvWidth = cr->bounds.width / (float)FONT_PAGE_SIZE;
             float uvHeight = cr->bounds.height / (float)FONT_PAGE_SIZE;
-            vec2 p0 = {pen.x + cr->bmpDiff.x + (glyph_pos[i].x_offset >> 6),
-                       pen.y - cr->bmpDiff.y + (glyph_pos[i].y_offset >> 6)};
+            vec2 p0 = {pen.x + cr->bmpDiff.x + (tr->glyph_pos[i].x_offset >> 6),
+                       pen.y - cr->bmpDiff.y + (tr->glyph_pos[i].y_offset >> 6)};
             v.pos = p0;
 
             uint32_t firstIdx = ctx->vertCount;
@@ -453,18 +450,27 @@ void _show_text (VkvgContext ctx, const char* text){
             _add_tri_indices_for_rect (ctx, firstIdx);
         }
 
-        pen.x += (glyph_pos[i].x_advance >> 6);
-        pen.y -= (glyph_pos[i].y_advance >> 6);
+        pen.x += (tr->glyph_pos[i].x_advance >> 6);
+        pen.y -= (tr->glyph_pos[i].y_advance >> 6);
     }
 
     vkvg_move_to(ctx, pen.x, pen.y);
 
-    _flush_chars_to_tex(dev,f);
-    hb_buffer_destroy (buf);
+    _flush_chars_to_tex(tr->dev, tr->font);
+}
+void _show_text (VkvgContext ctx, const char* text){
+
+    vkvg_text_run_t tr = {};
+    _create_text_run (ctx, text, &tr);
+
+    _show_text_run (ctx, &tr);
+
+    _destroy_text_run (&tr);
+
     //_show_texture(ctx); return;
 }
 
-//debug function
+#if DEBUG
 void _show_texture (vkvg_context* ctx){
     Vertex vs[] = {
         {{0,0},                             {0,0,1}},
@@ -480,6 +486,7 @@ void _show_texture (vkvg_context* ctx){
 
     _add_tri_indices_for_rect (ctx, 0);
 }
+#endif
 /*void testfonts(){
     FT_Library      library;
     FT_Face         face;
@@ -517,9 +524,4 @@ void _show_texture (vkvg_context* ctx){
     FT_Done_Face    ( face );
     FT_Done_FreeType( library );
 }*/
-
-
-//void main(){
-//    testfonts();
-//}
 
