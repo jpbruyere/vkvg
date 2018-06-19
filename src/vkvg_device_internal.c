@@ -84,7 +84,7 @@ void _setupRenderPass(VkvgDevice dev)
                         .pResolveAttachments    = &resolveRef,
                         .pDepthStencilAttachment= &dsRef};
 
-    /*VkSubpassDependency dependencies[] =
+    VkSubpassDependency dependencies[] =
     {
         { VK_SUBPASS_EXTERNAL, 0,
           VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -94,15 +94,15 @@ void _setupRenderPass(VkvgDevice dev)
           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
           VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT,
           VK_DEPENDENCY_BY_REGION_BIT},
-    };*/
+    };
 
     VkRenderPassCreateInfo renderPassInfo = { .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
                 .attachmentCount = 3,
                 .pAttachments = attachments,
                 .subpassCount = 1,
                 .pSubpasses = &subpassDescription,
-    //            .dependencyCount = 2,
-    //            .pDependencies = dependencies
+                .dependencyCount = 2,
+                .pDependencies = dependencies
     };
 
     VK_CHECK_RESULT(vkCreateRenderPass(dev->vkDev, &renderPassInfo, NULL, &dev->renderPass));
