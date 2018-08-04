@@ -19,9 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 #include "vkengine.h"
+
 #include "vkvg.h"
+
 #include "string.h" //for nanosvg
 #define NANOSVG_IMPLEMENTATION	// Expands implementation
 #include "nanosvg.h"
@@ -333,7 +334,7 @@ void test_img_surface () {
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
     vkvg_paint(ctx);
     //vkvg_flush(ctx);
-    vkvg_set_source_rgba(ctx,1,0,0,1);
+    //vkvg_set_source_rgba(ctx,1,0,0,1);
 
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
@@ -1061,10 +1062,14 @@ void simple_paint () {
     vkvg_destroy(ctx);
 }
 void simple_rectangle_fill () {
+    vkvg_surface_clear(surf);
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_set_source_rgba(ctx,0,1,0,1);
+    vkvg_set_line_width(ctx,10);
+    vkvg_set_source_rgba(ctx,0,0,1,0.2);
     vkvg_rectangle(ctx,100,100,200,200);
-    vkvg_fill(ctx);
+    vkvg_fill_preserve(ctx);
+    vkvg_set_source_rgba(ctx,1,0,0,0.2);
+    vkvg_stroke(ctx);
     vkvg_destroy(ctx);
 }
 void simple_rectangle_stroke () {
@@ -1075,40 +1080,49 @@ void simple_rectangle_stroke () {
     vkvg_stroke(ctx);
     vkvg_destroy(ctx);
 }
+void lines_stroke () {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgba(ctx,1,1,1,1);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgba(ctx,0,0,0,0.9f);
+    vkvg_set_line_width(ctx,10.f);
+    vkvg_move_to(ctx,50,50);
+    vkvg_line_to(ctx,300,250);
+    vkvg_stroke(ctx);
+    vkvg_destroy(ctx);
+}
 int main(int argc, char *argv[]) {
-
     //dumpLayerExts();
+    int width=1024, height=768;
 
-    vk_engine_t* e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, 1024, 800);
+    vk_engine_t* e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, width, height);
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback (e, key_callback);
 
     device  = vkvg_device_create (r->dev->phy, r->dev->dev, r->qFam, 0);
-    surf    = vkvg_surface_create(device, 1024, 800);
+    surf    = vkvg_surface_create(device, width, height);
 
     //test_svg();
-    //
-
-
-
-
     //test_grad_transforms();
     //test_colinear();
 
-    vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
+    vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 
     while (!vkengine_should_close (e)) {
         glfwPollEvents();
-        //test_1();
         cairo_tests();
+        //test_1();
+        //vkvg_surface_clear(surf);
         //simple_paint();
         //simple_rectangle_stroke();
         //simple_rectangle_fill();
         //test_img_surface();
         //multi_test1();
         //test_painting();
+        //vkvg_surface_clear(surf);
+        //lines_stroke();
         if (!vkh_presenter_draw (r))
-            vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf));
+            vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
     }
 
     vkDeviceWaitIdle(e->dev->dev);

@@ -75,7 +75,7 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 
 void _init_surface (VkvgSurface surf) {
     surf->format = FB_COLOR_FORMAT;//force bgra internally
-    surf->img = vkh_image_create(surf->dev,surf->format,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,VMA_MEMORY_USAGE_GPU_ONLY,
+    surf->img = vkh_image_create(surf->dev,surf->format,surf->width,surf->height,VKVG_TILING,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     surf->imgMS = vkh_image_ms_create(surf->dev,surf->format,VKVG_SAMPLES,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
@@ -310,7 +310,7 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 
     vkh_cmd_end     (cmd);
     vkh_cmd_submit  (dev->gQueue, &cmd, dev->fence);
-    _wait_and_reset_device_fence (dev);
+    vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
     void* img = vkh_image_map (stagImg);
 
@@ -319,6 +319,7 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
     vkh_image_unmap (stagImg);
     vkh_image_destroy (stagImg);
 }
+
 /*VkhImage vkvg_surface_get_vkh_image(VkvgSurface surf)
 {
     return surf->img;

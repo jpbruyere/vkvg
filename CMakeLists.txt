@@ -9,11 +9,16 @@ SET(CMAKE_EXE_LINKER_FLAGS "-lm")
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)
 ENDIF()
-MESSAGE(STATUS "${CMAKE_BUILD_TYPE} build.")
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	ADD_DEFINITIONS (-DDEBUG)
 ENDIF()
+
+OPTION(VKVG_TILING_OPTIMAL "use VK_IMAGE_TILING_OPTIMAL for surface backend texture" OFF)
+IF (VKVG_TILING_OPTIMAL)
+	add_compile_options(-DVKVG_TILING_OPTIMAL)
+	ADD_DEFINITIONS (-DVKVG_TILING_OPTIMAL)
+ENDIF ()
 
 OPTION(VKVG_BUILD_TESTS "build tests with glfw" ON)
 
@@ -23,10 +28,14 @@ if (VULKAN_SDK)
 		SET(ENV{VK_LAYER_PATH} "${VULKAN_SDK}/etc/explicit_layer.d")
 endif ()
 
-MESSAGE(STATUS "VULKAN_SDK = $ENV{VULKAN_SDK}")
-MESSAGE(STATUS "VK_LAYER_PATH = $ENV{VK_LAYER_PATH}")
-
 add_subdirectory (vkh)
+
+SET(ENABLE_VALIDATION OFF CACHE BOOL "Enable vulkan validation layer")
+
+IF (ENABLE_VALIDATION)
+	ADD_DEFINITIONS (-DVKVG_USE_VALIDATION)
+ENDIF ()
+
 
 #be aware that system libraries have priority on SDK in the finding.
 FIND_PACKAGE(Vulkan REQUIRED)
@@ -157,3 +166,19 @@ if (GLFW3_FOUND)
 		vkvg
 	)
 endif ()
+
+MESSAGE(STATUS "\n\n--------------------------------------------------------------------------")
+	MESSAGE(STATUS "Build type\t\t= ${CMAKE_BUILD_TYPE}")
+	MESSAGE(STATUS "VULKAN_SDK\t\t= $ENV{VULKAN_SDK}")
+	MESSAGE(STATUS "VK_LAYER_PATH\t= $ENV{VK_LAYER_PATH}")
+IF (ENABLE_VALIDATION)
+	MESSAGE(STATUS "Validation\t\t= disabled.")
+ELSE ()
+	MESSAGE(STATUS "Validation\t\t= enabled.")
+ENDIF ()
+IF (VKVG_TILING_OPTIMAL)
+MESSAGE(STATUS "Surface tiling\t= VK_IMAGE_TILING_OPTIMAL.")
+ELSE ()
+MESSAGE(STATUS "Surface tiling\t= VK_IMAGE_TILING_LINEAR.")
+ENDIF ()
+MESSAGE(STATUS "---------------------------------------------------------------------------\n\n")

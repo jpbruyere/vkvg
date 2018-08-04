@@ -34,7 +34,7 @@ layout (set=2, binding = 0) uniform _uboGrad {
 }uboGrad;
 
 layout (location = 0) in vec3	inFontUV;		//if it is a text drawing, inFontUV.z hold fontMap layer
-layout (location = 1) in vec4	inSrc;			//source bounds
+layout (location = 1) in vec4	inSrc;			//source bounds or color
 layout (location = 2) in flat int inPatType;
 layout (location = 3) in mat3x2 inMat;
 

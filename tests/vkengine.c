@@ -31,7 +31,7 @@
 bool vkeCheckPhyPropBlitSource (VkEngine e) {
     VkFormatProperties formatProps;
     vkGetPhysicalDeviceFormatProperties(e->dev->phy, e->renderer->format, &formatProps);
-    assert((formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
+    assert((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
 }
 
 VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts)
@@ -146,15 +146,16 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     }
 
     char const * dex [] = {"VK_KHR_swapchain"};
-/*#if DEBUG
+#if VKVG_USE_VALIDATION
     uint32_t dlayCpt = 1;
     static char const * dlay [] = {"VK_LAYER_LUNARG_standard_validation"};
-#else*/
+#else
     uint32_t dlayCpt = 0;
     static char const * dlay [] = {};
-//#endif
+#endif
     VkPhysicalDeviceFeatures enabledFeatures = {
         .fillModeNonSolid = true,
+        .sampleRateShading = true
     };
 
     VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -200,14 +201,14 @@ void vkengine_destroy (VkEngine e) {
 void vkengine_close (VkEngine e) {
     glfwSetWindowShouldClose(e->window, GLFW_TRUE);
 }
-void vkengine_blitter_run (VkEngine e, VkImage img) {
+void vkengine_blitter_run (VkEngine e, VkImage img, uint32_t width, uint32_t height) {
     VkhPresenter p = e->renderer;
-    vkh_presenter_build_blit_cmd (p, img);
+    vkh_presenter_build_blit_cmd (p, img, width, height);
 
     while (!vkengine_should_close (e)) {
         glfwPollEvents();
         if (!vkh_presenter_draw (p))
-            vkh_presenter_build_blit_cmd (p, img);
+            vkh_presenter_build_blit_cmd (p, img, width, height);
     }
 }
 inline bool vkengine_should_close (VkEngine e) {

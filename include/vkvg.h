@@ -29,6 +29,12 @@ extern "C" {
 #include <vulkan/vulkan.h>
 #include <math.h>
 
+#ifdef VKVG_TILING_OPTIMAL
+    #define VKVG_TILING VK_IMAGE_TILING_OPTIMAL
+#else
+    #define VKVG_TILING VK_IMAGE_TILING_LINEAR
+#endif
+
 #define VKVG_SAMPLES 4
 
 #define LOG_ERR			0x00
