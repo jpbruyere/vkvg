@@ -12,6 +12,9 @@ ENDIF()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	ADD_DEFINITIONS (-DDEBUG)
+	OPTION(ENABLE_VALIDATION "enable vulkan validation layer" ON)
+ELSE()
+	OPTION(ENABLE_VALIDATION "enable vulkan validation layer" OFF)
 ENDIF()
 
 OPTION(VKVG_TILING_OPTIMAL "use VK_IMAGE_TILING_OPTIMAL for surface backend texture" OFF)
@@ -30,7 +33,7 @@ endif ()
 
 add_subdirectory (vkh)
 
-SET(ENABLE_VALIDATION OFF CACHE BOOL "Enable vulkan validation layer")
+#SET(ENABLE_VALIDATION OFF CACHE BOOL "Enable vulkan validation layer")
 
 IF (ENABLE_VALIDATION)
 	ADD_DEFINITIONS (-DVKVG_USE_VALIDATION)
@@ -172,9 +175,9 @@ MESSAGE(STATUS "\n\n------------------------------------------------------------
 	MESSAGE(STATUS "VULKAN_SDK\t\t= $ENV{VULKAN_SDK}")
 	MESSAGE(STATUS "VK_LAYER_PATH\t= $ENV{VK_LAYER_PATH}")
 IF (ENABLE_VALIDATION)
-	MESSAGE(STATUS "Validation\t\t= disabled.")
-ELSE ()
 	MESSAGE(STATUS "Validation\t\t= enabled.")
+ELSE ()
+	MESSAGE(STATUS "Validation\t\t= disabled.")
 ENDIF ()
 IF (VKVG_TILING_OPTIMAL)
 MESSAGE(STATUS "Surface tiling\t= VK_IMAGE_TILING_OPTIMAL.")
