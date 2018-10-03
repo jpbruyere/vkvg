@@ -30,6 +30,23 @@
 #define STENCIL_CLIP_BIT    0x2
 #define STENCIL_ALL_BIT     0x3
 
+PFN_vkCmdBindPipeline           CmdBindPipeline;
+PFN_vkCmdBindDescriptorSets     CmdBindDescriptorSets;
+PFN_vkCmdBindIndexBuffer        CmdBindIndexBuffer;
+PFN_vkCmdBindVertexBuffers      CmdBindVertexBuffers;
+
+PFN_vkCmdDrawIndexed    CmdDrawIndexed;
+PFN_vkCmdDraw           CmdDraw;
+
+PFN_vkCmdSetStencilCompareMask  CmdSetStencilCompareMask;
+PFN_vkCmdBeginRenderPass        CmdBeginRenderPass;
+PFN_vkCmdEndRenderPass          CmdEndRenderPass;
+PFN_vkCmdSetViewport            CmdSetViewport;
+PFN_vkCmdSetScissor             CmdSetScissor;
+
+PFN_vkCmdPushConstants          CmdPushConstants;
+
+
 typedef struct _vkvg_device_t{
     VkDevice				vkDev;
     VkPhysicalDeviceMemoryProperties phyMemProps;
@@ -66,6 +83,8 @@ typedef struct _vkvg_device_t{
 
     int		hdpi,
             vdpi;
+    VkInstance              instance;
+
 
     _font_cache_t*	fontCache;
     VkvgContext     lastCtx;    //double linked list last elmt

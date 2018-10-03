@@ -25,16 +25,30 @@
 #include "vkh_phyinfo.h"
 #include "vk_mem_alloc.h"
 
-VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
+VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
 {
     LOG(LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
 
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
+    dev->instance = inst;
     dev->hdpi   = 72;
     dev->vdpi   = 72;
     dev->vkDev  = vkdev;
     dev->phy    = phy;
+
+    CmdBindPipeline         = vkGetInstanceProcAddr(inst, "vkCmdBindPipeline");
+    CmdBindDescriptorSets   = vkGetInstanceProcAddr(inst, "vkCmdBindDescriptorSets");
+    CmdBindIndexBuffer      = vkGetInstanceProcAddr(inst, "vkCmdBindIndexBuffer");
+    CmdBindVertexBuffers    = vkGetInstanceProcAddr(inst, "vkCmdBindVertexBuffers");
+    CmdDrawIndexed          = vkGetInstanceProcAddr(inst, "vkCmdDrawIndexed");
+    CmdDraw                 = vkGetInstanceProcAddr(inst, "vkCmdDraw");
+    CmdSetStencilCompareMask= vkGetInstanceProcAddr(inst, "vkCmdSetStencilCompareMask");
+    CmdBeginRenderPass      = vkGetInstanceProcAddr(inst, "vkCmdBeginRenderPass");
+    CmdEndRenderPass        = vkGetInstanceProcAddr(inst, "vkCmdEndRenderPass");
+    CmdSetViewport          = vkGetInstanceProcAddr(inst, "vkCmdSetViewport");
+    CmdSetScissor           = vkGetInstanceProcAddr(inst, "vkCmdSetScissor");
+    CmdPushConstants        = vkGetInstanceProcAddr(inst, "vkCmdPushConstants");
 
     VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 

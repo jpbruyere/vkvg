@@ -1117,7 +1117,7 @@ int main(int argc, char *argv[]) {
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback (e, key_callback);
 
-    device  = vkvg_device_create (r->dev->phy, r->dev->dev, r->qFam, 0);
+    device  = vkvg_device_create (vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0);
     surf    = vkvg_surface_create(device, width, height);
 
     //test_svg();

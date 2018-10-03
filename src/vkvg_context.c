@@ -114,8 +114,8 @@ void vkvg_flush (VkvgContext ctx){
         j+=2;
     }
     dlpCount = 0;
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLineList);
-    vkCmdDrawIndexed(ctx->cmd, ctx->indCount-ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLineList);
+    CmdDrawIndexed(ctx->cmd, ctx->indCount-ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
     _flush_cmd_buff(ctx);
 #endif
 */
@@ -355,7 +355,7 @@ void vkvg_fill (VkvgContext ctx){
     _clear_path(ctx);
 }
 void _poly_fill (VkvgContext ctx){
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
     uint32_t ptrPath = 0;;
     Vertex v = {};
@@ -377,7 +377,7 @@ void _poly_fill (VkvgContext ctx){
         }
 
         LOG(LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
-        vkCmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx ,0);
+        CmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx ,0);
 
         ptrPath+=2;
     }
@@ -393,12 +393,12 @@ void vkvg_clip_preserve (VkvgContext ctx){
     _check_cmd_buff_state(ctx);
     _poly_fill (ctx);
 
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
-    vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
 
     //should test current operator to bind correct pipeline
     _bind_draw_pipeline (ctx);
-    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 }
 void vkvg_fill_preserve (VkvgContext ctx){
     if (ctx->pathPtr == 0)      //nothing to fill
@@ -414,9 +414,9 @@ void vkvg_fill_preserve (VkvgContext ctx){
     _poly_fill (ctx);
 
     _bind_draw_pipeline (ctx);
-    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-    vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
-    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 }
 void vkvg_stroke_preserve (VkvgContext ctx)
 {
@@ -551,7 +551,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 }
 void vkvg_paint (VkvgContext ctx){
     _check_cmd_buff_state(ctx);
-    vkCmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
 }
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
     vkvg_set_source_rgba (ctx, r, g, b, 1);
