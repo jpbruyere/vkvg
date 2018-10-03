@@ -20,7 +20,9 @@
  * THE SOFTWARE.
  */
 #include "vkengine.h"
-
+#include "stdio.h"
+#include "stdlib.h"
+#include "time.h"
 #include "vkvg.h"
 
 #include "string.h" //for nanosvg
@@ -45,6 +47,26 @@ static void char_callback (GLFWwindow* window, uint32_t c){}
 static void mouse_move_callback(GLFWwindow* window, double x, double y){}
 static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif){}
 
+double time_diff(struct timeval x , struct timeval y)
+{
+    double x_ms , y_ms , diff;
+
+    x_ms = (double)x.tv_sec*1000000 + (double)x.tv_usec;
+    y_ms = (double)y.tv_sec*1000000 + (double)y.tv_usec;
+
+    diff = (double)y_ms - (double)x_ms;
+
+    return diff;
+}
+
+void randomize_color (VkvgContext ctx) {
+    vkvg_set_source_rgba(ctx,
+        (float)rand()/RAND_MAX,
+        (float)rand()/RAND_MAX,
+        (float)rand()/RAND_MAX,
+        (float)rand()/RAND_MAX
+    );
+}
 void vkvg_test_gradient (VkvgContext ctx) {
     VkvgPattern pat = vkvg_pattern_create_linear(100,0,300,0);
     vkvg_set_line_width(ctx, 20);
@@ -831,28 +853,6 @@ void cairo_tests () {
     vkvg_paint(ctx);
 
     vkvg_set_matrix(ctx,&mat);
-    /*
-    vkvg_set_source_rgba(ctx,0,1,0,1);
-    vkvg_rectangle(ctx,0,0,600,600);
-    vkvg_fill(ctx);
-
-    vkvg_clip(ctx);
-
-    vkvg_set_source_rgba(ctx,1,0,0,1);
-    vkvg_paint(ctx);
-    //vkvg_rectangle(ctx,00,00,1024,800);
-    //vkvg_fill(ctx);
-
-    vkvg_reset_clip(ctx);
-    vkvg_set_source_rgba(ctx,0,0,1,1);
-    vkvg_set_line_width(ctx,20);
-    vkvg_move_to(ctx,0,0);
-    vkvg_rel_line_to(ctx,800,800);
-    vkvg_stroke(ctx);*/
-
-//    cairo_test_clip(ctx);
-//    vkvg_reset_clip(ctx);
-    //test_img_surface (ctx);
 
     cairo_print_arc(ctx);
 
@@ -861,15 +861,6 @@ void cairo_tests () {
 
     vkvg_translate(ctx,250,0);
     cairo_test_rounded_rect(ctx);
-
-
-/*
-    vkvg_set_operator(ctx, VKVG_OPERATOR_CLEAR);
-    vkvg_rectangle(ctx,100,100,500,500);
-    vkvg_fill(ctx);
-    vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
-*/
-
 
     vkvg_translate(ctx,-450,250);
     cairo_test_fill_and_stroke2(ctx);
@@ -1061,15 +1052,42 @@ void simple_paint () {
     vkvg_paint(ctx);
     vkvg_destroy(ctx);
 }
+void random_rectangles () {
+    vkvg_surface_clear(surf);
+    struct timeval currentTime;
+    gettimeofday(&currentTime, NULL);
+
+    srand((unsigned) currentTime.tv_usec);
+    const float w = 1024.f;
+
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_line_width(ctx,1);
+    for (int i=0; i<5000; i++) {
+        randomize_color(ctx);
+        float x = trunc( (0.5*(float)w*rand())/RAND_MAX );
+        float y = trunc( (0.5*(float)w*rand())/RAND_MAX );
+        float z = trunc( (0.5*(float)w*rand())/RAND_MAX ) + 1;
+        float v = trunc( (0.5*(float)w*rand())/RAND_MAX ) + 1;
+
+        vkvg_rectangle(ctx, x+1, y+1, z, v);
+        vkvg_fill_preserve(ctx);
+        randomize_color(ctx);
+        vkvg_stroke(ctx);
+    }
+    vkvg_destroy(ctx);
+}
+
 void simple_rectangle_fill () {
     vkvg_surface_clear(surf);
     VkvgContext ctx = vkvg_create(surf);
+
     vkvg_set_line_width(ctx,10);
-    vkvg_set_source_rgba(ctx,0,0,1,0.2);
+    vkvg_set_source_rgba(ctx,0,0,1,0.5);
     vkvg_rectangle(ctx,100,100,200,200);
-    vkvg_fill_preserve(ctx);
-    vkvg_set_source_rgba(ctx,1,0,0,0.2);
-    vkvg_stroke(ctx);
+    vkvg_fill(ctx);
+    vkvg_rectangle(ctx,200,200,200,200);
+    vkvg_set_source_rgba(ctx,1,0,0,0.5);
+    vkvg_fill(ctx);
     vkvg_destroy(ctx);
 }
 void simple_rectangle_stroke () {
@@ -1108,9 +1126,17 @@ int main(int argc, char *argv[]) {
 
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 
+    struct timeval before , after;
+    double frameTime = 0, frameTimeAccum = 0, frameCount = 0;
+
     while (!vkengine_should_close (e)) {
         glfwPollEvents();
+
+        gettimeofday(&before , NULL);
+
         cairo_tests();
+        //random_rectangles();
+        //simple_rectangle_stroke();
         //test_1();
         //vkvg_surface_clear(surf);
         //simple_paint();
@@ -1123,7 +1149,15 @@ int main(int argc, char *argv[]) {
         //lines_stroke();
         if (!vkh_presenter_draw (r))
             vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
+
+        gettimeofday(&after , NULL);
+
+        frameTimeAccum += time_diff(before , after);
+        frameCount++;
     }
+
+    frameTime = frameTimeAccum / frameCount;
+    printf ("frame (µs): %.0lf\nfps: %lf\n", frameTime, floor(1000000 / frameTime));
 
     vkDeviceWaitIdle(e->dev->dev);
 

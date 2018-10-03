@@ -80,38 +80,38 @@ typedef struct _vkvg_context_save_t{
 typedef struct _vkvg_context_t {
     VkvgContext         pPrev;      //double linked list of contexts
     VkvgContext         pNext;
-    uint32_t            references;
+    uint32_t            references; //reference count
 
-    VkvgSurface         pSurf;
-    VkFence             flushFence;
+    VkvgSurface         pSurf;      //surface bound to context, set on creation of ctx
+    VkFence             flushFence; //context fence
     VkhImage            source;     //source of painting operation
 
-    VkCommandPool		cmdPool;//local pools ensure thread safety
-    VkCommandBuffer     cmd;    //single cmd buff for context operations
-    bool                cmdStarted;//prevent flushing empty renderpass
+    VkCommandPool		cmdPool;    //local pools ensure thread safety
+    VkCommandBuffer     cmd;        //single cmd buff for context operations
+    bool                cmdStarted; //prevent flushing empty renderpass
     bool                pushCstDirty;//prevent pushing to gpu if not requested
-    VkDescriptorPool	descriptorPool;
-    VkDescriptorSet     dsFont; //fonts glyphs texture atlas descriptor (local for thread safety)
-    VkDescriptorSet     dsSrc;  //source ds
-    VkDescriptorSet     dsGrad; //gradient uniform buffer
+    VkDescriptorPool	descriptorPool;//one pool per thread
+    VkDescriptorSet     dsFont;     //fonts glyphs texture atlas descriptor (local for thread safety)
+    VkDescriptorSet     dsSrc;      //source ds
+    VkDescriptorSet     dsGrad;     //gradient uniform buffer
 
-    vkvg_buff	uboGrad;//uniform buff obj holdings gradient infos
+    vkvg_buff	uboGrad;        //uniform buff obj holdings gradient infos
 
     //vk buffers, holds data until flush
     vkvg_buff	indices;        //index buffer with persistent map memory
     size_t		sizeIndices;    //reserved size
     uint32_t	indCount;       //current indice count
 
-    uint32_t	curIndStart;
+    uint32_t	curIndStart;    //last index recorded in cmd buff
 
     vkvg_buff	vertices;       //vertex buffer with persistent mapped memory
     size_t		sizeVertices;   //reserved size
     uint32_t	vertCount;      //effective vertices count
 
     //pathes, exists until stroke of fill
-    vec2*		points;     //points array
-    size_t		sizePoints; //reserved size
-    uint32_t	pointCount; //effective points count
+    vec2*		points;         //points array
+    size_t		sizePoints;     //reserved size
+    uint32_t	pointCount;     //effective points count
 
     uint32_t	pathPtr;
     //pathes array is a list of couple (start,end) point idx refering to point array
@@ -133,6 +133,7 @@ typedef struct _vkvg_context_t {
 
     push_constants      pushConsts;
     VkvgPattern         pattern;
+    vkvg_status_t       status;
 
     vkvg_context_save_t* pSavedCtxs;//last ctx saved ptr
 

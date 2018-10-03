@@ -354,8 +354,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
     {
         VkvgSurface surf = (VkvgSurface)pat->data;
 
-        //flush ctx in two steps to add the src transition in the cmd buff
-        if (ctx->cmdStarted)//transition of img without appropriate dep in subpass must be done outside renderpass.
+        //flush ctx in two steps to add the src transitioning in the cmd buff
+        if (ctx->cmdStarted)//transition of img without appropriate dependencies in subpass must be done outside renderpass.
             _end_render_pass    (ctx);
         else {
             vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);

@@ -86,7 +86,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);
     glfwWindowHint(GLFW_FLOATING,   GLFW_FALSE);
-    glfwWindowHint(GLFW_DECORATED,  GLFW_FALSE);
+    glfwWindowHint(GLFW_DECORATED,  GLFW_TRUE);
 
     e->window = glfwCreateWindow (width, height, "Window Title", NULL, NULL);
     VkSurfaceKHR surf;
@@ -173,7 +173,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     e->dev = vkh_device_create(pi->phy, dev);
 
     e->renderer = vkh_presenter_create
-            (e->dev, pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, VK_PRESENT_MODE_FIFO_KHR);
+            (e->dev, pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, VK_PRESENT_MODE_MAILBOX_KHR);
 
 
     vkh_app_free_phyinfos (phyCount, phys);

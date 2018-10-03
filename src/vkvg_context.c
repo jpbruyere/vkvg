@@ -38,6 +38,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
     VkvgDevice dev = surf->dev;
     VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
+    if (ctx==NULL)
+        return NULL;
+
     ctx->sizePoints     = VKVG_PTS_SIZE;
     ctx->sizeVertices   = VKVG_VBO_SIZE;
     ctx->sizeIndices    = VKVG_IBO_SIZE;

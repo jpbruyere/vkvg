@@ -50,6 +50,11 @@ static uint8_t log_level	= LOG_ERR;// LOG_INFO | LOG_DEBUG;
 #define LOG
 #endif
 
+typedef enum _vkvg_status {
+    VKVG_STATUS_SUCCESS,
+    VKVG_STATUS_NO_MEMORY
+}vkvg_status_t;
+
 typedef enum _vkvg_direction {
     VKVG_HORIZONTAL	= 0,
     VKVG_VERTICAL	= 1

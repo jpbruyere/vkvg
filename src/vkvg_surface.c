@@ -306,7 +306,7 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
     };
     vkCmdBlitImage  (cmd,
                      vkh_image_get_vkimage (surf->img), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                     vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+                     vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
     vkh_cmd_end     (cmd);
     vkh_cmd_submit  (dev->gQueue, &cmd, dev->fence);
