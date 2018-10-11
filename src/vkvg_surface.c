@@ -70,7 +70,7 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
     }
     vkh_cmd_end (cmd);
 
-    vkh_cmd_submit (dev->gQueue, &cmd, dev->fence);
+    _submit_cmd (dev, &cmd, dev->fence);
 }
 
 void _init_surface (VkvgSurface surf) {
@@ -104,10 +104,6 @@ void _init_surface (VkvgSurface surf) {
 }
 void vkvg_surface_clear (VkvgSurface surf) {
     _clear_surface(surf, VK_IMAGE_ASPECT_STENCIL_BIT|VK_IMAGE_ASPECT_COLOR_BIT);
-}
-
-void vkvg_surface_test (VkvgSurface* pSurf, VkvgSurface surf) {
-    pSurf = &surf;
 }
 VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height){
     VkvgSurface surf = (vkvg_surface*)calloc(1,sizeof(vkvg_surface));
@@ -190,7 +186,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
                           VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
     vkh_cmd_end     (cmd);
-    vkh_cmd_submit  (dev->gQueue, &cmd, dev->fence);
+    _submit_cmd     (dev, &cmd, dev->fence);
 
     //don't reset fence after completion as this is the last cmd. (signaled idle fence)
     vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
@@ -309,7 +305,7 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
                      vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
     vkh_cmd_end     (cmd);
-    vkh_cmd_submit  (dev->gQueue, &cmd, dev->fence);
+    _submit_cmd     (dev, &cmd, dev->fence);
     vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
     void* img = vkh_image_map (stagImg);

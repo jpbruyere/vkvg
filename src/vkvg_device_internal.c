@@ -304,3 +304,9 @@ void _wait_and_reset_device_fence (VkvgDevice dev) {
     vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
     vkResetFences (dev->vkDev, 1, &dev->fence);
 }
+
+void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
+    MUTEX_LOCK (&dev->gQMutex);
+    vkh_cmd_submit (dev->gQueue, cmd, fence);
+    MUTEX_UNLOCK (&dev->gQMutex);
+}

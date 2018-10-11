@@ -19,15 +19,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef VKVG_INTERNAL_H
-#define VKVG_INTERNAL_H
+#ifndef CROSS_MUTEX_H
+#define CROSS_MUTEX_H
 
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include "vectors.h"
-#include "cross_mutex.h"
-
+//cross platform mutex
+#ifdef _WIN32
+#include "windows.h"
+#include "process.h"
+#define MUTEX HANDLE
+#elif __APPLE__
+#elif __unix__
+#include "pthread.h"
+#define MUTEX pthread_mutex_t
 #endif
+
+int MUTEX_INIT(MUTEX *mutex);
+int MUTEX_LOCK(MUTEX *mutex);
+int MUTEX_UNLOCK(MUTEX *mutex);
+int MUTEX_DESTROY(MUTEX *mutex);
+
+#endif // CROSS_MUTEX_H

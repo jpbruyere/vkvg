@@ -98,7 +98,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 
     VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
 
-    vkh_cmd_submit      (dev->gQueue, &cache->cmd, cache->uploadFence);
+    _submit_cmd         (dev, &cache->cmd, cache->uploadFence);
     vkWaitForFences     (dev->vkDev, 1, &cache->uploadFence, VK_TRUE, UINT64_MAX);
 
     _flush_all_contexes (dev);
@@ -219,7 +219,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 
     VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
 
-    vkh_cmd_submit(dev->gQueue,&cache->cmd,cache->uploadFence);
+    _submit_cmd (dev, &cache->cmd, cache->uploadFence);
 
     f->curLine.penX += cache->stagingX;
     cache->stagingX = 0;

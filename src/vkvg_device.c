@@ -49,11 +49,13 @@ VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vk
     CmdSetViewport          = vkGetInstanceProcAddr(inst, "vkCmdSetViewport");
     CmdSetScissor           = vkGetInstanceProcAddr(inst, "vkCmdSetScissor");
     CmdPushConstants        = vkGetInstanceProcAddr(inst, "vkCmdPushConstants");
+    CmdPushDescriptorSet    = vkGetInstanceProcAddr(inst, "vkCmdDescriptorSet");
 
     VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 
     dev->phyMemProps = phyInfos->memProps;
     dev->gQueue = vkh_queue_create (dev, qFamIdx, qIndex, phyInfos->queues[qFamIdx].queueFlags);
+    MUTEX_INIT (&dev->gQMutex);
 
     vkh_phyinfo_destroy (phyInfos);
 
@@ -117,6 +119,8 @@ void vkvg_device_destroy (VkvgDevice dev)
     _destroy_font_cache(dev);
 
     vmaDestroyAllocator (dev->allocator);
+
+    MUTEX_DESTROY (dev->gQMutex);
 
     free(dev);
 }

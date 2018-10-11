@@ -196,7 +196,7 @@ void _clear_attachment (VkvgContext ctx) {
 
 }
 inline void _submit_ctx_cmd(VkvgContext ctx){
-    vkh_cmd_submit (ctx->pSurf->dev->gQueue, &ctx->cmd, ctx->flushFence);
+    _submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
 }
 void _wait_and_reset_ctx_cmd (VkvgContext ctx){
     if (!ctx->cmdStarted)

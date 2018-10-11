@@ -45,6 +45,7 @@ PFN_vkCmdSetViewport            CmdSetViewport;
 PFN_vkCmdSetScissor             CmdSetScissor;
 
 PFN_vkCmdPushConstants          CmdPushConstants;
+PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
 
 
 typedef struct _vkvg_device_t{
@@ -54,6 +55,7 @@ typedef struct _vkvg_device_t{
     VmaAllocator            allocator;
 
     VkhQueue                gQueue;
+    MUTEX                   gQMutex;//queue submission has to be externally syncronized
     VkRenderPass			renderPass;
 
     uint32_t                references;
