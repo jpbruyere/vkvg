@@ -31,7 +31,9 @@ if (VULKAN_SDK)
 		SET(ENV{VK_LAYER_PATH} "${VULKAN_SDK}/etc/explicit_layer.d")
 endif ()
 
-add_subdirectory (vkh)
+if (NOT TARGET vkh_static)
+	add_subdirectory (vkh)
+endif()
 
 #SET(ENABLE_VALIDATION OFF CACHE BOOL "Enable vulkan validation layer")
 
