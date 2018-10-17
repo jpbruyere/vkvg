@@ -120,7 +120,7 @@ void vkvg_device_destroy (VkvgDevice dev)
 
     vmaDestroyAllocator (dev->allocator);
 
-    MUTEX_DESTROY (dev->gQMutex);
+    MUTEX_DESTROY (&dev->gQMutex);
 
     free(dev);
 }
