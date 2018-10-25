@@ -211,6 +211,8 @@ void vkvg_close_path (VkvgContext ctx){
         _finish_path(ctx);
 }
 void vkvg_rel_line_to (VkvgContext ctx, float x, float y){
+    if (_current_path_is_empty(ctx))
+        return;
     vec2 cp = _get_current_position(ctx);
     vkvg_line_to(ctx, cp.x + x, cp.y + y);
 }
@@ -294,6 +296,8 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 }
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
+    if (_current_path_is_empty(ctx))
+        return;
     vec2 cp = _get_current_position(ctx);
     vkvg_move_to(ctx, cp.x + x, cp.y + y);
 }
@@ -314,6 +318,8 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
     _add_point(ctx,x3,y3);
 }
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+    if (_current_path_is_empty(ctx))
+        return;
     vec2 cp = _get_current_position(ctx);
     vkvg_curve_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
 }
