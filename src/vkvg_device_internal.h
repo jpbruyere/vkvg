@@ -87,6 +87,8 @@ typedef struct _vkvg_device_t{
             vdpi;
     VkInstance              instance;
 
+    VkhImage                emptyImg;//prevent unbound descriptor to trigger Validation error 61
+
 
     _font_cache_t*	fontCache;
     VkvgContext     lastCtx;    //double linked list last elmt
@@ -98,5 +100,6 @@ void _setupPipelines            (VkvgDevice dev);
 void _createDescriptorSetLayout (VkvgDevice dev);
 void _flush_all_contexes        (VkvgDevice dev);
 void _init_all_contexes         (VkvgDevice dev);
-void _wait_and_reset_device_fence         (VkvgDevice dev);
+void _wait_and_reset_device_fence (VkvgDevice dev);
+void _submit_cmd                (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
 #endif

@@ -344,7 +344,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
         if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
             _flush_cmd_buff             (ctx);
-            _reset_src_descriptor_set   (ctx);
+            _update_descriptor_set      (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
             //_init_cmd_buff              (ctx);//push csts updated by init
         }//else
             //_update_push_constants (ctx);
@@ -421,7 +421,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         _flush_cmd_buff (ctx);
 
         if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
-            _reset_src_descriptor_set (ctx);
+            _update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
 
         vec4 bounds = {ctx->pSurf->width, ctx->pSurf->height, 0, 0};//store img bounds in unused source field
         ctx->pushConsts.source = bounds;
@@ -470,7 +470,7 @@ void _update_gradient_desc_set (VkvgContext ctx){
 /*
  * Reset currently bound descriptor which image could be destroyed
  */
-void _reset_src_descriptor_set (VkvgContext ctx){
+/*void _reset_src_descriptor_set (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;
     //VkDescriptorSet dss[] = {ctx->dsSrc};
     vkFreeDescriptorSets    (dev->vkDev, ctx->descriptorPool, 1, &ctx->dsSrc);
@@ -480,7 +480,7 @@ void _reset_src_descriptor_set (VkvgContext ctx){
                                                               .descriptorSetCount = 1,
                                                               .pSetLayouts = &dev->dslSrc };
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
-}
+}*/
 
 void _createDescriptorPool (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;

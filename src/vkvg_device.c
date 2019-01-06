@@ -77,6 +77,20 @@ VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vk
     _createDescriptorSetLayout  (dev);
     _setupPipelines             (dev);
 
+    //create empty image to bind to source descriptor when not in use
+    dev->emptyImg = vkh_image_create(dev,FB_COLOR_FORMAT,16,16,VKVG_TILING,VMA_MEMORY_USAGE_GPU_ONLY,
+                                     VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+    vkh_image_create_descriptor(dev->emptyImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+
+    _wait_and_reset_device_fence (dev);
+
+    vkh_cmd_begin (dev->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    vkh_image_set_layout (dev->cmd, dev->emptyImg, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                          VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+    vkh_cmd_end (dev->cmd);
+    _submit_cmd (dev, &dev->cmd, dev->fence);
+
     dev->references = 1;
 
     return dev;
@@ -89,6 +103,8 @@ void vkvg_device_destroy (VkvgDevice dev)
         return;
 
     LOG(LOG_INFO, "DESTROY Device\n");
+
+    vkh_image_destroy               (dev->emptyImg);
 
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslGrad,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);

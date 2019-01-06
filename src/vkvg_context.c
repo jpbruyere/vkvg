@@ -82,6 +82,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _createDescriptorPool   (ctx);
     _init_descriptor_sets   (ctx);
     _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->cacheTex, ctx->dsFont);
+    _update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc);
     _update_gradient_desc_set(ctx);
 
     //add full screen quad at the beginning, recurently used
@@ -229,9 +230,10 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
 {
     ctx->status = VKVG_STATUS_SUCCESS;
     vec2 p = {x,y};
-    if (_current_path_is_empty(ctx))
+    if (_current_path_is_empty(ctx)){
         vkvg_move_to(ctx, x,y);
-    else if (vec2_equ(_get_current_position(ctx),p))
+        return;
+    }else if (vec2_equ(_get_current_position(ctx),p))
         return;
 
     _add_point(ctx,x,y);
@@ -386,7 +388,7 @@ void vkvg_fill (VkvgContext ctx){
 void _poly_fill (VkvgContext ctx){
     CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
-    uint32_t ptrPath = 0;;
+    uint32_t ptrPath = 0;
     Vertex v = {};
     v.uv.z = -1;
 
