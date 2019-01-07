@@ -73,19 +73,20 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
     _submit_cmd (dev, &cmd, dev->fence);
 }
 
-void _init_surface (VkvgSurface surf) {
-    surf->format = FB_COLOR_FORMAT;//force bgra internally
+void _create_surface_main_image (VkvgSurface surf){
     surf->img = vkh_image_create((VkhDevice)surf->dev,surf->format,surf->width,surf->height,VKVG_TILING,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+    vkh_image_create_descriptor(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+}
+void _create_surface_ms_images (VkvgSurface surf) {
     surf->imgMS = vkh_image_ms_create((VkhDevice)surf->dev,surf->format,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     surf->stencilMS = vkh_image_ms_create((VkhDevice)surf->dev,VK_FORMAT_S8_UINT,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-
-    vkh_image_create_descriptor(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
     vkh_image_create_descriptor(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
     vkh_image_create_descriptor(surf->stencilMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-
+}
+void _create_framebuffer (VkvgSurface surf) {
     VkImageView attachments[] = {
         vkh_image_get_view (surf->imgMS),
         vkh_image_get_view (surf->img),
@@ -99,8 +100,15 @@ void _init_surface (VkvgSurface surf) {
                                                       .height = surf->height,
                                                       .layers = 1 };
     VK_CHECK_RESULT(vkCreateFramebuffer(surf->dev->vkDev, &frameBufferCreateInfo, NULL, &surf->fb));
+}
+void _init_surface (VkvgSurface surf) {
+    surf->format = FB_COLOR_FORMAT;//force bgra internally
 
-    _clear_surface(surf, VK_IMAGE_ASPECT_STENCIL_BIT);
+    _create_surface_main_image  (surf);
+    _create_surface_ms_images   (surf);
+    _create_framebuffer         (surf);
+
+    _clear_surface              (surf, VK_IMAGE_ASPECT_STENCIL_BIT);
 }
 void vkvg_surface_clear (VkvgSurface surf) {
     _clear_surface(surf, VK_IMAGE_ASPECT_STENCIL_BIT|VK_IMAGE_ASPECT_COLOR_BIT);
@@ -113,6 +121,29 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
     surf->height = height;
 
     _init_surface (surf);
+
+    surf->references = 1;
+    vkvg_device_reference (surf->dev);
+
+    return surf;
+}
+VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
+    VkhImage img = (VkhImage)vkhImg;
+    VkvgSurface surf = (vkvg_surface*)calloc(1,sizeof(vkvg_surface));
+
+    surf->format = FB_COLOR_FORMAT;//force bgra internally
+    surf->dev   = dev;
+    surf->width = img->infos.extent.width;
+    surf->height= img->infos.extent.height;
+
+    surf->img = img;
+
+    vkh_image_create_sampler(img, VK_FILTER_NEAREST, VK_FILTER_NEAREST,
+                             VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+
+    _create_surface_ms_images   (surf);
+    _create_framebuffer         (surf);
+    _clear_surface              (surf, VK_IMAGE_ASPECT_STENCIL_BIT);
 
     surf->references = 1;
     vkvg_device_reference (surf->dev);
@@ -242,7 +273,8 @@ void vkvg_surface_destroy(VkvgSurface surf)
     if (surf->references > 0)
         return;
     vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
-    vkh_image_destroy(surf->img);
+    if (!surf->img->imported)
+        vkh_image_destroy(surf->img);
     vkh_image_destroy(surf->imgMS);
     vkh_image_destroy(surf->stencilMS);
 

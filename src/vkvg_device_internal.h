@@ -96,6 +96,7 @@ typedef struct _vkvg_device_t{
 
 void _init_function_pointers    (VkvgDevice dev);
 void _create_empty_texture      (VkvgDevice dev);
+void _check_image_format_properties (VkvgDevice dev);
 void _create_pipeline_cache     (VkvgDevice dev);
 void _setupRenderPass           (VkvgDevice dev);
 void _setupPipelines            (VkvgDevice dev);

@@ -344,3 +344,32 @@ void _create_empty_texture (VkvgDevice dev) {
     vkh_cmd_end (dev->cmd);
     _submit_cmd (dev, &dev->cmd, dev->fence);
 }
+
+void _dump_image_format_properties (VkvgDevice dev) {
+    VkImageFormatProperties imgProps;
+    VK_CHECK_RESULT(vkGetPhysicalDeviceImageFormatProperties(dev->phy,
+                                                             FB_COLOR_FORMAT, VK_IMAGE_TYPE_2D, VKVG_TILING,
+                                                             VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+                                                             0, &imgProps));
+    printf ("tiling           = %d\n", VKVG_TILING);
+    printf ("max extend       = (%d, %d, %d)\n", imgProps.maxExtent.width, imgProps.maxExtent.height, imgProps.maxExtent.depth);
+    printf ("max mip levels   = %d\n", imgProps.maxMipLevels);
+    printf ("max array layers = %d\n", imgProps.maxArrayLayers);
+    printf ("sample counts    = ");
+    if (imgProps.sampleCounts & VK_SAMPLE_COUNT_1_BIT)
+        printf ("1,");
+    if (imgProps.sampleCounts & VK_SAMPLE_COUNT_2_BIT)
+        printf ("2,");
+    if (imgProps.sampleCounts & VK_SAMPLE_COUNT_4_BIT)
+        printf ("4,");
+    if (imgProps.sampleCounts & VK_SAMPLE_COUNT_8_BIT)
+        printf ("8,");
+    if (imgProps.sampleCounts & VK_SAMPLE_COUNT_16_BIT)
+        printf ("16,");
+    if (imgProps.sampleCounts & VK_SAMPLE_COUNT_32_BIT)
+        printf ("32,");
+    printf ("\n");
+    printf ("max resource size= %lu\n", imgProps.maxResourceSize);
+
+
+}
