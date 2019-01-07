@@ -77,9 +77,9 @@ void _init_surface (VkvgSurface surf) {
     surf->format = FB_COLOR_FORMAT;//force bgra internally
     surf->img = vkh_image_create(surf->dev,surf->format,surf->width,surf->height,VKVG_TILING,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-    surf->imgMS = vkh_image_ms_create(surf->dev,surf->format,VKVG_SAMPLES,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
+    surf->imgMS = vkh_image_ms_create(surf->dev,surf->format,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    surf->stencilMS = vkh_image_ms_create(surf->dev,VK_FORMAT_S8_UINT,VKVG_SAMPLES,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
+    surf->stencilMS = vkh_image_ms_create(surf->dev,VK_FORMAT_S8_UINT,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
     vkh_image_create_descriptor(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);

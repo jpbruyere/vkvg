@@ -27,6 +27,10 @@
 
 VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
 {
+    return vkvg_device_create_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_4_BIT);
+}
+VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples)
+{
     LOG(LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
 
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
@@ -34,6 +38,7 @@ VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vk
     dev->instance = inst;
     dev->hdpi   = 72;
     dev->vdpi   = 72;
+    dev->samples= samples;
     dev->vkDev  = vkdev;
     dev->phy    = phy;
 

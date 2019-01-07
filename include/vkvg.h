@@ -35,8 +35,6 @@ extern "C" {
     #define VKVG_TILING VK_IMAGE_TILING_LINEAR
 #endif
 
-#define VKVG_SAMPLES 4
-
 #define LOG_ERR			0x00
 #define LOG_DEBUG		0x10
 #define LOG_INFO		0x20
@@ -161,8 +159,9 @@ typedef struct _vkvg_surface_t* VkvgSurface;
 typedef struct _vkvg_device_t*  VkvgDevice;
 typedef struct _vkvg_pattern_t* VkvgPattern;
 
-VkvgDevice	vkvg_device_create			(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex);
-void		vkvg_device_destroy			(VkvgDevice dev);
+VkvgDevice	vkvg_device_create              (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex);
+VkvgDevice  vkvg_device_create_multisample  (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples);
+void		vkvg_device_destroy             (VkvgDevice dev);
 VkvgDevice  vkvg_device_reference           (VkvgDevice dev);
 uint32_t    vkvg_device_get_reference_count (VkvgDevice dev);
 

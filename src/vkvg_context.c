@@ -697,7 +697,7 @@ void vkvg_save (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;
     vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
-    sav->stencilMS = vkh_image_ms_create (dev,VK_FORMAT_S8_UINT, VKVG_SAMPLES, ctx->pSurf->width, ctx->pSurf->height,
+    sav->stencilMS = vkh_image_ms_create (dev,VK_FORMAT_S8_UINT, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
                         VMA_MEMORY_USAGE_GPU_ONLY,
                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 

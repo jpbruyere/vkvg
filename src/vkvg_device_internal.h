@@ -88,7 +88,7 @@ typedef struct _vkvg_device_t{
     VkInstance              instance;
 
     VkhImage                emptyImg;//prevent unbound descriptor to trigger Validation error 61
-
+    VkSampleCountFlags      samples;//samples count for all surfaces
 
     _font_cache_t*	fontCache;
     VkvgContext     lastCtx;    //double linked list last elmt

@@ -47,7 +47,7 @@ void _setupRenderPass(VkvgDevice dev)
 {
     VkAttachmentDescription attColor = {
                     .format = FB_COLOR_FORMAT,
-                    .samples = VKVG_SAMPLES,
+                    .samples = dev->samples,
                     .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
                     .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -65,7 +65,7 @@ void _setupRenderPass(VkvgDevice dev)
                     .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
     VkAttachmentDescription attDS = {
                     .format = VK_FORMAT_S8_UINT,
-                    .samples = VKVG_SAMPLES,
+                    .samples = dev->samples,
                     .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
@@ -165,7 +165,7 @@ void _setupPipelines(VkvgDevice dev)
                 .viewportCount = 1, .scissorCount = 1 };
 
     VkPipelineMultisampleStateCreateInfo multisampleState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-                .rasterizationSamples = VKVG_SAMPLES };
+                .rasterizationSamples = dev->samples };
     /*if (VKVG_SAMPLES != VK_SAMPLE_COUNT_1_BIT){
         multisampleState.sampleShadingEnable = VK_TRUE;
         multisampleState.minSampleShading = 0.25f;
