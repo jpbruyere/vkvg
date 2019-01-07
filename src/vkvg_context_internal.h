@@ -154,6 +154,7 @@ vec2 _get_current_position  (VkvgContext ctx);
 void _add_point         	(VkvgContext ctx, float x, float y);
 void _add_point_vec2			(VkvgContext ctx, vec2 v);
 
+void _create_gradient_buff  (VkvgContext ctx);
 void _create_vertices_buff	(VkvgContext ctx);
 void _add_vertex			(VkvgContext ctx, Vertex v);
 void _add_vertexf           (VkvgContext ctx, float x, float y);
@@ -175,6 +176,7 @@ void _wait_and_reset_ctx_cmd(VkvgContext ctx);
 void _update_push_constants (VkvgContext ctx);
 void _update_cur_pattern    (VkvgContext ctx, VkvgPattern pat);
 void _set_mat_inv_and_vkCmdPush (VkvgContext ctx);
+void _start_cmd_for_render_pass (VkvgContext ctx);
 
 void _createDescriptorPool  (VkvgContext ctx);
 void _init_descriptor_sets  (VkvgContext ctx);

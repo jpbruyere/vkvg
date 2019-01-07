@@ -160,7 +160,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
 
     VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                        .queueCreateInfoCount = qCount,
-                                       .pQueueCreateInfos = &pQueueInfos,
+                                       .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
                                        .enabledLayerCount = dlayCpt,
                                        .ppEnabledLayerNames = dlay,
                                        .enabledExtensionCount = 1,

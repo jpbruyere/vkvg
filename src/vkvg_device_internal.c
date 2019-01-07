@@ -20,6 +20,8 @@
  * THE SOFTWARE.
  */
 
+#define GetInstProcAddress(inst, func)(PFN_##func)vkGetInstanceProcAddr(inst, #func);
+
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
 #include "shaders.h"
@@ -189,13 +191,13 @@ void _setupPipelines(VkvgDevice dev)
 
     VkShaderModule modVert, modFrag, modFragWired;
     VkShaderModuleCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                                            .pCode = vkvg_main_vert_spv,
+                                            .pCode = (uint32_t*)vkvg_main_vert_spv,
                                             .codeSize = vkvg_main_vert_spv_len };
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modVert));
-    createInfo.pCode = vkvg_main_frag_spv;
+    createInfo.pCode = (uint32_t*)vkvg_main_frag_spv;
     createInfo.codeSize = vkvg_main_frag_spv_len;
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFrag));
-    createInfo.pCode = wired_frag_spv;
+    createInfo.pCode = (uint32_t*)wired_frag_spv;
     createInfo.codeSize = wired_frag_spv_len;
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFragWired));
 
@@ -277,7 +279,7 @@ void _setupPipelines(VkvgDevice dev)
 void _createDescriptorSetLayout (VkvgDevice dev) {
 
     VkDescriptorSetLayoutBinding dsLayoutBinding =
-        {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,VK_SHADER_STAGE_FRAGMENT_BIT};
+        {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,VK_SHADER_STAGE_FRAGMENT_BIT, NULL};
     VkDescriptorSetLayoutCreateInfo dsLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
                                                           .bindingCount = 1,
                                                           .pBindings = &dsLayoutBinding };
@@ -294,7 +296,7 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
                                                             .pushConstantRangeCount = 1,
-                                                            .pPushConstantRanges = &pushConstantRange,
+                                                            .pPushConstantRanges = (VkPushConstantRange*)&pushConstantRange,
                                                             .setLayoutCount = 3,
                                                             .pSetLayouts = dsls };
     VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
@@ -309,4 +311,36 @@ void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
     MUTEX_LOCK (&dev->gQMutex);
     vkh_cmd_submit (dev->gQueue, cmd, fence);
     MUTEX_UNLOCK (&dev->gQMutex);
+}
+
+void _init_function_pointers (VkvgDevice dev) {
+    CmdBindPipeline         = GetInstProcAddress(dev->instance, vkCmdBindPipeline);
+    CmdBindDescriptorSets   = GetInstProcAddress(dev->instance, vkCmdBindDescriptorSets);
+    CmdBindIndexBuffer      = GetInstProcAddress(dev->instance, vkCmdBindIndexBuffer);
+    CmdBindVertexBuffers    = GetInstProcAddress(dev->instance, vkCmdBindVertexBuffers);
+    CmdDrawIndexed          = GetInstProcAddress(dev->instance, vkCmdDrawIndexed);
+    CmdDraw                 = GetInstProcAddress(dev->instance, vkCmdDraw);
+    CmdSetStencilCompareMask= GetInstProcAddress(dev->instance, vkCmdSetStencilCompareMask);
+    CmdBeginRenderPass      = GetInstProcAddress(dev->instance, vkCmdBeginRenderPass);
+    CmdEndRenderPass        = GetInstProcAddress(dev->instance, vkCmdEndRenderPass);
+    CmdSetViewport          = GetInstProcAddress(dev->instance, vkCmdSetViewport);
+    CmdSetScissor           = GetInstProcAddress(dev->instance, vkCmdSetScissor);
+    CmdPushConstants        = GetInstProcAddress(dev->instance, vkCmdPushConstants);
+    CmdPushDescriptorSet    = (PFN_vkCmdPushDescriptorSetKHR)vkGetInstanceProcAddr(dev->instance, "vkCmdDescriptorSet");
+}
+
+void _create_empty_texture (VkvgDevice dev) {
+    //create empty image to bind to context source descriptor when not in use
+    dev->emptyImg = vkh_image_create((VkhDevice)dev,FB_COLOR_FORMAT,16,16,VKVG_TILING,VMA_MEMORY_USAGE_GPU_ONLY,
+                                     VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+    vkh_image_create_descriptor(dev->emptyImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+
+    _wait_and_reset_device_fence (dev);
+
+    vkh_cmd_begin (dev->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    vkh_image_set_layout (dev->cmd, dev->emptyImg, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                          VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+    vkh_cmd_end (dev->cmd);
+    _submit_cmd (dev, &dev->cmd, dev->fence);
 }

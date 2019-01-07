@@ -94,6 +94,8 @@ typedef struct _vkvg_device_t{
     VkvgContext     lastCtx;    //double linked list last elmt
 }vkvg_device;
 
+void _init_function_pointers    (VkvgDevice dev);
+void _create_empty_texture      (VkvgDevice dev);
 void _create_pipeline_cache     (VkvgDevice dev);
 void _setupRenderPass           (VkvgDevice dev);
 void _setupPipelines            (VkvgDevice dev);

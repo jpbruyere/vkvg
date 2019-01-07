@@ -175,10 +175,10 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
 
 
 void _create_cmd_buff (VkvgContext ctx){
-    ctx->cmd = vkh_cmd_buff_create(ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    ctx->cmd = vkh_cmd_buff_create((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }
 void _record_draw_cmd (VkvgContext ctx){
-    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vert cpt = %d; ind cpt = %d; ind drawn = %d\n", ctx, ctx->vertCount - 4, ctx->indCount - 6, ctx->indCount - ctx->curIndStart);
+    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vert cpt = %d; ind cpt = %d; ind drawn = %d\n", (ulong)ctx, ctx->vertCount - 4, ctx->indCount - 6, ctx->indCount - ctx->curIndStart);
     if (ctx->indCount == ctx->curIndStart)
         return;
     _check_cmd_buff_state(ctx);

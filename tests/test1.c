@@ -31,6 +31,62 @@
 #include "vkh_device.h"
 #include "vkh_presenter.h"
 
+#ifdef _WIN32 // MSC_VER
+    #define WIN32_LEAN_AND_MEAN
+    #define NOMINMAX
+    #include <Windows.h> // Windows.h -> WinDef.h defines min() max()
+
+    /*
+        typedef uint16_t WORD ;
+        typedef uint32_t DWORD;
+
+        typedef struct _FILETIME {
+            DWORD dwLowDateTime;
+            DWORD dwHighDateTime;
+        } FILETIME;
+
+        typedef struct _SYSTEMTIME {
+              WORD wYear;
+              WORD wMonth;
+              WORD wDayOfWeek;
+              WORD wDay;
+              WORD wHour;
+              WORD wMinute;
+              WORD wSecond;
+              WORD wMilliseconds;
+        } SYSTEMTIME, *PSYSTEMTIME;
+    */
+
+    // *sigh* Microsoft has this in winsock2.h because they are too lazy to put it in the standard location ... !?!?
+    typedef struct timeval {
+        long tv_sec;
+        long tv_usec;
+    } timeval;
+
+    // *sigh* no gettimeofday on Win32/Win64
+    int gettimeofday(struct timeval * tp, struct timezone * tzp)
+    {
+        // FILETIME Jan 1 1970 00:00:00
+        // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+        static const uint64_t EPOCH = ((uint64_t) 116444736000000000ULL);
+
+        SYSTEMTIME  nSystemTime;
+        FILETIME    nFileTime;
+        uint64_t    nTime;
+
+        GetSystemTime( &nSystemTime );
+        SystemTimeToFileTime( &nSystemTime, &nFileTime );
+        nTime =  ((uint64_t)nFileTime.dwLowDateTime )      ;
+        nTime += ((uint64_t)nFileTime.dwHighDateTime) << 32;
+
+        tp->tv_sec  = (long) ((nTime - EPOCH) / 10000000L);
+        tp->tv_usec = (long) (nSystemTime.wMilliseconds * 1000);
+        return 0;
+    }
+#else
+    #include <sys/time.h>
+#endif // _WIN32
+
 VkvgDevice device;
 VkvgSurface surf = NULL;
 
@@ -487,7 +543,7 @@ void multi_test1 () {
     VkvgSurface surf2 = vkvg_surface_create (device,800,800);;
     VkvgContext ctx = vkvg_create (surf2);
 
-    vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1.0);
+    vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1);
     vkvg_paint(ctx);
 
     vkvg_test_fill(ctx);
@@ -551,7 +607,7 @@ void multi_test1 () {
 
     VkvgPattern pat = vkvg_pattern_create_for_surface(surf2);
     vkvg_pattern_set_extend(pat, VKVG_EXTEND_REFLECT);
-    vkvg_pattern_set_filter(pat, VKVG_FILTER_BILINEAR);
+    vkvg_pattern_set_filter(pat, VKVG_FILTER_BEST);
     vkvg_set_source (ctx, pat);
     //vkvg_rectangle(ctx,100,100,400,400);
     //vkvg_fill(ctx);
@@ -1092,8 +1148,11 @@ void simple_rectangle_fill () {
 }
 void simple_rectangle_stroke () {
     VkvgContext ctx = vkvg_create(surf);
+    vkvg_clear(ctx);
+    vkvg_line_to(ctx,100,100);
     vkvg_set_source_rgba(ctx,0,0,1,1);
-    vkvg_set_line_width(ctx,10.f);
+    vkvg_set_line_width(ctx,50.f);
+    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
     vkvg_rectangle(ctx,100,100,200,200);
     vkvg_stroke(ctx);
     vkvg_destroy(ctx);

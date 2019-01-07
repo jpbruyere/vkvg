@@ -42,24 +42,12 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
     dev->vkDev  = vkdev;
     dev->phy    = phy;
 
-    CmdBindPipeline         = vkGetInstanceProcAddr(inst, "vkCmdBindPipeline");
-    CmdBindDescriptorSets   = vkGetInstanceProcAddr(inst, "vkCmdBindDescriptorSets");
-    CmdBindIndexBuffer      = vkGetInstanceProcAddr(inst, "vkCmdBindIndexBuffer");
-    CmdBindVertexBuffers    = vkGetInstanceProcAddr(inst, "vkCmdBindVertexBuffers");
-    CmdDrawIndexed          = vkGetInstanceProcAddr(inst, "vkCmdDrawIndexed");
-    CmdDraw                 = vkGetInstanceProcAddr(inst, "vkCmdDraw");
-    CmdSetStencilCompareMask= vkGetInstanceProcAddr(inst, "vkCmdSetStencilCompareMask");
-    CmdBeginRenderPass      = vkGetInstanceProcAddr(inst, "vkCmdBeginRenderPass");
-    CmdEndRenderPass        = vkGetInstanceProcAddr(inst, "vkCmdEndRenderPass");
-    CmdSetViewport          = vkGetInstanceProcAddr(inst, "vkCmdSetViewport");
-    CmdSetScissor           = vkGetInstanceProcAddr(inst, "vkCmdSetScissor");
-    CmdPushConstants        = vkGetInstanceProcAddr(inst, "vkCmdPushConstants");
-    CmdPushDescriptorSet    = vkGetInstanceProcAddr(inst, "vkCmdDescriptorSet");
+    _init_function_pointers (dev);
 
     VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 
     dev->phyMemProps = phyInfos->memProps;
-    dev->gQueue = vkh_queue_create (dev, qFamIdx, qIndex, phyInfos->queues[qFamIdx].queueFlags);
+    dev->gQueue = vkh_queue_create ((VkhDevice)dev, qFamIdx, qIndex, phyInfos->queues[qFamIdx].queueFlags);
     MUTEX_INIT (&dev->gQMutex);
 
     vkh_phyinfo_destroy (phyInfos);
@@ -72,9 +60,9 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 
     dev->lastCtx= NULL;
 
-    dev->cmdPool= vkh_cmd_pool_create       (dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    dev->cmd    = vkh_cmd_buff_create       (dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-    dev->fence  = vkh_fence_create_signaled (dev);
+    dev->cmdPool= vkh_cmd_pool_create       ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    dev->cmd    = vkh_cmd_buff_create       ((VkhDevice)dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    dev->fence  = vkh_fence_create_signaled ((VkhDevice)dev);
 
     _create_pipeline_cache      (dev);
     _init_fonts_cache           (dev);
@@ -82,19 +70,7 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
     _createDescriptorSetLayout  (dev);
     _setupPipelines             (dev);
 
-    //create empty image to bind to source descriptor when not in use
-    dev->emptyImg = vkh_image_create(dev,FB_COLOR_FORMAT,16,16,VKVG_TILING,VMA_MEMORY_USAGE_GPU_ONLY,
-                                     VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-    vkh_image_create_descriptor(dev->emptyImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-
-    _wait_and_reset_device_fence (dev);
-
-    vkh_cmd_begin (dev->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    vkh_image_set_layout (dev->cmd, dev->emptyImg, VK_IMAGE_ASPECT_COLOR_BIT,
-                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                          VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-    vkh_cmd_end (dev->cmd);
-    _submit_cmd (dev, &dev->cmd, dev->fence);
+    _create_empty_texture       (dev);
 
     dev->references = 1;
 

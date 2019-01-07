@@ -33,7 +33,7 @@ static uint32_t dlpCount = 0;
 
 VkvgContext vkvg_create(VkvgSurface surf)
 {
-    LOG(LOG_INFO, "CREATE Context: surf = %lu\n", surf);
+    LOG(LOG_INFO, "CREATE Context: surf = %lu\n", (ulong)surf);
 
     VkvgDevice dev = surf->dev;
     VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
@@ -50,7 +50,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->curOperator    = VKVG_OPERATOR_OVER;
 
     push_constants pc = {
-            {0,0,0,1},
+            {.height=1},
             {(float)ctx->pSurf->width,(float)ctx->pSurf->height},
             VKVG_PATTERN_TYPE_SOLID,
             0,
@@ -69,12 +69,12 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     ctx->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
 
-    ctx->flushFence = vkh_fence_create(dev);
+    ctx->flushFence = vkh_fence_create((VkhDevice)dev);
 
     ctx->points = (vec2*)       malloc (VKVG_VBO_SIZE*sizeof(vec2));
     ctx->pathes = (uint32_t*)   malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
 
-    ctx->cmdPool = vkh_cmd_pool_create (dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    ctx->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
     _create_vertices_buff   (ctx);
     _create_gradient_buff   (ctx);
@@ -690,14 +690,14 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 
 void vkvg_save (VkvgContext ctx){
     ctx->status = VKVG_STATUS_SUCCESS;
-    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %lu\n", ctx);
+    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %lu\n", (ulong)ctx);
 
     _flush_cmd_buff(ctx);
 
     VkvgDevice dev = ctx->pSurf->dev;
     vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
-    sav->stencilMS = vkh_image_ms_create (dev,VK_FORMAT_S8_UINT, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
+    sav->stencilMS = vkh_image_ms_create ((VkhDevice)dev,VK_FORMAT_S8_UINT, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
                         VMA_MEMORY_USAGE_GPU_ONLY,
                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
