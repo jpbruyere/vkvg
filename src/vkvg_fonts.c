@@ -34,7 +34,7 @@ void _init_fonts_cache (VkvgDevice dev){
 
     cache->config = FcInitLoadConfigAndFonts();
 
-    assert(!FT_Init_FreeType(&cache->library));
+    FT_CHECK_RESULT(FT_Init_FreeType(&cache->library));
 
     cache->cacheTexLength = FONT_CACHE_INIT_LAYERS;
     cache->cacheTex = vkh_tex2d_array_create ((VkhDevice)dev, VK_FORMAT_R8_UNORM, FONT_PAGE_SIZE, FONT_PAGE_SIZE,
@@ -174,7 +174,7 @@ void _dump_glyphs (FT_Face face){
     char gname[256];
 
     for (int i = 0; i < face->num_glyphs; ++i) {
-        assert(!FT_Load_Glyph(face,i,FT_LOAD_RENDER));
+        FT_CHECK_RESULT(FT_Load_Glyph(face,i,FT_LOAD_RENDER));
         slot = face->glyph;
 
         FT_Get_Glyph_Name(face,i,gname,256);
@@ -227,7 +227,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 }
 
 _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
-    assert(!FT_Load_Glyph(f->face, gindex, FT_LOAD_RENDER));
+    FT_CHECK_RESULT(FT_Load_Glyph(f->face, gindex, FT_LOAD_RENDER));
 
     FT_GlyphSlot slot = f->face->glyph;
     FT_Bitmap   bmp  = slot->bitmap;
@@ -319,8 +319,8 @@ void _update_current_font (VkvgContext ctx) {
             nf.fontFile = (char*)calloc(strlen(ctx->selectedFont.fontFile),sizeof(char));
             strcpy (nf.fontFile, ctx->selectedFont.fontFile);
 
-            assert(!FT_New_Face(cache->library, nf.fontFile, 0, &nf.face));
-            assert(!FT_Set_Char_Size(nf.face, 0, nf.charSize, dev->hdpi, dev->vdpi ));
+            FT_CHECK_RESULT(FT_New_Face(cache->library, nf.fontFile, 0, &nf.face));
+            FT_CHECK_RESULT(FT_Set_Char_Size(nf.face, 0, nf.charSize, dev->hdpi, dev->vdpi ));
             nf.hb_font = hb_ft_font_create(nf.face, NULL);
             nf.charLookup = (_char_ref**)calloc(nf.face->num_glyphs,sizeof(_char_ref*));
 

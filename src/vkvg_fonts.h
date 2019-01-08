@@ -34,6 +34,16 @@
 #define FONT_CACHE_INIT_LAYERS  2
 #define FONT_FILE_NAME_MAX_SIZE 256
 
+#define FT_CHECK_RESULT(f) 																				\
+{																										\
+    FT_Error res = (f);																					\
+    if (res != 0)																				\
+    {																									\
+        printf("Fatal : FreeType error is %d in %s at line %d\n", res,  __FILE__, __LINE__); \
+        assert(res == 0);																		\
+    }																									\
+}
+
 #include "vkvg_internal.h"
 #include "vkvg.h"
 #include "vkvg_buff.h"

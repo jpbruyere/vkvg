@@ -94,10 +94,9 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     glfwWindowHint(GLFW_DECORATED,  GLFW_TRUE);
 
     e->window = glfwCreateWindow (width, height, "Window Title", NULL, NULL);
+
     VkSurfaceKHR surf;
-
-    assert (glfwCreateWindowSurface(e->app->inst, e->window, NULL, &surf)==VK_SUCCESS);
-
+    VkResult res = glfwCreateWindowSurface(e->app->inst, e->window, NULL, &surf);
 
     VkhPhyInfo* phys = vkh_app_get_phyinfos (e->app, &phyCount, surf);
 
