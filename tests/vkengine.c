@@ -31,7 +31,12 @@
 bool vkeCheckPhyPropBlitSource (VkEngine e) {
     VkFormatProperties formatProps;
     vkGetPhysicalDeviceFormatProperties(e->dev->phy, e->renderer->format, &formatProps);
+
+#if VKVG_TILING_OPTIMAL
     assert((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
+#else
+    assert((formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
+#endif
 }
 
 VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts)
@@ -86,7 +91,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);
     glfwWindowHint(GLFW_FLOATING,   GLFW_FALSE);
-    glfwWindowHint(GLFW_DECORATED,  GLFW_FALSE);
+    glfwWindowHint(GLFW_DECORATED,  GLFW_TRUE);
 
     e->window = glfwCreateWindow (width, height, "Window Title", NULL, NULL);
     VkSurfaceKHR surf;
@@ -151,7 +156,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     static char const * dlay [] = {"VK_LAYER_LUNARG_standard_validation"};
 #else
     uint32_t dlayCpt = 0;
-    static char const * dlay [] = {};
+    static char const * dlay [] = {NULL};
 #endif
     VkPhysicalDeviceFeatures enabledFeatures = {
         .fillModeNonSolid = true,
@@ -160,7 +165,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
 
     VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                        .queueCreateInfoCount = qCount,
-                                       .pQueueCreateInfos = &pQueueInfos,
+                                       .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
                                        .enabledLayerCount = dlayCpt,
                                        .ppEnabledLayerNames = dlay,
                                        .enabledExtensionCount = 1,
@@ -173,10 +178,11 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     e->dev = vkh_device_create(pi->phy, dev);
 
     e->renderer = vkh_presenter_create
-            (e->dev, pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, VK_PRESENT_MODE_FIFO_KHR);
-
+            (e->dev, pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, VK_PRESENT_MODE_MAILBOX_KHR);
 
     vkh_app_free_phyinfos (phyCount, phys);
+
+    vkeCheckPhyPropBlitSource (e);
 
     return e;
 }

@@ -30,6 +30,24 @@
 #define STENCIL_CLIP_BIT    0x2
 #define STENCIL_ALL_BIT     0x3
 
+PFN_vkCmdBindPipeline           CmdBindPipeline;
+PFN_vkCmdBindDescriptorSets     CmdBindDescriptorSets;
+PFN_vkCmdBindIndexBuffer        CmdBindIndexBuffer;
+PFN_vkCmdBindVertexBuffers      CmdBindVertexBuffers;
+
+PFN_vkCmdDrawIndexed    CmdDrawIndexed;
+PFN_vkCmdDraw           CmdDraw;
+
+PFN_vkCmdSetStencilCompareMask  CmdSetStencilCompareMask;
+PFN_vkCmdBeginRenderPass        CmdBeginRenderPass;
+PFN_vkCmdEndRenderPass          CmdEndRenderPass;
+PFN_vkCmdSetViewport            CmdSetViewport;
+PFN_vkCmdSetScissor             CmdSetScissor;
+
+PFN_vkCmdPushConstants          CmdPushConstants;
+PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
+
+
 typedef struct _vkvg_device_t{
     VkDevice				vkDev;
     VkPhysicalDeviceMemoryProperties phyMemProps;
@@ -37,6 +55,7 @@ typedef struct _vkvg_device_t{
     VmaAllocator            allocator;
 
     VkhQueue                gQueue;
+    MUTEX                   gQMutex;//queue submission has to be externally syncronized
     VkRenderPass			renderPass;
 
     uint32_t                references;
@@ -66,16 +85,24 @@ typedef struct _vkvg_device_t{
 
     int		hdpi,
             vdpi;
+    VkInstance              instance;
+
+    VkhImage                emptyImg;//prevent unbound descriptor to trigger Validation error 61
+    VkSampleCountFlags      samples;//samples count for all surfaces
 
     _font_cache_t*	fontCache;
     VkvgContext     lastCtx;    //double linked list last elmt
 }vkvg_device;
 
+void _init_function_pointers    (VkvgDevice dev);
+void _create_empty_texture      (VkvgDevice dev);
+void _check_image_format_properties (VkvgDevice dev);
 void _create_pipeline_cache     (VkvgDevice dev);
 void _setupRenderPass           (VkvgDevice dev);
 void _setupPipelines            (VkvgDevice dev);
 void _createDescriptorSetLayout (VkvgDevice dev);
 void _flush_all_contexes        (VkvgDevice dev);
 void _init_all_contexes         (VkvgDevice dev);
-void _wait_and_reset_device_fence         (VkvgDevice dev);
+void _wait_and_reset_device_fence (VkvgDevice dev);
+void _submit_cmd                (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
 #endif

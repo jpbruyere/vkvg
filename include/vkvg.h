@@ -35,8 +35,6 @@ extern "C" {
     #define VKVG_TILING VK_IMAGE_TILING_LINEAR
 #endif
 
-#define VKVG_SAMPLES 4
-
 #define LOG_ERR			0x00
 #define LOG_DEBUG		0x10
 #define LOG_INFO		0x20
@@ -49,6 +47,29 @@ static uint8_t log_level	= LOG_ERR;// LOG_INFO | LOG_DEBUG;
 #else
 #define LOG
 #endif
+
+typedef enum _vkvg_status {
+    VKVG_STATUS_SUCCESS = 0,
+    VKVG_STATUS_NO_MEMORY,
+    VKVG_STATUS_INVALID_RESTORE,
+    VKVG_STATUS_INVALID_POP_GROUP,
+    VKVG_STATUS_NO_CURRENT_POINT,
+    VKVG_STATUS_INVALID_MATRIX,
+    VKVG_STATUS_INVALID_STATUS,
+    VKVG_STATUS_NULL_POINTER,
+    VKVG_STATUS_INVALID_STRING,
+    VKVG_STATUS_INVALID_PATH_DATA,
+    VKVG_STATUS_READ_ERROR,
+    VKVG_STATUS_WRITE_ERROR,
+    VKVG_STATUS_SURFACE_FINISHED,
+    VKVG_STATUS_SURFACE_TYPE_MISMATCH,
+    VKVG_STATUS_PATTERN_TYPE_MISMATCH,
+    VKVG_STATUS_INVALID_CONTENT,
+    VKVG_STATUS_INVALID_FORMAT,
+    VKVG_STATUS_INVALID_VISUAL,
+    VKVG_STATUS_FILE_NOT_FOUND,
+    VKVG_STATUS_INVALID_DASH
+}vkvg_status_t;
 
 typedef enum _vkvg_direction {
     VKVG_HORIZONTAL	= 0,
@@ -138,13 +159,15 @@ typedef struct _vkvg_surface_t* VkvgSurface;
 typedef struct _vkvg_device_t*  VkvgDevice;
 typedef struct _vkvg_pattern_t* VkvgPattern;
 
-VkvgDevice	vkvg_device_create			(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex);
-void		vkvg_device_destroy			(VkvgDevice dev);
+VkvgDevice	vkvg_device_create              (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex);
+VkvgDevice  vkvg_device_create_multisample  (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples);
+void		vkvg_device_destroy             (VkvgDevice dev);
 VkvgDevice  vkvg_device_reference           (VkvgDevice dev);
 uint32_t    vkvg_device_get_reference_count (VkvgDevice dev);
 
 VkvgSurface vkvg_surface_create			(VkvgDevice dev, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_create_from_image  (VkvgDevice dev, const char* filePath);
+VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg);
 // VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_reference          (VkvgSurface surf);
 uint32_t    vkvg_surface_get_reference_count(VkvgSurface surf);

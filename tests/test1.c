@@ -20,7 +20,9 @@
  * THE SOFTWARE.
  */
 #include "vkengine.h"
-
+#include "stdio.h"
+#include "stdlib.h"
+#include "time.h"
 #include "vkvg.h"
 
 #include "string.h" //for nanosvg
@@ -28,6 +30,62 @@
 #include "nanosvg.h"
 #include "vkh_device.h"
 #include "vkh_presenter.h"
+
+#ifdef _WIN32 // MSC_VER
+    #define WIN32_LEAN_AND_MEAN
+    #define NOMINMAX
+    #include <Windows.h> // Windows.h -> WinDef.h defines min() max()
+
+    /*
+        typedef uint16_t WORD ;
+        typedef uint32_t DWORD;
+
+        typedef struct _FILETIME {
+            DWORD dwLowDateTime;
+            DWORD dwHighDateTime;
+        } FILETIME;
+
+        typedef struct _SYSTEMTIME {
+              WORD wYear;
+              WORD wMonth;
+              WORD wDayOfWeek;
+              WORD wDay;
+              WORD wHour;
+              WORD wMinute;
+              WORD wSecond;
+              WORD wMilliseconds;
+        } SYSTEMTIME, *PSYSTEMTIME;
+    */
+
+    // *sigh* Microsoft has this in winsock2.h because they are too lazy to put it in the standard location ... !?!?
+    typedef struct timeval {
+        long tv_sec;
+        long tv_usec;
+    } timeval;
+
+    // *sigh* no gettimeofday on Win32/Win64
+    int gettimeofday(struct timeval * tp, struct timezone * tzp)
+    {
+        // FILETIME Jan 1 1970 00:00:00
+        // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+        static const uint64_t EPOCH = ((uint64_t) 116444736000000000ULL);
+
+        SYSTEMTIME  nSystemTime;
+        FILETIME    nFileTime;
+        uint64_t    nTime;
+
+        GetSystemTime( &nSystemTime );
+        SystemTimeToFileTime( &nSystemTime, &nFileTime );
+        nTime =  ((uint64_t)nFileTime.dwLowDateTime )      ;
+        nTime += ((uint64_t)nFileTime.dwHighDateTime) << 32;
+
+        tp->tv_sec  = (long) ((nTime - EPOCH) / 10000000L);
+        tp->tv_usec = (long) (nSystemTime.wMilliseconds * 1000);
+        return 0;
+    }
+#else
+    #include <sys/time.h>
+#endif // _WIN32
 
 VkvgDevice device;
 VkvgSurface surf = NULL;
@@ -45,6 +103,26 @@ static void char_callback (GLFWwindow* window, uint32_t c){}
 static void mouse_move_callback(GLFWwindow* window, double x, double y){}
 static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif){}
 
+double time_diff(struct timeval x , struct timeval y)
+{
+    double x_ms , y_ms , diff;
+
+    x_ms = (double)x.tv_sec*1000000 + (double)x.tv_usec;
+    y_ms = (double)y.tv_sec*1000000 + (double)y.tv_usec;
+
+    diff = (double)y_ms - (double)x_ms;
+
+    return diff;
+}
+
+void randomize_color (VkvgContext ctx) {
+    vkvg_set_source_rgba(ctx,
+        (float)rand()/RAND_MAX,
+        (float)rand()/RAND_MAX,
+        (float)rand()/RAND_MAX,
+        (float)rand()/RAND_MAX
+    );
+}
 void vkvg_test_gradient (VkvgContext ctx) {
     VkvgPattern pat = vkvg_pattern_create_linear(100,0,300,0);
     vkvg_set_line_width(ctx, 20);
@@ -465,7 +543,7 @@ void multi_test1 () {
     VkvgSurface surf2 = vkvg_surface_create (device,800,800);;
     VkvgContext ctx = vkvg_create (surf2);
 
-    vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1.0);
+    vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1);
     vkvg_paint(ctx);
 
     vkvg_test_fill(ctx);
@@ -529,7 +607,7 @@ void multi_test1 () {
 
     VkvgPattern pat = vkvg_pattern_create_for_surface(surf2);
     vkvg_pattern_set_extend(pat, VKVG_EXTEND_REFLECT);
-    vkvg_pattern_set_filter(pat, VKVG_FILTER_BILINEAR);
+    vkvg_pattern_set_filter(pat, VKVG_FILTER_BEST);
     vkvg_set_source (ctx, pat);
     //vkvg_rectangle(ctx,100,100,400,400);
     //vkvg_fill(ctx);
@@ -831,28 +909,6 @@ void cairo_tests () {
     vkvg_paint(ctx);
 
     vkvg_set_matrix(ctx,&mat);
-    /*
-    vkvg_set_source_rgba(ctx,0,1,0,1);
-    vkvg_rectangle(ctx,0,0,600,600);
-    vkvg_fill(ctx);
-
-    vkvg_clip(ctx);
-
-    vkvg_set_source_rgba(ctx,1,0,0,1);
-    vkvg_paint(ctx);
-    //vkvg_rectangle(ctx,00,00,1024,800);
-    //vkvg_fill(ctx);
-
-    vkvg_reset_clip(ctx);
-    vkvg_set_source_rgba(ctx,0,0,1,1);
-    vkvg_set_line_width(ctx,20);
-    vkvg_move_to(ctx,0,0);
-    vkvg_rel_line_to(ctx,800,800);
-    vkvg_stroke(ctx);*/
-
-//    cairo_test_clip(ctx);
-//    vkvg_reset_clip(ctx);
-    //test_img_surface (ctx);
 
     cairo_print_arc(ctx);
 
@@ -861,15 +917,6 @@ void cairo_tests () {
 
     vkvg_translate(ctx,250,0);
     cairo_test_rounded_rect(ctx);
-
-
-/*
-    vkvg_set_operator(ctx, VKVG_OPERATOR_CLEAR);
-    vkvg_rectangle(ctx,100,100,500,500);
-    vkvg_fill(ctx);
-    vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
-*/
-
 
     vkvg_translate(ctx,-450,250);
     cairo_test_fill_and_stroke2(ctx);
@@ -1061,21 +1108,51 @@ void simple_paint () {
     vkvg_paint(ctx);
     vkvg_destroy(ctx);
 }
+void random_rectangles () {
+    vkvg_surface_clear(surf);
+    struct timeval currentTime;
+    gettimeofday(&currentTime, NULL);
+
+    srand((unsigned) currentTime.tv_usec);
+    const float w = 1024.f;
+
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_line_width(ctx,1);
+    for (int i=0; i<5000; i++) {
+        randomize_color(ctx);
+        float x = trunc( (0.5*(float)w*rand())/RAND_MAX );
+        float y = trunc( (0.5*(float)w*rand())/RAND_MAX );
+        float z = trunc( (0.5*(float)w*rand())/RAND_MAX ) + 1;
+        float v = trunc( (0.5*(float)w*rand())/RAND_MAX ) + 1;
+
+        vkvg_rectangle(ctx, x+1, y+1, z, v);
+        vkvg_fill_preserve(ctx);
+        randomize_color(ctx);
+        vkvg_stroke(ctx);
+    }
+    vkvg_destroy(ctx);
+}
+
 void simple_rectangle_fill () {
     vkvg_surface_clear(surf);
     VkvgContext ctx = vkvg_create(surf);
+
     vkvg_set_line_width(ctx,10);
-    vkvg_set_source_rgba(ctx,0,0,1,0.2);
+    vkvg_set_source_rgba(ctx,0,0,1,0.5);
     vkvg_rectangle(ctx,100,100,200,200);
-    vkvg_fill_preserve(ctx);
-    vkvg_set_source_rgba(ctx,1,0,0,0.2);
-    vkvg_stroke(ctx);
+    vkvg_fill(ctx);
+    vkvg_rectangle(ctx,200,200,200,200);
+    vkvg_set_source_rgba(ctx,1,0,0,0.5);
+    vkvg_fill(ctx);
     vkvg_destroy(ctx);
 }
 void simple_rectangle_stroke () {
     VkvgContext ctx = vkvg_create(surf);
+    vkvg_clear(ctx);
+    vkvg_line_to(ctx,100,100);
     vkvg_set_source_rgba(ctx,0,0,1,1);
-    vkvg_set_line_width(ctx,10.f);
+    vkvg_set_line_width(ctx,50.f);
+    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
     vkvg_rectangle(ctx,100,100,200,200);
     vkvg_stroke(ctx);
     vkvg_destroy(ctx);
@@ -1099,7 +1176,7 @@ int main(int argc, char *argv[]) {
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback (e, key_callback);
 
-    device  = vkvg_device_create (r->dev->phy, r->dev->dev, r->qFam, 0);
+    device  = vkvg_device_create (vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0);
     surf    = vkvg_surface_create(device, width, height);
 
     //test_svg();
@@ -1108,9 +1185,17 @@ int main(int argc, char *argv[]) {
 
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 
+    struct timeval before , after;
+    double frameTime = 0, frameTimeAccum = 0, frameCount = 0;
+
     while (!vkengine_should_close (e)) {
         glfwPollEvents();
+
+        gettimeofday(&before , NULL);
+
         cairo_tests();
+        //random_rectangles();
+        //simple_rectangle_stroke();
         //test_1();
         //vkvg_surface_clear(surf);
         //simple_paint();
@@ -1123,7 +1208,15 @@ int main(int argc, char *argv[]) {
         //lines_stroke();
         if (!vkh_presenter_draw (r))
             vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
+
+        gettimeofday(&after , NULL);
+
+        frameTimeAccum += time_diff(before , after);
+        frameCount++;
     }
+
+    frameTime = frameTimeAccum / frameCount;
+    printf ("frame (µs): %.0lf\nfps: %lf\n", frameTime, floor(1000000 / frameTime));
 
     vkDeviceWaitIdle(e->dev->dev);
 

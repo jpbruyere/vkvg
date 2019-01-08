@@ -175,19 +175,19 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
 
 
 void _create_cmd_buff (VkvgContext ctx){
-    ctx->cmd = vkh_cmd_buff_create(ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    ctx->cmd = vkh_cmd_buff_create((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }
 void _record_draw_cmd (VkvgContext ctx){
-    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vert cpt = %d; ind cpt = %d; ind drawn = %d\n", ctx, ctx->vertCount - 4, ctx->indCount - 6, ctx->indCount - ctx->curIndStart);
+    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vert cpt = %d; ind cpt = %d; ind drawn = %d\n", (ulong)ctx, ctx->vertCount - 4, ctx->indCount - 6, ctx->indCount - ctx->curIndStart);
     if (ctx->indCount == ctx->curIndStart)
         return;
     _check_cmd_buff_state(ctx);
-    vkCmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
+    CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
 
     //DEBUG
-    /*vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
-    vkCmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
-    vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);*/
+    /*CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
+    CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);*/
     //////////
 
     ctx->curIndStart = ctx->indCount;
@@ -196,7 +196,7 @@ void _clear_attachment (VkvgContext ctx) {
 
 }
 inline void _submit_ctx_cmd(VkvgContext ctx){
-    vkh_cmd_submit (ctx->pSurf->dev->gQueue, &ctx->cmd, ctx->flushFence);
+    _submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
 }
 void _wait_and_reset_ctx_cmd (VkvgContext ctx){
     if (!ctx->cmdStarted)
@@ -237,7 +237,7 @@ void _explicit_ms_resolve (VkvgContext ctx){//should init cmd before calling thi
 void _end_render_pass (VkvgContext ctx) {
     LOG(LOG_INFO, "FLUSH Context: ctx = %lu; vert cpt = %d; ind cpt = %d\n", ctx, ctx->vertCount -4, ctx->indCount - 6);
     _record_draw_cmd        (ctx);
-    vkCmdEndRenderPass      (ctx->cmd);
+    CmdEndRenderPass      (ctx->cmd);
 }
 void _flush_cmd_buff (VkvgContext ctx){
     if (!ctx->cmdStarted)
@@ -252,14 +252,14 @@ void _flush_cmd_buff (VkvgContext ctx){
 void _bind_draw_pipeline (VkvgContext ctx) {
     switch (ctx->curOperator) {
     case VKVG_OPERATOR_OVER:
-        vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
         break;
     case VKVG_OPERATOR_CLEAR:
         vkvg_set_source_rgba(ctx,0,0,0,0);
-        vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_CLEAR);
+        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_CLEAR);
         break;
     default:
-        vkCmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
         break;
     }
 }
@@ -299,22 +299,22 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
 
-    vkCmdBeginRenderPass (ctx->cmd, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    CmdBeginRenderPass (ctx->cmd, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     VkViewport viewport = {0,0,ctx->pSurf->width,ctx->pSurf->height,0,1};
-    vkCmdSetViewport(ctx->cmd, 0, 1, &viewport);
+    CmdSetViewport(ctx->cmd, 0, 1, &viewport);
     VkRect2D scissor = {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
-    vkCmdSetScissor(ctx->cmd, 0, 1, &scissor);
+    CmdSetScissor(ctx->cmd, 0, 1, &scissor);
 
     VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc,ctx->dsGrad};
-    vkCmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
+    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
                             0, 3, dss, 0, NULL);
 
     VkDeviceSize offsets[1] = { 0 };
-    vkCmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
-    vkCmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+    CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
+    CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
     _bind_draw_pipeline (ctx);
-    vkCmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
     _update_push_constants  (ctx);
     ctx->cmdStarted = true;
@@ -327,7 +327,7 @@ void _set_mat_inv_and_vkCmdPush (VkvgContext ctx) {
     ctx->pushCstDirty = true;
 }
 inline void _update_push_constants (VkvgContext ctx) {
-    vkCmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
+    CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
     ctx->pushCstDirty = false;
 }
@@ -344,7 +344,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
         if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
             _flush_cmd_buff             (ctx);
-            _reset_src_descriptor_set   (ctx);
+            _update_descriptor_set      (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
             //_init_cmd_buff              (ctx);//push csts updated by init
         }//else
             //_update_push_constants (ctx);
@@ -354,8 +354,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
     {
         VkvgSurface surf = (VkvgSurface)pat->data;
 
-        //flush ctx in two steps to add the src transition in the cmd buff
-        if (ctx->cmdStarted)//transition of img without appropriate dep in subpass must be done outside renderpass.
+        //flush ctx in two steps to add the src transitioning in the cmd buff
+        if (ctx->cmdStarted)//transition of img without appropriate dependencies in subpass must be done outside renderpass.
             _end_render_pass    (ctx);
         else {
             vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -421,7 +421,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         _flush_cmd_buff (ctx);
 
         if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
-            _reset_src_descriptor_set (ctx);
+            _update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
 
         vec4 bounds = {ctx->pSurf->width, ctx->pSurf->height, 0, 0};//store img bounds in unused source field
         ctx->pushConsts.source = bounds;
@@ -470,7 +470,7 @@ void _update_gradient_desc_set (VkvgContext ctx){
 /*
  * Reset currently bound descriptor which image could be destroyed
  */
-void _reset_src_descriptor_set (VkvgContext ctx){
+/*void _reset_src_descriptor_set (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;
     //VkDescriptorSet dss[] = {ctx->dsSrc};
     vkFreeDescriptorSets    (dev->vkDev, ctx->descriptorPool, 1, &ctx->dsSrc);
@@ -480,7 +480,7 @@ void _reset_src_descriptor_set (VkvgContext ctx){
                                                               .descriptorSetCount = 1,
                                                               .pSetLayouts = &dev->dslSrc };
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
-}
+}*/
 
 void _createDescriptorPool (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;

@@ -25,21 +25,30 @@
 #include "vkh_phyinfo.h"
 #include "vk_mem_alloc.h"
 
-VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
+VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
+{
+    return vkvg_device_create_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_4_BIT);
+}
+VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples)
 {
     LOG(LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
 
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
+    dev->instance = inst;
     dev->hdpi   = 72;
     dev->vdpi   = 72;
+    dev->samples= samples;
     dev->vkDev  = vkdev;
     dev->phy    = phy;
+
+    _init_function_pointers (dev);
 
     VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 
     dev->phyMemProps = phyInfos->memProps;
-    dev->gQueue = vkh_queue_create (dev, qFamIdx, qIndex, phyInfos->queues[qFamIdx].queueFlags);
+    dev->gQueue = vkh_queue_create ((VkhDevice)dev, qFamIdx, qIndex, phyInfos->queues[qFamIdx].queueFlags);
+    MUTEX_INIT (&dev->gQMutex);
 
     vkh_phyinfo_destroy (phyInfos);
 
@@ -51,15 +60,17 @@ VkvgDevice vkvg_device_create(VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFa
 
     dev->lastCtx= NULL;
 
-    dev->cmdPool= vkh_cmd_pool_create       (dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    dev->cmd    = vkh_cmd_buff_create       (dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-    dev->fence  = vkh_fence_create_signaled (dev);
+    dev->cmdPool= vkh_cmd_pool_create       ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    dev->cmd    = vkh_cmd_buff_create       ((VkhDevice)dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    dev->fence  = vkh_fence_create_signaled ((VkhDevice)dev);
 
     _create_pipeline_cache      (dev);
     _init_fonts_cache           (dev);
     _setupRenderPass            (dev);
     _createDescriptorSetLayout  (dev);
     _setupPipelines             (dev);
+
+    _create_empty_texture       (dev);
 
     dev->references = 1;
 
@@ -73,6 +84,8 @@ void vkvg_device_destroy (VkvgDevice dev)
         return;
 
     LOG(LOG_INFO, "DESTROY Device\n");
+
+    vkh_image_destroy               (dev->emptyImg);
 
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslGrad,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
@@ -103,6 +116,8 @@ void vkvg_device_destroy (VkvgDevice dev)
     _destroy_font_cache(dev);
 
     vmaDestroyAllocator (dev->allocator);
+
+    MUTEX_DESTROY (&dev->gQMutex);
 
     free(dev);
 }

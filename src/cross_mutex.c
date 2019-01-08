@@ -19,15 +19,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef VKVG_INTERNAL_H
-#define VKVG_INTERNAL_H
-
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include "vectors.h"
 #include "cross_mutex.h"
 
+int MUTEX_INIT(MUTEX *mutex)
+{
+#ifdef _WIN32
+    *mutex = CreateMutex(0, FALSE, 0);;
+    return (*mutex==0);
+#elif __APPLE__
+#elif __unix__
+    return pthread_mutex_init (mutex, NULL);
 #endif
+    return -1;
+}
+
+int MUTEX_LOCK(MUTEX *mutex)
+{
+#ifdef _WIN32
+    return (WaitForSingleObject(*mutex, INFINITE)==WAIT_FAILED?1:0);
+#elif __APPLE__
+#elif __unix__
+    return pthread_mutex_lock( mutex );
+#endif
+    return -1;
+}
+
+int MUTEX_UNLOCK(MUTEX *mutex)
+{
+#ifdef _WIN32
+    return (ReleaseMutex(*mutex)==0);
+#elif __APPLE__
+#elif __unix__
+    return pthread_mutex_unlock( mutex );
+#endif
+    return -1;
+}
+
+int MUTEX_DESTROY(MUTEX *mutex)
+{
+#ifdef _WIN32
+    return (CloseHandle(*mutex)==0);
+#elif __APPLE__
+#elif __unix__
+    return pthread_mutex_destroy(mutex);
+#endif
+    return -1;
+}
