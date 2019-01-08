@@ -77,7 +77,7 @@ void vkengine_dump_Infos (VkEngine e){
         printf("\n");
     }
 }
-vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, uint32_t height) {
+vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
     vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 
     glfwInit();
@@ -86,14 +86,14 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     uint32_t enabledExtsCount = 0, phyCount = 0;
     const char ** enabledExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
 
-    e->app = vkh_app_create("vkvgTest", enabledExtsCount, enabledExts);
+    e->app = vkh_app_create("vkvgTest", (int)enabledExtsCount, enabledExts);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);
     glfwWindowHint(GLFW_FLOATING,   GLFW_FALSE);
     glfwWindowHint(GLFW_DECORATED,  GLFW_TRUE);
 
-    e->window = glfwCreateWindow (width, height, "Window Title", NULL, NULL);
+    e->window = glfwCreateWindow ((int)width, (int)height, "Window Title", NULL, NULL);
 
     VkSurfaceKHR surf;
     VkResult res = glfwCreateWindowSurface(e->app->inst, e->window, NULL, &surf);
@@ -177,7 +177,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, uint32_t width, 
     e->dev = vkh_device_create(pi->phy, dev);
 
     e->renderer = vkh_presenter_create
-            (e->dev, pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, VK_PRESENT_MODE_MAILBOX_KHR);
+            (e->dev, (uint32_t) pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, presentMode);
 
     vkh_app_free_phyinfos (phyCount, phys);
 

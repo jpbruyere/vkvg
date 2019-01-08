@@ -1170,9 +1170,9 @@ void lines_stroke () {
 }
 int main(int argc, char *argv[]) {
     //dumpLayerExts();
-    int width=1024, height=768;
+    uint width=1024, height=768;
 
-    vk_engine_t* e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, width, height);
+    vk_engine_t* e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback (e, key_callback);
 
