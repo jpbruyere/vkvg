@@ -17,10 +17,13 @@
 
 ### What is vkvg?
 **vkvg** is a multiplatform **c** library for drawing 2D vector graphics with [Vulkan](https://www.khronos.org/vulkan/). It's api follows the same pattern as [Cairo](https://www.cairographics.org/), but new functions and original drawing mechanics may be added.
+
 **vkvg** is in early development stage, api may change, any contribution is welcome.
+
 For API documentation and usage, please refer to the [Cairo](https://www.cairographics.org/) documentation.
 
 ### Current status:
+
 - Fill (with stencil even-odd technic) and Stroke functional.
 - Basic painting operation.
 - Font system with caching operational.
