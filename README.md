@@ -8,22 +8,19 @@
   Vulkan Vector Graphics
   <br>
 <p align="center">
+  <img src="https://img.shields.io/github/license/jpbruyere/vkvg.svg?style=flat-square">
   <a href="https://www.paypal.me/GrandTetraSoftware">
-	<img src="https://img.shields.io/badge/Donate-PayPal-green.svg">
+	<img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square">
   </a>
 </p>
 </h1>
 
 ### What is vkvg?
-
-**vkvg** is a multiplatform **c** library for drawing 2D vector graphics with [Vulkan](https://www.khronos.org/vulkan/).
-
-[Cairo](https://www.cairographics.org/) was missing a Vulkan backend, so I decided to start one myself trying to keep my api as close to Cairo as possible. 
+**vkvg** is a multiplatform **c** library for drawing 2D vector graphics with [Vulkan](https://www.khronos.org/vulkan/). It's api follows the same pattern as [Cairo](https://www.cairographics.org/), but new functions and original drawing mechanics may be added.
+**vkvg** is in early development stage, api may change, any contribution is welcome.
+For API documentation and usage, please refer to the [Cairo](https://www.cairographics.org/) documentation.
 
 ### Current status:
-
-**vkvg** is in early development stage, **0.1** beta release is on the road.
-
 - Fill (with stencil even-odd technic) and Stroke functional.
 - Basic painting operation.
 - Font system with caching operational.
@@ -35,7 +32,7 @@
 
 <p align="center">
   <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png">
-    <img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" width="500">
+    <img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" width="300">
   </a>
 </p>
 
@@ -65,20 +62,20 @@ cmake ..					    # Run CMake, optionaly setup glslc path
 make						    # Run Make
 ```
 
-### Roadmap
+### To Do
 
-- Radial gradients.
-- Dashed lines.
-- Operators.
-- Improve stroke algorithms.
-- Offscreen pattern building.
-- Optimize vulkan memory allocations by sub-allocating from a single shared memory chunk per type.
-- Optimize command submissions.
-- Test SDF font rendering.
-- Avoid line joins inside curves and arc.
-- Structured unit testing.
-- Perf and memory checks.
-- Code clean and comment.
-- Documentations.
+- [ ] Radial gradients.
+- [ ] Dashed lines.
+- [ ] Operators.
+- [ ] Improve stroke algorithms.
+- [ ] Offscreen pattern building.
+- [x] Optimize vulkan memory allocations by sub-allocating from a single shared memory chunk per type.
+- [ ] Optimize command submissions.
+- [ ] Test SDF font rendering.
+- [ ] Avoid line joins inside curves and arc.
+- [ ] Structured unit testing.
+- [ ] Perf and memory checks.
+- [ ] Code clean and comment.
+- [ ] Documentations.
 
 
