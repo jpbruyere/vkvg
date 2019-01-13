@@ -34,6 +34,9 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 - Test includes svg rendering with [nanoSVG](https://github.com/memononen/nanosvg)
 
 <p align="center">
+  <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
+    <img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png" width="300">
+  </a>
   <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png">
     <img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" width="300">
   </a>
