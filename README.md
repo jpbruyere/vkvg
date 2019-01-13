@@ -35,10 +35,10 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 
 <p align="center">
   <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
-    <img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png" width="300">
+    <kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png" height="260"></kbd>
   </a>
   <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png">
-    <img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" width="300">
+    <kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" height="260"></kbd>
   </a>
 </p>
 
