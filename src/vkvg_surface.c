@@ -29,6 +29,38 @@
 #include "stb_image_write.h"
 #include "vkh_image.h"
 
+void _explicit_ms_resolve (VkvgSurface surf){
+    VkvgDevice      dev = surf->dev;
+    VkCommandBuffer cmd = dev->cmd;
+
+    _wait_and_reset_device_fence (dev);
+
+    vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    vkh_image_set_layout (cmd, surf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout (cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+    VkImageResolve re = {
+        .extent = {surf->width, surf->height,1},
+        .srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1},
+        .dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1}
+    };
+
+    vkCmdResolveImage(cmd,
+                      vkh_image_get_vkimage (surf->imgMS), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                      vkh_image_get_vkimage (surf->img) ,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                      1,&re);
+    vkh_image_set_layout (cmd, surf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ,
+                          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+    vkh_cmd_end (cmd);
+
+    _submit_cmd (dev, &cmd, dev->fence);
+}
+
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 {
     VkvgDevice      dev = surf->dev;
@@ -99,6 +131,10 @@ void _create_framebuffer (VkvgSurface surf) {
                                                       .width = surf->width,
                                                       .height = surf->height,
                                                       .layers = 1 };
+    if (surf->dev->deferredResolve) {
+        attachments[1] = attachments[2];
+        frameBufferCreateInfo.attachmentCount = 2;
+    }
     VK_CHECK_RESULT(vkCreateFramebuffer(surf->dev->vkDev, &frameBufferCreateInfo, NULL, &surf->fb));
 }
 void _init_surface (VkvgSurface surf) {
@@ -292,7 +328,12 @@ uint32_t vkvg_surface_get_reference_count (VkvgSurface surf) {
 
 VkImage vkvg_surface_get_vk_image(VkvgSurface surf)
 {
+    if (surf->dev->deferredResolve)
+        _explicit_ms_resolve(surf);
     return vkh_image_get_vkimage (surf->img);
+}
+void vkvg_multisample_surface_resolve (VkvgSurface surf){
+    _explicit_ms_resolve(surf);
 }
 VkFormat vkvg_surface_get_vk_format(VkvgSurface surf)
 {

@@ -45,6 +45,59 @@ void _create_pipeline_cache(VkvgDevice dev){
     VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO};
     VK_CHECK_RESULT(vkCreatePipelineCache(dev->vkDev, &pipelineCacheCreateInfo, NULL, &dev->pipelineCache));
 }
+void _setupRenderPassDeferredResolve(VkvgDevice dev)
+{
+    VkAttachmentDescription attColor = {
+                    .format = FB_COLOR_FORMAT,
+                    .samples = dev->samples,
+                    .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+                    .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                    .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                    .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                    .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                    .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+    VkAttachmentDescription attDS = {
+                    .format = VK_FORMAT_S8_UINT,
+                    .samples = dev->samples,
+                    .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                    .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                    .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+                    .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+                    .initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                    .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+
+    VkAttachmentDescription attachments[] = {attColor,attDS};
+    VkAttachmentReference colorRef  = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+    VkAttachmentReference dsRef     = {1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+
+    VkSubpassDescription subpassDescription = { .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        .colorAttachmentCount   = 1,
+                        .pColorAttachments      = &colorRef,
+                        .pDepthStencilAttachment= &dsRef};
+
+    VkSubpassDependency dependencies[] =
+    {
+        { VK_SUBPASS_EXTERNAL, 0,
+          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+          VK_ACCESS_COLOR_ATTACHMENT_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+          VK_DEPENDENCY_BY_REGION_BIT},
+        { 0, VK_SUBPASS_EXTERNAL,
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+          VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT,
+          VK_DEPENDENCY_BY_REGION_BIT},
+    };
+
+    VkRenderPassCreateInfo renderPassInfo = { .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+                .attachmentCount = 2,
+                .pAttachments = attachments,
+                .subpassCount = 1,
+                .pSubpasses = &subpassDescription,
+                .dependencyCount = 2,
+                .pDependencies = dependencies
+    };
+
+    VK_CHECK_RESULT(vkCreateRenderPass(dev->vkDev, &renderPassInfo, NULL, &dev->renderPass));
+}
 void _setupRenderPass(VkvgDevice dev)
 {
     VkAttachmentDescription attColor = {
@@ -259,7 +312,7 @@ void _setupPipelines(VkvgDevice dev)
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
 
 
-#if DEBUG
+#ifdef VKVG_WIRED_DEBUG
     rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     shaderStages[1].pName = "main";

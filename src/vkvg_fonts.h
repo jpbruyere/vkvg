@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2019 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -48,71 +48,79 @@
 #include "vkvg.h"
 #include "vkvg_buff.h"
 #include "vkh.h"
-//#include "vkh_image.h"
 
-
-///texture coords of one char
+//texture coordinates of one character in font cache array texture.
 typedef struct {
-    vec4    bounds;
-    vec2i16	bmpDiff;
-    uint8_t pageIdx;
+    vec4    bounds;                 /* normalized float bounds of character bitmap in font cache texture. */
+    vec2i16	bmpDiff;                /* Difference in pixel between char bitmap top left corner and char glyph*/
+    uint8_t pageIdx;                /* Page index in font cache texture array */
 }_char_ref;
-//chars texture atlas reference
+// Current location in font cache texture array for new character addition. Each font holds such structure to locate
+// where to upload new chars.
 typedef struct {
-    uint8_t     pageIdx;
-    int         penX;
-    int         penY;
-    int         height;
+    uint8_t     pageIdx;            /* Current page number in font cache */
+    int         penX;               /* Current X in cache for next char addition */
+    int         penY;               /* Current Y in cache for next char addition */
+    int         height;             /* Height of current line pointed by this structure */
 }_tex_ref_t;
-
+// Loaded font structure, holds informations for glyphes upload in cache and the lookup table of characters.
 typedef struct {
-    char*       fontFile;
-    FT_F26Dot6  charSize;
-    hb_font_t*  hb_font;
-    FT_Face     face;
-    _char_ref** charLookup;
+    char*       fontFile;           /* Font file full path*/
+    FT_F26Dot6  charSize;           /* Font size*/
+    hb_font_t*  hb_font;            /* HarfBuzz font instance*/
+    FT_Face     face;               /* FreeType face*/
+    _char_ref** charLookup;         /* Lookup table of characteres in cache, if not found, upload is queued*/
 
-    _tex_ref_t  curLine;    //tex coord where to add new char bmp's
+    _tex_ref_t  curLine;            /* tex coord where to add new char bmp's */
 }_vkvg_font_t;
-
+// Font cache global structure, entry point for all font related operations.
 typedef struct {
-    FT_Library		library;
-    FcConfig*       config;
+    FT_Library		library;        /* FreeType library*/
+    FcConfig*       config;         /* Font config, used to find font files by font names*/
 
-    int             stagingX;   //x pen in host buffer
-    uint8_t*		hostBuff;	//host mem where bitmaps are first loaded
+    int             stagingX;       /* x pen in host buffer */
+    uint8_t*		hostBuff;       /* host memory where bitmaps are first loaded */
 
-    VkCommandBuffer cmd;        //upload cmd buff
-    vkvg_buff       buff;       //stagin buffer
-    VkhImage		cacheTex;	//tex 2d array
-    uint8_t         cacheTexLength;  //tex array length
-    int*            pensY;      //y pen pos in each texture of array
-    VkFence			uploadFence;
+    VkCommandBuffer cmd;            /* vulkan command buffer for font textures upload */
+    vkvg_buff       buff;           /* stagin buffer */
+    VkhImage		cacheTex;       /* 2d array texture used by contexts to draw characteres */
+    uint8_t         cacheTexLength; /* layer count of 2d array texture, starts with FONT_CACHE_INIT_LAYERS count and increased when needed */
+    int*            pensY;          /* array of current y pen positions for each texture in cache 2d array */
+    VkFence			uploadFence;    /* Signaled when upload is finished */
 
-    _vkvg_font_t*	fonts;
-    uint8_t			fontsCount;
+    _vkvg_font_t*	fonts;          /* Loaded fonts structure array */
+    uint8_t			fontsCount;     /* Loaded fonts array count*/
 }_font_cache_t;
-
+// Precompute everything necessary to draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
-    hb_buffer_t*        hbBuf;
-    _vkvg_font_t*       font;
-    VkvgDevice          dev;
-    vkvg_text_extents_t extents;
-    const char*         text;
-    unsigned int         glyph_count;
-    hb_glyph_position_t *glyph_pos;
+    hb_buffer_t*        hbBuf;      /* HarfBuzz buffer of text */
+    _vkvg_font_t*       font;       /* vkvg font structure pointer */
+    VkvgDevice          dev;        /* vkvg device associated with this text run */
+    vkvg_text_extents_t extents;    /* store computed text extends */
+    const char*         text;       /* utf8 char array of text*/
+    unsigned int         glyph_count;/* Total glyph count */
+    hb_glyph_position_t *glyph_pos; /* HarfBuzz computed glyph positions array */
 } vkvg_text_run_t;
-
+//Create font cache.
 void _init_fonts_cache      (VkvgDevice dev);
+//Release all ressources of font cache.
 void _destroy_font_cache	(VkvgDevice dev);
+//Select current font for context from font name, create new font entry in cache if required
 void _select_font_face		(VkvgContext ctx, const char* name);
+//Set current font size for context
 void _set_font_size         (VkvgContext ctx, uint32_t size);
+//Draw text
 void _show_text				(VkvgContext ctx, const char* text);
+//Get text dimmensions
 void _text_extents          (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents);
+//Get font global dimmensions
 void _font_extents          (VkvgContext ctx, vkvg_font_extents_t* extents);
-
+//Create text object that could be drawn multiple times minimizing harfbuzz and compute processing.
 void _create_text_run       (VkvgContext ctx, const char* text, VkvgText textRun);
+//Release ressources held by a text run.
 void _destroy_text_run      (VkvgText textRun);
+//Draw text run
 void _show_text_run         (VkvgContext ctx, VkvgText tr);
+//Trigger stagging buffer to be uploaded in font cache. Groupping upload improve performances.
 void _flush_chars_to_tex    (VkvgDevice dev, _vkvg_font_t* f);
 #endif

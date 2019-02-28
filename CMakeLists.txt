@@ -13,8 +13,10 @@ ENDIF()
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	ADD_DEFINITIONS (-DDEBUG)
 	OPTION(ENABLE_VALIDATION "enable vulkan validation layer" ON)
+	OPTION(ENABLE_WIRED_FILL "enable wired polygon draw to check vertices and primitives" OFF)
 ELSE()
-	OPTION(ENABLE_VALIDATION "enable vulkan validation layer" OFF)
+	UNSET(ENABLE_VALIDATION CACHE)
+	UNSET(ENABLE_WIRED_FILL CACHE)
 ENDIF()
 
 OPTION(VKVG_TILING_OPTIMAL "use VK_IMAGE_TILING_OPTIMAL for surface backend texture" OFF)
@@ -40,7 +42,9 @@ endif()
 IF (ENABLE_VALIDATION)
 	ADD_DEFINITIONS (-DVKVG_USE_VALIDATION)
 ENDIF ()
-
+IF (ENABLE_WIRED_FILL)
+	ADD_DEFINITIONS (-DVKVG_WIRED_DEBUG)
+ENDIF ()
 
 #be aware that system libraries have priority on SDK in the finding.
 FIND_PACKAGE(Vulkan REQUIRED)

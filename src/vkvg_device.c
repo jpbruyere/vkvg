@@ -24,12 +24,33 @@
 #include "vkh_queue.h"
 #include "vkh_phyinfo.h"
 #include "vk_mem_alloc.h"
-
+/**
+ * @brief Create VkvgDevice with default multisampling configuration
+ * @param Vulkan instance, usefull to retrieve function pointers
+ * @param Vulkan physical device
+ * @param Vulkan Device
+ * @param Queue familly index
+ * @param Queue index in selected familly
+ * @return
+ */
 VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
 {
-    return vkvg_device_create_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_4_BIT);
+    return vkvg_device_create_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_4_BIT, false);
 }
-VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples)
+/**
+ * @brief Create VkvgDevice with default multisampling configuration
+ * @param Vulkan instance, usefull to retrieve function pointers
+ * @param Vulkan physical device
+ * @param Vulkan Device
+ * @param Queue familly index
+ * @param Queue index in selected familly
+ * @param multisample count
+ * @param When set to false, surface is resolve after each renderpasses on resolve attachment of surface.
+ * If set to true, multisample surface image is resolve with vkvg_multisample_surface_resolve. This function
+ * is called automatically when surface's VkImage is querried with vkvg_surface_get_vk_image.
+ * @return
+ */
+VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve)
 {
     LOG(LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
 
@@ -39,6 +60,7 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
     dev->hdpi   = 72;
     dev->vdpi   = 72;
     dev->samples= samples;
+    dev->deferredResolve = deferredResolve;
     dev->vkDev  = vkdev;
     dev->phy    = phy;
 
@@ -66,7 +88,10 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 
     _create_pipeline_cache      (dev);
     _init_fonts_cache           (dev);
-    _setupRenderPass            (dev);
+    if (dev->deferredResolve)
+        _setupRenderPassDeferredResolve(dev);
+    else
+        _setupRenderPass        (dev);
     _createDescriptorSetLayout  (dev);
     _setupPipelines             (dev);
 
@@ -98,7 +123,7 @@ void vkvg_device_destroy (VkvgDevice dev)
     vkDestroyPipeline               (dev->vkDev, dev->pipe_SUB,     NULL);
     vkDestroyPipeline               (dev->vkDev, dev->pipe_CLEAR,   NULL);
 
-#if DEBUG
+#ifdef VKVG_WIRED_DEBUG
     vkDestroyPipeline               (dev->vkDev, dev->pipelineWired, NULL);
     vkDestroyPipeline               (dev->vkDev, dev->pipelineLineList, NULL);
 #endif

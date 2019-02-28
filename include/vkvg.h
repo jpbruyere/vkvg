@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2019 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -28,6 +28,7 @@ extern "C" {
 
 #include <vulkan/vulkan.h>
 #include <math.h>
+#include <stdbool.h>
 
 #ifdef VKVG_TILING_OPTIMAL
     #define VKVG_TILING VK_IMAGE_TILING_OPTIMAL
@@ -160,7 +161,7 @@ typedef struct _vkvg_device_t*  VkvgDevice;
 typedef struct _vkvg_pattern_t* VkvgPattern;
 
 VkvgDevice	vkvg_device_create              (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex);
-VkvgDevice  vkvg_device_create_multisample  (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples);
+VkvgDevice  vkvg_device_create_multisample  (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve);
 void		vkvg_device_destroy             (VkvgDevice dev);
 VkvgDevice  vkvg_device_reference           (VkvgDevice dev);
 uint32_t    vkvg_device_get_reference_count (VkvgDevice dev);
@@ -180,6 +181,7 @@ uint32_t   	vkvg_surface_get_width      (VkvgSurface surf);
 uint32_t	vkvg_surface_get_height     (VkvgSurface surf);
 VkImage		vkvg_surface_get_vkh_image	(VkvgSurface surf);
 void        vkvg_surface_write_to_png   (VkvgSurface surf, const char* path);
+void        vkvg_multisample_surface_resolve (VkvgSurface surf);
 
 //mimic from cairo, to facilitate usage of vkvg as cairo vulkan backend
 typedef enum _vkvg_operator {

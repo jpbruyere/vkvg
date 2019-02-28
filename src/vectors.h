@@ -22,9 +22,7 @@
 #ifndef VKVG_VECTORS_H
 #define VKVG_VECTORS_H
 
-#include <math.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include "vkvg_internal.h"
 
 typedef struct {
     float x;

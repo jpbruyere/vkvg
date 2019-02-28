@@ -86,7 +86,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     uint32_t enabledExtsCount = 0, phyCount = 0;
     const char ** enabledExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
 
-    e->app = vkh_app_create("vkvgTest", (int)enabledExtsCount, enabledExts);
+    e->app = vkh_app_create("vkvgTest", enabledExtsCount, enabledExts);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);
@@ -150,23 +150,15 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     }
 
     char const * dex [] = {"VK_KHR_swapchain"};
-#if VKVG_USE_VALIDATION
-    uint32_t dlayCpt = 1;
-    static char const * dlay [] = {"VK_LAYER_LUNARG_standard_validation"};
-#else
-    uint32_t dlayCpt = 0;
-    static char const * dlay [] = {NULL};
-#endif
+
     VkPhysicalDeviceFeatures enabledFeatures = {
         .fillModeNonSolid = true,
-        .sampleRateShading = true
+        //.sampleRateShading = true
     };
 
     VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                        .queueCreateInfoCount = qCount,
                                        .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
-                                       .enabledLayerCount = dlayCpt,
-                                       .ppEnabledLayerNames = dlay,
                                        .enabledExtensionCount = 1,
                                        .ppEnabledExtensionNames = dex,
                                        .pEnabledFeatures = &enabledFeatures
@@ -175,6 +167,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     VkDevice dev;
     VK_CHECK_RESULT(vkCreateDevice (pi->phy, &device_info, NULL, &dev));
     e->dev = vkh_device_create(pi->phy, dev);
+    e->dev->instance = vkh_app_get_inst (e->app);
 
     e->renderer = vkh_presenter_create
             (e->dev, (uint32_t) pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, presentMode);
@@ -194,7 +187,7 @@ void vkengine_destroy (VkEngine e) {
     vkh_presenter_destroy (e->renderer);
     vkDestroySurfaceKHR (e->app->inst, surf, NULL);
 
-    vkDestroyDevice (e->dev->dev, NULL);
+    vkh_device_destroy (e->dev);
 
     glfwDestroyWindow (e->window);
     glfwTerminate ();

@@ -90,6 +90,13 @@
 VkvgDevice device;
 VkvgSurface surf = NULL;
 
+static float panX = 0.f;
+static float panY = 0.f;
+static float lastX = 0.f;
+static float lastY = 0.f;
+static float zoom = 1.0f;
+static bool mouseDown = false;
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action != GLFW_PRESS)
         return;
@@ -100,8 +107,28 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 static void char_callback (GLFWwindow* window, uint32_t c){}
-static void mouse_move_callback(GLFWwindow* window, double x, double y){}
-static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif){}
+static void mouse_move_callback(GLFWwindow* window, double x, double y){
+    if (mouseDown) {
+        panX += ((float)x-lastX);
+        panY += ((float)y-lastY);
+    }
+    lastX = (float)x;
+    lastY = (float)y;
+}
+static void scroll_callback(GLFWwindow* window, double x, double y){
+    if (y<0.f)
+        zoom *= 0.5f;
+    else
+        zoom *= 2.0f;
+}
+static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif){
+    if (but != GLFW_MOUSE_BUTTON_1)
+        return;
+    if (state == GLFW_TRUE)
+        mouseDown = true;
+    else
+        mouseDown = false;
+}
 
 double time_diff(struct timeval x , struct timeval y)
 {
@@ -642,11 +669,11 @@ void cairo_test_fill_rule (VkvgContext cr){
     vkvg_rectangle (cr, 12, 12, 232, 70);
     //vkvg_stroke (cr);
 //    vkvg_new_sub_path (cr);
-    vkvg_arc (cr, 64, 64, 40, 0, M_PI*2);
+    vkvg_arc (cr, 64, 64, 40, 0, (float)M_PI*2.f);
     //vkvg_close_path(cr);
 
     vkvg_new_sub_path (cr);
-    vkvg_arc_negative (cr, 192, 64, 40, 2*M_PI, 0);
+    vkvg_arc_negative (cr, 192, 64, 40, (float)M_PI*2.f, 0);
     //vkvg_close_path(cr);
 
     //vkvg_rectangle (cr, 30, 30, 20, 200);
@@ -678,6 +705,7 @@ void cairo_test_text (VkvgContext cr) {
     /* draw helping lines */
     vkvg_set_source_rgba (cr, 1, 0.2, 0.2, 0.6);
     vkvg_set_line_width (cr, 6.0);
+    vkvg_new_path(cr);
     vkvg_arc (cr, x, y, 10.0, 0, 2*M_PI);
     vkvg_fill (cr);
     vkvg_move_to (cr, x,y);
@@ -811,13 +839,13 @@ void cairo_print_arc_neg (VkvgContext cr){
     float angle2 = 180.0 * (M_PI/180.0);  /* in radians           */
 
     vkvg_set_source_rgba(cr, 0, 0, 0, 1);
-    vkvg_set_line_width (cr, 10.0);
+    vkvg_set_line_width (cr, 5.0);
     vkvg_arc_negative (cr, xc, yc, radius, angle1, angle2);
     vkvg_stroke (cr);
 
     /* draw helping lines */
     vkvg_set_source_rgba (cr, 1, 0.2, 0.2, 0.6);
-    vkvg_set_line_width (cr, 6.0);
+    vkvg_set_line_width (cr, 10.0);
 
     vkvg_arc (cr, xc, yc, 10.0, 0, 2*M_PI);
     vkvg_fill (cr);
@@ -896,13 +924,16 @@ void cairo_print_arc (VkvgContext cr) {
     vkvg_stroke (cr);
 }
 static float rotation = 0.f;
+
 void cairo_tests () {
     rotation+=0.01f;
 
     vkvg_matrix_t mat;
     vkvg_matrix_init_translate (&mat, 512,400);
     vkvg_matrix_rotate(&mat,rotation);
-    vkvg_matrix_translate(&mat,-512,-400);
+    vkvg_matrix_scale(&mat,zoom,zoom);
+    vkvg_matrix_translate(&mat,-512.f + panX,-400.f +panY);
+
 
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
@@ -970,9 +1001,18 @@ void svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 }
 
 void test_svg () {
+    rotation+=0.01f;
+
+    vkvg_matrix_t mat;
+    vkvg_matrix_init_translate (&mat, 512,400);
+    vkvg_matrix_rotate(&mat,rotation);
+    vkvg_matrix_translate(&mat,-512,-400);
+
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_source_rgba(ctx,1.0,1.0,1.0,1);
     vkvg_paint(ctx);
+
+    vkvg_set_matrix(ctx,&mat);
 
     NSVGimage* svg;
     NSVGshape* shape;
@@ -1149,11 +1189,11 @@ void simple_rectangle_fill () {
 void simple_rectangle_stroke () {
     VkvgContext ctx = vkvg_create(surf);
     vkvg_clear(ctx);
-    vkvg_line_to(ctx,100,100);
+    vkvg_set_line_width(ctx,100.f);
+    vkvg_arc (ctx, 300, 300, 200, 0, M_PI*2.0);
     vkvg_set_source_rgba(ctx,0,0,1,1);
-    vkvg_set_line_width(ctx,50.f);
-    vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
-    vkvg_rectangle(ctx,100,100,200,200);
+    vkvg_fill_preserve(ctx);
+    vkvg_set_source_rgba(ctx,1,0,1,1);
     vkvg_stroke(ctx);
     vkvg_destroy(ctx);
 }
@@ -1172,16 +1212,21 @@ int main(int argc, char *argv[]) {
     //dumpLayerExts();
     uint width=1024, height=768;
 
-    vk_engine_t* e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
+    vk_engine_t* e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback (e, key_callback);
+    vkengine_set_mouse_but_callback(e, mouse_button_callback);
+    vkengine_set_cursor_pos_callback(e, mouse_move_callback);
+    vkengine_set_scroll_callback(e, scroll_callback);
 
-    device  = vkvg_device_create (vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0);
+    bool deferredResolve = false;
+
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_4_BIT, deferredResolve);
     surf    = vkvg_surface_create(device, width, height);
 
-    //test_svg();
     //test_grad_transforms();
     //test_colinear();
+    //simple_rectangle_stroke();
 
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 
@@ -1193,19 +1238,22 @@ int main(int argc, char *argv[]) {
 
         gettimeofday(&before , NULL);
 
+        //test_svg();
         cairo_tests();
         //random_rectangles();
         //simple_rectangle_stroke();
         //test_1();
         //vkvg_surface_clear(surf);
         //simple_paint();
-        //simple_rectangle_stroke();
+
         //simple_rectangle_fill();
         //test_img_surface();
         //multi_test1();
         //test_painting();
         //vkvg_surface_clear(surf);
         //lines_stroke();
+        if (deferredResolve)
+            vkvg_multisample_surface_resolve(surf);
         if (!vkh_presenter_draw (r))
             vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 

@@ -27,7 +27,7 @@
 
 #include "vkh.h"
 
-int defaultFontCharSize = 12<<6;
+static int defaultFontCharSize = 12<<6;
 
 void _init_fonts_cache (VkvgDevice dev){
     _font_cache_t* cache = (_font_cache_t*)calloc(1, sizeof(_font_cache_t));
@@ -59,6 +59,7 @@ void _init_fonts_cache (VkvgDevice dev){
 
     dev->fontCache = cache;
 }
+///increase layer count of 2d texture array used as font cache.
 void _increase_font_tex_array (VkvgDevice dev){
     _font_cache_t* cache = dev->fontCache;
 
@@ -118,6 +119,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 
     _init_all_contexes  (dev);
 }
+///Start a new line in font cache, increase texture layer count if needed.
 void _init_next_line_in_tex_cache (VkvgDevice dev, _vkvg_font_t* f){
     _font_cache_t* cache = dev->fontCache;
     int i;
@@ -169,6 +171,8 @@ void _destroy_font_cache (VkvgDevice dev){
 
 }
 
+#ifdef DEBUG
+//helper function
 void _dump_glyphs (FT_Face face){
     FT_GlyphSlot    slot;
     char gname[256];
@@ -185,7 +189,8 @@ void _dump_glyphs (FT_Face face){
                face->size->metrics.max_advance/64);
     }
 }
-
+#endif
+//flush font stagging buffer to cache texture array
 void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
     _font_cache_t* cache = dev->fontCache;
     if (cache->stagingX == 0)
@@ -225,7 +230,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
     cache->stagingX = 0;
     memset(cache->hostBuff, 0, FONT_PAGE_SIZE * FONT_PAGE_SIZE);
 }
-
+//create a new char entry and put glyph in stagging buffer, ready for upload.
 _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
     FT_CHECK_RESULT(FT_Load_Glyph(f->face, gindex, FT_LOAD_RENDER));
 
@@ -253,18 +258,19 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
         bmp.rows};
     cr->bounds = uvBounds;
     cr->pageIdx = f->curLine.pageIdx;
-    cr->bmpDiff.x = slot->bitmap_left;
-    cr->bmpDiff.y = slot->bitmap_top;
+    cr->bmpDiff.x = (int16_t)slot->bitmap_left;
+    cr->bmpDiff.y = (int16_t)slot->bitmap_top;
 
     f->charLookup[gindex] = cr;
     dev->fontCache->stagingX += bmp.width;
     return cr;
 }
-
+//set current font size for context
 void _set_font_size (VkvgContext ctx, uint32_t size){
     ctx->selectedFont.charSize = size << 6;
     ctx->currentFont = NULL;
 }
+//select current font for context
 void _select_font_face (VkvgContext ctx, const char* name){
     _font_cache_t*  cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;
 
@@ -289,7 +295,7 @@ void _select_font_face (VkvgContext ctx, const char* name){
 
     ctx->currentFont =  NULL;
 }
-
+//try to find font in cache with same font file path and font size as selected in context.
 _vkvg_font_t* _tryFindVkvgFont (VkvgContext ctx){
     _font_cache_t*  cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;
     for (int i = 0; i < cache->fontsCount; ++i) {
@@ -298,7 +304,7 @@ _vkvg_font_t* _tryFindVkvgFont (VkvgContext ctx){
     }
     return NULL;
 }
-
+//try to find corresponding font in cache (defined by context selectedFont) and create a new font entry if not found.
 void _update_current_font (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;
     if (ctx->currentFont == NULL){
@@ -336,7 +342,7 @@ void _update_current_font (VkvgContext ctx) {
         }
     }
 }
-
+//Get harfBuzz buffer for provided text.
 hb_buffer_t * _get_hb_buffer (VkvgContext ctx, const char* text) {
     hb_buffer_t *buf = hb_buffer_create();
 
@@ -353,6 +359,7 @@ hb_buffer_t * _get_hb_buffer (VkvgContext ctx, const char* text) {
     hb_shape (ctx->currentFont->hb_font, buf, NULL, 0);
     return buf;
 }
+//retrieve global font extends of context's current font as defined by FreeType
 void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
     _update_current_font (ctx);
 
@@ -365,7 +372,7 @@ void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
     extents->max_x_advance = bbox->xMax >> 6;
     extents->max_y_advance = bbox->yMax >> 6;
 }
-
+//compute text extends for provided string.
 void _text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents) {
     _update_current_font (ctx);
 
@@ -470,7 +477,7 @@ void _show_text (VkvgContext ctx, const char* text){
     //_show_texture(ctx); return;
 }
 
-#if DEBUG
+#ifdef DEBUG
 void _show_texture (vkvg_context* ctx){
     Vertex vs[] = {
         {{0,0},                             {0,0,1}},

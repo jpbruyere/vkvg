@@ -102,9 +102,9 @@ void _add_point_vec2(VkvgContext ctx, vec2 v){
 }
 float _normalizeAngle(float a)
 {
-    float res = ROUND_DOWN(fmod(a,2.0f*M_PI),100);
+    float res = ROUND_DOWN(fmod(a,2.0f*M_PIF),100);
     if (res < 0.0f)
-        return res + 2.0f*M_PI;
+        return res + 2.0f*M_PIF;
     else
         return res;
 }
@@ -184,11 +184,11 @@ void _record_draw_cmd (VkvgContext ctx){
     _check_cmd_buff_state(ctx);
     CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
 
-    //DEBUG
-    /*CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
+#ifdef VKVG_WIRED_DEBUG
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
     CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
-    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);*/
-    //////////
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+#endif
 
     ctx->curIndStart = ctx->indCount;
 }
@@ -211,7 +211,7 @@ inline void _submit_wait_and_reset_cmd (VkvgContext ctx){
     _submit_ctx_cmd(ctx);
     _wait_and_reset_ctx_cmd(ctx);
 }
-void _explicit_ms_resolve (VkvgContext ctx){//should init cmd before calling this (unused, using automatic resolve by renderpass)
+/*void _explicit_ms_resolve (VkvgContext ctx){//should init cmd before calling this (unused, using automatic resolve by renderpass)
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
@@ -232,7 +232,7 @@ void _explicit_ms_resolve (VkvgContext ctx){//should init cmd before calling thi
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ,
                           VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-}
+}*/
 
 void _end_render_pass (VkvgContext ctx) {
     LOG(LOG_INFO, "FLUSH Context: ctx = %lu; vert cpt = %d; ind cpt = %d\n", ctx, ctx->vertCount -4, ctx->indCount - 6);
@@ -560,13 +560,13 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
             _add_triangle_indices(ctx, idx+2, idx+3, idx+1);
             _add_triangle_indices(ctx, idx+1, idx+3, idx+4);
         }else if (ctx->lineJoin == VKVG_LINE_JOIN_ROUND){
-            float step = M_PI / hw;
+            float step = M_PIF / hw;
             float a = acos(vp.x);
             if (vp.y < 0)
                 a = -a;
 
             if (cross<0){
-                a+=M_PI;
+                a+=M_PIF;
                 float a1 = a + alpha*2;
                 a-=step;
                 while (a > a1){
@@ -700,8 +700,8 @@ void _recursive_bezier (VkvgContext ctx,
                 float a23 = atan2(y3 - y2, x3 - x2);
                 da1 = fabs(a23 - atan2(y2 - y1, x2 - x1));
                 da2 = fabs(atan2(y4 - y3, x4 - x3) - a23);
-                if(da1 >= M_PI) da1 = M_2_PI - da1;
-                if(da2 >= M_PI) da2 = M_2_PI - da2;
+                if(da1 >= M_PIF) da1 = M_2_PI - da1;
+                if(da2 >= M_PIF) da2 = M_2_PI - da2;
 
                 if(da1 + da2 < m_angle_tolerance)
                 {
@@ -742,7 +742,7 @@ void _recursive_bezier (VkvgContext ctx,
                     // Angle Condition
                     //----------------------
                     da1 = fabs(atan2(y3 - y2, x3 - x2) - atan2(y2 - y1, x2 - x1));
-                    if(da1 >= M_PI) da1 = M_2_PI - da1;
+                    if(da1 >= M_PIF) da1 = M_2_PI - da1;
 
                     if(da1 < m_angle_tolerance)
                     {
@@ -774,7 +774,7 @@ void _recursive_bezier (VkvgContext ctx,
                     // Angle Condition
                     //----------------------
                     da1 = fabs(atan2(y4 - y3, x4 - x3) - atan2(y3 - y2, x3 - x2));
-                    if(da1 >= M_PI) da1 = M_2_PI - da1;
+                    if(da1 >= M_PIF) da1 = M_2_PI - da1;
 
                     if(da1 < m_angle_tolerance)
                     {

@@ -49,50 +49,49 @@ PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
 
 
 typedef struct _vkvg_device_t{
-    VkDevice				vkDev;
-    VkPhysicalDeviceMemoryProperties phyMemProps;
-    VkPhysicalDevice        phy;
-    VmaAllocator            allocator;
+    VkDevice				vkDev;                  /**< Vulkan Logical Device */
+    VkPhysicalDeviceMemoryProperties phyMemProps;   /**< Vulkan Physical device memory properties */
+    VkPhysicalDevice        phy;                    /**< Vulkan Physical device */
+    VmaAllocator            allocator;              /**< Vulkan Memory allocator */
+    VkInstance              instance;               /**< Vulkan instance */
 
-    VkhQueue                gQueue;
-    MUTEX                   gQMutex;//queue submission has to be externally syncronized
-    VkRenderPass			renderPass;
+    VkhQueue                gQueue;                 /**< Vulkan Queue with Graphic flag */
+    MUTEX                   gQMutex;                /**< queue submission has to be externally syncronized */
+    VkRenderPass			renderPass;             /**< Vulkan render pass, common for all surfaces */
 
-    uint32_t                references;
-    VkCommandPool			cmdPool;
-    VkCommandBuffer         cmd;
-    //this fence is kept signaled when idle, wait and reset are called before each recording.
-    VkFence                 fence;
+    uint32_t                references;             /**< Reference count, prevent destroying device if still in use */
+    VkCommandPool			cmdPool;                /**< Global command pool for processing on surfaces without context */
+    VkCommandBuffer         cmd;                    /**< Global command buffer */
+    VkFence                 fence;                  /**< this fence is kept signaled when idle, wait and reset are called before each recording. */
 
-    VkPipeline				pipe_OVER;  //default operator
+    VkPipeline				pipe_OVER;              /**< default operator */
     VkPipeline				pipe_SUB;
-    VkPipeline				pipe_CLEAR; //clear operator
+    VkPipeline				pipe_CLEAR;             /**< clear operator */
 
-    VkPipeline				pipelinePolyFill;   //
-    VkPipeline				pipelineClipping;   //to update clip
+    VkPipeline				pipelinePolyFill;       /**< even-odd polygon filling first step */
+    VkPipeline				pipelineClipping;       /**< draw on stencil to update clipping regions */
 
-#if DEBUG
+#ifdef VKVG_WIRED_DEBUG
     VkPipeline				pipelineWired;
     VkPipeline				pipelineLineList;
 #endif
 
-    VkPipelineCache			pipelineCache;
-    VkPipelineLayout		pipelineLayout;
-    VkDescriptorPool		descriptorPool;
-    VkDescriptorSetLayout	dslFont;
-    VkDescriptorSetLayout	dslSrc;
-    VkDescriptorSetLayout	dslGrad;
+    VkPipelineCache			pipelineCache;          /**< speed up startup by caching configured pipelines on disk */
+    VkPipelineLayout		pipelineLayout;         /**< layout common to all pipelines */
+    VkDescriptorSetLayout	dslFont;                /**< font cache descriptors layout */
+    VkDescriptorSetLayout	dslSrc;                 /**< context source surface descriptors layout */
+    VkDescriptorSetLayout	dslGrad;                /**< context gradient descriptors layout */
 
-    int		hdpi,
+    int		hdpi,                                   /**< only used for FreeType fonts */
             vdpi;
-    VkInstance              instance;
 
-    VkhImage                emptyImg;//prevent unbound descriptor to trigger Validation error 61
-    VkSampleCountFlags      samples;//samples count for all surfaces
-    vkvg_status_t           status;
+    VkhImage                emptyImg;               /**< prevent unbound descriptor to trigger Validation error 61 */
+    VkSampleCountFlags      samples;                /**< samples count common to all surfaces */
+    bool                    deferredResolve;        /**< if true, resolve only on context destruction and set as source */
+    vkvg_status_t           status;                 /**< Current status of device, affected by last operation */
 
-    _font_cache_t*	fontCache;
-    VkvgContext     lastCtx;    //double linked list last elmt
+    _font_cache_t*	fontCache;                      /**< Store everything relative to common font caching system */
+    VkvgContext     lastCtx;                        /**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
 }vkvg_device;
 
 void _init_function_pointers    (VkvgDevice dev);
@@ -100,6 +99,7 @@ void _create_empty_texture      (VkvgDevice dev);
 void _check_image_format_properties (VkvgDevice dev);
 void _create_pipeline_cache     (VkvgDevice dev);
 void _setupRenderPass           (VkvgDevice dev);
+void _setupRenderPassDeferredResolve (VkvgDevice dev);
 void _setupPipelines            (VkvgDevice dev);
 void _createDescriptorSetLayout (VkvgDevice dev);
 void _flush_all_contexes        (VkvgDevice dev);

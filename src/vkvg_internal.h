@@ -27,6 +27,15 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <float.h>
+#include <math.h>
+
+# define M_PIF		3.14159265358979323846f	/* float pi */
+
+#define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
+#define ROUND_DOWN(v,p) (floorf(v * p) / p)
+#define EQUF(a, b) (fabsf(a-b)<=FLT_EPSILON)
+
 #include "vectors.h"
 #include "cross_mutex.h"
 

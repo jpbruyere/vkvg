@@ -28,13 +28,11 @@
 #include "vkh.h"
 #include "vkvg_fonts.h"
 
-#define VKVG_PTS_SIZE				16384
+#define VKVG_PTS_SIZE				10000
 #define VKVG_VBO_SIZE				VKVG_PTS_SIZE * 2
 #define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 2
-#define VKVG_PATHES_SIZE			256
+#define VKVG_PATHES_SIZE			16
 #define VKVG_ARRAY_THRESHOLD		4
-
-#define ROUND_DOWN(v,p) (floorf(v * p) / p)
 
 typedef struct{
     vec2 pos;
