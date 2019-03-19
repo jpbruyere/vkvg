@@ -145,22 +145,62 @@ INSTALL(TARGETS vkvg
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-if (GLFW3_FOUND)
-	#build test app
-	ADD_EXECUTABLE(${PROJECT_NAME}_test tests/test1.c tests/vkengine.c)
-	TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME}_test PRIVATE
+FUNCTION (buildtest TEST_NAME)
+	ADD_EXECUTABLE(${PROJECT_NAME}_${TEST_NAME} "tests/${TEST_NAME}.c" )
+	TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME}_${TEST_NAME} PRIVATE
 		${Vulkan_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${CMAKE_CURRENT_SOURCE_DIR}/tests/common
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
-	TARGET_LINK_LIBRARIES(${PROJECT_NAME}_test
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME}_${TEST_NAME}
+		#${Vulkan_LIBRARIES}
+		#${GLFW3_LIBRARIES}
+		#vkh_static
+		#vkvg
+		tests_common
+	)
+ENDFUNCTION (buildtest)
+
+if (GLFW3_FOUND)
+	ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
+	TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
+		${Vulkan_INCLUDE_DIRS}
+		${CMAKE_CURRENT_SOURCE_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${CMAKE_CURRENT_SOURCE_DIR}/tests/common
+		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
+		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
+	)
+	TARGET_LINK_LIBRARIES(tests_common
 		${Vulkan_LIBRARIES}
 		${GLFW3_LIBRARIES}
 		vkh_static
 		vkvg
 	)
+	file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/tests" "tests/data/*")
+	FOREACH(DATA_FILE ${DATAS})
+		GET_FILENAME_COMPONENT(copy-dest-dir ${CMAKE_CURRENT_BINARY_DIR}/${DATA_FILE} DIRECTORY)
+		SET(copy-output ${CMAKE_CURRENT_BINARY_DIR}/${DATA_FILE})
+		ADD_CUSTOM_COMMAND(
+		   OUTPUT  ${copy-output}
+		   COMMAND ${CMAKE_COMMAND} -E make_directory ${copy-dest-dir}
+		   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/tests/${DATA_FILE}" "${copy-output}"
+		   COMMENT "Copying ${DATA_FILE} to ${copy-output}"
+		   #DEPENDS ${DATA_FILE}
+		   VERBATIM
+		)
+	ENDFOREACH()
+	add_custom_target("${PROJECT_NAME}_DataCopy" ALL DEPENDS ${DATAS})
+
+	#build test apps
+	file(GLOB TESTS "tests/*.c")
+	FOREACH(TEST ${TESTS})
+		GET_FILENAME_COMPONENT(testname ${TEST} NAME_WE)
+		buildtest(${testname})
+	ENDFOREACH()
 endif ()
 
 MESSAGE(STATUS "\n\n--------------------------------------------------------------------------")
@@ -178,3 +218,4 @@ ELSE ()
 MESSAGE(STATUS "Surface tiling\t= VK_IMAGE_TILING_LINEAR.")
 ENDIF ()
 MESSAGE(STATUS "---------------------------------------------------------------------------\n\n")
+
