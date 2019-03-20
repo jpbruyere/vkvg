@@ -25,6 +25,10 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#ifdef VKVG_LCD_FONT_FILTER
+#include <freetype/ftlcdfil.h>
+#endif
+
 #include <hb.h>
 #include <hb-ft.h>
 
@@ -83,8 +87,10 @@ typedef struct {
 
     VkCommandBuffer cmd;            /* vulkan command buffer for font textures upload */
     vkvg_buff       buff;           /* stagin buffer */
-    VkhImage		cacheTex;       /* 2d array texture used by contexts to draw characteres */
-    uint8_t         cacheTexLength; /* layer count of 2d array texture, starts with FONT_CACHE_INIT_LAYERS count and increased when needed */
+    VkhImage		texture;        /* 2d array texture used by contexts to draw characteres */
+    VkFormat        texFormat;      /* Format of the fonts texture array */
+    uint8_t         texPixelSize;   /* Size in byte of a single pixel in a font texture */
+    uint8_t         texLength;      /* layer count of 2d array texture, starts with FONT_CACHE_INIT_LAYERS count and increased when needed */
     int*            pensY;          /* array of current y pen positions for each texture in cache 2d array */
     VkFence			uploadFence;    /* Signaled when upload is finished */
 

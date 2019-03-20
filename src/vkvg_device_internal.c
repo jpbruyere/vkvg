@@ -247,12 +247,14 @@ void _setupPipelines(VkvgDevice dev)
                                             .pCode = (uint32_t*)vkvg_main_vert_spv,
                                             .codeSize = vkvg_main_vert_spv_len };
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modVert));
+#ifdef VKVG_LCD_FONT_FILTER
+    createInfo.pCode = (uint32_t*)vkvg_main_lcd_frag_spv;
+    createInfo.codeSize = vkvg_main_lcd_frag_spv_len;
+#else
     createInfo.pCode = (uint32_t*)vkvg_main_frag_spv;
     createInfo.codeSize = vkvg_main_frag_spv_len;
+#endif
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFrag));
-    createInfo.pCode = (uint32_t*)wired_frag_spv;
-    createInfo.codeSize = wired_frag_spv_len;
-    VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFragWired));
 
     VkPipelineShaderStageCreateInfo vertStage = { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
@@ -315,8 +317,11 @@ void _setupPipelines(VkvgDevice dev)
 #ifdef VKVG_WIRED_DEBUG
     rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-    shaderStages[1].pName = "main";
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
+
+    createInfo.pCode = (uint32_t*)wired_frag_spv;
+    createInfo.codeSize = wired_frag_spv_len;
+    VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFragWired));
 
     shaderStages[1].module = modFragWired;
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;

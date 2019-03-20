@@ -1,9 +1,74 @@
 #include "test.h"
 
+static const char* txt = "The quick brown fox jumps over the lazy dog";
+
+void print(VkvgContext ctx, float penY, uint32_t size) {
+    vkvg_set_font_size(ctx,size);
+    vkvg_move_to(ctx, 10,penY);
+    vkvg_show_text (ctx,txt);
+}
+
+void test2() {
+    VkvgContext ctx = vkvg_create(surf);
+
+    vkvg_color_t bg = {0.3,0.3,0.3,1};
+    vkvg_color_t fg = {0.9,0.9,0.9,1};
+
+    vkvg_set_source_rgba(ctx,bg.r,bg.g,bg.b,bg.a);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgba(ctx,fg.r,fg.g,fg.b,fg.a);
+    //vkvg_select_font_face(ctx, "droid");
+    vkvg_select_font_face(ctx, "times");
+
+
+    float penY = 10.f;
+
+    for (uint32_t size=8;size<39;size++) {
+        print(ctx,penY+=size,size);
+    }
+
+    vkvg_destroy(ctx);
+}
+void test1() {
+    VkvgContext ctx = vkvg_create(surf);
+
+    vkvg_color_t fg = {0.0,0.0,0.0,1};
+    vkvg_color_t bg = {0.9,0.9,0.9,1};
+
+    vkvg_set_source_rgba(ctx,bg.r,bg.g,bg.b,bg.a);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgba(ctx,fg.r,fg.g,fg.b,fg.a);
+
+    uint32_t size = 8;
+    float penY = 100.f;
+
+    vkvg_set_font_size(ctx,size);
+
+    vkvg_select_font_face(ctx, "mono");
+    vkvg_move_to(ctx, 100,penY);
+    vkvg_show_text (ctx,txt);
+
+    penY += 1.2f * size;
+
+    vkvg_select_font_face(ctx, "times");
+    vkvg_move_to(ctx, 100, penY);
+    vkvg_show_text (ctx,txt);
+
+    penY += 1.2f * size;
+
+    vkvg_select_font_face(ctx, "arial:italic");
+    vkvg_move_to(ctx, 100, penY);
+    vkvg_show_text (ctx,txt);
+
+    vkvg_destroy(ctx);
+}
 void test(){
     VkvgContext ctx = vkvg_create(surf);
 
-    vkvg_set_source_rgba(ctx,0.9,0.9,0.9,1);
+    //vkvg_color_t fg = {0.2,0.2,0.2,1};
+    vkvg_color_t fg = {0.0,0.0,0.0,1};
+    vkvg_color_t bg = {0.9,0.9,0.9,1};
+    vkvg_set_source_rgba(ctx,bg.r,bg.g,bg.b,bg.a);
     vkvg_paint(ctx);
 
     int size = 19;
@@ -21,7 +86,7 @@ void test(){
     vkvg_font_extents_t fe;
     vkvg_font_extents (ctx,&fe);
     vkvg_move_to(ctx, penX,penY);
-    vkvg_set_source_rgba(ctx,0.1,0.1,0.1,1);
+    vkvg_set_source_rgba(ctx,fg.r,fg.g,fg.b,fg.a);
     vkvg_text_extents_t te;
     vkvg_text_extents(ctx,"abcdefghijk",&te);
     vkvg_show_text (ctx,"abcdefghijk");
@@ -31,7 +96,6 @@ void test(){
     penY+=2*size;
 
     vkvg_select_font_face(ctx, "times");
-    vkvg_set_source_rgba(ctx,0.1,0.1,0.2,1);
     vkvg_move_to(ctx, penX,penY);
     vkvg_show_text (ctx,"abcdefghijklmnopqrstuvwxyz");
     penY+=size;
@@ -90,7 +154,7 @@ void test(){
 
 int main(int argc, char *argv[]) {
 
-    perform_test (test, 1024, 768);
+    perform_test (test2, 1024, 768);
 
     return 0;
 }

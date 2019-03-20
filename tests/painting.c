@@ -28,8 +28,6 @@ void test(){
     vkvg_destroy (ctx);
     vkvg_surface_destroy (surf2);
     vkvg_pattern_destroy (pat);
-
-    vkvg_destroy(ctx);
 }
 
 int main(int argc, char *argv[]) {
