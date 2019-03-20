@@ -88,7 +88,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _create_cmd_buff        (ctx);
     _createDescriptorPool   (ctx);
     _init_descriptor_sets   (ctx);
-    _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->cacheTex, ctx->dsFont);
+    _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
     _update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc);
     _update_gradient_desc_set(ctx);
 

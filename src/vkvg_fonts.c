@@ -36,16 +36,26 @@ void _init_fonts_cache (VkvgDevice dev){
 
     FT_CHECK_RESULT(FT_Init_FreeType(&cache->library));
 
-    cache->cacheTexLength = FONT_CACHE_INIT_LAYERS;
-    cache->cacheTex = vkh_tex2d_array_create ((VkhDevice)dev, VK_FORMAT_R8_UNORM, FONT_PAGE_SIZE, FONT_PAGE_SIZE,
-                            cache->cacheTexLength ,VMA_MEMORY_USAGE_GPU_ONLY,
+
+#ifdef VKVG_LCD_FONT_FILTER
+    FT_CHECK_RESULT(FT_Library_SetLcdFilter (cache->library, FT_LCD_FILTER_LIGHT));
+    cache->texFormat = FB_COLOR_FORMAT;
+    cache->texPixelSize = 4;
+#else
+    cache->texFormat = VK_FORMAT_R8_UNORM;
+    cache->texPixelSize = 1;
+#endif
+
+    cache->texLength = FONT_CACHE_INIT_LAYERS;
+    cache->texture = vkh_tex2d_array_create ((VkhDevice)dev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE,
+                            cache->texLength ,VMA_MEMORY_USAGE_GPU_ONLY,
                             VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    vkh_image_create_descriptor (cache->cacheTex, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
+    vkh_image_create_descriptor (cache->texture, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
                                  VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
     cache->uploadFence = vkh_fence_create_signaled((VkhDevice)dev);
 
-    uint32_t buffLength = FONT_PAGE_SIZE*FONT_PAGE_SIZE*sizeof(uint8_t);
+    uint32_t buffLength = FONT_PAGE_SIZE*FONT_PAGE_SIZE*cache->texPixelSize;
 
     vkvg_buffer_create (dev,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -54,8 +64,8 @@ void _init_fonts_cache (VkvgDevice dev){
 
     cache->cmd = vkh_cmd_buff_create((VkhDevice)dev,dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
-    cache->hostBuff = (uint8_t*)malloc(FONT_PAGE_SIZE*FONT_PAGE_SIZE*sizeof(uint8_t));
-    cache->pensY = (int*)calloc(cache->cacheTexLength, sizeof(int));
+    cache->hostBuff = (uint8_t*)malloc(buffLength);
+    cache->pensY = (int*)calloc(cache->texLength, sizeof(int));
 
     dev->fontCache = cache;
 }
@@ -67,30 +77,30 @@ void _increase_font_tex_array (VkvgDevice dev){
     vkResetCommandBuffer(cache->cmd, 0);
     vkResetFences       (dev->vkDev, 1, &cache->uploadFence);
 
-    uint8_t newSize = cache->cacheTexLength + FONT_CACHE_INIT_LAYERS;
-    VkhImage newImg = vkh_tex2d_array_create ((VkhDevice)dev, VK_FORMAT_R8_UNORM, FONT_PAGE_SIZE, FONT_PAGE_SIZE,
+    uint8_t newSize = cache->texLength + FONT_CACHE_INIT_LAYERS;
+    VkhImage newImg = vkh_tex2d_array_create ((VkhDevice)dev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE,
                                               newSize ,VMA_MEMORY_USAGE_GPU_ONLY,
                                               VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     vkh_image_create_descriptor (newImg, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
                                VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
     VkImageSubresourceRange subresNew   = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,newSize};
-    VkImageSubresourceRange subres      = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,cache->cacheTexLength};
+    VkImageSubresourceRange subres      = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,cache->texLength};
 
     vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     vkh_image_set_layout_subres(cache->cmd, newImg, subresNew,
                                 VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres,
+    vkh_image_set_layout_subres(cache->cmd, cache->texture, subres,
                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-    VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, cache->cacheTexLength},
-                            .dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, cache->cacheTexLength},
+    VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, cache->texLength},
+                            .dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, cache->texLength},
                             .extent = {FONT_PAGE_SIZE,FONT_PAGE_SIZE,1}};
 
-    vkCmdCopyImage (cache->cmd, vkh_image_get_vkimage (cache->cacheTex), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    vkCmdCopyImage (cache->cmd, vkh_image_get_vkimage (cache->texture), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                 vkh_image_get_vkimage (newImg), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &cregion);
 
     vkh_image_set_layout_subres(cache->cmd, newImg, subresNew,
@@ -105,11 +115,11 @@ void _increase_font_tex_array (VkvgDevice dev){
     _flush_all_contexes (dev);
 
     cache->pensY = (int*)realloc(cache->pensY, newSize * sizeof(int));
-    memset (cache->pensY + cache->cacheTexLength * sizeof(int),0,FONT_CACHE_INIT_LAYERS*sizeof(int));
+    memset (cache->pensY + cache->texLength * sizeof(int),0,FONT_CACHE_INIT_LAYERS*sizeof(int));
 
-    vkh_image_destroy   (cache->cacheTex);
-    cache->cacheTexLength   = newSize;
-    cache->cacheTex         = newImg;
+    vkh_image_destroy   (cache->texture);
+    cache->texLength   = newSize;
+    cache->texture         = newImg;
 
     VkvgContext next = dev->lastCtx;
     while (next != NULL){
@@ -123,7 +133,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 void _init_next_line_in_tex_cache (VkvgDevice dev, _vkvg_font_t* f){
     _font_cache_t* cache = dev->fontCache;
     int i;
-    for (i = 0; i < cache->cacheTexLength; ++i) {
+    for (i = 0; i < cache->texLength; ++i) {
         if (cache->pensY[i] + f->curLine.height >= FONT_PAGE_SIZE)
             continue;
         f->curLine.pageIdx = (unsigned char)i;
@@ -163,7 +173,7 @@ void _destroy_font_cache (VkvgDevice dev){
 
 
     vkvg_buffer_destroy (&cache->buff);
-    vkh_image_destroy   (cache->cacheTex);
+    vkh_image_destroy   (cache->texture);
     //vkFreeCommandBuffers(dev->vkDev,dev->cmdPool, 1, &cache->cmd);
     vkDestroyFence      (dev->vkDev,cache->uploadFence,NULL);
 
@@ -200,12 +210,12 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
     vkResetCommandBuffer(cache->cmd,0);
     vkResetFences       (dev->vkDev,1,&cache->uploadFence);
 
-    memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, f->curLine.height * FONT_PAGE_SIZE);
+    memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (ulong)(f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize));
 
     vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     VkImageSubresourceRange subres      = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,f->curLine.pageIdx,1};
-    vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres,
+    vkh_image_set_layout_subres(cache->cmd, cache->texture, subres,
                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
@@ -216,9 +226,9 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
                                            .imageExtent = {FONT_PAGE_SIZE-f->curLine.penX,f->curLine.height,1}};
 
     vkCmdCopyBufferToImage(cache->cmd, cache->buff.buffer,
-                           vkh_image_get_vkimage (cache->cacheTex), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
+                           vkh_image_get_vkimage (cache->texture), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
 
-    vkh_image_set_layout_subres(cache->cmd, cache->cacheTex, subres,
+    vkh_image_set_layout_subres(cache->cmd, cache->texture, subres,
                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
@@ -228,33 +238,56 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 
     f->curLine.penX += cache->stagingX;
     cache->stagingX = 0;
-    memset(cache->hostBuff, 0, FONT_PAGE_SIZE * FONT_PAGE_SIZE);
+    memset(cache->hostBuff, 0, FONT_PAGE_SIZE * FONT_PAGE_SIZE * cache->texPixelSize);
 }
 //create a new char entry and put glyph in stagging buffer, ready for upload.
 _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
+
+#ifdef VKVG_LCD_FONT_FILTER
+    FT_CHECK_RESULT(FT_Load_Glyph(f->face, gindex, FT_LOAD_TARGET_NORMAL));
+    FT_CHECK_RESULT(FT_Render_Glyph(f->face->glyph, FT_RENDER_MODE_LCD));
+#else
     FT_CHECK_RESULT(FT_Load_Glyph(f->face, gindex, FT_LOAD_RENDER));
+#endif
 
     FT_GlyphSlot slot = f->face->glyph;
-    FT_Bitmap   bmp  = slot->bitmap;
-    uint8_t*    data = dev->fontCache->hostBuff;
+    FT_Bitmap bmp = slot->bitmap;
+    uint8_t* data = dev->fontCache->hostBuff;
+    uint bmpWidth = bmp.width;   //real width in pixel of char bitmap
 
-    if (dev->fontCache->stagingX + f->curLine.penX + bmp.width > FONT_PAGE_SIZE){
+#ifdef VKVG_LCD_FONT_FILTER
+    bmpWidth /= 3;
+#endif
+
+
+    if (dev->fontCache->stagingX + f->curLine.penX + bmpWidth > FONT_PAGE_SIZE){
         _flush_chars_to_tex (dev, f);
         _init_next_line_in_tex_cache (dev, f);
     }
 
     int penX = dev->fontCache->stagingX;
     for(int y=0; y<bmp.rows; y++) {
-        for(int x=0; x<bmp.width; x++)
-            data[ penX + x + y * FONT_PAGE_SIZE ] =
-                bmp.buffer[x + y * bmp.width];
+        for(int x=0; x<bmpWidth; x++) {
+#ifdef VKVG_LCD_FONT_FILTER
+            unsigned char r = bmp.buffer[y * bmp.pitch + x * 3];
+            unsigned char g = bmp.buffer[y * bmp.pitch + x * 3 + 1];
+            unsigned char b = bmp.buffer[y * bmp.pitch + x * 3 + 2];
+
+            data[(penX + x + y * FONT_PAGE_SIZE) * 4] = b;
+            data[(penX + x + y * FONT_PAGE_SIZE) * 4 + 1] = g;
+            data[(penX + x + y * FONT_PAGE_SIZE) * 4 + 2] = r;
+            data[(penX + x + y * FONT_PAGE_SIZE) * 4 + 3] = (r+g+b)/3;
+#else
+            data[penX + x + y * FONT_PAGE_SIZE ] = bmp.buffer[x + y * bmp.width];
+#endif
+        }
     }
 
     _char_ref* cr = (_char_ref*)malloc(sizeof(_char_ref));
     vec4 uvBounds = {
         (float)(penX + f->curLine.penX) / (float)FONT_PAGE_SIZE,
         (float)f->curLine.penY / (float)FONT_PAGE_SIZE,
-        bmp.width,
+        bmpWidth,
         bmp.rows};
     cr->bounds = uvBounds;
     cr->pageIdx = f->curLine.pageIdx;
@@ -262,7 +295,7 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
     cr->bmpDiff.y = (int16_t)slot->bitmap_top;
 
     f->charLookup[gindex] = cr;
-    dev->fontCache->stagingX += bmp.width;
+    dev->fontCache->stagingX += bmpWidth;
     return cr;
 }
 //set current font size for context
@@ -465,6 +498,27 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 
     _flush_chars_to_tex(tr->dev, tr->font);
 }
+
+#ifdef DEBUG
+void _show_texture (vkvg_context* ctx){
+    Vertex vs[] = {
+        {{0,0},                             {0,0,0}},
+        {{0,FONT_PAGE_SIZE},                {0,1,0}},
+        {{FONT_PAGE_SIZE,0},                {1,0,0}},
+        {{FONT_PAGE_SIZE,FONT_PAGE_SIZE},   {1,1,0}}
+    };
+
+    int i = ctx->vertCount;
+
+    _add_vertex(ctx,vs[0]);
+    _add_vertex(ctx,vs[1]);
+    _add_vertex(ctx,vs[2]);
+    _add_vertex(ctx,vs[3]);
+
+    _add_tri_indices_for_rect (ctx, i);
+}
+#endif
+
 void _show_text (VkvgContext ctx, const char* text){
 
     vkvg_text_run_t tr = {};
@@ -477,23 +531,7 @@ void _show_text (VkvgContext ctx, const char* text){
     //_show_texture(ctx); return;
 }
 
-#ifdef DEBUG
-void _show_texture (vkvg_context* ctx){
-    Vertex vs[] = {
-        {{0,0},                             {0,0,1}},
-        {{0,FONT_PAGE_SIZE},                {0,1,1}},
-        {{FONT_PAGE_SIZE,0},                {1,0,1}},
-        {{FONT_PAGE_SIZE,FONT_PAGE_SIZE},   {1,1,1}}
-    };
 
-    _add_vertex(ctx,vs[0]);
-    _add_vertex(ctx,vs[1]);
-    _add_vertex(ctx,vs[2]);
-    _add_vertex(ctx,vs[3]);
-
-    _add_tri_indices_for_rect (ctx, 0);
-}
-#endif
 /*void testfonts(){
     FT_Library      library;
     FT_Face         face;
