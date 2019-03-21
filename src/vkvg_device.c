@@ -57,8 +57,8 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
     VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
     dev->instance = inst;
-    dev->hdpi   = 72;
-    dev->vdpi   = 72;
+    dev->hdpi   = 96;
+    dev->vdpi   = 96;
     dev->samples= samples;
     dev->deferredResolve = deferredResolve;
     dev->vkDev  = vkdev;
@@ -153,4 +153,26 @@ VkvgDevice vkvg_device_reference (VkvgDevice dev) {
 }
 uint32_t vkvg_device_get_reference_count (VkvgDevice dev) {
     return dev->references;
+}
+/**
+ * @brief set horizontal and vertical resolution of device in dot per inch
+ * @param vkvg device pointer
+ * @param horizontal device resolution in dot per inch
+ * @param vertical device resolution in dot per inch
+ */
+void vkvg_device_set_dpy (VkvgDevice dev, int hdpy, int vdpy) {
+    dev->hdpi = hdpy;
+    dev->vdpi = vdpy;
+
+    //TODO: reset font cache
+}
+/**
+ * @brief get horizontal and vertical resolution of device in dot per inch
+ * @param vkvg device pointer
+ * @param return horizontal device resolution in dot per inch
+ * @param return vertical device resolution in dot per inch
+ */
+void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy) {
+    *hdpy = dev->hdpi;
+    *vdpy = dev->vdpi;
 }

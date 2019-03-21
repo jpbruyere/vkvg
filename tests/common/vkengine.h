@@ -32,8 +32,6 @@
 
 #include "vkh.h"
 
-/* Number of samples needs to be the same at image creation,      */
-/* renderpass creation and pipeline creation.                     */
 #define FENCE_TIMEOUT 100000000
 
 typedef struct _vk_engine_t* VkEngine;

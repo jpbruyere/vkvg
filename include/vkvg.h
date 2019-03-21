@@ -165,6 +165,8 @@ VkvgDevice  vkvg_device_create_multisample  (VkInstance inst, VkPhysicalDevice p
 void		vkvg_device_destroy             (VkvgDevice dev);
 VkvgDevice  vkvg_device_reference           (VkvgDevice dev);
 uint32_t    vkvg_device_get_reference_count (VkvgDevice dev);
+void        vkvg_device_set_dpy             (VkvgDevice dev, int hdpy, int vdpy);
+void        vkvg_device_get_dpy             (VkvgDevice dev, int* hdpy, int* vdpy);
 
 VkvgSurface vkvg_surface_create			(VkvgDevice dev, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_create_from_image  (VkvgDevice dev, const char* filePath);
