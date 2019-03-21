@@ -182,12 +182,21 @@ void _setupPipelines(VkvgDevice dev)
 
     VkPipelineColorBlendAttachmentState blendAttachmentState =
     { .colorWriteMask = 0x0, .blendEnable = VK_TRUE,
+#ifdef VKVG_PREMULT_ALPHA
       .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
-      .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
       .dstColorBlendFactor= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-      .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
       .colorBlendOp = VK_BLEND_OP_ADD,
+      .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+      .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
       .alphaBlendOp = VK_BLEND_OP_ADD,
+#else
+      .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+      .dstColorBlendFactor= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+      .colorBlendOp = VK_BLEND_OP_ADD,
+      .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+      .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+      .alphaBlendOp = VK_BLEND_OP_ADD,
+#endif
     };
 
     VkPipelineColorBlendStateCreateInfo colorBlendState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,

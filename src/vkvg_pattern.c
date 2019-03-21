@@ -40,11 +40,19 @@ VkvgPattern vkvg_pattern_create_rgba (float r, float g, float b, float a){
     pat->type = VKVG_PATTERN_TYPE_SOLID;
     pat->extend = VKVG_EXTEND_NONE;
     vkvg_color_t* c = (vkvg_color_t*)calloc(1,sizeof(vkvg_color_t));
-    //premultiplied alpha
+
+#ifdef VKVG_PREMULT_ALPHA
     c->r = r * a;
     c->g = g * a;
     c->b = b * a;
-    c->a = a;// > 0.f ? 1.f : 0.f;
+    c->a = a;
+#else
+    c->r = r;
+    c->g = g;
+    c->b = b;
+    c->a = a;
+#endif
+
     pat->data = c;
 
     pat->references = 1;
