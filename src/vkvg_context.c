@@ -445,7 +445,7 @@ void _poly_fill (VkvgContext ctx){
 
     while (ptrPath < ctx->pathPtr){
         if (!_path_is_closed(ctx, ptrPath))
-            ctx->pathes[ptrPath+1] = ctx->pathes[ptrPath];
+            ctx->pathes[ptrPath+1] = ctx->pathes[ptrPath];//close path by setting start and end equal
 
         uint32_t firstPtIdx = ctx->pathes[ptrPath];
         uint32_t lastPtIdx = _get_last_point_of_closed_path (ctx, ptrPath);
@@ -548,7 +548,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             vhw = vec2_perp(vhw);
 
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-                float step = M_PI_2 / hw;
+                float step = M_PI / hw;
                 float a = acos(n.x) + M_PI_2;
                 if (n.y < 0)
                     a = M_PI-a;
@@ -598,7 +598,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
                 firstIdx = ctx->vertCount;
-                float step = M_PI_2 / hw;
+                float step = M_PI / hw;
                 float a = acos(n.x)+ M_PI_2;
                 if (n.y < 0)
                     a = M_PI-a;

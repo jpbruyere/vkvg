@@ -11,8 +11,8 @@ void print(VkvgContext ctx, float penY, uint32_t size) {
 void test2() {
     VkvgContext ctx = vkvg_create(surf);
 
-    vkvg_color_t bg = {0.3,0.3,0.3,1};
-    vkvg_color_t fg = {0.9,0.9,0.9,1};
+    vkvg_color_t bg = {0.0,0.0,0.0,1};
+    vkvg_color_t fg = {1.0,1.0,1.0,1};
 
     vkvg_set_source_rgba(ctx,bg.r,bg.g,bg.b,bg.a);
     vkvg_paint(ctx);
@@ -23,7 +23,7 @@ void test2() {
 
     float penY = 10.f;
 
-    for (uint32_t size=8;size<39;size++) {
+    for (uint32_t size=4;size<39;size++) {
         print(ctx,penY+=size,size);
     }
 
@@ -67,7 +67,7 @@ void test(){
 
     //vkvg_color_t fg = {0.2,0.2,0.2,1};
     vkvg_color_t fg = {0.0,0.0,0.0,1};
-    vkvg_color_t bg = {0.9,0.9,0.9,1};
+    vkvg_color_t bg = {1.0,1.0,1.0,1};
     vkvg_set_source_rgba(ctx,bg.r,bg.g,bg.b,bg.a);
     vkvg_paint(ctx);
 
@@ -155,6 +155,8 @@ void test(){
 int main(int argc, char *argv[]) {
 
     perform_test (test2, 1024, 768);
+    perform_test (test1, 1024, 768);
+    perform_test (test, 1024, 768);
 
     return 0;
 }
