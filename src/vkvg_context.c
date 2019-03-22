@@ -735,6 +735,7 @@ void vkvg_save (VkvgContext ctx){
                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
     vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    ctx->cmdStarted = true;
 
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -806,11 +807,13 @@ void vkvg_restore (VkvgContext ctx){
 
     ctx->pushConsts   = sav->pushConsts;
 
-    _update_cur_pattern(ctx, sav->pattern);
+    if (sav->pattern)
+        _update_cur_pattern(ctx, sav->pattern);
 
     _flush_cmd_buff(ctx);
 
     vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    ctx->cmdStarted = true;
 
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
