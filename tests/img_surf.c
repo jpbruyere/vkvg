@@ -3,23 +3,22 @@
 void test(){
     VkvgContext ctx = vkvg_create(surf);
 
-    VkvgSurface imgSurf;// = vkvg_surface_create_from_image(device, "/mnt/data/images/blason.png");
-    //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/2000px-Tux.svg.png");
-    //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/path2674.png");
-    //VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "/mnt/data/images/horse-black-head-shape-of-a-chess-piece_318-52446.jpg");
-    /*vkvg_set_source_surface(ctx, imgSurf, 200, 200);
-    vkvg_paint(ctx);
-    vkvg_set_source_surface(ctx, imgSurf, 400, 400);
-    vkvg_paint(ctx);
-    vkvg_flush(ctx);
-    vkvg_surface_destroy(imgSurf);*/
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
 
-    imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
-    fflush(stdout);
-    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
-    vkvg_paint(ctx);
-    //vkvg_flush(ctx);
-    //vkvg_set_source_rgba(ctx,1,0,0,1);
+    vkvg_translate(ctx,200,200);
+    //vkvg_rotate(ctx,M_PI_4);
+
+    vkvg_set_line_width(ctx,20.f);
+    vkvg_set_source_rgba(ctx,1,0,0,1);
+    vkvg_arc(ctx,200,200,200,0,2.f*M_PI);
+    vkvg_new_sub_path(ctx);
+    vkvg_arc(ctx,200,200,100,0,2.f*M_PI);
+
+    vkvg_set_source_surface(ctx, imgSurf, 00, 00);
+    vkvg_fill_preserve(ctx);
+    vkvg_set_source_rgba(ctx,0.2,0.3,0.8,1);
+
+    vkvg_stroke(ctx);
 
     vkvg_surface_destroy(imgSurf);
 

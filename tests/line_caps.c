@@ -2,12 +2,14 @@
 
 void test(){
     VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgba(ctx,0.9,0.9,0.9,1);
+    vkvg_paint(ctx);
 
-    float x = 20, y = 20, dx = 30, dy = 60;
+    float x = 20, y = 20, dx = 40, dy = 60;
 
     //vkvg_scale(ctx,5,5);
-    vkvg_set_line_width(ctx,26);
-    vkvg_set_source_rgba(ctx,0,0,0,1);
+    vkvg_set_line_width(ctx,30);
+    vkvg_set_source_rgba(ctx,0.0,0.0,0,1);
     vkvg_move_to(ctx,x,y);
     vkvg_rel_line_to(ctx,0,dy);
     vkvg_stroke(ctx);

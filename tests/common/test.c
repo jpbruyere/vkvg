@@ -76,7 +76,10 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
     bool deferredResolve = false;
 
-    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_4_BIT, deferredResolve);
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_8_BIT, deferredResolve);
+
+    vkvg_device_set_dpy(device, 96, 96);
+
     surf    = vkvg_surface_create(device, width, height);
 
     vkvg_surface_clear(surf);
@@ -97,6 +100,8 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
             vkvg_multisample_surface_resolve(surf);
         if (!vkh_presenter_draw (r))
             vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
+
+        vkDeviceWaitIdle(e->dev->dev);
 
         gettimeofday(&after , NULL);
 
