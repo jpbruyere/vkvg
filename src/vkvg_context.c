@@ -711,8 +711,8 @@ void vkvg_text_run_destroy (VkvgText textRun) {
 void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun) {
     _show_text_run(ctx, textRun);
 }
-vkvg_text_extents_t* vkvg_text_run_get_extents (VkvgText textRun) {
-    return &textRun->extents;
+void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents) {
+    extents = &textRun->extents;
 }
 
 void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {

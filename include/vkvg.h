@@ -287,7 +287,7 @@ void vkvg_font_extents      (VkvgContext ctx, vkvg_font_extents_t* extents);
 VkvgText    vkvg_text_run_create    (VkvgContext ctx, const char* text);
 void        vkvg_text_run_destroy   (VkvgText textRun);
 void        vkvg_show_text_run      (VkvgContext ctx, VkvgText textRun);
-vkvg_text_extents_t* vkvg_text_run_get_extents (VkvgText textRun);
+void        vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents);
 
 //pattern
 VkvgPattern vkvg_pattern_create             ();

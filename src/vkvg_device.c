@@ -35,7 +35,7 @@
  */
 VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
 {
-    return vkvg_device_create_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_4_BIT, false);
+    return vkvg_device_create_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_1_BIT, false);
 }
 /**
  * @brief Create VkvgDevice with default multisampling configuration
