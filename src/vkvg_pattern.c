@@ -138,6 +138,9 @@ vkvg_extend_t vkvg_pattern_get_extend (VkvgPattern pat){
 vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat){
     return pat->filter;
 }
+vkvg_pattern_type_t vkvg_pattern_get_type (VkvgPattern pat){
+    return pat->type;
+}
 
 void vkvg_pattern_destroy(VkvgPattern pat)
 {
