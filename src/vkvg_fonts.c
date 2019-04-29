@@ -53,7 +53,7 @@ void _init_fonts_cache (VkvgDevice dev){
     vkh_image_create_descriptor (cache->texture, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
                                  VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
-    cache->uploadFence = vkh_fence_create_signaled((VkhDevice)dev);
+    cache->uploadFence = vkh_fence_create((VkhDevice)dev);
 
     uint32_t buffLength = FONT_PAGE_SIZE*FONT_PAGE_SIZE*cache->texPixelSize;
 
@@ -63,6 +63,15 @@ void _init_fonts_cache (VkvgDevice dev){
         buffLength, &cache->buff);
 
     cache->cmd = vkh_cmd_buff_create((VkhDevice)dev,dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+    //Set texture cache initial layout to shaderReadOnly to prevent error msg if cache is not fill
+    VkImageSubresourceRange subres      = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,cache->texLength};
+    vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    vkh_image_set_layout_subres(cache->cmd, cache->texture, subres,
+                                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+    VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
+    _submit_cmd (dev, &cache->cmd, cache->uploadFence);
 
     cache->hostBuff = (uint8_t*)malloc(buffLength);
     cache->pensY = (int*)calloc(cache->texLength, sizeof(int));
@@ -90,7 +99,7 @@ void _increase_font_tex_array (VkvgDevice dev){
     vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     vkh_image_set_layout_subres(cache->cmd, newImg, subresNew,
-                                VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
     vkh_image_set_layout_subres(cache->cmd, cache->texture, subres,
                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,

@@ -77,6 +77,9 @@ void vkengine_dump_Infos (VkEngine e){
         printf("\n");
     }
 }
+
+static VkDebugReportCallbackEXT dbgReport;
+
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
     vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 
@@ -84,7 +87,18 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     assert (glfwVulkanSupported()==GLFW_TRUE);
 
     uint32_t enabledExtsCount = 0, phyCount = 0;
-    const char ** enabledExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
+    const char** gflwExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
+
+    const char* enabledExts [enabledExtsCount+2];
+
+    for (uint i=0;i<enabledExtsCount;i++)
+        enabledExts[i] = gflwExts[i];
+#if DEBUG
+    enabledExts[enabledExtsCount] = "VK_EXT_debug_report";
+    enabledExtsCount++;
+    enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
+    enabledExtsCount++;
+#endif
 
     e->app = vkh_app_create("vkvgTest", enabledExtsCount, enabledExts);
 
@@ -166,8 +180,16 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
     VkDevice dev;
     VK_CHECK_RESULT(vkCreateDevice (pi->phy, &device_info, NULL, &dev));
-    e->dev = vkh_device_create(pi->phy, dev);
-    e->dev->instance = vkh_app_get_inst (e->app);
+    e->dev = vkh_device_create(vkh_app_get_inst (e->app), pi->phy, dev);
+
+#if DEBUG
+    dbgReport = vkh_device_create_debug_report (e->dev,
+            VK_DEBUG_REPORT_ERROR_BIT_EXT|
+            VK_DEBUG_REPORT_INFORMATION_BIT_EXT|
+            VK_DEBUG_REPORT_WARNING_BIT_EXT|
+            VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT|
+            VK_DEBUG_REPORT_DEBUG_BIT_EXT);
+#endif
 
     e->renderer = vkh_presenter_create
             (e->dev, (uint32_t) pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, presentMode);
@@ -186,6 +208,10 @@ void vkengine_destroy (VkEngine e) {
 
     vkh_presenter_destroy (e->renderer);
     vkDestroySurfaceKHR (e->app->inst, surf, NULL);
+
+#if DEBUG
+    vkh_device_destroy_debug_report(e->dev, dbgReport);
+#endif
 
     vkh_device_destroy (e->dev);
 
