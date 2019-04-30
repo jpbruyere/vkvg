@@ -98,7 +98,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
+
     vkvg_reset_clip         (ctx);
+    vkh_cmd_end             (ctx->cmd);
+    _submit_wait_and_reset_cmd(ctx);
 
     ctx->references = 1;
     ctx->status = VKVG_STATUS_SUCCESS;
