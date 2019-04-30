@@ -628,8 +628,6 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
 }
 
 void _free_ctx_save (vkvg_context_save_t* sav){
-    free(sav->pathes);
-    free(sav->points);
     free(sav->selectedFont.fontFile);
     vkh_image_destroy   (sav->stencilMS);
     free (sav);
@@ -874,12 +872,17 @@ void _fill_ec (VkvgContext ctx){
         _add_vertex(ctx, v);
 
         ear_clip_point* ecp_current = ecps;
+        uint32_t tries = 0;
 
         while (ecps_count > 3) {
+            if (tries > ecps_count) {
+                break;
+            }
             ear_clip_point* v0 = ecp_current->next,
                     *v1 = ecp_current, *v2 = ecp_current->next->next;
             if (ecp_zcross (v0, v2, v1)<0){
                 ecp_current = ecp_current->next;
+                tries++;
                 continue;
             }
             ear_clip_point* vP = v2->next;
@@ -895,8 +898,11 @@ void _fill_ec (VkvgContext ctx){
                 _add_triangle_indices (ctx, v0->idx, v1->idx, v2->idx);
                 v1->next = v2;
                 ecps_count --;
-            }else
+                tries = 0;
+            }else{
                 ecp_current = ecp_current->next;
+                tries++;
+            }
         }
         if (ecps_count == 3)
             _add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);

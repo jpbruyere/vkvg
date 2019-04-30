@@ -55,7 +55,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->lineWidth      = 1;
     ctx->pSurf          = surf;
     ctx->curOperator    = VKVG_OPERATOR_OVER;
-    ctx->curFillRule    = VKVG_FILL_RULE_EVEN_ODD;
+    ctx->curFillRule    = VKVG_FILL_RULE_NON_ZERO;
 
     push_constants pc = {
             {.height=1},
@@ -98,6 +98,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
+    vkvg_reset_clip         (ctx);
 
     ctx->references = 1;
     ctx->status = VKVG_STATUS_SUCCESS;
@@ -478,9 +479,9 @@ void vkvg_fill_preserve (VkvgContext ctx){
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);
 
+    _check_cmd_buff_state(ctx);
 
     if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
-        _check_cmd_buff_state(ctx);
         _poly_fill (ctx);
         _bind_draw_pipeline (ctx);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
@@ -488,8 +489,8 @@ void vkvg_fill_preserve (VkvgContext ctx){
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
     }else{
         //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
         _fill_ec(ctx);
-        //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
     }
 }
 void vkvg_stroke_preserve (VkvgContext ctx)
@@ -757,18 +758,6 @@ void vkvg_save (VkvgContext ctx){
     VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
     _submit_ctx_cmd(ctx);
 
-    sav->sizePoints = ctx->sizePoints;
-    sav->pointCount = ctx->pointCount;
-
-    sav->points = (vec2*)malloc (sav->pointCount * sizeof(vec2));
-    memcpy (sav->points, ctx->points, sav->pointCount * sizeof(vec2));
-
-    sav->pathPtr    = ctx->pathPtr;
-    sav->sizePathes = ctx->sizePathes;
-
-    sav->pathes = (uint32_t*)malloc (sav->pathPtr * sizeof(uint32_t));
-    memcpy (sav->pathes, ctx->pathes, sav->pathPtr * sizeof(uint32_t));
-
     sav->lineWidth  = ctx->lineWidth;
     sav->curOperator= ctx->curOperator;
     sav->lineCap    = ctx->lineCap;
@@ -834,20 +823,6 @@ void vkvg_restore (VkvgContext ctx){
 
     VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
     _submit_ctx_cmd(ctx);
-
-    ctx->sizePoints = sav->sizePoints;
-    ctx->pointCount = sav->pointCount;
-
-    ctx->points = (vec2*)realloc ( ctx->points, ctx->sizePoints * sizeof(vec2));
-    memset (ctx->points, 0, ctx->sizePoints * sizeof(vec2));
-    memcpy (ctx->points, sav->points, ctx->pointCount * sizeof(vec2));
-
-    ctx->pathPtr    = sav->pathPtr;
-    ctx->sizePathes = sav->sizePathes;
-
-    ctx->pathes = (uint32_t*)realloc (ctx->pathes, ctx->sizePathes * sizeof(uint32_t));
-    memset (ctx->pathes, 0, ctx->sizePathes * sizeof(uint32_t));
-    memcpy (ctx->pathes, sav->pathes, ctx->pathPtr * sizeof(uint32_t));
 
     ctx->lineWidth  = sav->lineWidth;
     ctx->curOperator= sav->curOperator;

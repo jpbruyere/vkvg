@@ -53,13 +53,6 @@ typedef struct _vkvg_context_save_t{
 
     VkhImage    stencilMS;
     uint32_t    stencilRef;
-    vec2*		points;     //points array
-    size_t		sizePoints; //reserved size
-    uint32_t	pointCount; //effective points count
-
-    uint32_t	pathPtr;
-    uint32_t*	pathes;
-    size_t		sizePathes;
 
     float       lineWidth;
 
@@ -68,11 +61,11 @@ typedef struct _vkvg_context_save_t{
     vkvg_line_join_t    lineJoint;
     vkvg_fill_rule_t    curFillRule;
 
-    _vkvg_font_t    selectedFont;     //hold current face and size before cache addition
-    _vkvg_font_t*   currentFont;      //font ready for lookup
-    vkvg_direction_t   textDirection;
-    push_constants  pushConsts;
-    VkvgPattern     pattern;
+    _vkvg_font_t        selectedFont;     //hold current face and size before cache addition
+    _vkvg_font_t*       currentFont;      //font ready for lookup
+    vkvg_direction_t    textDirection;
+    push_constants      pushConsts;
+    VkvgPattern         pattern;
 
 }vkvg_context_save_t;
 

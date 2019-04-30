@@ -173,9 +173,10 @@ uint32_t    vkvg_device_get_reference_count (VkvgDevice dev);
 void        vkvg_device_set_dpy             (VkvgDevice dev, int hdpy, int vdpy);
 void        vkvg_device_get_dpy             (VkvgDevice dev, int* hdpy, int* vdpy);
 
-VkvgSurface vkvg_surface_create			(VkvgDevice dev, uint32_t width, uint32_t height);
+VkvgSurface vkvg_surface_create             (VkvgDevice dev, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_create_from_image  (VkvgDevice dev, const char* filePath);
-VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg);
+VkvgSurface vkvg_surface_create_from_svg    (VkvgDevice dev, const char* filePath);
+VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void* vkhImg);
 // VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_reference          (VkvgSurface surf);
 uint32_t    vkvg_surface_get_reference_count(VkvgSurface surf);
