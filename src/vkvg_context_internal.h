@@ -66,6 +66,7 @@ typedef struct _vkvg_context_save_t{
     vkvg_operator_t     curOperator;
     vkvg_line_cap_t     lineCap;
     vkvg_line_join_t    lineJoint;
+    vkvg_fill_rule_t    curFillRule;
 
     _vkvg_font_t    selectedFont;     //hold current face and size before cache addition
     _vkvg_font_t*   currentFont;      //font ready for lookup
@@ -124,6 +125,7 @@ typedef struct _vkvg_context_t {
     vkvg_operator_t     curOperator;
     vkvg_line_cap_t     lineCap;
     vkvg_line_join_t    lineJoin;
+    vkvg_fill_rule_t    curFillRule;
 
     _vkvg_font_t        selectedFont;     //hold current face and size before cache addition
     _vkvg_font_t*       currentFont;      //font pointing to cached fonts ready for lookup
@@ -138,6 +140,12 @@ typedef struct _vkvg_context_t {
     VkClearRect         clearRect;
 }vkvg_context;
 
+typedef struct _ear_clip_point{
+    vec2 pos;
+    uint32_t idx;
+    struct _ear_clip_point* next;
+}ear_clip_point;
+
 bool _current_path_is_empty (VkvgContext ctx);
 void _start_sub_path        (VkvgContext ctx, float x, float y);
 void _check_pathes_array	(VkvgContext ctx);
@@ -150,7 +158,10 @@ float _normalizeAngle       (float a);
 
 vec2 _get_current_position  (VkvgContext ctx);
 void _add_point         	(VkvgContext ctx, float x, float y);
-void _add_point_vec2			(VkvgContext ctx, vec2 v);
+void _add_point_vec2		(VkvgContext ctx, vec2 v);
+
+void _poly_fill             (VkvgContext ctx);
+void _fill_ec               (VkvgContext ctx);//earclipping fill
 
 void _create_gradient_buff  (VkvgContext ctx);
 void _create_vertices_buff	(VkvgContext ctx);
@@ -185,6 +196,9 @@ void _free_ctx_save         (vkvg_context_save_t* sav);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){
     return v1.x*v2.y-v1.y*v2.x;
+}
+static inline float ecp_zcross (ear_clip_point* p0, ear_clip_point* p1, ear_clip_point* p2){
+    return vec2_zcross (vec2_sub (p1->pos, p0->pos), vec2_sub (p2->pos, p0->pos));
 }
 void _recursive_bezier(VkvgContext ctx,
                        float x1, float y1, float x2, float y2,

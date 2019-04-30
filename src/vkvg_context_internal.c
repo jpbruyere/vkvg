@@ -813,4 +813,95 @@ void _recursive_bezier (VkvgContext ctx,
     _recursive_bezier(ctx, x1, y1, x12, y12, x123, y123, x1234, y1234, level + 1);
     _recursive_bezier(ctx, x1234, y1234, x234, y234, x34, y34, x4, y4, level + 1);
 }
+void _poly_fill (VkvgContext ctx){
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
+    uint32_t ptrPath = 0;
+    Vertex v = {};
+    v.uv.z = -1;
+
+    while (ptrPath < ctx->pathPtr){
+        if (!_path_is_closed(ctx, ptrPath))
+            ctx->pathes[ptrPath+1] = ctx->pathes[ptrPath];//close path by setting start and end equal
+
+        uint32_t firstPtIdx = ctx->pathes[ptrPath];
+        uint32_t lastPtIdx = _get_last_point_of_closed_path (ctx, ptrPath);
+        uint32_t pathPointCount = lastPtIdx - ctx->pathes[ptrPath] + 1;
+        uint32_t firstVertIdx = ctx->vertCount;
+
+
+        for (int i = 0; i < pathPointCount; i++) {
+             v.pos = ctx->points[i+firstPtIdx];
+             _add_vertex(ctx, v);
+        }
+
+        LOG(LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
+        CmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx ,0);
+
+        ptrPath+=2;
+    }
+}
+void _fill_ec (VkvgContext ctx){
+    uint32_t ptrPath = 0;;
+    Vertex v = {};
+    v.uv.z = -1;
+
+    while (ptrPath < ctx->pathPtr){
+        if (!_path_is_closed(ctx, ptrPath))
+            //close path
+            ctx->pathes[ptrPath+1] = ctx->pathes[ptrPath];
+
+        uint32_t firstPtIdx = ctx->pathes[ptrPath];
+        uint32_t lastPtIdx = _get_last_point_of_closed_path (ctx, ptrPath);
+        uint32_t pathPointCount = lastPtIdx - ctx->pathes[ptrPath] + 1;
+        uint32_t firstVertIdx = ctx->vertCount;
+
+        ear_clip_point ecps[pathPointCount];
+        uint32_t ecps_count = pathPointCount;
+        uint32_t i = 0;
+
+        //init points link list
+        while (i < pathPointCount-1){
+            v.pos = ctx->points[i+firstPtIdx];
+            ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
+            ecps[i] = ecp;
+            _add_vertex(ctx, v);
+            i++;
+        }
+        v.pos = ctx->points[i+firstPtIdx];
+        ear_clip_point ecp = {v.pos, i+firstVertIdx, ecps};
+        ecps[i] = ecp;
+        _add_vertex(ctx, v);
+
+        ear_clip_point* ecp_current = ecps;
+
+        while (ecps_count > 3) {
+            ear_clip_point* v0 = ecp_current->next,
+                    *v1 = ecp_current, *v2 = ecp_current->next->next;
+            if (ecp_zcross (v0, v2, v1)<0){
+                ecp_current = ecp_current->next;
+                continue;
+            }
+            ear_clip_point* vP = v2->next;
+            bool isEar = true;
+            while (vP!=v1){
+                if (ptInTriangle (vP->pos, v0->pos, v2->pos, v1->pos)){
+                    isEar = false;
+                    break;
+                }
+                vP = vP->next;
+            }
+            if (isEar){
+                _add_triangle_indices (ctx, v0->idx, v1->idx, v2->idx);
+                v1->next = v2;
+                ecps_count --;
+            }else
+                ecp_current = ecp_current->next;
+        }
+        if (ecps_count == 3)
+            _add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
+
+        ptrPath+=2;
+    }
+    _record_draw_cmd(ctx);
+}

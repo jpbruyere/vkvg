@@ -39,6 +39,8 @@ PFN_vkCmdDrawIndexed    CmdDrawIndexed;
 PFN_vkCmdDraw           CmdDraw;
 
 PFN_vkCmdSetStencilCompareMask  CmdSetStencilCompareMask;
+PFN_vkCmdSetStencilReference    CmdSetStencilReference;
+PFN_vkCmdSetStencilWriteMask    CmdSetStencilWriteMask;
 PFN_vkCmdBeginRenderPass        CmdBeginRenderPass;
 PFN_vkCmdEndRenderPass          CmdEndRenderPass;
 PFN_vkCmdSetViewport            CmdSetViewport;

@@ -9,6 +9,7 @@ void test(){
     const float w = 1024.f;
 
     VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
     vkvg_set_line_width(ctx,1);
     for (int i=0; i<5000; i++) {
         randomize_color(ctx);

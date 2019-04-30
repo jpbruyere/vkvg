@@ -26,16 +26,29 @@ void test_clip(){
 void test_clip2(){
     vkvg_surface_clear(surf);
     VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
+    vkvg_rectangle(ctx, 50,50,200,200);
+    vkvg_rectangle(ctx, 100,100,250,250);
+    vkvg_clip(ctx);
+    //vkvg_rectangle(ctx, 150,150,200,200);
 
-    vkvg_rectangle(ctx, 50,50,200,200);
     //vkvg_clip(ctx);
-    vkvg_rectangle(ctx, 50,50,200,200);
+    //
     /*vkvg_clip_preserve(ctx);
     vkvg_set_operator(ctx, VKVG_OPERATOR_CLEAR);
     vkvg_fill_preserve(ctx);*/
-    vkvg_clip(ctx);
+    //vkvg_clip(ctx);
     //vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
+    /*vkvg_rectangle(ctx, 200,200,220,220);
+    vkvg_set_source_rgb(ctx,1,0,0);
+    vkvg_paint(ctx);*/
 
+
+    vkvg_set_source_rgb(ctx,0,1,0);
+    vkvg_paint(ctx);
+
+    vkvg_rectangle(ctx, 60,60,480,480);
+    vkvg_clip(ctx);
     vkvg_set_source_rgb(ctx,1,0,0);
     vkvg_paint(ctx);
 
@@ -43,7 +56,7 @@ void test_clip2(){
 }
 int main(int argc, char *argv[]) {
 
-    perform_test (test_clip, 1024, 768);
+    perform_test (test_clip2, 1024, 768);
 
     return 0;
 }

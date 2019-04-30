@@ -207,7 +207,7 @@ void _setupPipelines(VkvgDevice dev)
 
                                         /*failOp,passOp,depthFailOp,compareOp, compareMask, writeMask, reference;*/
     VkStencilOpState polyFillOpState ={VK_STENCIL_OP_KEEP,VK_STENCIL_OP_INVERT,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_CLIP_BIT,STENCIL_FILL_BIT,0};
-    VkStencilOpState clipingOpState = {VK_STENCIL_OP_REPLACE,VK_STENCIL_OP_ZERO,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_NOT_EQUAL,STENCIL_FILL_BIT,STENCIL_ALL_BIT,0x2};
+    VkStencilOpState clipingOpState = {VK_STENCIL_OP_ZERO,VK_STENCIL_OP_REPLACE,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_ALL_BIT,0x2};
     VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_ZERO,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_FILL_BIT,0x1};
 
     VkPipelineDepthStencilStateCreateInfo dsStateCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -222,6 +222,8 @@ void _setupPipelines(VkvgDevice dev)
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
         VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,
+        VK_DYNAMIC_STATE_STENCIL_REFERENCE,
+        VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
     };
     VkPipelineDynamicStateCreateInfo dynamicState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
                 .dynamicStateCount = 2,
@@ -292,7 +294,7 @@ void _setupPipelines(VkvgDevice dev)
 
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertStage,fragStage};
 
-    pipelineCreateInfo.stageCount = 2;
+    pipelineCreateInfo.stageCount = 1;
     pipelineCreateInfo.pStages = shaderStages;
     pipelineCreateInfo.pVertexInputState = &vertexInputState;
     pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -309,11 +311,13 @@ void _setupPipelines(VkvgDevice dev)
 
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     dsStateCreateInfo.back = dsStateCreateInfo.front = clipingOpState;
+    dynamicState.dynamicStateCount = 5;
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineClipping));
 
     dsStateCreateInfo.back = dsStateCreateInfo.front = stencilOpState;
     blendAttachmentState.colorWriteMask=0xf;
     dynamicState.dynamicStateCount = 3;
+    pipelineCreateInfo.stageCount = 2;
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_OVER));
 
     blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
@@ -390,6 +394,8 @@ void _init_function_pointers (VkvgDevice dev) {
     CmdDrawIndexed          = GetInstProcAddress(dev->instance, vkCmdDrawIndexed);
     CmdDraw                 = GetInstProcAddress(dev->instance, vkCmdDraw);
     CmdSetStencilCompareMask= GetInstProcAddress(dev->instance, vkCmdSetStencilCompareMask);
+    CmdSetStencilReference  = GetInstProcAddress(dev->instance, vkCmdSetStencilReference);
+    CmdSetStencilWriteMask  = GetInstProcAddress(dev->instance, vkCmdSetStencilWriteMask);
     CmdBeginRenderPass      = GetInstProcAddress(dev->instance, vkCmdBeginRenderPass);
     CmdEndRenderPass        = GetInstProcAddress(dev->instance, vkCmdEndRenderPass);
     CmdSetViewport          = GetInstProcAddress(dev->instance, vkCmdSetViewport);

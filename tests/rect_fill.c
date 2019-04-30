@@ -3,7 +3,7 @@
 void test(){
     vkvg_surface_clear(surf);
     VkvgContext ctx = vkvg_create(surf);
-
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
     vkvg_set_line_width(ctx,10);
     vkvg_set_source_rgba(ctx,0,0,1,0.5);
     vkvg_rectangle(ctx,100,100,200,200);
