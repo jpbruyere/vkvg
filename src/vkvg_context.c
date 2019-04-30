@@ -55,6 +55,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->lineWidth      = 1;
     ctx->pSurf          = surf;
     ctx->curOperator    = VKVG_OPERATOR_OVER;
+    ctx->curFillRule    = VKVG_FILL_RULE_EVEN_ODD;
 
     push_constants pc = {
             {.height=1},
@@ -436,34 +437,6 @@ void vkvg_fill (VkvgContext ctx){
     vkvg_fill_preserve(ctx);
     _clear_path(ctx);
 }
-void _poly_fill (VkvgContext ctx){
-    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
-
-    uint32_t ptrPath = 0;
-    Vertex v = {};
-    v.uv.z = -1;
-
-    while (ptrPath < ctx->pathPtr){
-        if (!_path_is_closed(ctx, ptrPath))
-            ctx->pathes[ptrPath+1] = ctx->pathes[ptrPath];//close path by setting start and end equal
-
-        uint32_t firstPtIdx = ctx->pathes[ptrPath];
-        uint32_t lastPtIdx = _get_last_point_of_closed_path (ctx, ptrPath);
-        uint32_t pathPointCount = lastPtIdx - ctx->pathes[ptrPath] + 1;
-        uint32_t firstVertIdx = ctx->vertCount;
-
-
-        for (int i = 0; i < pathPointCount; i++) {
-             v.pos = ctx->points[i+firstPtIdx];
-             _add_vertex(ctx, v);
-        }
-
-        LOG(LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
-        CmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx ,0);
-
-        ptrPath+=2;
-    }
-}
 void vkvg_clip_preserve (VkvgContext ctx){
     if (ctx->pathPtr == 0)      //nothing to fill
         return;
@@ -472,12 +445,25 @@ void vkvg_clip_preserve (VkvgContext ctx){
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);
 
-    _check_cmd_buff_state(ctx);
-    _poly_fill (ctx);
-
-    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+    if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
+        _check_cmd_buff_state(ctx);
+        _poly_fill (ctx);
+        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
+    }else{
+        _check_cmd_buff_state(ctx);
+        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+        CmdSetStencilReference (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+        CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        _fill_ec(ctx);
+        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
+    }
     CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
-
     //should test current operator to bind correct pipeline
     _bind_draw_pipeline (ctx);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -492,13 +478,19 @@ void vkvg_fill_preserve (VkvgContext ctx){
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);
 
-    _check_cmd_buff_state(ctx);
-    _poly_fill (ctx);
 
-    _bind_draw_pipeline (ctx);
-    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
-    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
+        _check_cmd_buff_state(ctx);
+        _poly_fill (ctx);
+        _bind_draw_pipeline (ctx);
+        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    }else{
+        //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        _fill_ec(ctx);
+        //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    }
 }
 void vkvg_stroke_preserve (VkvgContext ctx)
 {
@@ -665,6 +657,12 @@ void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op){
     ctx->curOperator = op;
     _bind_draw_pipeline (ctx);
 }
+void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr){
+    ctx->curFillRule = fr;
+}
+vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx){
+    return ctx->curFillRule;
+}
 float vkvg_get_line_width (VkvgContext ctx){
     return ctx->lineWidth;
 }
@@ -775,6 +773,7 @@ void vkvg_save (VkvgContext ctx){
     sav->curOperator= ctx->curOperator;
     sav->lineCap    = ctx->lineCap;
     sav->lineWidth  = ctx->lineWidth;
+    sav->curFillRule= ctx->curFillRule;
 
     sav->selectedFont = ctx->selectedFont;
     sav->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
@@ -853,7 +852,8 @@ void vkvg_restore (VkvgContext ctx){
     ctx->lineWidth  = sav->lineWidth;
     ctx->curOperator= sav->curOperator;
     ctx->lineCap    = sav->lineCap;
-    ctx->lineJoin  = sav->lineJoint;
+    ctx->lineJoin   = sav->lineJoint;
+    ctx->curFillRule= sav->curFillRule;
 
     ctx->selectedFont.charSize = sav->selectedFont.charSize;
     strcpy (ctx->selectedFont.fontFile, sav->selectedFont.fontFile);

@@ -121,6 +121,11 @@ typedef enum _vkvg_line_join {
     VKVG_LINE_JOIN_BEVEL
 } vkvg_line_join_t;
 
+typedef enum _vkvg_fill_rule {
+    VKVG_FILL_RULE_EVEN_ODD,
+    VKVG_FILL_RULE_NON_ZERO
+} vkvg_fill_rule_t;
+
 typedef struct _vkvg_color_t{
     float r;
     float g;
@@ -258,11 +263,14 @@ void vkvg_set_line_join     (VkvgContext ctx, vkvg_line_join_t join);
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y);
 void vkvg_set_source        (VkvgContext ctx, VkvgPattern pat);
 void vkvg_set_operator      (VkvgContext ctx, vkvg_operator_t op);
+void vkvg_set_fill_rule     (VkvgContext ctx, vkvg_fill_rule_t fr);
+
 
 float               vkvg_get_line_width     (VkvgContext ctx);
 vkvg_line_cap_t     vkvg_get_line_cap       (VkvgContext ctx);
 vkvg_line_join_t    vkvg_get_line_join      (VkvgContext ctx);
 vkvg_operator_t     vkvg_get_operator       (VkvgContext ctx);
+vkvg_fill_rule_t    vkvg_get_fill_rule      (VkvgContext ctx);
 VkvgPattern         vkvg_get_source         (VkvgContext ctx);
 
 void vkvg_save              (VkvgContext ctx);
