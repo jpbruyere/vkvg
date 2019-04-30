@@ -307,6 +307,7 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 
     return surf;
 }
+VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, const char* filePath) {}
 
 void vkvg_surface_destroy(VkvgSurface surf)
 {
