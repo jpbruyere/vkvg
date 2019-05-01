@@ -27,10 +27,36 @@ void test_clip2(){
     vkvg_surface_clear(surf);
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
-    vkvg_rectangle(ctx, 50,50,200,200);
-    vkvg_rectangle(ctx, 100,100,250,250);
+    vkvg_rectangle(ctx, 50,50,500,500);
     vkvg_clip(ctx);
-    //vkvg_rectangle(ctx, 150,150,200,200);
+
+    vkvg_set_source_rgb(ctx,1,0,0);
+    vkvg_paint(ctx);
+
+    vkvg_save(ctx);
+    vkvg_rectangle(ctx, 100,100,350,350);
+    vkvg_clip(ctx);
+    vkvg_save(ctx);
+
+
+    vkvg_set_source_rgb(ctx,1,1,0);
+    vkvg_paint(ctx);
+
+
+    vkvg_rectangle(ctx, 200,200,200,200);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx,0,1,0);
+    vkvg_paint(ctx);
+
+    vkvg_restore(ctx);
+
+
+    vkvg_rectangle(ctx, 350,350,420,420);
+    vkvg_set_source_rgb(ctx,0,0,1);
+    vkvg_fill(ctx);
+
+    vkvg_restore(ctx);
 
     //vkvg_clip(ctx);
     //
@@ -44,13 +70,7 @@ void test_clip2(){
     vkvg_paint(ctx);*/
 
 
-    vkvg_set_source_rgb(ctx,0,1,0);
-    vkvg_paint(ctx);
 
-    vkvg_rectangle(ctx, 60,60,480,480);
-    vkvg_clip(ctx);
-    vkvg_set_source_rgb(ctx,1,0,0);
-    vkvg_paint(ctx);
 
     vkvg_destroy(ctx);
 }

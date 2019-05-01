@@ -305,10 +305,11 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
     CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
     CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
+    _update_push_constants  (ctx);
+
     _bind_draw_pipeline (ctx);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-    _update_push_constants  (ctx);
 
     ctx->cmdStarted = true;
 }

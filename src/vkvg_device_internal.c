@@ -59,7 +59,7 @@ VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadO
                     .initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                     .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
     VkAttachmentDescription attDS = {
-                    .format = VK_FORMAT_S8_UINT,
+                    .format = FB_STENCIL_FORMAT,
                     .samples = dev->samples,
                     .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -122,7 +122,7 @@ VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAt
                     .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
                     .finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
     VkAttachmentDescription attDS = {
-                    .format = VK_FORMAT_S8_UINT,
+                    .format = FB_STENCIL_FORMAT,
                     .samples = dev->samples,
                     .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,

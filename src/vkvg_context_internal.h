@@ -129,6 +129,7 @@ typedef struct _vkvg_context_t {
     vkvg_status_t       status;
 
     vkvg_context_save_t* pSavedCtxs;//last ctx saved ptr
+    unsigned char       curSavBit;//current stencil bit used to save context
 
     VkClearRect         clearRect;
     VkRenderPassBeginInfo renderPassBeginInfo;

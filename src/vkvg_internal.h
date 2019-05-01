@@ -39,4 +39,10 @@
 #include "vectors.h"
 #include "cross_mutex.h"
 
+//width of the stencil buffer will determine the number of context saving/restore layers
+//the two first bits of the stencil are the FILL and the CLIP bits, all other bits are
+//used to store clipping bit on context saving. 8 bit stencil will allow 6 save/restore layer
+#define FB_STENCIL_FORMAT VK_FORMAT_S8_UINT
+#define FB_COLOR_FORMAT VK_FORMAT_B8G8R8A8_UNORM
+
 #endif

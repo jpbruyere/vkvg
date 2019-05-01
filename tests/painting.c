@@ -6,11 +6,11 @@ void test(){
 
     VkvgContext ctx  = vkvg_create (surf);
 
-    vkvg_set_source_surface(ctx,surf2,0,0);
+    /*vkvg_set_source_surface(ctx,surf2,0,0);
     vkvg_paint (ctx);
     vkvg_destroy (ctx);
 
-    return;
+    return;*/
 
     //vkvg_set_source_rgba(ctx,0.1,0.1,0.3,1.0);
     //vkvg_paint (ctx);
@@ -18,8 +18,8 @@ void test(){
     for (int i=0; i<10; i++) {
         vkvg_translate(ctx,50,50);
 
-        /*vkvg_save(ctx);
-
+        vkvg_save(ctx);
+/*
         vkvg_rectangle(ctx,0,0,200,200);
         vkvg_clip_preserve(ctx);
         vkvg_set_operator(ctx,VKVG_OPERATOR_CLEAR);
@@ -34,7 +34,7 @@ void test(){
         vkvg_set_source_surface(ctx,surf2,0,0);
         vkvg_paint (ctx);
 
-        //vkvg_restore(ctx);
+        vkvg_restore(ctx);
     }
 
     //VkvgPattern pat = vkvg_get_source (ctx);

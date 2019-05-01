@@ -62,6 +62,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->pSurf          = surf;
     ctx->curOperator    = VKVG_OPERATOR_OVER;
     ctx->curFillRule    = VKVG_FILL_RULE_NON_ZERO;
+    ctx->curSavBit      = 0x4;
 
     push_constants pc = {
             {.height=1},
@@ -753,34 +754,19 @@ void vkvg_save (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;
     vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
-    sav->stencil = vkh_image_ms_create ((VkhDevice)dev,VK_FORMAT_S8_UINT, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
-                        VMA_MEMORY_USAGE_GPU_ONLY,
-                        VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+    _start_cmd_for_render_pass(ctx);
 
-    vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    ctx->cmdStarted = true;
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                          VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout (ctx->cmd, sav->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-                          VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                          VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|ctx->curSavBit);
+    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curSavBit);
 
-    VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
-                            .dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
-                            .extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
-    vkCmdCopyImage(ctx->cmd,
-                   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   vkh_image_get_vkimage (sav->stencil),       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                   1, &cregion);
+    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
 
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                          VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+    _bind_draw_pipeline (ctx);
+    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-    VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
-    _submit_ctx_cmd(ctx);
 
     sav->lineWidth  = ctx->lineWidth;
     sav->curOperator= ctx->curOperator;
@@ -799,12 +785,10 @@ void vkvg_save (VkvgContext ctx){
 
     sav->pNext      = ctx->pSavedCtxs;
     ctx->pSavedCtxs = sav;
+    ctx->curSavBit = (ctx->curSavBit << 1);
 
     if (ctx->pattern)
         vkvg_pattern_reference (ctx->pattern);
-
-    _wait_and_reset_ctx_cmd (ctx);
-    _init_cmd_buff          (ctx);
 }
 void vkvg_restore (VkvgContext ctx){
     if (ctx->pSavedCtxs == NULL){
@@ -824,29 +808,20 @@ void vkvg_restore (VkvgContext ctx){
 
     _flush_cmd_buff(ctx);
 
-    vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    ctx->cmdStarted = true;
+    ctx->curSavBit = (ctx->curSavBit >> 1);
 
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                          VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout (ctx->cmd, sav->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                          VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    _start_cmd_for_render_pass(ctx);
 
-    VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
-                            .dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
-                            .extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
-    vkCmdCopyImage(ctx->cmd,
-                   vkh_image_get_vkimage (sav->stencil),       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                   1, &cregion);
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                          VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 
-    VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
-    _submit_ctx_cmd(ctx);
+    CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|ctx->curSavBit);
+    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curSavBit);
+    CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+
+    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+
+    _bind_draw_pipeline (ctx);
+    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
     ctx->lineWidth  = sav->lineWidth;
     ctx->curOperator= sav->curOperator;
@@ -859,9 +834,6 @@ void vkvg_restore (VkvgContext ctx){
 
     ctx->currentFont  = sav->currentFont;
     ctx->textDirection= sav->textDirection;
-
-    _wait_and_reset_ctx_cmd (ctx);
-    _init_cmd_buff          (ctx);
 
     _free_ctx_save(sav);
 }
