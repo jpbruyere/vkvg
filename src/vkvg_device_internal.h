@@ -86,7 +86,7 @@ typedef struct _vkvg_device_t{
     VkDescriptorSetLayout	dslSrc;                 /**< context source surface descriptors layout */
     VkDescriptorSetLayout	dslGrad;                /**< context gradient descriptors layout */
 
-    int		hdpi,                                   /**< only used for FreeType fonts */
+    int		hdpi,                                   /**< only used for FreeType fonts and svg loading */
             vdpi;
 
     VkhImage                emptyImg;               /**< prevent unbound descriptor to trigger Validation error 61 */

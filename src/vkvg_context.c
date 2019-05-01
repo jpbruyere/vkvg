@@ -26,6 +26,8 @@
 #include "vkvg_pattern.h"
 #include "vkh_queue.h"
 
+#include "nanosvg.h"
+
 #ifdef DEBUG
 static vec2 debugLinePoints[1000];
 static uint32_t dlpCount = 0;
@@ -867,4 +869,58 @@ void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
 }
 void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
     memcpy (matrix, &ctx->pushConsts.mat, sizeof(vkvg_matrix_t));
+}
+
+void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg){
+    NSVGshape* shape;
+    NSVGpath* path;
+
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
+
+    vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
+
+    for (shape = svg->shapes; shape != NULL; shape = shape->next) {
+
+        vkvg_new_path(ctx);
+
+        float o = shape->opacity;
+
+        vkvg_set_line_width(ctx, shape->strokeWidth);
+
+        for (path = shape->paths; path != NULL; path = path->next) {
+            float* p = path->pts;
+            vkvg_move_to(ctx, p[0],p[1]);
+            for (int i = 1; i < path->npts-2; i += 3) {
+                p = &path->pts[i*2];
+                vkvg_curve_to(ctx, p[0],p[1], p[2],p[3], p[4],p[5]);
+            }
+            if (path->closed)
+                vkvg_close_path(ctx);
+        }
+
+        if (shape->fill.type == NSVG_PAINT_COLOR)
+            _svg_set_color(ctx, shape->fill.color, o);
+        else if (shape->fill.type == NSVG_PAINT_LINEAR_GRADIENT){
+            NSVGgradient* g = shape->fill.gradient;
+            _svg_set_color(ctx, g->stops[0].color, o);
+        }
+
+        if (shape->fill.type != NSVG_PAINT_NONE){
+            if (shape->stroke.type == NSVG_PAINT_NONE){
+                vkvg_fill(ctx);
+                continue;
+            }
+            vkvg_fill_preserve (ctx);
+        }
+
+        if (shape->stroke.type == NSVG_PAINT_COLOR)
+            _svg_set_color(ctx, shape->stroke.color, o);
+        else if (shape->stroke.type == NSVG_PAINT_LINEAR_GRADIENT){
+            NSVGgradient* g = shape->stroke.gradient;
+            _svg_set_color(ctx, g->stops[0].color, o);
+        }
+
+        vkvg_stroke(ctx);
+    }
+
 }

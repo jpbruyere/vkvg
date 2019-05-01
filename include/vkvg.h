@@ -176,6 +176,7 @@ void        vkvg_device_get_dpy             (VkvgDevice dev, int* hdpy, int* vdp
 VkvgSurface vkvg_surface_create             (VkvgDevice dev, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_create_from_image  (VkvgDevice dev, const char* filePath);
 VkvgSurface vkvg_surface_create_from_svg    (VkvgDevice dev, const char* filePath);
+VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, char *fragment);
 VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void* vkhImg);
 // VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height);
 VkvgSurface vkvg_surface_reference          (VkvgSurface surf);
@@ -190,6 +191,16 @@ uint32_t	vkvg_surface_get_height     (VkvgSurface surf);
 VkImage		vkvg_surface_get_vkh_image	(VkvgSurface surf);
 void        vkvg_surface_write_to_png   (VkvgSurface surf, const char* path);
 void        vkvg_multisample_surface_resolve (VkvgSurface surf);
+
+//nsvg interface for easy svg drawing
+typedef struct NSVGimage NSVGimage;
+
+NSVGimage*  nsvg_load_file   (VkvgDevice dev, const char* filePath);
+NSVGimage*  nsvg_load        (VkvgDevice dev, char* fragment);
+void        nsvg_destroy     (NSVGimage* svg);
+void        nsvg_get_size    (NSVGimage* svg, int* width, int* height);
+void        vkvg_render_svg  (VkvgContext ctx, NSVGimage* svg);
+
 
 //mimic from cairo, to facilitate usage of vkvg as cairo vulkan backend
 typedef enum _vkvg_operator {

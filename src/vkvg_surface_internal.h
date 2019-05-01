@@ -40,4 +40,5 @@ typedef struct _vkvg_surface_t {
 }vkvg_surface;
 
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect);
+void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha);
 #endif

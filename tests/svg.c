@@ -4,7 +4,7 @@
 #define NANOSVG_IMPLEMENTATION	// Expands implementation
 #include "nanosvg.h"
 
-void svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
+void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
     float a = (c >> 24 & 255) / 255.f;
     float b = (c >> 16 & 255) / 255.f;
     float g = (c >> 8 & 255) / 255.f;
@@ -13,17 +13,31 @@ void svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 }
 
 static float rotation = 0.f;
+//static const char* path = "/mnt/devel/crow-drm/Images/Icons/minimize.svg";
+static const char* path = "data/tiger.svg";
 
 void test_svg_surface() {
-    VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, "data/tiger.svg");
+    VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, path);
 
     VkvgContext ctx = vkvg_create(surf);
+
+    vkvg_set_source_rgb(ctx,0,0,0);
+    vkvg_paint(ctx);
 
     vkvg_set_source_surface(ctx, svgSurf, 0,0);
     vkvg_paint(ctx);
 
     vkvg_destroy(ctx);
     vkvg_surface_destroy(svgSurf);
+}
+
+void test_nsvg() {
+    NSVGimage* svg = nsvg_load_file(device, path);
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_scale(ctx,0.04f,0.04f);
+    vkvg_render_svg(ctx, svg);
+    vkvg_destroy(ctx);
+    nsvg_destroy(svg);
 }
 
 void test_svg () {
@@ -60,7 +74,6 @@ void test_svg () {
     vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
 
     for (shape = svg->shapes; shape != NULL; shape = shape->next) {
-
         vkvg_new_path(ctx);
 
         float o = shape->opacity;
@@ -79,10 +92,10 @@ void test_svg () {
         }
 
         if (shape->fill.type == NSVG_PAINT_COLOR)
-            svg_set_color(ctx, shape->fill.color, o);
+            _svg_set_color(ctx, shape->fill.color, o);
         else if (shape->fill.type == NSVG_PAINT_LINEAR_GRADIENT){
             NSVGgradient* g = shape->fill.gradient;
-            svg_set_color(ctx, g->stops[0].color, o);
+            _svg_set_color(ctx, g->stops[0].color, o);
         }
 
         if (shape->fill.type != NSVG_PAINT_NONE){
@@ -94,10 +107,10 @@ void test_svg () {
         }
 
         if (shape->stroke.type == NSVG_PAINT_COLOR)
-            svg_set_color(ctx, shape->stroke.color, o);
+            _svg_set_color(ctx, shape->stroke.color, o);
         else if (shape->stroke.type == NSVG_PAINT_LINEAR_GRADIENT){
             NSVGgradient* g = shape->stroke.gradient;
-            svg_set_color(ctx, g->stops[0].color, o);
+            _svg_set_color(ctx, g->stops[0].color, o);
         }
 
         vkvg_stroke(ctx);
@@ -111,6 +124,6 @@ void test_svg () {
 
 int main(int argc, char *argv[]) {
 
-    perform_test (test_svg_surface, 1024, 768);
+    perform_test (test_nsvg, 1024, 768);
     return 0;
 }

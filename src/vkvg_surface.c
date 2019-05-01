@@ -321,7 +321,7 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
     return surf;
 }
 
-void svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
+void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
     float a = (c >> 24 & 255) / 255.f;
     float b = (c >> 16 & 255) / 255.f;
     float g = (c >> 8 & 255) / 255.f;
@@ -329,8 +329,7 @@ void svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
     vkvg_set_source_rgba(ctx,r,g,b,a*alpha);
 }
 
-VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, const char* filePath) {
-    NSVGimage* svg = nsvgParseFromFile(filePath, "px", 96);
+VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
     NSVGshape* shape;
     NSVGpath* path;
 
@@ -344,61 +343,35 @@ VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, const char* filePath) 
     _init_surface (surf);
 
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
-
-    vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
-
-    for (shape = svg->shapes; shape != NULL; shape = shape->next) {
-
-        vkvg_new_path(ctx);
-
-        float o = shape->opacity;
-
-        vkvg_set_line_width(ctx, shape->strokeWidth);
-
-        for (path = shape->paths; path != NULL; path = path->next) {
-            float* p = path->pts;
-            vkvg_move_to(ctx, p[0],p[1]);
-            for (int i = 1; i < path->npts-2; i += 3) {
-                p = &path->pts[i*2];
-                vkvg_curve_to(ctx, p[0],p[1], p[2],p[3], p[4],p[5]);
-            }
-            if (path->closed)
-                vkvg_close_path(ctx);
-        }
-
-        if (shape->fill.type == NSVG_PAINT_COLOR)
-            svg_set_color(ctx, shape->fill.color, o);
-        else if (shape->fill.type == NSVG_PAINT_LINEAR_GRADIENT){
-            NSVGgradient* g = shape->fill.gradient;
-            svg_set_color(ctx, g->stops[0].color, o);
-        }
-
-        if (shape->fill.type != NSVG_PAINT_NONE){
-            if (shape->stroke.type == NSVG_PAINT_NONE){
-                vkvg_fill(ctx);
-                continue;
-            }
-            vkvg_fill_preserve (ctx);
-        }
-
-        if (shape->stroke.type == NSVG_PAINT_COLOR)
-            svg_set_color(ctx, shape->stroke.color, o);
-        else if (shape->stroke.type == NSVG_PAINT_LINEAR_GRADIENT){
-            NSVGgradient* g = shape->stroke.gradient;
-            svg_set_color(ctx, g->stops[0].color, o);
-        }
-
-        vkvg_stroke(ctx);
-    }
+    vkvg_render_svg(ctx, svg);
+    vkvg_destroy(ctx);
 
     nsvgDelete(svg);
-    vkvg_destroy(ctx);
 
     surf->references = 1;
     vkvg_device_reference (surf->dev);
 
     return surf;
+}
+
+VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, const char* filePath) {
+    return _svg_load(dev, nsvgParseFromFile(filePath, "px", dev->hdpi));
+}
+VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, char* fragment) {
+    return _svg_load(dev, nsvgParse(fragment, "px", dev->hdpi));
+}
+NSVGimage* nsvg_load_file (VkvgDevice dev, const char* filePath) {
+    return nsvgParseFromFile(filePath, "px", dev->hdpi);
+}
+NSVGimage* nsvg_load (VkvgDevice dev, char* fragment) {
+    return nsvgParse (fragment, "px", dev->hdpi);
+}
+void nsvg_destroy (NSVGimage* svg) {
+    nsvgDelete(svg);
+}
+void nsvg_get_size (NSVGimage* svg, int* width, int* height) {
+    *width = (int)svg->width;
+    *height = (int)svg->height;
 }
 
 void vkvg_surface_destroy(VkvgSurface surf)
