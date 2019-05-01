@@ -2,7 +2,7 @@
 
 void test(){
     VkvgContext ctx = vkvg_create(surf);
-
+    vkvg_set_fill_rule(ctx,VKVG_FILL_RULE_EVEN_ODD);
     VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
 
     vkvg_translate(ctx,200,200);

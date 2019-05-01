@@ -385,7 +385,7 @@ void _update_current_font (VkvgContext ctx) {
     }
 }
 //Get harfBuzz buffer for provided text.
-hb_buffer_t * _get_hb_buffer (VkvgContext ctx, const char* text) {
+hb_buffer_t * _get_hb_buffer (_vkvg_font_t* font, const char* text) {
     hb_buffer_t *buf = hb_buffer_create();
 
     const char *lng  = "fr";
@@ -398,7 +398,7 @@ hb_buffer_t * _get_hb_buffer (VkvgContext ctx, const char* text) {
     hb_buffer_set_language  (buf, hb_language_from_string(lng,strlen(lng)));
     hb_buffer_add_utf8      (buf, text, strlen(text), 0, strlen(text));
 
-    hb_shape (ctx->currentFont->hb_font, buf, NULL, 0);
+    hb_shape (font->hb_font, buf, NULL, 0);
     return buf;
 }
 //retrieve global font extends of context's current font as defined by FreeType
@@ -429,7 +429,7 @@ void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
 
     _update_current_font (ctx);
 
-    textRun->hbBuf = _get_hb_buffer (ctx, text);
+    textRun->hbBuf = _get_hb_buffer (ctx->currentFont, text);
     textRun->font = ctx->currentFont;
     textRun->dev = ctx->pSurf->dev;
 

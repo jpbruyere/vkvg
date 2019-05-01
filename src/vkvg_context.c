@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -30,6 +30,12 @@
 static vec2 debugLinePoints[1000];
 static uint32_t dlpCount = 0;
 #endif
+
+static VkClearValue clearValues[3] = {
+    { {{0.0f, 0.0f, 0.0f, 1.0f}} },
+    { {{1.0f, 0}} },
+    { {{0.0f, 0.0f, 0.0f, 1.0f}} }
+};
 
 /**
  * @brief create new context for surface
@@ -69,6 +75,13 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     const VkClearRect cr = {{{0},{ctx->pSurf->width, ctx->pSurf->height}},0,1};
     ctx->clearRect = cr;
+    ctx->renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
+    ctx->renderPassBeginInfo.renderArea.extent.width = ctx->pSurf->width;
+    ctx->renderPassBeginInfo.renderArea.extent.height = ctx->pSurf->height;
+    ctx->renderPassBeginInfo.pClearValues = clearValues;
+    ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearStencil;
+    ctx->renderPassBeginInfo.clearValueCount = 3;
 
     ctx->pPrev          = surf->dev->lastCtx;
     if (ctx->pPrev != NULL)
@@ -82,6 +95,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->points = (vec2*)       malloc (VKVG_VBO_SIZE*sizeof(vec2));
     ctx->pathes = (uint32_t*)   malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
 
+    //for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
     ctx->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
     _create_vertices_buff   (ctx);
@@ -98,10 +112,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     _init_cmd_buff          (ctx);
     _clear_path             (ctx);
-
-    vkvg_reset_clip         (ctx);
-    vkh_cmd_end             (ctx->cmd);
-    _submit_wait_and_reset_cmd(ctx);
 
     ctx->references = 1;
     ctx->status = VKVG_STATUS_SUCCESS;
@@ -732,17 +742,17 @@ void vkvg_save (VkvgContext ctx){
     VkvgDevice dev = ctx->pSurf->dev;
     vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
-    sav->stencilMS = vkh_image_ms_create ((VkhDevice)dev,VK_FORMAT_S8_UINT, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
+    sav->stencil = vkh_image_ms_create ((VkhDevice)dev,VK_FORMAT_S8_UINT, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
                         VMA_MEMORY_USAGE_GPU_ONLY,
                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
     vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     ctx->cmdStarted = true;
 
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
+    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                           VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout (ctx->cmd, sav->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
+    vkh_image_set_layout (ctx->cmd, sav->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
                           VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                           VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
@@ -750,11 +760,11 @@ void vkvg_save (VkvgContext ctx){
                             .dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
                             .extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
     vkCmdCopyImage(ctx->cmd,
-                   vkh_image_get_vkimage (ctx->pSurf->stencilMS),VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   vkh_image_get_vkimage (sav->stencilMS),       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                   vkh_image_get_vkimage (sav->stencil),       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                    1, &cregion);
 
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
+    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                           VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
 
@@ -806,10 +816,10 @@ void vkvg_restore (VkvgContext ctx){
     vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     ctx->cmdStarted = true;
 
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
+    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                           VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout (ctx->cmd, sav->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
+    vkh_image_set_layout (ctx->cmd, sav->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                           VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
@@ -817,10 +827,10 @@ void vkvg_restore (VkvgContext ctx){
                             .dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
                             .extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
     vkCmdCopyImage(ctx->cmd,
-                   vkh_image_get_vkimage (sav->stencilMS),       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   vkh_image_get_vkimage (ctx->pSurf->stencilMS),VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                   vkh_image_get_vkimage (sav->stencil),       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                    1, &cregion);
-    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
+    vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                           VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
 

@@ -47,12 +47,12 @@ void _create_pipeline_cache(VkvgDevice dev){
     VK_CHECK_RESULT(vkCreatePipelineCache(dev->vkDev, &pipelineCacheCreateInfo, NULL, &dev->pipelineCache));
 }
 
-void _setupRenderPassDeferredResolve(VkvgDevice dev)
+VkRenderPass _setupRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp)
 {
     VkAttachmentDescription attColor = {
                     .format = FB_COLOR_FORMAT,
                     .samples = dev->samples,
-                    .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+                    .loadOp = loadOp,
                     .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -63,7 +63,7 @@ void _setupRenderPassDeferredResolve(VkvgDevice dev)
                     .samples = dev->samples,
                     .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-                    .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+                    .stencilLoadOp = stencilLoadOp,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                     .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
@@ -97,15 +97,16 @@ void _setupRenderPassDeferredResolve(VkvgDevice dev)
                 .dependencyCount = 2,
                 .pDependencies = dependencies
     };
-
-    VK_CHECK_RESULT(vkCreateRenderPass(dev->vkDev, &renderPassInfo, NULL, &dev->renderPass));
+    VkRenderPass rp;
+    VK_CHECK_RESULT(vkCreateRenderPass(dev->vkDev, &renderPassInfo, NULL, &rp));
+    return rp;
 }
-void _setupRenderPass(VkvgDevice dev)
+VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp)
 {
     VkAttachmentDescription attColor = {
                     .format = FB_COLOR_FORMAT,
                     .samples = dev->samples,
-                    .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+                    .loadOp = loadOp,
                     .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -125,15 +126,15 @@ void _setupRenderPass(VkvgDevice dev)
                     .samples = dev->samples,
                     .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-                    .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+                    .stencilLoadOp = stencilLoadOp,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
                     .initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                     .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
-    VkAttachmentDescription attachments[] = {attColor,attColorResolve,attDS};
-    VkAttachmentReference colorRef  = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
-    VkAttachmentReference resolveRef= {1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
-    VkAttachmentReference dsRef     = {2, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+    VkAttachmentDescription attachments[] = {attColorResolve,attDS,attColor};
+    VkAttachmentReference resolveRef= {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+    VkAttachmentReference dsRef     = {1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+    VkAttachmentReference colorRef  = {2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 
     VkSubpassDescription subpassDescription = { .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
                         .colorAttachmentCount   = 1,
@@ -161,8 +162,9 @@ void _setupRenderPass(VkvgDevice dev)
                 .dependencyCount = 2,
                 .pDependencies = dependencies
     };
-
-    VK_CHECK_RESULT(vkCreateRenderPass(dev->vkDev, &renderPassInfo, NULL, &dev->renderPass));
+    VkRenderPass rp;
+    VK_CHECK_RESULT(vkCreateRenderPass(dev->vkDev, &renderPassInfo, NULL, &rp));
+    return rp;
 }
 
 void _setupPipelines(VkvgDevice dev)

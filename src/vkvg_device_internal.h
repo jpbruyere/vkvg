@@ -60,6 +60,7 @@ typedef struct _vkvg_device_t{
     VkhQueue                gQueue;                 /**< Vulkan Queue with Graphic flag */
     MUTEX                   gQMutex;                /**< queue submission has to be externally syncronized */
     VkRenderPass			renderPass;             /**< Vulkan render pass, common for all surfaces */
+    VkRenderPass			renderPass_ClearStencil;/**< Vulkan render pass for first draw with context, stencil has to be cleared */
 
     uint32_t                references;             /**< Reference count, prevent destroying device if still in use */
     VkCommandPool			cmdPool;                /**< Global command pool for processing on surfaces without context */
@@ -100,8 +101,8 @@ void _init_function_pointers    (VkvgDevice dev);
 void _create_empty_texture      (VkvgDevice dev);
 void _check_image_format_properties (VkvgDevice dev);
 void _create_pipeline_cache     (VkvgDevice dev);
-void _setupRenderPass           (VkvgDevice dev);
-void _setupRenderPassDeferredResolve (VkvgDevice dev);
+VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
+VkRenderPass _setupRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
 void _setupPipelines            (VkvgDevice dev);
 void _createDescriptorSetLayout (VkvgDevice dev);
 void _flush_all_contexes        (VkvgDevice dev);
