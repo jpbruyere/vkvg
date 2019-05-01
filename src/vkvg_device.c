@@ -134,6 +134,7 @@ void vkvg_device_destroy (VkvgDevice dev)
     vkDestroyPipelineLayout         (dev->vkDev, dev->pipelineLayout, NULL);
     vkDestroyPipelineCache          (dev->vkDev, dev->pipelineCache, NULL);
     vkDestroyRenderPass             (dev->vkDev, dev->renderPass, NULL);
+    vkDestroyRenderPass             (dev->vkDev, dev->renderPass_ClearStencil, NULL);
 
     vkWaitForFences                 (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
