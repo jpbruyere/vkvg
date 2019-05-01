@@ -19,25 +19,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef SURFACE_INTERNAL_H
-#define SURFACE_INTERNAL_H
+#ifndef CROSS_OS_H
+#define CROSS_OS_H
 
-#include "vkvg_internal.h"
-#include "vkvg.h"
-#include "vkh.h"
-
-typedef struct _vkvg_surface_t {
-    VkvgDevice	dev;
-    uint32_t	width;
-    uint32_t	height;
-    VkFormat    format;
-    VkFramebuffer fb;
-    VkhImage	img;
-    VkhImage	imgMS;
-    VkhImage	stencil;
-    uint32_t    references;
-    bool        new;
-}vkvg_surface;
-
-void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect);
+//cross platform os helpers
+#ifdef _WIN32
+#include "windows.h"
+#elif __APPLE__
+#elif __unix__
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 #endif
+
+const char* getUserDir ();
+
+#endif // CROSS_OS_H

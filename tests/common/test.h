@@ -73,5 +73,11 @@ extern bool mouseDown;
 extern VkvgDevice device;
 extern VkvgSurface surf;
 
+//run test in one step
 void perform_test (void(*testfunc)(void),uint width, uint height);
 void randomize_color (VkvgContext ctx);
+
+//run test in 3 step: init, run, clear.
+void init_test (uint width, uint height);
+void run_test_func (void(*testfunc)(void),uint width, uint height);
+void clear_test ();

@@ -32,9 +32,9 @@ static uint32_t dlpCount = 0;
 #endif
 
 static VkClearValue clearValues[3] = {
-    { {{0.0f, 0.0f, 0.0f, 1.0f}} },
-    { {{1.0f, 0}} },
-    { {{0.0f, 0.0f, 0.0f, 1.0f}} }
+    { 0.0f, 0.0f, 0.0f, 0.0f },
+    { 1.0f, 0 },
+    { 0.0f, 0.0f, 0.0f, 0.0f }
 };
 
 /**
@@ -44,10 +44,10 @@ static VkClearValue clearValues[3] = {
  */
 VkvgContext vkvg_create(VkvgSurface surf)
 {
-    LOG(LOG_INFO, "CREATE Context: surf = %lu\n", (ulong)surf);
-
     VkvgDevice dev = surf->dev;
     VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
+
+    LOG(LOG_INFO, "CREATE Context: ctx = %lu; surf = %lu\n", (ulong)ctx, (ulong)surf);
 
     if (ctx==NULL) {
         dev->status = VKVG_STATUS_NO_MEMORY;
@@ -80,7 +80,14 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->renderPassBeginInfo.renderArea.extent.width = ctx->pSurf->width;
     ctx->renderPassBeginInfo.renderArea.extent.height = ctx->pSurf->height;
     ctx->renderPassBeginInfo.pClearValues = clearValues;
-    ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearStencil;
+
+    if (ctx->pSurf->new)
+        ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearAll;
+    else
+        ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearStencil;
+
+    ctx->pSurf->new = false;
+
     ctx->renderPassBeginInfo.clearValueCount = 3;
 
     ctx->pPrev          = surf->dev->lastCtx;
@@ -159,6 +166,8 @@ void vkvg_destroy (VkvgContext ctx)
         return;
 
     _flush_cmd_buff(ctx);
+
+    LOG(LOG_INFO, "DESTROY Context: ctx = %lu; surf = %lu\n", (ulong)ctx, (ulong)ctx->pSurf);
 
     if (ctx->pattern)
         vkvg_pattern_destroy (ctx->pattern);
@@ -455,6 +464,8 @@ void vkvg_clip_preserve (VkvgContext ctx){
     if (ctx->pathPtr == 0)      //nothing to fill
         return;
     _finish_path(ctx);
+
+    LOG(LOG_INFO, "CLIP: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
         vkvg_flush(ctx);

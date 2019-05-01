@@ -235,7 +235,7 @@ inline void _submit_wait_and_reset_cmd (VkvgContext ctx){
 }*/
 
 void _end_render_pass (VkvgContext ctx) {
-    LOG(LOG_INFO, "FLUSH Context: ctx = %lu; vert cpt = %d; ind cpt = %d\n", ctx, ctx->vertCount -4, ctx->indCount - 6);
+    LOG(LOG_INFO, "END RENDER PASS: ctx = %lu; vert cpt = %d; ind cpt = %d\n", ctx, ctx->vertCount -4, ctx->indCount - 6);
     _record_draw_cmd        (ctx);
     CmdEndRenderPass      (ctx->cmd);
     ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;

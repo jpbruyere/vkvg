@@ -170,6 +170,7 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
     surf->dev = dev;
     surf->width = width;
     surf->height = height;
+    surf->new = true;//used to clear all attacments on first render pass
 
     _init_surface (surf);
 

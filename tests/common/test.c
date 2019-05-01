@@ -63,11 +63,70 @@ void randomize_color (VkvgContext ctx) {
         (float)rand()/RAND_MAX
     );
 }
+static vk_engine_t* e;
+
+void init_test (uint width, uint height){
+    e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
+    VkhPresenter r = e->renderer;
+    vkengine_set_key_callback (e, key_callback);
+    vkengine_set_mouse_but_callback(e, mouse_button_callback);
+    vkengine_set_cursor_pos_callback(e, mouse_move_callback);
+    vkengine_set_scroll_callback(e, scroll_callback);
+
+    bool deferredResolve = false;
+
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_1_BIT, deferredResolve);
+
+    vkvg_device_set_dpy(device, 96, 96);
+
+    surf    = vkvg_surface_create(device, width, height);
+
+    vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
+}
+void run_test_func (void(*testfunc)(void),uint width, uint height) {
+    bool deferredResolve = false;
+    VkhPresenter r = e->renderer;
+
+    struct timeval before , after;
+    double frameTime = 0, frameTimeAccum = 0, frameCount = 0;
+
+    while (!vkengine_should_close (e)) {
+        glfwPollEvents();
+
+        gettimeofday(&before , NULL);
+
+        testfunc();
+
+        if (deferredResolve)
+            vkvg_multisample_surface_resolve(surf);
+        if (!vkh_presenter_draw (r))
+            vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
+
+        vkDeviceWaitIdle(e->dev->dev);
+
+        gettimeofday(&after , NULL);
+
+        frameTimeAccum += time_diff(before , after);
+        frameCount++;
+    }
+
+    frameTime = frameTimeAccum / frameCount;
+    printf ("frame (µs): %.0lf\nfps: %lf\n", frameTime, floor(1000000 / frameTime));
+
+}
+void clear_test () {
+    vkDeviceWaitIdle(e->dev->dev);
+
+    vkvg_surface_destroy    (surf);
+    vkvg_device_destroy     (device);
+
+    vkengine_destroy (e);
+}
 
 void perform_test (void(*testfunc)(void),uint width, uint height) {
     //dumpLayerExts();
 
-    vk_engine_t* e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
+    e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback (e, key_callback);
     vkengine_set_mouse_but_callback(e, mouse_button_callback);

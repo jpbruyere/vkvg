@@ -19,25 +19,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef SURFACE_INTERNAL_H
-#define SURFACE_INTERNAL_H
+#include "cross_os.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#include "vkvg_internal.h"
-#include "vkvg.h"
-#include "vkh.h"
 
-typedef struct _vkvg_surface_t {
-    VkvgDevice	dev;
-    uint32_t	width;
-    uint32_t	height;
-    VkFormat    format;
-    VkFramebuffer fb;
-    VkhImage	img;
-    VkhImage	imgMS;
-    VkhImage	stencil;
-    uint32_t    references;
-    bool        new;
-}vkvg_surface;
-
-void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect);
+int directoryExists (const char* path) {
+#ifdef _WIN32
+    return getenv("HOME");
+#elif __APPLE__
+#elif __unix__
+    struct stat st = {0};
+    return stat(path, &st)+1;
 #endif
+    return -1;
+}
+const char* getUserDir () {
+#ifdef _WIN32
+    return getenv("HOME");
+#elif __APPLE__
+#elif __unix__
+    struct passwd *pw = getpwuid(getuid());
+    return pw->pw_dir;
+#endif
+    return -1;
+}
