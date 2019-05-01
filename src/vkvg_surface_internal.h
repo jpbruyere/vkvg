@@ -34,7 +34,7 @@ typedef struct _vkvg_surface_t {
     VkFramebuffer fb;
     VkhImage	img;
     VkhImage	imgMS;
-    VkhImage	stencilMS;
+    VkhImage	stencil;
     uint32_t    references;
 }vkvg_surface;
 

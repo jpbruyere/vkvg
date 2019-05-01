@@ -74,14 +74,18 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
         VkClearColorValue cclr = {{0,0,0,0}};
         VkImageSubresourceRange range = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
 
-        vkh_image_set_layout (cmd, surf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
+        VkhImage img = surf->imgMS;
+        if (surf->dev->samples == VK_SAMPLE_COUNT_1_BIT)
+            img = surf->img;
+
+        vkh_image_set_layout (cmd, img, VK_IMAGE_ASPECT_COLOR_BIT,
                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-        vkCmdClearColorImage(cmd, vkh_image_get_vkimage (surf->imgMS),
+        vkCmdClearColorImage(cmd, vkh_image_get_vkimage (img),
                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &cclr, 1, &range);
 
-        vkh_image_set_layout (cmd, surf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
+        vkh_image_set_layout (cmd, img, VK_IMAGE_ASPECT_COLOR_BIT,
                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                               VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
@@ -89,14 +93,14 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
         VkClearDepthStencilValue clr = {0,0};
         VkImageSubresourceRange range = {VK_IMAGE_ASPECT_STENCIL_BIT,0,1,0,1};
 
-        vkh_image_set_layout (cmd, surf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
+        vkh_image_set_layout (cmd, surf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
                               VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-        vkCmdClearDepthStencilImage (cmd, vkh_image_get_vkimage (surf->stencilMS),
+        vkCmdClearDepthStencilImage (cmd, vkh_image_get_vkimage (surf->stencil),
                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,&clr,1,&range);
 
-        vkh_image_set_layout (cmd, surf->stencilMS, VK_IMAGE_ASPECT_STENCIL_BIT,
+        vkh_image_set_layout (cmd, surf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                               VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
     }
@@ -110,19 +114,23 @@ void _create_surface_main_image (VkvgSurface surf){
                                      VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     vkh_image_create_descriptor(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 }
-void _create_surface_ms_images (VkvgSurface surf) {
-    surf->imgMS = vkh_image_ms_create((VkhDevice)surf->dev,surf->format,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
-                                     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    surf->stencilMS = vkh_image_ms_create((VkhDevice)surf->dev,VK_FORMAT_S8_UINT,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
-                                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    vkh_image_create_descriptor(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-    vkh_image_create_descriptor(surf->stencilMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+//create multisample color img if sample count > 1 and the stencil buffer multisampled or not
+void _create_surface_secondary_images (VkvgSurface surf) {
+    if (surf->dev->samples > VK_SAMPLE_COUNT_1_BIT){
+        surf->imgMS = vkh_image_ms_create((VkhDevice)surf->dev,surf->format,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
+                                          VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+        vkh_image_create_descriptor(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
+                                    VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    }
+    surf->stencil = vkh_image_ms_create((VkhDevice)surf->dev,VK_FORMAT_S8_UINT,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,                                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+    vkh_image_create_descriptor(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST,
+                                VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 }
 void _create_framebuffer (VkvgSurface surf) {
     VkImageView attachments[] = {
-        vkh_image_get_view (surf->imgMS),
         vkh_image_get_view (surf->img),
-        vkh_image_get_view (surf->stencilMS),
+        vkh_image_get_view (surf->stencil),
+        vkh_image_get_view (surf->imgMS),
     };
     VkFramebufferCreateInfo frameBufferCreateInfo = { .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
                                                       .renderPass = surf->dev->renderPass,
@@ -131,8 +139,10 @@ void _create_framebuffer (VkvgSurface surf) {
                                                       .width = surf->width,
                                                       .height = surf->height,
                                                       .layers = 1 };
-    if (surf->dev->deferredResolve) {
-        attachments[1] = attachments[2];
+    if (surf->dev->samples == VK_SAMPLE_COUNT_1_BIT)
+        frameBufferCreateInfo.attachmentCount = 2;
+    else if (surf->dev->deferredResolve) {
+        attachments[0] = attachments[2];
         frameBufferCreateInfo.attachmentCount = 2;
     }
     VK_CHECK_RESULT(vkCreateFramebuffer(surf->dev->vkDev, &frameBufferCreateInfo, NULL, &surf->fb));
@@ -141,14 +151,14 @@ void _init_surface (VkvgSurface surf) {
     surf->format = FB_COLOR_FORMAT;//force bgra internally
 
     _create_surface_main_image  (surf);
-    _create_surface_ms_images   (surf);
+    _create_surface_secondary_images   (surf);
     _create_framebuffer         (surf);
 
     _clear_surface              (surf, VK_IMAGE_ASPECT_STENCIL_BIT);
 #if DEBUG
     vkh_image_set_name(surf->img, "surfImg");
     vkh_image_set_name(surf->imgMS, "surfImgMS");
-    vkh_image_set_name(surf->stencilMS, "surfStencil");
+    vkh_image_set_name(surf->stencil, "surfStencil");
 #endif
 }
 void vkvg_surface_clear (VkvgSurface surf) {
@@ -182,7 +192,7 @@ VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
     vkh_image_create_sampler(img, VK_FILTER_NEAREST, VK_FILTER_NEAREST,
                              VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 
-    _create_surface_ms_images   (surf);
+    _create_surface_secondary_images   (surf);
     _create_framebuffer         (surf);
     _clear_surface              (surf, VK_IMAGE_ASPECT_STENCIL_BIT);
 
@@ -315,10 +325,10 @@ void vkvg_surface_destroy(VkvgSurface surf)
     if (surf->references > 0)
         return;
     vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
-    if (!surf->img->imported)
-        vkh_image_destroy(surf->img);
+
+    vkh_image_destroy(surf->img);
     vkh_image_destroy(surf->imgMS);
-    vkh_image_destroy(surf->stencilMS);
+    vkh_image_destroy(surf->stencil);
 
     vkvg_device_destroy (surf->dev);
     free(surf);

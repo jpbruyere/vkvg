@@ -10,8 +10,8 @@ void test(){
 
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
-    vkvg_set_line_width(ctx,1);
-    for (int i=0; i<5000; i++) {
+    vkvg_set_line_width(ctx,2);
+    for (int i=0; i<1500; i++) {
         randomize_color(ctx);
         float x = trunc( (0.5*(float)w*rand())/RAND_MAX );
         float y = trunc( (0.5*(float)w*rand())/RAND_MAX );

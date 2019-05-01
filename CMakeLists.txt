@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.9)
 
-PROJECT(vkvg VERSION 0.1.0 DESCRIPTION "Vulkan Vector Graphic")
+PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic")
 
 INCLUDE(CheckSymbolExists)
 INCLUDE(CheckIncludeFile)

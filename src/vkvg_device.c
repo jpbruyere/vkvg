@@ -88,10 +88,13 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 
     _create_pipeline_cache      (dev);
     _init_fonts_cache           (dev);
-    if (dev->deferredResolve)
-        _setupRenderPassDeferredResolve(dev);
-    else
-        _setupRenderPass        (dev);
+    if (dev->deferredResolve || dev->samples == VK_SAMPLE_COUNT_1_BIT){
+        dev->renderPass = _setupRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
+        dev->renderPass_ClearStencil = _setupRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
+    }else{
+        dev->renderPass = _createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
+        dev->renderPass_ClearStencil = _createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
+    }
     _createDescriptorSetLayout  (dev);
     _setupPipelines             (dev);
 

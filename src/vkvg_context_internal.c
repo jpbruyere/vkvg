@@ -238,6 +238,7 @@ void _end_render_pass (VkvgContext ctx) {
     LOG(LOG_INFO, "FLUSH Context: ctx = %lu; vert cpt = %d; ind cpt = %d\n", ctx, ctx->vertCount -4, ctx->indCount - 6);
     _record_draw_cmd        (ctx);
     CmdEndRenderPass      (ctx->cmd);
+    ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
 }
 void _flush_cmd_buff (VkvgContext ctx){
     if (!ctx->cmdStarted)
@@ -271,22 +272,11 @@ void _init_cmd_buff (VkvgContext ctx){
     //VkClearValue clearValues[2];
     //clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
     //clearValues[1].depthStencil = { 1.0f, 0 };
-    /*VkClearValue clearValues[4] = {
-        { 0.0f, 1.0f, 0.0f, 1.0f },
-        { 0.0f, 0.0f, 0.0f, 1.0f },
-        { 1.0f, 0 },
-        { 1.0f, 0 }
-    };*/
 
 }
-void _start_cmd_for_render_pass (VkvgContext ctx) {
-    VkRenderPassBeginInfo renderPassBeginInfo = { .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-                                                  .renderPass = ctx->pSurf->dev->renderPass,
-                                                  .framebuffer = ctx->pSurf->fb,
-                                                  .renderArea.extent = {ctx->pSurf->width,ctx->pSurf->height}};
-                                                  //.clearValueCount = 4,
-                                                  //.pClearValues = clearValues};
 
+
+void _start_cmd_for_render_pass (VkvgContext ctx) {
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     if (ctx->pSurf->img->layout == VK_IMAGE_LAYOUT_UNDEFINED){
@@ -299,7 +289,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
 
-    CmdBeginRenderPass (ctx->cmd, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    CmdBeginRenderPass (ctx->cmd, &ctx->renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     VkViewport viewport = {0,0,ctx->pSurf->width,ctx->pSurf->height,0,1};
     CmdSetViewport(ctx->cmd, 0, 1, &viewport);
     VkRect2D scissor = {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
@@ -317,6 +307,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
     _update_push_constants  (ctx);
+
     ctx->cmdStarted = true;
 }
 //compute inverse mat used in shader when context matrix has changed
@@ -629,7 +620,7 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
 
 void _free_ctx_save (vkvg_context_save_t* sav){
     free(sav->selectedFont.fontFile);
-    vkh_image_destroy   (sav->stencilMS);
+    vkh_image_destroy   (sav->stencil);
     free (sav);
 }
 

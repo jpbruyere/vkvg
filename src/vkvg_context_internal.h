@@ -51,7 +51,7 @@ typedef struct {
 typedef struct _vkvg_context_save_t{
     struct _vkvg_context_save_t* pNext;
 
-    VkhImage    stencilMS;
+    VkhImage    stencil;
     uint32_t    stencilRef;
 
     float       lineWidth;
@@ -131,6 +131,7 @@ typedef struct _vkvg_context_t {
     vkvg_context_save_t* pSavedCtxs;//last ctx saved ptr
 
     VkClearRect         clearRect;
+    VkRenderPassBeginInfo renderPassBeginInfo;
 }vkvg_context;
 
 typedef struct _ear_clip_point{
