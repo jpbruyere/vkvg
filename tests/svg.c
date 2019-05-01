@@ -14,6 +14,18 @@ void svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 
 static float rotation = 0.f;
 
+void test_svg_surface() {
+    VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, "data/tiger.svg");
+
+    VkvgContext ctx = vkvg_create(surf);
+
+    vkvg_set_source_surface(ctx, svgSurf, 0,0);
+    vkvg_paint(ctx);
+
+    vkvg_destroy(ctx);
+    vkvg_surface_destroy(svgSurf);
+}
+
 void test_svg () {
     rotation+=0.01f;
 
@@ -99,6 +111,6 @@ void test_svg () {
 
 int main(int argc, char *argv[]) {
 
-    perform_test (test_svg, 1024, 768);
+    perform_test (test_svg_surface, 1024, 768);
     return 0;
 }
