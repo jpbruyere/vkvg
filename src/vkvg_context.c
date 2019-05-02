@@ -880,10 +880,10 @@ void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg, char *subId){
     vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
 
     for (shape = svg->shapes; shape != NULL; shape = shape->next) {
-        /*if (subId != NULL) {
+        if (subId != NULL) {
             if (strcmp(shape->id, subId)!=0)
                 continue;
-        }*/
+        }
 
         vkvg_new_path(ctx);
 
