@@ -343,7 +343,7 @@ VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
     _init_surface (surf);
 
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_render_svg(ctx, svg);
+    vkvg_render_svg(ctx, svg, NULL);
     vkvg_destroy(ctx);
 
     nsvgDelete(svg);

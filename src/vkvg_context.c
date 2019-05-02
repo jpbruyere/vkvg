@@ -871,7 +871,7 @@ void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
     memcpy (matrix, &ctx->pushConsts.mat, sizeof(vkvg_matrix_t));
 }
 
-void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg){
+void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg, char *subId){
     NSVGshape* shape;
     NSVGpath* path;
 
@@ -880,6 +880,10 @@ void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg){
     vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
 
     for (shape = svg->shapes; shape != NULL; shape = shape->next) {
+        /*if (subId != NULL) {
+            if (strcmp(shape->id, subId)!=0)
+                continue;
+        }*/
 
         vkvg_new_path(ctx);
 

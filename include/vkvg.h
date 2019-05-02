@@ -199,7 +199,7 @@ NSVGimage*  nsvg_load_file   (VkvgDevice dev, const char* filePath);
 NSVGimage*  nsvg_load        (VkvgDevice dev, char* fragment);
 void        nsvg_destroy     (NSVGimage* svg);
 void        nsvg_get_size    (NSVGimage* svg, int* width, int* height);
-void        vkvg_render_svg  (VkvgContext ctx, NSVGimage* svg);
+void        vkvg_render_svg  (VkvgContext ctx, NSVGimage* svg, char* subId);
 
 
 //mimic from cairo, to facilitate usage of vkvg as cairo vulkan backend

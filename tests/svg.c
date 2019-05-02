@@ -13,7 +13,7 @@ void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 }
 
 static float rotation = 0.f;
-//static const char* path = "/mnt/devel/crow-drm/Images/Icons/minimize.svg";
+//static const char* path = "/mnt/devel/crow-drm/Images/Icons/expandable.svg";
 static const char* path = "data/tiger.svg";
 
 void test_svg_surface() {
@@ -34,8 +34,9 @@ void test_svg_surface() {
 void test_nsvg() {
     NSVGimage* svg = nsvg_load_file(device, path);
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_scale(ctx,0.04f,0.04f);
-    vkvg_render_svg(ctx, svg);
+    vkvg_scale(ctx,0.4f,0.4f);
+    vkvg_translate(ctx,100,100);
+    vkvg_render_svg(ctx, svg, NULL);
     vkvg_destroy(ctx);
     nsvg_destroy(svg);
 }
