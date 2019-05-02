@@ -491,7 +491,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
         CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
     }
-    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+    _draw_full_screen_quad(ctx);
     //should test current operator to bind correct pipeline
     _bind_draw_pipeline (ctx);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -512,7 +512,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
         _poly_fill (ctx);
         _bind_draw_pipeline (ctx);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-        CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+        _draw_full_screen_quad(ctx);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
     }else{
         //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
@@ -653,7 +653,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 }
 void vkvg_paint (VkvgContext ctx){
     _check_cmd_buff_state(ctx);
-    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+    _draw_full_screen_quad(ctx);
 }
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
     vkvg_set_source_rgba (ctx, r, g, b, 1);
@@ -764,7 +764,7 @@ void vkvg_save (VkvgContext ctx){
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
     CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curSavBit);
 
-    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+    _draw_full_screen_quad(ctx);
 
     _bind_draw_pipeline (ctx);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -820,7 +820,7 @@ void vkvg_restore (VkvgContext ctx){
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curSavBit);
     CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-    CmdDrawIndexed (ctx->cmd,6,1,0,0,0);
+    _draw_full_screen_quad(ctx);
 
     _bind_draw_pipeline (ctx);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);

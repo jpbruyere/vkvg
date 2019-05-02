@@ -33,11 +33,15 @@ void test_svg_surface() {
 
 void test_nsvg() {
     NSVGimage* svg = nsvg_load_file(device, path);
+
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_scale(ctx,0.4f,0.4f);
-    vkvg_translate(ctx,100,100);
+    vkvg_set_source_rgba(ctx,0.9f,1.0,1.0,1);
+    vkvg_paint(ctx);
+
+    vkvg_scale(ctx,0.3f,0.3f);
     vkvg_render_svg(ctx, svg, NULL);
     vkvg_destroy(ctx);
+
     nsvg_destroy(svg);
 }
 
@@ -125,6 +129,6 @@ void test_svg () {
 
 int main(int argc, char *argv[]) {
 
-    perform_test (test_nsvg, 1024, 768);
+    perform_test (test_nsvg, 512, 512);
     return 0;
 }

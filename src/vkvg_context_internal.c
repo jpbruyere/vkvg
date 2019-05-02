@@ -905,3 +905,13 @@ void _fill_ec (VkvgContext ctx){
     }
     _record_draw_cmd(ctx);
 }
+
+static const uint32_t one = 1;
+static const uint32_t zero = 0;
+void _draw_full_screen_quad (VkvgContext ctx) {
+    CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
+                       VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&one);
+    CmdDraw (ctx->cmd,3,1,0,0);
+    CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
+                       VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&zero);
+}

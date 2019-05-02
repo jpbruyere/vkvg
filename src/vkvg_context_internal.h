@@ -43,7 +43,7 @@ typedef struct {
     vec4            source;
     vec2            size;
     uint32_t        patternType;
-    uint32_t        pad;
+    uint32_t        fullScreenQuad;
     vkvg_matrix_t   mat;
     vkvg_matrix_t   matInv;
 }push_constants;
@@ -157,6 +157,7 @@ void _add_point_vec2		(VkvgContext ctx, vec2 v);
 
 void _poly_fill             (VkvgContext ctx);
 void _fill_ec               (VkvgContext ctx);//earclipping fill
+void _draw_full_screen_quad (VkvgContext ctx);
 
 void _create_gradient_buff  (VkvgContext ctx);
 void _create_vertices_buff	(VkvgContext ctx);
