@@ -190,7 +190,7 @@ if (GLFW3_FOUND)
 	)
 	TARGET_LINK_LIBRARIES(tests_common
 		${Vulkan_LIBRARIES}
-		${GLFW3_LIBRARIES}
+		${GLFW3_LIBRARY}
 		vkh_static
 		vkvg
 	)
@@ -243,7 +243,6 @@ MESSAGE(STATUS "Font filtering\t= Grayscale.")
 ENDIF ()
 MESSAGE(STATUS "---------------------------------------------------------------------------\n\n")
 
-MESSAGE(STATUS "GLFW3 include dir:  ${GLFW3_INCLUDE_DIR}")
 IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 INCLUDE(InstallRequiredSystemLibraries)
 
