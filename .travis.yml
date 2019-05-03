@@ -1,19 +1,13 @@
 language: c
-os:
-  - linux
-  - osx
-compiler:
-  - gcc
-  - clang
-addons:
-  apt:
-	packages:
-	  - libvulkan
 
+os:
+    - linux
+
+compiler:
+    - gcc
 
 script:
-  - mkdir build
-  - cd build
-  - cmake ..
-  - make -j 4
-
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make
