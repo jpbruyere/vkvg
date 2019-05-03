@@ -165,6 +165,7 @@ FUNCTION (buildtest TEST_NAME)
 	ADD_EXECUTABLE(test_${TEST_NAME} "tests/${TEST_NAME}.c" )
 	TARGET_INCLUDE_DIRECTORIES(test_${TEST_NAME} PRIVATE
 		${Vulkan_INCLUDE_DIRS}
+		${GLFW3_INCLUDE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${CMAKE_CURRENT_SOURCE_DIR}/tests/common
@@ -242,6 +243,7 @@ MESSAGE(STATUS "Font filtering\t= Grayscale.")
 ENDIF ()
 MESSAGE(STATUS "---------------------------------------------------------------------------\n\n")
 
+MESSAGE(STATUS "GLFW3 include dir:  ${GLFW3_INCLUDE_DIR}")
 IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 INCLUDE(InstallRequiredSystemLibraries)
 
