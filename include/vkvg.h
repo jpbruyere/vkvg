@@ -321,7 +321,7 @@ VkvgPattern vkvg_pattern_create_radial      (float cx0, float cy0, float radius0
                                              float cx1, float cy1, float radius1);
 void        vkvg_pattern_destroy            (VkvgPattern pat);
 
-void vkvg_patter_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a);
+void vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r, float g, float b, float a);
 void vkvg_pattern_set_extend    (VkvgPattern pat, vkvg_extend_t extend);
 void vkvg_pattern_set_filter    (VkvgPattern pat, vkvg_filter_t filter);
 

@@ -113,7 +113,7 @@ VkvgPattern vkvg_pattern_reference (VkvgPattern pat) {
 uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat) {
     return pat->references;
 }
-void vkvg_patter_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a) {
+void vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a) {
     if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID){
 
         return;
