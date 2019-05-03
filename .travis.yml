@@ -1,19 +1,20 @@
-language: c
+language: cpp
+dist: xenial
+
 os:
-  - linux
-  - osx
+    - linux
+
 compiler:
-  - gcc
-  - clang
-addons:
-  apt:
-	packages:
-	  - libvulkan
+    - g++
 
-
+install:
+    - wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+    - sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.1.106-xenial.list http://packages.lunarg.com/vulkan/1.1.106/lunarg-vulkan-1.1.106-xenial.list
+    - sudo apt -qq update
+    - sudo apt install vulkan-sdk libharfbuzz-dev libfreetype6-dev libfontconfig1-dev
+#    - sudo apt install libglfw3-dev
 script:
-  - mkdir build
-  - cd build
-  - cmake ..
-  - make -j 4
-
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make
