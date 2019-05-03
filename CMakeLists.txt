@@ -180,6 +180,7 @@ if (GLFW3_FOUND)
 	ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
 	TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
 		${Vulkan_INCLUDE_DIRS}
+		${GLFW3_INCLUDE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${CMAKE_CURRENT_SOURCE_DIR}/tests/common
