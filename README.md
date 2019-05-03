@@ -8,6 +8,9 @@
   Vulkan Vector Graphics
   <br>
 <p align="center">
+  <a href="https://travis-ci.org/jpbruyere/vkvg">
+	<img src="https://travis-ci.org/jpbruyere/vkvg.svg?branch=master">
+  </a>
   <img src="https://img.shields.io/github/license/jpbruyere/vkvg.svg?style=flat-square">
   <a href="https://www.paypal.me/GrandTetraSoftware">
 	<img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square">
@@ -35,10 +38,10 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 
 <p align="center">
   <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
-    <kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png" height="260"></kbd>
+	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png" height="260"></kbd>
   </a>
   <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png">
-    <kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" height="260"></kbd>
+	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" height="260"></kbd>
   </a>
 </p>
 
