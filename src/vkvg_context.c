@@ -326,7 +326,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 
     vec2 v = {cosf(a1)*radius + xc, sinf(a1)*radius + yc};
 
-    float step = M_PIF/radius*1.5f;
+    float step = M_PIF/radius*0.5f;
     float a = a1;
 
     if (_current_path_is_empty(ctx))
@@ -345,8 +345,10 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
         _add_point (ctx, v.x, v.y);
         a+=step;
     }
-    if (EQUF(a2-a1,M_PIF*2.f))//if arc is complete circle, last point is the same as the first one
+    if (EQUF(a2-a1,M_PIF*2.f)){//if arc is complete circle, last point is the same as the first one
+        vkvg_close_path(ctx);
         return;
+    }
     a = a2;
     vec2 lastP = v;
     v.x = cosf(a)*radius + xc;
