@@ -43,7 +43,7 @@ extern "C" {
 #define LOG_FULL		0xff
 
 #ifdef DEBUG
-static uint8_t log_level	= LOG_ERR;// | LOG_INFO | LOG_DEBUG;
+static uint8_t log_level	= LOG_ERR;// | LOG_INFO | LOG_DEBUG | LOG_INFO_PATH;
 #define LOG(level,...) (log_level & level) ? fprintf (stdout, __VA_ARGS__):true;
 #else
 #define LOG

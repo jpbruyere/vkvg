@@ -178,9 +178,9 @@ void _create_cmd_buff (VkvgContext ctx){
     ctx->cmd = vkh_cmd_buff_create((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }
 void _record_draw_cmd (VkvgContext ctx){
-    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vert cpt = %d; ind cpt = %d; ind drawn = %d\n", (ulong)ctx, ctx->vertCount - 4, ctx->indCount - 6, ctx->indCount - ctx->curIndStart);
     if (ctx->indCount == ctx->curIndStart)
         return;
+    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vertices = %d; indices = %d\n", (ulong)ctx, ctx->vertCount - *((uint32_t*)(ctx->indices.allocInfo.pMappedData + (ctx->curIndStart * sizeof(uint32_t)))), ctx->indCount - ctx->curIndStart);
     _check_cmd_buff_state(ctx);
     CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
 
@@ -235,8 +235,8 @@ inline void _submit_wait_and_reset_cmd (VkvgContext ctx){
 }*/
 
 void _end_render_pass (VkvgContext ctx) {
-    LOG(LOG_INFO, "END RENDER PASS: ctx = %lu; vert cpt = %d; ind cpt = %d\n", ctx, ctx->vertCount -4, ctx->indCount - 6);
     _record_draw_cmd        (ctx);
+    LOG(LOG_INFO, "END RENDER PASS: ctx = %lu;\n", ctx);
     CmdEndRenderPass      (ctx->cmd);
     ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
 }
@@ -246,6 +246,7 @@ void _flush_cmd_buff (VkvgContext ctx){
     _end_render_pass        (ctx);
     vkh_cmd_end             (ctx->cmd);
 
+    LOG(LOG_INFO, "FLUSH CTX: ctx = %lu; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
     _submit_wait_and_reset_cmd(ctx);
 
     ctx->vertCount = 0;
@@ -270,6 +271,7 @@ void _bind_draw_pipeline (VkvgContext ctx) {
 }
 
 void _start_cmd_for_render_pass (VkvgContext ctx) {
+    LOG(LOG_INFO, "START RENDER PASS: ctx = %lu\n", ctx);
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     if (ctx->pSurf->img->layout == VK_IMAGE_LAYOUT_UNDEFINED){

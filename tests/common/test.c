@@ -166,6 +166,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
         frameTimeAccum += time_diff(before , after);
         frameCount++;
+        fflush(stdout);
     }
 
     frameTime = frameTimeAccum / frameCount;
