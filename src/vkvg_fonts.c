@@ -135,8 +135,6 @@ void _increase_font_tex_array (VkvgDevice dev){
         _update_descriptor_set (next, next->source, next->dsSrc);
         next = next->pPrev;
     }
-
-    _init_all_contexes  (dev);
 }
 ///Start a new line in font cache, increase texture layer count if needed.
 void _init_next_line_in_tex_cache (VkvgDevice dev, _vkvg_font_t* f){

@@ -247,6 +247,10 @@ void _flush_cmd_buff (VkvgContext ctx){
     vkh_cmd_end             (ctx->cmd);
 
     _submit_wait_and_reset_cmd(ctx);
+
+    ctx->vertCount = 0;
+    ctx->indCount = 0;
+    ctx->curIndStart = 0;
 }
 
 //bind correct draw pipeline depending on current OPERATOR
@@ -264,17 +268,6 @@ void _bind_draw_pipeline (VkvgContext ctx) {
         break;
     }
 }
-void _init_cmd_buff (VkvgContext ctx){
-    //full surf quad triangles is at the beginning
-    ctx->vertCount = 4;
-    ctx->indCount = 6;
-    ctx->curIndStart = 6;
-    //VkClearValue clearValues[2];
-    //clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-    //clearValues[1].depthStencil = { 1.0f, 0 };
-
-}
-
 
 void _start_cmd_for_render_pass (VkvgContext ctx) {
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);

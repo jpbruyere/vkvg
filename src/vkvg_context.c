@@ -65,6 +65,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->curOperator    = VKVG_OPERATOR_OVER;
     ctx->curFillRule    = VKVG_FILL_RULE_NON_ZERO;
     ctx->curSavBit      = 0x4;
+    ctx->vertCount      = 0;
+    ctx->indCount       = 0;
+    ctx->curIndStart    = 0;
+
 
     push_constants pc = {
             {.height=1},
@@ -117,10 +121,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc);
     _update_gradient_desc_set(ctx);
 
-    //add full screen quad at the beginning, recurently used
-    _vao_add_rectangle (ctx,0,0,ctx->pSurf->width,ctx->pSurf->height);
-
-    _init_cmd_buff          (ctx);
     _clear_path             (ctx);
 
     ctx->references = 1;
@@ -133,7 +133,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
  */
 void vkvg_flush (VkvgContext ctx){
     _flush_cmd_buff(ctx);
-    _init_cmd_buff(ctx);
 /*
 #ifdef DEBUG
 

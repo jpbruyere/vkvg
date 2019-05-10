@@ -33,13 +33,6 @@ void _flush_all_contexes (VkvgDevice dev){
         next = next->pPrev;
     }
 }
-void _init_all_contexes (VkvgDevice dev){
-    VkvgContext next = dev->lastCtx;
-    while (next != NULL){
-        _init_cmd_buff (next);
-        next = next->pPrev;
-    }
-}
 
 void _create_pipeline_cache(VkvgDevice dev){
 

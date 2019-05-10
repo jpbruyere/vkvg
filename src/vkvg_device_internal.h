@@ -107,7 +107,6 @@ VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadO
 void _setupPipelines            (VkvgDevice dev);
 void _createDescriptorSetLayout (VkvgDevice dev);
 void _flush_all_contexes        (VkvgDevice dev);
-void _init_all_contexes         (VkvgDevice dev);
 void _wait_and_reset_device_fence (VkvgDevice dev);
 void _submit_cmd                (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
 #endif

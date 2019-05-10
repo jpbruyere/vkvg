@@ -171,7 +171,6 @@ void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, flo
 
 void _bind_draw_pipeline    (VkvgContext ctx);
 void _create_cmd_buff		(VkvgContext ctx);
-void _init_cmd_buff			(VkvgContext ctx);
 void _check_cmd_buff_state  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
 void _record_draw_cmd		(VkvgContext ctx);
