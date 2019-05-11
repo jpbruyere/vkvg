@@ -55,16 +55,18 @@ layout(push_constant) uniform PushConsts {
 
 void main()
 {
-	outUV		= inUV;
 	outPatType	= pc.srcType;
 	outSrc		= pc.source;
 	outMat		= pc.matInv;
 
 	if (pc.fullScreenQuad != 0) {
 		gl_Position = vec4(vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2) * 2.0f + -1.0f, 0.0f, 1.0f);
+		outUV = vec3(0,0,-1);
 		//gl_Position = vec4(vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2) -1.0f, 0.0f, 1.0f);
 		return;
 	}
+
+	outUV = inUV;
 
 	vec2 p = vec2(
 		pc.mat[0][0] * inPos.x + pc.mat[1][0] * inPos.y + pc.mat[2][0],
