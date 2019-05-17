@@ -28,9 +28,9 @@
 #include "vkh.h"
 #include "vkvg_fonts.h"
 
-#define VKVG_PTS_SIZE				10000
-#define VKVG_VBO_SIZE				VKVG_PTS_SIZE * 2
-#define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 2
+#define VKVG_PTS_SIZE				4096
+#define VKVG_VBO_SIZE				4096 * 8
+#define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 6
 #define VKVG_PATHES_SIZE			16
 #define VKVG_ARRAY_THRESHOLD		4
 
@@ -50,9 +50,6 @@ typedef struct {
 
 typedef struct _vkvg_context_save_t{
     struct _vkvg_context_save_t* pNext;
-
-    VkhImage    stencil;
-    uint32_t    stencilRef;
 
     float       lineWidth;
 
@@ -128,8 +125,9 @@ typedef struct _vkvg_context_t {
     VkvgPattern         pattern;
     vkvg_status_t       status;
 
-    vkvg_context_save_t* pSavedCtxs;//last ctx saved ptr
-    unsigned char       curSavBit;//current stencil bit used to save context
+    vkvg_context_save_t* pSavedCtxs;        //last ctx saved ptr
+    uint8_t             curSavBit;          //current stencil bit used to save context, 6 bits used by stencil for save/restore
+    VkhImage*           savedStencils;      //additional image for saving contexes once more than 6 save/restore are reached
 
     VkClearRect         clearRect;
     VkRenderPassBeginInfo renderPassBeginInfo;
@@ -186,7 +184,6 @@ void _createDescriptorPool  (VkvgContext ctx);
 void _init_descriptor_sets  (VkvgContext ctx);
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
 void _update_gradient_desc_set(VkvgContext ctx);
-//void _reset_src_descriptor_set(VkvgContext ctx);
 void _free_ctx_save         (vkvg_context_save_t* sav);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){

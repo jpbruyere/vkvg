@@ -36,7 +36,7 @@ void test2(){
 }
 int main(int argc, char *argv[]) {
 
-    perform_test (test2, 1024, 768);
+    perform_test (test, 1024, 768);
 
     return 0;
 }

@@ -1,25 +1,28 @@
 #include "test.h"
 
+void recurse_draw(VkvgContext ctx, int depth) {
+    depth++;
+    vkvg_save(ctx);
+
+    vkvg_translate (ctx, 5,5);
+    vkvg_rectangle(ctx, depth,depth,200,200);
+    vkvg_clip_preserve(ctx);
+    vkvg_set_source_rgb(ctx, 1.f/depth, 1.f / depth, 1.f / depth);
+    vkvg_fill_preserve(ctx);
+    vkvg_set_source_rgb(ctx, 0,0,0);
+    vkvg_stroke(ctx);
+
+    if (depth < 20)
+        recurse_draw (ctx, depth);
+
+    vkvg_restore(ctx);
+}
+
+
 void test(){
     VkvgContext ctx = vkvg_create(surf);
 
-    vkvg_set_source_rgba(ctx,1,0,0,1);
-    vkvg_set_line_width(ctx,10);
-    vkvg_rectangle(ctx,100,100,200,200);
-    vkvg_stroke(ctx);
-    vkvg_set_source_rgba(ctx,0,1,0,1);
-
-    vkvg_save(ctx);
-
-    vkvg_set_source_rgba(ctx,0,1,1,1);
-    vkvg_set_line_width(ctx,1);
-    vkvg_rectangle(ctx,200,200,200,200);
-    vkvg_fill(ctx);
-
-    vkvg_restore(ctx);
-
-    vkvg_rectangle(ctx,100,100,200,200);
-    vkvg_stroke(ctx);
+    recurse_draw(ctx, 0);
 
     vkvg_destroy(ctx);
 }

@@ -311,7 +311,7 @@ void cairo_tests () {
 
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
-    vkvg_set_source_rgba(ctx,0.7f,0.7f,0.7f,1);
+    vkvg_set_source_rgba(ctx,1.0f,1.0f,1.0f,1);
     vkvg_paint(ctx);
 
     vkvg_set_matrix(ctx,&mat);

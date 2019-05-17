@@ -348,6 +348,10 @@ _vkvg_font_t* _tryFindVkvgFont (VkvgContext ctx){
 void _update_current_font (VkvgContext ctx) {
     VkvgDevice dev = ctx->pSurf->dev;
     if (ctx->currentFont == NULL){
+        if (ctx->selectedFont.fontFile[0] == 0) {
+            ctx->selectedFont.charSize = 10 << 6;
+            _select_font_face (ctx, "sans");
+        }
         ctx->currentFont = _tryFindVkvgFont (ctx);
         if (ctx->currentFont == NULL){
             //create new font in cache

@@ -141,7 +141,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
     surf    = vkvg_surface_create(device, width, height);
 
-    vkvg_surface_clear(surf);
+    //vkvg_surface_clear(surf);
 
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 
