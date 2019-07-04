@@ -92,6 +92,8 @@ VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
 VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
                                         float cx1, float cy1, float radius1){
     VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
+    pat->type = VKVG_PATTERN_TYPE_RADIAL;
+    pat->extend = VKVG_EXTEND_PAD;
 
     vkvg_gradient_t* grad = (vkvg_gradient_t*)calloc(1,sizeof(vkvg_gradient_t));
 

@@ -163,7 +163,15 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
         }
     }
 
+#if DEBUG
+    char const * dex [] = {"VK_KHR_swapchain", "VK_EXT_debug_marker"};
+    enabledExtsCount = 2;
+#else
     char const * dex [] = {"VK_KHR_swapchain"};
+    enabledExtsCount = 1;
+#endif
+
+
 
     VkPhysicalDeviceFeatures enabledFeatures = {
         .fillModeNonSolid = true,
@@ -173,7 +181,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                        .queueCreateInfoCount = qCount,
                                        .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
-                                       .enabledExtensionCount = 1,
+                                       .enabledExtensionCount = enabledExtsCount,
                                        .ppEnabledExtensionNames = dex,
                                        .pEnabledFeatures = &enabledFeatures
                                      };
@@ -184,6 +192,8 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
 #if DEBUG
     dbgReport = vkh_device_create_debug_report (e->dev,
+
+    //VK_DEBUG_REPORT_INFORMATION_BIT_EXT|
             VK_DEBUG_REPORT_ERROR_BIT_EXT|
             VK_DEBUG_REPORT_WARNING_BIT_EXT|
             VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT|

@@ -34,8 +34,8 @@ layout (set=2, binding = 0) uniform _uboGrad {
 }uboGrad;
 
 layout (location = 0) in vec3	inFontUV;		//if it is a text drawing, inFontUV.z hold fontMap layer
-layout (location = 1) in vec4	inSrc;			//source bounds or color
-layout (location = 2) in flat int inPatType;
+layout (location = 1) in vec4	inSrc;			//source bounds or color depending on pattern type
+layout (location = 2) in flat int inPatType;	//pattern type
 layout (location = 3) in mat3x2 inMat;
 
 layout (location = 0) out vec4 outFragColor;
@@ -63,7 +63,6 @@ void main()
 			inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
 			inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
 		);
-
 		c = texture (source, uv / inSrc.zw);
 		break;
 	case LINEAR:
@@ -80,6 +79,8 @@ void main()
 		c = mix(uboGrad.colors[0], uboGrad.colors[1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[0].r*d, gradientStartPosRotatedX + uboGrad.stops[1].r*d, xLocRotated ) );
 		for ( int i=1; i<uboGrad.count-1; ++i )
 			c = mix(c, uboGrad.colors[i+1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[i].r*d, gradientStartPosRotatedX + uboGrad.stops[i+1].r*d, xLocRotated ) );
+		break;
+	case RADIAL:
 		break;
 	}
 
