@@ -14,6 +14,8 @@ void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 
 static float rotation = 0.f;
 static const char* path = "data/tiger.svg";
+//static const char* path = "data/vkvg.svg";
+//static const char* path = "data/testPiece.svg";
 
 void test_svg_surface() {
     VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, path);
@@ -37,7 +39,8 @@ void test_nsvg() {
     vkvg_set_source_rgba(ctx,0.9f,1.0,1.0,1);
     vkvg_paint(ctx);
 
-    vkvg_scale(ctx,0.3f,0.3f);
+    vkvg_scale(ctx,1.0f,1.0f);
+    //vkvg_render_svg(ctx, svg, "br0");
     vkvg_render_svg(ctx, svg, NULL);
 
     vkvg_destroy(ctx);
@@ -129,6 +132,6 @@ void test_svg () {
 
 int main(int argc, char *argv[]) {
 
-    perform_test (test_nsvg, 512, 512);
+    perform_test (test_nsvg, 1024, 800);
     return 0;
 }

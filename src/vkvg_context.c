@@ -277,7 +277,8 @@ void vkvg_close_path (VkvgContext ctx){
         ctx->pathes[ctx->pathPtr] = ctx->pointCount - 1;
         ctx->pathes[ctx->pathPtr-1] |= PATH_CLOSED_BIT;
         _check_pathes_array(ctx);
-        ctx->pathPtr++;
+        ctx->pathPtr += ctx->curvePtr + 1;
+        ctx->curvePtr = 0;
     }else
         _finish_path(ctx);
 }
@@ -343,13 +344,18 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     if (EQUF(a2, a1))
         return;
 
+    _set_curve_start (ctx);
+
     while(a < a2){
         v.x = cosf(a)*radius + xc;
         v.y = sinf(a)*radius + yc;
         _add_point (ctx, v.x, v.y);
         a+=step;
     }
+
     if (EQUF(a2-a1,M_PIF*2.f)){//if arc is complete circle, last point is the same as the first one
+        ctx->pathes[ctx->pathPtr+ctx->curvePtr+2] = ctx->pointCount - 1;
+        ctx->curvePtr+=2;
         vkvg_close_path(ctx);
         return;
     }
@@ -359,6 +365,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     v.y = sinf(a)*radius + yc;
     //if (!vec2_equ (v,lastP))//this test should not be required
         _add_point (ctx, v.x, v.y);
+    _set_curve_end(ctx);
 }
 void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
     while (a2 > a1)
@@ -382,6 +389,8 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
     if (EQUF(a2, a1))
         return;
 
+    _set_curve_start (ctx);
+
     while(a > a2){
         v.x = cosf(a)*radius + xc;
         v.y = sinf(a)*radius + yc;
@@ -398,6 +407,7 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
     v.y = sinf(a)*radius + yc;
     //if (!vec2_equ (v,lastP))
         _add_point (ctx, v.x, v.y);
+    _set_curve_end(ctx);
 }
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
@@ -418,11 +428,14 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
         vkvg_move_to(ctx, x1, y1);
 
     vec2 cp = _get_current_position(ctx);
-    _recursive_bezier       (ctx, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
+
+    _set_curve_start (ctx);
+    _recursive_bezier (ctx, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
     /*cp.x = x3;
     cp.y = y3;
     if (!vec2_equ(ctx->points[ctx->pointCount-1],cp))*/
     _add_point(ctx,x3,y3);
+    _set_curve_end (ctx);
 }
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
     if (_current_path_is_empty(ctx)){
@@ -546,13 +559,14 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     uint32_t lastPathPointIdx, iL, iR;
 
     while (ptrPath < ctx->pathPtr){
+        int ptrCurve = 0;
         uint32_t firstIdx = ctx->vertCount;
         i = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
         LOG(LOG_INFO_PATH, "\tPATH: start = %d; ", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
 
         if (_path_is_closed(ctx,ptrPath)){
-            lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;// _get_last_point_of_closed_path(ctx,ptrPath);
+            lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
             LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
             //prevent closing on the same position, this could be generalize
             //to prevent processing of two consecutive point at the same position
@@ -601,10 +615,27 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             iL = i++;
         }
 
-        while (i < lastPathPointIdx){
-            iR = i+1;
-            _build_vb_step(ctx,v,hw,iL,i,iR);
-            iL = i++;
+        if (_path_has_curves (ctx,ptrPath)) {
+            while (i < lastPathPointIdx){
+                if (i + ptrCurve + 2 < ctx->pathPtr && ctx->pathes [ptrPath + 2 + ptrCurve] == i){
+                    while (i<ctx->pathes[ptrPath + 2 + ptrCurve+1]){
+                        iR = i+1;
+                        _build_vb_step(ctx,v,hw,iL,i,iR,true);
+                        iL = i++;
+                    }
+                    ptrCurve += 2;
+                }else{
+                    iR = i+1;
+                    _build_vb_step(ctx,v,hw,iL,i,iR, false);
+                    iL = i++;
+                }
+            }
+        }else{
+            while (i < lastPathPointIdx){
+                iR = i+1;
+                _build_vb_step(ctx,v,hw,iL,i,iR, false);
+                iL = i++;
+            }
         }
 
         if (!_path_is_closed(ctx,ptrPath)){
@@ -643,7 +674,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             i++;
         }else{
             iR = ctx->pathes[ptrPath]&PATH_ELT_MASK;
-            _build_vb_step(ctx,v,hw,iL,i,iR);
+            _build_vb_step(ctx,v,hw,iL,i,iR, false);
 
             uint32_t* inds = (uint32_t*)(ctx->indices.allocInfo.pMappedData + ((ctx->indCount-6) * sizeof(uint32_t)));
             uint32_t ii = firstIdx;
@@ -653,7 +684,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             i++;
         }
 
-        ptrPath+=2;
+        ptrPath+=2+ptrCurve;
     }
     _record_draw_cmd(ctx);
 }

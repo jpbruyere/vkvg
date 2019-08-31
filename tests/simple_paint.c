@@ -9,6 +9,8 @@ void test(){
 
 int main(int argc, char *argv[]) {
 
+    vkengine_dump_available_layers();
+
     perform_test (test, 1024, 768);
 
     return 0;

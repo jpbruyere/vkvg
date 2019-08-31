@@ -102,13 +102,19 @@ typedef struct _vkvg_context_t {
     size_t		sizePoints;     //reserved size
     uint32_t	pointCount;     //effective points count
 
-    uint32_t	pathPtr;
     //pathes array is a list of couple (start,end) point idx refering to point array
     //it split points list in subpathes and tell if path is closed.
     //if path is closed, end index is the same as start.
     //(TODO: I should use a boolean or smthg else instead to keep last point in array)
+    uint32_t	pathPtr;        //pointer in the path array, even=start point;odd=end point
     uint32_t*	pathes;
     size_t		sizePathes;
+
+    //if current path contains curves, start/end points are store next to the path start/stop
+    //curve start point = pathPtr + curvePtr
+    //when closing of finishing path, pathPtr is incremented by 1 + pathPtr
+    //note:number of pathes can no longuer be computed from pathPtr/2, the array contains now curves datas
+    uint32_t    curvePtr;
 
     float		lineWidth;
 
@@ -145,7 +151,9 @@ void _check_pathes_array	(VkvgContext ctx);
 void _finish_path			(VkvgContext ctx);
 void _clear_path			(VkvgContext ctx);
 bool _path_is_closed		(VkvgContext ctx, uint32_t ptrPath);
-uint32_t _get_last_point_of_closed_path (VkvgContext ctx, uint32_t ptrPath);
+void _set_curve_start       (VkvgContext ctx);
+void _set_curve_end         (VkvgContext ctx);
+bool _path_has_curves       (VkvgContext ctx, int ptrPath);
 
 float _normalizeAngle       (float a);
 
@@ -164,7 +172,7 @@ void _add_vertexf           (VkvgContext ctx, float x, float y);
 void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
 void _add_triangle_indices	(VkvgContext ctx, uint32_t i0, uint32_t i1,uint32_t i2);
 void _add_tri_indices_for_rect	(VkvgContext ctx, uint32_t i);
-void _build_vb_step         (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR);
+void _build_vb_step         (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR, bool isCurve);
 void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, float height);
 
 void _bind_draw_pipeline    (VkvgContext ctx);
