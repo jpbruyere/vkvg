@@ -273,12 +273,9 @@ void vkvg_close_path (VkvgContext ctx){
         return;
     }
     //check if at least 3 points are present
-    if (ctx->pointCount - ctx->pathes [ctx->pathPtr-1] > 2){
-        //set end idx of path to the same as start idx
-        ctx->pathes[ctx->pathPtr] = ctx->pathes [ctx->pathPtr-1];
-        //if last point of path is same pos as first point, remove it
-        //if (vec2_equ(ctx->points[ctx->pointCount-1], ctx->points[ctx->pathes[ctx->pathPtr]]))
-        //    ctx->pointCount--;
+    if (ctx->pointCount - (ctx->pathes [ctx->pathPtr-1]&PATH_ELT_MASK) > 2){
+        ctx->pathes[ctx->pathPtr] = ctx->pointCount - 1;
+        ctx->pathes[ctx->pathPtr-1] |= PATH_CLOSED_BIT;
         _check_pathes_array(ctx);
         ctx->pathPtr++;
     }else
@@ -550,12 +547,12 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
     while (ptrPath < ctx->pathPtr){
         uint32_t firstIdx = ctx->vertCount;
-        i = ctx->pathes[ptrPath];
+        i = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
-        LOG(LOG_INFO_PATH, "\tPATH: start = %d; ", ctx->pathes[ptrPath], ctx->pathes[ptrPath+1]);
+        LOG(LOG_INFO_PATH, "\tPATH: start = %d; ", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
 
         if (_path_is_closed(ctx,ptrPath)){
-            lastPathPointIdx = _get_last_point_of_closed_path(ctx,ptrPath);
+            lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;// _get_last_point_of_closed_path(ctx,ptrPath);
             LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
             //prevent closing on the same position, this could be generalize
             //to prevent processing of two consecutive point at the same position
@@ -563,7 +560,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 lastPathPointIdx--;
             iL = lastPathPointIdx;
         }else{
-            lastPathPointIdx = ctx->pathes[ptrPath+1];
+            lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
             LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
 
             vec2 n = vec2_line_norm(ctx->points[i], ctx->points[i+1]);
@@ -645,7 +642,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
             i++;
         }else{
-            iR = ctx->pathes[ptrPath];
+            iR = ctx->pathes[ptrPath]&PATH_ELT_MASK;
             _build_vb_step(ctx,v,hw,iL,i,iR);
 
             uint32_t* inds = (uint32_t*)(ctx->indices.allocInfo.pMappedData + ((ctx->indCount-6) * sizeof(uint32_t)));
