@@ -32,7 +32,7 @@ bool vkeCheckPhyPropBlitSource (VkEngine e) {
     VkFormatProperties formatProps;
     vkGetPhysicalDeviceFormatProperties(e->dev->phy, e->renderer->format, &formatProps);
 
-#if VKVG_TILING_OPTIMAL
+#ifdef VKVG_TILING_OPTIMAL
     assert((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
 #else
     assert((formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
@@ -56,12 +56,12 @@ void vkengine_dump_Infos (VkEngine e){
     printf("max tex array layers = %d\n", e->gpu_props.limits.maxImageArrayLayers);
     printf("max mem alloc count = %d\n", e->gpu_props.limits.maxMemoryAllocationCount);
 
-    for (int i = 0; i < e->memory_properties.memoryHeapCount; i++) {
+    for (uint32_t i = 0; i < e->memory_properties.memoryHeapCount; i++) {
         printf("Mem Heap %d\n", i);
         printf("\tflags= %d\n", e->memory_properties.memoryHeaps[i].flags);
-        printf("\tsize = %d Mo\n", e->memory_properties.memoryHeaps[i].size/ (1024*1024));
+        printf("\tsize = %lu Mo\n", e->memory_properties.memoryHeaps[i].size/ (uint32_t)(1024*1024));
     }
-    for (int i = 0; i < e->memory_properties.memoryTypeCount; i++) {
+    for (uint32_t i = 0; i < e->memory_properties.memoryTypeCount; i++) {
         printf("Mem type %d\n", i);
         printf("\theap %d: ", e->memory_properties.memoryTypes[i].heapIndex);
         if (e->memory_properties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -76,6 +76,21 @@ void vkengine_dump_Infos (VkEngine e){
             printf("VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT|");
         printf("\n");
     }
+}
+
+void vkengine_dump_available_layers () {
+    uint32_t layerCount;
+    vkEnumerateInstanceLayerProperties(&layerCount, NULL);
+
+    VkLayerProperties availableLayers [layerCount];
+    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers);
+
+    printf("Available Layers:\n");
+    printf("-----------------\n");
+    for (uint i=0; i<layerCount; i++) {
+         printf ("\t - %s\n", availableLayers[i].layerName);
+    }
+    printf("-----------------\n\n");
 }
 
 static VkDebugReportCallbackEXT dbgReport;

@@ -84,7 +84,7 @@ void _clear_path (VkvgContext ctx){
     ctx->pointCount = 0;
 }
 inline bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
-    return (ctx->pathes[ptrPath] == ctx->pathes[ptrPath+1]);
+    return ctx->pathes[ptrPath] & PATH_CLOSED_BIT;
 }
 uint32_t _get_last_point_of_closed_path(VkvgContext ctx, uint32_t ptrPath){
     if (ptrPath+2 < ctx->pathPtr)			//this is not the last path
@@ -176,6 +176,9 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
 
 void _create_cmd_buff (VkvgContext ctx){
     ctx->cmd = vkh_cmd_buff_create((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+#if DEBUG
+    vkh_device_set_object_name((VkhDevice)ctx->pSurf->dev, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, (uint64_t)ctx->cmd, "vkvgCtxCmd");
+#endif
 }
 void _record_draw_cmd (VkvgContext ctx){
     if (ctx->indCount == ctx->curIndStart)
@@ -807,14 +810,13 @@ void _poly_fill (VkvgContext ctx){
     v.uv.z = -1;
 
     while (ptrPath < ctx->pathPtr){
-        if (!_path_is_closed(ctx, ptrPath))
-            ctx->pathes[ptrPath+1] = ctx->pathes[ptrPath];//close path by setting start and end equal
+        //close path
+        ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;// ctx->pathes[ptrPath];//close path by setting start and end equal
 
-        uint32_t firstPtIdx = ctx->pathes[ptrPath];
-        uint32_t lastPtIdx = _get_last_point_of_closed_path (ctx, ptrPath);
-        uint32_t pathPointCount = lastPtIdx - ctx->pathes[ptrPath] + 1;
+        uint32_t firstPtIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
+        uint32_t lastPtIdx =   ctx->pathes[ptrPath+1]&PATH_ELT_MASK;//_get_last_point_of_closed_path (ctx, ptrPath);
+        uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
         uint32_t firstVertIdx = ctx->vertCount;
-
 
         for (int i = 0; i < pathPointCount; i++) {
              v.pos = ctx->points[i+firstPtIdx];
@@ -833,13 +835,12 @@ void _fill_ec (VkvgContext ctx){
     v.uv.z = -1;
 
     while (ptrPath < ctx->pathPtr){
-        if (!_path_is_closed(ctx, ptrPath))
-            //close path
-            ctx->pathes[ptrPath+1] = ctx->pathes[ptrPath];
 
-        uint32_t firstPtIdx = ctx->pathes[ptrPath];
-        uint32_t lastPtIdx = _get_last_point_of_closed_path (ctx, ptrPath);
-        uint32_t pathPointCount = lastPtIdx - ctx->pathes[ptrPath] + 1;
+        ctx->pathes[ptrPath]|=PATH_CLOSED_BIT;//close path
+
+        uint32_t firstPtIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
+        uint32_t lastPtIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
+        uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
         uint32_t firstVertIdx = ctx->vertCount;
 
         ear_clip_point ecps[pathPointCount];
