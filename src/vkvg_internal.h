@@ -30,9 +30,13 @@
 #include <float.h>
 #include <math.h>
 
-#define M_PIF           3.14159265358979323846f /* float pi */
-#define PATH_CLOSED_BIT 0x80000000              /* most significant bit of path elmts is closed/open path state */
-#define PATH_ELT_MASK   0x7FFFFFFF              /* Bit mask for fetching path element value */
+#define M_PIF               3.14159265358979323846f /* float pi */
+#define PATH_CLOSED_BIT     0x80000000              /* most significant bit of path elmts is closed/open path state */
+#define PATH_HAS_CURVES_BIT 0x40000000              /* most significant bit of path elmts end is continue path bit
+                                                       Used to handle curved/line transition */
+#define PATH_IS_CURVE_BIT   0x80000000              /* most significant bit of path elmts end is curve/line state,
+                                                       stored to avoid emiting join in curves */
+#define PATH_ELT_MASK       0x3FFFFFFF              /* Bit mask for fetching path element value */
 
 #define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
 #define ROUND_DOWN(v,p) (floorf(v * p) / p)

@@ -108,14 +108,23 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
     for (uint i=0;i<enabledExtsCount;i++)
         enabledExts[i] = gflwExts[i];
-#if DEBUG
+
+#if defined (ENABLE_VALIDATION)
+    const uint32_t enabledLayersCount = 2;
+    const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_RENDERDOC_Capture"};
+#else
+    const uint32_t enabledLayersCount = 0;
+    const char* enabledLayers[] = {NULL};
+#endif
+#if defined (DEBUG)
     enabledExts[enabledExtsCount] = "VK_EXT_debug_report";
     enabledExtsCount++;
     enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
     enabledExtsCount++;
 #endif
 
-    e->app = vkh_app_create("vkvgTest", enabledExtsCount, enabledExts);
+
+    e->app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);
@@ -178,7 +187,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
         }
     }
 
-#if DEBUG
+#if defined(DEBUG) && defined(ENABLE_VALIDATION)
     char const * dex [] = {"VK_KHR_swapchain", "VK_EXT_debug_marker"};
     enabledExtsCount = 2;
 #else

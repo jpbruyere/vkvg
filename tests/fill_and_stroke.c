@@ -17,7 +17,7 @@ void test(){
     vkvg_set_source_rgb (ctx, 0, 0, 1);
     vkvg_fill_preserve (ctx);
     //vkvg_fill(ctx);
-    vkvg_set_source_rgb (ctx, 0, 0, 0);
+    vkvg_set_source_rgb (ctx, 1, 0, 0);
     vkvg_stroke (ctx);
 
     vkvg_destroy(ctx);

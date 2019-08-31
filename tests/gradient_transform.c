@@ -4,8 +4,9 @@ void test(){
     VkvgContext ctx = vkvg_create(surf);
 
     //vkvg_translate(ctx,-100,-100);
-    //vkvg_rotate(ctx,1.5);
-    //vkvg_translate(ctx,100,100);
+
+    vkvg_translate(ctx,100,100);
+    vkvg_rotate(ctx,0.5);
 
     vkvg_scale(ctx,2,2);
     VkvgPattern pat = vkvg_pattern_create_linear(0,0,200,0);

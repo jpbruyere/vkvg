@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -43,7 +43,7 @@ void _check_cmd_buff_state (VkvgContext ctx) {
         _update_push_constants(ctx);
 }
 void _check_pathes_array (VkvgContext ctx){
-    if (ctx->sizePathes - ctx->pathPtr > VKVG_ARRAY_THRESHOLD)
+    if (ctx->sizePathes - ctx->pathPtr - ctx->curvePtr > VKVG_ARRAY_THRESHOLD)
         return;
     ctx->sizePathes += VKVG_PATHES_SIZE;
     ctx->pathes = (uint32_t*) realloc (ctx->pathes, ctx->sizePathes*sizeof(uint32_t));
@@ -56,6 +56,20 @@ inline bool _current_path_is_empty (VkvgContext ctx) {
 //this function expect that current point exists
 inline vec2 _get_current_position (VkvgContext ctx) {
     return ctx->points[ctx->pointCount-1];
+}
+//set curve start point and set path has curve bit
+inline void _set_curve_start (VkvgContext ctx) {
+    ctx->pathes[ctx->pathPtr+ctx->curvePtr+1] = ctx->pointCount - 1;
+    ctx->pathes[ctx->pathPtr-1] |= PATH_HAS_CURVES_BIT;
+}
+//set curve end point and set path has curve bit
+inline void _set_curve_end (VkvgContext ctx) {
+    ctx->pathes[ctx->pathPtr+ctx->curvePtr+2] = ctx->pointCount - 1;
+    ctx->curvePtr+=2;
+}
+//path start pointed at ptrPath has curve bit
+inline bool _path_has_curves (VkvgContext ctx, int ptrPath) {
+    return ctx->pathes[ptrPath] & PATH_HAS_CURVES_BIT;
 }
 //this function expect that current path is empty
 void _start_sub_path (VkvgContext ctx, float x, float y) {
@@ -77,19 +91,16 @@ void _finish_path (VkvgContext ctx){
     //set end index of current path to last point in points array
     ctx->pathes[ctx->pathPtr] = ctx->pointCount - 1;
     _check_pathes_array(ctx);
-    ctx->pathPtr++;
+    ctx->pathPtr += ctx->curvePtr + 1;
+    ctx->curvePtr = 0;
 }
 void _clear_path (VkvgContext ctx){
     ctx->pathPtr = 0;
     ctx->pointCount = 0;
+    ctx->curvePtr = 0;
 }
 inline bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
     return ctx->pathes[ptrPath] & PATH_CLOSED_BIT;
-}
-uint32_t _get_last_point_of_closed_path(VkvgContext ctx, uint32_t ptrPath){
-    if (ptrPath+2 < ctx->pathPtr)			//this is not the last path
-        return ctx->pathes[ptrPath+2]-1;    //last p is p prior to first idx of next path
-    return ctx->pointCount-1;				//last point of path is last point of point array
 }
 void _add_point (VkvgContext ctx, float x, float y){
     vec2 v = {x,y};
@@ -176,7 +187,7 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
 
 void _create_cmd_buff (VkvgContext ctx){
     ctx->cmd = vkh_cmd_buff_create((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-#if DEBUG
+#if defined(DEBUG) && defined(ENABLE_VALIDATION)
     vkh_device_set_object_name((VkhDevice)ctx->pSurf->dev, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, (uint64_t)ctx->cmd, "vkvgCtxCmd");
 #endif
 }
@@ -510,7 +521,7 @@ void add_line(vkvg_context* ctx, vec2 p1, vec2 p2, vec4 col){
     ctx->indCount+=2;
 }
 
-void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR){
+void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR, bool isCurve){
     vec2 v0n = vec2_line_norm(ctx->points[iL], ctx->points[i]);
     vec2 v1n = vec2_line_norm(ctx->points[i], ctx->points[iR]);
 
@@ -528,7 +539,7 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
 
     uint32_t idx = ctx->vertCount;
 
-    if (ctx->lineJoin == VKVG_LINE_JOIN_MITER){
+    if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
         v.pos = vec2_add(ctx->points[i], bisec);
         _add_vertex(ctx, v);
         v.pos = vec2_sub(ctx->points[i], bisec);
@@ -588,7 +599,6 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
         else
             v.pos = vec2_add (ctx->points[i], vp);
         _add_vertex(ctx, v);
-
     }
 
 /*
@@ -811,6 +821,7 @@ void _poly_fill (VkvgContext ctx){
 
     while (ptrPath < ctx->pathPtr){
         //close path
+        uint32_t ptrCurve = 0;
         ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;// ctx->pathes[ptrPath];//close path by setting start and end equal
 
         uint32_t firstPtIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
@@ -818,15 +829,33 @@ void _poly_fill (VkvgContext ctx){
         uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
         uint32_t firstVertIdx = ctx->vertCount;
 
-        for (int i = 0; i < pathPointCount; i++) {
-             v.pos = ctx->points[i+firstPtIdx];
-             _add_vertex(ctx, v);
+        if (_path_has_curves(ctx, ptrPath)) {
+            int i=0;
+            while (i < pathPointCount) {
+                if (ptrPath + ptrCurve < ctx->pathPtr && ctx->pathes[ptrPath+2+ptrCurve] == i+firstPtIdx){
+                    while (i < ctx->pathes[ptrPath+3+ptrCurve] && i < pathPointCount){
+                        v.pos = ctx->points[i+firstPtIdx];
+                        _add_vertex(ctx, v);
+                        i++;
+                    }
+                    ptrCurve+=2;
+                }else{
+                    v.pos = ctx->points[i+firstPtIdx];
+                    _add_vertex(ctx, v);
+                    i++;
+                }
+            }
+        }else{
+            for (int i = 0; i < pathPointCount; i++) {
+                v.pos = ctx->points[i+firstPtIdx];
+                _add_vertex(ctx, v);
+            }
         }
 
         LOG(LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
         CmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx ,0);
 
-        ptrPath+=2;
+        ptrPath+=2+ptrCurve;
     }
 }
 void _fill_ec (VkvgContext ctx){
@@ -835,7 +864,7 @@ void _fill_ec (VkvgContext ctx){
     v.uv.z = -1;
 
     while (ptrPath < ctx->pathPtr){
-
+        uint32_t ptrCurve = 0;
         ctx->pathes[ptrPath]|=PATH_CLOSED_BIT;//close path
 
         uint32_t firstPtIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
@@ -848,12 +877,33 @@ void _fill_ec (VkvgContext ctx){
         uint32_t i = 0;
 
         //init points link list
-        while (i < pathPointCount-1){
-            v.pos = ctx->points[i+firstPtIdx];
-            ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
-            ecps[i] = ecp;
-            _add_vertex(ctx, v);
-            i++;
+        if (_path_has_curves(ctx, ptrPath)) {
+            while (i < pathPointCount-1){
+                if (ptrPath + ptrCurve < ctx->pathPtr && ctx->pathes[ptrPath+2+ptrCurve] == i+firstPtIdx){
+                    while (i < ctx->pathes[ptrPath+3+ptrCurve] && i < pathPointCount-1){
+                        v.pos = ctx->points[i+firstPtIdx];
+                        ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
+                        ecps[i] = ecp;
+                        _add_vertex(ctx, v);
+                        i++;
+                    }
+                    ptrCurve+=2;
+                }else{
+                    v.pos = ctx->points[i+firstPtIdx];
+                    ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
+                    ecps[i] = ecp;
+                    _add_vertex(ctx, v);
+                    i++;
+                }
+            }
+        }else{
+            while (i < pathPointCount-1){
+                v.pos = ctx->points[i+firstPtIdx];
+                ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
+                ecps[i] = ecp;
+                _add_vertex(ctx, v);
+                i++;
+            }
         }
         v.pos = ctx->points[i+firstPtIdx];
         ear_clip_point ecp = {v.pos, i+firstVertIdx, ecps};
@@ -896,7 +946,7 @@ void _fill_ec (VkvgContext ctx){
         if (ecps_count == 3)
             _add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
 
-        ptrPath+=2;
+        ptrPath+=2+ptrCurve;
     }
     _record_draw_cmd(ctx);
 }

@@ -3,15 +3,16 @@
 void test(){
     VkvgContext ctx = vkvg_create(surf);
 
-    VkvgPattern pat = vkvg_pattern_create_linear(100,0,300,0);
+    VkvgPattern pat = vkvg_pattern_create_linear(0,0,300,300);
     vkvg_set_line_width(ctx, 20);
     vkvg_pattern_add_color_stop(pat, 0, 1, 0, 0, 1);
     vkvg_pattern_add_color_stop(pat, 0.5, 0, 1, 0, 1);
     vkvg_pattern_add_color_stop(pat, 1, 0, 0, 1, 1);
     vkvg_set_source (ctx, pat);
     vkvg_rectangle(ctx,100,100,200,200);
-    vkvg_fill (ctx);
-    //vkvg_stroke (ctx);
+    //vkvg_fill (ctx);
+    //vkvg_paint(ctx);
+    vkvg_stroke (ctx);
     vkvg_pattern_destroy (pat);
 
     vkvg_destroy(ctx);
