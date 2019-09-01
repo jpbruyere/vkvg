@@ -617,8 +617,9 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
         if (_path_has_curves (ctx,ptrPath)) {
             while (i < lastPathPointIdx){
-                if (i + ptrCurve + 2 < ctx->pathPtr && ctx->pathes [ptrPath + 2 + ptrCurve] == i){
-                    while (i<ctx->pathes[ptrPath + 2 + ptrCurve+1]){
+                if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve]&PATH_ELT_MASK) == i){
+                    uint32_t lastCurvePoint = ctx->pathes[ptrPath + 3 + ptrCurve]&PATH_ELT_MASK;
+                    while (i<lastCurvePoint){
                         iR = i+1;
                         _build_vb_step(ctx,v,hw,iL,i,iR,true);
                         iL = i++;
