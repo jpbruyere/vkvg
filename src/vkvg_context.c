@@ -553,13 +553,13 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     Vertex v = {};
     v.uv.z = -1;
 
-    float hw = ctx->lineWidth / 2.0;
-    int i = 0, ptrPath = 0;
+    float hw = ctx->lineWidth / 2.0f;
+    uint i = 0, ptrPath = 0;
 
     uint32_t lastPathPointIdx, iL, iR;
 
     while (ptrPath < ctx->pathPtr){
-        int ptrCurve = 0;
+        uint ptrCurve = 0;
         uint32_t firstIdx = ctx->vertCount;
         i = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
@@ -588,19 +588,19 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             vhw = vec2_perp(vhw);
 
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-                float step = M_PI / hw;
-                float a = acos(n.x) + M_PI_2;
+                float step = M_PIF / hw;
+                float a = acosf(n.x) + M_PIF_2;
                 if (n.y < 0)
-                    a = M_PI-a;
-                float a1 = a + M_PI;
+                    a = M_PIF-a;
+                float a1 = a + M_PIF;
 
                 a+=step;
                 while (a < a1){
-                    _add_vertexf(ctx, cos(a) * hw + p0.x, sin(a) * hw + p0.y);
+                    _add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
                     a+=step;
                 }
                 uint32_t p0Idx = ctx->vertCount;
-                for (int p = firstIdx; p < p0Idx; p++)
+                for (uint p = firstIdx; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p0Idx+1, p, p+1);
                 firstIdx = p0Idx;
             }
@@ -616,18 +616,19 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         }
 
         if (_path_has_curves (ctx,ptrPath)) {
+
             while (i < lastPathPointIdx){
                 if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve]&PATH_ELT_MASK) == i){
                     uint32_t lastCurvePoint = ctx->pathes[ptrPath + 3 + ptrCurve]&PATH_ELT_MASK;
                     while (i<lastCurvePoint){
                         iR = i+1;
-                        _build_vb_step(ctx,v,hw,iL,i,iR,true);
+                        _build_vb_step (ctx, v, hw, iL, i, iR, true);
                         iL = i++;
                     }
                     ptrCurve += 2;
                 }else{
                     iR = i+1;
-                    _build_vb_step(ctx,v,hw,iL,i,iR, false);
+                    _build_vb_step (ctx, v, hw, iL, i, iR, false);
                     iL = i++;
                 }
             }
@@ -656,19 +657,19 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
                 firstIdx = ctx->vertCount;
-                float step = M_PI / hw;
-                float a = acos(n.x)+ M_PI_2;
+                float step = M_PIF / hw;
+                float a = acosf(n.x)+ M_PIF_2;
                 if (n.y < 0)
-                    a = M_PI-a;
-                float a1 = a - M_PI;
+                    a = M_PIF-a;
+                float a1 = a - M_PIF;
                 a-=step;
                 while ( a > a1){
-                    _add_vertexf(ctx, cos(a) * hw + p0.x, sin(a) * hw + p0.y);
+                    _add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
                     a-=step;
                 }
 
                 uint32_t p0Idx = ctx->vertCount-1;
-                for (int p = firstIdx-1 ; p < p0Idx; p++)
+                for (uint p = firstIdx-1 ; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p+1, p, firstIdx-2);
             }
 

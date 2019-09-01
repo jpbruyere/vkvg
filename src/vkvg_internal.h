@@ -31,6 +31,7 @@
 #include <math.h>
 
 #define M_PIF               3.14159265358979323846f /* float pi */
+#define M_PIF_2             1.57079632679489661923f
 #define PATH_CLOSED_BIT     0x80000000              /* most significant bit of path elmts is closed/open path state */
 #define PATH_HAS_CURVES_BIT 0x40000000              /* most significant bit of path elmts end is continue path bit
                                                        Used to handle curved/line transition */

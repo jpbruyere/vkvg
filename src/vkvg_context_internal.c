@@ -68,7 +68,7 @@ inline void _set_curve_end (VkvgContext ctx) {
     ctx->curvePtr+=2;
 }
 //path start pointed at ptrPath has curve bit
-inline bool _path_has_curves (VkvgContext ctx, int ptrPath) {
+inline bool _path_has_curves (VkvgContext ctx, uint ptrPath) {
     return ctx->pathes[ptrPath] & PATH_HAS_CURVES_BIT;
 }
 //this function expect that current path is empty
@@ -527,13 +527,13 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
 
     vec2 bisec = vec2_norm(vec2_add(v0n,v1n));
 
-    float alpha = acos(v0n.x * v1n.x + v0n.y * v1n.y)/2;
+    float alpha = acosf(v0n.x * v1n.x + v0n.y * v1n.y)/2;
     float cross = v0n.x * v1n.y - v0n.y * v1n.x;
 
     if (cross<0)
         alpha = -alpha;
 
-    float lh = hw / cos(alpha);
+    float lh = hw / cosf(alpha);
     bisec = vec2_perp(bisec);
     bisec = vec2_mult(bisec,lh);
 
@@ -570,7 +570,7 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
             }
         }else if (ctx->lineJoin == VKVG_LINE_JOIN_ROUND){
             float step = M_PIF / hw;
-            float a = acos(vp.x);
+            float a = acosf(vp.x);
             if (vp.y < 0)
                 a = -a;
 
@@ -579,26 +579,26 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
                 float a1 = a + alpha*2;
                 a-=step;
                 while (a > a1){
-                    _add_vertexf(ctx, cos(a) * hw + ctx->points[i].x, sin(a) * hw + ctx->points[i].y);
+                    _add_vertexf(ctx, cosf(a) * hw + ctx->points[i].x, sinf(a) * hw + ctx->points[i].y);
                     a-=step;
                 }
             }else{
                 float a1 = a + alpha*2;
                 a+=step;
                 while (a < a1){
-                    _add_vertexf(ctx, cos(a) * hw + ctx->points[i].x, sin(a) * hw + ctx->points[i].y);
+                    _add_vertexf(ctx, cosf(a) * hw + ctx->points[i].x, sinf(a) * hw + ctx->points[i].y);
                     a+=step;
                 }
             }
             uint32_t p0Idx = ctx->vertCount;
             _add_triangle_indices(ctx, idx, idx+2, idx+1);
             if (cross<0){
-                for (int p = idx+2; p < p0Idx; p++)
+                for (uint p = idx+2; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p, p+1, idx);
                 _add_triangle_indices(ctx, p0Idx, p0Idx+2, idx);
                 _add_triangle_indices(ctx, idx, p0Idx+1, p0Idx+2);
             }else{
-                for (int p = idx+2; p < p0Idx; p++)
+                for (uint p = idx+2; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p, p+1, idx+1);
                 _add_triangle_indices(ctx, p0Idx, p0Idx+1, idx+1);
                 _add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);

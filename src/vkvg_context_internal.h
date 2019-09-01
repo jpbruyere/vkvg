@@ -153,7 +153,7 @@ void _clear_path			(VkvgContext ctx);
 bool _path_is_closed		(VkvgContext ctx, uint32_t ptrPath);
 void _set_curve_start       (VkvgContext ctx);
 void _set_curve_end         (VkvgContext ctx);
-bool _path_has_curves       (VkvgContext ctx, int ptrPath);
+bool _path_has_curves       (VkvgContext ctx, uint ptrPath);
 
 float _normalizeAngle       (float a);
 
