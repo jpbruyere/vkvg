@@ -548,9 +548,9 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
     }else{
         vec2 vp = vec2_perp(v0n);
         if (cross<0){
-            v.pos = vec2_sub (ctx->points[i], vec2_mult (vp, hw));
-            _add_vertex(ctx, v);
             v.pos = vec2_add (ctx->points[i], bisec);
+            _add_vertex(ctx, v);
+            v.pos = vec2_sub (ctx->points[i], vec2_mult (vp, hw));
         }else{
             v.pos = vec2_add (ctx->points[i], vec2_mult (vp, hw));
             _add_vertex(ctx, v);
@@ -559,9 +559,15 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
         _add_vertex(ctx, v);
 
         if (ctx->lineJoin == VKVG_LINE_JOIN_BEVEL){
-            _add_triangle_indices(ctx, idx, idx+2, idx+1);
-            _add_triangle_indices(ctx, idx+2, idx+3, idx+1);
-            _add_triangle_indices(ctx, idx+1, idx+3, idx+4);
+            if (cross<0){
+                _add_triangle_indices(ctx, idx, idx+2, idx+1);
+                _add_triangle_indices(ctx, idx+2, idx+4, idx+0);
+                _add_triangle_indices(ctx, idx, idx+3, idx+4);
+            }else{
+                _add_triangle_indices(ctx, idx, idx+2, idx+1);
+                _add_triangle_indices(ctx, idx+2, idx+3, idx+1);
+                _add_triangle_indices(ctx, idx+1, idx+3, idx+4);
+            }
         }else if (ctx->lineJoin == VKVG_LINE_JOIN_ROUND){
             float step = M_PIF / hw;
             float a = acos(vp.x);
@@ -586,11 +592,18 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
             }
             uint32_t p0Idx = ctx->vertCount;
             _add_triangle_indices(ctx, idx, idx+2, idx+1);
-            for (int p = idx+2; p < p0Idx; p++)
-                _add_triangle_indices(ctx, p, p+1, idx+1);
+            if (cross<0){
+                for (int p = idx+2; p < p0Idx; p++)
+                    _add_triangle_indices(ctx, p, p+1, idx);
+                _add_triangle_indices(ctx, p0Idx, p0Idx+2, idx);
+                _add_triangle_indices(ctx, idx, p0Idx+1, p0Idx+2);
+            }else{
+                for (int p = idx+2; p < p0Idx; p++)
+                    _add_triangle_indices(ctx, p, p+1, idx+1);
+                _add_triangle_indices(ctx, p0Idx, p0Idx+1, idx+1);
+                _add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
+            }
 
-            _add_triangle_indices(ctx, p0Idx, p0Idx+1, idx+1);
-            _add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
         }
 
         vp = vec2_mult (vec2_perp(v1n), hw);
