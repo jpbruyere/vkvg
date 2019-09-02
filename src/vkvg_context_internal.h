@@ -84,6 +84,13 @@ typedef struct _vkvg_context_t {
     VkDescriptorSet     dsSrc;      //source ds
     VkDescriptorSet     dsGrad;     //gradient uniform buffer
 
+    VkRect2D            bounds;
+
+    float xMin;
+    float xMax;
+    float yMin;
+    float yMax;
+
     vkvg_buff	uboGrad;        //uniform buff obj holdings gradient infos
 
     //vk buffers, holds data until flush
@@ -160,6 +167,8 @@ float _normalizeAngle       (float a);
 vec2 _get_current_position  (VkvgContext ctx);
 void _add_point         	(VkvgContext ctx, float x, float y);
 void _add_point_vec2		(VkvgContext ctx, vec2 v);
+
+void _resetMinMax           (VkvgContext ctx);
 
 void _poly_fill             (VkvgContext ctx);
 void _fill_ec               (VkvgContext ctx);//earclipping fill

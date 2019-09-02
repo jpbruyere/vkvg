@@ -69,6 +69,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->indCount       = 0;
     ctx->curIndStart    = 0;
 
+    VkRect2D scissor = {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
+    ctx->bounds        = scissor;
+
     ctx->savedStencils = malloc(0);
 
     push_constants pc = {
