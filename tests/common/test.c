@@ -135,7 +135,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
     bool deferredResolve = false;
 
-    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_8_BIT, deferredResolve);
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_4_BIT, deferredResolve);
 
     vkvg_device_set_dpy(device, 96, 96);
 

@@ -357,8 +357,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
     }
 
     if (EQUF(a2-a1,M_PIF*2.f)){//if arc is complete circle, last point is the same as the first one
-        ctx->pathes[ctx->pathPtr+ctx->curvePtr+2] = ctx->pointCount - 1;
-        ctx->curvePtr+=2;
+        _set_curve_end(ctx);
         vkvg_close_path(ctx);
         return;
     }
@@ -619,7 +618,6 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         }
 
         if (_path_has_curves (ctx,ptrPath)) {
-
             while (i < lastPathPointIdx){
                 if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve]&PATH_ELT_MASK) == i){
                     uint32_t lastCurvePoint = ctx->pathes[ptrPath + 3 + ptrCurve]&PATH_ELT_MASK;

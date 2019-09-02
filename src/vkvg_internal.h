@@ -33,10 +33,10 @@
 #define M_PIF               3.14159265358979323846f /* float pi */
 #define M_PIF_2             1.57079632679489661923f
 #define PATH_CLOSED_BIT     0x80000000              /* most significant bit of path elmts is closed/open path state */
-#define PATH_HAS_CURVES_BIT 0x40000000              /* most significant bit of path elmts end is continue path bit
-                                                       Used to handle curved/line transition */
-#define PATH_IS_CURVE_BIT   0x80000000              /* most significant bit of path elmts end is curve/line state,
+#define PATH_HAS_CURVES_BIT 0x40000000              /* 2d most significant bit of path elmts start = true if curve data are present,
                                                        stored to avoid emiting join in curves */
+#define PATH_IS_CURVE_BIT   0x80000000              /* most significant bit of path elmts end mark curves data in path array */
+
 #define PATH_ELT_MASK       0x3FFFFFFF              /* Bit mask for fetching path element value */
 
 #define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
