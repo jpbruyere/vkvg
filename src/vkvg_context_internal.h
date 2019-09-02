@@ -31,7 +31,7 @@
 #define VKVG_PTS_SIZE				4096
 #define VKVG_VBO_SIZE				4096 * 8
 #define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 6
-#define VKVG_PATHES_SIZE			32
+#define VKVG_PATHES_SIZE			16
 #define VKVG_ARRAY_THRESHOLD		4
 
 typedef struct{
