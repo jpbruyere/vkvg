@@ -109,7 +109,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
     ctx->currentFont           = NULL;
 
-    ctx->flushFence = vkh_fence_create((VkhDevice)dev);
+    ctx->flushFence = vkh_fence_create_signaled ((VkhDevice)dev);
 
     ctx->points = (vec2*)       malloc (VKVG_VBO_SIZE*sizeof(vec2));
     ctx->pathes = (uint32_t*)   malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
@@ -128,6 +128,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     _clear_path             (ctx);
 
+    ctx->cmd = ctx->cmdBuffers[0];//current recording buffer
+
     ctx->references = 1;
     ctx->status = VKVG_STATUS_SUCCESS;
     return ctx;
@@ -138,6 +140,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
  */
 void vkvg_flush (VkvgContext ctx){
     _flush_cmd_buff(ctx);
+    _wait_flush_fence(ctx);
 /*
 #ifdef DEBUG
 
@@ -174,6 +177,8 @@ void vkvg_destroy (VkvgContext ctx)
 
     _flush_cmd_buff(ctx);
 
+    vkWaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
+
     LOG(LOG_INFO, "DESTROY Context: ctx = %lu; surf = %lu\n", (ulong)ctx, (ulong)ctx->pSurf);
 
     if (ctx->pattern)
@@ -182,7 +187,7 @@ void vkvg_destroy (VkvgContext ctx)
     VkDevice dev = ctx->pSurf->dev->vkDev;
 
     vkDestroyFence      (dev, ctx->flushFence,NULL);
-    vkFreeCommandBuffers(dev, ctx->cmdPool, 1, &ctx->cmd);
+    vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
     vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
     VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc, ctx->dsGrad};
@@ -495,30 +500,30 @@ void vkvg_clip_preserve (VkvgContext ctx){
     LOG(LOG_INFO, "CLIP: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
-        vkvg_flush(ctx);
+        _flush_cmd_buff(ctx);
 
     if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
         _check_cmd_buff_state(ctx);
         _poly_fill (ctx);
-        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
-        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+        CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+        CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-        CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
+        CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
     }else{
         _check_cmd_buff_state(ctx);
-        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
-        CmdSetStencilReference (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+        CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-        CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
         _fill_ec(ctx);
-        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+        CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-        CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
+        CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
     }
-    _draw_full_screen_quad(ctx,false);
+    _draw_full_screen_quad (ctx, false);
     //should test current operator to bind correct pipeline
     _bind_draw_pipeline (ctx);
-    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 }
 void vkvg_fill_preserve (VkvgContext ctx){
     if (ctx->pathPtr == 0)      //nothing to fill
@@ -528,7 +533,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
     LOG(LOG_INFO, "FILL: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
-        vkvg_flush(ctx);
+        _flush_cmd_buff(ctx);
 
     _check_cmd_buff_state(ctx);
 
@@ -539,7 +544,6 @@ void vkvg_fill_preserve (VkvgContext ctx){
         _draw_full_screen_quad(ctx,true);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
     }else{
-        //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
         _fill_ec(ctx);
     }
@@ -553,7 +557,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     LOG(LOG_INFO, "STROKE: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
     if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)
-        vkvg_flush(ctx);
+        _flush_cmd_buff(ctx);
 
     Vertex v = {};
     v.uv.z = -1;
@@ -794,7 +798,8 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 void vkvg_save (VkvgContext ctx){
     LOG(LOG_INFO, "SAVE CONTEXT: ctx = %lu\n", (ulong)ctx);
 
-    _flush_cmd_buff(ctx);
+    _flush_cmd_buff (ctx);
+    _wait_flush_fence (ctx);
 
     VkvgDevice dev = ctx->pSurf->dev;
     vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
@@ -830,20 +835,20 @@ void vkvg_save (VkvgContext ctx){
                               VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
 
         VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
-        _submit_wait_and_reset_cmd(ctx);
+        _wait_and_submit_cmd(ctx);
     }
 
     uint8_t curSaveBit = 1 << (ctx->curSavBit % 6 + 2);
 
-    _start_cmd_for_render_pass(ctx);
+    _start_cmd_for_render_pass (ctx);
 
-    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+    CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 
-    CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
+    CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-    CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
+    CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
 
-    _draw_full_screen_quad(ctx,false);
+    _draw_full_screen_quad (ctx, false);
 
     _bind_draw_pipeline (ctx);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -885,28 +890,29 @@ void vkvg_restore (VkvgContext ctx){
     ctx->pushConsts   = sav->pushConsts;
 
     if (sav->pattern)
-        _update_cur_pattern(ctx, sav->pattern);
+        _update_cur_pattern (ctx, sav->pattern);
 
-    _flush_cmd_buff(ctx);
+    _flush_cmd_buff (ctx);
+    _wait_flush_fence (ctx);
 
     ctx->curSavBit--;
 
     uint8_t curSaveBit = 1 << (ctx->curSavBit % 6 + 2);
 
-    _start_cmd_for_render_pass(ctx);
+    _start_cmd_for_render_pass (ctx);
 
-    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+    CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 
-    CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
+    CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
-    CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-    _draw_full_screen_quad(ctx,false);
+    _draw_full_screen_quad (ctx, false);
 
     _bind_draw_pipeline (ctx);
-    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-    _flush_cmd_buff(ctx);
+    _flush_cmd_buff (ctx);
 
     uint8_t curSaveStencil = ctx->curSavBit / 6;
     if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0){//addtional save/restore stencil image have to be copied back to surf stencil first
@@ -934,9 +940,9 @@ void vkvg_restore (VkvgContext ctx){
                               VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
 
         VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
-        _submit_wait_and_reset_cmd(ctx);
+        _wait_and_submit_cmd (ctx);
 
-        vkh_image_destroy(savStencil);
+        vkh_image_destroy (savStencil);
     }
 
     ctx->lineWidth  = sav->lineWidth;

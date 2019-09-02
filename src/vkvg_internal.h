@@ -51,5 +51,5 @@
 //used to store clipping bit on context saving. 8 bit stencil will allow 6 save/restore layer
 #define FB_STENCIL_FORMAT VK_FORMAT_S8_UINT
 #define FB_COLOR_FORMAT VK_FORMAT_B8G8R8A8_UNORM
-
+#define VKVG_FENCE_TIMEOUT UINT64_MAX
 #endif
