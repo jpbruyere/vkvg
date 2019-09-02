@@ -104,6 +104,10 @@ typedef struct _vkvg_context_t {
     size_t		sizeVertices;   //reserved size
     uint32_t	vertCount;      //effective vertices count
 
+    Vertex*     vertexCache;
+    uint32_t*   indexCache;
+
+
     //pathes, exists until stroke of fill
     vec2*		points;         //points array
     size_t		sizePoints;     //reserved size
