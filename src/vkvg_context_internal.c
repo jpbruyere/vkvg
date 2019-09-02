@@ -104,12 +104,17 @@ inline bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
     return ctx->pathes[ptrPath] & PATH_CLOSED_BIT;
 }
 void _resetMinMax (VkvgContext ctx) {
-    ctx->xMin = FLT_MAX;
-    ctx->xMax = FLT_MIN;
-    ctx->yMin = FLT_MAX;
-    ctx->yMax = FLT_MIN;
+    ctx->xMin = ctx->yMin = FLT_MAX;
+    ctx->xMax = ctx->yMax = FLT_MIN;
 }
 void _add_point (VkvgContext ctx, float x, float y){
+    ctx->points[ctx->pointCount] = (vec2){x,y};
+    ctx->pointCount++;
+
+    //bounds are computed here to scissor the painting operation
+    //that speed up fill drastically.
+    vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x, &y);
+
     if (x < ctx->xMin)
         ctx->xMin = x;
     if (x > ctx->xMax)
@@ -118,12 +123,6 @@ void _add_point (VkvgContext ctx, float x, float y){
         ctx->yMin = y;
     if (y > ctx->yMax)
         ctx->yMax = y;
-    ctx->points[ctx->pointCount] = (vec2){x,y};
-    ctx->pointCount++;
-}
-void _add_point_vec2(VkvgContext ctx, vec2 v){
-    ctx->points[ctx->pointCount] = v;
-    ctx->pointCount++;
 }
 float _normalizeAngle(float a)
 {
@@ -980,13 +979,18 @@ void _fill_ec (VkvgContext ctx){
 
 static const uint32_t one = 1;
 static const uint32_t zero = 0;
-void _draw_full_screen_quad (VkvgContext ctx) {
-    VkRect2D r = {ctx->xMin, ctx->yMin, ctx->xMax - ctx->xMin, ctx->yMax - ctx->xMin};
-    CmdSetScissor(ctx->cmd, 0, 1, &r);
+void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
+    if (ctx->xMin < 0 || ctx->yMin < 0)
+        useScissor = false;
+    if (useScissor && ctx->xMin < FLT_MAX) {
+        VkRect2D r = {ctx->xMin, ctx->yMin, ctx->xMax - ctx->xMin, ctx->yMax - ctx->yMin};
+        CmdSetScissor(ctx->cmd, 0, 1, &r);
+    }
     CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&one);
     CmdDraw (ctx->cmd,3,1,0,0);
     CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&zero);
-    CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
+    if (useScissor && ctx->xMin < FLT_MAX)
+        CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 }
