@@ -13,9 +13,9 @@
 }*/
 
 static float rotation = 0.f;
-static const char* path = "data/tiger.svg";
+//static const char* path = "data/tiger.svg";
 //static const char* path = "data/vkvg.svg";
-//static const char* path = "data/testPiece.svg";
+static const char* path = "data/testPiece.svg";
 
 void test_svg_surface() {
     VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, path);
@@ -40,7 +40,7 @@ void test_nsvg() {
     vkvg_paint(ctx);
 
     vkvg_scale(ctx,1.0f,1.0f);
-    //vkvg_render_svg(ctx, svg, "br0");
+    //vkvg_render_svg(ctx, svg, "wq");
     vkvg_render_svg(ctx, svg, NULL);
 
     vkvg_destroy(ctx);
