@@ -370,6 +370,9 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
     VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }
 
+void _wait_idle (VkvgDevice dev) {
+    vkDeviceWaitIdle (dev->vkDev);
+}
 void _wait_and_reset_device_fence (VkvgDevice dev) {
     vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
     vkResetFences (dev->vkDev, 1, &dev->fence);

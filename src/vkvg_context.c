@@ -194,6 +194,9 @@ void vkvg_destroy (VkvgContext ctx)
     vkvg_buffer_destroy (&ctx->indices);
     vkvg_buffer_destroy (&ctx->vertices);
 
+    free(ctx->vertexCache);
+    free(ctx->indexCache);
+
     //vkh_image_destroy   (ctx->source);
 
     free(ctx->selectedFont.fontFile);
@@ -679,7 +682,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             iR = ctx->pathes[ptrPath]&PATH_ELT_MASK;
             _build_vb_step(ctx,v,hw,iL,i,iR, false);
 
-            uint32_t* inds = (uint32_t*)(ctx->indices.allocInfo.pMappedData + ((ctx->indCount-6) * sizeof(uint32_t)));
+            uint32_t* inds = &ctx->indexCache [ctx->indCount-6];
             uint32_t ii = firstIdx;
             inds[1] = ii;
             inds[4] = ii;
