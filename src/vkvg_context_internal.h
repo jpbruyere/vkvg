@@ -33,6 +33,7 @@
 #define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 6
 #define VKVG_PATHES_SIZE			16
 #define VKVG_ARRAY_THRESHOLD		4
+#define VKVG_IBO_INDEX_TYPE         uint16_t
 
 typedef struct{
     vec2 pos;
@@ -105,9 +106,8 @@ typedef struct _vkvg_context_t {
     size_t		sizeVertices;   //reserved size
     uint32_t	vertCount;      //effective vertices count
 
-    Vertex*     vertexCache;
-    uint32_t*   indexCache;
-
+    Vertex* vertexCache;
+    VKVG_IBO_INDEX_TYPE* indexCache;
 
     //pathes, exists until stroke of fill
     vec2*		points;         //points array
@@ -159,6 +159,8 @@ typedef struct _ear_clip_point{
 
 bool _current_path_is_empty (VkvgContext ctx);
 void _start_sub_path        (VkvgContext ctx, float x, float y);
+void _check_vbo_size        (VkvgContext ctx);
+void _check_ibo_size        (VkvgContext ctx);
 void _check_pathes_array	(VkvgContext ctx);
 void _finish_path			(VkvgContext ctx);
 void _clear_path			(VkvgContext ctx);

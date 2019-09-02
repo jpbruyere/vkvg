@@ -11,14 +11,14 @@ void test(){
 
     VkvgContext ctx = vkvg_create(surf);
     //vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
-    vkvg_set_line_width(ctx,20);
+    vkvg_set_line_width(ctx,1);
     //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
 
-    for (int i=0; i<250; i++) {
+    for (uint i=0; i<iterations; i++) {
         randomize_color(ctx);
-        float x1 = trunc( ((float)w*rand())/RAND_MAX );
-        float y1 = trunc( ((float)h*rand())/RAND_MAX );
-        float v = trunc( ((float)500*rand())/RAND_MAX );
+        float x1 = w*rand()/RAND_MAX;
+        float y1 = h*rand()/RAND_MAX;
+        float v = 500.f*rand()/RAND_MAX;
 
         vkvg_move_to (ctx, x1, y1);
         vkvg_line_to (ctx, x1 + v, y1);

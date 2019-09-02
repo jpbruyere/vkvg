@@ -74,13 +74,13 @@ make						    # Run Make
 
 ### To Do
 
-- [ ] Use Scissor where possible.
-- [ ] Improve stroke algorithms.
+- [x] Use Scissor where possible.
+- [x] Improve stroke algorithms.
 - [ ] Radial gradients.
 - [ ] Dashed lines.
 - [ ] Operators.
 - [x] Optimize vulkan memory allocations by sub-allocating from a single shared memory chunk per type.
-- [ ] Optimize command submissions.
+- [x] Optimize command submissions.
 - [x] Test SDF font rendering.
 - [x] Avoid line joins inside curves and arc.
 - [ ] Structured unit testing.

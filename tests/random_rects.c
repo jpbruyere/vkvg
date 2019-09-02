@@ -10,21 +10,22 @@ void test(){
 
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
-    vkvg_set_line_width(ctx,2);
-    //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
-    vkvg_set_source_rgba(ctx,1.0,0.0,0.0,0.1);
-    for (int i=0; i<250; i++) {
-        randomize_color(ctx);
-        float x = trunc( (0.5*(float)w*rand())/RAND_MAX );
-        float y = trunc( (0.5*(float)w*rand())/RAND_MAX );
-        float z = trunc( (0.5*(float)w*rand())/RAND_MAX ) + 1;
-        float v = trunc( (0.5*(float)w*rand())/RAND_MAX ) + 1;
 
-        vkvg_rectangle(ctx, x+1, y+1, z, v);
-        /*vkvg_fill_preserve(ctx);
-        randomize_color(ctx);*/
+    //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
+
+    for (int i=0; i<iterations; i++) {
+        randomize_color(ctx);
+
+        float x = 0.5f*w*rand()/RAND_MAX;
+        float y = 0.5f*w*rand()/RAND_MAX;
+        float z = 0.5f*w*rand()/RAND_MAX;
+        float v = 0.5f*w*rand()/RAND_MAX;
+
+        vkvg_rectangle(ctx, x, y, z, v);
         vkvg_fill(ctx);
-        vkvg_stroke(ctx);
+
+        if (i%30==0)
+            vkvg_flush(ctx);
     }
     vkvg_destroy(ctx);
 }

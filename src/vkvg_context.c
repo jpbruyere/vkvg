@@ -99,9 +99,12 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     ctx->pSurf->new = false;
 
-    ctx->renderPassBeginInfo.clearValueCount = 3;
+    if (dev->samples == VK_SAMPLE_COUNT_1_BIT)
+        ctx->renderPassBeginInfo.clearValueCount = 2;
+    else
+        ctx->renderPassBeginInfo.clearValueCount = 3;
 
-    ctx->pPrev          = surf->dev->lastCtx;
+    ctx->pPrev = surf->dev->lastCtx;
     if (ctx->pPrev != NULL)
         ctx->pPrev->pNext = ctx;
     surf->dev->lastCtx = ctx;
@@ -140,7 +143,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
  */
 void vkvg_flush (VkvgContext ctx){
     _flush_cmd_buff(ctx);
-    _wait_flush_fence(ctx);
+    //_wait_flush_fence(ctx);
 /*
 #ifdef DEBUG
 
@@ -686,8 +689,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             iR = ctx->pathes[ptrPath]&PATH_ELT_MASK;
             _build_vb_step(ctx,v,hw,iL,i,iR, false);
 
-            uint32_t* inds = &ctx->indexCache [ctx->indCount-6];
-            uint32_t ii = firstIdx;
+            VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
+            VKVG_IBO_INDEX_TYPE ii = firstIdx;
             inds[1] = ii;
             inds[4] = ii;
             inds[5] = ii+1;

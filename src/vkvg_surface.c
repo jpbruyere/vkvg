@@ -381,7 +381,9 @@ void vkvg_surface_destroy(VkvgSurface surf)
         return;
     vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
 
-    vkh_image_destroy(surf->img);
+    if (!surf->img->imported)
+        vkh_image_destroy(surf->img);
+
     vkh_image_destroy(surf->imgMS);
     vkh_image_destroy(surf->stencil);
 
