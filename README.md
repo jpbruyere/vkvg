@@ -27,7 +27,8 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 
 ### Current status:
 
-- Fill (with stencil even-odd technic) and Stroke functional.
+- Fill (stencil even-odd, non-zero with ear clipping).
+- Stroke.
 - Basic painting operation.
 - Font system with caching operational.
 - Linear Gradients.
@@ -73,15 +74,15 @@ make						    # Run Make
 
 ### To Do
 
+- [ ] Use Scissor where possible.
+- [ ] Improve stroke algorithms.
 - [ ] Radial gradients.
 - [ ] Dashed lines.
 - [ ] Operators.
-- [ ] Improve stroke algorithms.
-- [ ] Offscreen pattern building.
 - [x] Optimize vulkan memory allocations by sub-allocating from a single shared memory chunk per type.
 - [ ] Optimize command submissions.
-- [ ] Test SDF font rendering.
-- [ ] Avoid line joins inside curves and arc.
+- [x] Test SDF font rendering.
+- [x] Avoid line joins inside curves and arc.
 - [ ] Structured unit testing.
 - [ ] Perf and memory checks.
 - [ ] Code clean and comment.
