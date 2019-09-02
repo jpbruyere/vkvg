@@ -202,7 +202,7 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
 
 
 void _create_cmd_buff (VkvgContext ctx){
-    ctx->cmd = vkh_cmd_buff_create((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    vkh_cmd_buffs_create((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY, 2, ctx->cmdBuffers);
 #if defined(DEBUG) && defined(ENABLE_VALIDATION)
     vkh_device_set_object_name((VkhDevice)ctx->pSurf->dev, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, (uint64_t)ctx->cmd, "vkvgCtxCmd");
 #endif
@@ -225,21 +225,25 @@ void _record_draw_cmd (VkvgContext ctx){
 void _clear_attachment (VkvgContext ctx) {
 
 }
-inline void _submit_ctx_cmd(VkvgContext ctx){
-    _submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
+inline void _wait_flush_fence (VkvgContext ctx) {
+    vkWaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
 }
-void _wait_and_reset_ctx_cmd (VkvgContext ctx){
+void _wait_and_submit_cmd (VkvgContext ctx){
     if (!ctx->cmdStarted)
         return;
-    vkWaitForFences(ctx->pSurf->dev->vkDev,1,&ctx->flushFence,VK_TRUE,UINT64_MAX);
-    vkResetFences(ctx->pSurf->dev->vkDev,1,&ctx->flushFence);
-    vkResetCommandBuffer(ctx->cmd,0);
-    ctx->cmdStarted = false;
-}
 
-inline void _submit_wait_and_reset_cmd (VkvgContext ctx){
-    _submit_ctx_cmd(ctx);
-    _wait_and_reset_ctx_cmd(ctx);
+    _wait_flush_fence (ctx);
+    vkResetFences   (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
+
+    _submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
+
+    if (ctx->cmd == ctx->cmdBuffers[0])
+        ctx->cmd = ctx->cmdBuffers[1];
+    else
+        ctx->cmd = ctx->cmdBuffers[0];
+
+    vkResetCommandBuffer (ctx->cmd, 0);
+    ctx->cmdStarted = false;
 }
 /*void _explicit_ms_resolve (VkvgContext ctx){//should init cmd before calling this (unused, using automatic resolve by renderpass)
     vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -271,17 +275,17 @@ void _end_render_pass (VkvgContext ctx) {
     ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
 }
 void _flush_cmd_buff (VkvgContext ctx){
+    if (!ctx->cmdStarted)
+        return;
 
     memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
     memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (uint32_t));
 
-    if (!ctx->cmdStarted)
-        return;
     _end_render_pass        (ctx);
     vkh_cmd_end             (ctx->cmd);
 
     LOG(LOG_INFO, "FLUSH CTX: ctx = %lu; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
-    _submit_wait_and_reset_cmd(ctx);
+    _wait_and_submit_cmd(ctx);
 
     ctx->vertCount = 0;
     ctx->indCount = 0;
@@ -379,7 +383,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
         //flush ctx in two steps to add the src transitioning in the cmd buff
         if (ctx->cmdStarted)//transition of img without appropriate dependencies in subpass must be done outside renderpass.
-            _end_render_pass    (ctx);
+            _end_render_pass (ctx);
         else {
             vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
             ctx->cmdStarted = true;
@@ -390,8 +394,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
-        vkh_cmd_end             (ctx->cmd);
-        _submit_wait_and_reset_cmd(ctx);
+        vkh_cmd_end (ctx->cmd);
+        _wait_and_submit_cmd (ctx);
 
         ctx->source = surf->img;
 
@@ -467,6 +471,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         vkvg_pattern_destroy    (lastPat);
 }
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
+    _wait_flush_fence(ctx);//descriptorSet update invalidate cmd buffs
     VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     VkWriteDescriptorSet writeDescriptorSet = {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -842,11 +847,11 @@ void _recursive_bezier (VkvgContext ctx,
 
     // Continue subdivision
     //----------------------
-    _recursive_bezier(ctx, x1, y1, x12, y12, x123, y123, x1234, y1234, level + 1);
-    _recursive_bezier(ctx, x1234, y1234, x234, y234, x34, y34, x4, y4, level + 1);
+    _recursive_bezier (ctx, x1, y1, x12, y12, x123, y123, x1234, y1234, level + 1);
+    _recursive_bezier (ctx, x1234, y1234, x234, y234, x34, y34, x4, y4, level + 1);
 }
 void _poly_fill (VkvgContext ctx){
-    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
+    CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
     uint32_t ptrPath = 0;
     Vertex v = {};
@@ -860,14 +865,14 @@ void _poly_fill (VkvgContext ctx){
         //close path
         ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;// ctx->pathes[ptrPath];//close path by setting start and end equal
 
-        uint32_t firstPtIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
-        uint32_t lastPtIdx =   ctx->pathes[ptrPath+1]&PATH_ELT_MASK;//_get_last_point_of_closed_path (ctx, ptrPath);
+        uint32_t firstPtIdx = ctx->pathes [ptrPath] & PATH_ELT_MASK;
+        uint32_t lastPtIdx  = ctx->pathes [ptrPath+1] & PATH_ELT_MASK;//_get_last_point_of_closed_path (ctx, ptrPath);
         uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
         uint32_t firstVertIdx = ctx->vertCount;
 
         for (uint i = 0; i < pathPointCount; i++) {
-            v.pos = ctx->points[i+firstPtIdx];
-            _add_vertex(ctx, v);
+            v.pos = ctx->points [i+firstPtIdx];
+            _add_vertex (ctx, v);
         }
 
         LOG(LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);

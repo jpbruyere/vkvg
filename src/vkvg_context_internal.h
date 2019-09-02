@@ -76,7 +76,8 @@ typedef struct _vkvg_context_t {
     VkhImage            source;     //source of painting operation
 
     VkCommandPool		cmdPool;    //local pools ensure thread safety
-    VkCommandBuffer     cmd;        //single cmd buff for context operations
+    VkCommandBuffer     cmdBuffers[2];//double cmd buff for context operations
+    VkCommandBuffer     cmd;        //current recording buffer
     bool                cmdStarted; //prevent flushing empty renderpass
     bool                pushCstDirty;//prevent pushing to gpu if not requested
     VkDescriptorPool	descriptorPool;//one pool per thread
@@ -192,9 +193,8 @@ void _create_cmd_buff		(VkvgContext ctx);
 void _check_cmd_buff_state  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
 void _record_draw_cmd		(VkvgContext ctx);
-void _submit_wait_and_reset_cmd(VkvgContext ctx);
-void _submit_ctx_cmd        (VkvgContext ctx);
-void _wait_and_reset_ctx_cmd(VkvgContext ctx);
+void _wait_flush_fence      (VkvgContext ctx);
+void _wait_and_submit_cmd   (VkvgContext ctx);
 void _update_push_constants (VkvgContext ctx);
 void _update_cur_pattern    (VkvgContext ctx, VkvgPattern pat);
 void _set_mat_inv_and_vkCmdPush (VkvgContext ctx);

@@ -128,7 +128,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 
     vkh_image_destroy   (cache->texture);
     cache->texLength   = newSize;
-    cache->texture         = newImg;
+    cache->texture     = newImg;
 
     VkvgContext next = dev->lastCtx;
     while (next != NULL){
