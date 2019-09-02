@@ -7,23 +7,24 @@ void test(){
 
     srand((unsigned) currentTime.tv_usec);
     const float w = 1024.f;
-    const float h = 800.f;
 
     VkvgContext ctx = vkvg_create(surf);
-    //vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
-    vkvg_set_line_width(ctx,1);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
+
     //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
-    //vkvg_set_source_rgba(ctx,1.0,0.0,0.0,0.1);
 
     for (int i=0; i<iterations; i++) {
         randomize_color(ctx);
-        float x1 = w*rand()/RAND_MAX;
-        float y1 = h*rand()/RAND_MAX;
-        float v = (500.f*rand()/RAND_MAX) + 1;
 
-        vkvg_move_to (ctx, x1, y1);
-        vkvg_line_to (ctx, x1, y1 + v);
-        vkvg_stroke (ctx);
+        float x = w*rand()/RAND_MAX;
+        float y = w*rand()/RAND_MAX;
+        float r = 0.1f*w*rand()/RAND_MAX;
+
+        vkvg_arc(ctx, x, y, r, 0, M_PI * 2.f);
+        vkvg_fill(ctx);
+
+        if (i%50==0)
+            vkvg_flush(ctx);
     }
     vkvg_destroy(ctx);
 }

@@ -42,11 +42,23 @@ void _check_cmd_buff_state (VkvgContext ctx) {
     else if (ctx->pushCstDirty)
         _update_push_constants(ctx);
 }
+void _check_vbo_size (VkvgContext ctx) {
+    if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
+        return;
+    ctx->sizeVertices += VKVG_VBO_SIZE;
+    ctx->vertexCache = (Vertex*) realloc (ctx->vertexCache, ctx->sizeVertices * sizeof(Vertex));
+}
+void _check_ibo_size (VkvgContext ctx) {
+    if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD)
+        return;
+    ctx->sizeIndices += VKVG_IBO_SIZE;
+    ctx->indexCache = (VKVG_IBO_INDEX_TYPE*) realloc (ctx->vertexCache, ctx->sizeVertices * sizeof(VKVG_IBO_INDEX_TYPE));
+}
 void _check_pathes_array (VkvgContext ctx){
     if (ctx->sizePathes - ctx->pathPtr - ctx->curvePtr > VKVG_ARRAY_THRESHOLD)
         return;
     ctx->sizePathes += VKVG_PATHES_SIZE;
-    ctx->pathes = (uint32_t*) realloc (ctx->pathes, ctx->sizePathes*sizeof(uint32_t));
+    ctx->pathes = (uint32_t*) realloc (ctx->pathes, ctx->sizePathes * sizeof(uint32_t));
 }
 //when empty, ptr is even, else it's odd
 //when empty, no current point is defined.
@@ -142,7 +154,7 @@ void _create_gradient_buff (VkvgContext ctx){
 void _create_vertices_buff (VkvgContext ctx){
 
     ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
-    ctx->indexCache = (uint32_t*)malloc(ctx->sizeVertices * sizeof(uint32_t));
+    ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeVertices * sizeof(VKVG_IBO_INDEX_TYPE));
 
     vkvg_buffer_create (ctx->pSurf->dev,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -151,7 +163,7 @@ void _create_vertices_buff (VkvgContext ctx){
     vkvg_buffer_create (ctx->pSurf->dev,
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         VMA_MEMORY_USAGE_CPU_TO_GPU,
-        ctx->sizeIndices * sizeof(uint32_t), &ctx->indices);
+        ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
 }
 const vec3 blankuv = {};
 void _add_vertexf (VkvgContext ctx, float x, float y){
@@ -169,7 +181,7 @@ void _set_vertex(VkvgContext ctx, uint32_t idx, Vertex v){
     ctx->vertexCache[idx] = v;
 }
 void _add_tri_indices_for_rect (VkvgContext ctx, uint32_t i){
-    uint32_t* inds = &ctx->indexCache[ctx->indCount];
+    VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
     inds[0] = i;
     inds[1] = i+2;
     inds[2] = i+1;
@@ -179,7 +191,7 @@ void _add_tri_indices_for_rect (VkvgContext ctx, uint32_t i){
     ctx->indCount+=6;
 }
 void _add_triangle_indices(VkvgContext ctx, uint32_t i0, uint32_t i1, uint32_t i2){
-    uint32_t* inds = &ctx->indexCache[ctx->indCount];
+    VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
     inds[0] = i0;
     inds[1] = i1;
     inds[2] = i2;
@@ -279,7 +291,7 @@ void _flush_cmd_buff (VkvgContext ctx){
         return;
 
     memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
-    memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (uint32_t));
+    memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
 
     _end_render_pass        (ctx);
     vkh_cmd_end             (ctx->cmd);
@@ -336,7 +348,10 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 
     VkDeviceSize offsets[1] = { 0 };
     CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
-    CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+    if (sizeof (VKVG_IBO_INDEX_TYPE) == 4)
+        CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+    else
+        CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT16);
 
     _update_push_constants  (ctx);
 
@@ -540,7 +555,7 @@ void add_line(vkvg_context* ctx, vec2 p1, vec2 p2, vec4 col){
     _add_vertex(ctx, v);
     v.pos = p2;
     _add_vertex(ctx, v);
-    uint32_t* inds = &ctx->indexCache [ctx->indCount];
+    VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount];
     inds[0] = ctx->vertCount - 2;
     inds[1] = ctx->vertCount - 1;
     ctx->indCount+=2;
