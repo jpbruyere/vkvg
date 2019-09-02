@@ -66,6 +66,7 @@ inline void _set_curve_start (VkvgContext ctx) {
 inline void _set_curve_end (VkvgContext ctx) {
     ctx->pathes[ctx->pathPtr+ctx->curvePtr+2] = ctx->pointCount - 1;
     ctx->curvePtr+=2;
+    _check_pathes_array(ctx);
 }
 //path start pointed at ptrPath has curve bit
 inline bool _path_has_curves (VkvgContext ctx, uint ptrPath) {
