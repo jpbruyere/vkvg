@@ -36,11 +36,12 @@
 #include "vkh_queue.h"
 #include "vkh_image.h"
 
-void _check_cmd_buff_state (VkvgContext ctx) {
+void _check_flush_needed (VkvgContext ctx) {
     if (!ctx->cmdStarted)
-        _start_cmd_for_render_pass(ctx);
-    else if (ctx->pushCstDirty)
-        _update_push_constants(ctx);
+        return;
+    if (ctx->pointCount * 4 < ctx->sizeIndices - ctx->indCount)
+        return;
+    _flush_cmd_buff(ctx);
 }
 void _check_vbo_size (VkvgContext ctx) {
     if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
@@ -52,7 +53,7 @@ void _check_ibo_size (VkvgContext ctx) {
     if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD)
         return;
     ctx->sizeIndices += VKVG_IBO_SIZE;
-    ctx->indexCache = (VKVG_IBO_INDEX_TYPE*) realloc (ctx->vertexCache, ctx->sizeVertices * sizeof(VKVG_IBO_INDEX_TYPE));
+    ctx->indexCache = (VKVG_IBO_INDEX_TYPE*) realloc (ctx->indexCache, ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 }
 void _check_pathes_array (VkvgContext ctx){
     if (ctx->sizePathes - ctx->pathPtr - ctx->curvePtr > VKVG_ARRAY_THRESHOLD)
@@ -154,7 +155,7 @@ void _create_gradient_buff (VkvgContext ctx){
 void _create_vertices_buff (VkvgContext ctx){
 
     ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
-    ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeVertices * sizeof(VKVG_IBO_INDEX_TYPE));
+    ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 
     vkvg_buffer_create (ctx->pSurf->dev,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -212,7 +213,12 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
     _add_tri_indices_for_rect(ctx, firstIdx);
 }
 
-
+void _check_cmd_buff_state (VkvgContext ctx) {
+    if (!ctx->cmdStarted)
+        _start_cmd_for_render_pass(ctx);
+    else if (ctx->pushCstDirty)
+        _update_push_constants(ctx);
+}
 void _create_cmd_buff (VkvgContext ctx){
     vkh_cmd_buffs_create((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY, 2, ctx->cmdBuffers);
 #if defined(DEBUG) && defined(ENABLE_VALIDATION)
@@ -240,12 +246,15 @@ void _clear_attachment (VkvgContext ctx) {
 inline void _wait_flush_fence (VkvgContext ctx) {
     vkWaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
 }
+inline void _reset_flush_fence (VkvgContext ctx) {
+    vkResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
+}
 void _wait_and_submit_cmd (VkvgContext ctx){
     if (!ctx->cmdStarted)
         return;
 
     _wait_flush_fence (ctx);
-    vkResetFences   (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
+    _reset_flush_fence(ctx);
 
     _submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
 
@@ -279,29 +288,32 @@ void _wait_and_submit_cmd (VkvgContext ctx){
                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ,
                           VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }*/
-
+//this func expect cmdStarted to be true, so that vert and ind count are > 0
 void _end_render_pass (VkvgContext ctx) {
     _record_draw_cmd        (ctx);
     LOG(LOG_INFO, "END RENDER PASS: ctx = %lu;\n", ctx);
     CmdEndRenderPass      (ctx->cmd);
     ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
+
+    //copy vertex and index caches to the vbo and ibo vkbuffers
+    _wait_flush_fence (ctx);
+
+    memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
+    memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
+
+    ctx->vertCount = 0;
+    ctx->indCount = 0;
+    ctx->curIndStart = 0;
 }
 void _flush_cmd_buff (VkvgContext ctx){
     if (!ctx->cmdStarted)
         return;
 
-    memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
-    memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
-
-    _end_render_pass        (ctx);
-    vkh_cmd_end             (ctx->cmd);
+    _end_render_pass  (ctx);
+    vkh_cmd_end       (ctx->cmd);
 
     LOG(LOG_INFO, "FLUSH CTX: ctx = %lu; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
     _wait_and_submit_cmd(ctx);
-
-    ctx->vertCount = 0;
-    ctx->indCount = 0;
-    ctx->curIndStart = 0;
 }
 
 //bind correct draw pipeline depending on current OPERATOR

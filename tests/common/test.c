@@ -77,9 +77,9 @@ void init_test (uint width, uint height){
     vkengine_set_cursor_pos_callback(e, mouse_move_callback);
     vkengine_set_scroll_callback(e, scroll_callback);
 
-    bool deferredResolve = true;
+    bool deferredResolve = false;
 
-    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_4_BIT, deferredResolve);
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_1_BIT, deferredResolve);
 
     vkvg_device_set_dpy(device, 96, 96);
 
@@ -141,7 +141,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
     vkengine_set_cursor_pos_callback(e, mouse_move_callback);
     vkengine_set_scroll_callback(e, scroll_callback);
 
-    bool deferredResolve = false;
+    bool deferredResolve = true;
 
     device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_4_BIT, deferredResolve);
 
@@ -173,10 +173,12 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
                     vkDestroyFence (e->dev->dev, fences[i], NULL);
                     fences[i] = NULL;
                 }
-                vkvg_surface_destroy(surfaces[i]);
-                surfaces[i] = vkvg_surface_create_for_VkhImage (device, r->ScBuffers[i]);
+                vkvg_surface_destroy (surfaces[i]);
             }
             vkDestroyFence (e->dev->dev, fence, NULL);
+            vkh_presenter_create_swapchain (r);
+            for (uint i=0; i < r->imgCount;i++)
+                surfaces[i] = vkvg_surface_create_for_VkhImage (device, r->ScBuffers[i]);
         }else{
             surf = surfaces[r->currentScBufferIndex];
             if (fences[r->currentScBufferIndex] != NULL){
@@ -195,8 +197,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
                                          .pSwapchains = &r->swapChain,
                                          .pImageIndices = &r->currentScBufferIndex };
 
-            /* Make sure command buffer is finished before presenting */
-            VK_CHECK_RESULT(vkQueuePresentKHR(r->queue, &present));
+            vkQueuePresentKHR(r->queue, &present);
         }
 #else
         testfunc();
@@ -236,5 +237,4 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
     vkvg_device_destroy     (device);
 
     vkengine_destroy (e);
-
 }
