@@ -58,7 +58,7 @@ VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadO
                     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .stencilLoadOp = stencilLoadOp,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
-                    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                    .initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                     .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
     VkAttachmentDescription attachments[] = {attColor,attDS};
@@ -121,7 +121,7 @@ VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAt
                     .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
                     .stencilLoadOp = stencilLoadOp,
                     .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
-                    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                    .initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                     .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
     VkAttachmentDescription attachments[] = {attColorResolve,attDS,attColor};

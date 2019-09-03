@@ -34,9 +34,9 @@ static uint32_t dlpCount = 0;
 #endif
 
 static VkClearValue clearValues[3] = {
-    { 0.0f, 0.0f, 0.0f, 0.0f },
+    { 0 },
     { 1.0f, 0 },
-    { 0.0f, 0.0f, 0.0f, 0.0f }
+    { 0 }
 };
 
 /**
@@ -179,8 +179,7 @@ void vkvg_destroy (VkvgContext ctx)
         return;
 
     _flush_cmd_buff(ctx);
-
-    vkWaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
+    _wait_flush_fence(ctx);
 
     LOG(LOG_INFO, "DESTROY Context: ctx = %lu; surf = %lu\n", (ulong)ctx, (ulong)ctx->pSurf);
 
@@ -502,8 +501,8 @@ void vkvg_clip_preserve (VkvgContext ctx){
 
     LOG(LOG_INFO, "CLIP: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
-        _flush_cmd_buff(ctx);
+    _check_flush_needed (ctx);
+
 
     if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
         _check_cmd_buff_state(ctx);
@@ -535,10 +534,8 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
     LOG(LOG_INFO, "FILL: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)//flush if vk buff is full
-        _flush_cmd_buff(ctx);
-
-    _check_cmd_buff_state(ctx);
+    _check_flush_needed (ctx);
+    _check_cmd_buff_state (ctx);
 
     if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
         _poly_fill (ctx);
@@ -559,10 +556,9 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
     LOG(LOG_INFO, "STROKE: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    if (ctx->pointCount * 4 > ctx->sizeIndices - ctx->indCount)
-        _flush_cmd_buff(ctx);
+    _check_flush_needed (ctx);
 
-    Vertex v = {};
+    Vertex v = {0};
     v.uv.z = -1;
 
     float hw = ctx->lineWidth / 2.0f;
@@ -572,7 +568,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
     while (ptrPath < ctx->pathPtr){
         uint ptrCurve = 0;
-        uint32_t firstIdx = ctx->vertCount;
+        VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
         i = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
         LOG(LOG_INFO_PATH, "\tPATH: start = %d; ", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
@@ -686,8 +682,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
             i++;
         }else{
-            iR = ctx->pathes[ptrPath]&PATH_ELT_MASK;
-            _build_vb_step(ctx,v,hw,iL,i,iR, false);
+            iR = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+            _build_vb_step (ctx,v,hw,iL,i,iR, false);
 
             VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
             VKVG_IBO_INDEX_TYPE ii = firstIdx;
@@ -702,8 +698,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     _record_draw_cmd(ctx);
 }
 void vkvg_paint (VkvgContext ctx){
-    _check_cmd_buff_state(ctx);
-    _draw_full_screen_quad(ctx,true);
+    _check_cmd_buff_state (ctx);
+    _draw_full_screen_quad (ctx, true);
 }
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
     vkvg_set_source_rgba (ctx, r, g, b, 1);
@@ -856,7 +852,6 @@ void vkvg_save (VkvgContext ctx){
     _bind_draw_pipeline (ctx);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-
     sav->lineWidth  = ctx->lineWidth;
     sav->curOperator= ctx->curOperator;
     sav->lineCap    = ctx->lineCap;
@@ -916,6 +911,7 @@ void vkvg_restore (VkvgContext ctx){
     CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
     _flush_cmd_buff (ctx);
+    _wait_flush_fence (ctx);
 
     uint8_t curSaveStencil = ctx->curSavBit / 6;
     if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0){//addtional save/restore stencil image have to be copied back to surf stencil first
@@ -944,7 +940,7 @@ void vkvg_restore (VkvgContext ctx){
 
         VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
         _wait_and_submit_cmd (ctx);
-
+        _wait_flush_fence (ctx);
         vkh_image_destroy (savStencil);
     }
 

@@ -22,11 +22,6 @@
 
 #include "vectors.h"
 
-// init float vector
-inline vec2 vec2_create (float x, float y) {
-    vec2 v = {x,y};
-    return v;
-}
 // compute normal direction vector from line defined by 2 points in double precision
 vec2d vec2d_line_norm(vec2d a, vec2d b)
 {
@@ -40,77 +35,66 @@ vec2d vec2d_line_norm(vec2d a, vec2d b)
 vec2 vec2_line_norm(vec2 a, vec2 b)
 {
     vec2 d = {b.x - a.x, b.y - a.y};
-    float md = sqrt (d.x*d.x + d.y*d.y);
+    float md = sqrtf (d.x*d.x + d.y*d.y);
     d.x/=md;
     d.y/=md;
     return d;
 }
 // compute length of double vector 2d
-double vec2d_length(vec2d v){
+inline double vec2d_length(vec2d v){
     return sqrt (v.x*v.x + v.y*v.y);
 }
 // compute length of float vector 2d
-float vec2_length(vec2 v){
-    return sqrt (v.x*v.x + v.y*v.y);
+inline float vec2_length(vec2 v){
+    return sqrtf (v.x*v.x + v.y*v.y);
 }
 // normalize float vector
 vec2 vec2_norm(vec2 a)
 {
-    float m = sqrt (a.x*a.x + a.y*a.y);
-    vec2 d = {a.x/m, a.y/m};
-    return d;
+    float m = sqrtf (a.x*a.x + a.y*a.y);
+    return (vec2){a.x/m, a.y/m};
 }
 // normalize double vector
 vec2d vec2d_norm(vec2d a)
 {
     double m = sqrt (a.x*a.x + a.y*a.y);
-    vec2d d = {a.x/m, a.y/m};
-    return d;
+    return (vec2d){a.x/m, a.y/m};
 }
 // multiply 2d vector by scalar
-vec2d vec2d_mult(vec2d a, double m){
-    vec2d r = {a.x*m,a.y*m};
-    return r;
+inline vec2d vec2d_mult(vec2d a, double m){
+    return (vec2d){a.x*m,a.y*m};
 }
 // multiply 2d vector by scalar
-vec2 vec2_mult(vec2 a, float m){
-    vec2 r = {a.x*m,a.y*m};
-    return r;
+inline vec2 vec2_mult(vec2 a, float m){
+    return (vec2){a.x*m,a.y*m};
 }
 // compute perpendicular vector
-vec2d vec2d_perp (vec2d a){
-    vec2d vp = {a.y, -a.x};
-    return vp;
+inline vec2d vec2d_perp (vec2d a){
+    return (vec2d){a.y, -a.x};
 }
 // compute perpendicular vector
-vec2 vec2_perp (vec2 a){
-    vec2 vp = {a.y, -a.x};
-    return vp;
+inline vec2 vec2_perp (vec2 a){
+    return (vec2){a.y, -a.x};
 }
 // convert double precision vector to single precision
-vec2 vec2d_to_vec2(vec2d vd){
-    vec2 v = {vd.x,vd.y};
-    return v;
+inline vec2 vec2d_to_vec2(vec2d vd){
+    return (vec2){(float)vd.x,(float)vd.y};
 }
 // compute sum of two single precision vectors
-vec2 vec2_add (vec2 a, vec2 b){
-    vec2 r = {a.x + b.x, a.y + b.y};
-    return r;
+inline vec2 vec2_add (vec2 a, vec2 b){
+    return (vec2){a.x + b.x, a.y + b.y};
 }
 // compute sum of two double precision vectors
-vec2d vec2d_add (vec2d a, vec2d b){
-    vec2d r = {a.x + b.x, a.y + b.y};
-    return r;
+inline vec2d vec2d_add (vec2d a, vec2d b){
+    return (vec2d){a.x + b.x, a.y + b.y};
 }
 // compute subbstraction of two single precision vectors
-vec2 vec2_sub (vec2 a, vec2 b){
-    vec2 r = {a.x - b.x, a.y - b.y};
-    return r;
+inline vec2 vec2_sub (vec2 a, vec2 b){
+    return (vec2){a.x - b.x, a.y - b.y};
 }
 // compute subbstraction of two double precision vectors
-vec2d vec2d_sub (vec2d a, vec2d b){
-    vec2d r = {a.x - b.x, a.y - b.y};
-    return r;
+inline vec2d vec2d_sub (vec2d a, vec2d b){
+    return (vec2d){a.x - b.x, a.y - b.y};
 }
 // test equality of two single precision vectors
 bool vec2_equ (vec2 a, vec2 b){

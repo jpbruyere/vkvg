@@ -29,7 +29,7 @@
 #include "vkvg_fonts.h"
 
 #define VKVG_PTS_SIZE				4096
-#define VKVG_VBO_SIZE				4096 * 8
+#define VKVG_VBO_SIZE				VKVG_PTS_SIZE * 8
 #define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 6
 #define VKVG_PATHES_SIZE			16
 #define VKVG_ARRAY_THRESHOLD		4
@@ -157,11 +157,13 @@ typedef struct _ear_clip_point{
     struct _ear_clip_point* next;
 }ear_clip_point;
 
-bool _current_path_is_empty (VkvgContext ctx);
-void _start_sub_path        (VkvgContext ctx, float x, float y);
+void _check_flush_needed    (VkvgContext ctx);
 void _check_vbo_size        (VkvgContext ctx);
 void _check_ibo_size        (VkvgContext ctx);
 void _check_pathes_array	(VkvgContext ctx);
+
+bool _current_path_is_empty (VkvgContext ctx);
+void _start_sub_path        (VkvgContext ctx, float x, float y);
 void _finish_path			(VkvgContext ctx);
 void _clear_path			(VkvgContext ctx);
 bool _path_is_closed		(VkvgContext ctx, uint32_t ptrPath);
@@ -196,6 +198,7 @@ void _check_cmd_buff_state  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
 void _record_draw_cmd		(VkvgContext ctx);
 void _wait_flush_fence      (VkvgContext ctx);
+void _reset_flush_fence     (VkvgContext ctx);
 void _wait_and_submit_cmd   (VkvgContext ctx);
 void _update_push_constants (VkvgContext ctx);
 void _update_cur_pattern    (VkvgContext ctx, VkvgPattern pat);
