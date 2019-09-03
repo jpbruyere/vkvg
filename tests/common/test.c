@@ -10,7 +10,7 @@ bool mouseDown = false;
 VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
-uint iterations = 250;  // items drawn in one run, or complexity
+uint iterations = 1000;  // items drawn in one run, or complexity
 uint runs       = 10;   // repeat test n times
 
 static vk_engine_t* e;
@@ -62,10 +62,10 @@ double time_diff(struct timeval x , struct timeval y)
 
 void randomize_color (VkvgContext ctx) {
     vkvg_set_source_rgba(ctx,
+        1.0f,//(float)rand()/RAND_MAX,
         (float)rand()/RAND_MAX,
         (float)rand()/RAND_MAX,
-        (float)rand()/RAND_MAX,
-        (float)rand()/RAND_MAX
+        0.5f//(float)rand()/RAND_MAX
     );
 }
 
@@ -141,9 +141,9 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
     vkengine_set_cursor_pos_callback(e, mouse_move_callback);
     vkengine_set_scroll_callback(e, scroll_callback);
 
-    bool deferredResolve = true;
+    bool deferredResolve = false;
 
-    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_4_BIT, deferredResolve);
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_1_BIT, deferredResolve);
 
     vkvg_device_set_dpy(device, 96, 96);
 
