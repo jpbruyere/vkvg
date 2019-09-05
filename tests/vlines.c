@@ -15,7 +15,7 @@ void test(){
     //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
     //vkvg_set_source_rgba(ctx,1.0,0.0,0.0,0.1);
 
-    for (int i=0; i<iterations; i++) {
+    for (int i=0; i<test_size; i++) {
         randomize_color(ctx);
         float x1 = w*rand()/RAND_MAX;
         float y1 = h*rand()/RAND_MAX;

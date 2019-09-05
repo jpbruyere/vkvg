@@ -10,6 +10,14 @@
 #define M_PIF               3.14159265359f /* float pi */
 #define M_PIF_MULT_2        6.28318530718f
 
+#ifndef MIN
+# define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef MAX
+# define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+
 #ifdef _WIN32 // MSC_VER
     #define WIN32_LEAN_AND_MEAN
     #define NOMINMAX
@@ -66,8 +74,8 @@
     #include <sys/time.h>
 #endif // _WIN32
 
-extern uint iterations;
-extern uint runs;
+extern uint test_size;
+extern int iterations;
 
 extern float panX;
 extern float panY;

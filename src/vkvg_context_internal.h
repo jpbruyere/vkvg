@@ -28,11 +28,11 @@
 #include "vkh.h"
 #include "vkvg_fonts.h"
 
-#define VKVG_PTS_SIZE				4096
-#define VKVG_VBO_SIZE				VKVG_PTS_SIZE * 8
+#define VKVG_PTS_SIZE				256
+#define VKVG_VBO_SIZE				VKVG_PTS_SIZE * 4
 #define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 6
 #define VKVG_PATHES_SIZE			16
-#define VKVG_ARRAY_THRESHOLD		4
+#define VKVG_ARRAY_THRESHOLD		8
 #define VKVG_IBO_INDEX_TYPE         uint16_t
 
 typedef struct{
@@ -97,15 +97,17 @@ typedef struct _vkvg_context_t {
 
     //vk buffers, holds data until flush
     vkvg_buff	indices;        //index buffer with persistent map memory
+    size_t		sizeIBO;        //size of vk ibo size
     size_t		sizeIndices;    //reserved size
-    uint32_t	indCount;       //current indice count
+    VKVG_IBO_INDEX_TYPE	indCount;       //current indice count
 
-    uint32_t	curIndStart;    //last index recorded in cmd buff
-    uint32_t    curVertOffset;  //vertex offset in draw indexed command
+    VKVG_IBO_INDEX_TYPE	curIndStart;    //last index recorded in cmd buff
+    VKVG_IBO_INDEX_TYPE curVertOffset;  //vertex offset in draw indexed command
 
     vkvg_buff	vertices;       //vertex buffer with persistent mapped memory
+    size_t      sizeVBO;        //size of vk vbo size
     size_t		sizeVertices;   //reserved size
-    uint32_t	vertCount;      //effective vertices count
+    VKVG_IBO_INDEX_TYPE	vertCount;      //effective vertices count
 
     Vertex* vertexCache;
     VKVG_IBO_INDEX_TYPE* indexCache;
@@ -188,8 +190,8 @@ void _create_vertices_buff	(VkvgContext ctx);
 void _add_vertex			(VkvgContext ctx, Vertex v);
 void _add_vertexf           (VkvgContext ctx, float x, float y);
 void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
-void _add_triangle_indices	(VkvgContext ctx, uint32_t i0, uint32_t i1,uint32_t i2);
-void _add_tri_indices_for_rect	(VkvgContext ctx, uint32_t i);
+void _add_triangle_indices	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2);
+void _add_tri_indices_for_rect	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
 void _build_vb_step         (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR, bool isCurve);
 void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, float height);
 
