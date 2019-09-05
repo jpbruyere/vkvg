@@ -1,7 +1,6 @@
 #include "test.h"
 
 void test(){
-    vkvg_surface_clear(surf);
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
 
@@ -11,20 +10,21 @@ void test(){
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
 
+    vkvg_clear(ctx);
     //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
 
-    for (int i=0; i<iterations; i++) {
+    for (uint i=0; i<iterations; i++) {
         randomize_color(ctx);
 
-        float x = 0.5f*w*rand()/RAND_MAX;
-        float y = 0.5f*w*rand()/RAND_MAX;
-        float z = 0.5f*w*rand()/RAND_MAX;
-        float v = 0.5f*w*rand()/RAND_MAX;
+        float x = truncf(0.8f*w*rand()/RAND_MAX);
+        float y = truncf(0.8f*w*rand()/RAND_MAX);
+        float z = truncf((0.2f*w*rand()/RAND_MAX)+1.f);
+        float v = truncf((0.2f*w*rand()/RAND_MAX)+1.f);
 
         vkvg_rectangle(ctx, x, y, z, v);
         vkvg_fill(ctx);
 
-        if (i%30==0)
+        if (i%250==0)
             vkvg_flush(ctx);
     }
     vkvg_destroy(ctx);
@@ -32,7 +32,7 @@ void test(){
 
 int main(int argc, char *argv[]) {
 
-    perform_test (test, 1024, 768);
+    perform_test (test, 800, 600);
 
     return 0;
 }

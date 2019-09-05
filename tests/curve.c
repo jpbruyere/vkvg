@@ -4,8 +4,9 @@ void test(){
     VkvgContext ctx = vkvg_create(surf);
 
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
-    vkvg_set_line_width(ctx, 50);
+    vkvg_set_line_width(ctx, 20);
 
+    vkvg_scale(ctx,2,2);
     vkvg_set_line_join(ctx, VKVG_LINE_JOIN_BEVEL);
 
     //vkvg_arc (ctx, 200, 500, 100, 0, M_PI);

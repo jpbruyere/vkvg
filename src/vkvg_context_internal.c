@@ -47,19 +47,43 @@ void _check_vbo_size (VkvgContext ctx) {
     if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
         return;
     ctx->sizeVertices += VKVG_VBO_SIZE;
-    ctx->vertexCache = (Vertex*) realloc (ctx->vertexCache, ctx->sizeVertices * sizeof(Vertex));
+    Vertex* tmp = (Vertex*) realloc (ctx->vertexCache, ctx->sizeVertices * sizeof(Vertex));
+    if (tmp == NULL)
+        ctx->status = VKVG_STATUS_NO_MEMORY;
+    else
+        ctx->vertexCache = tmp;
 }
 void _check_ibo_size (VkvgContext ctx) {
     if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD)
         return;
     ctx->sizeIndices += VKVG_IBO_SIZE;
-    ctx->indexCache = (VKVG_IBO_INDEX_TYPE*) realloc (ctx->indexCache, ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
+    VKVG_IBO_INDEX_TYPE* tmp = (VKVG_IBO_INDEX_TYPE*) realloc (ctx->indexCache, ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
+    if (tmp == NULL)
+        ctx->status = VKVG_STATUS_NO_MEMORY;
+    else
+        ctx->indexCache = tmp;
 }
 void _check_pathes_array (VkvgContext ctx){
     if (ctx->sizePathes - ctx->pathPtr - ctx->curvePtr > VKVG_ARRAY_THRESHOLD)
         return;
     ctx->sizePathes += VKVG_PATHES_SIZE;
-    ctx->pathes = (uint32_t*) realloc (ctx->pathes, ctx->sizePathes * sizeof(uint32_t));
+    uint32_t* tmp = (uint32_t*) realloc (ctx->pathes, ctx->sizePathes * sizeof(uint32_t));
+    if (tmp == NULL){
+        ctx->status = VKVG_STATUS_NO_MEMORY;
+        ctx->pathPtr = 0 + (ctx->pathPtr % 2);
+    }else
+        ctx->pathes = tmp;
+}
+void _check_point_array (VkvgContext ctx){
+    if (ctx->sizePoints - ctx->pointCount > VKVG_ARRAY_THRESHOLD)
+        return;
+    ctx->sizePoints += VKVG_PATHES_SIZE;
+    vec2* tmp = (vec2*) realloc (ctx->points, ctx->sizePoints * sizeof(vec2));
+    if (tmp == NULL){
+        ctx->status = VKVG_STATUS_NO_MEMORY;
+        ctx->pointCount = 0;
+    }else
+        ctx->points = tmp;
 }
 //when empty, ptr is even, else it's odd
 //when empty, no current point is defined.
@@ -124,6 +148,8 @@ void _resetMinMax (VkvgContext ctx) {
 void _add_point (VkvgContext ctx, float x, float y){
     ctx->points[ctx->pointCount] = (vec2){x,y};
     ctx->pointCount++;
+
+    _check_point_array(ctx);
 
     //bounds are computed here to scissor the painting operation
     //that speed up fill drastically.

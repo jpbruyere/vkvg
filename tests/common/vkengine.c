@@ -109,7 +109,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     for (uint i=0;i<enabledExtsCount;i++)
         enabledExts[i] = gflwExts[i];
 
-#if defined (ENABLE_VALIDATION)
+#if defined (VKVG_USE_VALIDATION)
     const uint32_t enabledLayersCount = 2;
     const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_RENDERDOC_Capture"};
 #else
@@ -187,7 +187,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
         }
     }
 
-#if defined(DEBUG) && defined(ENABLE_VALIDATION)
+#if defined(DEBUG) && defined(VKVG_USE_VALIDATION)
     char const * dex [] = {"VK_KHR_swapchain", "VK_EXT_debug_marker"};
     enabledExtsCount = 2;
 #else

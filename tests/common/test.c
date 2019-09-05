@@ -62,10 +62,10 @@ double time_diff(struct timeval x , struct timeval y)
 
 void randomize_color (VkvgContext ctx) {
     vkvg_set_source_rgba(ctx,
-        1.0f,//(float)rand()/RAND_MAX,
         (float)rand()/RAND_MAX,
         (float)rand()/RAND_MAX,
-        0.5f//(float)rand()/RAND_MAX
+        (float)rand()/RAND_MAX,
+        0.5f//0.8f*rand()/RAND_MAX + 0.2f
     );
 }
 
@@ -143,12 +143,11 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
     bool deferredResolve = false;
 
-    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_1_BIT, deferredResolve);
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_4_BIT, deferredResolve);
 
     vkvg_device_set_dpy(device, 96, 96);
 
 #ifdef VKVG_TEST_DIRECT_DRAW
-    VkFence* fences = (VkFence*)calloc(r->imgCount, sizeof (VkFence));
     surfaces = (VkvgSurface*)malloc(r->imgCount * sizeof (VkvgSurface));
     for (uint i=0; i < r->imgCount;i++)
         surfaces[i] = vkvg_surface_create_for_VkhImage (device, r->ScBuffers[i]);
@@ -165,27 +164,17 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
         gettimeofday(&before , NULL);
 
 #ifdef VKVG_TEST_DIRECT_DRAW
-        VkFence fence = vkh_fence_create (e->dev);
 
-        if (!vkh_presenter_acquireNextImage(r, fence)) {
-            for (uint i=0; i < r->imgCount;i++){
-                if (fences[i]!=NULL){
-                    vkDestroyFence (e->dev->dev, fences[i], NULL);
-                    fences[i] = NULL;
-                }
+        if (!vkh_presenter_acquireNextImage(r, NULL, NULL)) {
+            for (uint i=0; i < r->imgCount;i++)
                 vkvg_surface_destroy (surfaces[i]);
-            }
-            vkDestroyFence (e->dev->dev, fence, NULL);
+
             vkh_presenter_create_swapchain (r);
+
             for (uint i=0; i < r->imgCount;i++)
                 surfaces[i] = vkvg_surface_create_for_VkhImage (device, r->ScBuffers[i]);
         }else{
             surf = surfaces[r->currentScBufferIndex];
-            if (fences[r->currentScBufferIndex] != NULL){
-                vkWaitForFences (e->dev->dev, 1, &fences[r->currentScBufferIndex], VK_TRUE, UINT64_MAX);
-                vkDestroyFence (e->dev->dev, fences[r->currentScBufferIndex], NULL);
-            }
-            fences[r->currentScBufferIndex] = fence;
 
             testfunc();
 
@@ -208,7 +197,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
             vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 #endif
 
-        //vkDeviceWaitIdle(e->dev->dev);
+        vkDeviceWaitIdle(e->dev->dev);
 
         gettimeofday(&after , NULL);
 
@@ -223,12 +212,9 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
     vkDeviceWaitIdle(e->dev->dev);
 
 #ifdef VKVG_TEST_DIRECT_DRAW
-    for (int i=0; i<r->imgCount;i++){
+    for (uint i=0; i<r->imgCount;i++)
         vkvg_surface_destroy (surfaces[i]);
-        if (fences[i]!=NULL)
-            vkDestroyFence (e->dev->dev, fences[i], NULL);
-    }
-    free (fences);
+
     free (surfaces);
 #else
     vkvg_surface_destroy    (surf);
