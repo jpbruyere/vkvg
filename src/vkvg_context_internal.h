@@ -101,6 +101,7 @@ typedef struct _vkvg_context_t {
     uint32_t	indCount;       //current indice count
 
     uint32_t	curIndStart;    //last index recorded in cmd buff
+    uint32_t    curVertOffset;  //vertex offset in draw indexed command
 
     vkvg_buff	vertices;       //vertex buffer with persistent mapped memory
     size_t		sizeVertices;   //reserved size
