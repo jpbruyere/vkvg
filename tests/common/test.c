@@ -10,15 +10,19 @@ bool mouseDown = false;
 VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
-uint iterations = 1000;  // items drawn in one run, or complexity
-uint runs       = 10;   // repeat test n times
+uint test_size = 250;  // items drawn in one run, or complexity
+int iterations       = 100;   // repeat test n times
 
+static bool paused = false;
 static vk_engine_t* e;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action != GLFW_PRESS)
         return;
     switch (key) {
+    case GLFW_KEY_SPACE:
+         paused = !paused;
+        break;
     case GLFW_KEY_ESCAPE :
         glfwSetWindowShouldClose(window, GLFW_TRUE);
         break;
@@ -68,6 +72,42 @@ void randomize_color (VkvgContext ctx) {
         0.5f//0.8f*rand()/RAND_MAX + 0.2f
     );
 }
+/* from caskbench */
+double
+get_tick (void)
+{
+    struct timeval now;
+    gettimeofday (&now, NULL);
+    return (double)now.tv_sec + (double)now.tv_usec / 1000000.0;
+}
+double median_run_time (double data[], int n)
+{
+    double temp;
+    int i, j;
+    for (i = 0; i < n; i++)
+        for (j = i+1; j < n; j++)
+        {
+            if (data[i] > data[j])
+            {
+                temp = data[j];
+                data[j] = data[i];
+                data[i] = temp;
+            }
+        }
+    if (n % 2 == 0)
+        return (data[n/2] + data[n/2-1])/2;
+    else
+        return data[n/2];
+}
+double standard_deviation (const double data[], int n, double mean)
+{
+    double sum_deviation = 0.0;
+    int i;
+    for (i = 0; i < n; ++i)
+    sum_deviation += (data[i]-mean) * (data[i]-mean);
+    return sqrt (sum_deviation / n);
+}
+/***************/
 
 void init_test (uint width, uint height){
     e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
@@ -91,15 +131,18 @@ void run_test_func (void(*testfunc)(void),uint width, uint height) {
     bool deferredResolve = false;
     VkhPresenter r = e->renderer;
 
-    struct timeval before , after;
-    double frameTime = 0, frameTimeAccum = 0, frameCount = 0;
+    double start_time, stop_time, run_time, run_total, min_run_time = -1, max_run_time;
+    double run_time_values[iterations];
 
-    while (!vkengine_should_close (e)) {
+    int i = 0;
+
+    while (!vkengine_should_close (e) && i < iterations) {
         glfwPollEvents();
 
-        gettimeofday(&before , NULL);
+        start_time = get_tick();
 
-        testfunc();
+        if (!paused)
+            testfunc();
 
         if (deferredResolve)
             vkvg_multisample_surface_resolve(surf);
@@ -108,14 +151,26 @@ void run_test_func (void(*testfunc)(void),uint width, uint height) {
 
         vkDeviceWaitIdle(e->dev->dev);
 
-        gettimeofday(&after , NULL);
+        stop_time = get_tick();
+        run_time = stop_time - start_time;
+        run_time_values[i] = run_time;
 
-        frameTimeAccum += time_diff(before , after);
-        frameCount++;
+        if (min_run_time < 0)
+            min_run_time = run_time;
+        else
+            min_run_time = MIN(run_time, min_run_time);
+        max_run_time = MAX(run_time, max_run_time);
+        run_total += run_time;
+        i++;
     }
 
-    frameTime = frameTimeAccum / frameCount;
-    printf ("frame (µs): %.0lf\nfps: %lf\n", frameTime, floor(1000000 / frameTime));
+    double avg_run_time = run_total / (double)iterations;
+    double med_run_time = median_run_time (run_time_values, iterations);
+    double standard_dev = standard_deviation (run_time_values, iterations, avg_run_time);
+    double avg_frames_per_second = (1.0 / avg_run_time);
+    avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
+
+    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 
 }
 void clear_test () {
@@ -143,7 +198,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
     bool deferredResolve = false;
 
-    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_4_BIT, deferredResolve);
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_1_BIT, deferredResolve);
 
     vkvg_device_set_dpy(device, 96, 96);
 
@@ -155,13 +210,17 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
     surf    = vkvg_surface_create(device, width, height);
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 #endif
-    struct timeval before , after;
-    double frameTime = 0, frameTimeAccum = 0, frameCount = 0;
 
-    while (!vkengine_should_close (e)) {
+
+    double start_time, stop_time, run_time, run_total, min_run_time = -1, max_run_time;
+    double run_time_values[iterations];
+
+    int i = 0;
+
+    while (!vkengine_should_close (e) && i < iterations) {
         glfwPollEvents();
 
-        gettimeofday(&before , NULL);
+        start_time = get_tick();
 
 #ifdef VKVG_TEST_DIRECT_DRAW
 
@@ -189,7 +248,8 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
             vkQueuePresentKHR(r->queue, &present);
         }
 #else
-        testfunc();
+        if (!paused)
+            testfunc();
 
         if (deferredResolve)
             vkvg_multisample_surface_resolve(surf);
@@ -199,15 +259,26 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
         vkDeviceWaitIdle(e->dev->dev);
 
-        gettimeofday(&after , NULL);
+        stop_time = get_tick();
+        run_time = stop_time - start_time;
+        run_time_values[i] = run_time;
 
-        frameTimeAccum += time_diff(before , after);
-        frameCount++;
-        //fflush(stdout);
+        if (min_run_time < 0)
+            min_run_time = run_time;
+        else
+            min_run_time = MIN(run_time, min_run_time);
+        max_run_time = MAX(run_time, max_run_time);
+        run_total += run_time;
+        i++;
     }
 
-    frameTime = frameTimeAccum / frameCount;
-    printf ("frame (µs): %.0lf\nfps: %lf\n", frameTime, floor(1000000 / frameTime));
+    double avg_run_time = run_total / (double)iterations;
+    double med_run_time = median_run_time (run_time_values, iterations);
+    double standard_dev = standard_deviation (run_time_values, iterations, avg_run_time);
+    double avg_frames_per_second = (1.0 / avg_run_time);
+    avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
+
+    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 
     vkDeviceWaitIdle(e->dev->dev);
 

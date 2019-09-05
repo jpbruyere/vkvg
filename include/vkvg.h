@@ -40,6 +40,7 @@ extern "C" {
 #define LOG_DEBUG		0x10
 #define LOG_INFO		0x20
 #define LOG_INFO_PATH   0x40
+#define LOG_DBG_ARRAYS  0x80
 #define LOG_FULL		0xff
 
 #ifdef DEBUG

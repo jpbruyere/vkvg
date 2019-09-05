@@ -57,8 +57,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
     }
 
     ctx->sizePoints     = VKVG_PTS_SIZE;
-    ctx->sizeVertices   = VKVG_VBO_SIZE;
-    ctx->sizeIndices    = VKVG_IBO_SIZE;
+    ctx->sizeVertices   = ctx->sizeVBO = VKVG_VBO_SIZE;
+    ctx->sizeIndices    = ctx->sizeIBO = VKVG_IBO_SIZE;
     ctx->sizePathes     = VKVG_PATHES_SIZE;
     ctx->lineWidth      = 1;
     ctx->pSurf          = surf;
@@ -121,6 +121,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
     //for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
     ctx->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
+    ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
+    ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
+
     _create_vertices_buff   (ctx);
     _create_gradient_buff   (ctx);
     _create_cmd_buff        (ctx);
@@ -136,6 +139,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     ctx->references = 1;
     ctx->status = VKVG_STATUS_SUCCESS;
+
+    LOG(LOG_DBG_ARRAYS, "START\tctx = %lu; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+
     return ctx;
 }
 /**
@@ -239,6 +245,8 @@ void vkvg_destroy (VkvgContext ctx)
         ctx->pPrev->pNext = ctx->pNext;
         ctx->pNext->pPrev = ctx->pPrev;
     }
+
+    LOG(LOG_DBG_ARRAYS, "END\tctx = %lu; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
 
     free(ctx);
 }
@@ -502,9 +510,6 @@ void vkvg_clip_preserve (VkvgContext ctx){
 
     LOG(LOG_INFO, "CLIP: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    _check_flush_needed (ctx);
-
-
     if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
         _check_cmd_buff_state(ctx);
         _poly_fill (ctx);
@@ -535,7 +540,6 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
     LOG(LOG_INFO, "FILL: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    _check_flush_needed (ctx);
     _check_cmd_buff_state (ctx);
 
     if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
@@ -556,8 +560,6 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     _finish_path(ctx);
 
     LOG(LOG_INFO, "STROKE: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
-
-    _check_flush_needed (ctx);
 
     Vertex v = {0};
     v.uv.z = -1;

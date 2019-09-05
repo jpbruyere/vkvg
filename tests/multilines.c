@@ -16,7 +16,7 @@ void test(){
 
     randomize_color(ctx);
 
-    for (int i=0; i<iterations; i++) {
+    for (int i=0; i<test_size; i++) {
 
         float x1 = w*rand()/RAND_MAX;
         float y1 = h*rand()/RAND_MAX;
@@ -26,8 +26,8 @@ void test(){
         vkvg_move_to (ctx, x1, y1);
         vkvg_line_to (ctx, x2, y2);
 
-        if (i%100==0)
-            vkvg_flush(ctx);
+        /*if (i%100==0)
+            vkvg_flush(ctx);*/
     }
     vkvg_stroke (ctx);
     vkvg_destroy(ctx);

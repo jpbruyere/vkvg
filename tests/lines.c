@@ -15,7 +15,7 @@ void test(){
     vkvg_set_line_width (ctx,1);
     //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
 
-    for (uint i=0; i<iterations; i++) {
+    for (uint i=0; i<test_size; i++) {
         randomize_color(ctx);
 
         float x1 = w*rand()/RAND_MAX;
@@ -27,8 +27,8 @@ void test(){
         vkvg_line_to (ctx, x2, y2);
         vkvg_stroke (ctx);
 
-        if (i%100==0)
-            vkvg_flush(ctx);
+        /*if (i%100==0)
+            vkvg_flush(ctx);*/
     }
     vkvg_destroy(ctx);
 }
