@@ -68,6 +68,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->vertCount      = 0;
     ctx->indCount       = 0;
     ctx->curIndStart    = 0;
+    ctx->curVertOffset  = 0;
 
     VkRect2D scissor = {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
     ctx->bounds        = scissor;
@@ -568,7 +569,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
     while (ptrPath < ctx->pathPtr){
         uint ptrCurve = 0;
-        VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
+        VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
         i = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
         LOG(LOG_INFO_PATH, "\tPATH: start = %d; ", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
@@ -607,7 +608,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                     _add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
                     a+=step;
                 }
-                uint32_t p0Idx = ctx->vertCount;
+                VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
                 for (uint p = firstIdx; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p0Idx+1, p, p+1);
                 firstIdx = p0Idx;
@@ -663,7 +664,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             _add_vertex(ctx, v);
 
             if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-                firstIdx = ctx->vertCount;
+                firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
                 float step = M_PIF / hw;
                 float a = acosf(n.x)+ M_PIF_2;
                 if (n.y < 0)
@@ -675,7 +676,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                     a-=step;
                 }
 
-                uint32_t p0Idx = ctx->vertCount-1;
+                VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset - 1);
                 for (uint p = firstIdx-1 ; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p+1, p, firstIdx-2);
             }

@@ -477,7 +477,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
                        pen.y - cr->bmpDiff.y + (tr->glyph_pos[i].y_offset >> 6)};
             v.pos = p0;
 
-            uint32_t firstIdx = ctx->vertCount;
+            uint32_t firstIdx = ctx->vertCount - ctx->curVertOffset;
 
             v.uv.x = cr->bounds.x;
             v.uv.y = cr->bounds.y;

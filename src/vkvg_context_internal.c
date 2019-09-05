@@ -254,9 +254,9 @@ void _create_cmd_buff (VkvgContext ctx){
 void _record_draw_cmd (VkvgContext ctx){
     if (ctx->indCount == ctx->curIndStart)
         return;
-    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vertices = %d; indices = %d\n", (ulong)ctx, ctx->vertCount - *((uint32_t*)(ctx->indices.allocInfo.pMappedData + (ctx->curIndStart * sizeof(uint32_t)))), ctx->indCount - ctx->curIndStart);
+    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vertices = %d; indices = %d\n", (ulong)ctx, ctx->vertCount - ctx->indexCache[ctx->curIndStart], ctx->indCount - ctx->curIndStart);
     _check_cmd_buff_state(ctx);
-    CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, 0, 1);
+    CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
 
 #ifdef VKVG_WIRED_DEBUG
     CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
@@ -265,6 +265,7 @@ void _record_draw_cmd (VkvgContext ctx){
 #endif
 
     ctx->curIndStart = ctx->indCount;
+    ctx->curVertOffset = ctx->vertCount;
 }
 void _clear_attachment (VkvgContext ctx) {
 
@@ -327,9 +328,7 @@ void _end_render_pass (VkvgContext ctx) {
     memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
     memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
 
-    ctx->vertCount = 0;
-    ctx->indCount = 0;
-    ctx->curIndStart = 0;
+    ctx->vertCount = ctx->indCount = ctx->curIndStart = ctx->curVertOffset = 0;
 }
 void _flush_cmd_buff (VkvgContext ctx){
     if (!ctx->cmdStarted)
@@ -615,7 +614,7 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
     bisec = vec2_perp(bisec);
     bisec = vec2_mult(bisec,lh);
 
-    uint32_t idx = ctx->vertCount;
+    uint32_t idx = ctx->vertCount - ctx->curVertOffset;
 
     if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
         v.pos = vec2_add(ctx->points[i], bisec);
@@ -668,7 +667,7 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
                     a+=step;
                 }
             }
-            uint32_t p0Idx = ctx->vertCount;
+            uint32_t p0Idx = ctx->vertCount - ctx->curVertOffset;
             _add_triangle_indices(ctx, idx, idx+2, idx+1);
             if (cross<0){
                 for (uint p = idx+2; p < p0Idx; p++)
@@ -949,7 +948,7 @@ void _fill_ec (VkvgContext ctx){
         uint32_t firstPtIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
         uint32_t lastPtIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
         uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
-        uint32_t firstVertIdx = ctx->vertCount;
+        uint32_t firstVertIdx = ctx->vertCount-ctx->curVertOffset;
 
         ear_clip_point ecps[pathPointCount];
         uint32_t ecps_count = pathPointCount;
