@@ -353,7 +353,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 
     vec2 v = {cosf(a1)*radius + xc, sinf(a1)*radius + yc};
 
-    float step = M_PIF/radius*0.5f;
+    float step = _get_arc_step(radius);
     float a = a1;
 
     if (_current_path_is_empty(ctx))
@@ -396,7 +396,7 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 
     vec2 v = {cosf(a1)*radius + xc, sinf(a1)*radius + yc};
 
-    float step = M_PIF/radius*1.5f;
+    float step = _get_arc_step(radius);
     float a = a1;
 
     if (_current_path_is_empty(ctx))
@@ -465,6 +465,10 @@ void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2,
     }
     vec2 cp = _get_current_position(ctx);
     vkvg_curve_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
+}
+void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
+    _vao_add_rectangle (ctx,x,y,w,h);
+    _record_draw_cmd(ctx);
 }
 
 void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
@@ -540,8 +544,6 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
     LOG(LOG_INFO, "FILL: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    _check_cmd_buff_state (ctx);
-
     if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
         _poly_fill (ctx);
         _bind_draw_pipeline (ctx);
@@ -549,6 +551,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
         _draw_full_screen_quad(ctx,true);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
     }else{
+        _check_cmd_buff_state (ctx);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
         _fill_ec(ctx);
     }

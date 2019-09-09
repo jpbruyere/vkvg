@@ -175,6 +175,7 @@ void _set_curve_end         (VkvgContext ctx);
 bool _path_has_curves       (VkvgContext ctx, uint ptrPath);
 
 float _normalizeAngle       (float a);
+float _get_arc_step         (float radius);
 
 vec2 _get_current_position  (VkvgContext ctx);
 void _add_point         	(VkvgContext ctx, float x, float y);

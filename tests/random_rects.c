@@ -5,29 +5,23 @@ void test(){
     gettimeofday(&currentTime, NULL);
 
     srand((unsigned) currentTime.tv_usec);
-    const float w = 1024.f;
+    const float w = 800.f;
+
+    vkvg_surface_clear(surf);
 
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
-    vkvg_set_line_width(ctx, 2.0f);
-
-    vkvg_clear(ctx);
-    //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
 
     for (uint i=0; i<test_size; i++) {
         randomize_color(ctx);
 
-        float x = truncf(0.8f*w*rand()/RAND_MAX);
-        float y = truncf(0.8f*w*rand()/RAND_MAX);
-        float z = truncf((0.2f*w*rand()/RAND_MAX)+1.f);
-        float v = truncf((0.2f*w*rand()/RAND_MAX)+1.f);
+        float x = truncf(0.5f*w*rand()/RAND_MAX);
+        float y = truncf(0.5f*w*rand()/RAND_MAX);
+        float z = truncf((0.5f*w*rand()/RAND_MAX)+1.f);
+        float v = truncf((0.5f*w*rand()/RAND_MAX)+1.f);
 
         vkvg_rectangle(ctx, x, y, z, v);
-        //vkvg_stroke(ctx);
         vkvg_fill(ctx);
-
-        /*if (i%250==0)
-            vkvg_flush(ctx);*/
     }
     vkvg_destroy(ctx);
 }

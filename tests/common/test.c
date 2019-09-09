@@ -10,10 +10,11 @@ bool mouseDown = false;
 VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
-uint test_size = 250;  // items drawn in one run, or complexity
-int iterations       = 100;   // repeat test n times
+uint test_size = 100;  // items drawn in one run, or complexity
+int iterations = 500;   // repeat test n times
 
 static bool paused = false;
+static VkSampleCountFlags samples = VK_SAMPLE_COUNT_4_BIT;
 static vk_engine_t* e;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -69,7 +70,7 @@ void randomize_color (VkvgContext ctx) {
         (float)rand()/RAND_MAX,
         (float)rand()/RAND_MAX,
         (float)rand()/RAND_MAX,
-        0.5f//0.8f*rand()/RAND_MAX + 0.2f
+        (float)rand()/RAND_MAX
     );
 }
 /* from caskbench */
@@ -119,7 +120,7 @@ void init_test (uint width, uint height){
 
     bool deferredResolve = false;
 
-    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_1_BIT, deferredResolve);
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
 
     vkvg_device_set_dpy(device, 96, 96);
 
@@ -198,7 +199,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
     bool deferredResolve = false;
 
-    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, VK_SAMPLE_COUNT_1_BIT, deferredResolve);
+    device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
 
     vkvg_device_set_dpy(device, 96, 96);
 
@@ -258,6 +259,9 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 #endif
 
         vkDeviceWaitIdle(e->dev->dev);
+
+        if (paused)
+            continue;
 
         stop_time = get_tick();
         run_time = stop_time - start_time;

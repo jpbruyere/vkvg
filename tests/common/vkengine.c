@@ -108,15 +108,17 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
     for (uint i=0;i<enabledExtsCount;i++)
         enabledExts[i] = gflwExts[i];
-
-#if defined (VKVG_USE_VALIDATION)
+#ifdef VKVG_USE_RENDERDOC
     const uint32_t enabledLayersCount = 2;
     const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_RENDERDOC_Capture"};
+#elif defined (VKVG_USE_VALIDATION)
+    const uint32_t enabledLayersCount = 1;
+    const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation"};
 #else
     const uint32_t enabledLayersCount = 0;
     const char* enabledLayers[] = {NULL};
 #endif
-#if defined (DEBUG)
+#ifdef DEBUG
     enabledExts[enabledExtsCount] = "VK_EXT_debug_report";
     enabledExtsCount++;
     enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
@@ -210,9 +212,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
                                        .pEnabledFeatures = &enabledFeatures
                                      };
 
-    VkDevice dev;
-    VK_CHECK_RESULT(vkCreateDevice (pi->phy, &device_info, NULL, &dev));
-    e->dev = vkh_device_create(vkh_app_get_inst (e->app), pi->phy, dev);
+    e->dev = vkh_device_create(e->app, pi, &device_info);
 
 #if DEBUG
     dbgReport = vkh_device_create_debug_report (e->dev,

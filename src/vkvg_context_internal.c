@@ -166,11 +166,14 @@ void _add_point (VkvgContext ctx, float x, float y){
 }
 float _normalizeAngle(float a)
 {
-    float res = ROUND_DOWN(fmod(a,2.0f*M_PIF),100);
+    float res = ROUND_DOWN(fmodf(a,2.0f*M_PIF),100);
     if (res < 0.0f)
         return res + 2.0f*M_PIF;
     else
         return res;
+}
+inline float _get_arc_step (float radius) {
+    return M_PIF/sqrtf(radius)*0.35f;
 }
 void _create_gradient_buff (VkvgContext ctx){
     vkvg_buffer_create (ctx->pSurf->dev,
@@ -188,12 +191,31 @@ void _create_vertices_buff (VkvgContext ctx){
         VMA_MEMORY_USAGE_CPU_TO_GPU,
         ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
 }
-const vec3 blankuv = {};
+void _resize_vbo (VkvgContext ctx, size_t new_size) {
+    _wait_flush_fence (ctx);//wait previous cmd if not completed
+    ctx->sizeVBO = new_size;
+    ctx->sizeVBO += ctx->sizeVBO % VKVG_VBO_SIZE;
+    vkvg_buffer_destroy (&ctx->vertices);
+    vkvg_buffer_create (ctx->pSurf->dev,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU,
+        ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
+}
+void _resize_ibo (VkvgContext ctx, size_t new_size) {
+    _wait_flush_fence (ctx);//wait previous cmd if not completed
+    ctx->sizeIBO = ctx->sizeIndices;
+    ctx->sizeIBO += ctx->sizeIBO % VKVG_IBO_SIZE;
+    vkvg_buffer_destroy (&ctx->indices);
+    vkvg_buffer_create (ctx->pSurf->dev,
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_CPU_TO_GPU,
+        ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
+}
 void _add_vertexf (VkvgContext ctx, float x, float y){
     Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
     pVert->pos.x = x;
     pVert->pos.y = y;
-    pVert->uv = blankuv;
+    pVert->uv = (vec3){0};
     ctx->vertCount++;
 
     _check_vbo_size(ctx);
@@ -236,7 +258,7 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
         {{x+width,y},       {0,0,-1}},
         {{x+width,y+height},{0,0,-1}}
     };
-    VKVG_IBO_INDEX_TYPE firstIdx = ctx->vertCount;
+    VKVG_IBO_INDEX_TYPE firstIdx = ctx->vertCount - ctx->curVertOffset;
     Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
     memcpy (pVert,v,4*sizeof(Vertex));
     ctx->vertCount+=4;
@@ -353,14 +375,12 @@ void _record_draw_cmd (VkvgContext ctx){
             vkh_cmd_end (ctx->cmd);
             _wait_and_submit_cmd (ctx);
             //we could resize here
+            _resize_vbo(ctx, ctx->sizeVertices);
+            _resize_ibo(ctx, ctx->sizeIndices);
         }else{
             //should resize vbo here
-            _wait_flush_fence (ctx);
-            ctx->sizeVBO = ctx->sizeVertices;
-            ctx->sizeIBO = ctx->sizeIndices;
-            vkvg_buffer_destroy (&ctx->indices);
-            vkvg_buffer_destroy (&ctx->vertices);
-            _create_vertices_buff (ctx);
+            _resize_vbo(ctx, ctx->sizeVertices);
+            _resize_ibo(ctx, ctx->sizeIndices);
         }
     }
 
@@ -958,22 +978,18 @@ void _poly_fill (VkvgContext ctx){
     //we anticipate the check for vbo buffer size
     if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO) {
         if (ctx->cmdStarted) {
-            _end_render_pass        (ctx);
-            _flush_vertices_caches  (ctx);
-            vkh_cmd_end             (ctx->cmd);
-            _wait_and_submit_cmd    (ctx);
-            //we could resize here after a wait fence
-        }else{
-            _wait_flush_fence (ctx);//wait previous cmd if not completed
-            ctx->sizeVBO = ctx->vertCount + ctx->pointCount;
-            vkvg_buffer_destroy (&ctx->vertices);
-            vkvg_buffer_create (ctx->pSurf->dev,
-                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                VMA_MEMORY_USAGE_CPU_TO_GPU,
-                ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
-        }
+            _end_render_pass(ctx);
+            _flush_vertices_caches(ctx);
+            vkh_cmd_end(ctx->cmd);
+            _wait_and_submit_cmd(ctx);
+            if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO)
+                _resize_vbo(ctx, ctx->vertCount + ctx->pointCount);
+        }else
+            _resize_vbo(ctx, ctx->vertCount + ctx->pointCount);
+
         _start_cmd_for_render_pass(ctx);
-    }
+    }else
+        _check_cmd_buff_state(ctx);
 
     CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
@@ -997,7 +1013,8 @@ void _poly_fill (VkvgContext ctx){
 
         for (uint i = 0; i < pathPointCount; i++) {
             v.pos = ctx->points [i+firstPtIdx];
-            _add_vertex (ctx, v);
+            ctx->vertexCache[ctx->vertCount] = v;
+            ctx->vertCount++;
         }
 
         LOG(LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);

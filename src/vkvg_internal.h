@@ -36,7 +36,8 @@
 #define PATH_HAS_CURVES_BIT 0x40000000              /* 2d most significant bit of path elmts start = true if curve data are present,
                                                        stored to avoid emiting join in curves */
 #define PATH_IS_CURVE_BIT   0x80000000              /* most significant bit of path elmts end mark curves data in path array */
-
+#define PATH_IS_CONCAVE_BIT 0x40000000              /* 2d most significant bit of path elmts end = true if path is simple concave
+                                                       triangulation for fill may be simplified*/
 #define PATH_ELT_MASK       0x3FFFFFFF              /* Bit mask for fetching path element value */
 
 #define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
