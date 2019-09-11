@@ -190,11 +190,11 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     }
 
 #if defined(DEBUG) && defined(VKVG_USE_VALIDATION)
-    char const * dex [] = {"VK_KHR_swapchain", "VK_EXT_debug_marker"};
-    enabledExtsCount = 2;
+    char const * dex [] = {"VK_KHR_swapchain", "VK_KHR_push_descriptor", "VK_EXT_debug_marker"};
+    enabledExtsCount = 3;
 #else
-    char const * dex [] = {"VK_KHR_swapchain"};
-    enabledExtsCount = 1;
+    char const * dex [] = {"VK_KHR_swapchain", "VK_KHR_push_descriptor"};
+    enabledExtsCount = 2;
 #endif
 
 

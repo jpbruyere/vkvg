@@ -61,7 +61,7 @@ void main()
 
 	if (pc.fullScreenQuad != 0) {
 		gl_Position = vec4(vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2) * 2.0f + -1.0f, 0.0f, 1.0f);
-		outUV = vec3((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2, -1);
+		outUV = vec3((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2, -2);
 		//outUV = vec3(0,0,-1);
 		return;
 	}
@@ -69,15 +69,19 @@ void main()
 	vec2 p0 = inPos;
 
 	if (pc.srcType == SURFACE) {
-		outUV = vec3(inPos.x / pc.source.z, inPos.y / pc.source.w ,-1);
+		vec2 uv = vec2(
+			pc.matInv[0][0] * p0.x + pc.matInv[1][0] * p0.y + pc.matInv[2][0],
+			pc.matInv[0][1] * p0.x + pc.matInv[1][1] * p0.y + pc.matInv[2][1]
+		);
+		outUV = vec3(uv.x / pc.source.z, uv.y / pc.source.w ,-1);
 		p0 = inPos + pc.source.xy;
 	}else
 		outUV = vec3(0,0,-1);
 
-	vec2 p = vec2(
+	/*vec2 p = vec2(
 		pc.mat[0][0] * p0.x + pc.mat[1][0] * p0.y + pc.mat[2][0],
 		pc.mat[0][1] * p0.x + pc.mat[1][1] * p0.y + pc.mat[2][1]
-	);
+	);*/
 
-	gl_Position = vec4(p * vec2(2) / pc.size - vec2(1), 0.0, 1.0);
+	gl_Position = vec4(p0 * vec2(2) / pc.size - vec2(1), 0.0, 1.0);
 }

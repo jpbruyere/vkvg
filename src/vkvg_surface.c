@@ -114,19 +114,17 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 void _create_surface_main_image (VkvgSurface surf){
     surf->img = vkh_image_create((VkhDevice)surf->dev,surf->format,surf->width,surf->height,VKVG_TILING,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-    vkh_image_create_descriptor(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    vkh_image_create_view(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 //create multisample color img if sample count > 1 and the stencil buffer multisampled or not
 void _create_surface_secondary_images (VkvgSurface surf) {
     if (surf->dev->samples > VK_SAMPLE_COUNT_1_BIT){
         surf->imgMS = vkh_image_ms_create((VkhDevice)surf->dev,surf->format,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-        vkh_image_create_descriptor(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
-                                    VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+        vkh_image_create_view(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
     }
     surf->stencil = vkh_image_ms_create((VkhDevice)surf->dev,FB_STENCIL_FORMAT,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,                                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    vkh_image_create_descriptor(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST,
-                                VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    vkh_image_create_view(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT);
 }
 void _create_framebuffer (VkvgSurface surf) {
     VkImageView attachments[] = {
@@ -192,8 +190,8 @@ VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
 
     surf->img = img;
 
-    vkh_image_create_sampler(img, VK_FILTER_NEAREST, VK_FILTER_NEAREST,
-                             VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    /*vkh_image_create_sampler(img, VK_FILTER_NEAREST, VK_FILTER_NEAREST,
+                             VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);*/
 
     _create_surface_secondary_images   (surf);
     _create_framebuffer         (surf);
@@ -225,8 +223,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
     VkhImage tmpImg = vkh_image_create ((VkhDevice)surf->dev,surf->format,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
                                          VMA_MEMORY_USAGE_GPU_ONLY,
                                          VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-    vkh_image_create_descriptor (tmpImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
-                                 VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+    vkh_image_create_view (tmpImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
     //staging buffer
     vkvg_buff buff = {0};
     vkvg_buffer_create(dev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, imgSize, &buff);
@@ -291,11 +288,20 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
     ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SURFACE;
 
     //_update_push_constants (ctx);
-    _update_descriptor_set (ctx, tmpImg, ctx->dsSrc);
+
+    VkvgPattern pat = vkvg_pattern_create();
+    if (CmdPushDescriptorSet != VK_NULL_HANDLE) {
+        ctx->source = tmpImg;
+        ctx->descSrcTex = (VkDescriptorImageInfo){
+                _get_sampler_for_pattern(ctx->pSurf->dev,pat), vkh_image_get_view(tmpImg), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+    }else {
+        _update_descriptor_set (ctx, tmpImg, ctx->dsSrc);
+    }
     _check_cmd_buff_state  (ctx);
 
     vkvg_paint          (ctx);
     vkvg_destroy        (ctx);
+    vkvg_pattern_destroy(pat);
 
     vkh_image_destroy   (tmpImg);
 

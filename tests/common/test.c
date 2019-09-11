@@ -137,7 +137,7 @@ void run_test_func (void(*testfunc)(void),uint width, uint height) {
 
     int i = 0;
 
-    while (!vkengine_should_close (e) && i < iterations) {
+    while (!vkengine_should_close (e)){// && i < iterations) {
         glfwPollEvents();
 
         start_time = get_tick();
@@ -218,7 +218,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
     int i = 0;
 
-    while (!vkengine_should_close (e) && i < iterations) {
+    while (!vkengine_should_close (e)){// && i < iterations) {
         glfwPollEvents();
 
         start_time = get_tick();
@@ -260,7 +260,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
         vkDeviceWaitIdle(e->dev->dev);
 
-        if (paused)
+        //if (paused)
             continue;
 
         stop_time = get_tick();

@@ -3,6 +3,8 @@
 void test(){
     VkvgContext ctx = vkvg_create(surf);
 
+    vkvg_translate(ctx,250,150);
+
     vkvg_move_to (ctx, 100, 100);
     vkvg_rel_line_to (ctx, 50, -80);
     vkvg_rel_line_to (ctx, 50, 80);

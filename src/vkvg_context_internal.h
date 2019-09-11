@@ -35,7 +35,7 @@
 #define VKVG_ARRAY_THRESHOLD		8
 #define VKVG_IBO_INDEX_TYPE         uint16_t
 #define CreateRgba(r, g, b, a) ((a << 24) | (r << 16) | (g << 8) | b)
-#define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(r * a * 255.0f) << 16) | ((int)(g * a * 255.0f) << 8) | (int)(b * a * 255.0f))
+#define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(b * a * 255.0f) << 16) | ((int)(g * a * 255.0f) << 8) | (int)(r * a * 255.0f))
 typedef struct{
     vec2        pos;
     uint32_t    color;
@@ -145,6 +145,10 @@ typedef struct _vkvg_context_t {
     _vkvg_font_t*       currentFont;      //font pointing to cached fonts ready for lookup
     vkvg_direction_t    textDirection;
 
+    VkWriteDescriptorSet wds[3];
+    VkDescriptorImageInfo descSrcTex;
+    VkDescriptorImageInfo descFontTex;
+
     push_constants      pushConsts;
     VkvgPattern         pattern;
     vkvg_status_t       status;
@@ -182,6 +186,8 @@ float _get_arc_step         (float radius);
 
 vec2 _get_current_position  (VkvgContext ctx);
 void _add_point         	(VkvgContext ctx, float x, float y);
+void _add_point_pretransformed (VkvgContext ctx, float x, float y);
+void _add_point_relative    (VkvgContext ctx, float dx, float dy);
 
 void _resetMinMax           (VkvgContext ctx);
 
@@ -203,7 +209,13 @@ void _bind_draw_pipeline    (VkvgContext ctx);
 void _create_cmd_buff		(VkvgContext ctx);
 void _check_cmd_buff_state  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
-void _record_draw_cmd		(VkvgContext ctx);
+
+bool _undrawn_vertices (VkvgContext ctx);
+void _init_push_descriptor_writes (VkvgContext ctx);
+
+void _new_flush (VkvgContext ctx);
+
+void _record_draw_cmd       (VkvgContext ctx);
 void _wait_flush_fence      (VkvgContext ctx);
 void _reset_flush_fence     (VkvgContext ctx);
 void _wait_and_submit_cmd   (VkvgContext ctx);

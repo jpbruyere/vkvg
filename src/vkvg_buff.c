@@ -31,6 +31,8 @@ void vkvg_buffer_create(VkvgDevice pDev, VkBufferUsageFlags usage, VmaMemoryUsag
     VmaAllocationCreateInfo allocInfo = { .usage = memoryPropertyFlags, .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT };
 
     VK_CHECK_RESULT(vmaCreateBuffer (pDev->allocator, &bufCreateInfo, &allocInfo, &buff->buffer, &buff->alloc, &buff->allocInfo));
+    buff->descriptor = (VkDescriptorBufferInfo){buff->buffer, 0, VK_WHOLE_SIZE};
+
 }
 
 void vkvg_buffer_destroy(vkvg_buff *buff){

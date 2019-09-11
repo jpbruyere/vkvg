@@ -102,6 +102,8 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 
     _create_empty_texture       (dev);
 
+    memset(dev->samplers, 0, 10 * sizeof (VkSampler));
+
     dev->references = 1;
 
     return dev;
@@ -117,8 +119,8 @@ void vkvg_device_destroy (VkvgDevice dev)
 
     vkh_image_destroy               (dev->emptyImg);
 
-    vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslGrad,NULL);
-    vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
+    //vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslGrad,NULL);
+    //vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);
 
     vkDestroyPipeline               (dev->vkDev, dev->pipelinePolyFill, NULL);

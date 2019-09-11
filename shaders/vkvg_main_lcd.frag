@@ -25,8 +25,8 @@
 #extension GL_ARB_shading_language_420pack	: enable
 
 layout (set=0, binding = 0) uniform sampler2DArray fontMap;
-layout (set=1, binding = 0) uniform sampler2D		source;
-layout (set=2, binding = 0) uniform _uboGrad {
+layout (set=0, binding = 1) uniform sampler2D		source;
+layout (set=0, binding = 2) uniform _uboGrad {
 	vec4    cp[3];
 	vec4	colors[16];
 	vec4	stops[16];
@@ -58,12 +58,16 @@ void main()
 		c = inSrc;
 		break;
 	case SURFACE:
-		vec2 p = (gl_FragCoord.xy - inSrc.xy);
-		vec2 uv = vec2(
-			inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
-			inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
-		);
-		c = texture (source, inFontUV.xy);
+		if (inFontUV.z < 1.0){
+			//pattern is drawn with a full screen quad with no tex coord
+			//so we have to transform pixel
+			vec2 p = (gl_FragCoord.xy - textureSize(source,0));
+			vec2 uv = vec2(
+						inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
+					inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]);
+			c = texture (source, uv);
+		}else
+			c = texture (source, inFontUV.xy);
 		break;
 	case LINEAR:
 		//credit to Nikita Rokotyan for linear grad

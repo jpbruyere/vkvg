@@ -24,6 +24,7 @@
 
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
+#include "vkvg_pattern.h"
 #include "shaders.h"
 
 void _flush_all_contexes (VkvgDevice dev){
@@ -346,30 +347,76 @@ void _setupPipelines(VkvgDevice dev)
 
 void _createDescriptorSetLayout (VkvgDevice dev) {
 
-    VkDescriptorSetLayoutBinding dsLayoutBinding =
-        {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,VK_SHADER_STAGE_FRAGMENT_BIT, NULL};
+    VkDescriptorSetLayoutBinding dsLayoutBinding[] = {
+        {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,VK_SHADER_STAGE_FRAGMENT_BIT, NULL},
+        {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,VK_SHADER_STAGE_FRAGMENT_BIT, NULL},
+        {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,VK_SHADER_STAGE_FRAGMENT_BIT, NULL}
+    };
     VkDescriptorSetLayoutCreateInfo dsLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-                                                          .bindingCount = 1,
-                                                          .pBindings = &dsLayoutBinding };
-    VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
+                                                          .bindingCount = 3,
+                                                          .pBindings = dsLayoutBinding };
+    if (CmdPushDescriptorSet)
+        dsLayoutCreateInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
+
+    //VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslSrc));
-    dsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslGrad));
+    //dsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+    //VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslGrad));
 
     VkPushConstantRange pushConstantRange[] = {
         {VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push_constants)},
         //{VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push_constants)}
     };
-    VkDescriptorSetLayout dsls[] = {dev->dslFont,dev->dslSrc,dev->dslGrad};
+    //VkDescriptorSetLayout dsls[] = {dev->dslFont,dev->dslSrc,dev->dslGrad};
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
                                                             .pushConstantRangeCount = 1,
                                                             .pPushConstantRanges = (VkPushConstantRange*)&pushConstantRange,
-                                                            .setLayoutCount = 3,
-                                                            .pSetLayouts = dsls };
+                                                            .setLayoutCount = 1,
+                                                            .pSetLayouts = &dev->dslSrc };
     VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }
+VkSampler _get_sampler_for_pattern (VkvgDevice dev, VkvgPattern pat) {
+    VkFilter filter = VK_FILTER_NEAREST;
+    switch (pat->filter) {
+    case VKVG_FILTER_BILINEAR:
+    case VKVG_FILTER_BEST:
+        filter = VK_FILTER_LINEAR;
+        break;
+    default:
+        filter = VK_FILTER_NEAREST;
+        break;
+    }
+    VkSamplerAddressMode addrMode;
+    switch (pat->extend) {
+    case VKVG_EXTEND_NONE:
+        addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        break;
+    case VKVG_EXTEND_PAD:
+        addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        break;
+    case VKVG_EXTEND_REPEAT:
+        addrMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        break;
+    case VKVG_EXTEND_REFLECT:
+        addrMode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        break;
+    }
+    if (dev->samplers[filter][addrMode] == VK_NULL_HANDLE)
+        dev->samplers[filter][addrMode] = vkh_device_create_sampler((VkhDevice)dev, filter, filter,
+                                                                    VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
+    return dev->samplers[filter][addrMode];
 
+}
+void _destroy_samplers (VkvgDevice dev) {
+    for (int i=0;i<5;i++) {
+        for (int j=0;j<2;j++) {
+            if (dev->samplers[j][i] != VK_NULL_HANDLE)
+                vkh_device_destroy_sampler((VkhDevice)dev, dev->samplers[j][i]);
+        }
+    }
+}
 void _wait_idle (VkvgDevice dev) {
     vkDeviceWaitIdle (dev->vkDev);
 }
@@ -399,7 +446,7 @@ void _init_function_pointers (VkvgDevice dev) {
     CmdSetViewport          = GetInstProcAddress(dev->instance, vkCmdSetViewport);
     CmdSetScissor           = GetInstProcAddress(dev->instance, vkCmdSetScissor);
     CmdPushConstants        = GetInstProcAddress(dev->instance, vkCmdPushConstants);
-    CmdPushDescriptorSet    = (PFN_vkCmdPushDescriptorSetKHR)vkGetInstanceProcAddr(dev->instance, "vkCmdDescriptorSet");
+    CmdPushDescriptorSet    = (PFN_vkCmdPushDescriptorSetKHR)vkGetInstanceProcAddr(dev->instance, "vkCmdPushDescriptorSetKHR");
 }
 
 void _create_empty_texture (VkvgDevice dev) {

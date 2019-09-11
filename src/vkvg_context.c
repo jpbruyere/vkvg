@@ -127,12 +127,15 @@ VkvgContext vkvg_create(VkvgSurface surf)
     _create_vertices_buff   (ctx);
     _create_gradient_buff   (ctx);
     _create_cmd_buff        (ctx);
-    _createDescriptorPool   (ctx);
-    _init_descriptor_sets   (ctx);
-    _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
-    _update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc);
-    _update_gradient_desc_set(ctx);
-
+    if (CmdPushDescriptorSet) {
+        _init_push_descriptor_writes(ctx);
+    }else{
+        _createDescriptorPool   (ctx);
+        _init_descriptor_sets   (ctx);
+        _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
+        _update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc);
+        _update_gradient_desc_set(ctx);
+    }
     _clear_path             (ctx);
 
     ctx->cmd = ctx->cmdBuffers[0];//current recording buffer
@@ -199,11 +202,14 @@ void vkvg_destroy (VkvgContext ctx)
     vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
     vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
-    VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc, ctx->dsGrad};
-    vkFreeDescriptorSets    (dev, ctx->descriptorPool, 3, dss);
+    if (CmdPushDescriptorSet) {
 
-    vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
+    }else{
+        VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc, ctx->dsGrad};
+        vkFreeDescriptorSets    (dev, ctx->descriptorPool, 3, dss);
 
+        vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
+    }
     vkvg_buffer_destroy (&ctx->uboGrad);
     vkvg_buffer_destroy (&ctx->indices);
     vkvg_buffer_destroy (&ctx->vertices);
@@ -315,8 +321,7 @@ void vkvg_rel_line_to (VkvgContext ctx, float x, float y){
         ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
         return;
     }
-    vec2 cp = _get_current_position(ctx);
-    vkvg_line_to(ctx, cp.x + x, cp.y + y);
+    _add_point_relative (ctx, x, y);
 }
 /**
  * @brief Draw line from current point, if no current point is defined, only a move to will be executed.
@@ -336,7 +341,7 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
     _add_point(ctx,x,y);
 }
 /**
- * @brief Draw arc
+ * @brief Draw arc clockwise
  * @param context pointer
  * @param center x coordinate
  * @param center y coordinate
@@ -388,6 +393,15 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
         _add_point (ctx, v.x, v.y);
     _set_curve_end(ctx);
 }
+/**
+ * @brief Draw arc counter clockwise
+ * @param context pointer
+ * @param center x coordinate
+ * @param center y coordinate
+ * @param radius
+ * @param start angle of arc
+ * @param end angle of arc
+ */
 void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
     while (a2 > a1)
         a2 -= 2.f*M_PIF;
@@ -437,7 +451,15 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
         return;
     }
     vec2 cp = _get_current_position(ctx);
-    vkvg_move_to(ctx, cp.x + x, cp.y + y);
+
+    _finish_path(ctx);
+    //start subpath
+    ctx->pathes[ctx->pathPtr] = ctx->pointCount;
+    vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &x, &y);
+    _add_point_pretransformed(ctx, cp.x + x, cp.y + y);
+    _check_pathes_array(ctx);
+    ctx->pathPtr++;
+    //***
 }
 void vkvg_move_to (VkvgContext ctx, float x, float y)
 {
@@ -451,11 +473,17 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
     vec2 cp = _get_current_position(ctx);
 
     _set_curve_start (ctx);
+
+    //TODO:x1,y1 are transformed 2 times if path is empty, one in move_to, and one before recursive_bezier.
+    vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x1, &y1);
+    vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x2, &y2);
+    vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x3, &y3);
+
     _recursive_bezier (ctx, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
     /*cp.x = x3;
     cp.y = y3;
     if (!vec2_equ(ctx->points[ctx->pointCount-1],cp))*/
-    _add_point(ctx,x3,y3);
+    _add_point_pretransformed(ctx,x3,y3);
     _set_curve_end (ctx);
 }
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
@@ -464,11 +492,20 @@ void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2,
         return;
     }
     vec2 cp = _get_current_position(ctx);
-    vkvg_curve_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
+
+    _set_curve_start (ctx);
+
+    vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &x1, &y1);
+    vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &x2, &y2);
+    vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &x3, &y3);
+
+    _recursive_bezier (ctx, cp.x, cp.y, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3, 0);
+    _add_point_pretransformed(ctx, cp.x + x3, cp.y + y3);
+    _set_curve_end (ctx);
 }
 void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
     _vao_add_rectangle (ctx,x,y,w,h);
-    _record_draw_cmd(ctx);
+    //_record_draw_cmd(ctx);
 }
 
 void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
@@ -551,7 +588,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
         _draw_full_screen_quad(ctx,true);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
     }else{
-        _check_cmd_buff_state (ctx);
+        //_check_cmd_buff_state (ctx);
         //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
         _fill_ec(ctx);
     }
@@ -705,17 +742,20 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 }
 void vkvg_paint (VkvgContext ctx){
     _check_cmd_buff_state (ctx);
-    vec4 r = {0};
+
     if (ctx->pattern == NULL || ctx->pattern->type == VKVG_PATTERN_TYPE_SOLID){
-        /*r.width = ctx->bounds.extent.width;
-        r.height = ctx->bounds.extent.height;*/
-        _draw_full_screen_quad (ctx, true);
+        _vao_add_rectangle (ctx, 0, 0, ctx->bounds.extent.width, ctx->bounds.extent.height);
         return;
     }else{
-        r.width = ctx->pushConsts.source.width;
-        r.height = ctx->pushConsts.source.height;
+        vec4 r = ctx->pushConsts.source;
+    //vkvg_matrix_transform_point (&ctx->pushConsts.matInv, &r.x, &r.y);
+        r.width = ctx->bounds.extent.width;
+        r.height = ctx->bounds.extent.height;
+        //vkvg_matrix_transform_point(&ctx->pushConsts.matInv, &r.width, &r.height);
+        _vao_add_rectangle (ctx, r.x, r.y, r.width, r.height);
+        /*vkvg_rectangle(ctx, r.x, r.y, r.width, r.height);
+        vkvg_fill(ctx);*/
     }
-    vkvg_fill_rectangle(ctx, 0, 0, r.width, r.height);
 }
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
     vkvg_set_source_rgba (ctx, r, g, b, 1);
@@ -727,8 +767,7 @@ void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
     _update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
-    ctx->pushConsts.source.x = x;
-    ctx->pushConsts.source.y = y;
+    ctx->pushConsts.source = (vec4){x, y, surf->width, surf->height};
     ctx->pushCstDirty = true;
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){

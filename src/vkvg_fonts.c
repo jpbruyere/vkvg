@@ -533,7 +533,7 @@ void _show_texture (vkvg_context* ctx){
 
 void _show_text (VkvgContext ctx, const char* text){
 
-    vkvg_text_run_t tr = {};
+    vkvg_text_run_t tr = {0};
     _create_text_run (ctx, text, &tr);
 
     _show_text_run (ctx, &tr);

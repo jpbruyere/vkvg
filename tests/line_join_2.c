@@ -6,13 +6,13 @@ void test(){
     //vkvg_set_fill_rule(ctx, VKVG_FILL_RULE);
     vkvg_set_line_width(ctx, 30);
 
-    //vkvg_set_line_join(ctx, VKVG_LINE_JOIN_ROUND);
+    vkvg_set_line_join(ctx, VKVG_LINE_JOIN_ROUND);
 
     //vkvg_arc (ctx, 200, 500, 100, 0, M_PI);
 
     vkvg_translate(ctx,-50,-50);
 
-    vkvg_set_source_rgba   (ctx, 0.5,0,0,1);
+    vkvg_set_source_rgba   (ctx, 0.2f,0.2f,1.0f,1);
 
     for (int j=0;j<2;j++) {
          int i=0;

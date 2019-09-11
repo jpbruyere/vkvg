@@ -5,12 +5,27 @@ void test(){
     vkvg_set_fill_rule(ctx,VKVG_FILL_RULE_NON_ZERO);
     VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
 
-    vkvg_set_operator(ctx, VKVG_OPERATOR_CLEAR);
+    //vkvg_rotate(ctx,0.5);
+
+    //vkvg_set_source_rgba(ctx,1,0,0,1);
+    //vkvg_rectangle(ctx,100,100,200,200);
+    /*vkvg_rectangle(ctx,
+                   0,
+                   0,
+                   500,
+                   500);*/
+    //vkvg_fill(ctx);
+    //vkvg_paint(ctx);
+
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+    //vkvg_rectangle(ctx,0,0,400,400);
+    //vkvg_fill(ctx);
     vkvg_paint(ctx);
-    vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
+
+    /*vkvg_set_operator(ctx, VKVG_OPERATOR_CLEAR);
+    vkvg_paint(ctx);
+    vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);*/
     /*vkvg_translate(ctx,200,200);
-
-
 
     vkvg_set_line_width(ctx,20.f);
     vkvg_set_source_rgba(ctx,1,0,0,1);
@@ -23,7 +38,7 @@ void test(){
     vkvg_set_source_rgba(ctx,0.2,0.3,0.8,1);
 
     vkvg_stroke(ctx);*/
-
+/*
     //vkvg_translate(ctx,200,200);
     vkvg_rotate(ctx,0.1f);
 
@@ -36,7 +51,7 @@ void test(){
     vkvg_rectangle(ctx,100,100,200,200);
     vkvg_stroke(ctx);
     //vkvg_paint(ctx);
-
+*/
     vkvg_surface_destroy(imgSurf);
 
     vkvg_destroy(ctx);

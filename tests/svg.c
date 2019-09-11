@@ -36,7 +36,7 @@ void test_nsvg() {
     NSVGimage* svg = nsvg_load_file(device, path);
 
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
+    //vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
     vkvg_set_source_rgba(ctx,0.9f,1.0,1.0,1);
     vkvg_paint(ctx);
 

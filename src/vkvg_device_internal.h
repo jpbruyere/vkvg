@@ -89,6 +89,8 @@ typedef struct _vkvg_device_t{
     int		hdpi,                                   /**< only used for FreeType fonts and svg loading */
             vdpi;
 
+    VkSampler               samplers[2][5];         /**< source samplers, created on request */
+
     VkhImage                emptyImg;               /**< prevent unbound descriptor to trigger Validation error 61 */
     VkSampleCountFlags      samples;                /**< samples count common to all surfaces */
     bool                    deferredResolve;        /**< if true, resolve only on context destruction and set as source */
@@ -107,6 +109,7 @@ VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadO
 void _setupPipelines            (VkvgDevice dev);
 void _createDescriptorSetLayout (VkvgDevice dev);
 void _flush_all_contexes        (VkvgDevice dev);
+VkSampler _get_sampler_for_pattern (VkvgDevice dev, VkvgPattern pat);
 void _wait_idle                 (VkvgDevice dev);
 void _wait_and_reset_device_fence (VkvgDevice dev);
 void _submit_cmd                (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);

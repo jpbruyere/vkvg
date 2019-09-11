@@ -36,13 +36,6 @@
 #include "vkh_queue.h"
 #include "vkh_image.h"
 
-void _check_flush_needed (VkvgContext ctx) {
-    if (!ctx->cmdStarted)
-        return;
-    if (ctx->pointCount * 4 < ctx->sizeIndices - ctx->indCount)
-        return;
-    _flush_cmd_buff(ctx);
-}
 void _check_vbo_size (VkvgContext ctx) {
     if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
         return;
@@ -145,15 +138,49 @@ void _resetMinMax (VkvgContext ctx) {
     ctx->xMin = ctx->yMin = FLT_MAX;
     ctx->xMax = ctx->yMax = FLT_MIN;
 }
-void _add_point (VkvgContext ctx, float x, float y){
+void _add_point_relative (VkvgContext ctx, float dx, float dy){
+    vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &dx, &dy);
+
+    dx += ctx->points[ctx->pointCount-1].x;
+    dy += ctx->points[ctx->pointCount-1].y;
+    ctx->points[ctx->pointCount].x = dx;
+    ctx->points[ctx->pointCount].y = dy;
+    ctx->pointCount++;
+
+    _check_point_array(ctx);
+
+    if (dx < ctx->xMin)
+        ctx->xMin = dx;
+    if (dx > ctx->xMax)
+        ctx->xMax = dx;
+    if (dy < ctx->yMin)
+        ctx->yMin = dy;
+    if (dy > ctx->yMax)
+        ctx->yMax = dy;
+}
+void _add_point_pretransformed (VkvgContext ctx, float x, float y){
     ctx->points[ctx->pointCount] = (vec2){x,y};
     ctx->pointCount++;
 
     _check_point_array(ctx);
 
-    //bounds are computed here to scissor the painting operation
-    //that speed up fill drastically.
+    if (x < ctx->xMin)
+        ctx->xMin = x;
+    if (x > ctx->xMax)
+        ctx->xMax = x;
+    if (y < ctx->yMin)
+        ctx->yMin = y;
+    if (y > ctx->yMax)
+        ctx->yMax = y;
+}
+void _add_point (VkvgContext ctx, float x, float y){
+    //pretransform all points
     vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x, &y);
+
+    ctx->points[ctx->pointCount] = (vec2){x,y};
+    ctx->pointCount++;
+
+    _check_point_array(ctx);
 
     if (x < ctx->xMin)
         ctx->xMin = x;
@@ -253,10 +280,10 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
     Vertex v[4] =
     {
-        {{x,y},             {0,0,-1}},
-        {{x,y+height},      {0,1,-1}},
-        {{x+width,y},       {1,0,-1}},
-        {{x+width,y+height},{1,1,-1}}
+        {{x,y},             ctx->curColor},
+        {{x,y+height},      ctx->curColor},
+        {{x+width,y},       ctx->curColor},
+        {{x+width,y+height},ctx->curColor}
     };
     VKVG_IBO_INDEX_TYPE firstIdx = ctx->vertCount - ctx->curVertOffset;
     Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
@@ -361,7 +388,7 @@ void _end_render_pass (VkvgContext ctx) {
     CmdEndRenderPass      (ctx->cmd);
     ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
 }
-void _record_draw_cmd (VkvgContext ctx){
+void _new_flush (VkvgContext ctx){
     if (ctx->indCount == ctx->curIndStart)
         return;
 
@@ -374,11 +401,51 @@ void _record_draw_cmd (VkvgContext ctx){
             _flush_vertices_caches_until_vertex_base (ctx);
             vkh_cmd_end (ctx->cmd);
             _wait_and_submit_cmd (ctx);
-            //we could resize here
             _resize_vbo(ctx, ctx->sizeVertices);
             _resize_ibo(ctx, ctx->sizeIndices);
         }else{
-            //should resize vbo here
+            _resize_vbo(ctx, ctx->sizeVertices);
+            _resize_ibo(ctx, ctx->sizeIndices);
+        }
+    }
+
+    _check_cmd_buff_state(ctx);
+    CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
+
+    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vertices = %d; indices = %d\n", (ulong)ctx, ctx->vertCount - ctx->indexCache[ctx->curIndStart], ctx->indCount - ctx->curIndStart);
+
+#ifdef VKVG_WIRED_DEBUG
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
+    CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+#endif
+
+    ctx->curIndStart = ctx->indCount;
+    ctx->curVertOffset = ctx->vertCount;
+
+    _end_render_pass        (ctx);
+    _flush_vertices_caches  (ctx);
+    vkh_cmd_end             (ctx->cmd);
+
+    LOG(LOG_INFO, "FLUSH CTX: ctx = %lu; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
+    _wait_and_submit_cmd(ctx);
+}
+inline bool _undrawn_vertices (VkvgContext ctx) {
+    return ctx->indCount > ctx->curIndStart;
+}
+void _record_draw_cmd (VkvgContext ctx){
+    if (ctx->vertCount > ctx->sizeVBO || ctx->indCount > ctx->sizeIBO){
+        //vbo or ibo buffers too small
+        if (ctx->cmdStarted) {
+            //if cmd is started buffers, are already bound, so no resize is possible
+            //instead we flush, and clear vbo and ibo caches
+            _end_render_pass (ctx);
+            _flush_vertices_caches_until_vertex_base (ctx);
+            vkh_cmd_end (ctx->cmd);
+            _wait_and_submit_cmd (ctx);
+            _resize_vbo(ctx, ctx->sizeVertices);
+            _resize_ibo(ctx, ctx->sizeIndices);
+        }else{
             _resize_vbo(ctx, ctx->sizeVertices);
             _resize_ibo(ctx, ctx->sizeIndices);
         }
@@ -399,10 +466,12 @@ void _record_draw_cmd (VkvgContext ctx){
     ctx->curVertOffset = ctx->vertCount;
 }
 void _flush_cmd_buff (VkvgContext ctx){
-    if (!ctx->cmdStarted)
+    if (_undrawn_vertices(ctx)){
+        if (!ctx->cmdStarted)
+            _start_cmd_for_render_pass(ctx);
+        _record_draw_cmd (ctx);
+    }else if (!ctx->cmdStarted)
         return;
-
-    _record_draw_cmd        (ctx);
     _end_render_pass        (ctx);
     _flush_vertices_caches  (ctx);
     vkh_cmd_end             (ctx->cmd);
@@ -426,7 +495,35 @@ void _bind_draw_pipeline (VkvgContext ctx) {
         break;
     }
 }
+void _init_push_descriptor_writes (VkvgContext ctx) {
+    ctx->descFontTex = vkh_image_get_descriptor (ctx->pSurf->dev->fontCache->texture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    VkWriteDescriptorSet wds = {0};
+    wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    wds.dstSet = 0;
+    wds.dstBinding = 0;
+    wds.descriptorCount = 1;
+    wds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    wds.pImageInfo = &ctx->descFontTex;
+    ctx->wds[0] = wds;
 
+    ctx->descSrcTex = vkh_image_get_descriptor (ctx->pSurf->dev->emptyImg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    wds.dstSet = 0;
+    wds.dstBinding = 1;
+    wds.descriptorCount = 1;
+    wds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    wds.pImageInfo = &ctx->descSrcTex;
+    ctx->wds[1] = wds;
+
+    wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    wds.dstSet = 0;
+    wds.dstBinding = 2;
+    wds.descriptorCount = 1;
+    wds.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    wds.pImageInfo = 0;
+    wds.pBufferInfo = &ctx->uboGrad.descriptor;
+    ctx->wds[2] = wds;
+}
 void _start_cmd_for_render_pass (VkvgContext ctx) {
     LOG(LOG_INFO, "START RENDER PASS: ctx = %lu\n", ctx);
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -443,16 +540,24 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
 
+    if (ctx->source && ctx->source->layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+        vkh_image_set_layout (ctx->cmd, ctx->source, VK_IMAGE_ASPECT_COLOR_BIT,
+                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
     CmdBeginRenderPass (ctx->cmd, &ctx->renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     VkViewport viewport = {0,0,ctx->pSurf->width,ctx->pSurf->height,0,1};
     CmdSetViewport(ctx->cmd, 0, 1, &viewport);
 
     CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
-    VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc,ctx->dsGrad};
-    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
-                            0, 3, dss, 0, NULL);
-
+    if (CmdPushDescriptorSet) {
+        CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 3, ctx->wds);
+    }else{
+        VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc,ctx->dsGrad};
+        CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
+                              0, 3, dss, 0, NULL);
+    }
     VkDeviceSize offsets[1] = { 0 };
     CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
     if (sizeof (VKVG_IBO_INDEX_TYPE) == 4)
@@ -489,22 +594,36 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
     switch (pat->type)  {
     case VKVG_PATTERN_TYPE_SOLID:
-        memcpy (&ctx->pushConsts.source, ctx->pattern->data, sizeof(vkvg_color_t));
-
+        if (ctx->source)
+            ctx->source = NULL;
         if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
-            _flush_cmd_buff             (ctx);
-            _update_descriptor_set      (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
-            //_init_cmd_buff              (ctx);//push csts updated by init
-        }//else
-            //_update_push_constants (ctx);
-
+            ctx->descSrcTex = vkh_image_get_descriptor (ctx->pSurf->dev->emptyImg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            if (ctx->cmdStarted){
+                CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[1]);
+            }
+        }
         break;
     case VKVG_PATTERN_TYPE_SURFACE:
     {
         VkvgSurface surf = (VkvgSurface)pat->data;
+        ctx->source = surf->img;
 
+        if (CmdPushDescriptorSet != VK_NULL_HANDLE) {
+            ctx->descSrcTex = (VkDescriptorImageInfo){
+                    _get_sampler_for_pattern(ctx->pSurf->dev, pat), vkh_image_get_view(surf->img), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+            if (!ctx->cmdStarted)
+                _start_cmd_for_render_pass(ctx);
+            else{
+                vkh_image_set_layout (ctx->cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+                CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[1]);
+            }
+        }
+        vec4 srcRect = {0,0,surf->width,surf->height};
+        ctx->pushConsts.source = srcRect;
         //flush ctx in two steps to add the src transitioning in the cmd buff
-        if (ctx->cmdStarted){//transition of img without appropriate dependencies in subpass must be done outside renderpass.
+        /*if (ctx->cmdStarted){//transition of img without appropriate dependencies in subpass must be done outside renderpass.
             _record_draw_cmd (ctx);//ensure all vertices are flushed
             _end_render_pass (ctx);
             _flush_vertices_caches (ctx);
@@ -512,43 +631,17 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
             vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
             ctx->cmdStarted = true;
         }
-
+    */
         //transition source surface for sampling
+        /*
         vkh_image_set_layout (ctx->cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         vkh_cmd_end (ctx->cmd);
-        _wait_and_submit_cmd (ctx);
+        _wait_and_submit_cmd (ctx);*/
 
-        ctx->source = surf->img;
 
-        //if (vkh_image_get_sampler (ctx->source) == VK_NULL_HANDLE){
-            VkSamplerAddressMode addrMode;
-            VkFilter filter = VK_FILTER_NEAREST;
-            switch (pat->extend) {
-            case VKVG_EXTEND_NONE:
-                addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-                break;
-            case VKVG_EXTEND_PAD:
-                addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-                break;
-            case VKVG_EXTEND_REPEAT:
-                addrMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-                break;
-            case VKVG_EXTEND_REFLECT:
-                addrMode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-                break;
-            }
-            switch (pat->filter) {
-            case VKVG_FILTER_BILINEAR:
-            case VKVG_FILTER_BEST:
-                filter = VK_FILTER_LINEAR;
-                break;
-            }
-            vkh_image_create_sampler(ctx->source, filter, filter,
-                                 VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
-        //}
         /*if (vkh_image_get_layout (ctx->source) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL){
             vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -559,11 +652,11 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
             _submit_wait_and_reset_cmd  (ctx);
         }*/
-
+/*
         _update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
 
-        vec4 srcRect = {0,0,surf->width,surf->height};
-        ctx->pushConsts.source = srcRect;
+
+  */
 
         //_init_cmd_buff                  (ctx);
         break;
@@ -852,7 +945,7 @@ void _recursive_bezier (VkvgContext ctx,
                 //----------------------
                 if(m_angle_tolerance < curve_angle_tolerance_epsilon)
                 {
-                    _add_point (ctx, x1234, y1234);
+                    _add_point_pretransformed(ctx, x1234, y1234);
                     return;
                 }
 
@@ -868,7 +961,7 @@ void _recursive_bezier (VkvgContext ctx,
                 {
                     // Finally we can stop the recursion
                     //----------------------
-                    _add_point (ctx, x1234, y1234);
+                    _add_point_pretransformed(ctx, x1234, y1234);
                     return;
                 }
 
@@ -876,13 +969,13 @@ void _recursive_bezier (VkvgContext ctx,
                 {
                     if(da1 > m_cusp_limit)
                     {
-                        _add_point (ctx, x2, y2);
+                        _add_point_pretransformed (ctx, x2, y2);
                         return;
                     }
 
                     if(da2 > m_cusp_limit)
                     {
-                        _add_point (ctx, x3, y3);
+                        _add_point_pretransformed (ctx, x3, y3);
                         return;
                     }
                 }
@@ -896,7 +989,7 @@ void _recursive_bezier (VkvgContext ctx,
                 {
                     if(m_angle_tolerance < curve_angle_tolerance_epsilon)
                     {
-                        _add_point (ctx, x1234, y1234);
+                        _add_point_pretransformed (ctx, x1234, y1234);
                         return;
                     }
 
@@ -907,8 +1000,8 @@ void _recursive_bezier (VkvgContext ctx,
 
                     if(da1 < m_angle_tolerance)
                     {
-                        _add_point (ctx, x2, y2);
-                        _add_point (ctx, x3, y3);
+                        _add_point_pretransformed (ctx, x2, y2);
+                        _add_point_pretransformed (ctx, x3, y3);
                         return;
                     }
 
@@ -916,7 +1009,7 @@ void _recursive_bezier (VkvgContext ctx,
                     {
                         if(da1 > m_cusp_limit)
                         {
-                            _add_point (ctx, x2, y2);
+                            _add_point_pretransformed (ctx, x2, y2);
                             return;
                         }
                     }
@@ -928,7 +1021,7 @@ void _recursive_bezier (VkvgContext ctx,
                 {
                     if(m_angle_tolerance < curve_angle_tolerance_epsilon)
                     {
-                        _add_point (ctx, x1234, y1234);
+                        _add_point_pretransformed (ctx, x1234, y1234);
                         return;
                     }
 
@@ -939,8 +1032,8 @@ void _recursive_bezier (VkvgContext ctx,
 
                     if(da1 < m_angle_tolerance)
                     {
-                        _add_point (ctx, x2, y2);
-                        _add_point (ctx, x3, y3);
+                        _add_point_pretransformed (ctx, x2, y2);
+                        _add_point_pretransformed (ctx, x3, y3);
                         return;
                     }
 
@@ -962,7 +1055,7 @@ void _recursive_bezier (VkvgContext ctx,
                 dy = y1234 - (y1 + y4) / 2;
                 if(dx*dx + dy*dy <= m_distance_tolerance)
                 {
-                    _add_point (ctx, x1234, y1234);
+                    _add_point_pretransformed (ctx, x1234, y1234);
                     return;
                 }
             }
