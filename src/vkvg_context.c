@@ -735,7 +735,8 @@ void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join){
 }
 void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op){
     ctx->curOperator = op;
-    _bind_draw_pipeline (ctx);
+    if (ctx->cmdStarted)
+        _bind_draw_pipeline (ctx);
 }
 void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr){
     ctx->curFillRule = fr;
