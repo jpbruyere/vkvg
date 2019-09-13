@@ -215,7 +215,7 @@ void _add_vertexf (VkvgContext ctx, float x, float y){
     Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
     pVert->pos.x = x;
     pVert->pos.y = y;
-    pVert->uv = (vec3){0};
+    pVert->color = ctx->curColor;
     ctx->vertCount++;
 
     _check_vbo_size(ctx);
@@ -254,9 +254,9 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
     Vertex v[4] =
     {
         {{x,y},             {0,0,-1}},
-        {{x,y+height},      {0,0,-1}},
-        {{x+width,y},       {0,0,-1}},
-        {{x+width,y+height},{0,0,-1}}
+        {{x,y+height},      {0,1,-1}},
+        {{x+width,y},       {1,0,-1}},
+        {{x+width,y+height},{1,1,-1}}
     };
     VKVG_IBO_INDEX_TYPE firstIdx = ctx->vertCount - ctx->curVertOffset;
     Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
@@ -994,8 +994,7 @@ void _poly_fill (VkvgContext ctx){
     CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
     uint32_t ptrPath = 0;
-    Vertex v = {0};
-    v.uv.z = -1;
+    Vertex v = {{0},ctx->curColor};
 
     while (ptrPath < ctx->pathPtr){
         if (ctx->pathes[ptrPath+1]&PATH_IS_CURVE_BIT){
@@ -1026,8 +1025,7 @@ void _poly_fill (VkvgContext ctx){
 }
 void _fill_ec (VkvgContext ctx){
     uint32_t ptrPath = 0;;
-    Vertex v = {};
-    v.uv.z = -1;
+    Vertex v = {{0},ctx->curColor};
 
     while (ptrPath < ctx->pathPtr){
         if (ctx->pathes[ptrPath+1]&PATH_IS_CURVE_BIT){
@@ -1097,7 +1095,7 @@ void _fill_ec (VkvgContext ctx){
 
         ptrPath+=2;
     }
-    _record_draw_cmd(ctx);
+    //_record_draw_cmd(ctx);
 }
 
 static const uint32_t one = 1;

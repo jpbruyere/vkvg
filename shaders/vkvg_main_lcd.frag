@@ -63,7 +63,7 @@ void main()
 			inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
 			inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
 		);
-		c = texture (source, uv / inSrc.zw);
+		c = texture (source, inFontUV.xy);
 		break;
 	case LINEAR:
 		//credit to Nikita Rokotyan for linear grad

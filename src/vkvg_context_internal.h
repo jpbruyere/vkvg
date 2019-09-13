@@ -34,10 +34,11 @@
 #define VKVG_PATHES_SIZE			16
 #define VKVG_ARRAY_THRESHOLD		8
 #define VKVG_IBO_INDEX_TYPE         uint16_t
-
+#define CreateRgba(r, g, b, a) ((a << 24) | (r << 16) | (g << 8) | b)
+#define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(r * a * 255.0f) << 16) | ((int)(g * a * 255.0f) << 8) | (int)(b * a * 255.0f))
 typedef struct{
-    vec2 pos;
-    vec3 uv;
+    vec2        pos;
+    uint32_t    color;
 }Vertex;
 
 typedef struct {
@@ -87,6 +88,8 @@ typedef struct _vkvg_context_t {
     VkDescriptorSet     dsGrad;     //gradient uniform buffer
 
     VkRect2D            bounds;
+
+    uint32_t            curColor;
 
     float xMin;
     float xMax;

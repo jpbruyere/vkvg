@@ -10,7 +10,7 @@ bool mouseDown = false;
 VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
-uint test_size = 100;  // items drawn in one run, or complexity
+uint test_size = 200;  // items drawn in one run, or complexity
 int iterations = 500;   // repeat test n times
 
 static bool paused = false;

@@ -241,7 +241,7 @@ void _setupPipelines(VkvgDevice dev)
 
     VkVertexInputAttributeDescription vertexInputAttributs[2] = {
         {0, 0, VK_FORMAT_R32G32_SFLOAT,         0},
-        {1, 0, VK_FORMAT_R32G32B32_SFLOAT,      sizeof(vec2)}
+        {1, 0, VK_FORMAT_R8G8B8A8_UNORM,      sizeof(vec2)}
     };
 
     VkPipelineVertexInputStateCreateInfo vertexInputState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -302,12 +302,12 @@ void _setupPipelines(VkvgDevice dev)
     pipelineCreateInfo.layout = dev->pipelineLayout;
 
 
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelinePolyFill));
+    //VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelinePolyFill));
 
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     dsStateCreateInfo.back = dsStateCreateInfo.front = clipingOpState;
     dynamicState.dynamicStateCount = 5;
-    VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineClipping));
+    //VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineClipping));
 
     dsStateCreateInfo.back = dsStateCreateInfo.front = stencilOpState;
     blendAttachmentState.colorWriteMask=0xf;

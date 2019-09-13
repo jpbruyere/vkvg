@@ -552,7 +552,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
     }else{
         _check_cmd_buff_state (ctx);
-        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+        //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
         _fill_ec(ctx);
     }
 }
@@ -564,8 +564,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
     LOG(LOG_INFO, "STROKE: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    Vertex v = {0};
-    v.uv.z = -1;
+    Vertex v = {{0},ctx->curColor};
 
     float hw = ctx->lineWidth / 2.0f;
     uint i = 0, ptrPath = 0;
@@ -701,18 +700,30 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
         ptrPath+=2+ptrCurve;
     }
-    _record_draw_cmd(ctx);
+    _check_cmd_buff_state (ctx);
+    //_record_draw_cmd(ctx);
 }
 void vkvg_paint (VkvgContext ctx){
     _check_cmd_buff_state (ctx);
-    _draw_full_screen_quad (ctx, true);
+    vec4 r = {0};
+    if (ctx->pattern == NULL || ctx->pattern->type == VKVG_PATTERN_TYPE_SOLID){
+        /*r.width = ctx->bounds.extent.width;
+        r.height = ctx->bounds.extent.height;*/
+        _draw_full_screen_quad (ctx, true);
+        return;
+    }else{
+        r.width = ctx->pushConsts.source.width;
+        r.height = ctx->pushConsts.source.height;
+    }
+    vkvg_fill_rectangle(ctx, 0, 0, r.width, r.height);
 }
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
     vkvg_set_source_rgba (ctx, r, g, b, 1);
 }
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
-    _update_cur_pattern (ctx, vkvg_pattern_create_rgba (r,g,b,a));
+    ctx->curColor = CreateRgbaf(r,g,b,a);
+    //_update_cur_pattern (ctx, vkvg_pattern_create_rgba (r,g,b,a));
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
     _update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));

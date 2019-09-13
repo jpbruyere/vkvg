@@ -24,13 +24,13 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout (location = 0) in vec2	inPos;
-layout (location = 1) in vec3	inUV;
+layout (location = 0) in		vec2 inPos;
+layout (location = 1) in lowp	vec4 inColor;
 
-layout (location = 0) out vec3	outUV;
-layout (location = 1) out vec4	outSrc;
-layout (location = 2) out flat int outPatType;
-layout (location = 3) out mat3x2 outMat;
+layout (location = 0) out		vec3 outUV;
+layout (location = 1) out		vec4 outSrc;
+layout (location = 2) out flat	int	 outPatType;
+layout (location = 3) out		mat3x2 outMat;
 
 out gl_PerVertex
 {
@@ -56,20 +56,27 @@ layout(push_constant) uniform PushConsts {
 void main()
 {
 	outPatType	= pc.srcType;
-	outSrc		= pc.source;
+	outSrc		= inColor;
 	outMat		= pc.matInv;
 
 	if (pc.fullScreenQuad != 0) {
 		gl_Position = vec4(vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2) * 2.0f + -1.0f, 0.0f, 1.0f);
-		outUV = vec3(0,0,-1);
+		outUV = vec3((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2, -1);
+		//outUV = vec3(0,0,-1);
 		return;
 	}
 
-	outUV = inUV;
+	vec2 p0 = inPos;
+
+	if (pc.srcType == SURFACE) {
+		outUV = vec3(inPos.x / pc.source.z, inPos.y / pc.source.w ,-1);
+		p0 = inPos + pc.source.xy;
+	}else
+		outUV = vec3(0,0,-1);
 
 	vec2 p = vec2(
-		pc.mat[0][0] * inPos.x + pc.mat[1][0] * inPos.y + pc.mat[2][0],
-		pc.mat[0][1] * inPos.x + pc.mat[1][1] * inPos.y + pc.mat[2][1]
+		pc.mat[0][0] * p0.x + pc.mat[1][0] * p0.y + pc.mat[2][0],
+		pc.mat[0][1] * p0.x + pc.mat[1][1] * p0.y + pc.mat[2][1]
 	);
 
 	gl_Position = vec4(p * vec2(2) / pc.size - vec2(1), 0.0, 1.0);

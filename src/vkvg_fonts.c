@@ -457,7 +457,8 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
     unsigned int glyph_count;
     hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos (tr->hbBuf, &glyph_count);
 
-    Vertex v = {};
+    Vertex v = {{0},ctx->curColor};
+    vec3 uv = {0};
     vec2 pen = {0,0};
 
     if (!_current_path_is_empty(ctx))
@@ -479,23 +480,23 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 
             uint32_t firstIdx = ctx->vertCount - ctx->curVertOffset;
 
-            v.uv.x = cr->bounds.x;
-            v.uv.y = cr->bounds.y;
-            v.uv.z = cr->pageIdx;
+            uv.x = cr->bounds.x;
+            uv.y = cr->bounds.y;
+            uv.z = cr->pageIdx;
             _add_vertex(ctx,v);
 
             v.pos.y += cr->bounds.height;
-            v.uv.y += uvHeight;
+            uv.y += uvHeight;
             _add_vertex(ctx,v);
 
             v.pos.x += cr->bounds.width;
             v.pos.y = p0.y;
-            v.uv.x += uvWidth;
-            v.uv.y = cr->bounds.y;
+            uv.x += uvWidth;
+            uv.y = cr->bounds.y;
             _add_vertex(ctx,v);
 
             v.pos.y += cr->bounds.height;
-            v.uv.y += uvHeight;
+            uv.y += uvHeight;
             _add_vertex(ctx,v);
 
             _add_tri_indices_for_rect (ctx, firstIdx);

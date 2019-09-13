@@ -9,7 +9,7 @@ void test(){
     const float w = 800.f;
 
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
+    //vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
 
     vkvg_set_line_width(ctx, 1.0f);
     //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);

@@ -11,8 +11,12 @@ void test(){
     vkvg_rectangle(ctx,100,100,200,200);
     vkvg_fill(ctx);
 
-    vkvg_rectangle(ctx,200,200,200,200);
     vkvg_set_source_rgba(ctx,1,0,0,0.5);
+    vkvg_rectangle(ctx,200,200,200,200);
+    vkvg_fill(ctx);
+
+    vkvg_set_source_rgba(ctx,0,1,0,0.5);
+    vkvg_rectangle(ctx,500,500,200,200);
     vkvg_fill(ctx);
 
     vkvg_destroy(ctx);
