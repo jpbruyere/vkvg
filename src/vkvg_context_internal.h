@@ -33,7 +33,7 @@
 #define VKVG_IBO_SIZE				VKVG_VBO_SIZE * 6
 #define VKVG_PATHES_SIZE			16
 #define VKVG_ARRAY_THRESHOLD		8
-#define VKVG_IBO_INDEX_TYPE         uint16_t
+#define VKVG_IBO_INDEX_TYPE         uint32_t
 #define CreateRgba(r, g, b, a) ((a << 24) | (r << 16) | (g << 8) | b)
 #define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(b * a * 255.0f) << 16) | ((int)(g * a * 255.0f) << 8) | (int)(r * a * 255.0f))
 typedef struct{
@@ -83,9 +83,9 @@ typedef struct _vkvg_context_t {
     bool                cmdStarted; //prevent flushing empty renderpass
     bool                pushCstDirty;//prevent pushing to gpu if not requested
     VkDescriptorPool	descriptorPool;//one pool per thread
-    VkDescriptorSet     dsFont;     //fonts glyphs texture atlas descriptor (local for thread safety)
+    //VkDescriptorSet     dsFont;     //fonts glyphs texture atlas descriptor (local for thread safety)
     VkDescriptorSet     dsSrc;      //source ds
-    VkDescriptorSet     dsGrad;     //gradient uniform buffer
+    //VkDescriptorSet     dsGrad;     //gradient uniform buffer
 
     VkRect2D            bounds;
 
@@ -226,7 +226,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx);
 
 void _createDescriptorPool  (VkvgContext ctx);
 void _init_descriptor_sets  (VkvgContext ctx);
-void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
+void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds, uint binding);
 void _update_gradient_desc_set(VkvgContext ctx);
 void _free_ctx_save         (vkvg_context_save_t* sav);
 

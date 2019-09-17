@@ -82,9 +82,9 @@ typedef struct _vkvg_device_t{
 
     VkPipelineCache			pipelineCache;          /**< speed up startup by caching configured pipelines on disk */
     VkPipelineLayout		pipelineLayout;         /**< layout common to all pipelines */
-    VkDescriptorSetLayout	dslFont;                /**< font cache descriptors layout */
+    //VkDescriptorSetLayout	dslFont;                /**< font cache descriptors layout */
     VkDescriptorSetLayout	dslSrc;                 /**< context source surface descriptors layout */
-    VkDescriptorSetLayout	dslGrad;                /**< context gradient descriptors layout */
+    //VkDescriptorSetLayout	dslGrad;                /**< context gradient descriptors layout */
 
     int		hdpi,                                   /**< only used for FreeType fonts and svg loading */
             vdpi;
@@ -113,4 +113,5 @@ VkSampler _get_sampler_for_pattern (VkvgDevice dev, VkvgPattern pat);
 void _wait_idle                 (VkvgDevice dev);
 void _wait_and_reset_device_fence (VkvgDevice dev);
 void _submit_cmd                (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
+void _destroy_samplers          (VkvgDevice dev);
 #endif

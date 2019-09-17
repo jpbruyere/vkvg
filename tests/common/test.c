@@ -10,8 +10,8 @@ bool mouseDown = false;
 VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
-uint test_size = 200;  // items drawn in one run, or complexity
-int iterations = 500;   // repeat test n times
+uint test_size = 100;  // items drawn in one run, or complexity
+int iterations = 200;   // repeat test n times
 
 static bool paused = false;
 static VkSampleCountFlags samples = VK_SAMPLE_COUNT_4_BIT;
@@ -162,7 +162,7 @@ void run_test_func (void(*testfunc)(void),uint width, uint height) {
             min_run_time = MIN(run_time, min_run_time);
         max_run_time = MAX(run_time, max_run_time);
         run_total += run_time;
-        i++;
+        //i++;
     }
 
     double avg_run_time = run_total / (double)iterations;

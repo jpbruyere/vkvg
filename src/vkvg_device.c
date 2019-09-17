@@ -119,6 +119,7 @@ void vkvg_device_destroy (VkvgDevice dev)
 
     vkh_image_destroy               (dev->emptyImg);
 
+    _destroy_samplers               (dev);
     //vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslGrad,NULL);
     //vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);

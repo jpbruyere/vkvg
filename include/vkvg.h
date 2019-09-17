@@ -346,6 +346,7 @@ void vkvg_matrix_multiply           (vkvg_matrix_t *result, const vkvg_matrix_t 
 void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, float *dy);
 void vkvg_matrix_transform_point    (const vkvg_matrix_t *matrix, float *x, float *y);
 void vkvg_matrix_invert             (vkvg_matrix_t *matrix);
+bool vkvg_matrix_is_identity        (const vkvg_matrix_t *matrix);
 
 #ifdef __cplusplus
 }

@@ -132,7 +132,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 
     VkvgContext next = dev->lastCtx;
     while (next != NULL){
-        _update_descriptor_set (next, next->source, next->dsSrc);
+        _update_descriptor_set (next, next->source, next->dsSrc, 1);
         next = next->pPrev;
     }
 }

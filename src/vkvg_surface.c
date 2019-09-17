@@ -223,7 +223,8 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
     VkhImage tmpImg = vkh_image_create ((VkhDevice)surf->dev,surf->format,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
                                          VMA_MEMORY_USAGE_GPU_ONLY,
                                          VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-    vkh_image_create_view (tmpImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
+    vkh_image_create_descriptor (tmpImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST,
+                                VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
     //staging buffer
     vkvg_buff buff = {0};
     vkvg_buffer_create(dev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, imgSize, &buff);
@@ -289,19 +290,16 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
     //_update_push_constants (ctx);
 
-    VkvgPattern pat = vkvg_pattern_create();
     if (CmdPushDescriptorSet != VK_NULL_HANDLE) {
         ctx->source = tmpImg;
-        ctx->descSrcTex = (VkDescriptorImageInfo){
-                _get_sampler_for_pattern(ctx->pSurf->dev,pat), vkh_image_get_view(tmpImg), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+        ctx->descSrcTex = vkh_image_get_descriptor (tmpImg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }else {
-        _update_descriptor_set (ctx, tmpImg, ctx->dsSrc);
+        _update_descriptor_set (ctx, tmpImg, ctx->dsSrc,1);
     }
     _check_cmd_buff_state  (ctx);
 
     vkvg_paint          (ctx);
     vkvg_destroy        (ctx);
-    vkvg_pattern_destroy(pat);
 
     vkh_image_destroy   (tmpImg);
 
@@ -441,10 +439,10 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
     vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
                           VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+                          VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
     vkh_image_set_layout (cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     VkImageBlit blit = {
         .srcSubresource = imgSubResLayers,

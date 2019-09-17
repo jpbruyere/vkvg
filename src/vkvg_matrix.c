@@ -60,7 +60,9 @@
 
 #include "vkvg_matrix.h"
 
-#define ISFINITE(x) ((x) * (x) >= 0.) /* check for NaNs */
+#define ISFINITE(x) ((x) * (x) >= 0.f) /* check for NaNs */
+
+static const vkvg_matrix_t identity = VKVG_IDENTITY_MATRIX;
 
 //matrix computations mainly taken from http://cairographics.org
 static void _vkvg_matrix_scalar_multiply (vkvg_matrix_t *matrix, float scalar)
@@ -119,23 +121,23 @@ void vkvg_matrix_invert (vkvg_matrix_t *matrix)
     float det;
 
     /* Simple scaling|translation matrices are quite common... */
-    if (matrix->xy == 0. && matrix->yx == 0.) {
+    if (matrix->xy == 0.f&& matrix->yx == 0.f) {
         matrix->x0 = -matrix->x0;
         matrix->y0 = -matrix->y0;
 
-        if (matrix->xx != 1.) {
-            if (matrix->xx == 0.)
+        if (matrix->xx != 1.f) {
+            if (matrix->xx == 0.f)
             return;
 
-            matrix->xx = 1. / matrix->xx;
+            matrix->xx = 1.f / matrix->xx;
             matrix->x0 *= matrix->xx;
         }
 
-        if (matrix->yy != 1.) {
-            if (matrix->yy == 0.)
+        if (matrix->yy != 1.f) {
+            if (matrix->yy == 0.f)
             return;
 
-            matrix->yy = 1. / matrix->yy;
+            matrix->yy = 1.f / matrix->yy;
             matrix->y0 *= matrix->yy;
         }
 
@@ -148,7 +150,7 @@ void vkvg_matrix_invert (vkvg_matrix_t *matrix)
     if (! ISFINITE (det))
         return;
 
-    if (det == 0)
+    if (det == 0.f)
         return;
 
     _vkvg_matrix_compute_adjoint (matrix);
@@ -191,8 +193,8 @@ void vkvg_matrix_init_rotate (vkvg_matrix_t *matrix, float radians)
     float  s;
     float  c;
 
-    s = sin (radians);
-    c = cos (radians);
+    s = sinf (radians);
+    c = cosf (radians);
 
     vkvg_matrix_init (matrix,
                c, s,
@@ -254,4 +256,14 @@ void vkvg_matrix_transform_point (const vkvg_matrix_t *matrix, float *x, float *
 
     *x += matrix->x0;
     *y += matrix->y0;
+}
+
+bool vkvg_matrix_is_identity (const vkvg_matrix_t *matrix) {
+    return memcmp(matrix, &identity, sizeof (vkvg_matrix_t)) == 0;
+    /*return matrix->xx == 1.0f &&
+            matrix->yy == 1.0f &&
+            matrix->x0 == 0.0f &&
+            matrix->y0 == 0.0f &&
+            matrix->xy == 0.0f &&
+            matrix->yx == 0.0f;*/
 }

@@ -132,8 +132,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
     }else{
         _createDescriptorPool   (ctx);
         _init_descriptor_sets   (ctx);
-        _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
-        _update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc);
+        _update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsSrc,0);
+        _update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc,1);
         _update_gradient_desc_set(ctx);
     }
     _clear_path             (ctx);
@@ -205,9 +205,7 @@ void vkvg_destroy (VkvgContext ctx)
     if (CmdPushDescriptorSet) {
 
     }else{
-        VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc, ctx->dsGrad};
-        vkFreeDescriptorSets    (dev, ctx->descriptorPool, 3, dss);
-
+        vkFreeDescriptorSets    (dev, ctx->descriptorPool, 1, &ctx->dsSrc);
         vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
     }
     vkvg_buffer_destroy (&ctx->uboGrad);
@@ -744,17 +742,20 @@ void vkvg_paint (VkvgContext ctx){
     _check_cmd_buff_state (ctx);
 
     if (ctx->pattern == NULL || ctx->pattern->type == VKVG_PATTERN_TYPE_SOLID){
+        //add full screen rect untransformed with current color, no need of push constant update -> no flush requested
         _vao_add_rectangle (ctx, 0, 0, ctx->bounds.extent.width, ctx->bounds.extent.height);
         return;
-    }else{
-        vec4 r = ctx->pushConsts.source;
-    //vkvg_matrix_transform_point (&ctx->pushConsts.matInv, &r.x, &r.y);
-        r.width = ctx->bounds.extent.width;
-        r.height = ctx->bounds.extent.height;
-        //vkvg_matrix_transform_point(&ctx->pushConsts.matInv, &r.width, &r.height);
-        _vao_add_rectangle (ctx, r.x, r.y, r.width, r.height);
-        /*vkvg_rectangle(ctx, r.x, r.y, r.width, r.height);
-        vkvg_fill(ctx);*/
+    }else if (ctx->pattern->extend == VKVG_EXTEND_NONE){
+        //add transformed rectangle with source bounds, uv will be computed in vs with matInv + source x,y
+        vkvg_rectangle(ctx, 0, 0, ctx->pushConsts.source.width, ctx->pushConsts.source.height);
+        vkvg_fill(ctx);
+    }else if (vkvg_matrix_is_identity(&ctx->pushConsts.mat)){
+        //if theres no transform, draw full screen quad
+        vkvg_rectangle(ctx, 0, 0, ctx->bounds.extent.width, ctx->bounds.extent.height);
+        vkvg_fill(ctx);
+    }else{//if current transformation is not identity, full screen quad has to be untransformed
+        //cur transform will be applied in fs for each pixel.
+        _vao_add_rectangle (ctx, 0, 0, ctx->bounds.extent.width, ctx->bounds.extent.height);
     }
 }
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
@@ -766,9 +767,9 @@ void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
     //_update_cur_pattern (ctx, vkvg_pattern_create_rgba (r,g,b,a));
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
+    ctx->pushConsts.source.x = x;
+    ctx->pushConsts.source.y = y;
     _update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
-    ctx->pushConsts.source = (vec4){x, y, surf->width, surf->height};
-    ctx->pushCstDirty = true;
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
     _update_cur_pattern (ctx, pat);
@@ -1017,29 +1018,43 @@ void vkvg_restore (VkvgContext ctx){
 }
 
 void vkvg_translate (VkvgContext ctx, float dx, float dy){
+    //other pattern than solid use mat and matInv in shaders,
+    //so we have to flush undrawn vertices
+    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
+        _flush_cmd_buff(ctx);
     vkvg_matrix_translate (&ctx->pushConsts.mat, dx, dy);
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_scale (VkvgContext ctx, float sx, float sy){
+    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
+        _flush_cmd_buff(ctx);
     vkvg_matrix_scale (&ctx->pushConsts.mat, sx, sy);
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_rotate (VkvgContext ctx, float radians){
+    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
+        _flush_cmd_buff(ctx);
     vkvg_matrix_rotate (&ctx->pushConsts.mat, radians);
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix) {
+    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
+        _flush_cmd_buff(ctx);
     vkvg_matrix_t res;
     vkvg_matrix_multiply (&res, &ctx->pushConsts.mat, matrix);
     ctx->pushConsts.mat = res;
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_identity_matrix (VkvgContext ctx) {
+    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
+        _flush_cmd_buff(ctx);
     vkvg_matrix_t im = VKVG_IDENTITY_MATRIX;
     ctx->pushConsts.mat = im;
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
+    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
+        _flush_cmd_buff(ctx);
     ctx->pushConsts.mat = (*matrix);
     _set_mat_inv_and_vkCmdPush (ctx);
 }

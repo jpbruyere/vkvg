@@ -24,14 +24,14 @@
 #extension GL_ARB_separate_shader_objects	: enable
 #extension GL_ARB_shading_language_420pack	: enable
 
-layout (set=0, binding = 0) uniform sampler2DArray fontMap;
-layout (set=0, binding = 1) uniform sampler2D		source;
-layout (set=0, binding = 2) uniform _uboGrad {
+//layout (set=0, binding = 0) uniform sampler2DArray fontMap;
+layout (set=0, binding = 0) uniform sampler2D		source;
+/*layout (set=0, binding = 2) uniform _uboGrad {
 	vec4    cp[3];
 	vec4	colors[16];
 	vec4	stops[16];
 	uint	count;
-}uboGrad;
+}uboGrad;*/
 
 layout (location = 0) in vec3	inFontUV;		//if it is a text drawing, inFontUV.z hold fontMap layer
 layout (location = 1) in vec4	inSrc;			//source bounds or color depending on pattern type
@@ -58,7 +58,7 @@ void main()
 		c = inSrc;
 		break;
 	case SURFACE:
-		if (inFontUV.z < 1.0){
+		if (inFontUV.z < -1.0){
 			//pattern is drawn with a full screen quad with no tex coord
 			//so we have to transform pixel
 			vec2 p = (gl_FragCoord.xy - textureSize(source,0));
@@ -71,7 +71,7 @@ void main()
 		break;
 	case LINEAR:
 		//credit to Nikita Rokotyan for linear grad
-		float  alpha = atan( -uboGrad.cp[1].y + uboGrad.cp[0].y, uboGrad.cp[1].x - uboGrad.cp[0].x );
+		/*float  alpha = atan( -uboGrad.cp[1].y + uboGrad.cp[0].y, uboGrad.cp[1].x - uboGrad.cp[0].x );
 		float  gradientStartPosRotatedX = uboGrad.cp[0].x*cos(alpha) - uboGrad.cp[0].y*sin(alpha);
 		float  gradientEndPosRotatedX   = uboGrad.cp[1].x*cos(alpha) - uboGrad.cp[1].y*sin(alpha);
 		float  d = gradientEndPosRotatedX - gradientStartPosRotatedX;
@@ -82,14 +82,14 @@ void main()
 
 		c = mix(uboGrad.colors[0], uboGrad.colors[1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[0].r*d, gradientStartPosRotatedX + uboGrad.stops[1].r*d, xLocRotated ) );
 		for ( int i=1; i<uboGrad.count-1; ++i )
-			c = mix(c, uboGrad.colors[i+1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[i].r*d, gradientStartPosRotatedX + uboGrad.stops[i+1].r*d, xLocRotated ) );
+			c = mix(c, uboGrad.colors[i+1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[i].r*d, gradientStartPosRotatedX + uboGrad.stops[i+1].r*d, xLocRotated ) );*/
 		break;
 	case RADIAL:
 		break;
 	}
 
-	if (inFontUV.z >= 0.0)
-		c *= texture(fontMap, inFontUV);
+	/*if (inFontUV.z >= 0.0)
+		c *= texture(fontMap, inFontUV);*/
 
 	outFragColor = c;
 }

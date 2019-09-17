@@ -25,9 +25,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "vkvg.h"
-
-
-
 
 #endif

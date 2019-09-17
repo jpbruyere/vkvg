@@ -73,15 +73,10 @@ void main()
 			pc.matInv[0][0] * p0.x + pc.matInv[1][0] * p0.y + pc.matInv[2][0],
 			pc.matInv[0][1] * p0.x + pc.matInv[1][1] * p0.y + pc.matInv[2][1]
 		);
+		uv -= pc.source.xy;
 		outUV = vec3(uv.x / pc.source.z, uv.y / pc.source.w ,-1);
-		p0 = inPos + pc.source.xy;
 	}else
 		outUV = vec3(0,0,-1);
-
-	/*vec2 p = vec2(
-		pc.mat[0][0] * p0.x + pc.mat[1][0] * p0.y + pc.mat[2][0],
-		pc.mat[0][1] * p0.x + pc.mat[1][1] * p0.y + pc.mat[2][1]
-	);*/
 
 	gl_Position = vec4(p0 * vec2(2) / pc.size - vec2(1), 0.0, 1.0);
 }
