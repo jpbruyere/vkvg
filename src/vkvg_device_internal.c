@@ -366,7 +366,6 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 
     VkPushConstantRange pushConstantRange[] = {
         {VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push_constants)},
-        //{VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push_constants)}
     };
     //VkDescriptorSetLayout dsls[] = {dev->dslFont,dev->dslSrc,dev->dslGrad};
 

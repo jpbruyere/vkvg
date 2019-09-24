@@ -14,7 +14,9 @@ void test(){
 
     vkvg_set_source_rgba   (ctx, 1,0,0,1);
     vkvg_set_line_width(ctx, 40);
-    vkvg_stroke(ctx);
+    vkvg_stroke_preserve(ctx);
+    vkvg_set_source_rgba   (ctx, 1,1,0,1);
+    vkvg_fill(ctx);
 
     vkvg_destroy(ctx);
 }

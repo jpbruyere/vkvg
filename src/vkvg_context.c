@@ -1066,7 +1066,7 @@ void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg, char *subId){
     NSVGshape* shape;
     NSVGpath* path;
 
-    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
 
     vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
 

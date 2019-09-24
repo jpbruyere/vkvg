@@ -58,7 +58,7 @@ void test_svg () {
     vkvg_matrix_translate(&mat,-512,-400);
 
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
     vkvg_set_source_rgba(ctx,1.0,1.0,1.0,1);
     vkvg_paint(ctx);
 

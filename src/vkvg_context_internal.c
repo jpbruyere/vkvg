@@ -501,16 +501,16 @@ void _init_push_descriptor_writes (VkvgContext ctx) {
     wds.dstBinding = 0;
     wds.descriptorCount = 1;
     wds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    wds.pImageInfo = &ctx->descFontTex;
+    wds.pImageInfo = &ctx->descSrcTex;
     ctx->wds[0] = wds;
 
     ctx->descSrcTex = vkh_image_get_descriptor (ctx->pSurf->dev->emptyImg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     wds.dstSet = 0;
-    wds.dstBinding = 0;
+    wds.dstBinding = 1;
     wds.descriptorCount = 1;
     wds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    wds.pImageInfo = &ctx->descSrcTex;
+    wds.pImageInfo = &ctx->descFontTex;
     ctx->wds[1] = wds;
 
     wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -550,7 +550,12 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
     CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
     if (CmdPushDescriptorSet) {
-        CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[1]);
+        if (ctx->pattern){
+            if (ctx->pattern->type == VKVG_PATTERN_TYPE_SURFACE)
+                CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[0]);
+            else if (ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
+                CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[2]);
+        }
     }else{
         CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
                               0, 1, &ctx->dsSrc, 0, NULL);
@@ -624,7 +629,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
                 vkh_image_set_layout (ctx->cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-                CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[1]);
+                CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[0]);
             }
         }
         //flush ctx in two steps to add the src transitioning in the cmd buff
@@ -669,11 +674,12 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
     case VKVG_PATTERN_TYPE_LINEAR:
         _flush_cmd_buff (ctx);
 
-        if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
-            _update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc,1);
+        //if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
+        //    _update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc,1);
 
-        vec4 bounds = {ctx->pSurf->width, ctx->pSurf->height, 0, 0};//store img bounds in unused source field
-        ctx->pushConsts.source = bounds;
+        ctx->pushConsts.source = (vec4){ctx->pSurf->width, ctx->pSurf->height, 0, 0};//store img bounds in unused source field
+        ctx->pushConsts.patternType = pat->type;
+        ctx->pushCstDirty = true;
 
         //transform control point with current ctx matrix
         vkvg_gradient_t grad = {};
@@ -685,7 +691,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
         memcpy(ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
 
-        //_init_cmd_buff (ctx);
+        if (CmdPushDescriptorSet != VK_NULL_HANDLE && ctx->cmdStarted)
+            CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[2]);
         break;
     }
 
