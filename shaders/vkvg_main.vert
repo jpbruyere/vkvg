@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2019 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -25,11 +25,11 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 layout (location = 0) in		vec2 inPos;
-layout (location = 1) in lowp	vec4 inColor;
+layout (location = 1) in lowp   vec4 inColor;
 
 layout (location = 0) out		vec3 outUV;
 layout (location = 1) out		vec4 outSrc;
-layout (location = 2) out flat	int	 outPatType;
+layout (location = 2) out flat  int outPatType;
 layout (location = 3) out		mat3x2 outMat;
 
 out gl_PerVertex

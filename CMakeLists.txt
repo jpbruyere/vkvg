@@ -40,13 +40,13 @@ OPTION(VKVG_BUILD_TESTS "build tests with glfw" ON)
 
 set(VULKAN_SDK "$ENV{VULKAN_SDK}" CACHE STRING "LunarG Vulkan SDK path")
 if (VULKAN_SDK)
-		set(ENV{VULKAN_SDK} ${VULKAN_SDK})
-		SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/vulkan/explicit_layer.d")
-		IF (NOT EXISTS "${vulkanSdkLayerPath}")
-			SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/explicit_layer.d")
-		endif ()
-		SET(ENV{VK_LAYER_PATH} "${vulkanSdkLayerPath}")
-		link_directories("${VULKAN_SDK}/lib")
+        set(ENV{VULKAN_SDK} ${VULKAN_SDK})
+        SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/vulkan/explicit_layer.d")
+        IF (NOT EXISTS "${vulkanSdkLayerPath}")
+                SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/explicit_layer.d")
+        endif ()
+        SET(ENV{VK_LAYER_PATH} "${vulkanSdkLayerPath}")
+        link_directories("${VULKAN_SDK}/lib")
 endif ()
 
 if (NOT TARGET vkh_static)
@@ -149,7 +149,7 @@ FUNCTION (setup_lib LibName)
 			SOVERSION 1
 			PUBLIC_HEADER include/vkvg.h
 	)
-	TARGET_INCLUDE_DIRECTORIES(${LibName} PRIVATE
+	TARGET_INCLUDE_DIRECTORIES(${LibName} PRIVATE                
 		${Vulkan_INCLUDE_DIRS}
 		${FREETYPE_INCLUDE_DIRS}
 		${HARFBUZZ_INCLUDE_DIRS}
@@ -159,6 +159,9 @@ FUNCTION (setup_lib LibName)
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
+        TARGET_LINK_DIRECTORIES(${LibName} PRIVATE
+                "${VULKAN_SDK}/lib"
+        )
 	TARGET_LINK_LIBRARIES(${LibName}
 		${Vulkan_LIBRARIES}
 		${FREETYPE_LIBRARIES}

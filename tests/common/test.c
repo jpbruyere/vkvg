@@ -188,7 +188,7 @@ VkvgSurface* surfaces;
 #endif
 
 void perform_test (void(*testfunc)(void),uint width, uint height) {
-    //dumpLayerExts();
+    dumpLayerExts();
 
     e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
     VkhPresenter r = e->renderer;

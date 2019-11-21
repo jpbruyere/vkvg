@@ -550,12 +550,13 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
     CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
     if (CmdPushDescriptorSet) {
-        if (ctx->pattern){
+        CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 3, &ctx->wds[0]);
+        /*if (ctx->pattern){
             if (ctx->pattern->type == VKVG_PATTERN_TYPE_SURFACE)
                 CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[0]);
             else if (ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
                 CmdPushDescriptorSet(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout, 0, 1, &ctx->wds[2]);
-        }
+        }*/
     }else{
         CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
                               0, 1, &ctx->dsSrc, 0, NULL);

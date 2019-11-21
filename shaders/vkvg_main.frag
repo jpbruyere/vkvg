@@ -24,8 +24,8 @@
 #extension GL_ARB_separate_shader_objects	: enable
 #extension GL_ARB_shading_language_420pack	: enable
 
-layout (set=0, binding = 0) uniform sampler2DArray fontMap;
-layout (set=1, binding = 0) uniform sampler2D		source;
+layout (set=0, binding = 0) uniform sampler2DArray  fontMap;
+layout (set=1, binding = 0) uniform sampler2D       source;
 layout (set=2, binding = 0) uniform _uboGrad {
 	vec4    cp[3];
 	vec4	colors[16];
@@ -84,7 +84,7 @@ void main()
 	}
 
 	if (inFontUV.z >= 0.0)
-		c *= texture(fontMap, inFontUV).r;
+            c *= texture(fontMap, inFontUV).r;
 
 	outFragColor = c;
 }
