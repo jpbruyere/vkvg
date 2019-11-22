@@ -240,6 +240,7 @@ void _add_tri_indices_for_rect (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i){
     ctx->indCount+=6;
 
     _check_ibo_size(ctx);
+    LOG(LOG_INFO, "Rectangle IDX: %d %d %d | %d %d %d (count=%d)\n", inds[0], inds[1], inds[2], inds[3], inds[4], inds[5], ctx->indCount);
 }
 void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2){
     VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
@@ -249,6 +250,7 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
     ctx->indCount+=3;
 
     _check_ibo_size(ctx);
+    LOG(LOG_INFO, "Triangle IDX: %d %d %d (count=%d)\n", i0,i1,i2,ctx->indCount);
 }
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
     Vertex v[4] =
@@ -290,7 +292,7 @@ inline void _reset_flush_fence (VkvgContext ctx) {
     vkResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
 }
 void _wait_and_submit_cmd (VkvgContext ctx){
-    if (!ctx->cmdStarted)
+    if (!ctx->cmdStarted)//current cmd buff is empty, be aware that wait is also canceled!!
         return;
 
     _wait_flush_fence (ctx);
@@ -387,7 +389,9 @@ void _record_draw_cmd (VkvgContext ctx){
     _check_cmd_buff_state(ctx);
     CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
 
-    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vertices = %d; indices = %d\n", (ulong)ctx, ctx->vertCount - ctx->indexCache[ctx->curIndStart], ctx->indCount - ctx->curIndStart);
+    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
+        (ulong)ctx, ctx->vertCount - ctx->curVertOffset,
+        ctx->indCount - ctx->curIndStart, ctx->curVertOffset, ctx->curIndStart, ctx->indCount);
 
 #ifdef VKVG_WIRED_DEBUG
     CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
@@ -1097,7 +1101,7 @@ void _fill_ec (VkvgContext ctx){
 
         ptrPath+=2;
     }
-    _record_draw_cmd(ctx);
+    _record_draw_cmd(ctx);    
 }
 
 static const uint32_t one = 1;

@@ -455,7 +455,7 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
     /*cp.x = x3;
     cp.y = y3;
     if (!vec2_equ(ctx->points[ctx->pointCount-1],cp))*/
-    _add_point(ctx,x3,y3);
+        _add_point(ctx,x3,y3);
     _set_curve_end (ctx);
 }
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
@@ -544,7 +544,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
     LOG(LOG_INFO, "FILL: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
+     if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
         _poly_fill (ctx);
         _bind_draw_pipeline (ctx);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
@@ -668,8 +668,9 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             v.pos = vec2_sub(p0, vhw);
             _add_vertex(ctx, v);
 
-            if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-                firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+            firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+
+            if (ctx->lineCap == VKVG_LINE_CAP_ROUND){                
                 float step = M_PIF / hw;
                 float a = acosf(n.x)+ M_PIF_2;
                 if (n.y < 0)

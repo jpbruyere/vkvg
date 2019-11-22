@@ -125,10 +125,10 @@ typedef struct _vkvg_context_t {
     uint32_t*	pathes;
     size_t		sizePathes;
 
-    //if current path contains curves, start/end points are store next to the path start/stop
+    //if current path contains curves, curve's start/end points are store next to the path start/stop
     //curve start point = pathPtr + curvePtr
     //when closing of finishing path, pathPtr is incremented by 1 + pathPtr
-    //note:number of pathes can no longuer be computed from pathPtr/2, the array contains now curves datas
+    //note:number of pathes can no longer be computed from pathPtr/2, the array contains now curves datas
     uint32_t    curvePtr;
 
     float		lineWidth;
