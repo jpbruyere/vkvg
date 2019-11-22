@@ -38,8 +38,7 @@ void test(){
     //vkvg_stroke(ctx);
 
     vkvg_set_source_rgba   (ctx, 0.5,0.0,1.0,0.5);
-    vkvg_move_to(ctx,100,100);
-    vkvg_line_to(ctx,200,100);
+    vkvg_move_to(ctx,200,100);
     vkvg_curve_to(ctx,250,100,300,150,300,200);
     vkvg_line_to(ctx,300,300);
     vkvg_curve_to(ctx,300,350,250,400,200,400);
