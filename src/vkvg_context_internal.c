@@ -773,8 +773,13 @@ void add_line(vkvg_context* ctx, vec2 p1, vec2 p2, vec4 col){
 }
 
 void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR, bool isCurve){
+    //if two of the three points are equal, normal is null
     vec2 v0n = vec2_line_norm(ctx->points[iL], ctx->points[i]);
+    if (vec2_isnan(v0n))
+        return;
     vec2 v1n = vec2_line_norm(ctx->points[i], ctx->points[iR]);
+    if (vec2_isnan(v1n))
+        return;
 
     vec2 bisec = vec2_norm(vec2_add(v0n,v1n));
 
