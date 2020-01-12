@@ -35,10 +35,16 @@
 #define VKVG_ARRAY_THRESHOLD		8
 #define VKVG_IBO_INDEX_TYPE         uint32_t
 #define CreateRgba(r, g, b, a) ((a << 24) | (r << 16) | (g << 8) | b)
-#define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(b * a * 255.0f) << 16) | ((int)(g * a * 255.0f) << 8) | (int)(r * a * 255.0f))
+#ifdef VKVG_PREMULT_ALPHA
+    #define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(b * a * 255.0f) << 16) | ((int)(g * a * 255.0f) << 8) | (int)(r * a * 255.0f))
+#else
+    #define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(b * 255.0f) << 16) | ((int)(g * 255.0f) << 8) | (int)(r * 255.0f))
+#endif
 typedef struct{
     vec2        pos;
     uint32_t    color;
+    vec2        uv;
+    char        uvZ;
 }Vertex;
 
 typedef struct {

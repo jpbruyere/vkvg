@@ -7,9 +7,7 @@ void test(){
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
-
-    vkengine_dump_available_layers();
+int main(int argc, char *argv[]) {    
 
     perform_test (test, 1024, 768);
 

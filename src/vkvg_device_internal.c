@@ -240,15 +240,17 @@ void _setupPipelines(VkvgDevice dev)
                 .stride = sizeof(Vertex),
                 .inputRate = VK_VERTEX_INPUT_RATE_VERTEX };
 
-    VkVertexInputAttributeDescription vertexInputAttributs[2] = {
-        {0, 0, VK_FORMAT_R32G32_SFLOAT,         0},
-        {1, 0, VK_FORMAT_R8G8B8A8_UNORM,      sizeof(vec2)}
+    VkVertexInputAttributeDescription vertexInputAttributs[4] = {
+        {0, 0, VK_FORMAT_R32G32_SFLOAT,         0},        
+        {1, 0, VK_FORMAT_R8G8B8A8_UNORM,        8},
+        {2, 0, VK_FORMAT_R32G32_SFLOAT,        12},
+        {3, 0, VK_FORMAT_R8_SINT,              20},
     };
 
     VkPipelineVertexInputStateCreateInfo vertexInputState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
         .pVertexBindingDescriptions = &vertexInputBinding,
-        .vertexAttributeDescriptionCount = 2,
+        .vertexAttributeDescriptionCount = 4,
         .pVertexAttributeDescriptions = vertexInputAttributs };
 
     VkShaderModule modVert, modFrag, modFragWired;

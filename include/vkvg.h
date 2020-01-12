@@ -271,6 +271,7 @@ void vkvg_clip              (VkvgContext ctx);
 void vkvg_clip_preserve     (VkvgContext ctx);
 void vkvg_set_source_rgba	(VkvgContext ctx, float r, float g, float b, float a);
 void vkvg_set_source_rgb    (VkvgContext ctx, float r, float g, float b);
+//void vkvg_set_source_color  (VkvgContext ctx, uint32_t rgba);
 void vkvg_set_line_width	(VkvgContext ctx, float width);
 void vkvg_set_line_cap      (VkvgContext ctx, vkvg_line_cap_t cap);
 void vkvg_set_line_join     (VkvgContext ctx, vkvg_line_join_t join);

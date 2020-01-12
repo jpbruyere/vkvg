@@ -11,7 +11,7 @@ VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
 uint test_size = 100;  // items drawn in one run, or complexity
-int iterations = 200;   // repeat test n times
+int iterations = 500;   // repeat test n times
 
 static bool paused = false;
 static VkSampleCountFlags samples = VK_SAMPLE_COUNT_4_BIT;
@@ -72,6 +72,7 @@ void randomize_color (VkvgContext ctx) {
         (float)rand()/RAND_MAX,
         (float)rand()/RAND_MAX
     );
+    //vkvg_set_source_color(ctx,(uint32_t) rand());
 }
 /* from caskbench */
 double
@@ -102,10 +103,9 @@ double median_run_time (double data[], int n)
 }
 double standard_deviation (const double data[], int n, double mean)
 {
-    double sum_deviation = 0.0;
-    int i;
-    for (i = 0; i < n; ++i)
-    sum_deviation += (data[i]-mean) * (data[i]-mean);
+    double sum_deviation = 0.0;    
+    for (int i = 0; i < n; ++i)
+        sum_deviation += (data[i]-mean) * (data[i]-mean);
     return sqrt (sum_deviation / n);
 }
 /***************/
@@ -188,8 +188,6 @@ VkvgSurface* surfaces;
 #endif
 
 void perform_test (void(*testfunc)(void),uint width, uint height) {
-    dumpLayerExts();
-
     e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback (e, key_callback);
@@ -213,12 +211,12 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 #endif
 
 
-    double start_time, stop_time, run_time, run_total, min_run_time = -1, max_run_time;
+    double start_time = 0, stop_time = 0, run_time = 0, run_total = 0, min_run_time = -1, max_run_time = 0;
     double run_time_values[iterations];
 
     int i = 0;
 
-    while (!vkengine_should_close (e)){// && i < iterations) {
+    while (!vkengine_should_close (e) && i < iterations) {
         glfwPollEvents();
 
         start_time = get_tick();
@@ -260,7 +258,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
         vkDeviceWaitIdle(e->dev->dev);
 
-        //if (paused)
+        if (paused)
             continue;
 
         stop_time = get_tick();

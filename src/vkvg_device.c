@@ -124,8 +124,8 @@ void vkvg_device_destroy (VkvgDevice dev)
     //vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
     vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);
 
-    vkDestroyPipeline               (dev->vkDev, dev->pipelinePolyFill, NULL);
-    vkDestroyPipeline               (dev->vkDev, dev->pipelineClipping, NULL);
+    //vkDestroyPipeline               (dev->vkDev, dev->pipelinePolyFill, NULL);
+    //vkDestroyPipeline               (dev->vkDev, dev->pipelineClipping, NULL);
 
     vkDestroyPipeline               (dev->vkDev, dev->pipe_OVER,    NULL);
     vkDestroyPipeline               (dev->vkDev, dev->pipe_SUB,     NULL);
@@ -148,11 +148,13 @@ void vkvg_device_destroy (VkvgDevice dev)
     vkFreeCommandBuffers            (dev->vkDev, dev->cmdPool, 1, &dev->cmd);
     vkDestroyCommandPool            (dev->vkDev, dev->cmdPool, NULL);
 
-    _destroy_font_cache(dev);
+    _destroy_font_cache             (dev);
 
-    vmaDestroyAllocator (dev->allocator);
+    vmaDestroyAllocator             (dev->allocator);
 
     MUTEX_DESTROY (&dev->gQMutex);
+
+    vkh_queue_destroy               (dev->gQueue);
 
     free(dev);
 }

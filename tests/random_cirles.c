@@ -22,7 +22,10 @@ void test(){
         float y = truncf(0.5f * w*rand()/RAND_MAX + r);
 
         vkvg_arc(ctx, x, y, r, 0, M_PI * 2.0f);
-        vkvg_fill(ctx);
+        //vkvg_fill(ctx);
+        vkvg_fill_preserve(ctx);
+        randomize_color(ctx);
+        vkvg_stroke(ctx);
     }
     vkvg_destroy(ctx);
 }

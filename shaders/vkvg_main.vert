@@ -26,6 +26,8 @@
 
 layout (location = 0) in		vec2 inPos;
 layout (location = 1) in lowp   vec4 inColor;
+layout (location = 2) in		vec2 inUV;
+layout (location = 3) in		int	 inUVZ;
 
 layout (location = 0) out		vec3 outUV;
 layout (location = 1) out		vec4 outSrc;
@@ -76,7 +78,7 @@ void main()
 		uv -= pc.source.xy;
 		outUV = vec3(uv.x / pc.source.z, uv.y / pc.source.w ,-1);
 	}else
-		outUV = vec3(0,0,-1);
+		outUV = vec3(inUV, inUVZ);
 
 	gl_Position = vec4(p0 * vec2(2) / pc.size - vec2(1), 0.0, 1.0);
 }

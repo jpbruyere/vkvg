@@ -154,9 +154,7 @@ void _init_next_line_in_tex_cache (VkvgDevice dev, _vkvg_font_t* f){
     _init_next_line_in_tex_cache(dev, f);
 }
 void _destroy_font_cache (VkvgDevice dev){
-    _font_cache_t* cache = (_font_cache_t*)dev->fontCache;
-
-    //FcFini();
+    _font_cache_t* cache = (_font_cache_t*)dev->fontCache;    
 
     free (cache->hostBuff);
 
@@ -183,6 +181,11 @@ void _destroy_font_cache (VkvgDevice dev){
     vkh_image_destroy   (cache->texture);
     //vkFreeCommandBuffers(dev->vkDev,dev->cmdPool, 1, &cache->cmd);
     vkDestroyFence      (dev->vkDev,cache->uploadFence,NULL);
+
+    FT_CHECK_RESULT(FT_Done_FreeType (cache->library));
+
+    FcConfigDestroy     (cache->config);
+    FcFini();
 
     free (dev->fontCache);
 
@@ -457,8 +460,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
     unsigned int glyph_count;
     hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos (tr->hbBuf, &glyph_count);
 
-    Vertex v = {{0},ctx->curColor};
-    vec3 uv = {0};
+    Vertex v = {{0},ctx->curColor,{0},0};
     vec2 pen = {0,0};
 
     if (!_current_path_is_empty(ctx))
@@ -480,23 +482,22 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 
             uint32_t firstIdx = ctx->vertCount - ctx->curVertOffset;
 
-            uv.x = cr->bounds.x;
-            uv.y = cr->bounds.y;
-            uv.z = cr->pageIdx;
+            v.uv = (vec2){cr->bounds.x, cr->bounds.y};
+            v.uvZ = (int8_t)cr->pageIdx;
             _add_vertex(ctx,v);
 
             v.pos.y += cr->bounds.height;
-            uv.y += uvHeight;
+            v.uv.y += uvHeight;
             _add_vertex(ctx,v);
 
             v.pos.x += cr->bounds.width;
             v.pos.y = p0.y;
-            uv.x += uvWidth;
-            uv.y = cr->bounds.y;
+            v.uv.x += uvWidth;
+            v.uv.y = cr->bounds.y;
             _add_vertex(ctx,v);
 
             v.pos.y += cr->bounds.height;
-            uv.y += uvHeight;
+            v.uv.y += uvHeight;
             _add_vertex(ctx,v);
 
             _add_tri_indices_for_rect (ctx, firstIdx);
@@ -514,10 +515,10 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 #ifdef DEBUG
 void _show_texture (vkvg_context* ctx){
     Vertex vs[] = {
-        {{0,0},                             {0,0,0}},
-        {{0,FONT_PAGE_SIZE},                {0,1,0}},
-        {{FONT_PAGE_SIZE,0},                {1,0,0}},
-        {{FONT_PAGE_SIZE,FONT_PAGE_SIZE},   {1,1,0}}
+        {{0,0},                             0,{0,0},0},
+        {{0,FONT_PAGE_SIZE},                0,{0,1},0},
+        {{FONT_PAGE_SIZE,0},                0,{1,0},0},
+        {{FONT_PAGE_SIZE,FONT_PAGE_SIZE},   0,{1,1},0}
     };
 
     int i = ctx->vertCount;

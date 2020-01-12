@@ -113,7 +113,7 @@ void _start_sub_path (VkvgContext ctx, float x, float y) {
 void _finish_path (VkvgContext ctx){
     if (_current_path_is_empty(ctx))
         return;
-    if (ctx->pathes[ctx->pathPtr-1] == ctx->pointCount - 1){
+    if ((ctx->pathes[ctx->pathPtr-1]&PATH_ELT_MASK) == ctx->pointCount - 1){
         //only current pos is in path
         ctx->pathPtr--;
         return;
@@ -243,6 +243,7 @@ void _add_vertexf (VkvgContext ctx, float x, float y){
     pVert->pos.x = x;
     pVert->pos.y = y;
     pVert->color = ctx->curColor;
+    pVert->uvZ = -1;
     ctx->vertCount++;
 
     _check_vbo_size(ctx);
@@ -280,10 +281,10 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
     Vertex v[4] =
     {
-        {{x,y},             ctx->curColor},
-        {{x,y+height},      ctx->curColor},
-        {{x+width,y},       ctx->curColor},
-        {{x+width,y+height},ctx->curColor}
+        {{x,y},             ctx->curColor, {0,0},-1},
+        {{x,y+height},      ctx->curColor, {0,0},-1},
+        {{x+width,y},       ctx->curColor, {0,0},-1},
+        {{x+width,y+height},ctx->curColor, {0,0},-1}
     };
     VKVG_IBO_INDEX_TYPE firstIdx = ctx->vertCount - ctx->curVertOffset;
     Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
@@ -761,16 +762,6 @@ void _init_descriptor_sets (VkvgContext ctx){
                                                               .pSetLayouts = &dev->dslSrc };
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
 }
-void add_line(vkvg_context* ctx, vec2 p1, vec2 p2, vec4 col){
-    Vertex v = {{p1.x,p1.y},{0,0,-1}};
-    _add_vertex(ctx, v);
-    v.pos = p2;
-    _add_vertex(ctx, v);
-    VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount];
-    inds[0] = ctx->vertCount - 2;
-    inds[1] = ctx->vertCount - 1;
-    ctx->indCount+=2;
-}
 
 void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR, bool isCurve){
     //if two of the three points are equal, normal is null
@@ -1101,7 +1092,7 @@ void _poly_fill (VkvgContext ctx){
     CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
     uint32_t ptrPath = 0;
-    Vertex v = {{0},ctx->curColor};
+    Vertex v = {{0},ctx->curColor,{0,0},-1};
 
     while (ptrPath < ctx->pathPtr){
         if (ctx->pathes[ptrPath+1]&PATH_IS_CURVE_BIT){
@@ -1132,7 +1123,7 @@ void _poly_fill (VkvgContext ctx){
 }
 void _fill_ec (VkvgContext ctx){
     uint32_t ptrPath = 0;;
-    Vertex v = {{0},ctx->curColor};
+    Vertex v = {{0},ctx->curColor,{0,0},-1};
 
     while (ptrPath < ctx->pathPtr){
         if (ctx->pathes[ptrPath+1]&PATH_IS_CURVE_BIT){
@@ -1146,23 +1137,27 @@ void _fill_ec (VkvgContext ctx){
         uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
         uint32_t firstVertIdx = ctx->vertCount-ctx->curVertOffset;
 
-        ear_clip_point ecps[pathPointCount];
-        uint32_t ecps_count = pathPointCount;
-        uint32_t i = 0;
+        ear_clip_point ecps[pathPointCount];        
+        uint32_t ecps_count = 0, i = 0;
 
         //init points link list
         while (i < pathPointCount-1){
-            v.pos = ctx->points[i+firstPtIdx];
-            ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
-            ecps[i] = ecp;
-            _add_vertex(ctx, v);
+            vec2 np = ctx->points[i+firstPtIdx];
+            if (!vec2_equ(np, v.pos)){
+                v.pos = np;
+                ear_clip_point ecp = {v.pos, ecps_count+firstVertIdx, &ecps[ecps_count+1]};
+                ecps[ecps_count] = ecp;
+                _add_vertex(ctx, v);
+                ecps_count++;
+            }
             i++;
         }
 
         v.pos = ctx->points[i+firstPtIdx];
-        ear_clip_point ecp = {v.pos, i+firstVertIdx, ecps};
-        ecps[i] = ecp;
+        ear_clip_point ecp = {v.pos, ecps_count+firstVertIdx, ecps};
+        ecps[ecps_count] = ecp;
         _add_vertex(ctx, v);
+        ecps_count++;
 
         ear_clip_point* ecp_current = ecps;
         uint32_t tries = 0;

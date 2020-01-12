@@ -333,8 +333,8 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
     if (_current_path_is_empty(ctx)){
         vkvg_move_to(ctx, x,y);
         return;
-    }else if (vec2_equ(_get_current_position(ctx),p))
-        return;
+    }//else if (vec2_equ(_get_current_position(ctx),p))
+    //    return;
 
     _add_point(ctx,x,y);
 }
@@ -599,7 +599,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
     LOG(LOG_INFO, "STROKE: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    Vertex v = {{0},ctx->curColor};
+    Vertex v = {{0},ctx->curColor,{0,0},-1};
 
     float hw = ctx->lineWidth / 2.0f;
     uint i = 0, ptrPath = 0;
@@ -766,6 +766,10 @@ void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
     ctx->curColor = CreateRgbaf(r,g,b,a);
     //_update_cur_pattern (ctx, vkvg_pattern_create_rgba (r,g,b,a));
 }
+/*void vkvg_set_source_color (VkvgContext ctx, uint32_t rgba) {
+ * not really useful because we prefer premult alpha
+    ctx->curColor = rgba;
+}*/
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
     ctx->pushConsts.source.x = x;
     ctx->pushConsts.source.y = y;

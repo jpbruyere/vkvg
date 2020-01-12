@@ -3,15 +3,6 @@
 #include "string.h" //for nanosvg
 //#define NANOSVG_IMPLEMENTATION	// Expands implementation
 #include "nanosvg.h"
-
-/*void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
-    float a = (c >> 24 & 255) / 255.f;
-    float b = (c >> 16 & 255) / 255.f;
-    float g = (c >> 8 & 255) / 255.f;
-    float r = (c & 255) / 255.f;
-    vkvg_set_source_rgba(ctx,r,g,b,a*alpha);
-}*/
-
 static float rotation = 0.f;
 static const char* path = "data/tiger.svg";
 //static const char* path = "data/vkvg.svg";
@@ -62,7 +53,7 @@ void test_svg () {
     vkvg_set_source_rgba(ctx,1.0,1.0,1.0,1);
     vkvg_paint(ctx);
 
-    vkvg_set_matrix(ctx,&mat);
+    //vkvg_set_matrix(ctx,&mat);
 
     NSVGimage* svg;
     NSVGshape* shape;
@@ -122,12 +113,10 @@ void test_svg () {
             _svg_set_color(ctx, g->stops[0].color, o);
         }
 
-        vkvg_stroke(ctx);
+        vkvg_stroke(ctx);        
     }
 
     nsvgDelete(svg);
-
-
     vkvg_destroy(ctx);
 }
 

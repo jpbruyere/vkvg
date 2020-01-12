@@ -88,8 +88,8 @@ void main()
 		break;
 	}
 
-	/*if (inFontUV.z >= 0.0)
-		c *= texture(fontMap, inFontUV);*/
+	if (inFontUV.z >= 0.0)
+		c *= texture(fontMap, inFontUV);
 
 	outFragColor = c;
 }
