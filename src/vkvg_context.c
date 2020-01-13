@@ -319,7 +319,8 @@ void vkvg_rel_line_to (VkvgContext ctx, float x, float y){
         ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
         return;
     }
-    _add_point_relative (ctx, x, y);
+    vec2 cp = _get_current_position(ctx);
+    vkvg_line_to(ctx, cp.x + x, cp.y + y);
 }
 /**
  * @brief Draw line from current point, if no current point is defined, only a move to will be executed.
@@ -333,8 +334,8 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
     if (_current_path_is_empty(ctx)){
         vkvg_move_to(ctx, x,y);
         return;
-    }//else if (vec2_equ(_get_current_position(ctx),p))
-    //    return;
+    }else if (vec2_equ(_get_current_position(ctx),p))
+        return;
 
     _add_point(ctx,x,y);
 }
@@ -449,14 +450,15 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
         return;
     }
     vec2 cp = _get_current_position(ctx);
+    vkvg_move_to(ctx, cp.x + x, cp.y + y);
 
-    _finish_path(ctx);
+    /*_finish_path(ctx);
     //start subpath
     ctx->pathes[ctx->pathPtr] = ctx->pointCount;
     vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &x, &y);
-    _add_point_pretransformed(ctx, cp.x + x, cp.y + y);
+    _add_point(ctx, cp.x + x, cp.y + y);
     _check_pathes_array(ctx);
-    ctx->pathPtr++;
+    ctx->pathPtr++;*/
     //***
 }
 void vkvg_move_to (VkvgContext ctx, float x, float y)
@@ -472,16 +474,11 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
 
     _set_curve_start (ctx);
 
-    //TODO:x1,y1 are transformed 2 times if path is empty, one in move_to, and one before recursive_bezier.
-    vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x1, &y1);
-    vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x2, &y2);
-    vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x3, &y3);
-
     _recursive_bezier (ctx, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
     /*cp.x = x3;
     cp.y = y3;
     if (!vec2_equ(ctx->points[ctx->pointCount-1],cp))*/
-    _add_point_pretransformed(ctx,x3,y3);
+    _add_point(ctx,x3,y3);
     _set_curve_end (ctx);
 }
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
@@ -490,16 +487,7 @@ void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2,
         return;
     }
     vec2 cp = _get_current_position(ctx);
-
-    _set_curve_start (ctx);
-
-    vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &x1, &y1);
-    vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &x2, &y2);
-    vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &x3, &y3);
-
-    _recursive_bezier (ctx, cp.x, cp.y, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3, 0);
-    _add_point_pretransformed(ctx, cp.x + x3, cp.y + y3);
-    _set_curve_end (ctx);
+    vkvg_curve_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
 }
 void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
     _vao_add_rectangle (ctx,x,y,w,h);
@@ -586,7 +574,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
         _draw_full_screen_quad(ctx,true);
         CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
     }else{
-        //_check_cmd_buff_state (ctx);
+        _check_cmd_buff_state (ctx);
         //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
         _fill_ec(ctx);
     }
@@ -740,7 +728,6 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 }
 void vkvg_paint (VkvgContext ctx){
     _check_cmd_buff_state (ctx);
-
     if (ctx->pattern == NULL || ctx->pattern->type == VKVG_PATTERN_TYPE_SOLID){
         //add full screen rect untransformed with current color, no need of push constant update -> no flush requested
         _vao_add_rectangle (ctx, 0, 0, ctx->bounds.extent.width, ctx->bounds.extent.height);
@@ -757,6 +744,7 @@ void vkvg_paint (VkvgContext ctx){
         //cur transform will be applied in fs for each pixel.
         _vao_add_rectangle (ctx, 0, 0, ctx->bounds.extent.width, ctx->bounds.extent.height);
     }
+    //_draw_full_screen_quad (ctx, true);
 }
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
     vkvg_set_source_rgba (ctx, r, g, b, 1);
@@ -1022,43 +1010,29 @@ void vkvg_restore (VkvgContext ctx){
 }
 
 void vkvg_translate (VkvgContext ctx, float dx, float dy){
-    //other pattern than solid use mat and matInv in shaders,
-    //so we have to flush undrawn vertices
-    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
-        _flush_cmd_buff(ctx);
     vkvg_matrix_translate (&ctx->pushConsts.mat, dx, dy);
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_scale (VkvgContext ctx, float sx, float sy){
-    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
-        _flush_cmd_buff(ctx);
     vkvg_matrix_scale (&ctx->pushConsts.mat, sx, sy);
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_rotate (VkvgContext ctx, float radians){
-    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
-        _flush_cmd_buff(ctx);
     vkvg_matrix_rotate (&ctx->pushConsts.mat, radians);
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix) {
-    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
-        _flush_cmd_buff(ctx);
     vkvg_matrix_t res;
     vkvg_matrix_multiply (&res, &ctx->pushConsts.mat, matrix);
     ctx->pushConsts.mat = res;
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_identity_matrix (VkvgContext ctx) {
-    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
-        _flush_cmd_buff(ctx);
     vkvg_matrix_t im = VKVG_IDENTITY_MATRIX;
     ctx->pushConsts.mat = im;
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
-    if (ctx->pattern && ctx->pattern->type != VKVG_PATTERN_TYPE_SOLID)
-        _flush_cmd_buff(ctx);
     ctx->pushConsts.mat = (*matrix);
     _set_mat_inv_and_vkCmdPush (ctx);
 }

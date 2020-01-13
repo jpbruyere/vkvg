@@ -58,6 +58,13 @@ void main()
 		c = inSrc;
 		break;
 	case SURFACE:
+		vec2 p = (gl_FragCoord.xy - inSrc.xy);
+		vec2 uv = vec2(
+			inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
+			inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
+		);
+		c = texture (source, uv / inSrc.zw);
+
 		/*if (inFontUV.z < -1.0){
 			//pattern is drawn with a full screen quad with no tex coord
 			//so we have to transform pixel
@@ -67,7 +74,7 @@ void main()
 					inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]);
 			c = texture (source, uv);
 		}else*/
-			c = texture (source, inFontUV.xy);
+//			c = texture (source, inFontUV.xy);
 		break;
 	case LINEAR:
 		//credit to Nikita Rokotyan for linear grad

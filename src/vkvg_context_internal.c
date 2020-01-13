@@ -138,49 +138,15 @@ void _resetMinMax (VkvgContext ctx) {
     ctx->xMin = ctx->yMin = FLT_MAX;
     ctx->xMax = ctx->yMax = FLT_MIN;
 }
-void _add_point_relative (VkvgContext ctx, float dx, float dy){
-    vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &dx, &dy);
-
-    dx += ctx->points[ctx->pointCount-1].x;
-    dy += ctx->points[ctx->pointCount-1].y;
-    ctx->points[ctx->pointCount].x = dx;
-    ctx->points[ctx->pointCount].y = dy;
-    ctx->pointCount++;
-
-    _check_point_array(ctx);
-
-    if (dx < ctx->xMin)
-        ctx->xMin = dx;
-    if (dx > ctx->xMax)
-        ctx->xMax = dx;
-    if (dy < ctx->yMin)
-        ctx->yMin = dy;
-    if (dy > ctx->yMax)
-        ctx->yMax = dy;
-}
-void _add_point_pretransformed (VkvgContext ctx, float x, float y){
-    ctx->points[ctx->pointCount] = (vec2){x,y};
-    ctx->pointCount++;
-
-    _check_point_array(ctx);
-
-    if (x < ctx->xMin)
-        ctx->xMin = x;
-    if (x > ctx->xMax)
-        ctx->xMax = x;
-    if (y < ctx->yMin)
-        ctx->yMin = y;
-    if (y > ctx->yMax)
-        ctx->yMax = y;
-}
 void _add_point (VkvgContext ctx, float x, float y){
-    //pretransform all points
-    vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x, &y);
-
     ctx->points[ctx->pointCount] = (vec2){x,y};
     ctx->pointCount++;
 
     _check_point_array(ctx);
+
+    //bounds are computed here to scissor the painting operation
+    //that speed up fill drastically.
+    vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x, &y);
 
     if (x < ctx->xMin)
         ctx->xMin = x;
@@ -580,6 +546,8 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 //compute inverse mat used in shader when context matrix has changed
 //then trigger push constants command
 void _set_mat_inv_and_vkCmdPush (VkvgContext ctx) {
+    if (_undrawn_vertices(ctx))
+        _record_draw_cmd (ctx);//emit draw cmd before push new cst
     ctx->pushConsts.matInv = ctx->pushConsts.mat;
     vkvg_matrix_invert (&ctx->pushConsts.matInv);
     ctx->pushCstDirty = true;
@@ -950,7 +918,7 @@ void _recursive_bezier (VkvgContext ctx,
                 //----------------------
                 if(m_angle_tolerance < curve_angle_tolerance_epsilon)
                 {
-                    _add_point_pretransformed(ctx, x1234, y1234);
+                    _add_point(ctx, x1234, y1234);
                     return;
                 }
 
@@ -966,7 +934,7 @@ void _recursive_bezier (VkvgContext ctx,
                 {
                     // Finally we can stop the recursion
                     //----------------------
-                    _add_point_pretransformed(ctx, x1234, y1234);
+                    _add_point(ctx, x1234, y1234);
                     return;
                 }
 
@@ -974,13 +942,13 @@ void _recursive_bezier (VkvgContext ctx,
                 {
                     if(da1 > m_cusp_limit)
                     {
-                        _add_point_pretransformed (ctx, x2, y2);
+                        _add_point (ctx, x2, y2);
                         return;
                     }
 
                     if(da2 > m_cusp_limit)
                     {
-                        _add_point_pretransformed (ctx, x3, y3);
+                        _add_point (ctx, x3, y3);
                         return;
                     }
                 }
@@ -994,7 +962,7 @@ void _recursive_bezier (VkvgContext ctx,
                 {
                     if(m_angle_tolerance < curve_angle_tolerance_epsilon)
                     {
-                        _add_point_pretransformed (ctx, x1234, y1234);
+                        _add_point (ctx, x1234, y1234);
                         return;
                     }
 
@@ -1005,8 +973,8 @@ void _recursive_bezier (VkvgContext ctx,
 
                     if(da1 < m_angle_tolerance)
                     {
-                        _add_point_pretransformed (ctx, x2, y2);
-                        _add_point_pretransformed (ctx, x3, y3);
+                        _add_point (ctx, x2, y2);
+                        _add_point (ctx, x3, y3);
                         return;
                     }
 
@@ -1014,7 +982,7 @@ void _recursive_bezier (VkvgContext ctx,
                     {
                         if(da1 > m_cusp_limit)
                         {
-                            _add_point_pretransformed (ctx, x2, y2);
+                            _add_point (ctx, x2, y2);
                             return;
                         }
                     }
@@ -1026,7 +994,7 @@ void _recursive_bezier (VkvgContext ctx,
                 {
                     if(m_angle_tolerance < curve_angle_tolerance_epsilon)
                     {
-                        _add_point_pretransformed (ctx, x1234, y1234);
+                        _add_point (ctx, x1234, y1234);
                         return;
                     }
 
@@ -1037,8 +1005,8 @@ void _recursive_bezier (VkvgContext ctx,
 
                     if(da1 < m_angle_tolerance)
                     {
-                        _add_point_pretransformed (ctx, x2, y2);
-                        _add_point_pretransformed (ctx, x3, y3);
+                        _add_point (ctx, x2, y2);
+                        _add_point (ctx, x3, y3);
                         return;
                     }
 
@@ -1060,7 +1028,7 @@ void _recursive_bezier (VkvgContext ctx,
                 dy = y1234 - (y1 + y4) / 2;
                 if(dx*dx + dy*dy <= m_distance_tolerance)
                 {
-                    _add_point_pretransformed (ctx, x1234, y1234);
+                    _add_point (ctx, x1234, y1234);
                     return;
                 }
             }

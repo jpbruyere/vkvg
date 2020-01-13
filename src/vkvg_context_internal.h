@@ -192,9 +192,6 @@ float _get_arc_step         (float radius);
 
 vec2 _get_current_position  (VkvgContext ctx);
 void _add_point         	(VkvgContext ctx, float x, float y);
-void _add_point_pretransformed (VkvgContext ctx, float x, float y);
-void _add_point_relative    (VkvgContext ctx, float dx, float dy);
-
 void _resetMinMax           (VkvgContext ctx);
 
 void _poly_fill             (VkvgContext ctx);
