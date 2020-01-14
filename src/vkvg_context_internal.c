@@ -215,7 +215,7 @@ void _add_vertexf (VkvgContext ctx, float x, float y){
     Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
     pVert->pos.x = x;
     pVert->pos.y = y;
-    pVert->uv = (vec3){0};
+    pVert->uv = (vec3){0,0,-1};
     ctx->vertCount++;
 
     _check_vbo_size(ctx);
@@ -663,24 +663,17 @@ void _init_descriptor_sets (VkvgContext ctx){
     descriptorSetAllocateInfo.pSetLayouts = &dev->dslGrad;
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
-void add_line(vkvg_context* ctx, vec2 p1, vec2 p2, vec4 col){
-    Vertex v = {{p1.x,p1.y},{0,0,-1}};
-    _add_vertex(ctx, v);
-    v.pos = p2;
-    _add_vertex(ctx, v);
-    VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount];
-    inds[0] = ctx->vertCount - 2;
-    inds[1] = ctx->vertCount - 1;
-    ctx->indCount+=2;
-}
 
-void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR, bool isCurve){
+float _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR, bool isCurve){
     vec2 v0n = vec2_line_norm(ctx->points[iL], ctx->points[i]);
     vec2 v1n = vec2_line_norm(ctx->points[i], ctx->points[iR]);
 
     vec2 bisec = vec2_norm(vec2_add(v0n,v1n));
 
-    float alpha = acosf(v0n.x * v1n.x + v0n.y * v1n.y)/2;
+    float dot = v0n.x * v1n.x + v0n.y * v1n.y;
+    //printf("%f\n", dot);
+
+    float alpha = acosf(dot)/2;
     float cross = v0n.x * v1n.y - v0n.y * v1n.x;
 
     if (cross<0)
@@ -690,7 +683,7 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
     bisec = vec2_perp(bisec);
     bisec = vec2_mult(bisec,lh);
 
-    uint32_t idx = ctx->vertCount - ctx->curVertOffset;
+    VKVG_IBO_INDEX_TYPE idx = ctx->vertCount - ctx->curVertOffset;
 
     if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
         v.pos = vec2_add(ctx->points[i], bisec);
@@ -743,15 +736,15 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
                     a+=step;
                 }
             }
-            uint32_t p0Idx = ctx->vertCount - ctx->curVertOffset;
+            VKVG_IBO_INDEX_TYPE p0Idx = ctx->vertCount - ctx->curVertOffset;
             _add_triangle_indices(ctx, idx, idx+2, idx+1);
             if (cross<0){
-                for (uint p = idx+2; p < p0Idx; p++)
+                for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p, p+1, idx);
                 _add_triangle_indices(ctx, p0Idx, p0Idx+2, idx);
                 _add_triangle_indices(ctx, idx, p0Idx+1, p0Idx+2);
             }else{
-                for (uint p = idx+2; p < p0Idx; p++)
+                for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p, p+1, idx+1);
                 _add_triangle_indices(ctx, p0Idx, p0Idx+1, idx+1);
                 _add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
@@ -780,6 +773,7 @@ void _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_
     debugLinePoints[dlpCount+1] = ctx->points[iR];
     dlpCount+=2;
 #endif*/
+    return cross;
 }
 
 bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
@@ -998,8 +992,7 @@ void _poly_fill (VkvgContext ctx){
     CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
     uint32_t ptrPath = 0;
-    Vertex v = {0};
-    v.uv.z = -1;
+    Vertex v = {{0},{0,0,-1}};
 
     while (ptrPath < ctx->pathPtr){
         if (ctx->pathes[ptrPath+1]&PATH_IS_CURVE_BIT){
@@ -1101,7 +1094,7 @@ void _fill_ec (VkvgContext ctx){
 
         ptrPath+=2;
     }
-    _record_draw_cmd(ctx);    
+    _record_draw_cmd(ctx);
 }
 
 static const uint32_t one = 1;

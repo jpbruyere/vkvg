@@ -614,7 +614,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                     a+=step;
                 }
                 VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-                for (uint p = firstIdx; p < p0Idx; p++)
+                for (VKVG_IBO_INDEX_TYPE p = firstIdx; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p0Idx+1, p, p+1);
                 firstIdx = p0Idx;
             }
@@ -670,7 +670,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
             firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
-            if (ctx->lineCap == VKVG_LINE_CAP_ROUND){                
+            if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
                 float step = M_PIF / hw;
                 float a = acosf(n.x)+ M_PIF_2;
                 if (n.y < 0)
@@ -683,20 +683,26 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 }
 
                 VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset - 1);
-                for (uint p = firstIdx-1 ; p < p0Idx; p++)
+                for (VKVG_IBO_INDEX_TYPE p = firstIdx-1 ; p < p0Idx; p++)
                     _add_triangle_indices(ctx, p+1, p, firstIdx-2);
             }
 
             i++;
         }else{
             iR = ctx->pathes[ptrPath] & PATH_ELT_MASK;
-            _build_vb_step (ctx,v,hw,iL,i,iR, false);
+            float cross =_build_vb_step (ctx,v,hw,iL,i,iR, false);
 
             VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
             VKVG_IBO_INDEX_TYPE ii = firstIdx;
-            inds[1] = ii;
-            inds[4] = ii;
-            inds[5] = ii+1;
+            if (cross < 0 && ctx->lineJoin != VKVG_LINE_JOIN_MITER){
+                inds[1] = ii+1;
+                inds[4] = ii+1;
+                inds[5] = ii;
+            }else{
+                inds[1] = ii;
+                inds[4] = ii;
+                inds[5] = ii+1;
+            }
             i++;
         }
 

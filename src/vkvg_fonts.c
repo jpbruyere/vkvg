@@ -457,7 +457,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
     unsigned int glyph_count;
     hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos (tr->hbBuf, &glyph_count);
 
-    Vertex v = {};
+    Vertex v = {{0},{0}};
     vec2 pen = {0,0};
 
     if (!_current_path_is_empty(ctx))
