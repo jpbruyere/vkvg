@@ -50,7 +50,7 @@ static uint8_t log_level	= LOG_ERR;// | LOG_INFO | LOG_DEBUG | LOG_INFO_PATH;
 #define LOG
 #endif
 
-typedef enum _vkvg_status {
+typedef enum {
     VKVG_STATUS_SUCCESS = 0,
     VKVG_STATUS_NO_MEMORY,
     VKVG_STATUS_INVALID_RESTORE,
@@ -73,26 +73,26 @@ typedef enum _vkvg_status {
     VKVG_STATUS_INVALID_DASH
 }vkvg_status_t;
 
-typedef enum _vkvg_direction {
+typedef enum {
     VKVG_HORIZONTAL	= 0,
     VKVG_VERTICAL	= 1
 }vkvg_direction_t;
 
-typedef enum _vkvg_format {
+typedef enum {
     VKVG_FORMAT_ARGB32,
     VKVG_FORMAT_RGB24,
     VKVG_FORMAT_A8,
     VKVG_FORMAT_A1
 } vkvg_format_t;
 
-typedef enum _vkvg_extend {
+typedef enum {
     VKVG_EXTEND_NONE,
     VKVG_EXTEND_REPEAT,
     VKVG_EXTEND_REFLECT,
     VKVG_EXTEND_PAD
 } vkvg_extend_t;
 
-typedef enum _vkvg_filter {
+typedef enum {
     VKVG_FILTER_FAST,
     VKVG_FILTER_GOOD,
     VKVG_FILTER_BEST,
@@ -101,7 +101,7 @@ typedef enum _vkvg_filter {
     VKVG_FILTER_GAUSSIAN,
 } vkvg_filter_t;
 
-typedef enum _vkvg_pattern_type {
+typedef enum {
     VKVG_PATTERN_TYPE_SOLID,
     VKVG_PATTERN_TYPE_SURFACE,
     VKVG_PATTERN_TYPE_LINEAR,
@@ -110,24 +110,24 @@ typedef enum _vkvg_pattern_type {
     VKVG_PATTERN_TYPE_RASTER_SOURCE,
 } vkvg_pattern_type_t;
 
-typedef enum _vkvg_line_cap {
+typedef enum {
     VKVG_LINE_CAP_BUTT,
     VKVG_LINE_CAP_ROUND,
     VKVG_LINE_CAP_SQUARE
 } vkvg_line_cap_t;
 
-typedef enum _vkvg_line_join {
+typedef enum {
     VKVG_LINE_JOIN_MITER,
     VKVG_LINE_JOIN_ROUND,
     VKVG_LINE_JOIN_BEVEL
 } vkvg_line_join_t;
 
-typedef enum _vkvg_fill_rule {
+typedef enum {
     VKVG_FILL_RULE_EVEN_ODD,
     VKVG_FILL_RULE_NON_ZERO
 } vkvg_fill_rule_t;
 
-typedef struct _vkvg_color_t{
+typedef struct {
     float r;
     float g;
     float b;
@@ -279,6 +279,8 @@ void vkvg_set_source        (VkvgContext ctx, VkvgPattern pat);
 void vkvg_set_operator      (VkvgContext ctx, vkvg_operator_t op);
 void vkvg_set_fill_rule     (VkvgContext ctx, vkvg_fill_rule_t fr);
 
+void vkvg_set_dash          (VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset);
+void vkvg_get_dash          (VkvgContext ctx, const float *dashes, uint32_t* num_dashes, float* offset);
 
 float               vkvg_get_line_width     (VkvgContext ctx);
 vkvg_line_cap_t     vkvg_get_line_cap       (VkvgContext ctx);

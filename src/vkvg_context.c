@@ -61,6 +61,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->sizeIndices    = ctx->sizeIBO = VKVG_IBO_SIZE;
     ctx->sizePathes     = VKVG_PATHES_SIZE;
     ctx->lineWidth      = 1;
+    ctx->dashCount      = 0;
+    ctx->dashOffset     = 0;
+    ctx->dashes         = NULL;
     ctx->pSurf          = surf;
     ctx->curOperator    = VKVG_OPERATOR_OVER;
     ctx->curFillRule    = VKVG_FILL_RULE_NON_ZERO;
@@ -216,6 +219,8 @@ void vkvg_destroy (VkvgContext ctx)
     free(ctx->selectedFont.fontFile);
     free(ctx->pathes);
     free(ctx->points);
+    if (ctx->dashCount > 0)
+        free(ctx->dashes);
 
     //free saved context stack elmt
     vkvg_context_save_t* next = ctx->pSavedCtxs;
@@ -751,9 +756,47 @@ void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr){
 vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx){
     return ctx->curFillRule;
 }
+/**
+ * @brief This function return the current line width use by vkvg_stroke() as set by vkvg_set_line_width().
+ * @param a vkvg context.
+ * @return current line width.
+ */
 float vkvg_get_line_width (VkvgContext ctx){
     return ctx->lineWidth;
 }
+/**
+ * @brief Sets the dash pattern to be used by vkvg_stroke(). A dash pattern is specified by dashes , an array of positive values. Each value provides the length of alternate "on" and "off" portions of the stroke. The offset specifies an offset into the pattern at which the stroke begins.
+ * @param a vkvg context.
+ * @param a pointer on an array of float values defining alternate lengths of on and off stroke portions.
+ * @param the length of the dash array.
+ * @param an offset into the dash pattern at which the stroke should start.
+ */
+void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset){
+    if (ctx->dashCount > 0)
+        free (ctx->dashes);
+    ctx->dashCount = num_dashes;
+    ctx->dashOffset = offset;
+    if (ctx->dashCount == 0)
+        return;
+    ctx->dashes = (float*)malloc (sizeof(float) * ctx->dashCount);
+    memcpy (ctx->dashes, dashes, sizeof(float) * ctx->dashCount);
+}
+/**
+ * @brief get dash settings. If dashes pointer is NULL, only count and offset are returned.
+ * @param a vkvg context.
+ * @param return value for the dash array. If count is 0, this pointer stay untouched. If NULL, only count and offset are returned.
+ * @param return length of dash array or 0 if dash not set.
+ * @param return value for the current dash offset
+ */
+void vkvg_get_dash (VkvgContext ctx, const float* dashes, uint32_t* num_dashes, float* offset){
+    *num_dashes = ctx->dashCount;
+    *offset = ctx->dashOffset;
+    if (ctx->dashCount == 0 || dashes == NULL)
+        return;
+    memcpy ((float*)dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
+}
+
+
 vkvg_line_cap_t vkvg_get_line_cap (VkvgContext ctx){
     return ctx->lineCap;
 }
@@ -866,6 +909,12 @@ void vkvg_save (VkvgContext ctx){
     _bind_draw_pipeline (ctx);
     CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
+    sav->dashOffset = ctx->dashOffset;
+    sav->dashCount  = ctx->dashCount;
+    if (ctx->dashCount > 0) {
+        sav->dashes = (float*)malloc (sizeof(float) * ctx->dashCount);
+        memcpy (sav->dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
+    }
     sav->lineWidth  = ctx->lineWidth;
     sav->curOperator= ctx->curOperator;
     sav->lineCap    = ctx->lineCap;
@@ -956,6 +1005,15 @@ void vkvg_restore (VkvgContext ctx){
         _wait_and_submit_cmd (ctx);
         _wait_flush_fence (ctx);
         vkh_image_destroy (savStencil);
+    }
+
+    ctx->dashOffset = sav->dashOffset;
+    if (ctx->dashCount > 0)
+        free (ctx->dashes);
+    ctx->dashCount  = sav->dashCount;
+    if (ctx->dashCount > 0) {
+        ctx->dashes = (float*)malloc (sizeof(float) * ctx->dashCount);
+        memcpy (ctx->dashes, sav->dashes, sizeof(float) * ctx->dashCount);
     }
 
     ctx->lineWidth  = sav->lineWidth;

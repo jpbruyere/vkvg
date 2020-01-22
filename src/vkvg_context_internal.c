@@ -671,8 +671,6 @@ float _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32
     vec2 bisec = vec2_norm(vec2_add(v0n,v1n));
 
     float dot = v0n.x * v1n.x + v0n.y * v1n.y;
-    //printf("%f\n", dot);
-
     float alpha = acosf(dot)/2;
     float cross = v0n.x * v1n.y - v0n.y * v1n.x;
 
@@ -790,6 +788,8 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
 }
 
 void _free_ctx_save (vkvg_context_save_t* sav){
+    if (sav->dashCount > 0)
+        free (sav->dashes);
     free(sav->selectedFont.fontFile);
     free (sav);
 }

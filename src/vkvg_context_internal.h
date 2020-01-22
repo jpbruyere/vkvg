@@ -53,6 +53,10 @@ typedef struct _vkvg_context_save_t{
     struct _vkvg_context_save_t* pNext;
 
     float       lineWidth;
+    uint32_t    dashCount;      //value count in dash array, 0 if dash not set.
+    float       dashOffset;     //an offset for dash
+    float*      dashes;         //an array of alternate lengths of on and off stroke.
+
 
     vkvg_operator_t     curOperator;
     vkvg_line_cap_t     lineCap;
@@ -132,6 +136,9 @@ typedef struct _vkvg_context_t {
     uint32_t    curvePtr;
 
     float		lineWidth;
+    uint32_t    dashCount;      //value count in dash array, 0 if dash not set.
+    float       dashOffset;     //an offset for dash
+    float*      dashes;         //an array of alternate lengths of on and off stroke.
 
     vkvg_operator_t     curOperator;
     vkvg_line_cap_t     lineCap;
