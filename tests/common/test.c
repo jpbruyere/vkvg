@@ -11,10 +11,10 @@ VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
 uint test_size = 100;  // items drawn in one run, or complexity
-int iterations = 500;   // repeat test n times
+int iterations = 10000;   // repeat test n times
 
 static bool paused = false;
-static VkSampleCountFlags samples = VK_SAMPLE_COUNT_4_BIT;
+static VkSampleCountFlags samples = VK_SAMPLE_COUNT_8_BIT;
 static vk_engine_t* e;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
