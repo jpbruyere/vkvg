@@ -108,3 +108,11 @@ void vec2_inv (vec2* v){
     v->x = -v->x;
     v->y = -v->y;
 }
+// test if one component of float vector is nan
+inline bool vec2_isnan (vec2 v){
+    return (bool)(isnanf (v.x) || isnanf (v.y));
+}
+// test if one component of double vector is nan
+inline bool vec2d_isnan (vec2d v){
+    return (bool)(isnan (v.x) || isnan (v.y));
+}
