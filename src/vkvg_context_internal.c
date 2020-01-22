@@ -361,6 +361,9 @@ void _flush_vertices_caches (VkvgContext ctx) {
 void _end_render_pass (VkvgContext ctx) {
     LOG(LOG_INFO, "END RENDER PASS: ctx = %lu;\n", ctx);
     CmdEndRenderPass      (ctx->cmd);
+#ifdef DEBUG
+    vkh_cmd_label_end (ctx->cmd);
+#endif
     ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
 }
 void _record_draw_cmd (VkvgContext ctx){
@@ -430,10 +433,15 @@ void _bind_draw_pipeline (VkvgContext ctx) {
         break;
     }
 }
+const float LAB_COLOR_RP[4] = {0,0,1,1};
 
 void _start_cmd_for_render_pass (VkvgContext ctx) {
     LOG(LOG_INFO, "START RENDER PASS: ctx = %lu\n", ctx);
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+#ifdef DEBUG
+    vkh_cmd_label_start(ctx->cmd, "ctx render pass", LAB_COLOR_RP);
+#endif
 
     if (ctx->pSurf->img->layout == VK_IMAGE_LAYOUT_UNDEFINED){
         VkhImage imgMs = ctx->pSurf->imgMS;
