@@ -87,26 +87,26 @@ void _check_point_array (VkvgContext ctx){
 }
 //when empty, ptr is even, else it's odd
 //when empty, no current point is defined.
-inline bool _current_path_is_empty (VkvgContext ctx) {
+bool _current_path_is_empty (VkvgContext ctx) {
     return ctx->pathPtr % 2 == 0;
 }
 //this function expect that current point exists
-inline vec2 _get_current_position (VkvgContext ctx) {
+vec2 _get_current_position (VkvgContext ctx) {
     return ctx->points[ctx->pointCount-1];
 }
 //set curve start point and set path has curve bit
-inline void _set_curve_start (VkvgContext ctx) {
+void _set_curve_start (VkvgContext ctx) {
     ctx->pathes[ctx->pathPtr+ctx->curvePtr+1] = (ctx->pointCount - 1);
     ctx->pathes[ctx->pathPtr-1] |= PATH_HAS_CURVES_BIT;
 }
 //set curve end point and set path has curve bit
-inline void _set_curve_end (VkvgContext ctx) {
+void _set_curve_end (VkvgContext ctx) {
     ctx->pathes[ctx->pathPtr+ctx->curvePtr+2] = (ctx->pointCount - 1)|PATH_IS_CURVE_BIT;
     ctx->curvePtr+=2;
     _check_pathes_array(ctx);
 }
 //path start pointed at ptrPath has curve bit
-inline bool _path_has_curves (VkvgContext ctx, uint32_t ptrPath) {
+bool _path_has_curves (VkvgContext ctx, uint32_t ptrPath) {
     return ctx->pathes[ptrPath] & PATH_HAS_CURVES_BIT;
 }
 //this function expect that current path is empty
@@ -138,7 +138,7 @@ void _clear_path (VkvgContext ctx){
     ctx->curvePtr = 0;
     _resetMinMax(ctx);
 }
-inline bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
+bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
     return ctx->pathes[ptrPath] & PATH_CLOSED_BIT;
 }
 void _resetMinMax (VkvgContext ctx) {
@@ -172,7 +172,7 @@ float _normalizeAngle(float a)
     else
         return res;
 }
-inline float _get_arc_step (float radius) {
+float _get_arc_step (float radius) {
     return M_PIF/sqrtf(radius)*0.35f;
 }
 void _create_gradient_buff (VkvgContext ctx){
@@ -285,10 +285,10 @@ void _create_cmd_buff (VkvgContext ctx){
 void _clear_attachment (VkvgContext ctx) {
 
 }
-inline void _wait_flush_fence (VkvgContext ctx) {
+void _wait_flush_fence (VkvgContext ctx) {
     vkWaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
 }
-inline void _reset_flush_fence (VkvgContext ctx) {
+void _reset_flush_fence (VkvgContext ctx) {
     vkResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
 }
 void _wait_and_submit_cmd (VkvgContext ctx){
@@ -487,7 +487,7 @@ void _set_mat_inv_and_vkCmdPush (VkvgContext ctx) {
     vkvg_matrix_invert (&ctx->pushConsts.matInv);
     ctx->pushCstDirty = true;
 }
-inline void _update_push_constants (VkvgContext ctx) {
+void _update_push_constants (VkvgContext ctx) {
     CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
     ctx->pushCstDirty = false;
