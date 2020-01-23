@@ -1,7 +1,10 @@
 #include "vkengine.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "time.h"
+#include <stdio.h>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <time.h>
+
 #include "vkvg.h"
 
 #include "vkh_device.h"
@@ -18,7 +21,7 @@
 # define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
-#ifdef _WIN32 // MSC_VER
+#ifdef _WINDOWS // MSC_VER
     #define WIN32_LEAN_AND_MEAN
     #define NOMINMAX
     #include <Windows.h> // Windows.h -> WinDef.h defines min() max()
