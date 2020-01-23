@@ -14,7 +14,7 @@ void test(){
     vkvg_set_line_width(ctx, 1.0f);
     //vkvg_set_line_join(ctx,VKVG_LINE_JOIN_BEVEL);
 
-    for (uint i=0; i<test_size; i++) {
+    for (uint32_t i=0; i<test_size; i++) {
         randomize_color(ctx);
 
         float r = 0.5f*w*rand()/RAND_MAX;

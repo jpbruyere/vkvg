@@ -5,8 +5,7 @@ environment:
     APPVEYOR_SAVE_CACHE_ON_ERROR: true
 
 install:
-    - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.130.0/windows/VulkanSDK-1.1.130.0-Installer.exe?Human=true 
-    - VulkanSDK.exe /S
+    - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.130.0/windows/VulkanSDK-1.1.130.0-Installer.exe?Human=true && VulkanSDK.exe /S
     - vcpkg install freetype harfbuzz fontconfig glfw3
 cache:
     - VulkanSDK.exe
@@ -18,7 +17,6 @@ before_build:
     - mkdir build
     - cd build
     - cmake -G "Visual Studio 14" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
-    - ls
 
 build_script:
     - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"

@@ -1,46 +1,93 @@
-# Copyright (c) 2012, Intel Corporation
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-# * Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-# * Redistributions in binary form must reproduce the above copyright notice,
-#   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.
-# * Neither the name of Intel Corporation nor the names of its contributors may
-#   be used to endorse or promote products derived from this software without
-#   specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#
-# Try to find Harfbuzz include and library directories.
-#
-# After successful discovery, this will set for inclusion where needed:
-# HARFBUZZ_INCLUDE_DIRS - containg the HarfBuzz headers
-# HARFBUZZ_LIBRARIES - containg the HarfBuzz library
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
+# file Copyright.txt or https://cmake.org/licensing for details.
 
-INCLUDE(FindPkgConfig)
+#.rst:
+# FindHarfBuzz
+# ------------
+#
+# Find the HarfBuzz text shaping engine includes and library.
+#
+# Imported Targets
+# ^^^^^^^^^^^^^^^^
+#
+# This module defines the following :prop_tgt:`IMPORTED` target:
+#
+# ``HarfBuzz::HarfBuzz``
+#   The Harfbuzz ``harfbuzz`` library, if found
+#
+# Result Variables
+# ^^^^^^^^^^^^^^^^
+#
+# This module will set the following variables in your project:
+#
+# ``HARFBUZZ_FOUND``
+#   true if the HarfBuzz headers and libraries were found
+# ``HARFBUZZ_INCLUDE_DIRS``
+#   directories containing the Harfbuzz headers.
+# ``HARFBUZZ_LIBRARIES``
+#   the library to link against
+# ``HARFBUZZ_VERSION_STRING``
+#   the version of harfbuzz found
 
-PKG_CHECK_MODULES(PC_HARFBUZZ harfbuzz>=0.9.0)
+# Created by Ebrahim Byagowi.
 
-FIND_PATH(HARFBUZZ_INCLUDE_DIRS NAMES hb.h
-  HINTS ${PC_HARFBUZZ_INCLUDE_DIRS} ${PC_HARFBUZZ_INCLUDEDIR}
+set(HARFBUZZ_FIND_ARGS
+  HINTS
+    ENV HARFBUZZ_DIR
+  PATHS
+    ENV GTKMM_BASEPATH
+    [HKEY_CURRENT_USER\\SOFTWARE\\gtkmm\\2.4;Path]
+    [HKEY_LOCAL_MACHINE\\SOFTWARE\\gtkmm\\2.4;Path]
 )
 
-FIND_LIBRARY(HARFBUZZ_LIBRARIES NAMES harfbuzz
-  HINTS ${PC_HARFBUZZ_LIBRARY_DIRS} ${PC_HARFBUZZ_LIBDIR}
+find_path(
+  HARFBUZZ_INCLUDE_DIRS
+  hb.h
+  ${HARFBUZZ_FIND_ARGS}
+  PATH_SUFFIXES
+    src
+    harfbuzz
 )
 
-INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(HarfBuzz DEFAULT_MSG HARFBUZZ_INCLUDE_DIRS HARFBUZZ_LIBRARIES)
+if(NOT HARFBUZZ_LIBRARY)
+  find_library(HARFBUZZ_LIBRARY
+    NAMES
+      harfbuzz
+      libharfbuzz
+    ${HARFBUZZ_FIND_ARGS}
+    PATH_SUFFIXES
+      lib
+  )
+  include(SelectLibraryConfigurations)
+  select_library_configurations(HARFBUZZ)
+else()
+  # on Windows, ensure paths are in canonical format (forward slahes):
+  file(TO_CMAKE_PATH "${HARFBUZZ_LIBRARY}" HARFBUZZ_LIBRARY)
+endif()
+
+unset(HARFBUZZ_FIND_ARGS)
+
+# set the user variables
+set(HARFBUZZ_LIBRARIES "${HARFBUZZ_LIBRARY}")
+
+include(FindPackageHandleStandardArgs)
+
+find_package_handle_standard_args(
+  HarfBuzz
+  REQUIRED_VARS
+    HARFBUZZ_LIBRARY
+    HARFBUZZ_INCLUDE_DIRS
+  VERSION_VAR
+  HARFBUZZ_VERSION_STRING
+)
+
+if(HARFBUZZ_FOUND)
+  if(NOT TARGET HarfBuzz::HarfBuzz)
+    add_library(HarfBuzz::HarfBuzz UNKNOWN IMPORTED)
+    set_target_properties(HarfBuzz::HarfBuzz PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${HARFBUZZ_INCLUDE_DIRS}")
+    set_target_properties(HarfBuzz::HarfBuzz PROPERTIES
+      IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+      IMPORTED_LOCATION "${HARFBUZZ_LIBRARY}")
+  endif()
+endif()
