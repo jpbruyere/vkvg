@@ -32,6 +32,11 @@
 
 #define M_PIF               3.14159265358979323846f /* float pi */
 #define M_PIF_2             1.57079632679489661923f
+
+#ifndef M_2_PI
+    #define M_2_PI		0.63661977236758134308	/* 2/pi */
+#endif
+
 #define PATH_CLOSED_BIT     0x80000000              /* most significant bit of path elmts is closed/open path state */
 #define PATH_HAS_CURVES_BIT 0x40000000              /* 2d most significant bit of path elmts start = true if curve data are present,
                                                        stored to avoid emiting join in curves */

@@ -590,7 +590,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         ctx->pushConsts.source = bounds;
 
         //transform control point with current ctx matrix
-        vkvg_gradient_t grad = {};
+        vkvg_gradient_t grad = {0};
         memcpy(&grad, pat->data, sizeof(vkvg_gradient_t));
 
         vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
@@ -1036,7 +1036,7 @@ void _poly_fill (VkvgContext ctx){
 }
 void _fill_ec (VkvgContext ctx){
     uint32_t ptrPath = 0;;
-    Vertex v = {};
+    Vertex v = {0};
     v.uv.z = -1;
 
     while (ptrPath < ctx->pathPtr){
@@ -1051,7 +1051,7 @@ void _fill_ec (VkvgContext ctx){
         uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
         uint32_t firstVertIdx = ctx->vertCount-ctx->curVertOffset;
 
-        ear_clip_point ecps[pathPointCount];
+        ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
         uint32_t ecps_count = pathPointCount;
         uint32_t i = 0;
 
@@ -1106,6 +1106,7 @@ void _fill_ec (VkvgContext ctx){
             _add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
 
         ptrPath+=2;
+        free (ecps);
     }
     _record_draw_cmd(ctx);
 }
@@ -1116,7 +1117,7 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
     if (ctx->xMin < 0 || ctx->yMin < 0)
         useScissor = false;
     if (useScissor && ctx->xMin < FLT_MAX) {
-        VkRect2D r = {ctx->xMin, ctx->yMin, ctx->xMax - ctx->xMin, ctx->yMax - ctx->yMin};
+        VkRect2D r = {{ctx->xMin, ctx->yMin}, {ctx->xMax - ctx->xMin, ctx->yMax - ctx->yMin}};
         CmdSetScissor(ctx->cmd, 0, 1, &r);
     }
     CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,

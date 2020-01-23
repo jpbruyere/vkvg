@@ -420,7 +420,7 @@ void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
 void _text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents) {
     _update_current_font (ctx);
 
-    vkvg_text_run_t tr = {};
+    vkvg_text_run_t tr = {0};
     _create_text_run (ctx, text, &tr);
 
     *extents = tr.extents;
@@ -532,7 +532,7 @@ void _show_texture (vkvg_context* ctx){
 
 void _show_text (VkvgContext ctx, const char* text){
 
-    vkvg_text_run_t tr = {};
+    vkvg_text_run_t tr = {0};
     _create_text_run (ctx, text, &tr);
 
     _show_text_run (ctx, &tr);

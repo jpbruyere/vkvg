@@ -22,7 +22,7 @@
 #include "cross_os.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 
 int directoryExists (const char* path) {
