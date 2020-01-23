@@ -49,7 +49,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     VkvgDevice dev = surf->dev;
     VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
-    LOG(LOG_INFO, "CREATE Context: ctx = %lu; surf = %lu\n", (ulong)ctx, (ulong)surf);
+    LOG(LOG_INFO, "CREATE Context: ctx = %lu; surf = %lu\n", (uint64_t)ctx, (uint64_t)surf);
 
     if (ctx==NULL) {
         dev->status = VKVG_STATUS_NO_MEMORY;
@@ -206,7 +206,7 @@ void vkvg_destroy (VkvgContext ctx)
     _flush_cmd_buff(ctx);
     _wait_flush_fence(ctx);
 
-    LOG(LOG_INFO, "DESTROY Context: ctx = %lu; surf = %lu\n", (ulong)ctx, (ulong)ctx->pSurf);
+    LOG(LOG_INFO, "DESTROY Context: ctx = %lu; surf = %lu\n", (uint64_t)ctx, (uint64_t)ctx->pSurf);
 
     if (ctx->pattern)
         vkvg_pattern_destroy (ctx->pattern);
@@ -867,7 +867,7 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 }
 
 void vkvg_save (VkvgContext ctx){
-    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %lu\n", (ulong)ctx);
+    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %lu\n", (uint64_t)ctx);
 
     _flush_cmd_buff (ctx);
     _wait_flush_fence (ctx);

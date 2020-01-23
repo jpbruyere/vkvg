@@ -201,7 +201,7 @@ void _dump_glyphs (FT_Face face){
         FT_Get_Glyph_Name(face,i,gname,256);
 
 
-        printf("glyph: %s (%d,%d;%d), max advance:%d\n", gname,
+        printf("glyph: %s (%d,%d;%d), max advance:%ld\n", gname,
                slot->bitmap.width, slot->bitmap.rows, slot->bitmap.pitch,
                face->size->metrics.max_advance/64);
     }
@@ -217,7 +217,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
     vkResetCommandBuffer(cache->cmd,0);
     vkResetFences       (dev->vkDev,1,&cache->uploadFence);
 
-    memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (ulong)(f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize));
+    memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (uint64_t)(f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize));
 
     vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 

@@ -393,7 +393,7 @@ void _record_draw_cmd (VkvgContext ctx){
     CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
 
     LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
-        (ulong)ctx, ctx->vertCount - ctx->curVertOffset,
+        (uint64_t)ctx, ctx->vertCount - ctx->curVertOffset,
         ctx->indCount - ctx->curIndStart, ctx->curVertOffset, ctx->curIndStart, ctx->indCount);
 
 #ifdef VKVG_WIRED_DEBUG
