@@ -1,7 +1,21 @@
-version: 1.0.{build}
-image:
-- Visual Studio 2015
-- Visual Studio 2017
-- Ubuntu
+version: 0.1.{build}
+
+environment:
+  VULKAN_SDK: C:/VulkanSDK/1.1.130.0
+
+install:
+    - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.130.0/windows/VulkanSDK-1.1.130.0-Installer.exe?Human=true && VulkanSDK.exe /S
+    - vcpkg search
+    - vcpkg install freetype harfbuzz fontconfig GLFW3
+cache:
+    - VulkanSDK.exe
+     c:\tools\vcpkg\installed\
+
+before_build:
+    - git submodule update --init --recursive
+    - mkdir build
+    - cd build
+    - cmake -G "Visual Studio 14" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+
 build:
-  verbosity: minimal
+  verbosity: detailed
