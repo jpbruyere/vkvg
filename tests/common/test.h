@@ -21,7 +21,7 @@
 # define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
-#ifdef _WINDOWS // MSC_VER
+#if defined(_WIN32) || defined(_WIN64)
     #define WIN32_LEAN_AND_MEAN
     #define NOMINMAX
     #include <Windows.h> // Windows.h -> WinDef.h defines min() max()
@@ -75,7 +75,7 @@
     }
 #else
     #include <sys/time.h>
-#endif // _WIN32
+#endif
 
 extern uint32_t test_size;
 extern int iterations;

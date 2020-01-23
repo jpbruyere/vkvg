@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2020 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -734,7 +734,7 @@ void vkvg_paint (VkvgContext ctx){
     _check_cmd_buff_state (ctx);
     _draw_full_screen_quad (ctx, true);
 }
-inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
+void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
     vkvg_set_source_rgba (ctx, r, g, b, 1);
 }
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
