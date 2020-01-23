@@ -12,7 +12,8 @@ install:
     - sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-bionic.list https://packages.lunarg.com/vulkan/lunarg-vulkan-bionic.list 
     - sudo apt -qq update
     - sudo apt install vulkan-sdk libharfbuzz-dev libfreetype6-dev libfontconfig1-dev
-#    - sudo apt install libglfw3-dev
+    - sudo apt install libglfw3-dev
+
 script:
     - mkdir build
     - cd build

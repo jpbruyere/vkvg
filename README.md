@@ -12,7 +12,7 @@
 	<img src="https://travis-ci.org/jpbruyere/vkvg.svg?branch=master">
   </a>
   <a href="https://ci.appveyor.com/project/jpbruyere/vkvg">
-	<img src="https://ci.appveyor.com/api/projects/status/github/gruntjs/grunt?branch=master&svg=true">
+	<img src="https://ci.appveyor.com/api/projects/status/github/jpbruyere/vkvg?branch=master&svg=true">
   </a>
   <img src="https://img.shields.io/github/license/jpbruyere/vkvg.svg?style=flat-square">
   <a href="https://www.paypal.me/GrandTetraSoftware">
