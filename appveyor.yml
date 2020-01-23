@@ -17,5 +17,9 @@ before_build:
     - cd build
     - cmake -G "Visual Studio 14" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
     - ls
+
+build_script:
+  - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+
 build:
   verbosity: detailed
