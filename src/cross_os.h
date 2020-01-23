@@ -23,7 +23,7 @@
 #define CROSS_OS_H
 
 //cross platform os helpers
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include "windows.h"
 #elif __APPLE__
 #elif __unix__
