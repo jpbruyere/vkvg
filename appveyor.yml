@@ -1,6 +1,7 @@
 version: 0.1.{build}
 
 environment:
+    VCPKG_DEFAULT_TRIPLET: x64-windows
     VULKAN_SDK: C:/VulkanSDK/1.1.130.0
     APPVEYOR_SAVE_CACHE_ON_ERROR: true
 
