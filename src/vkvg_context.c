@@ -588,14 +588,12 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     v.uv.z = -1;
 
     float hw = ctx->lineWidth / 2.0f;
-    uint32_t i = 0, ptrPath = 0;
-
-    uint32_t lastPathPointIdx, iL, iR;
+    uint32_t firstPathPointIdx = 0, lastPathPointIdx, ptrPath = 0, iL, iR;
 
     while (ptrPath < ctx->pathPtr){
         uint32_t ptrCurve = 0;
         VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-        i = ctx->pathes[ptrPath]&PATH_ELT_MASK;
+        firstPathPointIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
         LOG(LOG_INFO_PATH, "\tPATH: start = %d; ", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
 
@@ -604,16 +602,16 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
             //prevent closing on the same position, this could be generalize
             //to prevent processing of two consecutive point at the same position
-            if (vec2_equ(ctx->points[i], ctx->points[lastPathPointIdx]))
+            if (vec2_equ(ctx->points[firstPathPointIdx], ctx->points[lastPathPointIdx]))
                 lastPathPointIdx--;
             iL = lastPathPointIdx;
         }else{
             lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
             LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
 
-            vec2 n = vec2_line_norm(ctx->points[i], ctx->points[i+1]);
+            vec2 n = vec2_line_norm(ctx->points[firstPathPointIdx], ctx->points[firstPathPointIdx+1]);
 
-            vec2 p0 = ctx->points[i];
+            vec2 p0 = ctx->points[firstPathPointIdx];
             vec2 vhw = vec2_mult(n,hw);
 
             if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
@@ -646,36 +644,36 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
             _add_tri_indices_for_rect(ctx, firstIdx);
 
-            iL = i++;
+            iL = firstPathPointIdx++;
         }
 
         if (_path_has_curves (ctx,ptrPath)) {
-            while (i < lastPathPointIdx){
-                if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve]&PATH_ELT_MASK) == i){
-                    uint32_t lastCurvePoint = ctx->pathes[ptrPath + 3 + ptrCurve]&PATH_ELT_MASK;
-                    while (i<lastCurvePoint){
-                        iR = i+1;
-                        _build_vb_step (ctx, v, hw, iL, i, iR, true);
-                        iL = i++;
+            while (firstPathPointIdx < lastPathPointIdx){
+                if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve]&PATH_ELT_MASK) == firstPathPointIdx){
+                    uint32_t lastCurvePointIdx = ctx->pathes[ptrPath + 3 + ptrCurve]&PATH_ELT_MASK;
+                    while (firstPathPointIdx < lastCurvePointIdx){
+                        iR = firstPathPointIdx+1;
+                        _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[firstPathPointIdx], ctx->points[iR], true);
+                        iL = firstPathPointIdx++;
                     }
                     ptrCurve += 2;
                 }else{
-                    iR = i+1;
-                    _build_vb_step (ctx, v, hw, iL, i, iR, false);
-                    iL = i++;
+                    iR = firstPathPointIdx+1;
+                    _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[firstPathPointIdx], ctx->points[iR], false);
+                    iL = firstPathPointIdx++;
                 }
             }
         }else{
-            while (i < lastPathPointIdx){
-                iR = i+1;
-                _build_vb_step(ctx,v,hw,iL,i,iR, false);
-                iL = i++;
+            while (firstPathPointIdx < lastPathPointIdx){
+                iR = firstPathPointIdx+1;
+                _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[firstPathPointIdx], ctx->points[iR], false);
+                iL = firstPathPointIdx++;
             }
         }
 
         if (!_path_is_closed(ctx,ptrPath)){
-            vec2 n = vec2_line_norm(ctx->points[i-1], ctx->points[i]);
-            vec2 p0 = ctx->points[i];
+            vec2 n = vec2_line_norm(ctx->points[firstPathPointIdx-1], ctx->points[firstPathPointIdx]);
+            vec2 p0 = ctx->points[firstPathPointIdx];
             vec2 vhw = vec2_mult(n, hw);
 
             if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
@@ -707,10 +705,10 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                     _add_triangle_indices(ctx, p+1, p, firstIdx-2);
             }
 
-            i++;
+            firstPathPointIdx++;
         }else{
             iR = ctx->pathes[ptrPath] & PATH_ELT_MASK;
-            float cross =_build_vb_step (ctx,v,hw,iL,i,iR, false);
+            float cross = _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[firstPathPointIdx], ctx->points[iR], false);
 
             VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
             VKVG_IBO_INDEX_TYPE ii = firstIdx;
@@ -723,7 +721,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 inds[4] = ii;
                 inds[5] = ii+1;
             }
-            i++;
+            firstPathPointIdx++;
         }
 
         ptrPath+=2+ptrCurve;

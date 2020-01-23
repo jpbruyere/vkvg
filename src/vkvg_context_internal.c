@@ -672,12 +672,12 @@ void _init_descriptor_sets (VkvgContext ctx){
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
 
-float _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32_t i, uint32_t iR, bool isCurve){
+float _build_vb_step (vkvg_context* ctx, Vertex v, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve){
     //if two of the three points are equal, normal is null
-    vec2 v0n = vec2_line_norm(ctx->points[iL], ctx->points[i]);
+    vec2 v0n = vec2_line_norm(pL, p0);
     if (vec2_isnan(v0n))
         return 0;
-    vec2 v1n = vec2_line_norm(ctx->points[i], ctx->points[iR]);
+    vec2 v1n = vec2_line_norm(p0, pR);
     if (vec2_isnan(v1n))
         return 0;
 
@@ -697,21 +697,21 @@ float _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32
     VKVG_IBO_INDEX_TYPE idx = ctx->vertCount - ctx->curVertOffset;
 
     if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
-        v.pos = vec2_add(ctx->points[i], bisec);
+        v.pos = vec2_add(p0, bisec);
         _add_vertex(ctx, v);
-        v.pos = vec2_sub(ctx->points[i], bisec);
+        v.pos = vec2_sub(p0, bisec);
         _add_vertex(ctx, v);
         _add_tri_indices_for_rect(ctx, idx);
     }else{
         vec2 vp = vec2_perp(v0n);
         if (cross<0){
-            v.pos = vec2_add (ctx->points[i], bisec);
+            v.pos = vec2_add (p0, bisec);
             _add_vertex(ctx, v);
-            v.pos = vec2_sub (ctx->points[i], vec2_mult (vp, hw));
+            v.pos = vec2_sub (p0, vec2_mult (vp, hw));
         }else{
-            v.pos = vec2_add (ctx->points[i], vec2_mult (vp, hw));
+            v.pos = vec2_add (p0, vec2_mult (vp, hw));
             _add_vertex(ctx, v);
-            v.pos = vec2_sub (ctx->points[i], bisec);
+            v.pos = vec2_sub (p0, bisec);
         }
         _add_vertex(ctx, v);
 
@@ -736,14 +736,14 @@ float _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32
                 float a1 = a + alpha*2;
                 a-=step;
                 while (a > a1){
-                    _add_vertexf(ctx, cosf(a) * hw + ctx->points[i].x, sinf(a) * hw + ctx->points[i].y);
+                    _add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
                     a-=step;
                 }
             }else{
                 float a1 = a + alpha*2;
                 a+=step;
                 while (a < a1){
-                    _add_vertexf(ctx, cosf(a) * hw + ctx->points[i].x, sinf(a) * hw + ctx->points[i].y);
+                    _add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
                     a+=step;
                 }
             }
@@ -765,23 +765,23 @@ float _build_vb_step (vkvg_context* ctx, Vertex v, float hw, uint32_t iL, uint32
 
         vp = vec2_mult (vec2_perp(v1n), hw);
         if (cross<0)
-            v.pos = vec2_sub (ctx->points[i], vp);
+            v.pos = vec2_sub (p0, vp);
         else
-            v.pos = vec2_add (ctx->points[i], vp);
+            v.pos = vec2_add (p0, vp);
         _add_vertex(ctx, v);
     }
 
 /*
 #ifdef DEBUG
 
-    debugLinePoints[dlpCount] = ctx->points[i];
-    debugLinePoints[dlpCount+1] = _v2add(ctx->points[i], _vec2dToVec2(_v2Multd(v0n,10)));
+    debugLinePoints[dlpCount] = p0;
+    debugLinePoints[dlpCount+1] = _v2add(p0, _vec2dToVec2(_v2Multd(v0n,10)));
     dlpCount+=2;
-    debugLinePoints[dlpCount] = ctx->points[i];
-    debugLinePoints[dlpCount+1] = _v2add(ctx->points[i], _vec2dToVec2(_v2Multd(v1n,10)));
+    debugLinePoints[dlpCount] = p0;
+    debugLinePoints[dlpCount+1] = _v2add(p0, _vec2dToVec2(_v2Multd(v1n,10)));
     dlpCount+=2;
-    debugLinePoints[dlpCount] = ctx->points[i];
-    debugLinePoints[dlpCount+1] = ctx->points[iR];
+    debugLinePoints[dlpCount] = p0;
+    debugLinePoints[dlpCount+1] = pR;
     dlpCount+=2;
 #endif*/
     return cross;
