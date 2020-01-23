@@ -132,8 +132,8 @@ void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height) {
     bool deferredResolve = false;
     VkhPresenter r = e->renderer;
 
-    double start_time, stop_time, run_time, run_total, min_run_time = -1, max_run_time;
-    double run_time_values[iterations];
+    double start_time, stop_time, run_time, run_total = 0.0, min_run_time = -1, max_run_time;
+    double* run_time_values = (double*)malloc(iterations*sizeof(double));
 
     int i = 0;
 
@@ -171,8 +171,9 @@ void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height) {
     double avg_frames_per_second = (1.0 / avg_run_time);
     avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
 
-    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+    free (run_time_values);
 
+    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 }
 void clear_test () {
     vkDeviceWaitIdle(e->dev->dev);
@@ -213,8 +214,8 @@ void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height) {
 #endif
 
 
-    double start_time, stop_time, run_time, run_total, min_run_time = -1, max_run_time;
-    double run_time_values[iterations];
+    double start_time, stop_time, run_time, run_total = 0.0, min_run_time = -1, max_run_time;
+    double* run_time_values = (double*)malloc(iterations*sizeof(double));
 
     int i = 0;
 
@@ -281,6 +282,8 @@ void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height) {
     double standard_dev = standard_deviation (run_time_values, iterations, avg_run_time);
     double avg_frames_per_second = (1.0 / avg_run_time);
     avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
+
+    free (run_time_values);
 
     printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 

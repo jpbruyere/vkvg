@@ -82,7 +82,7 @@ void vkengine_dump_available_layers () {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, NULL);
 
-    VkLayerProperties availableLayers [layerCount];
+    VkLayerProperties* availableLayers = (VkLayerProperties*)malloc(layerCount*sizeof(VkLayerProperties));
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers);
 
     printf("Available Layers:\n");
@@ -91,9 +91,8 @@ void vkengine_dump_available_layers () {
          printf ("\t - %s\n", availableLayers[i].layerName);
     }
     printf("-----------------\n\n");
+    free (availableLayers);
 }
-
-static VkDebugReportCallbackEXT dbgReport;
 
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
     vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
@@ -104,7 +103,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     uint32_t enabledExtsCount = 0, phyCount = 0;
     const char** gflwExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
 
-    const char* enabledExts [enabledExtsCount+1];
+    const char* enabledExts [10];
 
     for (uint32_t i=0;i<enabledExtsCount;i++)
         enabledExts[i] = gflwExts[i];
