@@ -10,7 +10,7 @@ bool mouseDown = false;
 VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
-uint test_size = 100;  // items drawn in one run, or complexity
+uint32_t test_size = 100;  // items drawn in one run, or complexity
 int iterations = 10000;   // repeat test n times
 
 static bool paused = false;
@@ -110,7 +110,7 @@ double standard_deviation (const double data[], int n, double mean)
 }
 /***************/
 
-void init_test (uint width, uint height){
+void init_test (uint32_t width, uint32_t height){
     e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback (e, key_callback);
@@ -128,7 +128,7 @@ void init_test (uint width, uint height){
 
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 }
-void run_test_func (void(*testfunc)(void),uint width, uint height) {
+void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height) {
     bool deferredResolve = false;
     VkhPresenter r = e->renderer;
 
@@ -187,7 +187,7 @@ void clear_test () {
 VkvgSurface* surfaces;
 #endif
 
-void perform_test (void(*testfunc)(void),uint width, uint height) {
+void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height) {
     //dumpLayerExts();
 
     e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
@@ -205,7 +205,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
 #ifdef VKVG_TEST_DIRECT_DRAW
     surfaces = (VkvgSurface*)malloc(r->imgCount * sizeof (VkvgSurface));
-    for (uint i=0; i < r->imgCount;i++)
+    for (uint32_t i=0; i < r->imgCount;i++)
         surfaces[i] = vkvg_surface_create_for_VkhImage (device, r->ScBuffers[i]);
 #else
     surf    = vkvg_surface_create(device, width, height);
@@ -226,12 +226,12 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 #ifdef VKVG_TEST_DIRECT_DRAW
 
         if (!vkh_presenter_acquireNextImage(r, NULL, NULL)) {
-            for (uint i=0; i < r->imgCount;i++)
+            for (uint32_t i=0; i < r->imgCount;i++)
                 vkvg_surface_destroy (surfaces[i]);
 
             vkh_presenter_create_swapchain (r);
 
-            for (uint i=0; i < r->imgCount;i++)
+            for (uint32_t i=0; i < r->imgCount;i++)
                 surfaces[i] = vkvg_surface_create_for_VkhImage (device, r->ScBuffers[i]);
         }else{
             surf = surfaces[r->currentScBufferIndex];
@@ -287,7 +287,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
     vkDeviceWaitIdle(e->dev->dev);
 
 #ifdef VKVG_TEST_DIRECT_DRAW
-    for (uint i=0; i<r->imgCount;i++)
+    for (uint32_t i=0; i<r->imgCount;i++)
         vkvg_surface_destroy (surfaces[i]);
 
     free (surfaces);

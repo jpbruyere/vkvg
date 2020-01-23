@@ -74,7 +74,7 @@
     #include <sys/time.h>
 #endif // _WIN32
 
-extern uint test_size;
+extern uint32_t test_size;
 extern int iterations;
 
 extern float panX;
@@ -88,10 +88,10 @@ extern VkvgDevice device;
 extern VkvgSurface surf;
 
 //run test in one step
-void perform_test (void(*testfunc)(void),uint width, uint height);
+void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height);
 void randomize_color (VkvgContext ctx);
 
 //run test in 3 step: init, run, clear.
-void init_test (uint width, uint height);
-void run_test_func (void(*testfunc)(void),uint width, uint height);
+void init_test (uint32_t width, uint32_t height);
+void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height);
 void clear_test ();

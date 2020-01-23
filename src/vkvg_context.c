@@ -588,12 +588,12 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     v.uv.z = -1;
 
     float hw = ctx->lineWidth / 2.0f;
-    uint i = 0, ptrPath = 0;
+    uint32_t i = 0, ptrPath = 0;
 
     uint32_t lastPathPointIdx, iL, iR;
 
     while (ptrPath < ctx->pathPtr){
-        uint ptrCurve = 0;
+        uint32_t ptrCurve = 0;
         VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
         i = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 

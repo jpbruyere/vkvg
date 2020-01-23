@@ -106,7 +106,7 @@ inline void _set_curve_end (VkvgContext ctx) {
     _check_pathes_array(ctx);
 }
 //path start pointed at ptrPath has curve bit
-inline bool _path_has_curves (VkvgContext ctx, uint ptrPath) {
+inline bool _path_has_curves (VkvgContext ctx, uint32_t ptrPath) {
     return ctx->pathes[ptrPath] & PATH_HAS_CURVES_BIT;
 }
 //this function expect that current path is empty
@@ -439,10 +439,6 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
     LOG(LOG_INFO, "START RENDER PASS: ctx = %lu\n", ctx);
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-#ifdef DEBUG
-    vkh_cmd_label_start(ctx->cmd, "ctx render pass", LAB_COLOR_RP);
-#endif
-
     if (ctx->pSurf->img->layout == VK_IMAGE_LAYOUT_UNDEFINED){
         VkhImage imgMs = ctx->pSurf->imgMS;
         if (imgMs != NULL)
@@ -454,6 +450,10 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
+
+#ifdef DEBUG
+    vkh_cmd_label_start(ctx->cmd, "ctx render pass", LAB_COLOR_RP);
+#endif
 
     CmdBeginRenderPass (ctx->cmd, &ctx->renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     VkViewport viewport = {0,0,ctx->pSurf->width,ctx->pSurf->height,0,1};
@@ -1021,7 +1021,7 @@ void _poly_fill (VkvgContext ctx){
 
         VKVG_IBO_INDEX_TYPE firstVertIdx = ctx->vertCount;
 
-        for (uint i = 0; i < pathPointCount; i++) {
+        for (uint32_t i = 0; i < pathPointCount; i++) {
             v.pos = ctx->points [i+firstPtIdx];
             ctx->vertexCache[ctx->vertCount] = v;
             ctx->vertCount++;

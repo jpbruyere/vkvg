@@ -87,7 +87,7 @@ void vkengine_dump_available_layers () {
 
     printf("Available Layers:\n");
     printf("-----------------\n");
-    for (uint i=0; i<layerCount; i++) {
+    for (uint32_t i=0; i<layerCount; i++) {
          printf ("\t - %s\n", availableLayers[i].layerName);
     }
     printf("-----------------\n\n");
@@ -106,7 +106,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
     const char* enabledExts [enabledExtsCount+1];
 
-    for (uint i=0;i<enabledExtsCount;i++)
+    for (uint32_t i=0;i<enabledExtsCount;i++)
         enabledExts[i] = gflwExts[i];
 #ifdef VKVG_USE_RENDERDOC
     const uint32_t enabledLayersCount = 2;

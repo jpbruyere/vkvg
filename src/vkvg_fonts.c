@@ -257,10 +257,10 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
     FT_CHECK_RESULT(FT_Load_Glyph(f->face, gindex, FT_LOAD_RENDER));
 #endif
 
-    FT_GlyphSlot slot = f->face->glyph;
-    FT_Bitmap bmp = slot->bitmap;
-    uint8_t* data = dev->fontCache->hostBuff;
-    uint bmpWidth = bmp.width;   //real width in pixel of char bitmap
+    FT_GlyphSlot    slot    = f->face->glyph;
+    FT_Bitmap       bmp     = slot->bitmap;
+    uint8_t*        data    = dev->fontCache->hostBuff;
+    uint32_t        bmpWidth= bmp.width;   //real width in pixel of char bitmap
 
 #ifdef VKVG_LCD_FONT_FILTER
     bmpWidth /= 3;
