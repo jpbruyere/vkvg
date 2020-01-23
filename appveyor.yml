@@ -16,7 +16,7 @@ before_build:
     - git submodule update --init --recursive
     - mkdir build
     - cd build
-    - cmake -G "Visual Studio 14" ..
+    - cmake -G "Visual Studio 14" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
 
 build_script:
     - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
