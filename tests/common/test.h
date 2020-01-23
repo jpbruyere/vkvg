@@ -1,7 +1,10 @@
 #include "vkengine.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "time.h"
+#include <stdio.h>
+#include <stdlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <time.h>
+
 #include "vkvg.h"
 
 #include "vkh_device.h"
@@ -18,7 +21,7 @@
 # define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
-#ifdef _WIN32 // MSC_VER
+#if defined(_WIN32) || defined(_WIN64)
     #define WIN32_LEAN_AND_MEAN
     #define NOMINMAX
     #include <Windows.h> // Windows.h -> WinDef.h defines min() max()
@@ -51,30 +54,12 @@
     } timeval;
 
     // *sigh* no gettimeofday on Win32/Win64
-    int gettimeofday(struct timeval * tp, struct timezone * tzp)
-    {
-        // FILETIME Jan 1 1970 00:00:00
-        // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
-        static const uint64_t EPOCH = ((uint64_t) 116444736000000000ULL);
-
-        SYSTEMTIME  nSystemTime;
-        FILETIME    nFileTime;
-        uint64_t    nTime;
-
-        GetSystemTime( &nSystemTime );
-        SystemTimeToFileTime( &nSystemTime, &nFileTime );
-        nTime =  ((uint64_t)nFileTime.dwLowDateTime )      ;
-        nTime += ((uint64_t)nFileTime.dwHighDateTime) << 32;
-
-        tp->tv_sec  = (long) ((nTime - EPOCH) / 10000000L);
-        tp->tv_usec = (long) (nSystemTime.wMilliseconds * 1000);
-        return 0;
-    }
+    int gettimeofday(struct timeval * tp, struct timezone * tzp);
 #else
     #include <sys/time.h>
-#endif // _WIN32
+#endif
 
-extern uint test_size;
+extern uint32_t test_size;
 extern int iterations;
 
 extern float panX;
@@ -88,10 +73,10 @@ extern VkvgDevice device;
 extern VkvgSurface surf;
 
 //run test in one step
-void perform_test (void(*testfunc)(void),uint width, uint height);
+void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height);
 void randomize_color (VkvgContext ctx);
 
 //run test in 3 step: init, run, clear.
-void init_test (uint width, uint height);
-void run_test_func (void(*testfunc)(void),uint width, uint height);
+void init_test (uint32_t width, uint32_t height);
+void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height);
 void clear_test ();

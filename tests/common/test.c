@@ -1,5 +1,27 @@
 ﻿#include "test.h"
 
+#if defined(_WIN32) || defined(_WIN64)
+int gettimeofday(struct timeval * tp, struct timezone * tzp)
+{
+    // FILETIME Jan 1 1970 00:00:00
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    static const uint64_t EPOCH = ((uint64_t) 116444736000000000ULL);
+
+    SYSTEMTIME  nSystemTime;
+    FILETIME    nFileTime;
+    uint64_t    nTime;
+
+    GetSystemTime( &nSystemTime );
+    SystemTimeToFileTime( &nSystemTime, &nFileTime );
+    nTime =  ((uint64_t)nFileTime.dwLowDateTime )      ;
+    nTime += ((uint64_t)nFileTime.dwHighDateTime) << 32;
+
+    tp->tv_sec  = (long) ((nTime - EPOCH) / 10000000L);
+    tp->tv_usec = (long) (nSystemTime.wMilliseconds * 1000);
+    return 0;
+}
+#endif
+
 float panX = 0.f;
 float panY = 0.f;
 float lastX = 0.f;
@@ -10,7 +32,7 @@ bool mouseDown = false;
 VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
-uint test_size = 100;  // items drawn in one run, or complexity
+uint32_t test_size = 100;  // items drawn in one run, or complexity
 int iterations = 10000;   // repeat test n times
 
 static bool paused = false;
@@ -110,7 +132,7 @@ double standard_deviation (const double data[], int n, double mean)
 }
 /***************/
 
-void init_test (uint width, uint height){
+void init_test (uint32_t width, uint32_t height){
     e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback (e, key_callback);
@@ -128,12 +150,12 @@ void init_test (uint width, uint height){
 
     vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 }
-void run_test_func (void(*testfunc)(void),uint width, uint height) {
+void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height) {
     bool deferredResolve = false;
     VkhPresenter r = e->renderer;
 
-    double start_time, stop_time, run_time, run_total, min_run_time = -1, max_run_time;
-    double run_time_values[iterations];
+    double start_time, stop_time, run_time, run_total = 0.0, min_run_time = -1, max_run_time;
+    double* run_time_values = (double*)malloc(iterations*sizeof(double));
 
     int i = 0;
 
@@ -171,8 +193,9 @@ void run_test_func (void(*testfunc)(void),uint width, uint height) {
     double avg_frames_per_second = (1.0 / avg_run_time);
     avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
 
-    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+    free (run_time_values);
 
+    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 }
 void clear_test () {
     vkDeviceWaitIdle(e->dev->dev);
@@ -187,7 +210,7 @@ void clear_test () {
 VkvgSurface* surfaces;
 #endif
 
-void perform_test (void(*testfunc)(void),uint width, uint height) {
+void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height) {
     //dumpLayerExts();
 
     e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
@@ -205,7 +228,7 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 
 #ifdef VKVG_TEST_DIRECT_DRAW
     surfaces = (VkvgSurface*)malloc(r->imgCount * sizeof (VkvgSurface));
-    for (uint i=0; i < r->imgCount;i++)
+    for (uint32_t i=0; i < r->imgCount;i++)
         surfaces[i] = vkvg_surface_create_for_VkhImage (device, r->ScBuffers[i]);
 #else
     surf    = vkvg_surface_create(device, width, height);
@@ -213,8 +236,8 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 #endif
 
 
-    double start_time, stop_time, run_time, run_total, min_run_time = -1, max_run_time;
-    double run_time_values[iterations];
+    double start_time, stop_time, run_time, run_total = 0.0, min_run_time = -1, max_run_time;
+    double* run_time_values = (double*)malloc(iterations*sizeof(double));
 
     int i = 0;
 
@@ -226,12 +249,12 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
 #ifdef VKVG_TEST_DIRECT_DRAW
 
         if (!vkh_presenter_acquireNextImage(r, NULL, NULL)) {
-            for (uint i=0; i < r->imgCount;i++)
+            for (uint32_t i=0; i < r->imgCount;i++)
                 vkvg_surface_destroy (surfaces[i]);
 
             vkh_presenter_create_swapchain (r);
 
-            for (uint i=0; i < r->imgCount;i++)
+            for (uint32_t i=0; i < r->imgCount;i++)
                 surfaces[i] = vkvg_surface_create_for_VkhImage (device, r->ScBuffers[i]);
         }else{
             surf = surfaces[r->currentScBufferIndex];
@@ -282,12 +305,14 @@ void perform_test (void(*testfunc)(void),uint width, uint height) {
     double avg_frames_per_second = (1.0 / avg_run_time);
     avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
 
+    free (run_time_values);
+
     printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 
     vkDeviceWaitIdle(e->dev->dev);
 
 #ifdef VKVG_TEST_DIRECT_DRAW
-    for (uint i=0; i<r->imgCount;i++)
+    for (uint32_t i=0; i<r->imgCount;i++)
         vkvg_surface_destroy (surfaces[i]);
 
     free (surfaces);

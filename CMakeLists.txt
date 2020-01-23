@@ -1,13 +1,20 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.9)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
 
 PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic")
 
 INCLUDE(CheckSymbolExists)
 INCLUDE(CheckIncludeFile)
 INCLUDE(GNUInstallDirs)
+INCLUDE(CMakeDependentOption)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-SET(CMAKE_CXX_FLAGS "-W -Wall -Wno-extra")
+
+IF (UNIX)
+    SET(CMAKE_CXX_FLAGS "-Wall -Wno-extra")
+ELSEIF(MSVC)
+    SET(CMAKE_CXX_FLAGS "-W4")
+ENDIF()
+
 SET(CMAKE_EXE_LINKER_FLAGS "-lm")
 
 IF(NOT CMAKE_BUILD_TYPE)
@@ -36,17 +43,14 @@ IF (VKVG_TILING_OPTIMAL)
 	ADD_DEFINITIONS (-DVKVG_TILING_OPTIMAL)
 ENDIF ()
 
-OPTION(VKVG_BUILD_TESTS "build tests with glfw" ON)
-
 set(VULKAN_SDK "$ENV{VULKAN_SDK}" CACHE STRING "LunarG Vulkan SDK path")
 if (VULKAN_SDK)
-		set(ENV{VULKAN_SDK} ${VULKAN_SDK})
-		SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/vulkan/explicit_layer.d")
-		IF (NOT EXISTS "${vulkanSdkLayerPath}")
-			SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/explicit_layer.d")
-		endif ()
-		SET(ENV{VK_LAYER_PATH} "${vulkanSdkLayerPath}")
-		link_directories("${VULKAN_SDK}/lib")
+    set(ENV{VULKAN_SDK} ${VULKAN_SDK})
+    SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/vulkan/explicit_layer.d")
+    IF (NOT EXISTS "${vulkanSdkLayerPath}")
+        SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/explicit_layer.d")
+    endif ()
+    SET(ENV{VK_LAYER_PATH} "${vulkanSdkLayerPath}")
 endif ()
 
 if (NOT TARGET vkh_static)
@@ -66,12 +70,14 @@ IF (ENABLE_WIRED_FILL)
 	ADD_DEFINITIONS (-DVKVG_WIRED_DEBUG)
 ENDIF ()
 
-#be aware that system libraries have priority on SDK in the finding.
 FIND_PACKAGE(Vulkan REQUIRED)
-FIND_PACKAGE(GLFW3)
 FIND_PACKAGE(Freetype REQUIRED)
-FIND_PACKAGE(FontConfig REQUIRED)
+FIND_PACKAGE(Fontconfig REQUIRED)
 FIND_PACKAGE(HarfBuzz REQUIRED)
+
+FIND_PACKAGE(GLFW3)
+
+CMAKE_DEPENDENT_OPTION(VKVG_BUILD_TESTS "build tests with glfw" ON "GLFW3_FOUND" OFF)
 
 #Freetype lcd font filtering
 #CHECK_SYMBOL_EXISTS (FT_CONFIG_OPTION_SUBPIXEL_RENDERING "${FREETYPE_INCLUDE_DIR_freetype2}/freetype/config/ftoption.h" FT_HAS_SUBPIXEL_RENDERING)
@@ -150,20 +156,20 @@ FUNCTION (setup_lib LibName)
 			PUBLIC_HEADER include/vkvg.h
 	)
 	TARGET_INCLUDE_DIRECTORIES(${LibName} PRIVATE
-		${Vulkan_INCLUDE_DIRS}
-		${FREETYPE_INCLUDE_DIRS}
-		${HARFBUZZ_INCLUDE_DIRS}
-		${FONTCONFIG_INCLUDE_DIRS}
+        ${Vulkan_INCLUDE_DIRS}
+        ${FREETYPE_INCLUDE_DIRS}
+        ${HarfBuzz_INCLUDE_DIRS}
+        ${Fontconfig_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
 	TARGET_LINK_LIBRARIES(${LibName}
-		${Vulkan_LIBRARIES}
-		${FREETYPE_LIBRARIES}
-		${HARFBUZZ_LIBRARIES}
-		${FONTCONFIG_LIBRARIES}
+        ${Vulkan_LIBRARIES}
+        ${FREETYPE_LIBRARIES}
+        ${HarfBuzz_LIBRARIES}
+        ${Fontconfig_LIBRARIES}
 		vkh_static
 	)
 	INSTALL(TARGETS ${LibName}
@@ -183,7 +189,7 @@ setup_lib ("${PROJECT_NAME}_shared")
 FUNCTION (buildtest TEST_NAME)
 	ADD_EXECUTABLE(test_${TEST_NAME} "tests/${TEST_NAME}.c" )
 	TARGET_INCLUDE_DIRECTORIES(test_${TEST_NAME} PRIVATE
-		${Vulkan_INCLUDE_DIRS}
+        ${Vulkan_INCLUDE_DIRS}
 		${GLFW3_INCLUDE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -196,11 +202,11 @@ FUNCTION (buildtest TEST_NAME)
 	)
 ENDFUNCTION (buildtest)
 
-if (GLFW3_FOUND)
+if (VKVG_BUILD_TESTS)
 	ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
 	TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
-		${Vulkan_INCLUDE_DIRS}
-		${GLFW3_INCLUDE_DIR}
+        ${Vulkan_INCLUDE_DIRS}
+        ${GLFW3_INCLUDE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${CMAKE_CURRENT_SOURCE_DIR}/tests/common
@@ -208,8 +214,8 @@ if (GLFW3_FOUND)
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
 	TARGET_LINK_LIBRARIES(tests_common
-		${Vulkan_LIBRARIES}
-		${GLFW3_LIBRARY}
+        ${Vulkan_LIBRARIES}
+        ${GLFW3_LIBRARY}
 		vkh_static
 		vkvg_static
 	)
@@ -236,10 +242,17 @@ if (GLFW3_FOUND)
 	ENDFOREACH()
 endif ()
 
+MESSAGE(STATUS "HarfBuzz_INCLUDE_DIRS = ${HarfBuzz_INCLUDE_DIRS}")
+
 MESSAGE(STATUS "\n\n--------------------------------------------------------------------------")
-	MESSAGE(STATUS "Build type\t\t= ${CMAKE_BUILD_TYPE}")
-	MESSAGE(STATUS "VULKAN_SDK\t\t= $ENV{VULKAN_SDK}")
-	MESSAGE(STATUS "VK_LAYER_PATH\t= $ENV{VK_LAYER_PATH}")
+MESSAGE(STATUS "Build type\t\t= ${CMAKE_BUILD_TYPE}")
+MESSAGE(STATUS "VULKAN_SDK\t\t= $ENV{VULKAN_SDK}")
+MESSAGE(STATUS "VK_LAYER_PATH\t= $ENV{VK_LAYER_PATH}")
+IF (VKVG_BUILD_TESTS)
+MESSAGE(STATUS "Build tests\t\t= true.")
+ELSE ()
+MESSAGE(STATUS "Build tests\t\t= false.")
+ENDIF ()
 IF (ENABLE_VALIDATION)
 	MESSAGE(STATUS "Validation\t\t= enabled.")
 ELSE ()

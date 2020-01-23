@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2020 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -49,7 +49,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     VkvgDevice dev = surf->dev;
     VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
-    LOG(LOG_INFO, "CREATE Context: ctx = %lu; surf = %lu\n", (ulong)ctx, (ulong)surf);
+    LOG(LOG_INFO, "CREATE Context: ctx = %lu; surf = %lu\n", (uint64_t)ctx, (uint64_t)surf);
 
     if (ctx==NULL) {
         dev->status = VKVG_STATUS_NO_MEMORY;
@@ -206,7 +206,7 @@ void vkvg_destroy (VkvgContext ctx)
     _flush_cmd_buff(ctx);
     _wait_flush_fence(ctx);
 
-    LOG(LOG_INFO, "DESTROY Context: ctx = %lu; surf = %lu\n", (ulong)ctx, (ulong)ctx->pSurf);
+    LOG(LOG_INFO, "DESTROY Context: ctx = %lu; surf = %lu\n", (uint64_t)ctx, (uint64_t)ctx->pSurf);
 
     if (ctx->pattern)
         vkvg_pattern_destroy (ctx->pattern);
@@ -588,12 +588,12 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     v.uv.z = -1;
 
     float hw = ctx->lineWidth / 2.0f;
-    uint i = 0, ptrPath = 0;
+    uint32_t i = 0, ptrPath = 0;
 
     uint32_t lastPathPointIdx, iL, iR;
 
     while (ptrPath < ctx->pathPtr){
-        uint ptrCurve = 0;
+        uint32_t ptrCurve = 0;
         VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
         i = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
@@ -734,7 +734,7 @@ void vkvg_paint (VkvgContext ctx){
     _check_cmd_buff_state (ctx);
     _draw_full_screen_quad (ctx, true);
 }
-inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
+void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
     vkvg_set_source_rgba (ctx, r, g, b, 1);
 }
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
@@ -867,7 +867,7 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 }
 
 void vkvg_save (VkvgContext ctx){
-    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %lu\n", (ulong)ctx);
+    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %lu\n", (uint64_t)ctx);
 
     _flush_cmd_buff (ctx);
     _wait_flush_fence (ctx);

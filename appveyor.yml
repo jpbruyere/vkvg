@@ -1,7 +1,24 @@
-version: 1.0.{build}
-image:
-- Visual Studio 2015
-- Visual Studio 2017
-- Ubuntu
-build:
-  verbosity: minimal
+version: 0.1.{build}
+
+environment:
+    VCPKG_DEFAULT_TRIPLET: x64-windows
+    VULKAN_SDK: C:/VulkanSDK/1.1.130.0
+    APPVEYOR_SAVE_CACHE_ON_ERROR: true
+
+install:
+    - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.130.0/windows/VulkanSDK-1.1.130.0-Installer.exe?Human=true && VulkanSDK.exe /S
+    - vcpkg install freetype harfbuzz fontconfig glfw3
+cache:
+    - VulkanSDK.exe
+    - c:\tools\vcpkg\installed\
+    - c:\VulkanSDK\
+
+before_build:
+    - git submodule update --init --recursive
+    - mkdir build
+    - cd build
+    - cmake -G "Visual Studio 14 Win64" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+
+build_script:
+    - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+

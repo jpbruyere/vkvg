@@ -201,7 +201,7 @@ void _dump_glyphs (FT_Face face){
         FT_Get_Glyph_Name(face,i,gname,256);
 
 
-        printf("glyph: %s (%d,%d;%d), max advance:%d\n", gname,
+        printf("glyph: %s (%d,%d;%d), max advance:%ld\n", gname,
                slot->bitmap.width, slot->bitmap.rows, slot->bitmap.pitch,
                face->size->metrics.max_advance/64);
     }
@@ -217,7 +217,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
     vkResetCommandBuffer(cache->cmd,0);
     vkResetFences       (dev->vkDev,1,&cache->uploadFence);
 
-    memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (ulong)(f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize));
+    memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (uint64_t)(f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize));
 
     vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -257,10 +257,10 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
     FT_CHECK_RESULT(FT_Load_Glyph(f->face, gindex, FT_LOAD_RENDER));
 #endif
 
-    FT_GlyphSlot slot = f->face->glyph;
-    FT_Bitmap bmp = slot->bitmap;
-    uint8_t* data = dev->fontCache->hostBuff;
-    uint bmpWidth = bmp.width;   //real width in pixel of char bitmap
+    FT_GlyphSlot    slot    = f->face->glyph;
+    FT_Bitmap       bmp     = slot->bitmap;
+    uint8_t*        data    = dev->fontCache->hostBuff;
+    uint32_t        bmpWidth= bmp.width;   //real width in pixel of char bitmap
 
 #ifdef VKVG_LCD_FONT_FILTER
     bmpWidth /= 3;
@@ -420,7 +420,7 @@ void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
 void _text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents) {
     _update_current_font (ctx);
 
-    vkvg_text_run_t tr = {};
+    vkvg_text_run_t tr = {0};
     _create_text_run (ctx, text, &tr);
 
     *extents = tr.extents;
@@ -532,7 +532,7 @@ void _show_texture (vkvg_context* ctx){
 
 void _show_text (VkvgContext ctx, const char* text){
 
-    vkvg_text_run_t tr = {};
+    vkvg_text_run_t tr = {0};
     _create_text_run (ctx, text, &tr);
 
     _show_text_run (ctx, &tr);

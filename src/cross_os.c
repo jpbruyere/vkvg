@@ -22,11 +22,11 @@
 #include "cross_os.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 
 int directoryExists (const char* path) {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
     return getenv("HOME");
 #elif __APPLE__
 #elif __unix__
@@ -36,7 +36,7 @@ int directoryExists (const char* path) {
     return -1;
 }
 const char* getUserDir () {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
     return getenv("HOME");
 #elif __APPLE__
 #elif __unix__

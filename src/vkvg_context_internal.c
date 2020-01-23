@@ -87,26 +87,26 @@ void _check_point_array (VkvgContext ctx){
 }
 //when empty, ptr is even, else it's odd
 //when empty, no current point is defined.
-inline bool _current_path_is_empty (VkvgContext ctx) {
+bool _current_path_is_empty (VkvgContext ctx) {
     return ctx->pathPtr % 2 == 0;
 }
 //this function expect that current point exists
-inline vec2 _get_current_position (VkvgContext ctx) {
+vec2 _get_current_position (VkvgContext ctx) {
     return ctx->points[ctx->pointCount-1];
 }
 //set curve start point and set path has curve bit
-inline void _set_curve_start (VkvgContext ctx) {
+void _set_curve_start (VkvgContext ctx) {
     ctx->pathes[ctx->pathPtr+ctx->curvePtr+1] = (ctx->pointCount - 1);
     ctx->pathes[ctx->pathPtr-1] |= PATH_HAS_CURVES_BIT;
 }
 //set curve end point and set path has curve bit
-inline void _set_curve_end (VkvgContext ctx) {
+void _set_curve_end (VkvgContext ctx) {
     ctx->pathes[ctx->pathPtr+ctx->curvePtr+2] = (ctx->pointCount - 1)|PATH_IS_CURVE_BIT;
     ctx->curvePtr+=2;
     _check_pathes_array(ctx);
 }
 //path start pointed at ptrPath has curve bit
-inline bool _path_has_curves (VkvgContext ctx, uint ptrPath) {
+bool _path_has_curves (VkvgContext ctx, uint32_t ptrPath) {
     return ctx->pathes[ptrPath] & PATH_HAS_CURVES_BIT;
 }
 //this function expect that current path is empty
@@ -138,7 +138,7 @@ void _clear_path (VkvgContext ctx){
     ctx->curvePtr = 0;
     _resetMinMax(ctx);
 }
-inline bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
+bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
     return ctx->pathes[ptrPath] & PATH_CLOSED_BIT;
 }
 void _resetMinMax (VkvgContext ctx) {
@@ -172,7 +172,7 @@ float _normalizeAngle(float a)
     else
         return res;
 }
-inline float _get_arc_step (float radius) {
+float _get_arc_step (float radius) {
     return M_PIF/sqrtf(radius)*0.35f;
 }
 void _create_gradient_buff (VkvgContext ctx){
@@ -285,10 +285,10 @@ void _create_cmd_buff (VkvgContext ctx){
 void _clear_attachment (VkvgContext ctx) {
 
 }
-inline void _wait_flush_fence (VkvgContext ctx) {
+void _wait_flush_fence (VkvgContext ctx) {
     vkWaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
 }
-inline void _reset_flush_fence (VkvgContext ctx) {
+void _reset_flush_fence (VkvgContext ctx) {
     vkResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
 }
 void _wait_and_submit_cmd (VkvgContext ctx){
@@ -393,7 +393,7 @@ void _record_draw_cmd (VkvgContext ctx){
     CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
 
     LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
-        (ulong)ctx, ctx->vertCount - ctx->curVertOffset,
+        (uint64_t)ctx, ctx->vertCount - ctx->curVertOffset,
         ctx->indCount - ctx->curIndStart, ctx->curVertOffset, ctx->curIndStart, ctx->indCount);
 
 #ifdef VKVG_WIRED_DEBUG
@@ -439,10 +439,6 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
     LOG(LOG_INFO, "START RENDER PASS: ctx = %lu\n", ctx);
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-#ifdef DEBUG
-    vkh_cmd_label_start(ctx->cmd, "ctx render pass", LAB_COLOR_RP);
-#endif
-
     if (ctx->pSurf->img->layout == VK_IMAGE_LAYOUT_UNDEFINED){
         VkhImage imgMs = ctx->pSurf->imgMS;
         if (imgMs != NULL)
@@ -454,6 +450,10 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     }
+
+#ifdef DEBUG
+    vkh_cmd_label_start(ctx->cmd, "ctx render pass", LAB_COLOR_RP);
+#endif
 
     CmdBeginRenderPass (ctx->cmd, &ctx->renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     VkViewport viewport = {0,0,ctx->pSurf->width,ctx->pSurf->height,0,1};
@@ -487,7 +487,7 @@ void _set_mat_inv_and_vkCmdPush (VkvgContext ctx) {
     vkvg_matrix_invert (&ctx->pushConsts.matInv);
     ctx->pushCstDirty = true;
 }
-inline void _update_push_constants (VkvgContext ctx) {
+void _update_push_constants (VkvgContext ctx) {
     CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
     ctx->pushCstDirty = false;
@@ -590,7 +590,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         ctx->pushConsts.source = bounds;
 
         //transform control point with current ctx matrix
-        vkvg_gradient_t grad = {};
+        vkvg_gradient_t grad = {0};
         memcpy(&grad, pat->data, sizeof(vkvg_gradient_t));
 
         vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
@@ -1021,7 +1021,7 @@ void _poly_fill (VkvgContext ctx){
 
         VKVG_IBO_INDEX_TYPE firstVertIdx = ctx->vertCount;
 
-        for (uint i = 0; i < pathPointCount; i++) {
+        for (uint32_t i = 0; i < pathPointCount; i++) {
             v.pos = ctx->points [i+firstPtIdx];
             ctx->vertexCache[ctx->vertCount] = v;
             ctx->vertCount++;
@@ -1036,7 +1036,7 @@ void _poly_fill (VkvgContext ctx){
 }
 void _fill_ec (VkvgContext ctx){
     uint32_t ptrPath = 0;;
-    Vertex v = {};
+    Vertex v = {0};
     v.uv.z = -1;
 
     while (ptrPath < ctx->pathPtr){
@@ -1051,7 +1051,7 @@ void _fill_ec (VkvgContext ctx){
         uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
         uint32_t firstVertIdx = ctx->vertCount-ctx->curVertOffset;
 
-        ear_clip_point ecps[pathPointCount];
+        ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
         uint32_t ecps_count = pathPointCount;
         uint32_t i = 0;
 
@@ -1106,6 +1106,7 @@ void _fill_ec (VkvgContext ctx){
             _add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
 
         ptrPath+=2;
+        free (ecps);
     }
     _record_draw_cmd(ctx);
 }
@@ -1116,7 +1117,7 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
     if (ctx->xMin < 0 || ctx->yMin < 0)
         useScissor = false;
     if (useScissor && ctx->xMin < FLT_MAX) {
-        VkRect2D r = {ctx->xMin, ctx->yMin, ctx->xMax - ctx->xMin, ctx->yMax - ctx->yMin};
+        VkRect2D r = {{ctx->xMin, ctx->yMin}, {ctx->xMax - ctx->xMin, ctx->yMax - ctx->yMin}};
         CmdSetScissor(ctx->cmd, 0, 1, &r);
     }
     CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,

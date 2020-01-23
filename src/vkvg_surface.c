@@ -163,7 +163,9 @@ void _create_framebuffer (VkvgSurface surf) {
         frameBufferCreateInfo.attachmentCount = 2;
     }
     VK_CHECK_RESULT(vkCreateFramebuffer(surf->dev->vkDev, &frameBufferCreateInfo, NULL, &surf->fb));
+#ifdef DEBUG
     vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_FRAMEBUFFER, (uint64_t)surf->fb, "SURF FB");
+#endif
 }
 void _init_surface (VkvgSurface surf) {
     surf->format = FB_COLOR_FORMAT;//force bgra internally
@@ -346,14 +348,12 @@ void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 }
 
 VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
-    NSVGshape* shape;
-    NSVGpath* path;
 
     VkvgSurface surf = (vkvg_surface*)calloc(1,sizeof(vkvg_surface));
 
     surf->dev = dev;
-    surf->width = (uint)svg->width;
-    surf->height = (uint)svg->height;
+    surf->width = (uint32_t)svg->width;
+    surf->height = (uint32_t)svg->height;
     surf->new = true;
 
     _init_surface (surf);
