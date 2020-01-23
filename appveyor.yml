@@ -14,7 +14,6 @@ cache:
     - c:\VulkanSDK\
 
 before_build:
-    - ls c:/Tools/vcpkg/installed/x86-windows/debug/lib/
     - git submodule update --init --recursive
     - mkdir build
     - cd build

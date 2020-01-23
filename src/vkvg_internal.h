@@ -51,6 +51,7 @@
 #define ROUND_DOWN(v,p) (floorf(v * p) / p)
 #define EQUF(a, b) (fabsf(a-b)<=FLT_EPSILON)
 
+#include "cross_os.h"
 #include "vectors.h"
 #include "cross_mutex.h"
 

@@ -25,6 +25,7 @@
 //cross platform os helpers
 #if defined(_WIN32) || defined(_WIN64)
 #include "windows.h"
+#define isnanf _isnanf
 #elif __APPLE__
 #elif __unix__
 #include <unistd.h>
