@@ -20,74 +20,37 @@
 #
 # This module will set the following variables in your project:
 #
-# ``HARFBUZZ_FOUND``
+# ``HarfBuzz_FOUND``
 #   true if the HarfBuzz headers and libraries were found
-# ``HARFBUZZ_INCLUDE_DIRS``
+# ``HarfBuzz_INCLUDE_DIRS``
 #   directories containing the Harfbuzz headers.
-# ``HARFBUZZ_LIBRARIES``
+# ``HarfBuzz_LIBRARIES``
 #   the library to link against
-# ``HARFBUZZ_VERSION_STRING``
-#   the version of harfbuzz found
 
-# Created by Ebrahim Byagowi.
-
-set(HARFBUZZ_FIND_ARGS
-  HINTS
-    ENV HARFBUZZ_DIR
-  PATHS
-    ENV GTKMM_BASEPATH
-    [HKEY_CURRENT_USER\\SOFTWARE\\gtkmm\\2.4;Path]
-    [HKEY_LOCAL_MACHINE\\SOFTWARE\\gtkmm\\2.4;Path]
+find_path(HarfBuzz_INCLUDE_DIR
+	NAMES harfbuzz/hb.h
 )
-
-find_path(
-  HARFBUZZ_INCLUDE_DIRS
-  hb.h
-  ${HARFBUZZ_FIND_ARGS}
-  PATH_SUFFIXES
-    src
-    harfbuzz
+find_library(HarfBuzz_LIBRARY
+	NAMES harfbuzz libharfbuzz
 )
-
-if(NOT HARFBUZZ_LIBRARY)
-  find_library(HARFBUZZ_LIBRARY
-    NAMES
-      harfbuzz
-      libharfbuzz
-    ${HARFBUZZ_FIND_ARGS}
-    PATH_SUFFIXES
-      lib
-  )
-  include(SelectLibraryConfigurations)
-  select_library_configurations(HARFBUZZ)
-else()
-  # on Windows, ensure paths are in canonical format (forward slahes):
-  file(TO_CMAKE_PATH "${HARFBUZZ_LIBRARY}" HARFBUZZ_LIBRARY)
-endif()
-
-unset(HARFBUZZ_FIND_ARGS)
 
 # set the user variables
-set(HARFBUZZ_LIBRARIES "${HARFBUZZ_LIBRARY}")
+set(HarfBuzz_LIBRARIES "${HarfBuzz_LIBRARY}")
+
+
+set(HarfBuzz_LIBRARIES ${HarfBuzz_LIBRARY})
+set(HarfBuzz_INCLUDE_DIRS ${HarfBuzz_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(HarfBuzz
+  DEFAULT_MSG
+  HarfBuzz_LIBRARY HarfBuzz_INCLUDE_DIR)
 
-find_package_handle_standard_args(
-  HarfBuzz
-  REQUIRED_VARS
-    HARFBUZZ_LIBRARY
-    HARFBUZZ_INCLUDE_DIRS
-  VERSION_VAR
-  HARFBUZZ_VERSION_STRING
-)
+mark_as_advanced(HarfBuzz_INCLUDE_DIR HarfBuzz_LIBRARY)
 
-if(HARFBUZZ_FOUND)
-  if(NOT TARGET HarfBuzz::HarfBuzz)
-    add_library(HarfBuzz::HarfBuzz UNKNOWN IMPORTED)
-    set_target_properties(HarfBuzz::HarfBuzz PROPERTIES
-      INTERFACE_INCLUDE_DIRECTORIES "${HARFBUZZ_INCLUDE_DIRS}")
-    set_target_properties(HarfBuzz::HarfBuzz PROPERTIES
-      IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-      IMPORTED_LOCATION "${HARFBUZZ_LIBRARY}")
-  endif()
+if(HarfBuzz_FOUND AND NOT TARGET HarfBuzz::HarfBuzz)
+  add_library(HarfBuzz::HarfBuzz UNKNOWN IMPORTED)
+  set_target_properties(HarfBuzz::HarfBuzz PROPERTIES
+	IMPORTED_LOCATION "${HarfBuzz_LIBRARIES}"
+	INTERFACE_INCLUDE_DIRECTORIES "${HarfBuzz_INCLUDE_DIRS}")
 endif()

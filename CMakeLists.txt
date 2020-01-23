@@ -158,7 +158,7 @@ FUNCTION (setup_lib LibName)
 	TARGET_INCLUDE_DIRECTORIES(${LibName} PRIVATE
         ${Vulkan_INCLUDE_DIRS}
         ${FREETYPE_INCLUDE_DIRS}
-        ${HARFBUZZ_INCLUDE_DIRS}
+        ${HarfBuzz_INCLUDE_DIRS}
         ${Fontconfig_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -168,7 +168,7 @@ FUNCTION (setup_lib LibName)
 	TARGET_LINK_LIBRARIES(${LibName}
         ${Vulkan_LIBRARIES}
         ${FREETYPE_LIBRARIES}
-        ${HARFBUZZ_LIBRARIES}
+        ${HarfBuzz_LIBRARIES}
         ${Fontconfig_LIBRARIES}
 		vkh_static
 	)
@@ -241,6 +241,8 @@ if (VKVG_BUILD_TESTS)
 		buildtest(${testname})
 	ENDFOREACH()
 endif ()
+
+MESSAGE(STATUS "HarfBuzz_INCLUDE_DIRS = ${HarfBuzz_INCLUDE_DIRS}")
 
 MESSAGE(STATUS "\n\n--------------------------------------------------------------------------")
 MESSAGE(STATUS "Build type\t\t= ${CMAKE_BUILD_TYPE}")
