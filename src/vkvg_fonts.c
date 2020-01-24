@@ -376,7 +376,7 @@ void _update_current_font (VkvgContext ctx) {
 
             //nf.curLine.height = (nf.face->bbox.xMax - nf.face->bbox.xMin) >> 6;
             if (FT_IS_SCALABLE(nf.face))
-                nf.curLine.height = nf.face->size->metrics.height >> 6;
+                nf.curLine.height = FT_MulFix(nf.face->height, nf.face->size->metrics.y_scale) >> 6;// nf.face->size->metrics.height >> 6;
             else
                 nf.curLine.height = nf.face->height >> 6;
 
@@ -410,9 +410,9 @@ void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
     //TODO: ensure correct metrics are returned (scalled/unscalled, etc..)
     FT_BBox* bbox = &ctx->currentFont->face->bbox;
     FT_Size_Metrics* metrics = &ctx->currentFont->face->size->metrics;
-    extents->ascent = metrics->ascender >> 6;
-    extents->descent= -(metrics->descender >> 6);
-    extents->height = metrics->height >> 6;
+    extents->ascent = FT_MulFix(ctx->currentFont->face->ascender, metrics->y_scale) >> 6;//metrics->ascender >> 6;
+    extents->descent= FT_MulFix(ctx->currentFont->face->descender, metrics->y_scale) >> 6;//metrics->descender >> 6;
+    extents->height = FT_MulFix(ctx->currentFont->face->height, metrics->y_scale) >> 6;//metrics->height >> 6;
     extents->max_x_advance = bbox->xMax >> 6;
     extents->max_y_advance = bbox->yMax >> 6;
 }
@@ -438,7 +438,7 @@ void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
     textRun->glyph_pos = hb_buffer_get_glyph_positions   (textRun->hbBuf, &textRun->glyph_count);
 
     unsigned int string_width_in_pixels = 0;
-    for (int i=0; i < textRun->glyph_count; ++i)
+    for (uint32_t i=0; i < textRun->glyph_count; ++i)
         string_width_in_pixels += textRun->glyph_pos[i].x_advance >> 6;
 
     FT_Size_Metrics* metrics = &ctx->currentFont->face->size->metrics;
@@ -447,7 +447,7 @@ void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
     textRun->extents.x_bearing = -(textRun->glyph_pos[0].x_offset >> 6);
     textRun->extents.y_bearing = -(textRun->glyph_pos[0].y_offset >> 6);
 
-    textRun->extents.height = (metrics->ascender + metrics->descender) >> 6;
+    textRun->extents.height = FT_MulFix(ctx->currentFont->face->height, metrics->y_scale) >> 6;// (metrics->ascender + metrics->descender) >> 6;
     textRun->extents.width  = textRun->extents.x_advance;
 }
 void _destroy_text_run (VkvgText textRun) {
