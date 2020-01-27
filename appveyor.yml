@@ -43,7 +43,7 @@ for:
         - wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
         - sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-bionic.list https://packages.lunarg.com/vulkan/lunarg-vulkan-bionic.list 
         - sudo apt -qq update
-        - sudo apt -y install vulkan-sdk
+        - sudo apt -y install vulkan-sdk libharfbuzz-dev libglfw3-dev
     before_build:
         - git submodule update --init --recursive
         - mkdir build
