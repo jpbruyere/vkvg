@@ -1,24 +1,61 @@
 version: 0.1.{build}
 
-environment:
-    VCPKG_DEFAULT_TRIPLET: x64-windows
-    VULKAN_SDK: C:/VulkanSDK/1.1.130.0
-    APPVEYOR_SAVE_CACHE_ON_ERROR: true
+image:
+  - Visual Studio 2019
+  - Ubuntu
 
-install:
-    - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.130.0/windows/VulkanSDK-1.1.130.0-Installer.exe?Human=true && VulkanSDK.exe /S
-    - vcpkg install freetype harfbuzz fontconfig glfw3
-cache:
-    - VulkanSDK.exe
-    - c:\tools\vcpkg\installed\
-    - c:\VulkanSDK\
+artifacts:
+    - path: 'vkvg.zip'
+      name: vkvg
+      type: zip
 
-before_build:
-    - git submodule update --init --recursive
-    - mkdir build
-    - cd build
-    - cmake -G "Visual Studio 14 Win64" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+for:
+  -
+    matrix:
+      only:
+        - image: Visual Studio 2019
+    environment:
+        VCPKG_DEFAULT_TRIPLET: x64-windows
+        VULKAN_SDK: C:/VulkanSDK/1.1.130.0
+        APPVEYOR_SAVE_CACHE_ON_ERROR: true
+    cache:
+        - VulkanSDK.exe
+        - c:\tools\vcpkg\installed\
+        - c:\VulkanSDK\
+    install:
+        - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.130.0/windows/VulkanSDK-1.1.130.0-Installer.exe?Human=true && VulkanSDK.exe /S
+        - vcpkg install freetype harfbuzz fontconfig glfw3
+    before_build:
+        - git submodule update --init --recursive
+        - mkdir build
+        - cd build
+        - cmake -G "Visual Studio 14 Win64" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+    build_script:
+        - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+    after_build:
+        - 7z a vkvg.zip %APPVEYOR_BUILD_FOLDER%\build\*.dll %APPVEYOR_BUILD_FOLDER%\build\*.exe %APPVEYOR_BUILD_FOLDER%\build\*.lib
 
-build_script:
-    - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  -
+    matrix:
+      only:
+        - image: Ubuntu
+    install:
+        - wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+        - sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-bionic.list https://packages.lunarg.com/vulkan/lunarg-vulkan-bionic.list 
+        - sudo apt -qq update
+        - sudo apt -y install vulkan-sdk
+    before_build:
+        - git submodule update --init --recursive
+        - mkdir build
+        - cd build
+        - cmake ..
+    build_script:
+        - make
+    after_build:
+        - 7z a vkvg.zip %APPVEYOR_BUILD_FOLDER%\build\*.so* %APPVEYOR_BUILD_FOLDER%\build\test_*
+    
+
+
+
+
 
