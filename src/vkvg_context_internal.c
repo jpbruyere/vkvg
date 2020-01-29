@@ -671,7 +671,7 @@ void _init_descriptor_sets (VkvgContext ctx){
     descriptorSetAllocateInfo.pSetLayouts = &dev->dslGrad;
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
-
+//populate vertice buff for stroke
 float _build_vb_step (vkvg_context* ctx, Vertex v, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve){
     //if two of the three points are equal, normal is null
     vec2 v0n = vec2_line_norm(pL, p0);
@@ -1117,7 +1117,7 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
     if (ctx->xMin < 0 || ctx->yMin < 0)
         useScissor = false;
     if (useScissor && ctx->xMin < FLT_MAX) {
-        VkRect2D r = {{ctx->xMin, ctx->yMin}, {ctx->xMax - ctx->xMin, ctx->yMax - ctx->yMin}};
+        VkRect2D r = {{ctx->xMin, ctx->yMin}, {ctx->xMax - ctx->xMin + 1, ctx->yMax - ctx->yMin + 1}};
         CmdSetScissor(ctx->cmd, 0, 1, &r);
     }
     CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
