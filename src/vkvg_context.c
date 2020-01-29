@@ -576,6 +576,80 @@ void vkvg_fill_preserve (VkvgContext ctx){
         _fill_ec(ctx);
     }
 }
+
+void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 p1, bool isStart) {
+    Vertex v = {0};
+    v.uv.z = -1;
+    VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+
+    if (isStart){
+        vec2 n = vec2_line_norm(p0, p1);
+        vec2 vhw = vec2_mult(n,hw);
+
+        if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
+            p0 = vec2_sub(p0, vhw);
+
+        vhw = vec2_perp(vhw);
+
+        if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
+            float step = M_PIF / hw;
+            float a = acosf(n.x) + M_PIF_2;
+            if (n.y < 0)
+                a = M_PIF-a;
+            float a1 = a + M_PIF;
+
+            a+=step;
+            while (a < a1){
+                _add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
+                a+=step;
+            }
+            VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+            for (VKVG_IBO_INDEX_TYPE p = firstIdx; p < p0Idx; p++)
+                _add_triangle_indices(ctx, p0Idx+1, p, p+1);
+            firstIdx = p0Idx;
+        }
+
+        v.pos = vec2_add(p0, vhw);
+        _add_vertex(ctx, v);
+        v.pos = vec2_sub(p0, vhw);
+        _add_vertex(ctx, v);
+
+        _add_tri_indices_for_rect(ctx, firstIdx);
+    }else{
+        vec2 n = vec2_line_norm(p1, p0);
+        vec2 vhw = vec2_mult(n, hw);
+
+        if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
+            p0 = vec2_add(p0, vhw);
+
+        vhw = vec2_perp(vhw);
+
+        v.pos = vec2_add(p0, vhw);
+        _add_vertex(ctx, v);
+        v.pos = vec2_sub(p0, vhw);
+        _add_vertex(ctx, v);
+
+        firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+
+        if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
+            float step = M_PIF / hw;
+            float a = acosf(n.x)+ M_PIF_2;
+            if (n.y < 0)
+                a = M_PIF-a;
+            float a1 = a - M_PIF;
+
+            a-=step;
+            while ( a > a1){
+                _add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
+                a-=step;
+            }
+
+            VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset - 1);
+            for (VKVG_IBO_INDEX_TYPE p = firstIdx-1 ; p < p0Idx; p++)
+                _add_triangle_indices(ctx, p+1, p, firstIdx-2);
+        }
+    }
+}
 void vkvg_stroke_preserve (VkvgContext ctx)
 {
     if (ctx->pathPtr == 0)//nothing to stroke
@@ -588,127 +662,60 @@ void vkvg_stroke_preserve (VkvgContext ctx)
     v.uv.z = -1;
 
     float hw = ctx->lineWidth / 2.0f;
-    uint32_t firstPathPointIdx = 0, lastPathPointIdx, ptrPath = 0, iL, iR;
+    uint32_t curPathPointIdx = 0, lastPathPointIdx, ptrPath = 0, iL, iR;
 
     while (ptrPath < ctx->pathPtr){
         uint32_t ptrCurve = 0;
         VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-        firstPathPointIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
+        curPathPointIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
         LOG(LOG_INFO_PATH, "\tPATH: start = %d; ", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
 
+        lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
+        LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
+
         if (_path_is_closed(ctx,ptrPath)){
-            lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
-            LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
             //prevent closing on the same position, this could be generalize
             //to prevent processing of two consecutive point at the same position
-            if (vec2_equ(ctx->points[firstPathPointIdx], ctx->points[lastPathPointIdx]))
+            if (vec2_equ(ctx->points[curPathPointIdx], ctx->points[lastPathPointIdx]))
                 lastPathPointIdx--;
             iL = lastPathPointIdx;
         }else{
-            lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
-            LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
+            _draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], ctx->points[curPathPointIdx+1], true);
 
-            vec2 n = vec2_line_norm(ctx->points[firstPathPointIdx], ctx->points[firstPathPointIdx+1]);
-
-            vec2 p0 = ctx->points[firstPathPointIdx];
-            vec2 vhw = vec2_mult(n,hw);
-
-            if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-                p0 = vec2_sub(p0, vhw);
-
-            vhw = vec2_perp(vhw);
-
-            if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-                float step = M_PIF / hw;
-                float a = acosf(n.x) + M_PIF_2;
-                if (n.y < 0)
-                    a = M_PIF-a;
-                float a1 = a + M_PIF;
-
-                a+=step;
-                while (a < a1){
-                    _add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-                    a+=step;
-                }
-                VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-                for (VKVG_IBO_INDEX_TYPE p = firstIdx; p < p0Idx; p++)
-                    _add_triangle_indices(ctx, p0Idx+1, p, p+1);
-                firstIdx = p0Idx;
-            }
-
-            v.pos = vec2_add(p0, vhw);
-            _add_vertex(ctx, v);
-            v.pos = vec2_sub(p0, vhw);
-            _add_vertex(ctx, v);
-
-            _add_tri_indices_for_rect(ctx, firstIdx);
-
-            iL = firstPathPointIdx++;
+            iL = curPathPointIdx++;
         }
 
         if (_path_has_curves (ctx,ptrPath)) {
-            while (firstPathPointIdx < lastPathPointIdx){
-                if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve]&PATH_ELT_MASK) == firstPathPointIdx){
+            while (curPathPointIdx < lastPathPointIdx){
+                if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve]&PATH_ELT_MASK) == curPathPointIdx){
                     uint32_t lastCurvePointIdx = ctx->pathes[ptrPath + 3 + ptrCurve]&PATH_ELT_MASK;
-                    while (firstPathPointIdx < lastCurvePointIdx){
-                        iR = firstPathPointIdx+1;
-                        _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[firstPathPointIdx], ctx->points[iR], true);
-                        iL = firstPathPointIdx++;
+                    while (curPathPointIdx < lastCurvePointIdx){
+                        iR = curPathPointIdx+1;
+                        _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], true);
+                        iL = curPathPointIdx++;
                     }
                     ptrCurve += 2;
                 }else{
-                    iR = firstPathPointIdx+1;
-                    _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[firstPathPointIdx], ctx->points[iR], false);
-                    iL = firstPathPointIdx++;
+                    iR = curPathPointIdx+1;
+                    _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
+                    iL = curPathPointIdx++;
                 }
             }
         }else{
-            while (firstPathPointIdx < lastPathPointIdx){
-                iR = firstPathPointIdx+1;
-                _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[firstPathPointIdx], ctx->points[iR], false);
-                iL = firstPathPointIdx++;
+            while (curPathPointIdx < lastPathPointIdx){
+                iR = curPathPointIdx+1;
+                _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
+                iL = curPathPointIdx++;
             }
         }
 
         if (!_path_is_closed(ctx,ptrPath)){
-            vec2 n = vec2_line_norm(ctx->points[firstPathPointIdx-1], ctx->points[firstPathPointIdx]);
-            vec2 p0 = ctx->points[firstPathPointIdx];
-            vec2 vhw = vec2_mult(n, hw);
-
-            if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-                p0 = vec2_add(p0, vhw);
-
-            vhw = vec2_perp(vhw);
-
-            v.pos = vec2_add(p0, vhw);
-            _add_vertex(ctx, v);
-            v.pos = vec2_sub(p0, vhw);
-            _add_vertex(ctx, v);
-
-            firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-
-            if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-                float step = M_PIF / hw;
-                float a = acosf(n.x)+ M_PIF_2;
-                if (n.y < 0)
-                    a = M_PIF-a;
-                float a1 = a - M_PIF;
-                a-=step;
-                while ( a > a1){
-                    _add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-                    a-=step;
-                }
-
-                VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset - 1);
-                for (VKVG_IBO_INDEX_TYPE p = firstIdx-1 ; p < p0Idx; p++)
-                    _add_triangle_indices(ctx, p+1, p, firstIdx-2);
-            }
-
-            firstPathPointIdx++;
+            _draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], ctx->points[curPathPointIdx-1], false);
+            //curPathPointIdx++;
         }else{
             iR = ctx->pathes[ptrPath] & PATH_ELT_MASK;
-            float cross = _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[firstPathPointIdx], ctx->points[iR], false);
+            float cross = _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
 
             VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
             VKVG_IBO_INDEX_TYPE ii = firstIdx;
@@ -721,7 +728,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 inds[4] = ii;
                 inds[5] = ii+1;
             }
-            firstPathPointIdx++;
+            curPathPointIdx++;
         }
 
         ptrPath+=2+ptrCurve;
@@ -1072,7 +1079,7 @@ void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
     _set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
-    memcpy (matrix, &ctx->pushConsts.mat, sizeof(vkvg_matrix_t));
+    memcpy ((void*)matrix, &ctx->pushConsts.mat, sizeof(vkvg_matrix_t));
 }
 
 void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg, char *subId){
