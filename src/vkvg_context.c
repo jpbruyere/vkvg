@@ -577,13 +577,12 @@ void vkvg_fill_preserve (VkvgContext ctx){
     }
 }
 
-void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 p1, bool isStart) {
+void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
     Vertex v = {0};
     v.uv.z = -1;
     VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
     if (isStart){
-        vec2 n = vec2_line_norm(p0, p1);
         vec2 vhw = vec2_mult(n,hw);
 
         if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
@@ -616,7 +615,7 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 p1, bool isStart)
 
         _add_tri_indices_for_rect(ctx, firstIdx);
     }else{
-        vec2 n = vec2_line_norm(p1, p0);
+        vec2_inv (&n);
         vec2 vhw = vec2_mult(n, hw);
 
         if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
@@ -650,6 +649,35 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 p1, bool isStart)
         }
     }
 }
+
+static bool     dashOn          = true;
+static uint32_t curDash         = 0;    //current dash index
+static float    curDashOffset   = 0.f;  //cur dash offset between defined path point and last dash segment(on/off) start
+static vec2     normal          = {0};
+
+void _draw_dashed_segment (VkvgContext ctx, vec2 pL, vec2 p, vec2 pR, float hw) {
+    Vertex v = {0};
+    v.uv.z = -1;
+
+    if (!dashOn)//we test in fact the next dash start, if dashOn = true => next segment is a void.
+        _build_vb_step (ctx, v, hw, pL, p, pR, false);
+
+    vec2 d = vec2_sub (pR, p);
+    normal = vec2_norm (d);
+    float segmentLength = vec2_length(d);
+
+    while (curDashOffset < segmentLength){
+        vec2 p0 = vec2_add (p, vec2_mult(normal, curDashOffset));
+
+        _draw_stoke_cap (ctx, hw, p0, normal, dashOn);
+        dashOn ^= true;
+
+        curDashOffset += ctx->dashes[curDash++];
+        if (curDash == ctx->dashCount)
+            curDash = 0;
+    }
+    curDashOffset -= segmentLength;
+}
 void vkvg_stroke_preserve (VkvgContext ctx)
 {
     if (ctx->pathPtr == 0)//nothing to stroke
@@ -666,6 +694,13 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
     while (ptrPath < ctx->pathPtr){
         uint32_t ptrCurve = 0;
+
+        //used for dashed lines
+        dashOn = true;
+        curDash = 0;          //current dash index
+        curDashOffset = 0.f;  //cur dash offset between defined path point and last dash segment(on/off) start
+        //---
+
         VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
         curPathPointIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
@@ -674,7 +709,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
         LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
 
-        if (_path_is_closed(ctx,ptrPath)){
+/*        if (_path_is_closed(ctx,ptrPath)){
             //prevent closing on the same position, this could be generalize
             //to prevent processing of two consecutive point at the same position
             if (vec2_equ(ctx->points[curPathPointIdx], ctx->points[lastPathPointIdx]))
@@ -682,11 +717,10 @@ void vkvg_stroke_preserve (VkvgContext ctx)
             iL = lastPathPointIdx;
         }else{
             _draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], ctx->points[curPathPointIdx+1], true);
-
             iL = curPathPointIdx++;
-        }
+        }*/
 
-        if (_path_has_curves (ctx,ptrPath)) {
+        /*if (_path_has_curves (ctx,ptrPath)) {
             while (curPathPointIdx < lastPathPointIdx){
                 if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve]&PATH_ELT_MASK) == curPathPointIdx){
                     uint32_t lastCurvePointIdx = ctx->pathes[ptrPath + 3 + ptrCurve]&PATH_ELT_MASK;
@@ -702,18 +736,30 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                     iL = curPathPointIdx++;
                 }
             }
-        }else{
-            while (curPathPointIdx < lastPathPointIdx){
-                iR = curPathPointIdx+1;
-                _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
-                iL = curPathPointIdx++;
+        }else{*/
+        iL = lastPathPointIdx;
+            if (ctx->dashCount > 0) {
+                while (curPathPointIdx < lastPathPointIdx){
+                    iR = curPathPointIdx+1;
+                    _draw_dashed_segment(ctx, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], hw);
+                    iL = curPathPointIdx++;
+                }
+                if (_path_is_closed(ctx,ptrPath)){
+                    iR = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+                    _draw_dashed_segment(ctx, ctx->points[iL++], ctx->points[curPathPointIdx++], ctx->points[iR], hw);
+                }
+                if (!dashOn)
+                    _draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], normal, false);
+            } else {
+                while (curPathPointIdx < lastPathPointIdx){
+                    iR = curPathPointIdx+1;
+                    _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
+                    iL = curPathPointIdx++;
+                }
             }
-        }
+        //}
 
-        if (!_path_is_closed(ctx,ptrPath)){
-            _draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], ctx->points[curPathPointIdx-1], false);
-            //curPathPointIdx++;
-        }else{
+        /*if (_path_is_closed(ctx,ptrPath)){
             iR = ctx->pathes[ptrPath] & PATH_ELT_MASK;
             float cross = _build_vb_step (ctx, v, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
 
@@ -729,7 +775,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 inds[5] = ii+1;
             }
             curPathPointIdx++;
-        }
+        }else
+            _draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], ctx->points[curPathPointIdx-1], false);*/
 
         ptrPath+=2+ptrCurve;
     }
