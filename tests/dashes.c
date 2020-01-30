@@ -1,12 +1,15 @@
 #include "test.h"
-
+static float offset = 0;
 void test(){
+    offset += 0.1f;
     vkvg_surface_clear(surf);
 
     VkvgContext ctx = vkvg_create(surf);
-    const float dashes[] = {60.0f, 40};
+    //const float dashes[] = {160.0f, 80};
+    //const float dashes[] = {160.0f, 30};
+    const float dashes[] = {5, 2};
     vkvg_set_line_cap(ctx, VKVG_LINE_CAP_ROUND);
-    vkvg_set_dash(ctx, dashes, 2, 0.f);
+    vkvg_set_dash(ctx, dashes, 2, offset);
     vkvg_set_line_width(ctx, 20);
     vkvg_set_source_rgb(ctx, 0, 0, 1);
 
@@ -16,12 +19,13 @@ void test(){
     vkvg_rel_line_to (ctx, 200, 0);
     vkvg_rel_line_to (ctx, 0, 200);
     vkvg_rel_line_to (ctx, -700, 0);
+    vkvg_close_path(ctx);
     vkvg_stroke (ctx);
 
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 
     perform_test (test, 1024, 768);
 
