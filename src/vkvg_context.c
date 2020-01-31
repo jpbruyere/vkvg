@@ -578,8 +578,8 @@ void vkvg_fill_preserve (VkvgContext ctx){
 }
 
 void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
-    Vertex v = {0};
-    v.uv.z = -1;
+    Vertex v = {{0},{0,0,-1}};
+
     VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
     if (isStart){
@@ -591,7 +591,7 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) 
         vhw = vec2_perp(vhw);
 
         if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-            float step = M_PIF / hw;
+            float step = M_PIF / fmaxf(hw, 4.f);
             float a = acosf(n.x) + M_PIF_2;
             if (n.y < 0)
                 a = M_PIF-a;
@@ -630,7 +630,7 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) 
         firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
         if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-            float step = M_PIF / hw;
+            float step = M_PIF / fmaxf(hw, 4.f);
             float a = acosf(n.x)+ M_PIF_2;
             if (n.y < 0)
                 a = M_PIF-a;
@@ -654,7 +654,7 @@ static uint32_t curDash         = 0;    //current dash index
 static float    curDashOffset   = 0.f;  //cur dash offset between defined path point and last dash segment(on/off) start
 static vec2     normal          = {0};
 
-void _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR, bool isCurve) {
+float _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR, bool isCurve) {
     if (!dashOn)//we test in fact the next dash start, if dashOn = true => next segment is a void.
         _build_vb_step (ctx, hw, pL, p, pR, isCurve);
 
@@ -673,6 +673,7 @@ void _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR, 
             curDash = 0;
     }
     curDashOffset -= segmentLength;
+    return segmentLength;
 }
 static uint32_t curPathPointIdx, lastPathPointIdx, ptrPath, iL, iR;
 void _draw_segment (VkvgContext ctx, float hw, bool isCurve) {
@@ -707,8 +708,11 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
 
         if (ctx->dashCount > 0) {
+            //init dash stroke
             dashOn = true;
-            curDash = 0;          //current dash index
+            curDash = 0;    //current dash index
+
+            //limit offset to total length of dashes
             float totDashLength = 0;
             for (uint32_t i=0;i<ctx->dashCount;i++)
                 totDashLength+=ctx->dashes[i];
@@ -716,6 +720,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 curDashOffset = 0;
             else
                 curDashOffset = fmodf(ctx->dashOffset, totDashLength);  //cur dash offset between defined path point and last dash segment(on/off) start
+            //-----
+
             iL = lastPathPointIdx;
         } else if (_path_is_closed(ctx,ptrPath)){
             //prevent closing on the same position, this could be generalize
@@ -747,6 +753,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 _draw_dashed_segment(ctx, hw, ctx->points[iL++], ctx->points[curPathPointIdx++], ctx->points[iR], false);
             }
             if (!dashOn){
+                //finishing last dash that is already started, draw end caps but not too close to start
+                //the default gap is the next void
                 uint32_t prevDash = curDash-1;
                 if (prevDash < 0)
                     curDash = ctx->dashCount-1;

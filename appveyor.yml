@@ -34,7 +34,7 @@ for:
         - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
     after_build:
         - cd ..
-        - 7z a vkvg.zip build/*.dll build/*.exe build/*.lib
+        - 7z a vkvg.zip build\*.dll build\*.exe build\*.lib
 
   -
     matrix:
@@ -54,7 +54,7 @@ for:
         - make
     after_build:
         - cd ..
-        - 7z a build/vkvg.zip *.so* build/test_*
+        - 7z a build/vkvg.zip build/*.so* build/test_*
     
 
 
