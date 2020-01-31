@@ -7,7 +7,7 @@ void test(){
     VkvgContext ctx = vkvg_create(surf);
     //const float dashes[] = {160.0f, 80};
     //const float dashes[] = {160.0f, 30};
-    const float dashes[] = {5, 2};
+    const float dashes[] = {50, 40};
     vkvg_set_line_cap(ctx, VKVG_LINE_CAP_ROUND);
     vkvg_set_dash(ctx, dashes, 2, offset);
     vkvg_set_line_width(ctx, 20);
