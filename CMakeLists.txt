@@ -10,12 +10,12 @@ INCLUDE(CMakeDependentOption)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 IF (UNIX)
-    SET(CMAKE_CXX_FLAGS "-Wall -Wno-extra")
+	SET(CMAKE_CXX_FLAGS "-Wall -Wno-extra")
+	SET(CMAKE_EXE_LINKER_FLAGS "-lm")
 ELSEIF(MSVC)
-    SET(CMAKE_CXX_FLAGS "-W4")
+	SET(CMAKE_CXX_FLAGS "-W4")
 ENDIF()
 
-SET(CMAKE_EXE_LINKER_FLAGS "-lm")
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)
@@ -45,12 +45,12 @@ ENDIF ()
 
 set(VULKAN_SDK "$ENV{VULKAN_SDK}" CACHE STRING "LunarG Vulkan SDK path")
 if (VULKAN_SDK)
-    set(ENV{VULKAN_SDK} ${VULKAN_SDK})
-    SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/vulkan/explicit_layer.d")
-    IF (NOT EXISTS "${vulkanSdkLayerPath}")
-        SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/explicit_layer.d")
-    endif ()
-    SET(ENV{VK_LAYER_PATH} "${vulkanSdkLayerPath}")
+	set(ENV{VULKAN_SDK} ${VULKAN_SDK})
+	SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/vulkan/explicit_layer.d")
+	IF (NOT EXISTS "${vulkanSdkLayerPath}")
+		SET(vulkanSdkLayerPath "${VULKAN_SDK}/etc/explicit_layer.d")
+	endif ()
+	SET(ENV{VK_LAYER_PATH} "${vulkanSdkLayerPath}")
 endif ()
 
 if (NOT TARGET vkh_static)
@@ -156,20 +156,20 @@ FUNCTION (setup_lib LibName)
 			PUBLIC_HEADER include/vkvg.h
 	)
 	TARGET_INCLUDE_DIRECTORIES(${LibName} PRIVATE
-        ${Vulkan_INCLUDE_DIRS}
-        ${FREETYPE_INCLUDE_DIRS}
-        ${HarfBuzz_INCLUDE_DIRS}
-        ${Fontconfig_INCLUDE_DIRS}
+		${Vulkan_INCLUDE_DIRS}
+		${FREETYPE_INCLUDE_DIRS}
+		${HarfBuzz_INCLUDE_DIRS}
+		${Fontconfig_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
 	TARGET_LINK_LIBRARIES(${LibName}
-        ${Vulkan_LIBRARIES}
-        ${FREETYPE_LIBRARIES}
-        ${HarfBuzz_LIBRARIES}
-        ${Fontconfig_LIBRARIES}
+		${Vulkan_LIBRARIES}
+		${FREETYPE_LIBRARIES}
+		${HarfBuzz_LIBRARIES}
+		${Fontconfig_LIBRARIES}
 		vkh_static
 	)
 	INSTALL(TARGETS ${LibName}
@@ -189,7 +189,7 @@ setup_lib ("${PROJECT_NAME}_shared")
 FUNCTION (buildtest TEST_NAME)
 	ADD_EXECUTABLE(test_${TEST_NAME} "tests/${TEST_NAME}.c" )
 	TARGET_INCLUDE_DIRECTORIES(test_${TEST_NAME} PRIVATE
-        ${Vulkan_INCLUDE_DIRS}
+		${Vulkan_INCLUDE_DIRS}
 		${GLFW3_INCLUDE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -205,8 +205,8 @@ ENDFUNCTION (buildtest)
 if (VKVG_BUILD_TESTS)
 	ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
 	TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
-        ${Vulkan_INCLUDE_DIRS}
-        ${GLFW3_INCLUDE_DIR}
+		${Vulkan_INCLUDE_DIRS}
+		${GLFW3_INCLUDE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${CMAKE_CURRENT_SOURCE_DIR}/tests/common
@@ -214,8 +214,8 @@ if (VKVG_BUILD_TESTS)
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
 	TARGET_LINK_LIBRARIES(tests_common
-        ${Vulkan_LIBRARIES}
-        ${GLFW3_LIBRARY}
+		${Vulkan_LIBRARIES}
+		${GLFW3_LIBRARY}
 		vkh_static
 		vkvg_static
 	)
