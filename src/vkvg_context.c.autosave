@@ -654,7 +654,7 @@ static uint32_t curDash         = 0;    //current dash index
 static float    curDashOffset   = 0.f;  //cur dash offset between defined path point and last dash segment(on/off) start
 static vec2     normal          = {0};
 
-void _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR, bool isCurve) {
+float _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR, bool isCurve) {
     if (!dashOn)//we test in fact the next dash start, if dashOn = true => next segment is a void.
         _build_vb_step (ctx, hw, pL, p, pR, isCurve);
 
@@ -673,6 +673,7 @@ void _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR, 
             curDash = 0;
     }
     curDashOffset -= segmentLength;
+    return segmentLength;
 }
 static uint32_t curPathPointIdx, lastPathPointIdx, ptrPath, iL, iR;
 void _draw_segment (VkvgContext ctx, float hw, bool isCurve) {
@@ -707,8 +708,11 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
 
         if (ctx->dashCount > 0) {
+            
             dashOn = true;
-            curDash = 0;          //current dash index
+            curDash = 0;    //current dash index
+            
+            //limit offset to total length of dashes
             float totDashLength = 0;
             for (uint32_t i=0;i<ctx->dashCount;i++)
                 totDashLength+=ctx->dashes[i];
@@ -716,6 +720,8 @@ void vkvg_stroke_preserve (VkvgContext ctx)
                 curDashOffset = 0;
             else
                 curDashOffset = fmodf(ctx->dashOffset, totDashLength);  //cur dash offset between defined path point and last dash segment(on/off) start
+            //-----
+            
             iL = lastPathPointIdx;
         } else if (_path_is_closed(ctx,ptrPath)){
             //prevent closing on the same position, this could be generalize

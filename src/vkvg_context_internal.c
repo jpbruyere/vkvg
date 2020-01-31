@@ -672,7 +672,9 @@ void _init_descriptor_sets (VkvgContext ctx){
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
 //populate vertice buff for stroke
-float _build_vb_step (vkvg_context* ctx, Vertex v, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve){
+float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve){
+    Vertex v = {{0},{0,0,-1}};
+
     //if two of the three points are equal, normal is null
     vec2 v0n = vec2_line_norm(pL, p0);
     if (vec2_isnan(v0n))
