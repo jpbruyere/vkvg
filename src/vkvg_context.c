@@ -373,7 +373,8 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 
     vec2 v = {cosf(a1)*radius + xc, sinf(a1)*radius + yc};
 
-    float step = _get_arc_step(radius);
+    float step = _get_arc_step(ctx, radius);
+    printf ("steps: %.2f\n", 2.f*M_PIF/step);
     float a = a1;
 
     if (_current_path_is_empty(ctx))
@@ -416,7 +417,7 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 
     vec2 v = {cosf(a1)*radius + xc, sinf(a1)*radius + yc};
 
-    float step = _get_arc_step(radius);
+    float step = _get_arc_step(ctx, radius);
     float a = a1;
 
     if (_current_path_is_empty(ctx))
