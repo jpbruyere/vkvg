@@ -61,12 +61,16 @@ void cairo_test_fill_rule (VkvgContext cr){
 }
 void cairo_test_text (VkvgContext cr) {
     vkvg_text_extents_t extents;
+    vkvg_font_extents_t ft;
 
-    const char *utf8 = "vkvg";
+    //vkvg_set_fill_rule(cr, VKVG_FILL_RULE_NON_ZERO);
+    const char *utf8 = "vkvg|Ãp";
     float x,y;
 
-    vkvg_select_font_face (cr, "times");
-    vkvg_set_font_size (cr, 100.0);
+    //vkvg_select_font_face (cr, "times");
+    vkvg_select_font_face (cr, "linux biolinum keyboard");
+    vkvg_set_font_size (cr, 50);
+    vkvg_font_extents(cr, &ft);
     vkvg_text_extents (cr, utf8, &extents);
     vkvg_set_source_rgb(cr,0,0,0);
 
@@ -77,15 +81,36 @@ void cairo_test_text (VkvgContext cr) {
     vkvg_show_text (cr, utf8);
 
     /* draw helping lines */
-    vkvg_set_source_rgba (cr, 1, 0.2, 0.2, 0.6);
-    vkvg_set_line_width (cr, 6.0);
+    vkvg_set_source_rgba (cr, 0, 0.2, 0.2, 0.6);
+    vkvg_set_line_width (cr, 1.0);
     vkvg_new_path(cr);
     vkvg_arc (cr, x, y, 10.0, 0, 2*M_PI);
     vkvg_fill (cr);
     vkvg_move_to (cr, x,y);
-    vkvg_rel_line_to (cr, 0, -extents.height);
+    //vkvg_rel_line_to (cr, 0, -30);
+    vkvg_rel_line_to (cr, 0, -ft.ascent);
     vkvg_rel_line_to (cr, extents.width, 0);
     vkvg_rel_line_to (cr, extents.x_bearing, -extents.y_bearing);
+
+    vkvg_stroke (cr);
+
+    vkvg_move_to (cr, x,y);
+    vkvg_rel_line_to (cr, extents.width, 0);
+    vkvg_set_source_rgba (cr, 0.0, 0.0, 0.9, 0.6);
+
+    vkvg_stroke (cr);
+
+    vkvg_move_to (cr, x,y);
+    vkvg_rel_line_to (cr, 0, -ft.descent);
+    vkvg_rel_line_to (cr, extents.width, 0);
+    vkvg_set_source_rgba (cr, 0.9, 0.0, 0.0, 0.6);
+
+    vkvg_stroke (cr);
+
+    vkvg_move_to (cr, x-10,y-ft.ascent);
+    vkvg_rel_line_to (cr, 0, ft.height);
+    vkvg_set_source_rgba (cr, 0.0, 0.1, 0.0, 0.6);
+
     vkvg_stroke (cr);
 }
 void cairo_test_clip (VkvgContext cr){
@@ -300,7 +325,7 @@ void cairo_print_arc (VkvgContext cr) {
 static float rotation = 0.f;
 
 void cairo_tests () {
-    rotation+=0.01f;
+    rotation+=0.002f;
 
     vkvg_matrix_t mat;
     vkvg_matrix_init_translate (&mat, 512,400);
@@ -314,7 +339,7 @@ void cairo_tests () {
     vkvg_set_source_rgba(ctx,1.0f,1.0f,1.0f,1);
     vkvg_paint(ctx);
 
-    vkvg_set_matrix(ctx,&mat);
+    //vkvg_set_matrix(ctx,&mat);
 
     cairo_print_arc(ctx);
 

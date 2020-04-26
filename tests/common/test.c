@@ -33,7 +33,7 @@ VkvgDevice device = NULL;
 VkvgSurface surf = NULL;
 
 uint32_t test_size = 100;  // items drawn in one run, or complexity
-int iterations = 10000;   // repeat test n times
+int iterations = 40000;   // repeat test n times
 
 static bool paused = false;
 static VkSampleCountFlags samples = VK_SAMPLE_COUNT_8_BIT;
@@ -187,15 +187,15 @@ void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height) {
         i++;
     }
 
-    double avg_run_time = run_total / (double)iterations;
-    double med_run_time = median_run_time (run_time_values, iterations);
-    double standard_dev = standard_deviation (run_time_values, iterations, avg_run_time);
+    double avg_run_time = run_total / (double)i;
+    double med_run_time = median_run_time (run_time_values, i);
+    double standard_dev = standard_deviation (run_time_values, i, avg_run_time);
     double avg_frames_per_second = (1.0 / avg_run_time);
     avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
 
     free (run_time_values);
 
-    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 }
 void clear_test () {
     vkDeviceWaitIdle(e->dev->dev);
@@ -299,15 +299,15 @@ void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height) {
         i++;
     }
 
-    double avg_run_time = run_total / (double)iterations;
-    double med_run_time = median_run_time (run_time_values, iterations);
-    double standard_dev = standard_deviation (run_time_values, iterations, avg_run_time);
+    double avg_run_time = run_total / (double)i;
+    double med_run_time = median_run_time (run_time_values, i);
+    double standard_dev = standard_deviation (run_time_values, i, avg_run_time);
     double avg_frames_per_second = (1.0 / avg_run_time);
     avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
 
     free (run_time_values);
 
-    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, iterations, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+    printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 
     vkDeviceWaitIdle(e->dev->dev);
 
