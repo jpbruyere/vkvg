@@ -1,3 +1,7 @@
+/*
+ * test template
+ */
+
 #include "test.h"
 
 void test(){
@@ -8,7 +12,7 @@ void test(){
 
 int main(int argc, char *argv[]) {
 
-	perform_test (test, 600, 800);
+	perform_test (test, "custom test", 800, 600);
 
 	return 0;
 }

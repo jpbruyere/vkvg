@@ -43,7 +43,6 @@ void test_nsvg() {
 }
 
 int main(int argc, char *argv[]) {
-
-    perform_test (test_nsvg, 1024, 800);
+    PERFORM_TEST (test_nsvg);
     return 0;
 }

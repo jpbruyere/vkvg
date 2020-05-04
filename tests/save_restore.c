@@ -29,7 +29,7 @@ void test(){
 
 int main(int argc, char *argv[]) {
 
-    perform_test (test, 600, 800);
+    PERFORM_TEST (test);
 
     return 0;
 }

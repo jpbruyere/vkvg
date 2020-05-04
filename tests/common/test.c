@@ -210,7 +210,7 @@ void clear_test () {
 VkvgSurface* surfaces;
 #endif
 
-void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height) {
+void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, uint32_t height) {
     //dumpLayerExts();
 
     e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
@@ -240,6 +240,8 @@ void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height) {
     double* run_time_values = (double*)malloc(iterations*sizeof(double));
 
     int i = 0;
+
+    vkengine_set_title(e, testName);
 
     while (!vkengine_should_close (e) && i < iterations) {
         glfwPollEvents();

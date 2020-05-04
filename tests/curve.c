@@ -56,8 +56,6 @@ void test(){
 }
 
 int main(int argc, char *argv[]) {
-
-    perform_test (test, 1024, 768);
-
+    PERFORM_TEST (test);
     return 0;
 }

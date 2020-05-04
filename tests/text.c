@@ -154,9 +154,9 @@ void test(){
 
 int main(int argc, char *argv[]) {
 
-    perform_test (test2, 1024, 768);
-    perform_test (test1, 1024, 768);
-    perform_test (test, 1024, 768);
+    PERFORM_TEST (test);
+    PERFORM_TEST (test1);
+    PERFORM_TEST (test2);
 
     return 0;
 }

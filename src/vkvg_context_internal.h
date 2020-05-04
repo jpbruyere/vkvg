@@ -123,8 +123,6 @@ typedef struct _vkvg_context_t {
 
     //pathes array is a list of couple (start,end) point idx refering to point array
     //it split points list in subpathes and tell if path is closed.
-    //if path is closed, end index is the same as start.
-    //(TODO: I should use a boolean or smthg else instead to keep last point in array)
     uint32_t	pathPtr;        //pointer in the path array, even=start point;odd=end point
     uint32_t*	pathes;
     size_t		sizePathes;

@@ -1,4 +1,56 @@
 #include "test.h"
+void paint () {
+    VkvgContext ctx = vkvg_create(surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+
+    vkvg_set_source_surface(ctx, imgSurf, 00, 00);
+    vkvg_paint(ctx);
+
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
+void paint_offset () {
+    VkvgContext ctx = vkvg_create(surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+
+    vkvg_set_source_surface(ctx, imgSurf, 100, 100);
+    vkvg_paint(ctx);
+
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
+void paint_pattern () {
+    VkvgContext ctx = vkvg_create(surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+    VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
+    vkvg_set_source(ctx, pat);
+    vkvg_paint(ctx);
+    vkvg_pattern_destroy(pat);
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
+void paint_pattern_repeat () {
+    VkvgContext ctx = vkvg_create(surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+    VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
+    vkvg_pattern_set_extend(pat,VKVG_EXTEND_REPEAT);
+    vkvg_set_source(ctx, pat);
+    vkvg_paint(ctx);
+    vkvg_pattern_destroy(pat);
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
+void paint_pattern_pad () {
+    VkvgContext ctx = vkvg_create(surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+    VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
+    vkvg_pattern_set_extend(pat,VKVG_EXTEND_PAD);
+    vkvg_set_source(ctx, pat);
+    vkvg_paint(ctx);
+    vkvg_pattern_destroy(pat);
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
 
 void test(){
     VkvgContext ctx = vkvg_create(surf);
@@ -26,8 +78,12 @@ void test(){
 }
 
 int main(int argc, char *argv[]) {
-
-    perform_test (test, 1024, 768);
+    PERFORM_TEST (paint);
+    PERFORM_TEST (paint_offset);
+    PERFORM_TEST (paint_pattern);
+    PERFORM_TEST (paint_pattern_repeat);
+    PERFORM_TEST (paint_pattern_pad);
+    PERFORM_TEST (test);
 
     return 0;
 }
