@@ -63,17 +63,7 @@ if `glslc` or `xxd` are not present, a precompiled version of the shaders is sto
 
 ### Building
 
-The library can be built on [Windows](doc/windows_tutorial.md) or on Linux throught CMake. 
-
-```bash
-git clone https://github.com/jpbruyere/vkvg.git     # Download source code from github
-cd vkvg                                             # Enter the source directory
-git submodule update --init --recursive             # Dowload vkhelpers sources
-mkdir build					    # Create build directory
-cd build
-cmake ..					    # Run CMake, optionaly setup glslc path
-make						    # Run Make
-```
+The library can be built on [Windows](doc/windows_build_tutorial.md) or on [Linux](doc/linux_build_tutorial.md) throught CMake. 
 
 ### To Do
 
