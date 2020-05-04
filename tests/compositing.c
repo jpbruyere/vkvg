@@ -1,6 +1,6 @@
 #include "test.h"
 
-void test(){
+void compositing(){
     vkvg_surface_clear(surf);
 
     VkvgContext ctx = vkvg_create(surf);
@@ -17,8 +17,6 @@ void test(){
 }
 
 int main(int argc, char *argv[]) {
-
-    perform_test (test, 600, 800);
-
+    PERFORM_TEST (compositing);
     return 0;
 }

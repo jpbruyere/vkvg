@@ -33,6 +33,11 @@ void _init_fonts_cache (VkvgDevice dev){
     _font_cache_t* cache = (_font_cache_t*)calloc(1, sizeof(_font_cache_t));
 
     cache->config = FcInitLoadConfigAndFonts();
+    if (!cache->config) {
+        fprintf(stderr, "Font config initialisation failed, consider using 'FONTCONFIG_PATH' and 'FONTCONFIG_FILE' environmane\
+                       variables to point to 'fonts.conf' needed for FontConfig startup");
+        assert(cache->config);
+    }
 
     FT_CHECK_RESULT(FT_Init_FreeType(&cache->library));
 

@@ -75,8 +75,7 @@ void test_clip2(){
     vkvg_destroy(ctx);
 }
 int main(int argc, char *argv[]) {
-
-    perform_test (test_clip2, 1024, 768);
-
+    PERFORM_TEST (test_clip);
+    PERFORM_TEST (test_clip2);
     return 0;
 }

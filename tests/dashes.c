@@ -41,8 +41,6 @@ void test(){
 }
 
 int main() {
-
-    perform_test (test, 1024, 768);
-
+    PERFORM_TEST (test);
     return 0;
 }

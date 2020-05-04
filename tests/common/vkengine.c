@@ -258,7 +258,9 @@ void vkengine_blitter_run (VkEngine e, VkImage img, uint32_t width, uint32_t hei
 inline bool vkengine_should_close (VkEngine e) {
     return glfwWindowShouldClose (e->window);
 }
-
+void vkengine_set_title (VkEngine e, const char* title) {
+    glfwSetWindowTitle(e->window, title);
+}
 VkDevice vkengine_get_device (VkEngine e){
     return e->dev->dev;
 }

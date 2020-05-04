@@ -21,6 +21,7 @@
 # define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
+#define PERFORM_TEST(testName) perform_test(testName, #testName, 1024, 768);
 #if defined(_WIN32) || defined(_WIN64)
     #define WIN32_LEAN_AND_MEAN
     #define NOMINMAX
@@ -73,10 +74,10 @@ extern VkvgDevice device;
 extern VkvgSurface surf;
 
 //run test in one step
-void perform_test (void(*testfunc)(void),uint32_t width, uint32_t height);
+void perform_test (void(*testfunc)(void), const char* testName, uint32_t width, uint32_t height);
 void randomize_color (VkvgContext ctx);
 
 //run test in 3 step: init, run, clear.
 void init_test (uint32_t width, uint32_t height);
-void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height);
+void run_test_func (void(*testfunc)(void), uint32_t width, uint32_t height);
 void clear_test ();

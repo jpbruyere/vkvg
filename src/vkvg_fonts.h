@@ -43,7 +43,7 @@
     FT_Error res = (f);																					\
     if (res != 0)																				\
     {																									\
-        printf("Fatal : FreeType error is %d in %s at line %d\n", res,  __FILE__, __LINE__); \
+        fprintf(stderr,"Fatal : FreeType error is %d in %s at line %d\n", res,  __FILE__, __LINE__); \
         assert(res == 0);																		\
     }																									\
 }

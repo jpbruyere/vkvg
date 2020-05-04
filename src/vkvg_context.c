@@ -41,7 +41,7 @@ static VkClearValue clearValues[3] = {
 
 /**
  * @brief create new context for surface
- * @param drawing operation output surface
+ * @param drawing operations output surface
  * @return newly created context pointer
  */
 VkvgContext vkvg_create(VkvgSurface surf)
@@ -229,6 +229,7 @@ void vkvg_destroy (VkvgContext ctx)
     free(ctx->vertexCache);
     free(ctx->indexCache);
 
+    //TODO:check this for source counter
     //vkh_image_destroy   (ctx->source);
 
     free(ctx->selectedFont.fontFile);
@@ -301,10 +302,6 @@ void vkvg_new_sub_path (VkvgContext ctx){
 void vkvg_new_path (VkvgContext ctx){
     _clear_path(ctx);
 }
-//path closing is done by setting the endpoint of the path to the same index
-//as the start point.
-//I'll test if closing by adding a new point with the same x,y as the start point
-//would not make more sense.
 /**
  * @brief Close current path if at least 3 points are present
  * @param context pointer
@@ -356,7 +353,7 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
     _add_point(ctx,x,y);
 }
 /**
- * @brief Draw arc
+ * @brief Draw arc in clockwise order following angles of the trigonometric circle.
  * @param context pointer
  * @param center x coordinate
  * @param center y coordinate
@@ -408,6 +405,15 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
         _add_point (ctx, v.x, v.y);
     _set_curve_end(ctx);
 }
+/**
+ * @brief Draw arc in counter clockwise order following angles of the trigonometric circle.
+ * @param context pointer
+ * @param center x coordinate
+ * @param center y coordinate
+ * @param radius
+ * @param start angle of arc
+ * @param end angle of arc
+ */
 void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
     while (a2 > a1)
         a2 -= 2.f*M_PIF;
@@ -450,6 +456,12 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
         _add_point (ctx, v.x, v.y);
     _set_curve_end(ctx);
 }
+/**
+ * @brief move pen relative to the current point.
+ * @param ctx
+ * @param delta in the horizontal direction
+ * @param delta in the vertical direction
+ */
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
     if (_current_path_is_empty(ctx)){
@@ -459,11 +471,18 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
     vec2 cp = _get_current_position(ctx);
     vkvg_move_to(ctx, cp.x + x, cp.y + y);
 }
+/**
+ * @brief move pen to the position given in argument
+ * @param ctx
+ * @param new x position of the pen
+ * @param new y position of the pen
+ */
 void vkvg_move_to (VkvgContext ctx, float x, float y)
 {
     _finish_path(ctx);
     _start_sub_path(ctx, x, y);
 }
+
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
     if (_current_path_is_empty(ctx))
         vkvg_move_to(ctx, x1, y1);

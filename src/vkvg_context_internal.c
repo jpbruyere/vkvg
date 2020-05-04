@@ -99,7 +99,7 @@ void _set_curve_start (VkvgContext ctx) {
     ctx->pathes[ctx->pathPtr+ctx->curvePtr+1] = (ctx->pointCount - 1);
     ctx->pathes[ctx->pathPtr-1] |= PATH_HAS_CURVES_BIT;
 }
-//set curve end point and set path has curve bit
+//set curve end point and set path is curve bit
 void _set_curve_end (VkvgContext ctx) {
     ctx->pathes[ctx->pathPtr+ctx->curvePtr+2] = (ctx->pointCount - 1)|PATH_IS_CURVE_BIT;
     ctx->curvePtr+=2;
@@ -1017,10 +1017,10 @@ void _poly_fill (VkvgContext ctx){
             continue;
         }
         //close path
-        ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;// ctx->pathes[ptrPath];//close path by setting start and end equal
+        ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;
 
         uint32_t firstPtIdx = ctx->pathes [ptrPath] & PATH_ELT_MASK;
-        uint32_t lastPtIdx  = ctx->pathes [ptrPath+1] & PATH_ELT_MASK;//_get_last_point_of_closed_path (ctx, ptrPath);
+        uint32_t lastPtIdx  = ctx->pathes [ptrPath+1] & PATH_ELT_MASK;
         uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
 
         VKVG_IBO_INDEX_TYPE firstVertIdx = ctx->vertCount;

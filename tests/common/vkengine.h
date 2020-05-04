@@ -51,6 +51,7 @@ void vkengine_destroy       (VkEngine e);
 bool vkengine_should_close  (VkEngine e);
 void vkengine_close         (VkEngine e);
 void vkengine_dump_Infos    (VkEngine e);
+void vkengine_set_title     (VkEngine e, const char* title);
 VkDevice            vkengine_get_device         (VkEngine e);
 VkPhysicalDevice    vkengine_get_physical_device(VkEngine e);
 VkQueue             vkengine_get_queue          (VkEngine e);
