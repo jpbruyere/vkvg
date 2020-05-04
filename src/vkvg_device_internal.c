@@ -400,6 +400,9 @@ void _init_function_pointers (VkvgDevice dev) {
     CmdSetScissor           = GetInstProcAddress(dev->instance, vkCmdSetScissor);
     CmdPushConstants        = GetInstProcAddress(dev->instance, vkCmdPushConstants);
     CmdPushDescriptorSet    = (PFN_vkCmdPushDescriptorSetKHR)vkGetInstanceProcAddr(dev->instance, "vkCmdDescriptorSet");
+#ifdef DEBUG
+    vkh_device_init_debug_utils ((VkhDevice)dev);
+#endif
 }
 
 void _create_empty_texture (VkvgDevice dev) {
