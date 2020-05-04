@@ -5,18 +5,23 @@
 0 - In order to follow all the steps from this tutorial you must have Visual Studio installed on your machine. The version which we used was the VS 2017, but other versions should work (i.e. VS19 and VS15). If you do not have the VS program installed the steps which are presented in the following section might still have some value for you. <br>
 
 1 - Make sure that Git is installed on your machine by typing on the command line<br>
->\> git --version<br>
+```bash
+> git --version
+```
 
 If the output of such command is: <br>
->git version 2.19.1.windows.1<br>
+```bash
+git version 2.19.1.windows.1
+```
 
 Then you have git installed on your machine. If an error is given, then install git on your machine.<br> 
 
 2 - To install all the necessary libraries we first need to install the vcpkg package manager (the process can be done manually but it is easier this way) which allows one to link projects with a large array of libraries already developed in C\C++. The instalation of vcpkg is trivial, you just open a command line, and write <br>
->\> git clone https://github.com/Microsoft/vcpkg.git <br>
->\> cd vcpkg<br>
->\> .\bootstrap-vcpkg.bat<br>
-<br>
+```bash
+> git clone https://github.com/Microsoft/vcpkg.git
+> cd vcpkg
+> .\bootstrap-vcpkg.bat
+```
 3 - Now we have to install the dependencies for the vkvg library which are :<br> 
 
 - CMake -> Used to define projects across several operating systems (OS)<br>
@@ -27,28 +32,32 @@ Then you have git installed on your machine. If an error is given, then install 
 - GLFW -> Library used to create a window independent from the underlying OS<br>
 
 To install all these libraries we can simply write (assuming you are still on vcpkg directory):<br>
-
->\> vcpkg search vulkan<br>
+```bash
+> vcpkg search vulkan
+```
 
 To find if the library already has a port for the vcpkg packadge manager<br>
 
 4 - So now we know that the library is currently usable from the vcpkg program so we can now write:<br>
-
->\> vcpkg install vulkan<br>
+```bash
+> vcpkg install vulkan
+```
 
 And do the same drill for all the other libraries...<br>
-
->\> vcpkg install freetype<br>
->\> vcpkg install fontconfig<br>
->...<br>
+```bash
+> vcpkg install freetype
+> vcpkg install fontconfig
+>...
+```
 
 5 - What we just did was that we download the source files from the open sourced projects and we compiled them with the MSVN compiler so we know we won't be facing any incompatibilities when compiling our tutorial. Now we can download the source code for the vkvg library by typing:<br>
-
->\> cd ..<br>
+```bash
+> cd ..
+```
 On the command line to get out of the vcpkg directory and then write:<br>
-
->\> git clone https://github.com/jpbruyere/vkvg.git<br>
-
+```bash
+> git clone https://github.com/jpbruyere/vkvg.git
+```
 To download the code to a local repository<br>
 
 6 - Now we can use the IDE from CMake to generate the .sln file which can be processed by visual studio. Open the IDE and select the directory which contains the source code (it should be something like <i>'C:\...\vkvg'</i>). Now select the folder where you want to generate the project to. In our case we created a folder called bin (<i>'C:\...\vkvg\bin'</i>) and selected that file.<br>
