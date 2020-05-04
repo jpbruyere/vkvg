@@ -63,6 +63,8 @@ if `glslc` or `xxd` are not present, a precompiled version of the shaders is sto
 
 ### Building
 
+The library can be built on [Windows](doc/windows_tutorial.md) or on Linux throught CMake. 
+
 ```bash
 git clone https://github.com/jpbruyere/vkvg.git     # Download source code from github
 cd vkvg                                             # Enter the source directory
