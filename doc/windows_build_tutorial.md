@@ -14,9 +14,9 @@ If the output of such command is: <br>
 git version 2.19.1.windows.1
 ```
 
-Then you have git installed on your machine. If an error is given, then install git on your machine.<br> 
+Then you have git installed on your machine. If an error is given, then [install git on your machine](https://git-scm.com/download/win).<br> 
 
-2 - To install all the necessary libraries we first need to install the vcpkg package manager (the process can be done manually but it is easier this way) which allows one to link projects with a large array of libraries already developed in C\C++. The instalation of vcpkg is trivial, you just open a command line, and write <br>
+2 - To install all the necessary libraries we first need to install the [vcpkg package manager](https://docs.microsoft.com/en-us/cpp/build/vcpkg?view=vs-2019) (the process can be done manually but it is easier this way) which allows one to link projects with a large array of libraries already developed in C\C++. The instalation of vcpkg is trivial, you just open a command line, and write <br>
 ```bash
 > git clone https://github.com/Microsoft/vcpkg.git
 > cd vcpkg
@@ -24,18 +24,17 @@ Then you have git installed on your machine. If an error is given, then install 
 ```
 3 - Now we have to install the dependencies for the vkvg library which are :<br> 
 
-- CMake -> Used to define projects across several operating systems (OS)<br>
-- Vulkan -> The API to interact with the GPU to create images which you are already probabily familiar<br>
-- FontConfig -> The library used to find the configuration of the fonts from the OS<br>
-- Freetype -> Library used to render the fonts<br>
-- Harfbuzz -> Library used to shape the text .<br>
-- GLFW -> Library used to create a window independent from the underlying OS<br>
+- [CMake](https://cmake.org/) -> Used to define projects across several operating systems (OS)<br>
+- [Vulkan](https://www.khronos.org/vulkan/) -> The API to interact with the GPU to create images which you are already probabily familiar<br>
+- [FontConfig](https://www.freedesktop.org/wiki/Software/fontconfig/) -> The library used to find the configuration of the fonts from the OS<br>
+- [Freetype](https://www.freetype.org/) -> Library used to render the fonts<br>
+- [Harfbuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/) -> Library used to shape the text .<br>
+- [GLFW](http://www.glfw.org/) -> Library used to create a window independent from the underlying OS<br>
 
 To install all these libraries we can simply write (assuming you are still on vcpkg directory):<br>
 ```bash
 > vcpkg search vulkan
 ```
-
 To find if the library already has a port for the vcpkg packadge manager<br>
 
 4 - So now we know that the library is currently usable from the vcpkg program so we can now write:<br>
