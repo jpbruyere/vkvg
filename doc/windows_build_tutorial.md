@@ -2,9 +2,9 @@
  Tutorial for Windows with Visual Studio IDE:
 </h1>
 
-0 - In order to follow all the steps from this tutorial you must have Visual Studio installed on your machine. The version which we used was the VS 2017, but other versions should work (i.e. VS19 and VS15). If you do not have the VS program installed the steps which are presented in the following section might still have some value for you. <br>
+0 - In order to follow all the steps from this tutorial Visual Studio must be installed on your machine. The version used in this build tutorial was the VS 2017, but other versions should work (i.e. VS19 and VS15). If VS is not installed the following steps might still have some value for your specific build. <br>
 
-1 - Make sure that Git is installed on your machine by typing on the command line<br>
+1 - Make sure that Git is installed on your machine by typing on the command line (cmd)<br>
 ```bash
 > git --version
 ```
@@ -14,15 +14,15 @@ If the output of such command is: <br>
 git version 2.19.1.windows.1
 ```
 
-Then you have git installed on your machine. If an error is given, then [install git on your machine](https://git-scm.com/download/win).<br> 
+Then git is installed on your machine. If an error is given, then [install git on your machine](https://git-scm.com/download/win).<br> 
 
-2 - To install all the necessary libraries we first need to install the [vcpkg package manager](https://docs.microsoft.com/en-us/cpp/build/vcpkg?view=vs-2019) (the process can be done manually but it is easier this way) which allows one to link projects with a large array of libraries already developed in C\C++. The instalation of vcpkg is trivial, you just open a command line, and write <br>
+2 - To install all the dependencies one can use a packadge manager to simplify the required steps. The [vcpkg package manager](https://docs.microsoft.com/en-us/cpp/build/vcpkg?view=vs-2019) allows one to link projects with a large array of libraries already developed in C\C++. The instalation of vcpkg is trivial. First open a command line and write: <br>
 ```bash
 > git clone https://github.com/Microsoft/vcpkg.git
 > cd vcpkg
 > .\bootstrap-vcpkg.bat
 ```
-3 - Now we have to install the dependencies for the vkvg library which are :<br> 
+3 - The dependencies required by vkvg are :<br> 
 
 - [CMake](https://cmake.org/) -> Used to define projects across several operating systems (OS)<br>
 - [Vulkan](https://www.khronos.org/vulkan/) -> The API to interact with the GPU to create images which you are already probabily familiar<br>
@@ -31,13 +31,13 @@ Then you have git installed on your machine. If an error is given, then [install
 - [Harfbuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/) -> Library used to shape the text .<br>
 - [GLFW](http://www.glfw.org/) -> Library used to create a window independent from the underlying OS<br>
 
-To install all these libraries we can simply write (assuming you are still on vcpkg directory):<br>
+To install all these libraries write on the cmd (assuming you are still on vcpkg directory):<br>
 ```bash
 > vcpkg search vulkan
 ```
-To find if the library already has a port for the vcpkg packadge manager<br>
+To find if the library already has a port for **vcpkg**<br>
 
-4 - So now we know that the library is currently usable from the vcpkg program so we can now write:<br>
+4 - If the port exists write on the cmd:<br>
 ```bash
 > vcpkg install vulkan
 ```
@@ -49,7 +49,9 @@ And do the same drill for all the other libraries...<br>
 >...
 ```
 
-5 - What we just did was that we download the source files from the open sourced projects and we compiled them with the MSVN compiler so we know we won't be facing any incompatibilities when compiling our tutorial. Now we can download the source code for the vkvg library by typing:<br>
+With the previous commands the source files from the open sourced project is now on the machine and they have been compiled with MSVN so that no incompatibilities emerge further down the line.
+
+5 - To download the vkvg library type:<br>
 ```bash
 > cd ..
 ```
