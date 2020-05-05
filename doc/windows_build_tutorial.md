@@ -58,13 +58,16 @@ With the previous commands the source files from the open sourced project is now
 On the command line to get out of the **vcpkg** directory and then write:<br>
 ```bash
 > git clone https://github.com/jpbruyere/vkvg.git
+> cd vkvg 
+> git submodule update --init --recursive 
+> mkdir build
 ```
-To download the code to a local repository<br>
+To download the code to a local repository, download the vkh dependency and create the directory to build.<br>
 
-6 - To generate the .sln file which can be processed by visual studio go to the CMake IDE and lauch it. Select the directory which contains the source code (it should be something like <i>'C:\...\vkvg'</i>). Now select the folder where you want to generate the project to. For this test build create the <i>'C:\...\vkvg\bin'</i> directory and selected it as the destination of the binaries.<br>
+6 - To generate the .sln file which can be processed by visual studio go to the CMake IDE and lauch it. Select the directory which contains the source code (it should be something like <i>'C:\...\vkvg'</i>). Now select the folder where you want to generate the project to. For this test build select <i>'C:\...\vkvg\build'</i> as the destination of the binaries.<br>
 
 7 - Now configure the project. This action generated a window where you can select the target build you want, if you are using VS17 it should be something like <i>Visual Studio 15 2017 Win64</i>, and the toolchain file for cross-compiling must be specified (because vcpkg generates a file which simplifies the use of the libraries previously downloaded). It should be a file located in <i>'C:\...\vcpkg\scripts\buildsystems\vcpkg.cmake'</i> which contains information used by cmake.<br>
 
-8 - If everything went well it is time to select the options of the project for this specific build. On the bottom of the GUI there are some options related with the VKVG librarie. Unselect the <strong>VKVG_LCD_FONT_FILTER</strong> because **vcpkg** does not build FreeType with this option enabled. Now generate the sln project and procede to open the project with Visual Studio.<br>
+8 - If everything went well it is time to select the options of the project for this specific build. On the bottom of the GUI there are some options related with the **vkvg** library. Unselect the <strong>VKVG_LCD_FONT_FILTER</strong> because **vcpkg** does not build FreeType with this option enabled. Now generate the sln project and procede to open the project with Visual Studio.<br>
 
-9 - To build the project (the <strong>ALL BUILD</strong> project should be the Start Up project) press F7 or press build (top of the screen) and then press build solution. If everything goes well you finally have the .lib and .dll files to use in our projects. These files can be found in the <i>'C:\...\vkvg\bin\CMakeFiles\Debug'</i> directory (this directory is dependent of the folders created on step 6) <br>
+9 - To build the project (the <strong>ALL BUILD</strong> project should be the Start Up project) press F7 or press build (top of the screen) and then press build solution. If everything goes well you finally have the .lib and .dll files to use in our projects. These files can be found in the <i>'C:\...\vkvg\build\CMakeFiles\Debug'</i> directory (this directory is dependent of the folders created on step 6) <br>
