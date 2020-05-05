@@ -16,13 +16,13 @@ git version 2.19.1.windows.1
 
 Then git is installed on your machine. If an error is given, then [install git on your machine](https://git-scm.com/download/win).<br> 
 
-2 - To install all the dependencies one can use a packadge manager to simplify the required steps. The [vcpkg package manager](https://docs.microsoft.com/en-us/cpp/build/vcpkg?view=vs-2019) allows one to link projects with a large array of libraries already developed in C\C++. The instalation of vcpkg is trivial. First open a command line and write: <br>
+2 - To install all the dependencies one can use a packadge manager to simplify the required steps. The [vcpkg package manager](https://docs.microsoft.com/en-us/cpp/build/vcpkg?view=vs-2019) allows one to link projects with a large array of libraries already developed in C\C++. The instalation of **vcpkg** is trivial. First open a command line and write: <br>
 ```bash
 > git clone https://github.com/Microsoft/vcpkg.git
 > cd vcpkg
 > .\bootstrap-vcpkg.bat
 ```
-3 - The dependencies required by vkvg are :<br> 
+3 - The dependencies required by **vkvg** are :<br> 
 
 - [CMake](https://cmake.org/) -> Used to define projects across several operating systems (OS)<br>
 - [Vulkan](https://www.khronos.org/vulkan/) -> The API to interact with the GPU to create images which you are already probabily familiar<br>
@@ -31,7 +31,7 @@ Then git is installed on your machine. If an error is given, then [install git o
 - [Harfbuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/) -> Library used to shape the text .<br>
 - [GLFW](http://www.glfw.org/) -> Library used to create a window independent from the underlying OS<br>
 
-To install all these libraries write on the cmd (assuming you are still on vcpkg directory):<br>
+To install all these libraries write on the cmd (assuming you are still on **vcpkg** directory):<br>
 ```bash
 > vcpkg search vulkan
 ```
@@ -51,17 +51,17 @@ And do the same drill for all the other libraries...<br>
 
 With the previous commands the source files from the open sourced project is now on the machine and they have been compiled with MSVN so that no incompatibilities emerge further down the line.
 
-5 - To download the vkvg library type:<br>
+5 - To download the **vkvg** library type:<br>
 ```bash
 > cd ..
 ```
-On the command line to get out of the vcpkg directory and then write:<br>
+On the command line to get out of the **vcpkg** directory and then write:<br>
 ```bash
 > git clone https://github.com/jpbruyere/vkvg.git
 ```
 To download the code to a local repository<br>
 
-6 - Now we can use the IDE from CMake to generate the .sln file which can be processed by visual studio. Open the IDE and select the directory which contains the source code (it should be something like <i>'C:\...\vkvg'</i>). Now select the folder where you want to generate the project to. In our case we created a folder called bin (<i>'C:\...\vkvg\bin'</i>) and selected that file.<br>
+6 - To generate the .sln file which can be processed by visual studio go to the CMake IDE and lauch it. Select the directory which contains the source code (it should be something like <i>'C:\...\vkvg'</i>). Now select the folder where you want to generate the project to. For this test build try creating the directory <i>'C:\...\vkvg\bin'</i> and selected that file.<br>
 
 7 - Now configure the project. This action generated a window where you can select the target build you want, in our case it is <i>Visual Studio 15 2017 Win64</i> and we must specify the toolchain file for cross-compiling (because it is the vcpkg program which knowns where all the libraries we previously downloaded currently are). It should be a file located in <i>'C:\...\vcpkg\scripts\buildsystems\vcpkg.cmake'</i> which contains information to be used by cmake.<br>
 
