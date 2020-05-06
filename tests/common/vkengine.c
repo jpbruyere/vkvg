@@ -255,7 +255,7 @@ void vkengine_blitter_run (VkEngine e, VkImage img, uint32_t width, uint32_t hei
             vkh_presenter_build_blit_cmd (p, img, width, height);
     }
 }
-inline bool vkengine_should_close (VkEngine e) {
+bool vkengine_should_close (VkEngine e) {
     return glfwWindowShouldClose (e->window);
 }
 void vkengine_set_title (VkEngine e, const char* title) {
