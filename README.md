@@ -78,7 +78,7 @@ make						    # Run Make
 - [x] Use Scissor where possible.
 - [x] Improve stroke algorithms.
 - [ ] Radial gradients.
-- [ ] Dashed lines.
+- [x] Dashed lines.
 - [ ] Operators.
 - [x] Optimize vulkan memory allocations by sub-allocating from a single shared memory chunk per type.
 - [x] Optimize command submissions.
