@@ -26,12 +26,12 @@ for:
         - cd build
         - cmake -G "Visual Studio 14 Win64" -DCMAKE_BUILD_TYPE=Release -DVKVG_LCD_FONT_FILTER=off -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
     build_script:
-        - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+        - msbuild vkvg.sln /p:Configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
     after_build:
         - cd ..
-        - 7z a vkvg-{version}.zip build
+        - 7z a vkvg.zip build
     artifacts:
-        - path: 'vkvg-{version}.zip'
+        - path: 'vkvg.zip'
           name: vkvg
           type: zip
 
@@ -54,7 +54,7 @@ for:
         - cpack
     after_build:
         - cd ..
-        - appveyor PushArtifact build/vkvg_{version}.deb
+        - appveyor PushArtifact build/vkvg_0.1.1.deb
 
 
 
