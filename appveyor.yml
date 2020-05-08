@@ -29,7 +29,7 @@ for:
         - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
     after_build:
         - cd ..
-        - 7z a vkvg-{version}.zip build/Release
+        - 7z a vkvg-{version}.zip build
     artifacts:
         - path: 'vkvg-{version}.zip'
           name: vkvg
@@ -54,7 +54,7 @@ for:
         - cpack
     after_build:
         - cd ..
-        - Push-AppveyorArtifact build/vkvg_{version}.deb
+        - appveyor PushArtifact build/vkvg_{version}.deb
 
 
 
