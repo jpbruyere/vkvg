@@ -27,7 +27,16 @@
 
 For API documentation and usage, please refer to the [Cairo](https://www.cairographics.org/) documentation for now.
 
-### Current status:
+<p align="center">
+  <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
+	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png" height="260"></kbd>
+  </a>
+  <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png">
+	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" height="260"></kbd>
+  </a>
+</p>
+
+#### Current status:
 
 - Fill (stencil even-odd, non-zero with ear clipping).
 - Stroke.
@@ -38,15 +47,6 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 - Context should be thread safe, extensive tests required.
 - Image loading and writing with [stb lib](https://github.com/nothings/stb)
 - Test includes svg rendering with [nanoSVG](https://github.com/memononen/nanosvg)
-
-<p align="center">
-  <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
-	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png" height="260"></kbd>
-  </a>
-  <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png">
-	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" height="260"></kbd>
-  </a>
-</p>
 
 ### Requirements:
 
@@ -64,14 +64,18 @@ if `glslc` or `xxd` are not present, a precompiled version of the shaders is sto
 ### Building
 
 ```bash
-git clone https://github.com/jpbruyere/vkvg.git     # Download source code from github
-cd vkvg                                             # Enter the source directory
-git submodule update --init --recursive             # Dowload vkhelpers sources
-mkdir build					    # Create build directory
+#fetch sources from github
+git clone --recursive https://github.com/jpbruyere/vkvg.git    
+cd vkvg
+# Create build directory
+mkdir build
 cd build
-cmake ..					    # Run CMake, optionaly setup glslc path
-make						    # Run Make
+# Run CMake, optionaly setup glslc path
+cmake ..
+make
 ```
+
+A [detailed tutorial](doc/windows_build_tutorial.md) is available for Windows.
 
 ### To Do
 
@@ -88,5 +92,3 @@ make						    # Run Make
 - [ ] Perf and memory checks.
 - [ ] Code clean and comment.
 - [ ] Documentations.
-
-
