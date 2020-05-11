@@ -10,67 +10,52 @@ Necessary steps to follow the tutorial:
 
 This document is simillar to the tutorial developed by [Alexander Overvoorde](https://vulkan-tutorial.com/). The functions which are unchanged from this reference are used without further explanation. On the contrary, any change is adressed and explained.
 
-To start we create a vulkan instance throught the function
-```batch
-init_instance();
-```
+To start we create a vulkan instance throught the function `init_instance()` which initializes the Vulkan library. To receive feedback from the Vulkan debug layers the function `setupDebugMessenger()`establishes the necessary callbacks. To print to the screen create the surface associated with your operating system through the GFLW library by calling `init_surface()`.
 
-This initializes the Vulkan library.
+Until now all function calls are simillar to the ones written by Alexander. The first divergence comes while selecting the queue families which will be used to present and to process the graphics processing necessary by this application. To simplify the tutorial the queue family of the physical device must support both graphics and presentation operations as it is request in the following function: 
 
-The following call provides a callback function to receive feedback from the Vulkan debug layers.
-```batch
-setupDebugMessenger();
-```
+```c++
+QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+	QueueFamilyIndices indices;
 
-To print to the screen create the surface associated with your operating system through the GFLW library by calling:
-```batch
-init_surface();
-```
-Until now all function calls are simillar to the ones written by Alexander. The first divergence comes while selecting the queue families which will be used to present and to process the graphics processing necessary by this application. To simplify the tutorial the queue family of the physical device must support both graphics and presentation information as it is request in the following function: 
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
-```batch
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
-		QueueFamilyIndices indices;
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
-		uint32_t queueFamilyCount = 0;
-		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+	int i = 0;
+	for (const auto& queueFamily : queueFamilies) {
 
-		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+	VkBool32 presentSupport = false;
+	vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
-		int i = 0;
-		for (const auto& queueFamily : queueFamilies) {
-
-			VkBool32 presentSupport = false;
-			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-
-			if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && presentSupport ) {
-				indices.graphicsAndPresentationFamily = i;
-				break;
-			}
-			i++;
-		}
-
-		return indices;
+	if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && presentSupport ) {
+		indices.graphicsAndPresentationFamily = i;
+		break;
 	}
-
+	i++;
+	}
+	return indices;
+}
 ```
 
-With the physical device select one can create the logical device through the function call:
+With the physical device selected one can create the logical device through the function call `createLogicalDevice()`.
 
-```batch
-createLogicalDevice();
-```
+The second divergence from Alexander comes with the swapchain creation. To interact with GFLW surface, vkvg requires support for copy operations, which translates into the following logic in `querySwapChainSupport()`:
+```c++
+SwapChainSupportDetails details;
 
-The second divergence from Alexander comes with the swapchain creation. To interact with GFLW surface, vkvg requires support for copy operations in the function:
-```batch
-querySwapChainSupport();
+vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+if (!(details.capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT)) {
+	throw std::exception("glfw surface does not support copy operations");
+}
 ```
 To support copy operations between vkvg and the tutorial, the internal image representations must be equal. This means that while calling the function chooseSwapSurfaceFormat() one should request a VkSurfaceFormatKHR equal to VK_FORMAT_B8G8R8A8_UNORM or terminate the application otherwise.
 
 To establish the link between the internal memory block used by the vkvg surface and the swapchain the struct VkSwapchainCreateInfoKHR must be have the imageUsage field changed to both color attachment and as a destination of memory copies from the vkvg surface as seen in the following code:
 
-```batch
+```c++
 VkSwapchainCreateInfoKHR createInfo{};
 createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 createInfo.pNext = NULL;
