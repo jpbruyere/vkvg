@@ -66,7 +66,7 @@ querySwapChainSupport();
 ```
 To support copy operations between vkvg and the tutorial, the internal image representations must be equal. This means that while calling the function chooseSwapSurfaceFormat() one should request a VkSurfaceFormatKHR equal to VK_FORMAT_B8G8R8A8_UNORM or terminate the application otherwise.
 
-To establish the link between the internal memory block used by the vkvg surface and the swapchain the struct VkSwapchainCreateInfoKHR must be have the imageUsage field changed to both color attachment and as a destination of memory copies from the vkvg surface as seen in the following block of code:
+To establish the link between the internal memory block used by the vkvg surface and the swapchain the struct VkSwapchainCreateInfoKHR must be have the imageUsage field changed to both color attachment and as a destination of memory copies from the vkvg surface as seen in the following code:
 
 ```batch
 VkSwapchainCreateInfoKHR createInfo{};
@@ -89,4 +89,4 @@ createInfo.presentMode = presentMode;
 createInfo.clipped = VK_TRUE;
 createInfo.oldSwapchain = NULL;
 ```
-After creating the swapchain one must check that the format properties of the physical device support the tilling features required by vkvg. Assuming that the library was built with the
+After creating the swapchain one must check that the format properties of the physical device support the tilling features required by vkvg. Assuming that the library was built with the Optimal 
