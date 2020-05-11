@@ -1,12 +1,14 @@
-This tutorial shows how a sample of the vkvg library is coded from the ground up and how one creates an application based on vulkan which interacts with this library. Throught this document you will be refered to online documentation whenever necessary. The full cpp file is located [here]((/sample_1.cpp)), follow the code as you read this document.
+# How to draw the first circle
 
-Necessary steps to follow the tutorial
+This tutorial shows how one develops an application based on vulkan which interacts with the vkvg library. Throughout this document you will be refered to online documentation whenever necessary. The full sample is located [here]((/sample_1.cpp)), follow the code as you read this document.
+
+Necessary steps to follow the tutorial:
 1. Complete the steps necessary to build the library.
 2. Have a C++ compiler compatible with C++17.
 3. Set up the project according to your development environment.
 4. To understand the nomenclature use throught the document take a look through [Alexander Overvoorde](https://vulkan-tutorial.com/) tutorial
 
-This document is simillar to the tutorial developed by [Alexander Overvoorde](https://vulkan-tutorial.com/) but it uses a nomenclature simillar to the one introduced in the Vulkan samples. 
+This document is simillar to the tutorial developed by [Alexander Overvoorde](https://vulkan-tutorial.com/). The functions which are unchanged from this reference are used without further explanation. On the contrary, any change is adressed and explained.
 
 To start we create a vulkan instance throught the function
 ```batch
@@ -15,12 +17,12 @@ init_instance();
 
 This initializes the Vulkan library.
 
-The following call provides a callback function to receive feedback from the Vulkan layers.
+The following call provides a callback function to receive feedback from the Vulkan debug layers.
 ```batch
 setupDebugMessenger();
 ```
 
-To print to the screen create the surface associated with your operating system through the GFLW library by calling
+To print to the screen create the surface associated with your operating system through the GFLW library by calling:
 ```batch
 init_surface();
 ```
