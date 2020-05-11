@@ -4,11 +4,6 @@ image:
   - Visual Studio 2019
   - Ubuntu
 
-artifacts:
-    - path: 'vkvg.zip'
-      name: vkvg
-      type: zip
-
 for:
   -
     matrix:
@@ -29,12 +24,16 @@ for:
         - git submodule update --init --recursive
         - mkdir build
         - cd build
-        - cmake -G "Visual Studio 14 Win64" -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+        - cmake -G "Visual Studio 14 Win64" -DCMAKE_BUILD_TYPE=Release -DVKVG_LCD_FONT_FILTER=off -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
     build_script:
-        - msbuild vkvg.sln /p:Configuration=Debug /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+        - msbuild vkvg.sln /p:Configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
     after_build:
         - cd ..
         - 7z a vkvg.zip build
+    artifacts:
+        - path: 'vkvg.zip'
+          name: vkvg
+          type: zip
 
   -
     matrix:
@@ -42,7 +41,7 @@ for:
         - image: Ubuntu
     install:
         - wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
-        - sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-bionic.list https://packages.lunarg.com/vulkan/lunarg-vulkan-bionic.list 
+        - sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-bionic.list https://packages.lunarg.com/vulkan/lunarg-vulkan-bionic.list
         - sudo apt -qq update
         - sudo apt -y install vulkan-sdk libharfbuzz-dev libglfw3-dev
     before_build:
@@ -52,10 +51,10 @@ for:
         - cmake ..
     build_script:
         - make
+        - cpack
     after_build:
         - cd ..
-        - 7z a vkvg.zip build/*.so* build/test_*
-    
+        - appveyor PushArtifact build/vkvg_0.1.1.deb
 
 
 

@@ -30,12 +30,6 @@ extern "C" {
 #include <math.h>
 #include <stdbool.h>
 
-#ifdef VKVG_TILING_OPTIMAL
-    #define VKVG_TILING VK_IMAGE_TILING_OPTIMAL
-#else
-    #define VKVG_TILING VK_IMAGE_TILING_LINEAR
-#endif
-
 #define LOG_ERR			0x00
 #define LOG_DEBUG		0x10
 #define LOG_INFO		0x20
@@ -51,112 +45,112 @@ static uint8_t log_level	= LOG_ERR;// | LOG_INFO | LOG_DEBUG | LOG_INFO_PATH;
 #endif
 
 typedef enum {
-    VKVG_STATUS_SUCCESS = 0,
-    VKVG_STATUS_NO_MEMORY,
-    VKVG_STATUS_INVALID_RESTORE,
-    VKVG_STATUS_INVALID_POP_GROUP,
-    VKVG_STATUS_NO_CURRENT_POINT,
-    VKVG_STATUS_INVALID_MATRIX,
-    VKVG_STATUS_INVALID_STATUS,
-    VKVG_STATUS_NULL_POINTER,
-    VKVG_STATUS_INVALID_STRING,
-    VKVG_STATUS_INVALID_PATH_DATA,
-    VKVG_STATUS_READ_ERROR,
-    VKVG_STATUS_WRITE_ERROR,
-    VKVG_STATUS_SURFACE_FINISHED,
-    VKVG_STATUS_SURFACE_TYPE_MISMATCH,
-    VKVG_STATUS_PATTERN_TYPE_MISMATCH,
-    VKVG_STATUS_INVALID_CONTENT,
-    VKVG_STATUS_INVALID_FORMAT,
-    VKVG_STATUS_INVALID_VISUAL,
-    VKVG_STATUS_FILE_NOT_FOUND,
-    VKVG_STATUS_INVALID_DASH
+	VKVG_STATUS_SUCCESS = 0,
+	VKVG_STATUS_NO_MEMORY,
+	VKVG_STATUS_INVALID_RESTORE,
+	VKVG_STATUS_INVALID_POP_GROUP,
+	VKVG_STATUS_NO_CURRENT_POINT,
+	VKVG_STATUS_INVALID_MATRIX,
+	VKVG_STATUS_INVALID_STATUS,
+	VKVG_STATUS_NULL_POINTER,
+	VKVG_STATUS_INVALID_STRING,
+	VKVG_STATUS_INVALID_PATH_DATA,
+	VKVG_STATUS_READ_ERROR,
+	VKVG_STATUS_WRITE_ERROR,
+	VKVG_STATUS_SURFACE_FINISHED,
+	VKVG_STATUS_SURFACE_TYPE_MISMATCH,
+	VKVG_STATUS_PATTERN_TYPE_MISMATCH,
+	VKVG_STATUS_INVALID_CONTENT,
+	VKVG_STATUS_INVALID_FORMAT,
+	VKVG_STATUS_INVALID_VISUAL,
+	VKVG_STATUS_FILE_NOT_FOUND,
+	VKVG_STATUS_INVALID_DASH
 }vkvg_status_t;
 
 typedef enum {
-    VKVG_HORIZONTAL	= 0,
-    VKVG_VERTICAL	= 1
+	VKVG_HORIZONTAL	= 0,
+	VKVG_VERTICAL	= 1
 }vkvg_direction_t;
 
 typedef enum {
-    VKVG_FORMAT_ARGB32,
-    VKVG_FORMAT_RGB24,
-    VKVG_FORMAT_A8,
-    VKVG_FORMAT_A1
+	VKVG_FORMAT_ARGB32,
+	VKVG_FORMAT_RGB24,
+	VKVG_FORMAT_A8,
+	VKVG_FORMAT_A1
 } vkvg_format_t;
 
 typedef enum {
-    VKVG_EXTEND_NONE,
-    VKVG_EXTEND_REPEAT,
-    VKVG_EXTEND_REFLECT,
-    VKVG_EXTEND_PAD
+	VKVG_EXTEND_NONE,
+	VKVG_EXTEND_REPEAT,
+	VKVG_EXTEND_REFLECT,
+	VKVG_EXTEND_PAD
 } vkvg_extend_t;
 
 typedef enum {
-    VKVG_FILTER_FAST,
-    VKVG_FILTER_GOOD,
-    VKVG_FILTER_BEST,
-    VKVG_FILTER_NEAREST,
-    VKVG_FILTER_BILINEAR,
-    VKVG_FILTER_GAUSSIAN,
+	VKVG_FILTER_FAST,
+	VKVG_FILTER_GOOD,
+	VKVG_FILTER_BEST,
+	VKVG_FILTER_NEAREST,
+	VKVG_FILTER_BILINEAR,
+	VKVG_FILTER_GAUSSIAN,
 } vkvg_filter_t;
 
 typedef enum {
-    VKVG_PATTERN_TYPE_SOLID,
-    VKVG_PATTERN_TYPE_SURFACE,
-    VKVG_PATTERN_TYPE_LINEAR,
-    VKVG_PATTERN_TYPE_RADIAL,
-    VKVG_PATTERN_TYPE_MESH,
-    VKVG_PATTERN_TYPE_RASTER_SOURCE,
+	VKVG_PATTERN_TYPE_SOLID,
+	VKVG_PATTERN_TYPE_SURFACE,
+	VKVG_PATTERN_TYPE_LINEAR,
+	VKVG_PATTERN_TYPE_RADIAL,
+	VKVG_PATTERN_TYPE_MESH,
+	VKVG_PATTERN_TYPE_RASTER_SOURCE,
 } vkvg_pattern_type_t;
 
 typedef enum {
-    VKVG_LINE_CAP_BUTT,
-    VKVG_LINE_CAP_ROUND,
-    VKVG_LINE_CAP_SQUARE
+	VKVG_LINE_CAP_BUTT,
+	VKVG_LINE_CAP_ROUND,
+	VKVG_LINE_CAP_SQUARE
 } vkvg_line_cap_t;
 
 typedef enum {
-    VKVG_LINE_JOIN_MITER,
-    VKVG_LINE_JOIN_ROUND,
-    VKVG_LINE_JOIN_BEVEL
+	VKVG_LINE_JOIN_MITER,
+	VKVG_LINE_JOIN_ROUND,
+	VKVG_LINE_JOIN_BEVEL
 } vkvg_line_join_t;
 
 typedef enum {
-    VKVG_FILL_RULE_EVEN_ODD,
-    VKVG_FILL_RULE_NON_ZERO
+	VKVG_FILL_RULE_EVEN_ODD,
+	VKVG_FILL_RULE_NON_ZERO
 } vkvg_fill_rule_t;
 
 typedef struct {
-    float r;
-    float g;
-    float b;
-    float a;
+	float r;
+	float g;
+	float b;
+	float a;
 } vkvg_color_t;
 
 #define VKVG_IDENTITY_MATRIX {1,0,0,1,0,0}
 
 typedef struct {
-    float xx; float yx;
-    float xy; float yy;
-    float x0; float y0;
+	float xx; float yx;
+	float xy; float yy;
+	float x0; float y0;
 } vkvg_matrix_t;
 
 typedef struct {
-    float ascent;
-    float descent;
-    float height;
-    float max_x_advance;
-    float max_y_advance;
+	float ascent;
+	float descent;
+	float height;
+	float max_x_advance;
+	float max_y_advance;
 } vkvg_font_extents_t;
 
 typedef struct {
-    float x_bearing;
-    float y_bearing;
-    float width;
-    float height;
-    float x_advance;
-    float y_advance;
+	float x_bearing;
+	float y_bearing;
+	float width;
+	float height;
+	float x_advance;
+	float y_advance;
 } vkvg_text_extents_t;
 
 typedef struct _vkvg_text_run_t* VkvgText;
@@ -205,39 +199,39 @@ void        vkvg_render_svg  (VkvgContext ctx, NSVGimage* svg, char* subId);
 
 //mimic from cairo, to facilitate usage of vkvg as cairo vulkan backend
 typedef enum _vkvg_operator {
-    VKVG_OPERATOR_CLEAR,
+	VKVG_OPERATOR_CLEAR,
 
-    VKVG_OPERATOR_SOURCE,
-    VKVG_OPERATOR_OVER,
-    VKVG_OPERATOR_IN,
-    VKVG_OPERATOR_OUT,
-    VKVG_OPERATOR_ATOP,
+	VKVG_OPERATOR_SOURCE,
+	VKVG_OPERATOR_OVER,
+	VKVG_OPERATOR_IN,
+	VKVG_OPERATOR_OUT,
+	VKVG_OPERATOR_ATOP,
 
-    VKVG_OPERATOR_DEST,
-    VKVG_OPERATOR_DEST_OVER,
-    VKVG_OPERATOR_DEST_IN,
-    VKVG_OPERATOR_DEST_OUT,
-    VKVG_OPERATOR_DEST_ATOP,
+	VKVG_OPERATOR_DEST,
+	VKVG_OPERATOR_DEST_OVER,
+	VKVG_OPERATOR_DEST_IN,
+	VKVG_OPERATOR_DEST_OUT,
+	VKVG_OPERATOR_DEST_ATOP,
 
-    VKVG_OPERATOR_XOR,
-    VKVG_OPERATOR_ADD,
-    VKVG_OPERATOR_SATURATE,
+	VKVG_OPERATOR_XOR,
+	VKVG_OPERATOR_ADD,
+	VKVG_OPERATOR_SATURATE,
 
-    VKVG_OPERATOR_MULTIPLY,
-    VKVG_OPERATOR_SCREEN,
-    VKVG_OPERATOR_OVERLAY,
-    VKVG_OPERATOR_DARKEN,
-    VKVG_OPERATOR_LIGHTEN,
-    VKVG_OPERATOR_COLOR_DODGE,
-    VKVG_OPERATOR_COLOR_BURN,
-    VKVG_OPERATOR_HARD_LIGHT,
-    VKVG_OPERATOR_SOFT_LIGHT,
-    VKVG_OPERATOR_DIFFERENCE,
-    VKVG_OPERATOR_EXCLUSION,
-    VKVG_OPERATOR_HSL_HUE,
-    VKVG_OPERATOR_HSL_SATURATION,
-    VKVG_OPERATOR_HSL_COLOR,
-    VKVG_OPERATOR_HSL_LUMINOSITY
+	VKVG_OPERATOR_MULTIPLY,
+	VKVG_OPERATOR_SCREEN,
+	VKVG_OPERATOR_OVERLAY,
+	VKVG_OPERATOR_DARKEN,
+	VKVG_OPERATOR_LIGHTEN,
+	VKVG_OPERATOR_COLOR_DODGE,
+	VKVG_OPERATOR_COLOR_BURN,
+	VKVG_OPERATOR_HARD_LIGHT,
+	VKVG_OPERATOR_SOFT_LIGHT,
+	VKVG_OPERATOR_DIFFERENCE,
+	VKVG_OPERATOR_EXCLUSION,
+	VKVG_OPERATOR_HSL_HUE,
+	VKVG_OPERATOR_HSL_SATURATION,
+	VKVG_OPERATOR_HSL_COLOR,
+	VKVG_OPERATOR_HSL_LUMINOSITY
 } vkvg_operator_t;
 
 /*Context*/
@@ -322,7 +316,7 @@ VkvgPattern vkvg_pattern_create_rgb         (float r, float g, float b);
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
 VkvgPattern vkvg_pattern_create_linear      (float x0, float y0, float x1, float y1);
 VkvgPattern vkvg_pattern_create_radial      (float cx0, float cy0, float radius0,
-                                             float cx1, float cy1, float radius1);
+											 float cx1, float cy1, float radius1);
 void        vkvg_pattern_destroy            (VkvgPattern pat);
 
 void vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r, float g, float b, float a);
@@ -335,9 +329,9 @@ vkvg_filter_t   vkvg_pattern_get_filter (VkvgPattern pat);
 //matrix
 void vkvg_matrix_init_identity (vkvg_matrix_t *matrix);
 void vkvg_matrix_init (vkvg_matrix_t *matrix,
-           float xx, float yx,
-           float xy, float yy,
-           float x0, float y0);
+		   float xx, float yx,
+		   float xy, float yy,
+		   float x0, float y0);
 void vkvg_matrix_init_translate     (vkvg_matrix_t *matrix, float tx, float ty);
 void vkvg_matrix_init_scale         (vkvg_matrix_t *matrix, float sx, float sy);
 void vkvg_matrix_init_rotate        (vkvg_matrix_t *matrix, float radians);

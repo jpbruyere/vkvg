@@ -27,16 +27,17 @@
 #include "vkh.h"
 
 typedef struct _vkvg_surface_t {
-    VkvgDevice	dev;
-    uint32_t	width;
-    uint32_t	height;
-    VkFormat    format;
-    VkFramebuffer fb;
-    VkhImage	img;
-    VkhImage	imgMS;
-    VkhImage	stencil;
-    uint32_t    references;
-    bool        new;
+	VkvgDevice	dev;
+	uint32_t	width;
+	uint32_t	height;
+	VkFormat    format;
+	VkImageTiling tiling;           /**< optimal is prefered if supported */
+	VkFramebuffer fb;
+	VkhImage	img;
+	VkhImage	imgMS;
+	VkhImage	stencil;
+	uint32_t    references;
+	bool        new;
 }vkvg_surface;
 
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect);
