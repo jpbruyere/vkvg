@@ -1,6 +1,6 @@
 # How to draw the first circle
 
-This tutorial shows how one develops an application based on vulkan which interacts with the vkvg library. Throughout this document you will be refered to online documentation whenever necessary. The full sample is located [here]((/sample_1.cpp)), follow the code as you read this document.
+This tutorial shows how one develops an application based on vulkan which interacts with the vkvg library. Throughout this document you will be refered to online documentation whenever necessary. The full sample is located [here](sample_1.cpp), follow the code as you read this document.
 
 Necessary steps to follow the tutorial:
 1. Complete the steps necessary to build the library.
