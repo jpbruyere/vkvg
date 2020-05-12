@@ -76,4 +76,13 @@ createInfo.presentMode = presentMode;
 createInfo.clipped = VK_TRUE;
 createInfo.oldSwapchain = NULL;
 ```
-After creating the swapchain one must check that the format properties of the physical device support the tilling features required by vkvg. Assuming that the library was built with the Optimal 
+After creating the swapchain one must check that the format properties of the physical device support the tilling features required by vkvg. Assuming that the library was built with the VKVG_TILING_OPTIMAL option enabled then one can check the supported tilling features by writing: 
+
+```c++
+if (!(formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)){
+	throw std::exception("Format of swapchain does not support vkvg required VKVG_TILING_OPTIMAL optimal");
+}
+```
+If everything went well one can now create the image views associated with the swapchain by calling `createImageViews()`, then creating the command pool `createCommandPool()` and finally creating the `createCommandBuffers()`. The next change comes from the syncronization objects. 
+
+Instead of creating one graphics and presentation semaphores for each swapchain image we only have one semaphore associated with the operation of presenting the image to the screen, which is done with `createSyncObjects()` function call. 
