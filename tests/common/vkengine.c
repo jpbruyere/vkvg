@@ -159,43 +159,15 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	e->gpu_props = pi->properties;
 
 	uint32_t qCount = 0;
+	float qPriorities[] = {0.0};
+
 	VkDeviceQueueCreateInfo pQueueInfos[3];
-	float queue_priorities[] = {0.0};
-
-	VkDeviceQueueCreateInfo qiG = { .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-								   .queueCount = 1,
-								   .queueFamilyIndex = pi->gQueue,
-								   .pQueuePriorities = queue_priorities };
-	VkDeviceQueueCreateInfo qiC = { .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-								   .queueCount = 1,
-								   .queueFamilyIndex = pi->cQueue,
-								   .pQueuePriorities = queue_priorities };
-	VkDeviceQueueCreateInfo qiT = { .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-								   .queueCount = 1,
-								   .queueFamilyIndex = pi->tQueue,
-								   .pQueuePriorities = queue_priorities };
-
-	if (pi->gQueue == pi->cQueue){
-		if(pi->gQueue == pi->tQueue){
-			qCount=1;
-			pQueueInfos[0] = qiG;
-		}else{
-			qCount=2;
-			pQueueInfos[0] = qiG;
-			pQueueInfos[1] = qiT;
-		}
-	}else{
-		if((pi->gQueue == pi->tQueue) || (pi->cQueue==pi->tQueue)){
-			qCount=2;
-			pQueueInfos[0] = qiG;
-			pQueueInfos[1] = qiC;
-		}else{
-			qCount=3;
-			pQueueInfos[0] = qiG;
-			pQueueInfos[1] = qiC;
-			pQueueInfos[2] = qiT;
-		}
-	}
+	if (vkh_phyinfo_create_presentable_queues	(pi, 1, qPriorities, &pQueueInfos[qCount]))
+		qCount++;
+	if (vkh_phyinfo_create_compute_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
+		qCount++;
+	if (vkh_phyinfo_create_transfer_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
+		qCount++;
 
 	char const * dex [] = {"VK_KHR_swapchain"};
 	enabledExtsCount = 1;
@@ -210,8 +182,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 									   .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
 									   .enabledExtensionCount = enabledExtsCount,
 									   .ppEnabledExtensionNames = dex,
-									   .pEnabledFeatures = &enabledFeatures
-									 };
+									   .pEnabledFeatures = &enabledFeatures};
 
 	e->dev = vkh_device_create(e->app, pi, &device_info);
 
