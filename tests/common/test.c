@@ -133,7 +133,7 @@ double standard_deviation (const double data[], int n, double mean)
 /***************/
 
 void init_test (uint32_t width, uint32_t height){
-	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
+	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
 	VkhPresenter r = e->renderer;
 	vkengine_set_key_callback (e, key_callback);
 	vkengine_set_mouse_but_callback(e, mouse_button_callback);
@@ -211,7 +211,7 @@ VkvgSurface* surfaces;
 void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, uint32_t height) {
 	//dumpLayerExts();
 
-	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
+	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
 	VkhPresenter r = e->renderer;
 	vkengine_set_key_callback (e, key_callback);
 	vkengine_set_mouse_but_callback(e, mouse_button_callback);
@@ -234,7 +234,7 @@ void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, 
 #endif
 
 
-	double start_time, stop_time, run_time, run_total = 0.0, min_run_time = -1, max_run_time;
+	double start_time = 0.0, stop_time = 0.0, run_time = 0.0, run_total = 0.0, min_run_time = -1, max_run_time = 0.0;
 	double* run_time_values = (double*)malloc(iterations*sizeof(double));
 
 	int i = 0;

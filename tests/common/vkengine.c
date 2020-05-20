@@ -161,7 +161,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	uint32_t qCount = 0;
 	float qPriorities[] = {0.0};
 
-	VkDeviceQueueCreateInfo pQueueInfos[3];
+	VkDeviceQueueCreateInfo pQueueInfos[] = { {0},{0},{0} };
 	if (vkh_phyinfo_create_presentable_queues	(pi, 1, qPriorities, &pQueueInfos[qCount]))
 		qCount++;
 	if (vkh_phyinfo_create_compute_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
