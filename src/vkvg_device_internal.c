@@ -249,8 +249,11 @@ void _setupPipelines(VkvgDevice dev)
 		.pVertexBindingDescriptions = &vertexInputBinding,
 		.vertexAttributeDescriptionCount = 2,
 		.pVertexAttributeDescriptions = vertexInputAttributs };
-
+#ifdef VKVG_WIRED_DEBUG
 	VkShaderModule modVert, modFrag, modFragWired;
+#else
+	VkShaderModule modVert, modFrag;
+#endif
 	VkShaderModuleCreateInfo createInfo = { .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 											.pCode = (uint32_t*)vkvg_main_vert_spv,
 											.codeSize = vkvg_main_vert_spv_len };

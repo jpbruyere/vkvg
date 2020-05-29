@@ -49,7 +49,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     VkvgDevice dev = surf->dev;
     VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
-    LOG(LOG_INFO, "CREATE Context: ctx = %lu; surf = %lu\n", (uint64_t)ctx, (uint64_t)surf);
+    LOG(LOG_INFO, "CREATE Context: ctx = %p; surf = %p\n", ctx, surf);
 
     if (ctx==NULL) {
         dev->status = VKVG_STATUS_NO_MEMORY;
@@ -143,7 +143,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->references = 1;
     ctx->status = VKVG_STATUS_SUCCESS;
 
-    LOG(LOG_DBG_ARRAYS, "START\tctx = %lu; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+    LOG(LOG_DBG_ARRAYS, "START\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, (uint64_t)ctx->sizePathes, (uint64_t)ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
 
 #ifdef DEBUG
     vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
@@ -206,7 +206,7 @@ void vkvg_destroy (VkvgContext ctx)
     _flush_cmd_buff(ctx);
     _wait_flush_fence(ctx);
 
-    LOG(LOG_INFO, "DESTROY Context: ctx = %lu; surf = %lu\n", (uint64_t)ctx, (uint64_t)ctx->pSurf);
+    LOG(LOG_INFO, "DESTROY Context: ctx = %p; surf = %p\n", ctx, ctx->pSurf);
 
     if (ctx->pattern)
         vkvg_pattern_destroy (ctx->pattern);
@@ -267,7 +267,7 @@ void vkvg_destroy (VkvgContext ctx)
         ctx->pNext->pPrev = ctx->pPrev;
     }
 
-    LOG(LOG_DBG_ARRAYS, "END\tctx = %lu; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+    LOG(LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
 
     free(ctx);
 }
@@ -398,7 +398,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
         return;
     }
     a = a2;
-    vec2 lastP = v;
+    //vec2 lastP = v;
     v.x = cosf(a)*radius + xc;
     v.y = sinf(a)*radius + yc;
     //if (!vec2_equ (v,lastP))//this test should not be required
@@ -449,7 +449,7 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
         return;
 
     a = a2;
-    vec2 lastP = v;
+    //vec2 lastP = v;
     v.x = cosf(a)*radius + xc;
     v.y = sinf(a)*radius + yc;
     //if (!vec2_equ (v,lastP))
@@ -551,7 +551,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
         return;
     _finish_path(ctx);
 
-    LOG(LOG_INFO, "CLIP: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
+    LOG(LOG_INFO, "CLIP: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
     if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
         _check_cmd_buff_state(ctx);
@@ -581,7 +581,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
         return;
     _finish_path(ctx);
 
-    LOG(LOG_INFO, "FILL: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
+    LOG(LOG_INFO, "FILL: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
      if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
         _poly_fill (ctx);
@@ -709,7 +709,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         return;
     _finish_path(ctx);
 
-    LOG(LOG_INFO, "STROKE: ctx = %lu; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
+    LOG(LOG_INFO, "STROKE: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
     float hw = ctx->lineWidth / 2.0f;
     curPathPointIdx = lastPathPointIdx = ptrPath = iL = iR = 0;
@@ -721,7 +721,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
         VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
         curPathPointIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
-        LOG(LOG_INFO_PATH, "\tPATH: start = %d; ", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
+        LOG(LOG_INFO_PATH, "\tPATH: start=%d end=%d", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
 
         lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
         LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
@@ -945,7 +945,7 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 }
 
 void vkvg_save (VkvgContext ctx){
-    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %lu\n", (uint64_t)ctx);
+    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %p\n", (uint64_t)ctx);
 
     _flush_cmd_buff (ctx);
     _wait_flush_fence (ctx);
@@ -956,7 +956,13 @@ void vkvg_save (VkvgContext ctx){
     uint8_t curSaveStencil = ctx->curSavBit / 6;
 
     if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0){//new save/restore stencil image have to be created
-        ctx->savedStencils = (VkhImage*)realloc(ctx->savedStencils, curSaveStencil * sizeof (VkhImage));
+        VkhImage* savedStencilsPtr = (VkhImage*)realloc(ctx->savedStencils, curSaveStencil * sizeof(VkhImage));
+        if (savedStencilsPtr == NULL) {
+            free(sav);
+            ctx->status = VKVG_STATUS_NO_MEMORY;
+            return;
+        }
+        ctx->savedStencils = savedStencilsPtr;
         VkhImage savStencil = vkh_image_ms_create ((VkhDevice)dev,FB_STENCIL_FORMAT, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
                                 VMA_MEMORY_USAGE_GPU_ONLY, VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
         ctx->savedStencils[curSaveStencil-1] = savStencil;
@@ -1036,7 +1042,7 @@ void vkvg_restore (VkvgContext ctx){
         return;
     }
 
-    LOG(LOG_INFO, "RESTORE CONTEXT: ctx = %lu\n", ctx);
+    LOG(LOG_INFO, "RESTORE CONTEXT: ctx = %p\n", ctx);
 
     vkvg_context_save_t* sav = ctx->pSavedCtxs;
     ctx->pSavedCtxs = sav->pNext;

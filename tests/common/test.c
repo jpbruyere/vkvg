@@ -1,7 +1,7 @@
 ﻿#include "test.h"
 
 #if defined(_WIN32) || defined(_WIN64)
-int gettimeofday(struct timeval * tp, struct timezone * tzp)
+int gettimeofday(struct timeval * tp, void * tzp)
 {
 	// FILETIME Jan 1 1970 00:00:00
 	// Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
@@ -154,7 +154,7 @@ void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height) {
 	bool deferredResolve = false;
 	VkhPresenter r = e->renderer;
 
-	double start_time, stop_time, run_time, run_total = 0.0, min_run_time = -1, max_run_time;
+	double start_time = 0.0, stop_time = 0.0, run_time, run_total = 0.0, min_run_time = -1, max_run_time = 0.0;
 	double* run_time_values = (double*)malloc(iterations*sizeof(double));
 
 	int i = 0;

@@ -222,7 +222,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
     vkResetCommandBuffer(cache->cmd,0);
     vkResetFences       (dev->vkDev,1,&cache->uploadFence);
 
-    memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (uint64_t)(f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize));
+    memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (uint64_t)f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize);
 
     vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -250,7 +250,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 
     f->curLine.penX += cache->stagingX;
     cache->stagingX = 0;
-    memset(cache->hostBuff, 0, FONT_PAGE_SIZE * FONT_PAGE_SIZE * cache->texPixelSize);
+    memset(cache->hostBuff, 0, (uint64_t)FONT_PAGE_SIZE * FONT_PAGE_SIZE * cache->texPixelSize);
 }
 //create a new char entry and put glyph in stagging buffer, ready for upload.
 _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
@@ -278,8 +278,8 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
     }
 
     int penX = dev->fontCache->stagingX;
-    for(int y=0; y<bmp.rows; y++) {
-        for(int x=0; x<bmpWidth; x++) {
+    for(uint32_t y=0; y<bmp.rows; y++) {
+        for(uint32_t x=0; x<bmpWidth; x++) {
 #ifdef VKVG_LCD_FONT_FILTER
             unsigned char r = bmp.buffer[y * bmp.pitch + x * 3];
             unsigned char g = bmp.buffer[y * bmp.pitch + x * 3 + 1];
@@ -299,8 +299,8 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
     vec4 uvBounds = {
         (float)(penX + f->curLine.penX) / (float)FONT_PAGE_SIZE,
         (float)f->curLine.penY / (float)FONT_PAGE_SIZE,
-        bmpWidth,
-        bmp.rows};
+        (float)bmpWidth,
+        (float)bmp.rows};
     cr->bounds = uvBounds;
     cr->pageIdx = f->curLine.pageIdx;
     cr->bmpDiff.x = (int16_t)slot->bitmap_left;
@@ -397,13 +397,14 @@ hb_buffer_t * _get_hb_buffer (_vkvg_font_t* font, const char* text) {
 
     const char *lng  = "fr";
     hb_script_t script = HB_SCRIPT_LATIN;
-    script = hb_script_from_string (text, strlen (text));
+    script = hb_script_from_string (text, (int)strlen (text));
+
     hb_direction_t dir = hb_script_get_horizontal_direction(script);
     //dir = HB_DIRECTION_TTB;
     hb_buffer_set_direction (buf, dir);
     hb_buffer_set_script    (buf, script);
-    hb_buffer_set_language  (buf, hb_language_from_string(lng,strlen(lng)));
-    hb_buffer_add_utf8      (buf, text, strlen(text), 0, strlen(text));
+    hb_buffer_set_language  (buf, hb_language_from_string (lng, (int)strlen(lng)));
+    hb_buffer_add_utf8      (buf, text, (int)strlen(text), 0, (int)strlen(text));
 
     hb_shape (font->hb_font, buf, NULL, 0);
     return buf;
@@ -415,11 +416,11 @@ void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
     //TODO: ensure correct metrics are returned (scalled/unscalled, etc..)
     FT_BBox* bbox = &ctx->currentFont->face->bbox;
     FT_Size_Metrics* metrics = &ctx->currentFont->face->size->metrics;
-    extents->ascent = FT_MulFix(ctx->currentFont->face->ascender, metrics->y_scale) >> 6;//metrics->ascender >> 6;
-    extents->descent= FT_MulFix(ctx->currentFont->face->descender, metrics->y_scale) >> 6;//metrics->descender >> 6;
-    extents->height = FT_MulFix(ctx->currentFont->face->height, metrics->y_scale) >> 6;//metrics->height >> 6;
-    extents->max_x_advance = bbox->xMax >> 6;
-    extents->max_y_advance = bbox->yMax >> 6;
+    extents->ascent = (float)(FT_MulFix(ctx->currentFont->face->ascender, metrics->y_scale) >> 6);//metrics->ascender >> 6;
+    extents->descent= (float)(FT_MulFix(ctx->currentFont->face->descender, metrics->y_scale) >> 6);//metrics->descender >> 6;
+    extents->height = (float)(FT_MulFix(ctx->currentFont->face->height, metrics->y_scale) >> 6);//metrics->height >> 6;
+    extents->max_x_advance = (float)(bbox->xMax >> 6);
+    extents->max_y_advance = (float)(bbox->yMax >> 6);
 }
 //compute text extends for provided string.
 void _text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents) {
@@ -447,12 +448,12 @@ void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
         string_width_in_pixels += textRun->glyph_pos[i].x_advance >> 6;
 
     FT_Size_Metrics* metrics = &ctx->currentFont->face->size->metrics;
-    textRun->extents.x_advance = string_width_in_pixels;
-    textRun->extents.y_advance = textRun->glyph_pos[textRun->glyph_count-1].y_advance >> 6;
-    textRun->extents.x_bearing = -(textRun->glyph_pos[0].x_offset >> 6);
-    textRun->extents.y_bearing = -(textRun->glyph_pos[0].y_offset >> 6);
+    textRun->extents.x_advance = (float)string_width_in_pixels;
+    textRun->extents.y_advance = (float)(textRun->glyph_pos[textRun->glyph_count-1].y_advance >> 6);
+    textRun->extents.x_bearing = -(float)(textRun->glyph_pos[0].x_offset >> 6);
+    textRun->extents.y_bearing = -(float)(textRun->glyph_pos[0].y_offset >> 6);
 
-    textRun->extents.height = FT_MulFix(ctx->currentFont->face->height, metrics->y_scale) >> 6;// (metrics->ascender + metrics->descender) >> 6;
+    textRun->extents.height = (float)(FT_MulFix(ctx->currentFont->face->height, metrics->y_scale) >> 6);// (metrics->ascender + metrics->descender) >> 6;
     textRun->extents.width  = textRun->extents.x_advance;
 }
 void _destroy_text_run (VkvgText textRun) {
@@ -468,7 +469,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
     if (!_current_path_is_empty(ctx))
         pen = _get_current_position(ctx);
 
-    for (int i=0; i < glyph_count; ++i) {
+    for (uint32_t i=0; i < glyph_count; ++i) {
         _char_ref* cr = tr->font->charLookup[glyph_info[i].codepoint];
 
         if (cr==NULL)
@@ -482,7 +483,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
                        pen.y - cr->bmpDiff.y + (tr->glyph_pos[i].y_offset >> 6)};
             v.pos = p0;
 
-            uint32_t firstIdx = ctx->vertCount - ctx->curVertOffset;
+            VKVG_IBO_INDEX_TYPE firstIdx = ctx->vertCount - ctx->curVertOffset;
 
             v.uv.x = cr->bounds.x;
             v.uv.y = cr->bounds.y;
@@ -524,7 +525,7 @@ void _show_texture (vkvg_context* ctx){
         {{FONT_PAGE_SIZE,FONT_PAGE_SIZE},   {1,1,0}}
     };
 
-    int i = ctx->vertCount;
+    VKVG_IBO_INDEX_TYPE i = ctx->vertCount;
 
     _add_vertex(ctx,vs[0]);
     _add_vertex(ctx,vs[1]);

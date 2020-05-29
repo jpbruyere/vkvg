@@ -22,6 +22,9 @@
 #ifndef VKVG_INTERNAL_H
 #define VKVG_INTERNAL_H
 
+//disable warning on iostream functions on windows
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -34,6 +37,7 @@
 
 #define M_PIF               3.14159265358979323846f /* float pi */
 #define M_PIF_2             1.57079632679489661923f
+#define M_2_PIF             0.63661977236758134308f  // 2/pi
 
 /*#ifndef M_2_PI
 	#define M_2_PI		0.63661977236758134308	// 2/pi

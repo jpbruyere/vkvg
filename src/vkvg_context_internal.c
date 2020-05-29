@@ -193,7 +193,7 @@ void _create_vertices_buff (VkvgContext ctx){
         VMA_MEMORY_USAGE_CPU_TO_GPU,
         ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
 }
-void _resize_vbo (VkvgContext ctx, size_t new_size) {
+void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
     _wait_flush_fence (ctx);//wait previous cmd if not completed
     ctx->sizeVBO = new_size;
     ctx->sizeVBO += ctx->sizeVBO % VKVG_VBO_SIZE;
@@ -361,7 +361,7 @@ void _flush_vertices_caches (VkvgContext ctx) {
 }
 //this func expect cmdStarted to be true
 void _end_render_pass (VkvgContext ctx) {
-    LOG(LOG_INFO, "END RENDER PASS: ctx = %lu;\n", ctx);
+    LOG(LOG_INFO, "END RENDER PASS: ctx = %p;\n", ctx);
     CmdEndRenderPass      (ctx->cmd);
 #ifdef DEBUG
     vkh_cmd_label_end (ctx->cmd);
@@ -394,8 +394,8 @@ void _record_draw_cmd (VkvgContext ctx){
     _check_cmd_buff_state(ctx);
     CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
 
-    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %lu; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
-        (uint64_t)ctx, ctx->vertCount - ctx->curVertOffset,
+    LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %p; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
+        ctx, ctx->vertCount - ctx->curVertOffset,
         ctx->indCount - ctx->curIndStart, ctx->curVertOffset, ctx->curIndStart, ctx->indCount);
 
 #ifdef VKVG_WIRED_DEBUG
@@ -416,7 +416,7 @@ void _flush_cmd_buff (VkvgContext ctx){
     _flush_vertices_caches  (ctx);
     vkh_cmd_end             (ctx->cmd);
 
-    LOG(LOG_INFO, "FLUSH CTX: ctx = %lu; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
+    LOG(LOG_INFO, "FLUSH CTX: ctx = %p; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
     _wait_and_submit_cmd(ctx);
 }
 
@@ -438,7 +438,7 @@ void _bind_draw_pipeline (VkvgContext ctx) {
 const float LAB_COLOR_RP[4] = {0,0,1,1};
 
 void _start_cmd_for_render_pass (VkvgContext ctx) {
-    LOG(LOG_INFO, "START RENDER PASS: ctx = %lu\n", ctx);
+    LOG(LOG_INFO, "START RENDER PASS: ctx = %p\n", ctx);
     vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     if (ctx->pSurf->img->layout == VK_IMAGE_LAYOUT_UNDEFINED){
@@ -458,7 +458,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 #endif
 
     CmdBeginRenderPass (ctx->cmd, &ctx->renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    VkViewport viewport = {0,0,ctx->pSurf->width,ctx->pSurf->height,0,1};
+    VkViewport viewport = {0,0,(float)ctx->pSurf->width,(float)ctx->pSurf->height,0,1.f};
     CmdSetViewport(ctx->cmd, 0, 1, &viewport);
 
     CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
@@ -469,10 +469,11 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 
     VkDeviceSize offsets[1] = { 0 };
     CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
-    if (sizeof (VKVG_IBO_INDEX_TYPE) == 4)
-        CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
-    else
-        CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT16);
+#if VKVG_IBO_INDEX_TYPE == uint16_t
+    CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT16);
+#else
+    CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+#endif
 
     _update_push_constants  (ctx);
 
@@ -538,7 +539,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         ctx->source = surf->img;
 
         //if (vkh_image_get_sampler (ctx->source) == VK_NULL_HANDLE){
-            VkSamplerAddressMode addrMode;
+            VkSamplerAddressMode addrMode = 0;
             VkFilter filter = VK_FILTER_NEAREST;
             switch (pat->extend) {
             case VKVG_EXTEND_NONE:
@@ -576,7 +577,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
         _update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
 
-        vec4 srcRect = {0,0,surf->width,surf->height};
+        vec4 srcRect = {0,0,(float)surf->width,(float)surf->height};
         ctx->pushConsts.source = srcRect;
 
         //_init_cmd_buff                  (ctx);
@@ -588,7 +589,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
         if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
             _update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
 
-        vec4 bounds = {ctx->pSurf->width, ctx->pSurf->height, 0, 0};//store img bounds in unused source field
+        vec4 bounds = {(float)ctx->pSurf->width, (float)ctx->pSurf->height, 0, 0};//store img bounds in unused source field
         ctx->pushConsts.source = bounds;
 
         //transform control point with current ctx matrix
@@ -812,19 +813,20 @@ void _free_ctx_save (vkvg_context_save_t* sav){
 }
 
 
-#define m_approximation_scale   1.0
-#define m_angle_tolerance       0.01
-#define m_distance_tolerance    1.0
-#define m_cusp_limit            0.01
-#define curve_recursion_limit   10
-#define curve_collinearity_epsilon 1.7
-#define curve_angle_tolerance_epsilon 0.001
-
+#define M_APPROXIMATION_SCALE   1.0
+#define M_ANGLE_TOLERANCE       0.01
+#define M_DISTANCE_TOLERANCE    1.0
+#define M_CUSP_LIMIT            0.01
+#define CURVE_RECURSION_LIMIT   10
+#define CURVE_COLLINEARITY_EPSILON 1.7
+#define CURVE_ANGLE_TOLERANCE_EPSILON 0.001
+//no floating point arithmetic operation allowed in macro.
+#pragma warning(disable:4127)
 void _recursive_bezier (VkvgContext ctx,
                         float x1, float y1, float x2, float y2,
                         float x3, float y3, float x4, float y4,
                         unsigned level) {
-    if(level > curve_recursion_limit)
+    if(level > CURVE_RECURSION_LIMIT)
     {
         return;
     }
@@ -851,35 +853,34 @@ void _recursive_bezier (VkvgContext ctx,
         float dx = x4-x1;
         float dy = y4-y1;
 
-        float d2 = fabs(((x2 - x4) * dy - (y2 - y4) * dx));
-        float d3 = fabs(((x3 - x4) * dy - (y3 - y4) * dx));
+        float d2 = fabsf(((x2 - x4) * dy - (y2 - y4) * dx));
+        float d3 = fabsf(((x3 - x4) * dy - (y3 - y4) * dx));
 
         float da1, da2;
 
-        if(d2 > curve_collinearity_epsilon && d3 > curve_collinearity_epsilon)
+        if(d2 > CURVE_COLLINEARITY_EPSILON && d3 > CURVE_COLLINEARITY_EPSILON)
         {
             // Regular care
             //-----------------
-            if((d2 + d3)*(d2 + d3) <= m_distance_tolerance * (dx*dx + dy*dy))
+            if((d2 + d3)*(d2 + d3) <= (dx*dx + dy*dy) * (float)M_DISTANCE_TOLERANCE)
             {
                 // If the curvature doesn't exceed the distance_tolerance value
                 // we tend to finish subdivisions.
                 //----------------------
-                if(m_angle_tolerance < curve_angle_tolerance_epsilon)
-                {
-                    _add_point (ctx, x1234, y1234);
+                if (M_ANGLE_TOLERANCE < CURVE_ANGLE_TOLERANCE_EPSILON) {
+                    _add_point(ctx, x1234, y1234);
                     return;
                 }
 
                 // Angle & Cusp Condition
                 //----------------------
-                float a23 = atan2(y3 - y2, x3 - x2);
-                da1 = fabs(a23 - atan2(y2 - y1, x2 - x1));
-                da2 = fabs(atan2(y4 - y3, x4 - x3) - a23);
-                if(da1 >= M_PIF) da1 = M_2_PI - da1;
-                if(da2 >= M_PIF) da2 = M_2_PI - da2;
+                float a23 = atan2f(y3 - y2, x3 - x2);
+                da1 = fabsf(a23 - atan2f(y2 - y1, x2 - x1));
+                da2 = fabsf(atan2f(y4 - y3, x4 - x3) - a23);
+                if(da1 >= M_PIF) da1 = M_2_PIF - da1;
+                if(da2 >= M_PIF) da2 = M_2_PIF - da2;
 
-                if(da1 + da2 < m_angle_tolerance)
+                if(da1 + da2 < (float)M_ANGLE_TOLERANCE)
                 {
                     // Finally we can stop the recursion
                     //----------------------
@@ -887,15 +888,15 @@ void _recursive_bezier (VkvgContext ctx,
                     return;
                 }
 
-                if(m_cusp_limit != 0.0)
+                if(M_CUSP_LIMIT != 0.0)
                 {
-                    if(da1 > m_cusp_limit)
+                    if(da1 > M_CUSP_LIMIT)
                     {
                         _add_point (ctx, x2, y2);
                         return;
                     }
 
-                    if(da2 > m_cusp_limit)
+                    if(da2 > M_CUSP_LIMIT)
                     {
                         _add_point (ctx, x3, y3);
                         return;
@@ -903,13 +904,13 @@ void _recursive_bezier (VkvgContext ctx,
                 }
             }
         } else {
-            if(d2 > curve_collinearity_epsilon)
+            if(d2 > CURVE_COLLINEARITY_EPSILON)
             {
                 // p1,p3,p4 are collinear, p2 is considerable
                 //----------------------
-                if(d2 * d2 <= m_distance_tolerance * (dx*dx + dy*dy))
+                if(d2 * d2 <= (float)M_DISTANCE_TOLERANCE * (dx*dx + dy*dy))
                 {
-                    if(m_angle_tolerance < curve_angle_tolerance_epsilon)
+                    if(M_ANGLE_TOLERANCE < CURVE_ANGLE_TOLERANCE_EPSILON)
                     {
                         _add_point (ctx, x1234, y1234);
                         return;
@@ -917,31 +918,31 @@ void _recursive_bezier (VkvgContext ctx,
 
                     // Angle Condition
                     //----------------------
-                    da1 = fabs(atan2(y3 - y2, x3 - x2) - atan2(y2 - y1, x2 - x1));
-                    if(da1 >= M_PIF) da1 = M_2_PI - da1;
+                    da1 = fabsf(atan2f(y3 - y2, x3 - x2) - atan2f(y2 - y1, x2 - x1));
+                    if(da1 >= M_PIF) da1 = M_2_PIF - da1;
 
-                    if(da1 < m_angle_tolerance)
+                    if(da1 < M_ANGLE_TOLERANCE)
                     {
                         _add_point (ctx, x2, y2);
                         _add_point (ctx, x3, y3);
                         return;
                     }
 
-                    if(m_cusp_limit != 0.0)
+                    if(M_CUSP_LIMIT != 0.0)
                     {
-                        if(da1 > m_cusp_limit)
+                        if(da1 > M_CUSP_LIMIT)
                         {
                             _add_point (ctx, x2, y2);
                             return;
                         }
                     }
                 }
-            } else if(d3 > curve_collinearity_epsilon) {
+            } else if(d3 > CURVE_COLLINEARITY_EPSILON) {
                 // p1,p2,p4 are collinear, p3 is considerable
                 //----------------------
-                if(d3 * d3 <= m_distance_tolerance * (dx*dx + dy*dy))
+                if(d3 * d3 <= (float)M_DISTANCE_TOLERANCE * (dx*dx + dy*dy))
                 {
-                    if(m_angle_tolerance < curve_angle_tolerance_epsilon)
+                    if(M_ANGLE_TOLERANCE < CURVE_ANGLE_TOLERANCE_EPSILON)
                     {
                         _add_point (ctx, x1234, y1234);
                         return;
@@ -949,19 +950,19 @@ void _recursive_bezier (VkvgContext ctx,
 
                     // Angle Condition
                     //----------------------
-                    da1 = fabs(atan2(y4 - y3, x4 - x3) - atan2(y3 - y2, x3 - x2));
-                    if(da1 >= M_PIF) da1 = M_2_PI - da1;
+                    da1 = fabsf(atan2f(y4 - y3, x4 - x3) - atan2f(y3 - y2, x3 - x2));
+                    if(da1 >= M_PIF) da1 = M_2_PIF - da1;
 
-                    if(da1 < m_angle_tolerance)
+                    if(da1 < M_ANGLE_TOLERANCE)
                     {
                         _add_point (ctx, x2, y2);
                         _add_point (ctx, x3, y3);
                         return;
                     }
 
-                    if(m_cusp_limit != 0.0)
+                    if(M_CUSP_LIMIT != 0.0)
                     {
-                        if(da1 > m_cusp_limit)
+                        if(da1 > M_CUSP_LIMIT)
                         {
                             _add_point (ctx, x3, y3);
                             return;
@@ -975,7 +976,7 @@ void _recursive_bezier (VkvgContext ctx,
                 //-----------------
                 dx = x1234 - (x1 + x4) / 2;
                 dy = y1234 - (y1 + y4) / 2;
-                if(dx*dx + dy*dy <= m_distance_tolerance)
+                if(dx*dx + dy*dy <= (float)M_DISTANCE_TOLERANCE)
                 {
                     _add_point (ctx, x1234, y1234);
                     return;
@@ -989,6 +990,8 @@ void _recursive_bezier (VkvgContext ctx,
     _recursive_bezier (ctx, x1, y1, x12, y12, x123, y123, x1234, y1234, level + 1);
     _recursive_bezier (ctx, x1234, y1234, x234, y234, x34, y34, x4, y4, level + 1);
 }
+#pragma warning(default:4127)
+
 void _poly_fill (VkvgContext ctx){
     //we anticipate the check for vbo buffer size
     if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO) {
@@ -1050,14 +1053,14 @@ void _fill_ec (VkvgContext ctx){
         }
         ctx->pathes[ptrPath]|=PATH_CLOSED_BIT;//close path
 
-        uint32_t firstPtIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
-        uint32_t lastPtIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
-        uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
-        uint32_t firstVertIdx = ctx->vertCount-ctx->curVertOffset;
+        VKVG_IBO_INDEX_TYPE firstPtIdx = (VKVG_IBO_INDEX_TYPE)ctx->pathes[ptrPath]&PATH_ELT_MASK;
+        VKVG_IBO_INDEX_TYPE lastPtIdx = (VKVG_IBO_INDEX_TYPE)ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
+        VKVG_IBO_INDEX_TYPE pathPointCount = lastPtIdx - firstPtIdx + 1;
+        VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount-ctx->curVertOffset;
 
         ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
         uint32_t ecps_count = pathPointCount;
-        uint32_t i = 0;
+        VKVG_IBO_INDEX_TYPE i = 0;
 
         //init points link list
         while (i < pathPointCount-1){
@@ -1121,7 +1124,7 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
     if (ctx->xMin < 0 || ctx->yMin < 0)
         useScissor = false;
     if (useScissor && ctx->xMin < FLT_MAX) {
-        VkRect2D r = {{ctx->xMin, ctx->yMin}, {ctx->xMax - ctx->xMin + 1, ctx->yMax - ctx->yMin + 1}};
+        VkRect2D r = {{(int32_t)ctx->xMin, (int32_t)ctx->yMin}, {(int32_t)ctx->xMax - (int32_t)ctx->xMin + 1, (int32_t)ctx->yMax - (int32_t)ctx->yMin + 1}};
         CmdSetScissor(ctx->cmd, 0, 1, &r);
     }
     CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,

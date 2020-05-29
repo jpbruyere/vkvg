@@ -27,7 +27,7 @@
 
 int directoryExists (const char* path) {
 #if defined(_WIN32) || defined(_WIN64)
-    return getenv("HOME");
+    return getenv("HOME") != NULL;
 #elif __APPLE__
 #elif __unix__
     struct stat st = {0};
@@ -43,5 +43,4 @@ const char* getUserDir () {
     struct passwd *pw = getpwuid(getuid());
     return pw->pw_dir;
 #endif
-    return -1;
 }

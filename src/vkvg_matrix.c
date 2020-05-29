@@ -123,19 +123,19 @@ void vkvg_matrix_invert (vkvg_matrix_t *matrix)
         matrix->x0 = -matrix->x0;
         matrix->y0 = -matrix->y0;
 
-        if (matrix->xx != 1.) {
+        if (matrix->xx != 1.f) {
             if (matrix->xx == 0.)
             return;
 
-            matrix->xx = 1. / matrix->xx;
+            matrix->xx = 1.f / matrix->xx;
             matrix->x0 *= matrix->xx;
         }
 
-        if (matrix->yy != 1.) {
+        if (matrix->yy != 1.f) {
             if (matrix->yy == 0.)
             return;
 
-            matrix->yy = 1. / matrix->yy;
+            matrix->yy = 1.f / matrix->yy;
             matrix->y0 *= matrix->yy;
         }
 
@@ -191,8 +191,8 @@ void vkvg_matrix_init_rotate (vkvg_matrix_t *matrix, float radians)
     float  s;
     float  c;
 
-    s = sin (radians);
-    c = cos (radians);
+    s = sinf (radians);
+    c = cosf (radians);
 
     vkvg_matrix_init (matrix,
                c, s,

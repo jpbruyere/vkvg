@@ -77,7 +77,7 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 	VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 
 	dev->phyMemProps = phyInfos->memProps;
-	dev->gQueue = vkh_queue_create ((VkhDevice)dev, qFamIdx, qIndex, phyInfos->queues[qFamIdx].queueFlags);
+	dev->gQueue = vkh_queue_create ((VkhDevice)dev, qFamIdx, qIndex);
 	MUTEX_INIT (&dev->gQMutex);
 
 	vkh_phyinfo_destroy (phyInfos);

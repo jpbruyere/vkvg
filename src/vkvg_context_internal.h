@@ -101,16 +101,16 @@ typedef struct _vkvg_context_t {
 
     //vk buffers, holds data until flush
     vkvg_buff	indices;        //index buffer with persistent map memory
-    size_t		sizeIBO;        //size of vk ibo size
-    size_t		sizeIndices;    //reserved size
+    uint32_t	sizeIBO;        //size of vk ibo size
+    uint32_t	sizeIndices;    //reserved size
     VKVG_IBO_INDEX_TYPE	indCount;       //current indice count
 
     VKVG_IBO_INDEX_TYPE	curIndStart;    //last index recorded in cmd buff
     VKVG_IBO_INDEX_TYPE curVertOffset;  //vertex offset in draw indexed command
 
     vkvg_buff	vertices;       //vertex buffer with persistent mapped memory
-    size_t      sizeVBO;        //size of vk vbo size
-    size_t		sizeVertices;   //reserved size
+    uint32_t    sizeVBO;        //size of vk vbo size
+    uint32_t    sizeVertices;   //reserved size
     VKVG_IBO_INDEX_TYPE	vertCount;      //effective vertices count
 
     Vertex* vertexCache;
@@ -161,7 +161,7 @@ typedef struct _vkvg_context_t {
 
 typedef struct _ear_clip_point{
     vec2 pos;
-    uint32_t idx;
+    VKVG_IBO_INDEX_TYPE idx;
     struct _ear_clip_point* next;
 }ear_clip_point;
 

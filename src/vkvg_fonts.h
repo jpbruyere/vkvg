@@ -38,6 +38,11 @@
 #define FONT_CACHE_INIT_LAYERS  2
 #define FONT_FILE_NAME_MAX_SIZE 256
 
+#include "vkvg_internal.h"
+#include "vkvg.h"
+#include "vkvg_buff.h"
+#include "vkh.h"
+
 #define FT_CHECK_RESULT(f) 																				\
 {																										\
     FT_Error res = (f);																					\
@@ -47,11 +52,6 @@
         assert(res == 0);																		\
     }																									\
 }
-
-#include "vkvg_internal.h"
-#include "vkvg.h"
-#include "vkvg_buff.h"
-#include "vkh.h"
 
 //texture coordinates of one character in font cache array texture.
 typedef struct {
