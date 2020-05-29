@@ -332,7 +332,7 @@ void _select_font_face (VkvgContext ctx, const char* name){
     {
         if (FcPatternGetString(font, FC_FILE, 0, (FcChar8 **)&fontFile) == FcResultMatch){
             memset (ctx->selectedFont.fontFile, 0, FONT_FILE_NAME_MAX_SIZE);
-            strcpy(ctx->selectedFont.fontFile, fontFile);
+            memcpy (ctx->selectedFont.fontFile, fontFile, FONT_FILE_NAME_MAX_SIZE);
         }
     }
     FcPatternDestroy(pat);
@@ -371,7 +371,7 @@ void _update_current_font (VkvgContext ctx) {
             if (nf.charSize == 0)
                 nf.charSize = defaultFontCharSize;
 
-            nf.fontFile = (char*)calloc(strlen(ctx->selectedFont.fontFile),sizeof(char));
+            nf.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
             strcpy (nf.fontFile, ctx->selectedFont.fontFile);
 
             FT_CHECK_RESULT(FT_New_Face(cache->library, nf.fontFile, 0, &nf.face));
