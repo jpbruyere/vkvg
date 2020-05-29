@@ -21,13 +21,13 @@ void test(){
         float x = truncf(0.5f * w*rand()/RAND_MAX + r);
         float y = truncf(0.5f * w*rand()/RAND_MAX + r);
 
-        vkvg_arc(ctx, x, y, r, 0, M_PI * 2.0f);
+        vkvg_arc(ctx, x, y, r, 0, M_PIF * 2.0f);
         vkvg_fill(ctx);
     }
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     PERFORM_TEST(test);
     return 0;
 }

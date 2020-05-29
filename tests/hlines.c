@@ -27,7 +27,7 @@ void test(){
 	vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 
     PERFORM_TEST (test);
 

@@ -26,10 +26,14 @@ void test_svg_surface() {
 
 void test_nsvg() {
     NSVGimage* svg = nsvg_load_file(device, path);
+    if (svg == NULL) {
+        fprintf (stderr, "svg file not found: %s", path);
+        return;
+    }
 
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
-    vkvg_set_source_rgba(ctx,0.9f,1.0,1.0,1);
+    vkvg_set_source_rgba(ctx,0.9f,1.0,1.0f,1);
     vkvg_paint(ctx);
 
     vkvg_scale(ctx,1.0f,1.0f);
@@ -42,7 +46,7 @@ void test_nsvg() {
     nsvg_destroy(svg);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     PERFORM_TEST (test_nsvg);
     return 0;
 }

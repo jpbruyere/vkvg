@@ -945,7 +945,7 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 }
 
 void vkvg_save (VkvgContext ctx){
-    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %p\n", (uint64_t)ctx);
+    LOG(LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
     _flush_cmd_buff (ctx);
     _wait_flush_fence (ctx);

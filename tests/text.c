@@ -12,7 +12,7 @@ void test2() {
     VkvgContext ctx = vkvg_create(surf);
 
     vkvg_color_t bg = {0.0,0.0,0.0,1};
-    vkvg_color_t fg = {1.0,1.0,1.0,1};
+    vkvg_color_t fg = {1.0f,1.0f,1.0f,1};
 
     vkvg_set_source_rgba(ctx,bg.r,bg.g,bg.b,bg.a);
     vkvg_paint(ctx);
@@ -24,7 +24,7 @@ void test2() {
     float penY = 10.f;
 
     for (uint32_t size=4;size<39;size++) {
-        print(ctx,penY+=size,size);
+        print(ctx,(float)penY+=size,size);
     }
 
     vkvg_destroy(ctx);
@@ -33,7 +33,7 @@ void test1() {
     VkvgContext ctx = vkvg_create(surf);
 
     vkvg_color_t fg = {0.0,0.0,0.0,1};
-    vkvg_color_t bg = {0.9,0.9,0.9,1};
+    vkvg_color_t bg = {0.9f,0.9f,0.9f,1};
 
     vkvg_set_source_rgba(ctx,bg.r,bg.g,bg.b,bg.a);
     vkvg_paint(ctx);
@@ -45,19 +45,19 @@ void test1() {
     vkvg_set_font_size(ctx,size);
 
     vkvg_select_font_face(ctx, "mono");
-    vkvg_move_to(ctx, 100,penY);
+    vkvg_move_to(ctx, 100.f,penY);
     vkvg_show_text (ctx,txt);
 
     penY += 1.2f * size;
 
     vkvg_select_font_face(ctx, "times");
-    vkvg_move_to(ctx, 100, penY);
+    vkvg_move_to(ctx, 100.f, penY);
     vkvg_show_text (ctx,txt);
 
     penY += 1.2f * size;
 
     vkvg_select_font_face(ctx, "arial:italic");
-    vkvg_move_to(ctx, 100, penY);
+    vkvg_move_to(ctx, 100.f, penY);
     vkvg_show_text (ctx,txt);
 
     vkvg_destroy(ctx);
@@ -67,13 +67,13 @@ void test(){
 
     //vkvg_color_t fg = {0.2,0.2,0.2,1};
     vkvg_color_t fg = {0.0,0.0,0.0,1};
-    vkvg_color_t bg = {1.0,1.0,1.0,1};
+    vkvg_color_t bg = {1.0f,1.0f,1.0f,1};
     vkvg_set_source_rgba(ctx,bg.r,bg.g,bg.b,bg.a);
     vkvg_paint(ctx);
 
-    int size = 19;
-    int penY = 50;
-    int penX = 10;
+    float size = 19;
+    float penY = 50;
+    float penX = 10;
 
     /*vkvg_rectangle(ctx,30,0,100,400);
     vkvg_clip(ctx);*/
@@ -93,7 +93,7 @@ void test(){
     penX+= te.x_advance;
     vkvg_move_to(ctx, penX,penY);
     vkvg_show_text (ctx,"*abcdefghijk2");
-    penY+=2*size;
+    penY+=2.f*size;
 
     vkvg_select_font_face(ctx, "times");
     vkvg_move_to(ctx, penX,penY);
@@ -152,7 +152,7 @@ void test(){
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 
     PERFORM_TEST (test);
     PERFORM_TEST (test1);

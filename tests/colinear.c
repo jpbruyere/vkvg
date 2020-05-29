@@ -3,7 +3,7 @@
 void test(){
     VkvgContext ctx = vkvg_create(surf);
 
-    vkvg_set_source_rgba(ctx,0.7,0.7,0.7,1);
+    vkvg_set_source_rgba(ctx,0.7f,0.7f,0.7f,1);
     vkvg_paint(ctx);
 
     vkvg_set_source_rgba(ctx,0,1,0,1);
@@ -17,7 +17,7 @@ void test(){
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 
     PERFORM_TEST (test);
 

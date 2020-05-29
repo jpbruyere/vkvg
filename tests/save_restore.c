@@ -5,7 +5,7 @@ void recurse_draw(VkvgContext ctx, int depth) {
     vkvg_save(ctx);
 
     vkvg_translate (ctx, 5,5);
-    vkvg_rectangle(ctx, depth,depth,200,200);
+    vkvg_rectangle(ctx, (float)depth,(float)depth,200,200);
     vkvg_clip_preserve(ctx);
     vkvg_set_source_rgb(ctx, 1.f/depth, 1.f / depth, 1.f / depth);
     vkvg_fill_preserve(ctx);
@@ -27,7 +27,7 @@ void test(){
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 
     PERFORM_TEST (test);
 

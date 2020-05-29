@@ -16,7 +16,7 @@ void test(){
 
     randomize_color(ctx);
 
-    for (int i=0; i<test_size; i++) {
+    for (uint32_t i=0; i<test_size; i++) {
 
         float x1 = w*rand()/RAND_MAX;
         float y1 = h*rand()/RAND_MAX;
@@ -33,7 +33,7 @@ void test(){
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     PERFORM_TEST (test);
     return 0;
 }

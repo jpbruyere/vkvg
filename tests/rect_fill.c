@@ -34,7 +34,7 @@ void test_evenodd(){
 
     vkvg_destroy(ctx);
 }
-int main(int argc, char *argv[]) {
+int main() {
 
     PERFORM_TEST (test);
     PERFORM_TEST (test_evenodd);

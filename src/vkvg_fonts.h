@@ -22,6 +22,9 @@
 #ifndef VKVG_FONTS_H
 #define VKVG_FONTS_H
 
+ //disable warning on iostream functions on windows
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 

@@ -22,7 +22,7 @@
 #ifndef VKVG_INTERNAL_H
 #define VKVG_INTERNAL_H
 
-//disable warning on iostream functions on windows
+ //disable warning on iostream functions on windows
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>

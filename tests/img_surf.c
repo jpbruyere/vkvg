@@ -62,13 +62,13 @@ void test(){
 
     vkvg_set_line_width(ctx,20.f);
     vkvg_set_source_rgba(ctx,1,0,0,1);
-    vkvg_arc(ctx,200,200,200,0,2.f*M_PI);
+    vkvg_arc(ctx,200,200,200,0,2.f*M_PIF);
     vkvg_new_sub_path(ctx);
-    vkvg_arc(ctx,200,200,100,0,2.f*M_PI);
+    vkvg_arc(ctx,200,200,100,0,2.f*M_PIF);
 
     vkvg_set_source_surface(ctx, imgSurf, 00, 00);
     vkvg_fill_preserve(ctx);
-    vkvg_set_source_rgba(ctx,0.2,0.3,0.8,1);
+    vkvg_set_source_rgba(ctx,0.2f,0.3f,0.8f,1);
 
     vkvg_stroke(ctx);
 
@@ -77,7 +77,7 @@ void test(){
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     PERFORM_TEST (paint);
     PERFORM_TEST (paint_offset);
     PERFORM_TEST (paint_pattern);

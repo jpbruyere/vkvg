@@ -50,7 +50,7 @@ void test(){
     //vkvg_pattern_destroy (pat);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
 
     init_test(1024, 768);
 

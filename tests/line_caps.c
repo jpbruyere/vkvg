@@ -2,7 +2,7 @@
 
 void test(){
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_set_source_rgba(ctx,0.9,0.9,0.9,1);
+    vkvg_set_source_rgba(ctx,0.9f,0.9f,0.9f,1);
     vkvg_paint(ctx);
 
     float x = 20, y = 20, dx = 40, dy = 60;
@@ -22,15 +22,15 @@ void test(){
     vkvg_rel_line_to(ctx,0,dy);
     vkvg_rel_move_to(ctx,dx,-dy);
     vkvg_rel_line_to(ctx,dx,dy);
-    vkvg_rel_move_to(ctx,dx,-dy/2);
+    vkvg_rel_move_to(ctx,dx,-dy/2.f);
     vkvg_rel_line_to(ctx,dx,0);
-    vkvg_rel_move_to(ctx,dx,dy/2);
+    vkvg_rel_move_to(ctx,dx,dy/2.f);
     vkvg_rel_line_to(ctx,dx,-dy);
     vkvg_rel_move_to(ctx,dx,dy);
     vkvg_rel_line_to(ctx,0,-dy);
-    vkvg_rel_move_to(ctx,2*dx,dy);
+    vkvg_rel_move_to(ctx,dx*2.f,dy);
     vkvg_rel_line_to(ctx,-dx,-dy);
-    vkvg_rel_move_to(ctx,3*dx,dy/2);
+    vkvg_rel_move_to(ctx,dx*3.f,dy/2.f);
     vkvg_rel_line_to(ctx,-dx,0);
     //vkvg_rel_line_to(ctx,0,-dy);
     //vkvg_rel_move_to(ctx,dx,dy/2);
@@ -51,7 +51,7 @@ void test(){
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     PERFORM_TEST (test);
     return 0;
 }
