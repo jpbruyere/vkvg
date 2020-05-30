@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 
-PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic" LANGUAGES C)
+SET(LANG "C")
+
+PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic" LANGUAGES ${LANG})
 
 INCLUDE(CheckSymbolExists)
 INCLUDE(CheckIncludeFile)
@@ -14,7 +16,9 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 IF (UNIX)
-	SET(CMAKE_EXE_LINKER_FLAGS "-lm")
+	SET(LINKER_FLAGS "-lm")
+	SET(CMAKE_EXE_LINKER_FLAGS ${LINKER_FLAGS})
+	SET(CMAKE_SHARED_LINKER_FLAGS ${LINKER_FLAGS})
 ENDIF()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -22,17 +26,17 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	OPTION(ENABLE_VALIDATION "enable vulkan validation layer" ON)
 	OPTION(ENABLE_WIRED_FILL "enable wired polygon draw to check vertices and primitives" OFF)
 	IF (UNIX)
-		SET(CMAKE_C_FLAGS "-Wall -Wno-extra")
+		SET(CMAKE_${LANG}_FLAGS "-Wall -Wno-extra")
 	ELSEIF(MSVC)
-		SET(CMAKE_C_FLAGS "/TC /W4 /wd4201 /wd4204 /wd4221 /wd4100")#c11 complient
+		SET(CMAKE_${LANG}_FLAGS "/TC /W4 /wd4201 /wd4204 /wd4221 /wd4100")#c11 complient
 	ENDIF()
 ELSE()
 	UNSET(ENABLE_VALIDATION CACHE)
 	UNSET(ENABLE_WIRED_FILL CACHE)
 	IF (UNIX)
-		SET(CMAKE_C_FLAGS "-w")
+		SET(CMAKE_${LANG}_FLAGS "-w")
 	ELSEIF(MSVC)
-		SET(CMAKE_C_FLAGS "/TC /W0")
+		SET(CMAKE_${LANG}_FLAGS "/TC /W0")
 	ENDIF()
 ENDIF()
 OPTION(VKVG_TEST_DIRECT_DRAW "(Experimental)Draw directly on backend surface, if off surface is blitted." OFF)
@@ -176,7 +180,7 @@ FUNCTION (setup_lib LibName)
 		${FREETYPE_LIBRARIES}
 		${HarfBuzz_LIBRARIES}
 		${Fontconfig_LIBRARIES}
-		vkh_static
+		vkh_shared
 	)
 	INSTALL(TARGETS ${LibName}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -222,8 +226,9 @@ if (VKVG_BUILD_TESTS)
 	TARGET_LINK_LIBRARIES(tests_common
 		${Vulkan_LIBRARIES}
 		${GLFW3_LIBRARY}
-		vkh_static
+		vkh_shared
 		vkvg_static
+		m
 	)
 	file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/tests" "tests/data/*")
 	FOREACH(DATA_FILE ${DATAS})

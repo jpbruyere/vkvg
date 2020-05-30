@@ -22,18 +22,18 @@ int gettimeofday(struct timeval * tp, void * tzp)
 }
 #endif
 
-float panX = 0.f;
-float panY = 0.f;
+float panX	= 0.f;
+float panY	= 0.f;
 float lastX = 0.f;
 float lastY = 0.f;
-float zoom = 1.0f;
+float zoom	= 1.0f;
 bool mouseDown = false;
 
-VkvgDevice device = NULL;
-VkvgSurface surf = NULL;
+VkvgDevice device	= NULL;
+VkvgSurface surf	= NULL;
 
-uint32_t test_size = 100;  // items drawn in one run, or complexity
-int iterations = 40000;   // repeat test n times
+uint32_t test_size	= 100;	// items drawn in one run, or complexity
+uint32_t iterations	= 40000;// repeat test n times
 
 static bool paused = false;
 static VkSampleCountFlags samples = VK_SAMPLE_COUNT_8_BIT;
@@ -150,51 +150,9 @@ void init_test (uint32_t width, uint32_t height){
 
 	vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 }
-void run_test_func (void(*testfunc)(void),uint32_t width, uint32_t height) {
-	bool deferredResolve = false;
-	VkhPresenter r = e->renderer;
 
-	double start_time = 0.0, stop_time = 0.0, run_time, run_total = 0.0, min_run_time = -1, max_run_time = 0.0;
-	double* run_time_values = (double*)malloc(iterations*sizeof(double));
+//	printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 
-	int i = 0;
-
-	while (!vkengine_should_close (e) && i < iterations) {
-		glfwPollEvents();
-
-		start_time = get_tick();
-
-		if (!paused)
-			testfunc();
-
-		if (deferredResolve)
-			vkvg_multisample_surface_resolve(surf);
-		if (!vkh_presenter_draw (r))
-			vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
-
-		stop_time = get_tick();
-		run_time = stop_time - start_time;
-		run_time_values[i] = run_time;
-
-		if (min_run_time < 0)
-			min_run_time = run_time;
-		else
-			min_run_time = MIN(run_time, min_run_time);
-		max_run_time = MAX(run_time, max_run_time);
-		run_total += run_time;
-		i++;
-	}
-
-	double avg_run_time = run_total / (double)i;
-	double med_run_time = median_run_time (run_time_values, i);
-	double standard_dev = standard_deviation (run_time_values, i, avg_run_time);
-	double avg_frames_per_second = (1.0 / avg_run_time);
-	avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
-
-	free (run_time_values);
-
-	printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
-}
 void clear_test () {
 	vkDeviceWaitIdle(e->dev->dev);
 
@@ -208,8 +166,16 @@ void clear_test () {
 VkvgSurface* surfaces;
 #endif
 
-void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, uint32_t height) {
+void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, uint32_t height, int argc, char* argv[]) {
 	//dumpLayerExts();
+	if (argc > 1)
+		iterations = atoi (argv[1]);
+	if (argc > 2)
+		test_size = atoi (argv[2]);
+	if (iterations == 0 || test_size == 0) {
+		printf("usage: test [iterations] [size]\n");
+		return;
+	}
 
 	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
 	VkhPresenter r = e->renderer;
