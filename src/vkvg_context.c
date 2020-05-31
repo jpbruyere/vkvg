@@ -34,9 +34,9 @@ static uint32_t dlpCount = 0;
 #endif
 
 static VkClearValue clearValues[3] = {
-	{ 0 },
-	{ 1.0f, 0 },
-	{ 0 }
+	{ {{0}} },
+	{ {{1.0f, 0}} },
+	{ {{0}} }
 };
 
 /**
@@ -220,7 +220,7 @@ void vkvg_destroy (VkvgContext ctx)
 	_wait_flush_fence(ctx);
 
 	LOG(VKVG_LOG_INFO, "DESTROY Context: ctx = %p; surf = %p\n", ctx, ctx->pSurf);
-	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
 
 	if (ctx->pattern)
 		vkvg_pattern_destroy (ctx->pattern);
@@ -533,8 +533,8 @@ void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 
 	vkvg_close_path (ctx);
 }
-static const VkClearAttachment clearStencil        = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {0}};
-static const VkClearAttachment clearColorAttach    = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {0}};
+static const VkClearAttachment clearStencil        = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {{{0}}}};
+static const VkClearAttachment clearColorAttach    = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
 
 void vkvg_reset_clip (VkvgContext ctx){
 	_check_cmd_buff_state (ctx);

@@ -575,6 +575,9 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			case VKVG_FILTER_BEST:
 				filter = VK_FILTER_LINEAR;
 				break;
+			default:
+				filter = VK_FILTER_NEAREST;
+				break;
 			}
 			vkh_image_create_sampler(ctx->source, filter, filter,
 								 VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
@@ -592,7 +595,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 		_update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
 
-		vec4 srcRect = {0,0,(float)surf->width,(float)surf->height};
+		vec4 srcRect = {{0},{0},{(float)surf->width},{(float)surf->height}};
 		ctx->pushConsts.source = srcRect;
 
 		//_init_cmd_buff                  (ctx);
@@ -604,7 +607,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
 			_update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
 
-		vec4 bounds = {(float)ctx->pSurf->width, (float)ctx->pSurf->height, 0, 0};//store img bounds in unused source field
+		vec4 bounds = {{(float)ctx->pSurf->width}, {(float)ctx->pSurf->height}, {0}, {0}};//store img bounds in unused source field
 		ctx->pushConsts.source = bounds;
 
 		//transform control point with current ctx matrix

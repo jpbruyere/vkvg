@@ -31,11 +31,10 @@
 bool vkeCheckPhyPropBlitSource (VkEngine e) {
 	VkFormatProperties formatProps;
 	vkGetPhysicalDeviceFormatProperties(e->dev->phy, e->renderer->format, &formatProps);
-
 #ifdef VKVG_TILING_OPTIMAL
-	assert((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
+	return formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT;
 #else
-	assert((formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
+	return formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT;
 #endif
 }
 

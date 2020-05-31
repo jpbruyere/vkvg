@@ -34,7 +34,7 @@ VkvgDevice device	= NULL;
 VkvgSurface surf	= NULL;
 
 uint32_t test_size	= 100;	// items drawn in one run, or complexity
-uint32_t iterations	= 40000;// repeat test n times
+uint32_t iterations	= 1000;// repeat test n times
 uint32_t test_width	= 1024;
 uint32_t test_height= 768;
 bool	 test_vsync = false;
