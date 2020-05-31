@@ -227,13 +227,23 @@ if (VKVG_BUILD_TESTS)
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
+	IF (UNIX)
+		TARGET_LINK_LIBRARIES(tests_common
+			${Vulkan_LIBRARIES}
+			${GLFW3_LIBRARY}
+			vkh_shared
+			vkvg_static
+			m
+		)
+	ELSEIF(MSVC)
 	TARGET_LINK_LIBRARIES(tests_common
 		${Vulkan_LIBRARIES}
 		${GLFW3_LIBRARY}
 		vkh_shared
 		vkvg_static
-		m
 	)
+	ENDIF()
+
 	file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/tests" "tests/data/*")
 	FOREACH(DATA_FILE ${DATAS})
 		GET_FILENAME_COMPONENT(copy-dest-dir ${CMAKE_CURRENT_BINARY_DIR}/${DATA_FILE} DIRECTORY)

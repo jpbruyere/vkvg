@@ -45,7 +45,7 @@ void _check_flush_needed (VkvgContext ctx) {
 }
 void _resize_vertex_cache (VkvgContext ctx, uint32_t newSize) {
 	Vertex* tmp = (Vertex*) realloc (ctx->vertexCache, (size_t)newSize * sizeof(Vertex));
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %u size(byte): %lu Ptr: %p -> %p\n", newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %u size(byte): %zu Ptr: %p -> %p\n", newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
 	if (tmp == NULL){
 		ctx->status = VKVG_STATUS_NO_MEMORY;
 		LOG(VKVG_LOG_ERR, "resize VBO failed: vert count: %u byte size: %zu\n", ctx->sizeVertices, ctx->sizeVertices * sizeof(Vertex));
@@ -277,7 +277,7 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
 		{{x+width,y},       {0,0,-1}},
 		{{x+width,y+height},{0,0,-1}}
 	};
-	VKVG_IBO_INDEX_TYPE firstIdx = ctx->vertCount - ctx->curVertOffset;
+	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 	Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
 	memcpy (pVert,v,4*sizeof(Vertex));
 	ctx->vertCount+=4;
@@ -717,7 +717,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 	bisec = vec2_perp(bisec);
 	bisec = vec2_mult(bisec,lh);
 
-	VKVG_IBO_INDEX_TYPE idx = ctx->vertCount - ctx->curVertOffset;
+	VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
 		v.pos = vec2_add(p0, bisec);
@@ -770,7 +770,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 					a+=step;
 				}
 			}
-			VKVG_IBO_INDEX_TYPE p0Idx = ctx->vertCount - ctx->curVertOffset;
+			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 			_add_triangle_indices(ctx, idx, idx+2, idx+1);
 			if (cross<0){
 				for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
@@ -1079,23 +1079,23 @@ void _fill_ec (VkvgContext ctx){
 		uint32_t firstPtIdx		= ctx->pathes[ptrPath]	&PATH_ELT_MASK;
 		uint32_t lastPtIdx		= ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
 		uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
-		uint32_t firstVertIdx	= ctx->vertCount - ctx->curVertOffset;
+		VKVG_IBO_INDEX_TYPE firstVertIdx	= (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 		ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
 		uint32_t ecps_count = pathPointCount;
-		uint32_t i = 0;
+		VKVG_IBO_INDEX_TYPE i = 0;
 
 		//init points link list
 		while (i < pathPointCount-1){
 			v.pos = ctx->points[i+firstPtIdx];
-			ear_clip_point ecp = {v.pos, i+firstVertIdx, &ecps[i+1]};
+			ear_clip_point ecp = {v.pos, firstVertIdx+i, &ecps[i+1]};
 			ecps[i] = ecp;
 			_add_vertex(ctx, v);
 			i++;
 		}
 
 		v.pos = ctx->points[i+firstPtIdx];
-		ear_clip_point ecp = {v.pos, i+firstVertIdx, ecps};
+		ear_clip_point ecp = {v.pos, firstVertIdx+i, ecps};
 		ecps[i] = ecp;
 		_add_vertex(ctx, v);
 

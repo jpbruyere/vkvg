@@ -402,7 +402,7 @@ void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 	case SHAPE_STAR:
 		x = (float)rand()/RAND_MAX * w;
 		y = (float)rand()/RAND_MAX * h;
-		z = (float)rand()/RAND_MAX * sizeFact + 0.15; //scale
+		z = (float)rand()/RAND_MAX * sizeFact + 0.15f; //scale
 
 		vkvg_move_to (ctx, x+star_points[0][0]*z, y+star_points[0][1]*z);
 		for (int s=1; s<11; s++)

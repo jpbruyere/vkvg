@@ -483,7 +483,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
                        pen.y - cr->bmpDiff.y + (tr->glyph_pos[i].y_offset >> 6)};
             v.pos = p0;
 
-            VKVG_IBO_INDEX_TYPE firstIdx = ctx->vertCount - ctx->curVertOffset;
+            VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
             v.uv.x = cr->bounds.x;
             v.uv.y = cr->bounds.y;
@@ -525,7 +525,7 @@ void _show_texture (vkvg_context* ctx){
         {{FONT_PAGE_SIZE,FONT_PAGE_SIZE},   {1,1,0}}
     };
 
-    VKVG_IBO_INDEX_TYPE i = ctx->vertCount;
+    VKVG_IBO_INDEX_TYPE i = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
 
     _add_vertex(ctx,vs[0]);
     _add_vertex(ctx,vs[1]);

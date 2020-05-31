@@ -57,6 +57,9 @@ echo "| Test File Name  |         Sub Test          | Iter | SIZE |   FPS   | Av
 echo "|-----------------|---------------------------|------|------|---------|---------|---------|---------|" >> $logfile
 for file in test_*
 do
-	./"$file" $ITERATIONS $SIZE >> $logfile
+	if [[ -x "$file" ]]
+	then
+		./"$file" $ITERATIONS $SIZE >> $logfile
+	fi
 done
 echo "_____________________________________________________________________________________________________" >> $logfile

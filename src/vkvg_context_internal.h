@@ -161,7 +161,7 @@ typedef struct _vkvg_context_t {
 
 typedef struct _ear_clip_point{
 	vec2 pos;
-	uint32_t idx;
+	VKVG_IBO_INDEX_TYPE idx;
 	struct _ear_clip_point* next;
 }ear_clip_point;
 
