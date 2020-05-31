@@ -184,7 +184,7 @@ FUNCTION (setup_lib LibName)
 		${FREETYPE_LIBRARIES}
 		${HarfBuzz_LIBRARIES}
 		${Fontconfig_LIBRARIES}
-		vkh_shared
+		vkh_static
 	)
 	INSTALL(TARGETS ${LibName}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -231,7 +231,7 @@ if (VKVG_BUILD_TESTS)
 		TARGET_LINK_LIBRARIES(tests_common
 			${Vulkan_LIBRARIES}
 			${GLFW3_LIBRARY}
-			vkh_shared
+			vkh_static
 			vkvg_static
 			m
 		)
@@ -239,7 +239,7 @@ if (VKVG_BUILD_TESTS)
 	TARGET_LINK_LIBRARIES(tests_common
 		${Vulkan_LIBRARIES}
 		${GLFW3_LIBRARY}
-		vkh_shared
+		vkh_static
 		vkvg_static
 	)
 	ENDIF()
