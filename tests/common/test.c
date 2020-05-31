@@ -1,4 +1,5 @@
 ﻿#include "test.h"
+#include "string.h"
 
 #if defined(_WIN32) || defined(_WIN64)
 int gettimeofday(struct timeval * tp, void * tzp)
@@ -34,6 +35,9 @@ VkvgSurface surf	= NULL;
 
 uint32_t test_size	= 100;	// items drawn in one run, or complexity
 uint32_t iterations	= 40000;// repeat test n times
+uint32_t test_width	= 1024;
+uint32_t test_height= 768;
+
 
 static bool paused = false;
 static VkSampleCountFlags samples = VK_SAMPLE_COUNT_8_BIT;
@@ -166,7 +170,12 @@ void clear_test () {
 VkvgSurface* surfaces;
 #endif
 
-void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, uint32_t height, int argc, char* argv[]) {
+void perform_test (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
+	//init random gen
+	struct timeval currentTime;
+	gettimeofday(&currentTime, NULL);
+	srand((unsigned) currentTime.tv_usec);
+
 	//dumpLayerExts();
 	if (argc > 1)
 		iterations = atoi (argv[1]);
@@ -177,7 +186,11 @@ void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, 
 		return;
 	}
 
-	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
+	char* whoami;
+	(whoami = strrchr(argv[0], '/')) ? ++whoami : (whoami = argv[0]);
+
+	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
+
 	VkhPresenter r = e->renderer;
 	vkengine_set_key_callback (e, key_callback);
 	vkengine_set_mouse_but_callback(e, mouse_button_callback);
@@ -195,15 +208,15 @@ void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, 
 	for (uint32_t i=0; i < r->imgCount;i++)
 		surfaces[i] = vkvg_surface_create_for_VkhImage (device, r->ScBuffers[i]);
 #else
-	surf    = vkvg_surface_create(device, width, height);
-	vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
+	surf = vkvg_surface_create(device, test_width, test_height);
+	vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), test_width, test_height);
 #endif
 
 
 	double start_time = 0.0, stop_time = 0.0, run_time = 0.0, run_total = 0.0, min_run_time = -1, max_run_time = 0.0;
 	double* run_time_values = (double*)malloc(iterations*sizeof(double));
 
-	int i = 0;
+	uint32_t i = 0;
 
 	vkengine_set_title(e, testName);
 
@@ -243,8 +256,14 @@ void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, 
 
 		if (deferredResolve)
 			vkvg_multisample_surface_resolve(surf);
-		if (!vkh_presenter_draw (r))
-			vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
+		if (!vkh_presenter_draw (r)){
+			vkh_presenter_get_size (r, &test_width, &test_height);
+			vkvg_surface_destroy (surf);
+			surf = vkvg_surface_create(device, test_width, test_height);
+			vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), test_width, test_height);
+			vkDeviceWaitIdle(r->dev->dev);
+			continue;
+		}
 #endif
 
 		if (paused)
@@ -271,7 +290,13 @@ void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, 
 
 	free (run_time_values);
 
-	printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+
+	//printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+	printf ("| %-15s | %-25s | ",whoami + 5, testName);
+	printf ("%4d | %4d | %6.2f | %5.4f | %5.4f | %5.4f |\n",
+			test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+
+	//printf ("%s size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", whoami+5, test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 
 	vkDeviceWaitIdle(e->dev->dev);
 
@@ -288,3 +313,107 @@ void perform_test (void(*testfunc)(void), const char *testName, uint32_t width, 
 
 	vkengine_destroy (e);
 }
+const int star_points[11][2] = {
+	{ 0, 85 },
+	{ 75, 75 },
+	{ 100, 10 },
+	{ 125, 75 },
+	{ 200, 85 },
+	{ 150, 125 },
+	{ 160, 190 },
+	{ 100, 150 },
+	{ 40, 190 },
+	{ 50, 125 },
+	{ 0, 85 }
+};
+
+void draw_random_shape (VkvgContext ctx, shape_t shape) {
+	float w = (float)test_width;
+	float h = (float)test_height;
+
+	float x, y, z, v, r;
+
+	randomize_color (ctx);
+
+	switch (shape) {
+	case SHAPE_LINE:
+		x = (float)rand()/RAND_MAX * w;
+		y = (float)rand()/RAND_MAX * h;
+		z = (float)rand()/RAND_MAX * w;
+		v = (float)rand()/RAND_MAX * h;
+
+		vkvg_move_to(ctx, x, y);
+		vkvg_line_to(ctx, z, v);
+		vkvg_stroke(ctx);
+		break;
+	case SHAPE_RECTANGLE:
+		z = truncf((0.5f*w*rand()/RAND_MAX)+1.f);
+		v = truncf((0.5f*h*rand()/RAND_MAX)+1.f);
+		x = truncf((w-z)*rand()/RAND_MAX);
+		y = truncf((h-v)*rand()/RAND_MAX);
+
+		vkvg_rectangle(ctx, x+1, y+1, z, v);
+		break;
+	case SHAPE_ROUNDED_RECTANGLE:
+		z = truncf((0.5f*w*rand()/RAND_MAX)+1.f);
+		v = truncf((0.5f*h*rand()/RAND_MAX)+1.f);
+		x = truncf((w-z)*rand()/RAND_MAX);
+		y = truncf((h-v)*rand()/RAND_MAX);
+		r = truncf((0.2f*z*rand()/RAND_MAX)+1.f);
+
+		if ((r > v / 2) || (r > z / 2))
+			r = MIN(v / 2, z / 2);
+
+		vkvg_move_to(ctx, x, y + r);
+		vkvg_arc(ctx, x + r, y + r, r, (float)M_PI, (float)-M_PI_2);
+		vkvg_line_to(ctx, x + z - r, y);
+		vkvg_arc(ctx, x + z - r, y + r, r, (float)-M_PI_2, 0);
+		vkvg_line_to(ctx, x + z, y + v - r);
+		vkvg_arc(ctx, x + z - r, y + v - r, r, 0, (float)M_PI_2);
+		vkvg_line_to(ctx, x + r, y + v);
+		vkvg_arc(ctx, x + r, y + v - r, r, (float)M_PI_2, (float)M_PI);
+		vkvg_line_to(ctx, x, y + r);
+		vkvg_close_path(ctx);
+		break;
+	case SHAPE_CIRCLE:
+		/*x = truncf((float)w * rnd()/RAND_MAX);
+		y = truncf((float)h * rnd()/RAND_MAX);
+		v = truncf((float)w * rnd()/RAND_MAX * 0.2f);*/
+		x = (float)rand()/RAND_MAX * w;
+		y = (float)rand()/RAND_MAX * h;
+
+		r = truncf((0.5f*MIN(w,h)*rand()/RAND_MAX)+1.f);
+
+		/*float r = 0.5f*w*rand()/RAND_MAX;
+		float x = truncf(0.5f * w*rand()/RAND_MAX + r);
+		float y = truncf(0.5f * w*rand()/RAND_MAX + r);*/
+
+		vkvg_arc(ctx, x, y, r, 0, (float)M_PI * 2.0f);
+		break;
+	case SHAPE_TRIANGLE:
+	case SHAPE_STAR:
+		x = (float)rand()/RAND_MAX * w;
+		y = (float)rand()/RAND_MAX * h;
+		z = (float)rand()/RAND_MAX *0.5 + 0.15; //scale
+
+		vkvg_move_to (ctx, x+star_points[0][0]*z, y+star_points[0][1]*z);
+		for (int s=1; s<11; s++)
+			vkvg_line_to (ctx, x+star_points[s][0]*z, y+star_points[s][1]*z);
+		vkvg_close_path (ctx);
+		break;
+	case SHAPE_RANDOM:
+		draw_random_shape(ctx, 1 + rand()%4);
+		break;
+	}
+}
+
+/*void draw_random_shape (VkvgContext ctx, shape_t shape) {
+	float w = (float)test_width;
+	float h = (float)test_height;
+	randomize_color(ctx);
+	float z = truncf((0.5f*w*rand()/RAND_MAX)+1.f);
+	float v = truncf((0.5f*w*rand()/RAND_MAX)+1.f);
+	float x = truncf((w-z)*rand()/RAND_MAX);
+	float y = truncf((h-v)*rand()/RAND_MAX);
+	vkvg_rectangle(ctx, x, y, z, v);
+}*/

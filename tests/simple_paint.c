@@ -45,15 +45,11 @@ void paint_rect_with_scale(){
 	vkvg_destroy(ctx);
 }
 int main(int argc, char *argv[]) {
-
-	vkengine_dump_available_layers();
-
 	PERFORM_TEST (paint, argc, argv);
 	PERFORM_TEST (paint_with_rotation, argc, argv);
 	PERFORM_TEST (paint_with_scale, argc, argv);
 	PERFORM_TEST (paint_rect, argc, argv);
 	PERFORM_TEST (paint_rect_with_rotation, argc, argv);
 	PERFORM_TEST (paint_rect_with_scale, argc, argv);
-
 	return 0;
 }

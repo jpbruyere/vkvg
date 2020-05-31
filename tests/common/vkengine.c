@@ -144,7 +144,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	e->window = glfwCreateWindow ((int)width, (int)height, "Window Title", NULL, NULL);
 
 	VkSurfaceKHR surf;
-	VK_CHECK_RESULT (glfwCreateWindowSurface(e->app->inst, e->window, NULL, &surf))	
+	VK_CHECK_RESULT (glfwCreateWindowSurface(e->app->inst, e->window, NULL, &surf))
 
 	VkhPhyInfo* phys = vkh_app_get_phyinfos (e->app, &phyCount, surf);
 
@@ -164,10 +164,10 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	VkDeviceQueueCreateInfo pQueueInfos[] = { {0},{0},{0} };
 	if (vkh_phyinfo_create_presentable_queues	(pi, 1, qPriorities, &pQueueInfos[qCount]))
 		qCount++;
-	if (vkh_phyinfo_create_compute_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
+	/*if (vkh_phyinfo_create_compute_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
 		qCount++;
 	if (vkh_phyinfo_create_transfer_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
-		qCount++;
+		qCount++;*/
 
 	char const * dex [] = {"VK_KHR_swapchain"};
 	enabledExtsCount = 1;

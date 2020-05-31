@@ -22,6 +22,18 @@ void scaled_up() {
 
 	vkvg_destroy(ctx);
 }
+void fill_and_stroke () {
+	vkvg_surface_clear(surf);
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_source_rgba   (ctx, 0,0.1f,0.8f, 0.5f);
+	vkvg_set_line_width(ctx,10);
+
+	vkvg_arc(ctx, 300, 300, 150.f, 0, M_PIF*2);
+	vkvg_fill_preserve(ctx);
+	vkvg_stroke(ctx);
+
+	vkvg_destroy(ctx);
+}
 void sizes() {
 	VkvgContext ctx = vkvg_create(surf);
 
@@ -45,7 +57,8 @@ void sizes() {
 }
 
 int main(int argc, char *argv[]) {
-	PERFORM_TEST (sizes, argc, argv);
-	PERFORM_TEST (scaled_up, argc, argv);
+	PERFORM_TEST (fill_and_stroke, argc, argv);
+	//PERFORM_TEST (sizes, argc, argv);
+	//PERFORM_TEST (scaled_up, argc, argv);
 	return 0;
 }

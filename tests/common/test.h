@@ -21,7 +21,7 @@
 # define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
-#define PERFORM_TEST(testName, argc, argv) perform_test(testName, #testName, 1024, 768, argc, argv);
+#define PERFORM_TEST(testName, argc, argv) perform_test(testName, #testName, argc, argv);
 #if defined(_WIN32) || defined(_WIN64)
 	#define WIN32_LEAN_AND_MEAN
 	#define NOMINMAX
@@ -60,8 +60,20 @@
 	#include <sys/time.h>
 #endif
 
+typedef enum _shape_t {
+	SHAPE_LINE,
+	SHAPE_RECTANGLE,
+	SHAPE_ROUNDED_RECTANGLE,
+	SHAPE_CIRCLE,
+	SHAPE_TRIANGLE,
+	SHAPE_STAR,
+	SHAPE_RANDOM,
+} shape_t;
+
 extern uint32_t test_size;
 extern uint32_t iterations;
+extern uint32_t test_width;
+extern uint32_t test_height;
 
 extern float panX;
 extern float panY;
@@ -74,8 +86,10 @@ extern VkvgDevice device;
 extern VkvgSurface surf;
 
 //run test in one step
-void perform_test (void(*testfunc)(), const char* testName, uint32_t width, uint32_t height,int argc, char *argv[]);
-void randomize_color (VkvgContext ctx);
+void perform_test (void(*testfunc)(), const char* testName, int argc, char *argv[]);
+
+void randomize_color	(VkvgContext ctx);
+void draw_random_shape	(VkvgContext ctx, shape_t shape);
 
 //run test in 3 step: init, run, clear.
 void init_test (uint32_t width, uint32_t height);
