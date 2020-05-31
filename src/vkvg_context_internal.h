@@ -106,14 +106,14 @@ typedef struct _vkvg_context_t {
 	uint32_t	indCount;       //current indice count
 
 	uint32_t	curIndStart;    //last index recorded in cmd buff
-	int32_t		curVertOffset;  //vertex offset in draw indexed command
+	uint32_t	curVertOffset;  //vertex offset in draw indexed command
 
 	vkvg_buff	vertices;       //vertex buffer with persistent mapped memory
 	uint32_t	sizeVBO;        //size of vk vbo size
 	uint32_t	sizeVertices;   //reserved size
 	uint32_t	vertCount;      //effective vertices count
 
-	Vertex* vertexCache;
+	Vertex*		vertexCache;
 	VKVG_IBO_INDEX_TYPE* indexCache;
 
 	//pathes, exists until stroke of fill
@@ -166,8 +166,9 @@ typedef struct _ear_clip_point{
 }ear_clip_point;
 
 void _check_flush_needed    (VkvgContext ctx);
-void _check_vbo_size        (VkvgContext ctx);
-void _check_ibo_size        (VkvgContext ctx);
+void _check_vertex_cache_size(VkvgContext ctx);
+void _resize_vertex_cache	(VkvgContext ctx, uint32_t newSize);
+void _check_index_cache_size(VkvgContext ctx);
 void _check_pathes_array	(VkvgContext ctx);
 
 bool _current_path_is_empty (VkvgContext ctx);

@@ -37,6 +37,7 @@ uint32_t test_size	= 100;	// items drawn in one run, or complexity
 uint32_t iterations	= 40000;// repeat test n times
 uint32_t test_width	= 1024;
 uint32_t test_height= 768;
+bool	 test_vsync = false;
 
 
 static bool paused = false;
@@ -137,7 +138,11 @@ double standard_deviation (const double data[], int n, double mean)
 /***************/
 
 void init_test (uint32_t width, uint32_t height){
-	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
+	if (test_vsync)
+		e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
+	else
+		e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
+
 	VkhPresenter r = e->renderer;
 	vkengine_set_key_callback (e, key_callback);
 	vkengine_set_mouse_but_callback(e, mouse_button_callback);
@@ -189,7 +194,10 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 	char* whoami;
 	(whoami = strrchr(argv[0], '/')) ? ++whoami : (whoami = argv[0]);
 
-	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
+	if (test_vsync)
+		e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
+	else
+		e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, test_width, test_height);
 
 	VkhPresenter r = e->renderer;
 	vkengine_set_key_callback (e, key_callback);
@@ -293,7 +301,7 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 
 	//printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 	printf ("| %-15s | %-25s | ",whoami + 5, testName);
-	printf ("%4d | %4d | %6.2f | %5.4f | %5.4f | %5.4f |\n",
+	printf ("%4d | %4d | %7.2f | %6.5f | %6.5f | %6.5f |\n",
 			test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 
 	//printf ("%s size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", whoami+5, test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
@@ -327,7 +335,7 @@ const int star_points[11][2] = {
 	{ 0, 85 }
 };
 
-void draw_random_shape (VkvgContext ctx, shape_t shape) {
+void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 	float w = (float)test_width;
 	float h = (float)test_height;
 
@@ -347,16 +355,16 @@ void draw_random_shape (VkvgContext ctx, shape_t shape) {
 		vkvg_stroke(ctx);
 		break;
 	case SHAPE_RECTANGLE:
-		z = truncf((0.5f*w*rand()/RAND_MAX)+1.f);
-		v = truncf((0.5f*h*rand()/RAND_MAX)+1.f);
+		z = truncf((sizeFact*w*rand()/RAND_MAX)+1.f);
+		v = truncf((sizeFact*h*rand()/RAND_MAX)+1.f);
 		x = truncf((w-z)*rand()/RAND_MAX);
 		y = truncf((h-v)*rand()/RAND_MAX);
 
 		vkvg_rectangle(ctx, x+1, y+1, z, v);
 		break;
 	case SHAPE_ROUNDED_RECTANGLE:
-		z = truncf((0.5f*w*rand()/RAND_MAX)+1.f);
-		v = truncf((0.5f*h*rand()/RAND_MAX)+1.f);
+		z = truncf((sizeFact*w*rand()/RAND_MAX)+1.f);
+		v = truncf((sizeFact*h*rand()/RAND_MAX)+1.f);
 		x = truncf((w-z)*rand()/RAND_MAX);
 		y = truncf((h-v)*rand()/RAND_MAX);
 		r = truncf((0.2f*z*rand()/RAND_MAX)+1.f);
@@ -382,7 +390,7 @@ void draw_random_shape (VkvgContext ctx, shape_t shape) {
 		x = (float)rand()/RAND_MAX * w;
 		y = (float)rand()/RAND_MAX * h;
 
-		r = truncf((0.5f*MIN(w,h)*rand()/RAND_MAX)+1.f);
+		r = truncf((sizeFact*MIN(w,h)*rand()/RAND_MAX)+1.f);
 
 		/*float r = 0.5f*w*rand()/RAND_MAX;
 		float x = truncf(0.5f * w*rand()/RAND_MAX + r);
@@ -394,7 +402,7 @@ void draw_random_shape (VkvgContext ctx, shape_t shape) {
 	case SHAPE_STAR:
 		x = (float)rand()/RAND_MAX * w;
 		y = (float)rand()/RAND_MAX * h;
-		z = (float)rand()/RAND_MAX *0.5 + 0.15; //scale
+		z = (float)rand()/RAND_MAX * sizeFact + 0.15; //scale
 
 		vkvg_move_to (ctx, x+star_points[0][0]*z, y+star_points[0][1]*z);
 		for (int s=1; s<11; s++)
@@ -402,7 +410,7 @@ void draw_random_shape (VkvgContext ctx, shape_t shape) {
 		vkvg_close_path (ctx);
 		break;
 	case SHAPE_RANDOM:
-		draw_random_shape(ctx, 1 + rand()%4);
+		draw_random_shape(ctx, 1 + rand()%4, sizeFact);
 		break;
 	}
 }

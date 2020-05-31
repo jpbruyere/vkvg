@@ -49,7 +49,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	VkvgDevice dev = surf->dev;
 	VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
-	LOG(LOG_INFO, "CREATE Context: ctx = %p; surf = %p\n", ctx, surf);
+	LOG(VKVG_LOG_INFO, "CREATE Context: ctx = %p; surf = %p\n", ctx, surf);
 
 	if (ctx==NULL) {
 		dev->status = VKVG_STATUS_NO_MEMORY;
@@ -111,13 +111,13 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		ctx->pPrev->pNext = ctx;
 	surf->dev->lastCtx = ctx;
 
-	ctx->points = (vec2*)       malloc (VKVG_VBO_SIZE*sizeof(vec2));
-	ctx->pathes = (uint32_t*)   malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
+	ctx->points	= (vec2*)malloc (VKVG_VBO_SIZE*sizeof(vec2));
+	ctx->pathes	= (uint32_t*)malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
 	ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
 	ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 	ctx->savedStencils = malloc(0);
 	ctx->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
-	ctx->currentFont           = NULL;
+	ctx->currentFont = NULL;
 
 	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache || !ctx->savedStencils || !ctx->selectedFont.fontFile) {
 		dev->status = VKVG_STATUS_NO_MEMORY;
@@ -156,7 +156,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->references = 1;
 	ctx->status = VKVG_STATUS_SUCCESS;
 
-	LOG(LOG_DBG_ARRAYS, "INIT\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, (uint64_t)ctx->sizePathes, (uint64_t)ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+	LOG(VKVG_LOG_DBG_ARRAYS, "INIT\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, (uint64_t)ctx->sizePathes, (uint64_t)ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
 
 #ifdef DEBUG
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
@@ -219,8 +219,8 @@ void vkvg_destroy (VkvgContext ctx)
 	_flush_cmd_buff(ctx);
 	_wait_flush_fence(ctx);
 
-	LOG(LOG_INFO, "DESTROY Context: ctx = %p; surf = %p\n", ctx, ctx->pSurf);
-	LOG(LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+	LOG(VKVG_LOG_INFO, "DESTROY Context: ctx = %p; surf = %p\n", ctx, ctx->pSurf);
+	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
 
 	if (ctx->pattern)
 		vkvg_pattern_destroy (ctx->pattern);
@@ -564,7 +564,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
 		return;
 	_finish_path(ctx);
 
-	LOG(LOG_INFO, "CLIP: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
+	LOG(VKVG_LOG_INFO, "CLIP: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
 	if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
 		_check_cmd_buff_state(ctx);
@@ -594,7 +594,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 		return;
 	_finish_path(ctx);
 
-	LOG(LOG_INFO, "FILL: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
+	LOG(VKVG_LOG_INFO, "FILL: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
 	 if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
 		_poly_fill (ctx);
@@ -722,7 +722,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		return;
 	_finish_path(ctx);
 
-	LOG(LOG_INFO, "STROKE: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
+	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
 	float hw = ctx->lineWidth / 2.0f;
 	curPathPointIdx = lastPathPointIdx = ptrPath = iL = iR = 0;
@@ -734,10 +734,10 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 		curPathPointIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
-		LOG(LOG_INFO_PATH, "\tPATH: start=%d end=%d", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
+		LOG(VKVG_LOG_INFO_PATH, "\tPATH: start=%d end=%d", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
 
 		lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
-		LOG(LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
+		LOG(VKVG_LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
 
 		if (ctx->dashCount > 0) {
 			//init dash stroke
@@ -772,7 +772,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
 		if (_path_has_curves (ctx,ptrPath)) {
 			while (curPathPointIdx < lastPathPointIdx){
-				if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve]&PATH_ELT_MASK) == curPathPointIdx){
+				if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve] & PATH_ELT_MASK) == curPathPointIdx){
 					uint32_t lastCurvePointIdx = ctx->pathes[ptrPath + 3 + ptrCurve]&PATH_ELT_MASK;
 					while (curPathPointIdx < lastCurvePointIdx)
 						_draw_segment(ctx, hw, true);
@@ -958,7 +958,7 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 }
 
 void vkvg_save (VkvgContext ctx){
-	LOG(LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
+	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
 	_flush_cmd_buff (ctx);
 	_wait_flush_fence (ctx);
@@ -1055,7 +1055,7 @@ void vkvg_restore (VkvgContext ctx){
 		return;
 	}
 
-	LOG(LOG_INFO, "RESTORE CONTEXT: ctx = %p\n", ctx);
+	LOG(VKVG_LOG_INFO, "RESTORE CONTEXT: ctx = %p\n", ctx);
 
 	vkvg_context_save_t* sav = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav->pNext;

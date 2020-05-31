@@ -92,10 +92,14 @@ CMAKE_DEPENDENT_OPTION(VKVG_BUILD_TESTS "build tests with glfw" ON "GLFW3_FOUND"
 #Freetype lcd font filtering
 #CHECK_SYMBOL_EXISTS (FT_CONFIG_OPTION_SUBPIXEL_RENDERING "${FREETYPE_INCLUDE_DIR_freetype2}/freetype/config/ftoption.h" FT_HAS_SUBPIXEL_RENDERING)
 #IF (FT_HAS_SUBPIXEL_RENDERING)
-	OPTION(VKVG_LCD_FONT_FILTER "enable freetype lcd font filtering" ON)
-	IF (VKVG_LCD_FONT_FILTER)
-		ADD_DEFINITIONS (-DVKVG_LCD_FONT_FILTER)
-	ENDIF ()
+    IF (UNIX)
+        OPTION(VKVG_LCD_FONT_FILTER "enable freetype lcd font filtering" ON)
+    ELSEIF(MSVC)
+        OPTION(VKVG_LCD_FONT_FILTER "enable freetype lcd font filtering" OFF)
+    ENDIF()
+    IF (VKVG_LCD_FONT_FILTER)
+        ADD_DEFINITIONS (-DVKVG_LCD_FONT_FILTER)
+    ENDIF ()
 #ENDIF()
 
 # Find glslc shader compiler.

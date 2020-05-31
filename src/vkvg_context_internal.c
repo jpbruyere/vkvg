@@ -43,39 +43,44 @@ void _check_flush_needed (VkvgContext ctx) {
 		return;
 	_flush_cmd_buff(ctx);
 }
-void _check_vbo_size (VkvgContext ctx) {
-	if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
-		return;
-	ctx->sizeVertices += VKVG_VBO_SIZE;
-	Vertex* tmp = (Vertex*) realloc (ctx->vertexCache, (size_t)ctx->sizeVertices * sizeof(Vertex));
-	LOG(LOG_DBG_ARRAYS, "resize VBO: new size: %u size(byte): %lu Ptr: %p -> %p\n", ctx->sizeVertices, (size_t)ctx->sizeVertices * sizeof(Vertex), ctx->vertexCache, tmp);
+void _resize_vertex_cache (VkvgContext ctx, uint32_t newSize) {
+	Vertex* tmp = (Vertex*) realloc (ctx->vertexCache, (size_t)newSize * sizeof(Vertex));
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %u size(byte): %lu Ptr: %p -> %p\n", newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
 	if (tmp == NULL){
 		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(LOG_ERR, "resize VBO failed: vert count: %u byte size: %zu\n", ctx->sizeVertices, ctx->sizeVertices * sizeof(Vertex));
-	}else
-		ctx->vertexCache = tmp;
+		LOG(VKVG_LOG_ERR, "resize VBO failed: vert count: %u byte size: %zu\n", ctx->sizeVertices, ctx->sizeVertices * sizeof(Vertex));
+		return;
+	}
+	ctx->vertexCache = tmp;
+	ctx->sizeVertices = newSize;
 }
-void _check_ibo_size (VkvgContext ctx) {
+void _check_vertex_cache_size (VkvgContext ctx) {
+	if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
+		return;
+	_resize_vertex_cache (ctx, ctx->sizeVertices + VKVG_VBO_SIZE);
+}
+void _check_index_cache_size (VkvgContext ctx) {
 	if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD)
 		return;
 	ctx->sizeIndices += VKVG_IBO_SIZE;
 	VKVG_IBO_INDEX_TYPE* tmp = (VKVG_IBO_INDEX_TYPE*) realloc (ctx->indexCache, (size_t)ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
-	LOG(LOG_DBG_ARRAYS, "resize IBO: new size: %u Ptr: %p -> %p\n", ctx->sizeIndices, ctx->indexCache, tmp);
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %u Ptr: %p -> %p\n", ctx->sizeIndices, ctx->indexCache, tmp);
 	if (tmp == NULL){
 		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(LOG_ERR, "resize IBO failed: idx count: %u size(byte): %zu\n", ctx->sizeIndices, (size_t)ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
-	}else
-		ctx->indexCache = tmp;
+		LOG(VKVG_LOG_ERR, "resize IBO failed: idx count: %u size(byte): %zu\n", ctx->sizeIndices, (size_t)ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
+		return;
+	}
+	ctx->indexCache = tmp;
 }
 void _check_pathes_array (VkvgContext ctx){
 	if (ctx->sizePathes - ctx->pathPtr - ctx->curvePtr > VKVG_ARRAY_THRESHOLD)
 		return;
 	ctx->sizePathes += VKVG_PATHES_SIZE;
 	uint32_t* tmp = (uint32_t*) realloc (ctx->pathes, (size_t)ctx->sizePathes * sizeof(uint32_t));
-	LOG(LOG_DBG_ARRAYS, "resize PATH: new size: %u Ptr: %p -> %p\n", ctx->sizePathes, ctx->pathes, tmp);
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize PATH: new size: %u Ptr: %p -> %p\n", ctx->sizePathes, ctx->pathes, tmp);
 	if (tmp == NULL){
 		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePathes * sizeof(uint32_t));
+		LOG(VKVG_LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePathes * sizeof(uint32_t));
 		ctx->pathPtr = 0 + (ctx->pathPtr % 2);
 	}else
 		ctx->pathes = tmp;
@@ -85,10 +90,10 @@ void _check_point_array (VkvgContext ctx){
 		return;
 	ctx->sizePoints += VKVG_PATHES_SIZE;
 	vec2* tmp = (vec2*) realloc (ctx->points, (size_t)ctx->sizePoints * sizeof(vec2));
-	LOG(LOG_DBG_ARRAYS, "resize Points: new size(point): %u Ptr: %p -> %p\n", ctx->sizePoints, ctx->points, tmp);
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize Points: new size(point): %u Ptr: %p -> %p\n", ctx->sizePoints, ctx->points, tmp);
 	if (tmp == NULL){
 		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePoints * sizeof(vec2));
+		LOG(VKVG_LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePoints * sizeof(vec2));
 		ctx->pointCount = 0;
 	}else
 		ctx->points = tmp;
@@ -104,12 +109,12 @@ vec2 _get_current_position (VkvgContext ctx) {
 }
 //set curve start point and set path has curve bit
 void _set_curve_start (VkvgContext ctx) {
-	ctx->pathes[ctx->pathPtr+ctx->curvePtr+1] = (ctx->pointCount - 1);
-	ctx->pathes[ctx->pathPtr-1] |= PATH_HAS_CURVES_BIT;
+	ctx->pathes[ctx->pathPtr + ctx->curvePtr + 1] = (ctx->pointCount - 1);
+	ctx->pathes[ctx->pathPtr - 1] |= PATH_HAS_CURVES_BIT;
 }
 //set curve end point and set path is curve bit
 void _set_curve_end (VkvgContext ctx) {
-	ctx->pathes[ctx->pathPtr+ctx->curvePtr+2] = (ctx->pointCount - 1)|PATH_IS_CURVE_BIT;
+	ctx->pathes [ctx->pathPtr + ctx->curvePtr + 2] = (ctx->pointCount - 1) | PATH_IS_CURVE_BIT;
 	ctx->curvePtr+=2;
 	_check_pathes_array(ctx);
 }
@@ -205,7 +210,7 @@ void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
 	_wait_flush_fence (ctx);//wait previous cmd if not completed
 	ctx->sizeVBO = new_size;
 	ctx->sizeVBO += ctx->sizeVBO % VKVG_VBO_SIZE;
-	LOG(LOG_DBG_ARRAYS, "resize VBO: new size: %d\n", ctx->sizeVBO);
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %d\n", ctx->sizeVBO);
 	vkvg_buffer_destroy (&ctx->vertices);
 	vkvg_buffer_create (ctx->pSurf->dev,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -216,7 +221,7 @@ void _resize_ibo (VkvgContext ctx, size_t new_size) {
 	_wait_flush_fence (ctx);//wait previous cmd if not completed
 	ctx->sizeIBO = ctx->sizeIndices;
 	ctx->sizeIBO += ctx->sizeIBO % VKVG_IBO_SIZE;
-	LOG(LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);
 	vkvg_buffer_destroy (&ctx->indices);
 	vkvg_buffer_create (ctx->pSurf->dev,
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -230,13 +235,13 @@ void _add_vertexf (VkvgContext ctx, float x, float y){
 	pVert->uv = (vec3){0,0,-1};
 	ctx->vertCount++;
 
-	_check_vbo_size(ctx);
+	_check_vertex_cache_size(ctx);
 }
 void _add_vertex(VkvgContext ctx, Vertex v){
 	ctx->vertexCache[ctx->vertCount] = v;
 	ctx->vertCount++;
 
-	_check_vbo_size(ctx);
+	_check_vertex_cache_size(ctx);
 }
 void _set_vertex(VkvgContext ctx, uint32_t idx, Vertex v){
 	ctx->vertexCache[idx] = v;
@@ -251,8 +256,8 @@ void _add_tri_indices_for_rect (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i){
 	inds[5] = i+3;
 	ctx->indCount+=6;
 
-	_check_ibo_size(ctx);
-	LOG(LOG_INFO, "Rectangle IDX: %d %d %d | %d %d %d (count=%d)\n", inds[0], inds[1], inds[2], inds[3], inds[4], inds[5], ctx->indCount);
+	_check_index_cache_size(ctx);
+	LOG(VKVG_LOG_INFO, "Rectangle IDX: %d %d %d | %d %d %d (count=%d)\n", inds[0], inds[1], inds[2], inds[3], inds[4], inds[5], ctx->indCount);
 }
 void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2){
 	VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
@@ -261,8 +266,8 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
 	inds[2] = i2;
 	ctx->indCount+=3;
 
-	_check_ibo_size(ctx);
-	LOG(LOG_INFO, "Triangle IDX: %d %d %d (count=%d)\n", i0,i1,i2,ctx->indCount);
+	_check_index_cache_size(ctx);
+	LOG(VKVG_LOG_INFO, "Triangle IDX: %d %d %d (count=%d)\n", i0,i1,i2,ctx->indCount);
 }
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
 	Vertex v[4] =
@@ -277,7 +282,7 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
 	memcpy (pVert,v,4*sizeof(Vertex));
 	ctx->vertCount+=4;
 
-	_check_vbo_size(ctx);
+	_check_vertex_cache_size(ctx);
 
 	_add_tri_indices_for_rect(ctx, firstIdx);
 }
@@ -371,7 +376,7 @@ void _flush_vertices_caches (VkvgContext ctx) {
 }
 //this func expect cmdStarted to be true
 void _end_render_pass (VkvgContext ctx) {
-	LOG(LOG_INFO, "END RENDER PASS: ctx = %p;\n", ctx);
+	LOG(VKVG_LOG_INFO, "END RENDER PASS: ctx = %p;\n", ctx);
 	CmdEndRenderPass      (ctx->cmd);
 #ifdef DEBUG
 	vkh_cmd_label_end (ctx->cmd);
@@ -404,7 +409,7 @@ void _record_draw_cmd (VkvgContext ctx){
 	_check_cmd_buff_state(ctx);
 	CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
 
-	LOG(LOG_INFO, "RECORD DRAW CMD: ctx = %p; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
+	LOG(VKVG_LOG_INFO, "RECORD DRAW CMD: ctx = %p; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
 		ctx, ctx->vertCount - ctx->curVertOffset,
 		ctx->indCount - ctx->curIndStart, ctx->curVertOffset, ctx->curIndStart, ctx->indCount);
 
@@ -426,7 +431,7 @@ void _flush_cmd_buff (VkvgContext ctx){
 	_flush_vertices_caches  (ctx);
 	vkh_cmd_end             (ctx->cmd);
 
-	LOG(LOG_INFO, "FLUSH CTX: ctx = %p; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
+	LOG(VKVG_LOG_INFO, "FLUSH CTX: ctx = %p; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
 	_wait_and_submit_cmd(ctx);
 }
 
@@ -448,7 +453,7 @@ void _bind_draw_pipeline (VkvgContext ctx) {
 const float LAB_COLOR_RP[4] = {0,0,1,1};
 
 void _start_cmd_for_render_pass (VkvgContext ctx) {
-	LOG(LOG_INFO, "START RENDER PASS: ctx = %p\n", ctx);
+	LOG(VKVG_LOG_INFO, "START RENDER PASS: ctx = %p\n", ctx);
 	vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	if (ctx->pSurf->img->layout == VK_IMAGE_LAYOUT_UNDEFINED){
@@ -1010,10 +1015,14 @@ void _poly_fill (VkvgContext ctx){
 			_flush_vertices_caches(ctx);
 			vkh_cmd_end(ctx->cmd);
 			_wait_and_submit_cmd(ctx);
-			if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO)
+			if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO){
+				//_resize_vertex_cache(ctx, ctx->vertCount + ctx->pointCount);
 				_resize_vbo(ctx, ctx->vertCount + ctx->pointCount);
-		}else
+			}
+		}else{
+			//_resize_vertex_cache(ctx, ctx->vertCount + ctx->pointCount);
 			_resize_vbo(ctx, ctx->vertCount + ctx->pointCount);
+		}
 
 		_start_cmd_for_render_pass(ctx);
 	}else
@@ -1041,10 +1050,12 @@ void _poly_fill (VkvgContext ctx){
 			v.pos = ctx->points [i+firstPtIdx];
 			ctx->vertexCache[ctx->vertCount] = v;
 			ctx->vertCount++;
+
+			_check_vertex_cache_size(ctx);
 		}
 
-		LOG(LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
-		CmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx ,0);
+		LOG(VKVG_LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
+		CmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx , 0);
 
 		ptrPath+=2;
 	}
@@ -1056,16 +1067,16 @@ void _fill_ec (VkvgContext ctx){
 	v.uv.z = -1;
 
 	while (ptrPath < ctx->pathPtr){
-		if (ctx->pathes[ptrPath+1]&PATH_IS_CURVE_BIT){
+		if (ctx->pathes[ptrPath+1] & PATH_IS_CURVE_BIT){
 			ptrPath += 2;
 			continue;
 		}
-		ctx->pathes[ptrPath]|=PATH_CLOSED_BIT;//close path
+		ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;//close path
 
-		uint32_t firstPtIdx = (VKVG_IBO_INDEX_TYPE)(ctx->pathes[ptrPath]&PATH_ELT_MASK);
-		uint32_t lastPtIdx = (VKVG_IBO_INDEX_TYPE)(ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
+		uint32_t firstPtIdx		= ctx->pathes[ptrPath]	&PATH_ELT_MASK;
+		uint32_t lastPtIdx		= ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
 		uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
-		uint32_t firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount-ctx->curVertOffset;
+		uint32_t firstVertIdx	= ctx->vertCount - ctx->curVertOffset;
 
 		ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
 		uint32_t ecps_count = pathPointCount;

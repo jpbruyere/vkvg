@@ -26,6 +26,8 @@
 #include "vkvg_context_internal.h"
 #include "shaders.h"
 
+uint8_t vkvg_log_level = VKVG_LOG_ERR;
+
 void _flush_all_contexes (VkvgDevice dev){
 	VkvgContext next = dev->lastCtx;
 	while (next != NULL){

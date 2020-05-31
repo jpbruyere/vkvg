@@ -371,7 +371,7 @@ void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 
 VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
 	if (svg == NULL) {
-		LOG(LOG_ERR, "nsvg error");
+		LOG(VKVG_LOG_ERR, "nsvg error");
 		return NULL;
 	}
 	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);

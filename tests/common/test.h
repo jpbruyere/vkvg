@@ -89,7 +89,7 @@ extern VkvgSurface surf;
 void perform_test (void(*testfunc)(), const char* testName, int argc, char *argv[]);
 
 void randomize_color	(VkvgContext ctx);
-void draw_random_shape	(VkvgContext ctx, shape_t shape);
+void draw_random_shape	(VkvgContext ctx, shape_t shape, float sizeFact);
 
 //run test in 3 step: init, run, clear.
 void init_test (uint32_t width, uint32_t height);

@@ -12,13 +12,16 @@
 
 	vkvg_rectangle(ctx, x, y, z, v);
 }*/
+static vkvg_fill_rule_t fill_rule = VKVG_FILL_RULE_EVEN_ODD;
+static float line_width = 5.f;
+static float shape_size = 0.1f;
 
 void _shape_fill(shape_t shape){
 	vkvg_surface_clear(surf);
 	VkvgContext ctx = vkvg_create(surf);
-	vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
+	vkvg_set_fill_rule(ctx, fill_rule);
 	for (uint32_t i=0; i<test_size; i++) {
-		draw_random_shape(ctx, shape);
+		draw_random_shape(ctx, shape, shape_size);
 		vkvg_fill(ctx);
 	}
 	vkvg_destroy(ctx);
@@ -26,10 +29,10 @@ void _shape_fill(shape_t shape){
 void _shape_stroke(shape_t shape){
 	vkvg_surface_clear (surf);
 	VkvgContext ctx = vkvg_create(surf);
-	vkvg_set_line_width (ctx, 5.f);
-	vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
+	vkvg_set_line_width (ctx, line_width);
+	vkvg_set_fill_rule(ctx, fill_rule);
 	for (uint32_t i=0; i<test_size; i++) {
-		draw_random_shape(ctx, shape);
+		draw_random_shape(ctx, shape, shape_size);
 		vkvg_stroke (ctx);
 	}
 	vkvg_destroy(ctx);
@@ -37,10 +40,10 @@ void _shape_stroke(shape_t shape){
 void _shape_fill_stroke(shape_t shape){
 	vkvg_surface_clear(surf);
 	VkvgContext ctx = vkvg_create(surf);
-	vkvg_set_line_width (ctx, 10.f);
-	vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
+	vkvg_set_line_width (ctx, line_width);
+	vkvg_set_fill_rule(ctx, fill_rule);
 	for (uint32_t i=0; i<test_size; i++) {
-		draw_random_shape(ctx, shape);
+		draw_random_shape(ctx, shape, shape_size);
 		vkvg_fill_preserve(ctx);
 		vkvg_stroke(ctx);
 	}
@@ -95,25 +98,25 @@ void random_fill_stroke () {
 
 int main(int argc, char *argv[]) {
 
-	/*PERFORM_TEST (rectangles_fill, argc, argv);
+	PERFORM_TEST (rectangles_fill, argc, argv);
 	PERFORM_TEST (rectangles_stroke, argc, argv);
 	PERFORM_TEST (rectangles_fill_stroke, argc, argv);
 
 	PERFORM_TEST (rounded_rects_fill, argc, argv);
 	PERFORM_TEST (rounded_rects_stroke, argc, argv);
-*/	PERFORM_TEST (rounded_rects_fill_stroke, argc, argv);/*
+	PERFORM_TEST (rounded_rects_fill_stroke, argc, argv);
 
 	PERFORM_TEST (circles_fill, argc, argv);
 	PERFORM_TEST (circles_stroke, argc, argv);
-	PERFORM_TEST (circles_fill_stroke, argc, argv);*/
+	PERFORM_TEST (circles_fill_stroke, argc, argv);
 
-	/*PERFORM_TEST (stars_fill, argc, argv);
+	PERFORM_TEST (stars_fill, argc, argv);
 	PERFORM_TEST (stars_stroke, argc, argv);
 	PERFORM_TEST (stars_fill_stroke, argc, argv);
 
 	PERFORM_TEST (random_fill, argc, argv);
 	PERFORM_TEST (random_stroke, argc, argv);
-	PERFORM_TEST (random_fill_stroke, argc, argv);*/
+	PERFORM_TEST (random_fill_stroke, argc, argv);
 
 	return 0;
 }
