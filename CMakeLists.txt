@@ -1,8 +1,9 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 
-SET(LANG "C")
+SET(LANG "CXX")
 
-PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic" LANGUAGES ${LANG})
+#PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic" LANGUAGES ${LANG})
+PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic")
 
 INCLUDE(CheckSymbolExists)
 INCLUDE(CheckIncludeFile)
@@ -217,7 +218,7 @@ FUNCTION (buildtest TEST_NAME)
 ENDFUNCTION (buildtest)
 
 if (VKVG_BUILD_TESTS)
-	ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
+    ADD_LIBRARY("tests_common" SHARED tests/common/vkengine.c tests/common/test.c)
 	TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
 		${Vulkan_INCLUDE_DIRS}
 		${GLFW3_INCLUDE_DIR}
@@ -227,22 +228,11 @@ if (VKVG_BUILD_TESTS)
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
-	IF (UNIX)
-		TARGET_LINK_LIBRARIES(tests_common
-			${Vulkan_LIBRARIES}
-			${GLFW3_LIBRARY}
-			vkh_static
-			vkvg_static
-			m
-		)
-	ELSEIF(MSVC)
-	TARGET_LINK_LIBRARIES(tests_common
-		${Vulkan_LIBRARIES}
-		${GLFW3_LIBRARY}
-		vkh_static
-		vkvg_static
-	)
-	ENDIF()
+    TARGET_LINK_LIBRARIES(tests_common
+        ${Vulkan_LIBRARIES}
+        ${GLFW3_LIBRARY}
+        vkvg_shared
+    )
 
 	file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/tests" "tests/data/*")
 	FOREACH(DATA_FILE ${DATAS})
