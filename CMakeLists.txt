@@ -218,7 +218,7 @@ FUNCTION (buildtest TEST_NAME)
 ENDFUNCTION (buildtest)
 
 if (VKVG_BUILD_TESTS)
-    ADD_LIBRARY("tests_common" SHARED tests/common/vkengine.c tests/common/test.c)
+    ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
 	TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
 		${Vulkan_INCLUDE_DIRS}
 		${GLFW3_INCLUDE_DIR}
@@ -231,7 +231,8 @@ if (VKVG_BUILD_TESTS)
     TARGET_LINK_LIBRARIES(tests_common
         ${Vulkan_LIBRARIES}
         ${GLFW3_LIBRARY}
-        vkvg_shared
+        vkh_static
+        vkvg_static
     )
 
 	file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/tests" "tests/data/*")
