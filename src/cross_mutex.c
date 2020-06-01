@@ -29,8 +29,9 @@ int MUTEX_INIT(MUTEX *mutex)
 #elif __APPLE__
 #elif __unix__
     return pthread_mutex_init (mutex, NULL);
-#endif
+#else
     return -1;
+#endif
 }
 
 int MUTEX_LOCK(MUTEX *mutex)
@@ -40,8 +41,9 @@ int MUTEX_LOCK(MUTEX *mutex)
 #elif __APPLE__
 #elif __unix__
     return pthread_mutex_lock( mutex );
-#endif
+#else
     return -1;
+#endif
 }
 
 int MUTEX_UNLOCK(MUTEX *mutex)
@@ -51,8 +53,9 @@ int MUTEX_UNLOCK(MUTEX *mutex)
 #elif __APPLE__
 #elif __unix__
     return pthread_mutex_unlock( mutex );
-#endif
+#else
     return -1;
+#endif
 }
 
 int MUTEX_DESTROY(MUTEX *mutex)
@@ -62,6 +65,7 @@ int MUTEX_DESTROY(MUTEX *mutex)
 #elif __APPLE__
 #elif __unix__
     return pthread_mutex_destroy(mutex);
-#endif
+#else
     return -1;
+#endif
 }

@@ -24,16 +24,18 @@
 #include <sys/stat.h>
 //#include <unistd.h>
 
+#define _CRT_SECURE_NO_WARNINGS
 
 int directoryExists (const char* path) {
 #if defined(_WIN32) || defined(_WIN64)
-    return getenv("HOME");
+    return getenv("HOME") != NULL;
 #elif __APPLE__
 #elif __unix__
     struct stat st = {0};
     return stat(path, &st)+1;
-#endif
+#else
     return -1;
+#endif
 }
 const char* getUserDir () {
 #if defined(_WIN32) || defined(_WIN64)
@@ -43,5 +45,4 @@ const char* getUserDir () {
     struct passwd *pw = getpwuid(getuid());
     return pw->pw_dir;
 #endif
-    return -1;
 }

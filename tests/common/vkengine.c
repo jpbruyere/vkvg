@@ -31,11 +31,10 @@
 bool vkeCheckPhyPropBlitSource (VkEngine e) {
 	VkFormatProperties formatProps;
 	vkGetPhysicalDeviceFormatProperties(e->dev->phy, e->renderer->format, &formatProps);
-
 #ifdef VKVG_TILING_OPTIMAL
-	assert((formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
+	return formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT;
 #else
-	assert((formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) && "Format cannot be used as transfer source");
+	return formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT;
 #endif
 }
 
@@ -59,7 +58,7 @@ void vkengine_dump_Infos (VkEngine e){
 	for (uint32_t i = 0; i < e->memory_properties.memoryHeapCount; i++) {
 		printf("Mem Heap %d\n", i);
 		printf("\tflags= %d\n", e->memory_properties.memoryHeaps[i].flags);
-		printf("\tsize = %lu Mo\n", e->memory_properties.memoryHeaps[i].size/ (uint32_t)(1024*1024));
+		printf("\tsize = %lu Mo\n", (unsigned long)e->memory_properties.memoryHeaps[i].size/ (uint32_t)(1024*1024));
 	}
 	for (uint32_t i = 0; i < e->memory_properties.memoryTypeCount; i++) {
 		printf("Mem type %d\n", i);
@@ -144,12 +143,12 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	e->window = glfwCreateWindow ((int)width, (int)height, "Window Title", NULL, NULL);
 
 	VkSurfaceKHR surf;
-	VkResult res = glfwCreateWindowSurface(e->app->inst, e->window, NULL, &surf);
+	VK_CHECK_RESULT (glfwCreateWindowSurface(e->app->inst, e->window, NULL, &surf))
 
 	VkhPhyInfo* phys = vkh_app_get_phyinfos (e->app, &phyCount, surf);
 
-	VkhPhyInfo pi = NULL;
-	for (int i=0; i<phyCount; i++){
+	VkhPhyInfo pi = 0;
+	for (uint32_t i=0; i<phyCount; i++){
 		pi = phys[i];
 		if (pi->properties.deviceType == preferedGPU)
 			break;
@@ -164,10 +163,10 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	VkDeviceQueueCreateInfo pQueueInfos[] = { {0},{0},{0} };
 	if (vkh_phyinfo_create_presentable_queues	(pi, 1, qPriorities, &pQueueInfos[qCount]))
 		qCount++;
-	if (vkh_phyinfo_create_compute_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
+	/*if (vkh_phyinfo_create_compute_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
 		qCount++;
 	if (vkh_phyinfo_create_transfer_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
-		qCount++;
+		qCount++;*/
 
 	char const * dex [] = {"VK_KHR_swapchain"};
 	enabledExtsCount = 1;

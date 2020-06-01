@@ -28,9 +28,12 @@
 #include <stdbool.h>
 
 #include <GLFW/glfw3.h>
+#undef APIENTRY
+
 #include <vulkan/vulkan.h>
 
 #include "vkh.h"
+
 
 #define FENCE_TIMEOUT 100000000
 

@@ -24,6 +24,8 @@
 
 //cross platform os helpers
 #if defined(_WIN32) || defined(_WIN64)
+//disable warning on iostream functions on windows
+#define _CRT_SECURE_NO_WARNINGS
 #include "windows.h"
 #define isnanf _isnanf
 #elif __APPLE__

@@ -52,7 +52,7 @@ VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vk
  */
 VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve)
 {
-	LOG(LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
+	LOG(VKVG_LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
 
 	VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
 
@@ -68,7 +68,7 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 	VkImageTiling tiling;
 	if (!_get_best_image_tiling (dev, format, &tiling)) {
 		dev->status = VKVG_STATUS_INVALID_FORMAT;
-		LOG(LOG_ERR, "vkvg create device failed: image format not supported: %d\n", format);
+		LOG(VKVG_LOG_ERR, "vkvg create device failed: image format not supported: %d\n", format);
 		return dev;
 	}
 
@@ -77,7 +77,7 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 	VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 
 	dev->phyMemProps = phyInfos->memProps;
-	dev->gQueue = vkh_queue_create ((VkhDevice)dev, qFamIdx, qIndex, phyInfos->queues[qFamIdx].queueFlags);
+	dev->gQueue = vkh_queue_create ((VkhDevice)dev, qFamIdx, qIndex);
 	MUTEX_INIT (&dev->gQMutex);
 
 	vkh_phyinfo_destroy (phyInfos);
@@ -145,7 +145,7 @@ void vkvg_device_destroy (VkvgDevice dev)
 	if (dev->references > 0)
 		return;
 
-	LOG(LOG_INFO, "DESTROY Device\n");
+	LOG(VKVG_LOG_INFO, "DESTROY Device\n");
 
 	vkh_image_destroy               (dev->emptyImg);
 

@@ -30,16 +30,16 @@ extern "C" {
 #include <math.h>
 #include <stdbool.h>
 
-#define LOG_ERR			0x00
-#define LOG_DEBUG		0x10
-#define LOG_INFO		0x20
-#define LOG_INFO_PATH   0x40
-#define LOG_DBG_ARRAYS  0x80
-#define LOG_FULL		0xff
+#define VKVG_LOG_ERR		0x10
+#define VKVG_LOG_DEBUG		0x20
+#define VKVG_LOG_INFO		0x40
+#define VKVG_LOG_INFO_PATH	0x41
+#define VKVG_LOG_DBG_ARRAYS	0x80
+#define VKVG_LOG_FULL		0xff
 
 #ifdef DEBUG
-static uint8_t log_level	= LOG_ERR;// | LOG_INFO | LOG_DEBUG | LOG_INFO_PATH;
-#define LOG(level,...) (log_level & level) ? fprintf (stdout, __VA_ARGS__):true;
+extern uint8_t vkvg_log_level;
+#define LOG(level,...) (vkvg_log_level & level) ? fprintf (stdout, __VA_ARGS__):true;
 #else
 #define LOG
 #endif

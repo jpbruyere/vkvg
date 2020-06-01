@@ -1,5 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 
+SET(LANG "CXX")
+
+#PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic" LANGUAGES ${LANG})
 PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic")
 
 INCLUDE(CheckSymbolExists)
@@ -9,25 +12,33 @@ INCLUDE(CMakeDependentOption)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-IF (UNIX)
-	SET(CMAKE_CXX_FLAGS "-Wall -Wno-extra")
-	SET(CMAKE_EXE_LINKER_FLAGS "-lm")
-ELSEIF(MSVC)
-	SET(CMAKE_CXX_FLAGS "-W4")
-ENDIF()
-
-
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)
+ENDIF()
+
+IF (UNIX)
+	SET(LINKER_FLAGS "-lm")
+	SET(CMAKE_EXE_LINKER_FLAGS ${LINKER_FLAGS})
+	SET(CMAKE_SHARED_LINKER_FLAGS ${LINKER_FLAGS})
 ENDIF()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	ADD_DEFINITIONS (-DDEBUG)
 	OPTION(ENABLE_VALIDATION "enable vulkan validation layer" ON)
 	OPTION(ENABLE_WIRED_FILL "enable wired polygon draw to check vertices and primitives" OFF)
+	IF (UNIX)
+		SET(CMAKE_${LANG}_FLAGS "-Wall -Wno-extra -Wno-unknown-pragmas -Wno-missing-braces -Wno-unused-variable")
+	ELSEIF(MSVC)
+		SET(CMAKE_${LANG}_FLAGS "/TC /W4 /wd4201 /wd4204 /wd4221 /wd4100")#c11 complient
+	ENDIF()
 ELSE()
 	UNSET(ENABLE_VALIDATION CACHE)
 	UNSET(ENABLE_WIRED_FILL CACHE)
+	IF (UNIX)
+		SET(CMAKE_${LANG}_FLAGS "-w")
+	ELSEIF(MSVC)
+		SET(CMAKE_${LANG}_FLAGS "/TC /W0")
+	ENDIF()
 ENDIF()
 OPTION(VKVG_TEST_DIRECT_DRAW "(Experimental)Draw directly on backend surface, if off surface is blitted." OFF)
 IF (VKVG_TEST_DIRECT_DRAW)
@@ -82,7 +93,11 @@ CMAKE_DEPENDENT_OPTION(VKVG_BUILD_TESTS "build tests with glfw" ON "GLFW3_FOUND"
 #Freetype lcd font filtering
 #CHECK_SYMBOL_EXISTS (FT_CONFIG_OPTION_SUBPIXEL_RENDERING "${FREETYPE_INCLUDE_DIR_freetype2}/freetype/config/ftoption.h" FT_HAS_SUBPIXEL_RENDERING)
 #IF (FT_HAS_SUBPIXEL_RENDERING)
-	OPTION(VKVG_LCD_FONT_FILTER "enable freetype lcd font filtering" ON)
+	IF (UNIX)
+		OPTION(VKVG_LCD_FONT_FILTER "enable freetype lcd font filtering" ON)
+	ELSEIF(MSVC)
+		OPTION(VKVG_LCD_FONT_FILTER "enable freetype lcd font filtering" OFF)
+	ENDIF()
 	IF (VKVG_LCD_FONT_FILTER)
 		ADD_DEFINITIONS (-DVKVG_LCD_FONT_FILTER)
 	ENDIF ()
@@ -131,7 +146,7 @@ if(GLSLC AND XXD)
 		ADD_CUSTOM_COMMAND (TARGET BuildShaderHeader
 			POST_BUILD
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}
-			COMMAND xxd -i ${SPV} >> ${SHADERS_H}
+			COMMAND ${XXD} -i ${SPV} >> ${SHADERS_H}
 			DEPENDS ${SHADERS_H}
 		)
 	ENDFOREACH()
@@ -203,7 +218,7 @@ FUNCTION (buildtest TEST_NAME)
 ENDFUNCTION (buildtest)
 
 if (VKVG_BUILD_TESTS)
-	ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
+    ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
 	TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
 		${Vulkan_INCLUDE_DIRS}
 		${GLFW3_INCLUDE_DIR}
@@ -213,12 +228,13 @@ if (VKVG_BUILD_TESTS)
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
-	TARGET_LINK_LIBRARIES(tests_common
-		${Vulkan_LIBRARIES}
-		${GLFW3_LIBRARY}
-		vkh_static
-		vkvg_static
-	)
+    TARGET_LINK_LIBRARIES(tests_common
+        ${Vulkan_LIBRARIES}
+        ${GLFW3_LIBRARY}
+        vkh_static
+        vkvg_static
+    )
+
 	file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/tests" "tests/data/*")
 	FOREACH(DATA_FILE ${DATAS})
 		GET_FILENAME_COMPONENT(copy-dest-dir ${CMAKE_CURRENT_BINARY_DIR}/${DATA_FILE} DIRECTORY)

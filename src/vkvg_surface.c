@@ -326,7 +326,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 	VkClearRect cr = {{{0,0},{surf->width,surf->height}},0,1};
 	vkCmdClearAttachments(ctx->cmd, 1, &ca, 1, &cr);*/
 
-	vec4 srcRect = {.x=0,.y=0,.width=surf->width,.height=surf->height};
+	vec4 srcRect = {.x=0,.y=0,.width=(float)surf->width,.height=(float)surf->height};
 	ctx->pushConsts.source = srcRect;
 	ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SURFACE;
 
@@ -370,6 +370,10 @@ void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 }
 
 VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
+	if (svg == NULL) {
+		LOG(VKVG_LOG_ERR, "nsvg error");
+		return NULL;
+	}
 	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
 	if (!surf)
 		return NULL;
@@ -393,16 +397,16 @@ VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
 }
 
 VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, const char* filePath) {
-	return _svg_load(dev, nsvgParseFromFile(filePath, "px", dev->hdpi));
+	return _svg_load(dev, nsvgParseFromFile(filePath, "px", (float)dev->hdpi));
 }
 VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, char* fragment) {
-	return _svg_load(dev, nsvgParse(fragment, "px", dev->hdpi));
+	return _svg_load(dev, nsvgParse(fragment, "px", (float)dev->hdpi));
 }
 NSVGimage* nsvg_load_file (VkvgDevice dev, const char* filePath) {
-	return nsvgParseFromFile(filePath, "px", dev->hdpi);
+	return nsvgParseFromFile(filePath, "px", (float)dev->hdpi);
 }
 NSVGimage* nsvg_load (VkvgDevice dev, char* fragment) {
-	return nsvgParse (fragment, "px", dev->hdpi);
+	return nsvgParse (fragment, "px", (float)dev->hdpi);
 }
 void nsvg_destroy (NSVGimage* svg) {
 	nsvgDelete(svg);

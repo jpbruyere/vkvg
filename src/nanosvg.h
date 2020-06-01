@@ -279,7 +279,7 @@ static void nsvg__parseElement(char* s,
 
 	// Get attribs
 	while (!end && *s && nattr < NSVG_XML_MAX_ATTRIBS-3) {
-		char* name = NULL;
+		char* name2 = NULL;
 		char* value = NULL;
 
 		// Skip white space before the attrib name
@@ -289,7 +289,7 @@ static void nsvg__parseElement(char* s,
 			end = 1;
 			break;
 		}
-		name = s;
+		name2 = s;
 		// Find end of the attrib name.
 		while (*s && !nsvg__isspace(*s) && *s != '=') s++;
 		if (*s) { *s++ = '\0'; }
@@ -304,8 +304,8 @@ static void nsvg__parseElement(char* s,
 		if (*s) { *s++ = '\0'; }
 
 		// Store only well formed attributes
-		if (name && value) {
-			attr[nattr++] = name;
+		if (name2 && value) {
+			attr[nattr++] = name2;
 			attr[nattr++] = value;
 		}
 	}
@@ -792,8 +792,7 @@ static float nsvg__convertToPixels(NSVGparser* p, NSVGcoordinate c, float orig, 
 		case NSVG_UNITS_IN:			return c.value * p->dpi;
 		case NSVG_UNITS_EM:			return c.value * attr->fontSize;
 		case NSVG_UNITS_EX:			return c.value * attr->fontSize * 0.52f; // x-height of Helvetica.
-		case NSVG_UNITS_PERCENT:	return orig + c.value / 100.0f * length;
-		default:					return c.value;
+		case NSVG_UNITS_PERCENT:	return orig + c.value / 100.0f * length;		
 	}
 	return c.value;
 }
