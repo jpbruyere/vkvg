@@ -320,19 +320,19 @@ void vkvg_new_path (VkvgContext ctx){
  * @param context pointer
  */
 void vkvg_close_path (VkvgContext ctx){
-	if (_current_path_is_empty(ctx)){
-		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
+	//check if at least 3 points are present
+	if (ctx->pathes[ctx->pathPtr] < 3){
+		ctx->status = VKVG_STAtUS_NOT_ENOUGH_POINTS_TO_CLOSE_PATH;
 		return;
 	}
-	//check if at least 3 points are present
-	if (ctx->pointCount - (ctx->pathes [ctx->pathPtr-1]&PATH_ELT_MASK) > 2){
-		ctx->pathes[ctx->pathPtr] = ctx->pointCount - 1;
-		ctx->pathes[ctx->pathPtr-1] |= PATH_CLOSED_BIT;
-		_check_pathes_array(ctx);
-		ctx->pathPtr += ctx->curvePtr + 1;
-		ctx->curvePtr = 0;
-	}else
-		_finish_path(ctx);
+	//prevent closing on the same point
+	if (vec2_equ(ctx->points[ctx->pointCount-1],
+				 ctx->points[ctx->pointCount - ctx->pathes[ctx->pathPtr]]))
+		_remove_last_point(ctx);
+
+	ctx->pathes[ctx->pathPtr] |= PATH_CLOSED_BIT;
+
+	_finish_path(ctx);
 }
 /**
  * @brief draw line with second point coordinates relative to current point
@@ -357,13 +357,12 @@ void vkvg_rel_line_to (VkvgContext ctx, float x, float y){
 void vkvg_line_to (VkvgContext ctx, float x, float y)
 {
 	vec2 p = {x,y};
-	if (_current_path_is_empty(ctx)){
-		vkvg_move_to(ctx, x,y);
-		return;
-	}else if (vec2_equ(_get_current_position(ctx),p))
-		return;
-
-	_add_point(ctx,x,y);
+	if (!_current_path_is_empty (ctx)){
+		//prevent adding the same point
+		if (vec2_equ (_get_current_position (ctx), p))
+			return;
+	}
+	_add_point (ctx, x, y);
 }
 /**
  * @brief Draw arc in clockwise order following angles of the trigonometric circle.
@@ -386,17 +385,18 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 	float step = _get_arc_step(ctx, radius);
 	float a = a1;
 
-	if (_current_path_is_empty(ctx))
-		vkvg_move_to(ctx, v.x, v.y);
-	else
+	if (_current_path_is_empty(ctx)){
+		_set_curve_start (ctx);
+		_add_point (ctx, v.x, v.y);
+	}else{
 		vkvg_line_to(ctx, v.x, v.y);
+		_set_curve_start (ctx);
+	}
 
 	a+=step;
 
 	if (EQUF(a2, a1))
 		return;
-
-	_set_curve_start (ctx);
 
 	while(a < a2){
 		v.x = cosf(a)*radius + xc;
@@ -438,18 +438,18 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 	float step = _get_arc_step(ctx, radius);
 	float a = a1;
 
-	if (_current_path_is_empty(ctx))
-		vkvg_move_to(ctx, v.x, v.y);
-	else {
+	if (_current_path_is_empty(ctx)){
+		_set_curve_start (ctx);
+		_add_point (ctx, v.x, v.y);
+	}else{
 		vkvg_line_to(ctx, v.x, v.y);
+		_set_curve_start (ctx);
 	}
 
 	a-=step;
 
 	if (EQUF(a2, a1))
 		return;
-
-	_set_curve_start (ctx);
 
 	while(a > a2){
 		v.x = cosf(a)*radius + xc;
@@ -493,16 +493,16 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 void vkvg_move_to (VkvgContext ctx, float x, float y)
 {
 	_finish_path(ctx);
-	_start_sub_path(ctx, x, y);
+	_add_point (ctx, x, y);
 }
 
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+	_set_curve_start (ctx);
 	if (_current_path_is_empty(ctx))
-		vkvg_move_to(ctx, x1, y1);
+		_add_point(ctx, x1, y1);
 
 	vec2 cp = _get_current_position(ctx);
 
-	_set_curve_start (ctx);
 	_recursive_bezier (ctx, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
 	/*cp.x = x3;
 	cp.y = y3;
@@ -590,7 +590,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
 	CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 }
 void vkvg_fill_preserve (VkvgContext ctx){
-	if (ctx->pathPtr == 0)      //nothing to fill
+	if (!(ctx->pathPtr || ctx->segmentPtr))      //nothing to fill
 		return;
 	_finish_path(ctx);
 
@@ -718,7 +718,7 @@ void _draw_segment (VkvgContext ctx, float hw, bool isCurve) {
 }
 void vkvg_stroke_preserve (VkvgContext ctx)
 {
-	if (ctx->pathPtr == 0)//nothing to stroke
+	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to stroke
 		return;
 	_finish_path(ctx);
 
@@ -728,15 +728,19 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 	curPathPointIdx = lastPathPointIdx = ptrPath = iL = iR = 0;
 
 	while (ptrPath < ctx->pathPtr){
-		uint32_t ptrCurve = 0;
+		uint32_t ptrSegment = 0, lastSegmentPointIdx = 0;
+		uint32_t firstPathPointIdx = curPathPointIdx;
+		uint32_t pathPointCount = ctx->pathes[ptrPath]&PATH_ELT_MASK;
+		lastPathPointIdx = curPathPointIdx + pathPointCount - 1;
 
+		if (_path_has_curves (ctx,ptrPath)) {
+			ptrSegment = 1;
+			lastSegmentPointIdx = curPathPointIdx + (ctx->pathes[ptrPath+ptrSegment]&PATH_ELT_MASK)-1;
+		}
 
 		VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-		curPathPointIdx = ctx->pathes[ptrPath]&PATH_ELT_MASK;
 
-		LOG(VKVG_LOG_INFO_PATH, "\tPATH: start=%d end=%d", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
-
-		lastPathPointIdx = ctx->pathes[ptrPath+1]&PATH_ELT_MASK;
+		//LOG(VKVG_LOG_INFO_PATH, "\tPATH: start=%d end=%d", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
 		LOG(VKVG_LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
 
 		if (ctx->dashCount > 0) {
@@ -760,10 +764,6 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
 			iL = lastPathPointIdx;
 		} else if (_path_is_closed(ctx,ptrPath)){
-			//prevent closing on the same position, this could be generalize
-			//to prevent processing of two consecutive point at the same position
-			if (vec2_equ(ctx->points[curPathPointIdx], ctx->points[lastPathPointIdx]))
-				lastPathPointIdx--;
 			iL = lastPathPointIdx;
 		}else{
 			_draw_stoke_cap(ctx, hw, ctx->points[curPathPointIdx], vec2_line_norm(ctx->points[curPathPointIdx], ctx->points[curPathPointIdx+1]), true);
@@ -772,20 +772,28 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
 		if (_path_has_curves (ctx,ptrPath)) {
 			while (curPathPointIdx < lastPathPointIdx){
-				if (ptrPath + ptrCurve + 2 < ctx->pathPtr && (ctx->pathes [ptrPath + 2 + ptrCurve] & PATH_ELT_MASK) == curPathPointIdx){
-					uint32_t lastCurvePointIdx = ctx->pathes[ptrPath + 3 + ptrCurve]&PATH_ELT_MASK;
-					while (curPathPointIdx < lastCurvePointIdx)
-						_draw_segment(ctx, hw, true);
-					ptrCurve += 2;
-				}else
-					_draw_segment(ctx, hw, false);
+
+				bool curved = ctx->pathes [ptrPath + ptrSegment] & PATH_IS_CURVE_BIT;
+				if (lastSegmentPointIdx == lastPathPointIdx)//last segment of path, dont draw end point here
+					lastSegmentPointIdx--;
+				while (curPathPointIdx <= lastSegmentPointIdx)
+					_draw_segment(ctx, hw, curved);
+
+				ptrSegment ++;
+				uint32_t cptSegPts = ctx->pathes [ptrPath + ptrSegment]&PATH_ELT_MASK;
+				lastSegmentPointIdx = curPathPointIdx + cptSegPts - 1;
+				if (lastSegmentPointIdx == lastPathPointIdx && cptSegPts == 1) {
+					//single point last segment
+					ptrSegment++;
+					break;
+				}
 			}
 		}else while (curPathPointIdx < lastPathPointIdx)
 			_draw_segment(ctx, hw, false);
 
 		if (ctx->dashCount > 0) {
 			if (_path_is_closed(ctx,ptrPath)){
-				iR = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+				iR = firstPathPointIdx;
 				_draw_dashed_segment(ctx, hw, ctx->points[iL++], ctx->points[curPathPointIdx++], ctx->points[iR], false);
 			}
 			if (!dashOn){
@@ -799,7 +807,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 				_draw_stoke_cap (ctx, hw, p, normal, false);
 			}
 		} else if (_path_is_closed(ctx,ptrPath)){
-			iR = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+			iR = firstPathPointIdx;
 			float cross = _build_vb_step (ctx, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
 
 			VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
@@ -817,7 +825,12 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		}else
 			_draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], vec2_line_norm(ctx->points[curPathPointIdx-1], ctx->points[curPathPointIdx]), false);
 
-		ptrPath+=2+ptrCurve;
+		curPathPointIdx = firstPathPointIdx + pathPointCount;
+
+		if (ptrSegment > 0)
+			ptrPath += ptrSegment;
+		else
+			ptrPath++;
 	}
 	_record_draw_cmd(ctx);
 }

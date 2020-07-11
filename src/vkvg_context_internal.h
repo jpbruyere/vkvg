@@ -121,17 +121,12 @@ typedef struct _vkvg_context_t {
 	uint32_t	sizePoints;     //reserved size
 	uint32_t	pointCount;     //effective points count
 
-	//pathes array is a list of couple (start,end) point idx refering to point array
-	//it split points list in subpathes and tell if path is closed.
-	uint32_t	pathPtr;        //pointer in the path array, even=start point;odd=end point
+	//pathes array is a list of point count per segment
+	uint32_t	pathPtr;        //pointer in the path array
 	uint32_t*	pathes;
 	uint32_t	sizePathes;
 
-	//if current path contains curves, curve's start/end points are store next to the path start/stop
-	//curve start point = pathPtr + curvePtr
-	//when closing of finishing path, pathPtr is incremented by 1 + pathPtr
-	//note:number of pathes can no longer be computed from pathPtr/2, the array contains now curves datas
-	uint32_t    curvePtr;
+	uint32_t    segmentPtr;		//current segment count in current path having curves
 
 	float		lineWidth;
 	uint32_t    dashCount;      //value count in dash array, 0 if dash not set.
@@ -169,12 +164,13 @@ void _check_flush_needed    (VkvgContext ctx);
 void _check_vertex_cache_size(VkvgContext ctx);
 void _resize_vertex_cache	(VkvgContext ctx, uint32_t newSize);
 void _check_index_cache_size(VkvgContext ctx);
-void _check_pathes_array	(VkvgContext ctx);
+bool _check_pathes_array	(VkvgContext ctx);
 
 bool _current_path_is_empty (VkvgContext ctx);
 void _start_sub_path        (VkvgContext ctx, float x, float y);
 void _finish_path			(VkvgContext ctx);
 void _clear_path			(VkvgContext ctx);
+void _remove_last_point		(VkvgContext ctx);
 bool _path_is_closed		(VkvgContext ctx, uint32_t ptrPath);
 void _set_curve_start       (VkvgContext ctx);
 void _set_curve_end         (VkvgContext ctx);
