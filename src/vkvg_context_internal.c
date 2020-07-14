@@ -1112,6 +1112,7 @@ void _poly_fill (VkvgContext ctx){
 	}
 	ctx->curVertOffset = ctx->vertCount;
 }
+//create fill from current path with ear clipping technic
 void _fill_ec (VkvgContext ctx){
 	Vertex v = {0};
 	v.uv.z = -1;
