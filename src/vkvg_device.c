@@ -121,7 +121,7 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearAll, "RP clear all");
 
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
+	//vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
 
@@ -150,7 +150,7 @@ void vkvg_device_destroy (VkvgDevice dev)
 	vkh_image_destroy               (dev->emptyImg);
 
 	vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslGrad,NULL);
-	vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
+	//vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslFont,NULL);
 	vkDestroyDescriptorSetLayout    (dev->vkDev, dev->dslSrc, NULL);
 
 	vkDestroyPipeline               (dev->vkDev, dev->pipelinePolyFill, NULL);

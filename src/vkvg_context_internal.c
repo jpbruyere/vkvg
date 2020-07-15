@@ -277,7 +277,7 @@ void _add_vertexf (VkvgContext ctx, float x, float y){
 	Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
 	pVert->pos.x = x;
 	pVert->pos.y = y;
-	pVert->uv = (vec3){0,0,-1};
+	pVert->color = ctx->curColor;
 	ctx->vertCount++;
 
 	_check_vertex_cache_size(ctx);
@@ -317,10 +317,10 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
 	Vertex v[4] =
 	{
-		{{x,y},             {0,0,-1}},
-		{{x,y+height},      {0,0,-1}},
-		{{x+width,y},       {0,0,-1}},
-		{{x+width,y+height},{0,0,-1}}
+		{{x,y},             ctx->curColor},
+		{{x,y+height},      ctx->curColor},
+		{{x+width,y},       ctx->curColor},
+		{{x+width,y+height},ctx->curColor}
 	};
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 	Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
@@ -468,10 +468,10 @@ void _record_draw_cmd (VkvgContext ctx){
 	ctx->curVertOffset = ctx->vertCount;
 }
 void _flush_cmd_buff (VkvgContext ctx){
-	if (!ctx->cmdStarted)
+	if (ctx->indCount > ctx->curIndStart)
+		_record_draw_cmd (ctx);
+	else if (!ctx->cmdStarted)
 		return;
-
-	_record_draw_cmd        (ctx);
 	_end_render_pass        (ctx);
 	_flush_vertices_caches  (ctx);
 	vkh_cmd_end             (ctx->cmd);
@@ -523,9 +523,9 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 
 	CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
-	VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc,ctx->dsGrad};
+	VkDescriptorSet dss[] = {ctx->dsSrc,ctx->dsGrad};
 	CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
-							0, 3, dss, 0, NULL);
+							0, 2, dss, 0, NULL);
 
 	VkDeviceSize offsets[1] = { 0 };
 	CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
@@ -730,8 +730,9 @@ void _init_descriptor_sets (VkvgContext ctx){
 	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 															  .descriptorPool = ctx->descriptorPool,
 															  .descriptorSetCount = 1,
-															  .pSetLayouts = &dev->dslFont };
-	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsFont));
+															  //.pSetLayouts = &dev->dslFont
+															};
+	//VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsFont));
 	descriptorSetAllocateInfo.pSetLayouts = &dev->dslSrc;
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
 	descriptorSetAllocateInfo.pSetLayouts = &dev->dslGrad;
@@ -739,7 +740,7 @@ void _init_descriptor_sets (VkvgContext ctx){
 }
 //populate vertice buff for stroke
 float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve){
-	Vertex v = {{0},{0,0,-1}};
+	Vertex v = {{0},ctx->curColor};
 
 	//if two of the three points are equal, normal is null
 	vec2 v0n = vec2_line_norm(pL, p0);
@@ -1078,7 +1079,7 @@ void _poly_fill (VkvgContext ctx){
 
 	CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
-	Vertex v = {{0},{0,0,-1}};
+	Vertex v = {{0},ctx->curColor};
 	uint32_t ptrPath = 0;
 	uint32_t firstPtIdx = 0;
 
@@ -1114,8 +1115,7 @@ void _poly_fill (VkvgContext ctx){
 }
 //create fill from current path with ear clipping technic
 void _fill_ec (VkvgContext ctx){
-	Vertex v = {0};
-	v.uv.z = -1;
+	Vertex v = {{0},ctx->curColor};
 
 	uint32_t ptrPath = 0;
 	uint32_t firstPtIdx = 0;
@@ -1192,7 +1192,7 @@ void _fill_ec (VkvgContext ctx){
 			ptrPath++;
 		free (ecps);
 	}
-	_record_draw_cmd(ctx);
+	//_record_draw_cmd(ctx);
 }
 
 static const uint32_t one = 1;
