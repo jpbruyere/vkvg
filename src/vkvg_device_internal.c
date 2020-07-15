@@ -242,8 +242,8 @@ void _setupPipelines(VkvgDevice dev)
 				.inputRate = VK_VERTEX_INPUT_RATE_VERTEX };
 
 	VkVertexInputAttributeDescription vertexInputAttributs[2] = {
-		{0, 0, VK_FORMAT_R32G32_SFLOAT,         0},
-		{1, 0, VK_FORMAT_R32G32B32_SFLOAT,      sizeof(vec2)}
+		{0, 0, VK_FORMAT_R32G32_SFLOAT, 0},
+		{1, 0, VK_FORMAT_R8G8B8A8_UNORM, sizeof(vec2)}
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertexInputState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -261,8 +261,8 @@ void _setupPipelines(VkvgDevice dev)
 											.codeSize = vkvg_main_vert_spv_len };
 	VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modVert));
 #ifdef VKVG_LCD_FONT_FILTER
-	createInfo.pCode = (uint32_t*)vkvg_main_lcd_frag_spv;
-	createInfo.codeSize = vkvg_main_lcd_frag_spv_len;
+	createInfo.pCode = (uint32_t*)vkvg_main_frag_spv;
+	createInfo.codeSize = vkvg_main_frag_spv_len;
 #else
 	createInfo.pCode = (uint32_t*)vkvg_main_frag_spv;
 	createInfo.codeSize = vkvg_main_frag_spv_len;
@@ -356,7 +356,7 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 	VkDescriptorSetLayoutCreateInfo dsLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 														  .bindingCount = 1,
 														  .pBindings = &dsLayoutBinding };
-	VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
+	//VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
 	VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslSrc));
 	dsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslGrad));
@@ -365,12 +365,12 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 		{VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push_constants)},
 		//{VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push_constants)}
 	};
-	VkDescriptorSetLayout dsls[] = {dev->dslFont,dev->dslSrc,dev->dslGrad};
+	VkDescriptorSetLayout dsls[] = {dev->dslSrc,dev->dslGrad};
 
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 															.pushConstantRangeCount = 1,
 															.pPushConstantRanges = (VkPushConstantRange*)&pushConstantRange,
-															.setLayoutCount = 3,
+															.setLayoutCount = 2,
 															.pSetLayouts = dsls };
 	VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }

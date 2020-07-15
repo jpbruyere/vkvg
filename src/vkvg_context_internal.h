@@ -35,9 +35,16 @@
 #define VKVG_ARRAY_THRESHOLD		8
 #define VKVG_IBO_INDEX_TYPE         uint16_t
 
+#define CreateRgba(r, g, b, a) ((a << 24) | (r << 16) | (g << 8) | b)
+#ifdef VKVG_PREMULT_ALPHA
+	#define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(b * a * 255.0f) << 16) | ((int)(g * a * 255.0f) << 8) | (int)(r * a * 255.0f))
+#else
+	#define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(b * 255.0f) << 16) | ((int)(g * 255.0f) << 8) | (int)(r * 255.0f))
+#endif
+
 typedef struct{
 	vec2 pos;
-	vec3 uv;
+	uint32_t color;
 }Vertex;
 
 typedef struct {
@@ -86,11 +93,13 @@ typedef struct _vkvg_context_t {
 	bool                cmdStarted; //prevent flushing empty renderpass
 	bool                pushCstDirty;//prevent pushing to gpu if not requested
 	VkDescriptorPool	descriptorPool;//one pool per thread
-	VkDescriptorSet     dsFont;     //fonts glyphs texture atlas descriptor (local for thread safety)
+	//VkDescriptorSet     dsFont;     //fonts glyphs texture atlas descriptor (local for thread safety)
 	VkDescriptorSet     dsSrc;      //source ds
 	VkDescriptorSet     dsGrad;     //gradient uniform buffer
 
 	VkRect2D            bounds;
+
+	uint32_t            curColor;
 
 	float xMin;
 	float xMax;

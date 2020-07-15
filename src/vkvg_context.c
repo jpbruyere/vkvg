@@ -145,7 +145,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	_create_cmd_buff        (ctx);
 	_createDescriptorPool   (ctx);
 	_init_descriptor_sets   (ctx);
-	_update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
+	//_update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
 	_update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc);
 	_update_gradient_desc_set(ctx);
 
@@ -166,7 +166,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)ctx->descriptorPool, "CTX Descriptor Pool");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc, "CTX DescSet SOURCE");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
+//	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsGrad, "CTX DescSet GRADIENT");
 
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
@@ -231,8 +231,8 @@ void vkvg_destroy (VkvgContext ctx)
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
-	VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc, ctx->dsGrad};
-	vkFreeDescriptorSets    (dev, ctx->descriptorPool, 3, dss);
+	VkDescriptorSet dss[] = {ctx->dsSrc, ctx->dsGrad};
+	vkFreeDescriptorSets    (dev, ctx->descriptorPool, 2, dss);
 
 	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
 
@@ -520,7 +520,7 @@ void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2,
 }
 void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	_vao_add_rectangle (ctx,x,y,w,h);
-	_record_draw_cmd(ctx);
+	//_record_draw_cmd(ctx);
 }
 
 void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
@@ -842,7 +842,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		else
 			ptrPath++;
 	}
-	_record_draw_cmd(ctx);
+	//_record_draw_cmd(ctx);
 }
 void vkvg_paint (VkvgContext ctx){
 	_check_cmd_buff_state (ctx);
@@ -853,7 +853,8 @@ void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
 }
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
-	_update_cur_pattern (ctx, vkvg_pattern_create_rgba (r,g,b,a));
+	ctx->curColor = CreateRgbaf(r,g,b,a);
+	//_update_cur_pattern (ctx, vkvg_pattern_create_rgba (r,g,b,a));
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
 	_update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
