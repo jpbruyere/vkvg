@@ -1,9 +1,8 @@
 #include "test.h"
 
 void compositing(){
-	vkvg_surface_clear(surf);
-
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
 
 	vkvg_set_source_rgba(ctx, 1,0,0,0.5f);
 	vkvg_rectangle(ctx,100,100,200,200);

@@ -537,10 +537,20 @@ static const VkClearAttachment clearStencil        = {VK_IMAGE_ASPECT_STENCIL_BI
 static const VkClearAttachment clearColorAttach    = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
 
 void vkvg_reset_clip (VkvgContext ctx){
+	if (!ctx->cmdStarted) {
+		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearStencil;
+		_start_cmd_for_render_pass(ctx);
+		return;
+	}
 	_check_cmd_buff_state (ctx);
 	vkCmdClearAttachments(ctx->cmd, 1, &clearStencil, 1, &ctx->clearRect);
 }
 void vkvg_clear (VkvgContext ctx){
+	if (!ctx->cmdStarted) {
+		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearAll;
+		_start_cmd_for_render_pass(ctx);
+		return;
+	}
 	_check_cmd_buff_state (ctx);
 	VkClearAttachment ca[2] = {clearColorAttach, clearStencil};
 	vkCmdClearAttachments(ctx->cmd, 2, ca, 1, &ctx->clearRect);

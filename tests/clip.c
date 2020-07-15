@@ -1,8 +1,8 @@
 #include "test.h"
 
 void test_clip(){
-	vkvg_surface_clear(surf);
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
 
 	vkvg_move_to(ctx,10,10);
 	vkvg_line_to(ctx,400,150);
@@ -24,8 +24,8 @@ void test_clip(){
 	vkvg_destroy(ctx);
 }
 void test_clip2(){
-	vkvg_surface_clear(surf);
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
 	vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
 	vkvg_rectangle(ctx, 50,50,500,500);
 	vkvg_clip(ctx);

@@ -12,13 +12,13 @@
 
 	vkvg_rectangle(ctx, x, y, z, v);
 }*/
-static vkvg_fill_rule_t fill_rule = VKVG_FILL_RULE_EVEN_ODD;
+static vkvg_fill_rule_t fill_rule = VKVG_FILL_RULE_NON_ZERO;
 static float line_width = 5.f;
 static float shape_size = 0.1f;
 
 void _shape_fill(shape_t shape){
-	vkvg_surface_clear(surf);
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
 	vkvg_set_fill_rule(ctx, fill_rule);
 	for (uint32_t i=0; i<test_size; i++) {
 		draw_random_shape(ctx, shape, shape_size);
@@ -27,8 +27,8 @@ void _shape_fill(shape_t shape){
 	vkvg_destroy(ctx);
 }
 void _shape_stroke(shape_t shape){
-	vkvg_surface_clear (surf);
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
 	vkvg_set_line_width (ctx, line_width);
 	vkvg_set_fill_rule(ctx, fill_rule);
 	for (uint32_t i=0; i<test_size; i++) {
@@ -38,8 +38,8 @@ void _shape_stroke(shape_t shape){
 	vkvg_destroy(ctx);
 }
 void _shape_fill_stroke(shape_t shape){
-	vkvg_surface_clear(surf);
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
 	vkvg_set_line_width (ctx, line_width);
 	vkvg_set_fill_rule(ctx, fill_rule);
 	for (uint32_t i=0; i<test_size; i++) {

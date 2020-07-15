@@ -2,9 +2,9 @@
 static float offset = 0;
 void test(){
 	offset += 0.1f;
-	vkvg_surface_clear(surf);
 
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
 	//const float dashes[] = {160.0f, 80};
 	float dashes[] = {700.0f, 30};
 	//const float dashes[] = {50, 40};

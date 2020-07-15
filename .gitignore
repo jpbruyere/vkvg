@@ -3,3 +3,4 @@ build/
 ignore
 .vs/
 *.json
+log-*.txt
