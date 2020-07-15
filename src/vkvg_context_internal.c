@@ -1110,6 +1110,16 @@ void _fill_ec (VkvgContext ctx){
 		uint32_t pathPointCount = lastPtIdx - firstPtIdx + 1;
 		uint32_t firstVertIdx = ctx->vertCount-ctx->curVertOffset;
 
+		if (pathPointCount == 3){
+			v.pos = ctx->points[firstPtIdx];
+			_add_vertex(ctx, v);
+			v.pos = ctx->points[firstPtIdx+1];
+			_add_vertex(ctx, v);
+			v.pos = ctx->points[firstPtIdx+2];
+			_add_vertex(ctx, v);
+			_add_triangle_indices (ctx, firstVertIdx, firstVertIdx+1, firstVertIdx+2);
+		}
+
 		ear_clip_point ecps[pathPointCount];
 		uint32_t ecps_count = 0, i = 0;
 
