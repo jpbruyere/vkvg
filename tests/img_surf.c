@@ -5,8 +5,8 @@ void test(){
     vkvg_set_fill_rule(ctx,VKVG_FILL_RULE_NON_ZERO);
     VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
 
-    vkvg_translate(ctx,20,20);
-    vkvg_rotate(ctx,0.5);
+    //vkvg_translate(ctx,20,20);
+    //vkvg_rotate(ctx,0.5);
 
     vkvg_set_source_rgba(ctx,1,0,0,1);
     //vkvg_rectangle(ctx,100,100,200,200);

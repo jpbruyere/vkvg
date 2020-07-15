@@ -126,7 +126,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
     _create_vertices_buff   (ctx);
     _create_gradient_buff   (ctx);
-    _create_cmd_buff        (ctx);
+
+    vkh_cmd_buffs_create    ((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,
+                             VK_COMMAND_BUFFER_LEVEL_PRIMARY, 2, ctx->cmdBuffers);
+
     if (CmdPushDescriptorSet) {
         _init_push_descriptor_writes(ctx);
     }else{
@@ -144,6 +147,20 @@ VkvgContext vkvg_create(VkvgSurface surf)
     ctx->status = VKVG_STATUS_SUCCESS;
 
     LOG(LOG_DBG_ARRAYS, "START\tctx = %lu; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+
+#ifdef DEBUG
+    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
+    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[0], "CTX Cmd Buff A");
+    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1], "CTX Cmd Buff B");
+    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
+
+    if (!CmdPushDescriptorSet) {
+        vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)ctx->descriptorPool, "CTX Descriptor Pool");
+        vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc, "CTX Single DescSet");
+    }
+    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
+    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
+#endif
 
     return ctx;
 }
@@ -728,7 +745,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 }
 void vkvg_paint (VkvgContext ctx){
     _check_cmd_buff_state (ctx);
-    if (ctx->pattern == NULL || ctx->pattern->type == VKVG_PATTERN_TYPE_SOLID){
+    /*if (ctx->pattern == NULL || ctx->pattern->type == VKVG_PATTERN_TYPE_SOLID){
         //add full screen rect untransformed with current color, no need of push constant update -> no flush requested
         _vao_add_rectangle (ctx, 0, 0, ctx->bounds.extent.width, ctx->bounds.extent.height);
         return;
@@ -743,7 +760,8 @@ void vkvg_paint (VkvgContext ctx){
     }else{//if current transformation is not identity, full screen quad has to be untransformed
         //cur transform will be applied in fs for each pixel.
         _vao_add_rectangle (ctx, 0, 0, ctx->bounds.extent.width, ctx->bounds.extent.height);
-    }
+    }*/
+    _vao_add_rectangle (ctx, 0, 0, ctx->bounds.extent.width, ctx->bounds.extent.height);
     //_draw_full_screen_quad (ctx, true);
 }
 inline void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {

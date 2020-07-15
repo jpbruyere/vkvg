@@ -7,7 +7,7 @@ void test(){
 
     VkvgContext ctx = vkvg_create (surf2);
 
-    vkvg_set_source_rgba(ctx,1.0,0.,0.,0.5f);
+    vkvg_set_source_rgba(ctx,0.0,1.,0.,1.0f);
     vkvg_paint (ctx);
     vkvg_destroy(ctx);
 
@@ -20,7 +20,9 @@ void test(){
 
     */
 
-    vkvg_set_source_surface(ctx, surf2,0,0);
+    vkvg_translate(ctx, -150,-150);
+
+    vkvg_set_source_surface(ctx, surf2, 200,200);
     //vkvg_rectangle(ctx,10,10,300,300);
     //vkvg_fill(ctx);
     vkvg_paint(ctx);

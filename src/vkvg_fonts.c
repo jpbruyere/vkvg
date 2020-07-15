@@ -53,7 +53,7 @@ void _init_fonts_cache (VkvgDevice dev){
     vkh_image_create_descriptor (cache->texture, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
                                  VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
-    cache->uploadFence = vkh_fence_create((VkhDevice)dev);
+    cache->uploadFence = dev->fence; //vkh_fence_create((VkhDevice)dev);
 
     uint32_t buffLength = FONT_PAGE_SIZE*FONT_PAGE_SIZE*cache->texPixelSize;
 
@@ -62,7 +62,7 @@ void _init_fonts_cache (VkvgDevice dev){
         VMA_MEMORY_USAGE_CPU_TO_GPU,
         buffLength, &cache->buff);
 
-    cache->cmd = vkh_cmd_buff_create((VkhDevice)dev,dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    cache->cmd = dev->cmd;// vkh_cmd_buff_create((VkhDevice)dev,dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
     //Set texture cache initial layout to shaderReadOnly to prevent error msg if cache is not fill
     VkImageSubresourceRange subres      = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,cache->texLength};
@@ -71,6 +71,8 @@ void _init_fonts_cache (VkvgDevice dev){
                                 VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                 VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
     VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
+    vkWaitForFences (dev->vkDev, 1, &cache->uploadFence, VK_TRUE, UINT64_MAX);
+    vkResetFences   (dev->vkDev, 1, &cache->uploadFence);
     _submit_cmd (dev, &cache->cmd, cache->uploadFence);
 
     cache->hostBuff = (uint8_t*)malloc(buffLength);
@@ -154,7 +156,7 @@ void _init_next_line_in_tex_cache (VkvgDevice dev, _vkvg_font_t* f){
     _init_next_line_in_tex_cache(dev, f);
 }
 void _destroy_font_cache (VkvgDevice dev){
-    _font_cache_t* cache = (_font_cache_t*)dev->fontCache;    
+    _font_cache_t* cache = (_font_cache_t*)dev->fontCache;
 
     free (cache->hostBuff);
 
@@ -180,7 +182,7 @@ void _destroy_font_cache (VkvgDevice dev){
     vkvg_buffer_destroy (&cache->buff);
     vkh_image_destroy   (cache->texture);
     //vkFreeCommandBuffers(dev->vkDev,dev->cmdPool, 1, &cache->cmd);
-    vkDestroyFence      (dev->vkDev,cache->uploadFence,NULL);
+    //vkDestroyFence      (dev->vkDev,cache->uploadFence,NULL);
 
     FT_CHECK_RESULT(FT_Done_FreeType (cache->library));
 

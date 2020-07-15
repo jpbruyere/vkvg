@@ -93,8 +93,6 @@ void vkengine_dump_available_layers () {
     printf("-----------------\n\n");
 }
 
-//static VkDebugReportCallbackEXT dbgReport;
-
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
     vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 
@@ -104,7 +102,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     uint32_t enabledExtsCount = 0, phyCount = 0;
     const char** gflwExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
 
-    const char* enabledExts [enabledExtsCount+2];
+    const char* enabledExts [enabledExtsCount+1];
 
     for (uint i=0;i<enabledExtsCount;i++)
         enabledExts[i] = gflwExts[i];
@@ -119,14 +117,23 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
     const char* enabledLayers[] = {NULL};
 #endif
 #ifdef DEBUG
-    //enabledExts[enabledExtsCount] = "VK_EXT_debug_report";
-    //enabledExtsCount++;
-    //enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
-    //enabledExtsCount++;
+    enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
+    enabledExtsCount++;
 #endif
 
 
     e->app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+#ifdef DEBUG
+    vkh_app_enable_debug_messenger(e->app
+                                   , VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+                                   | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                                   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+                                   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+                                   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+                                   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+                                   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+                                   , NULL);
+#endif
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);
@@ -189,15 +196,8 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
         }
     }
 
-#if defined(DEBUG) && defined(VKVG_USE_VALIDATION)
-    char const * dex [] = {"VK_KHR_swapchain", "VK_KHR_push_descriptor"};//, "VK_EXT_debug_marker"};
-    enabledExtsCount = 2;
-#else
     char const * dex [] = {"VK_KHR_swapchain", "VK_KHR_push_descriptor"};
     enabledExtsCount = 2;
-#endif
-
-
 
     VkPhysicalDeviceFeatures enabledFeatures = {
         .fillModeNonSolid = true,
@@ -213,16 +213,6 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
                                      };
 
     e->dev = vkh_device_create(e->app, pi, &device_info);
-
-#if DEBUG
-    /*dbgReport = vkh_device_create_debug_report (e->dev,
-
-            VK_DEBUG_REPORT_INFORMATION_BIT_EXT|
-            VK_DEBUG_REPORT_ERROR_BIT_EXT|
-            VK_DEBUG_REPORT_WARNING_BIT_EXT|
-            VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT|
-            VK_DEBUG_REPORT_DEBUG_BIT_EXT);*/
-#endif
 
     e->renderer = vkh_presenter_create
             (e->dev, (uint32_t) pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, presentMode);
@@ -241,10 +231,6 @@ void vkengine_destroy (VkEngine e) {
 
     vkh_presenter_destroy (e->renderer);
     vkDestroySurfaceKHR (e->app->inst, surf, NULL);
-
-#if DEBUG
-    //vkh_device_destroy_debug_report(e->dev, dbgReport);
-#endif
 
     vkh_device_destroy (e->dev);
 

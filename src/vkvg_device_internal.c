@@ -241,7 +241,7 @@ void _setupPipelines(VkvgDevice dev)
                 .inputRate = VK_VERTEX_INPUT_RATE_VERTEX };
 
     VkVertexInputAttributeDescription vertexInputAttributs[4] = {
-        {0, 0, VK_FORMAT_R32G32_SFLOAT,         0},        
+        {0, 0, VK_FORMAT_R32G32_SFLOAT,         0},
         {1, 0, VK_FORMAT_R8G8B8A8_UNORM,        8},
         {2, 0, VK_FORMAT_R32G32_SFLOAT,        12},
         {3, 0, VK_FORMAT_R8_SINT,              20},
@@ -424,6 +424,7 @@ void _wait_idle (VkvgDevice dev) {
 void _wait_and_reset_device_fence (VkvgDevice dev) {
     vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
     vkResetFences (dev->vkDev, 1, &dev->fence);
+    vkResetCommandBuffer (dev->cmd, 0);
 }
 
 void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
@@ -457,11 +458,16 @@ void _create_empty_texture (VkvgDevice dev) {
     vkh_image_create_descriptor(dev->emptyImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 
     _wait_and_reset_device_fence (dev);
-
     vkh_cmd_begin (dev->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+#ifdef DEBUG
+    vkh_cmd_label_start(dev->cmd, "create empty texture", (float[]){0.5,0,0,1});
+#endif
     vkh_image_set_layout (dev->cmd, dev->emptyImg, VK_IMAGE_ASPECT_COLOR_BIT,
                           VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                           VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+#ifdef DEBUG
+    vkh_cmd_label_end(dev->cmd);
+#endif
     vkh_cmd_end (dev->cmd);
     _submit_cmd (dev, &dev->cmd, dev->fence);
 }

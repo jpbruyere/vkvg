@@ -209,7 +209,6 @@ void _build_vb_step         (vkvg_context* ctx, Vertex v, float hw, uint32_t iL,
 void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, float height);
 
 void _bind_draw_pipeline    (VkvgContext ctx);
-void _create_cmd_buff		(VkvgContext ctx);
 void _check_cmd_buff_state  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
 

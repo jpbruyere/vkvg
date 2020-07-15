@@ -115,6 +115,11 @@ void _create_surface_main_image (VkvgSurface surf){
     surf->img = vkh_image_create((VkhDevice)surf->dev,surf->format,surf->width,surf->height,VKVG_TILING,VMA_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     vkh_image_create_view(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
+#ifdef DEBUG
+    vkh_image_set_name(surf->img, "SURF main color");
+    vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(surf->img), "SURF main color VIEW");
+    //vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->img), "SURF main color SAMPLER");
+#endif
 }
 //create multisample color img if sample count > 1 and the stencil buffer multisampled or not
 void _create_surface_secondary_images (VkvgSurface surf) {
@@ -122,9 +127,19 @@ void _create_surface_secondary_images (VkvgSurface surf) {
         surf->imgMS = vkh_image_ms_create((VkhDevice)surf->dev,surf->format,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
         vkh_image_create_view(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
+#ifdef DEBUG
+        vkh_image_set_name(surf->imgMS, "SURF MS color IMG");
+        vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(surf->imgMS), "SURF MS color VIEW");
+        //vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->imgMS), "SURF MS color SAMPLER");
+#endif
     }
     surf->stencil = vkh_image_ms_create((VkhDevice)surf->dev,FB_STENCIL_FORMAT,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,                                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     vkh_image_create_view(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT);
+#ifdef DEBUG
+    vkh_image_set_name(surf->stencil, "SURF stencil");
+    vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(surf->stencil), "SURF stencil VIEW");
+    //vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->stencil), "SURF stencil SAMPLER");
+#endif
 }
 void _create_framebuffer (VkvgSurface surf) {
     VkImageView attachments[] = {
@@ -146,6 +161,9 @@ void _create_framebuffer (VkvgSurface surf) {
         frameBufferCreateInfo.attachmentCount = 2;
     }
     VK_CHECK_RESULT(vkCreateFramebuffer(surf->dev->vkDev, &frameBufferCreateInfo, NULL, &surf->fb));
+#ifdef DEBUG
+    vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_FRAMEBUFFER, (uint64_t)surf->fb, "SURF FB");
+#endif
 }
 void _init_surface (VkvgSurface surf) {
     surf->format = FB_COLOR_FORMAT;//force bgra internally
@@ -155,11 +173,6 @@ void _init_surface (VkvgSurface surf) {
     _create_framebuffer         (surf);
 
     _clear_surface              (surf, VK_IMAGE_ASPECT_STENCIL_BIT);
-#if defined(DEBUG) && defined(ENABLE_VALIDATION)
-    vkh_image_set_name(surf->img, "surfImg");
-    vkh_image_set_name(surf->imgMS, "surfImgMS");
-    vkh_image_set_name(surf->stencil, "surfStencil");
-#endif
 }
 void vkvg_surface_clear (VkvgSurface surf) {
     _clear_surface(surf, VK_IMAGE_ASPECT_STENCIL_BIT|VK_IMAGE_ASPECT_COLOR_BIT);
