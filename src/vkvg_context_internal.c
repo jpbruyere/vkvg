@@ -36,13 +36,6 @@
 #include "vkh_queue.h"
 #include "vkh_image.h"
 
-void _check_flush_needed (VkvgContext ctx) {
-	if (!ctx->cmdStarted)
-		return;
-	if (ctx->pointCount * 4 < ctx->sizeIndices - ctx->indCount)
-		return;
-	_flush_cmd_buff(ctx);
-}
 void _resize_vertex_cache (VkvgContext ctx, uint32_t newSize) {
 	Vertex* tmp = (Vertex*) realloc (ctx->vertexCache, (size_t)newSize * sizeof(Vertex));
 	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %u size(byte): %zu Ptr: %p -> %p\n", newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
@@ -139,10 +132,6 @@ void _set_curve_end (VkvgContext ctx) {
 //path start pointed at ptrPath has curve bit
 bool _path_has_curves (VkvgContext ctx, uint32_t ptrPath) {
 	return ctx->pathes[ptrPath] & PATH_HAS_CURVES_BIT;
-}
-//this function expect that current path is empty
-void _start_sub_path (VkvgContext ctx, float x, float y) {
-	_add_point (ctx, x, y);
 }
 void _finish_path (VkvgContext ctx){
 	if (ctx->pathes [ctx->pathPtr] == 0)//empty
@@ -331,8 +320,8 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
 
 	_add_tri_indices_for_rect(ctx, firstIdx);
 }
-
-void _check_cmd_buff_state (VkvgContext ctx) {
+//start render pass if not yet started or update push const if requested
+void _ensure_renderpass_is_started (VkvgContext ctx) {
 	if (!ctx->cmdStarted)
 		_start_cmd_for_render_pass(ctx);
 	else if (ctx->pushCstDirty)
@@ -410,8 +399,9 @@ void _flush_vertices_caches_until_vertex_base (VkvgContext ctx) {
 	ctx->curVertOffset = 0;
 	ctx->curIndStart = 0;
 }
+//copy vertex and index caches to the vbo and ibo vkbuffers used by gpu for drawing
+//current running cmd has to be completed to free usage of those
 void _flush_vertices_caches (VkvgContext ctx) {
-	//copy vertex and index caches to the vbo and ibo vkbuffers
 	_wait_flush_fence (ctx);
 
 	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
@@ -428,7 +418,8 @@ void _end_render_pass (VkvgContext ctx) {
 #endif
 	ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
 }
-void _record_draw_cmd (VkvgContext ctx){
+//stroke and non-zero draw call for solid color flush
+void _flush_undrawn_vertices (VkvgContext ctx){
 	if (ctx->indCount == ctx->curIndStart)
 		return;
 
@@ -441,17 +432,12 @@ void _record_draw_cmd (VkvgContext ctx){
 			_flush_vertices_caches_until_vertex_base (ctx);
 			vkh_cmd_end (ctx->cmd);
 			_wait_and_submit_cmd (ctx);
-			//we could resize here
-			_resize_vbo(ctx, ctx->sizeVertices);
-			_resize_ibo(ctx, ctx->sizeIndices);
-		}else{
-			//should resize vbo here
-			_resize_vbo(ctx, ctx->sizeVertices);
-			_resize_ibo(ctx, ctx->sizeIndices);
 		}
+		_resize_vbo(ctx, ctx->sizeVertices);
+		_resize_ibo(ctx, ctx->sizeIndices);
 	}
 
-	_check_cmd_buff_state(ctx);
+	_ensure_renderpass_is_started(ctx);
 	CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
 
 	LOG(VKVG_LOG_INFO, "RECORD DRAW CMD: ctx = %p; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
@@ -468,9 +454,8 @@ void _record_draw_cmd (VkvgContext ctx){
 	ctx->curVertOffset = ctx->vertCount;
 }
 void _flush_cmd_buff (VkvgContext ctx){
-	if (ctx->indCount > ctx->curIndStart)
-		_record_draw_cmd (ctx);
-	else if (!ctx->cmdStarted)
+	_flush_undrawn_vertices (ctx);
+	if (!ctx->cmdStarted)
 		return;
 	_end_render_pass        (ctx);
 	_flush_vertices_caches  (ctx);
@@ -540,7 +525,6 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 	_bind_draw_pipeline (ctx);
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-
 	ctx->cmdStarted = true;
 }
 //compute inverse mat used in shader when context matrix has changed
@@ -580,7 +564,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 		//flush ctx in two steps to add the src transitioning in the cmd buff
 		if (ctx->cmdStarted){//transition of img without appropriate dependencies in subpass must be done outside renderpass.
-			_record_draw_cmd (ctx);//ensure all vertices are flushed
+			_flush_undrawn_vertices (ctx);//ensure all vertices are flushed
 			_end_render_pass (ctx);
 			_flush_vertices_caches (ctx);
 		}else {
@@ -1075,7 +1059,7 @@ void _poly_fill (VkvgContext ctx){
 
 		_start_cmd_for_render_pass(ctx);
 	}else
-		_check_cmd_buff_state(ctx);
+		_ensure_renderpass_is_started(ctx);
 
 	CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
@@ -1204,9 +1188,14 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 		VkRect2D r = {{(int32_t)ctx->xMin, (int32_t)ctx->yMin}, {(int32_t)ctx->xMax - (int32_t)ctx->xMin + 1, (int32_t)ctx->yMax - (int32_t)ctx->yMin + 1}};
 		CmdSetScissor(ctx->cmd, 0, 1, &r);
 	}
+	VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
+	Vertex v = {{0,0},ctx->curColor};
+	for(int i=0; i<3; i++)
+		_add_vertex(ctx, v);
+
 	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
 					   VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&one);
-	CmdDraw (ctx->cmd,3,1,0,0);
+	CmdDraw (ctx->cmd,3,1,firstVertIdx,0);
 	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
 					   VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&zero);
 	if (useScissor && ctx->xMin < FLT_MAX)

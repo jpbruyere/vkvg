@@ -64,7 +64,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->dashCount      = 0;
 	ctx->dashOffset     = 0;
 	ctx->dashes         = NULL;
-	ctx->pSurf          = surf;
 	ctx->curOperator    = VKVG_OPERATOR_OVER;
 	ctx->curFillRule    = VKVG_FILL_RULE_NON_ZERO;
 	ctx->curSavBit      = 0;
@@ -73,6 +72,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->curIndStart    = 0;
 	ctx->curVertOffset  = 0;
 
+	ctx->pSurf          = surf;
 	VkRect2D scissor = {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
 	ctx->bounds        = scissor;
 
@@ -280,7 +280,6 @@ void vkvg_destroy (VkvgContext ctx)
 		ctx->pPrev->pNext = ctx->pNext;
 		ctx->pNext->pPrev = ctx->pPrev;
 	}
-
 
 	free(ctx);
 }
@@ -526,7 +525,7 @@ void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	_finish_path (ctx);
 
-	_start_sub_path(ctx, x, y);
+	_add_point (ctx, x, y);
 	_add_point (ctx, x + w, y);
 	_add_point (ctx, x + w, y + h);
 	_add_point (ctx, x, y + h);
@@ -537,21 +536,24 @@ static const VkClearAttachment clearStencil        = {VK_IMAGE_ASPECT_STENCIL_BI
 static const VkClearAttachment clearColorAttach    = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
 
 void vkvg_reset_clip (VkvgContext ctx){
+	_flush_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
+		//if command buffer is not already started and in a renderpass, we use the renderpass
+		//with the loadop clear for stencil
 		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearStencil;
+		//force run of one renderpass (even empty) to perform clear load op
 		_start_cmd_for_render_pass(ctx);
 		return;
 	}
-	_check_cmd_buff_state (ctx);
 	vkCmdClearAttachments(ctx->cmd, 1, &clearStencil, 1, &ctx->clearRect);
 }
 void vkvg_clear (VkvgContext ctx){
+	_flush_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
 		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearAll;
 		_start_cmd_for_render_pass(ctx);
 		return;
 	}
-	_check_cmd_buff_state (ctx);
 	VkClearAttachment ca[2] = {clearColorAttach, clearStencil};
 	vkCmdClearAttachments(ctx->cmd, 2, ca, 1, &ctx->clearRect);
 }
@@ -570,57 +572,59 @@ void vkvg_fill (VkvgContext ctx){
 	_clear_path(ctx);
 }
 void vkvg_clip_preserve (VkvgContext ctx){
-	if (ctx->pathPtr == 0)      //nothing to fill
+	if (!(ctx->pathPtr || ctx->segmentPtr))//nothing to fill
 		return;
+
+	_flush_undrawn_vertices(ctx);
+
 	_finish_path(ctx);
 
 	LOG(VKVG_LOG_INFO, "CLIP: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
 	if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
-		_check_cmd_buff_state(ctx);
+		_ensure_renderpass_is_started(ctx);
 		_poly_fill (ctx);
 		CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
-		CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-		CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
 	}else{
-		_check_cmd_buff_state(ctx);
+		_ensure_renderpass_is_started(ctx);
 		CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 		CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 		CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 		_fill_ec(ctx);
-		CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-		CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
 	}
+	CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+	CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
+
 	_draw_full_screen_quad (ctx, false);
-	//should test current operator to bind correct pipeline
+
 	_bind_draw_pipeline (ctx);
 	CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 }
 void vkvg_fill_preserve (VkvgContext ctx){
 	if (!(ctx->pathPtr || ctx->segmentPtr))      //nothing to fill
 		return;
+
 	_finish_path(ctx);
 
 	LOG(VKVG_LOG_INFO, "FILL: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
 	 if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
+		 _flush_undrawn_vertices(ctx);
 		_poly_fill (ctx);
 		_bind_draw_pipeline (ctx);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-		_draw_full_screen_quad(ctx,true);
+		_draw_full_screen_quad (ctx, true);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-	}else{
-		_check_cmd_buff_state (ctx);
-		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-		_fill_ec(ctx);
+		return;
 	}
+
+	_fill_ec(ctx);
 }
 
 void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
-	Vertex v = {{0},{0,0,-1}};
+	Vertex v = {{0},ctx->curColor};
 
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
@@ -845,7 +849,11 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 	//_record_draw_cmd(ctx);
 }
 void vkvg_paint (VkvgContext ctx){
-	_check_cmd_buff_state (ctx);
+	if (ctx->pathPtr || ctx->segmentPtr){//path to fill
+		vkvg_fill(ctx);
+		return;
+	}
+	_ensure_renderpass_is_started (ctx);
 	_draw_full_screen_quad (ctx, true);
 }
 void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
@@ -953,9 +961,9 @@ void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
 }
 
 void vkvg_show_text (VkvgContext ctx, const char* text){
-	_check_cmd_buff_state(ctx);
+	_ensure_renderpass_is_started(ctx);
 	_show_text (ctx, text);
-	_record_draw_cmd (ctx);
+	_flush_undrawn_vertices (ctx);
 }
 
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {

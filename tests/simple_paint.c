@@ -1,13 +1,17 @@
 #include "test.h"
 
+vkvg_fill_rule_t fillrule = VKVG_FILL_RULE_NON_ZERO;
+
 void paint(){
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_fill_rule(ctx,fillrule);
 	vkvg_set_source_rgba(ctx,1,0,0,1);
 	vkvg_paint(ctx);
 	vkvg_destroy(ctx);
 }
 void paint_with_rotation(){
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_fill_rule(ctx,fillrule);
 	vkvg_rotate(ctx, 45);
 	vkvg_set_source_rgba(ctx,1,0,0,1);
 	vkvg_paint(ctx);
@@ -15,6 +19,7 @@ void paint_with_rotation(){
 }
 void paint_with_scale(){
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_fill_rule(ctx,fillrule);
 	vkvg_scale (ctx, 0.2f,0.2f);
 	vkvg_set_source_rgba(ctx,1,0,0,1);
 	vkvg_paint(ctx);
@@ -22,6 +27,7 @@ void paint_with_scale(){
 }
 void paint_rect(){
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_fill_rule(ctx,fillrule);
 	vkvg_set_source_rgba(ctx,1,0,0,1);
 	vkvg_rectangle(ctx,100,100,300,200);
 	vkvg_paint(ctx);
@@ -30,6 +36,7 @@ void paint_rect(){
 //TODO:test failed: full screen paint instead of rotated rect
 void paint_rect_with_rotation(){
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_fill_rule(ctx,fillrule);
 	vkvg_rotate(ctx, 45);
 	vkvg_set_source_rgba(ctx,1,0,0,1);
 	vkvg_rectangle(ctx,100,100,300,200);
@@ -38,6 +45,7 @@ void paint_rect_with_rotation(){
 }
 void paint_rect_with_scale(){
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_fill_rule(ctx,fillrule);
 	vkvg_scale (ctx, 0.2f,0.2f);
 	vkvg_set_source_rgba(ctx,1,0,0,1);
 	vkvg_rectangle(ctx,100,100,300,200);
