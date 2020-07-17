@@ -169,14 +169,12 @@ typedef struct _ear_clip_point{
 	struct _ear_clip_point* next;
 }ear_clip_point;
 
-void _check_flush_needed    (VkvgContext ctx);
 void _check_vertex_cache_size(VkvgContext ctx);
 void _resize_vertex_cache	(VkvgContext ctx, uint32_t newSize);
 void _check_index_cache_size(VkvgContext ctx);
 bool _check_pathes_array	(VkvgContext ctx);
 
 bool _current_path_is_empty (VkvgContext ctx);
-void _start_sub_path        (VkvgContext ctx, float x, float y);
 void _finish_path			(VkvgContext ctx);
 void _clear_path			(VkvgContext ctx);
 void _remove_last_point		(VkvgContext ctx);
@@ -206,14 +204,12 @@ void _add_triangle_indices	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IN
 void _add_tri_indices_for_rect	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
 float _build_vb_step        (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve);
 void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, float height);
-void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, float height);
-void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, float height);
 
 void _bind_draw_pipeline    (VkvgContext ctx);
 void _create_cmd_buff		(VkvgContext ctx);
-void _check_cmd_buff_state  (VkvgContext ctx);
+void _ensure_renderpass_is_started  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
-void _record_draw_cmd		(VkvgContext ctx);
+void _flush_undrawn_vertices		(VkvgContext ctx);
 void _wait_flush_fence      (VkvgContext ctx);
 void _reset_flush_fence     (VkvgContext ctx);
 void _wait_and_submit_cmd   (VkvgContext ctx);

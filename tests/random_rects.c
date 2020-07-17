@@ -97,6 +97,7 @@ void random_fill_stroke () {
 }
 
 int main(int argc, char *argv[]) {
+	srand(0);
 
 	PERFORM_TEST (rectangles_fill, argc, argv);
 	PERFORM_TEST (rectangles_stroke, argc, argv);

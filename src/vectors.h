@@ -25,51 +25,51 @@
 #include "vkvg_internal.h"
 
 typedef struct {
-    float x;
-    float y;
+	float x;
+	float y;
 }vec2;
 typedef struct {
-    double x;
-    double y;
+	double x;
+	double y;
 }vec2d;
 
 typedef struct {
-    float x;
-    float y;
-    float z;
+	float x;
+	float y;
+	float z;
 }vec3;
 
 typedef struct {
-    union {
-        float x;
-        float r;
-    };
-    union {
-        float y;
-        float g;
-    };
-    union {
-        float z;
-        float width;
-        float b;
-    };
-    union {
-        float w;
-        float height;
-        float a;
-    };
+	union {
+		float x;
+		float r;
+	};
+	union {
+		float y;
+		float g;
+	};
+	union {
+		float z;
+		float width;
+		float b;
+	};
+	union {
+		float w;
+		float height;
+		float a;
+	};
 }vec4;
 
 typedef struct {
-    uint16_t x;
-    uint16_t y;
-    uint16_t z;
-    uint16_t w;
+	uint16_t x;
+	uint16_t y;
+	uint16_t z;
+	uint16_t w;
 }vec4i16;
 
 typedef struct {
-    int16_t x;
-    int16_t y;
+	int16_t x;
+	int16_t y;
 }vec2i16;
 
 float		vec2_length	(vec2 v);
@@ -93,4 +93,6 @@ bool        vec2d_isnan  (vec2d v);
 
 vec2		vec2d_to_vec2(vec2d vd);
 void        vec2_inv    (vec2* v);
+
+bool		vec4_equ	(vec4 a, vec4 b);
 #endif
