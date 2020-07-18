@@ -543,28 +543,30 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 	VkvgPattern lastPat = ctx->pattern;
 	ctx->pattern = pat;
 
-	ctx->pushConsts.patternType = pat->type;
-	ctx->pushCstDirty = true;
+	if (pat == NULL) {//solid color
+		if (lastPat == NULL)//solid
+			return;//solid to solid transition, no extra action requested
+		ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SOLID;
+	}else
+		ctx->pushConsts.patternType = pat->type;
 
-	switch (pat->type)  {
+	switch (ctx->pushConsts.patternType)  {
 	case VKVG_PATTERN_TYPE_SOLID:
-		memcpy (&ctx->pushConsts.source, ctx->pattern->data, sizeof(vkvg_color_t));
-
-		if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
+		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
+			//unbind current source surface by replacing it with empty texture
 			_flush_cmd_buff             (ctx);
 			_update_descriptor_set      (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
-			//_init_cmd_buff              (ctx);//push csts updated by init
-		}//else
-			//_update_push_constants (ctx);
-
+		}
 		break;
 	case VKVG_PATTERN_TYPE_SURFACE:
 	{
+		_flush_undrawn_vertices(ctx);
+
 		VkvgSurface surf = (VkvgSurface)pat->data;
 
 		//flush ctx in two steps to add the src transitioning in the cmd buff
 		if (ctx->cmdStarted){//transition of img without appropriate dependencies in subpass must be done outside renderpass.
-			_flush_undrawn_vertices (ctx);//ensure all vertices are flushed
+			//_flush_undrawn_vertices (ctx);//ensure all vertices are flushed
 			_end_render_pass (ctx);
 			_flush_vertices_caches (ctx);
 		}else {
@@ -582,45 +584,33 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 		ctx->source = surf->img;
 
-		//if (vkh_image_get_sampler (ctx->source) == VK_NULL_HANDLE){
-			VkSamplerAddressMode addrMode = 0;
-			VkFilter filter = VK_FILTER_NEAREST;
-			switch (pat->extend) {
-			case VKVG_EXTEND_NONE:
-				addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-				break;
-			case VKVG_EXTEND_PAD:
-				addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-				break;
-			case VKVG_EXTEND_REPEAT:
-				addrMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-				break;
-			case VKVG_EXTEND_REFLECT:
-				addrMode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-				break;
-			}
-			switch (pat->filter) {
-			case VKVG_FILTER_BILINEAR:
-			case VKVG_FILTER_BEST:
-				filter = VK_FILTER_LINEAR;
-				break;
-			default:
-				filter = VK_FILTER_NEAREST;
-				break;
-			}
-			vkh_image_create_sampler(ctx->source, filter, filter,
+		VkSamplerAddressMode addrMode = 0;
+		VkFilter filter = VK_FILTER_NEAREST;
+		switch (pat->extend) {
+		case VKVG_EXTEND_NONE:
+			addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			break;
+		case VKVG_EXTEND_PAD:
+			addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			break;
+		case VKVG_EXTEND_REPEAT:
+			addrMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			break;
+		case VKVG_EXTEND_REFLECT:
+			addrMode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+			break;
+		}
+		switch (pat->filter) {
+		case VKVG_FILTER_BILINEAR:
+		case VKVG_FILTER_BEST:
+			filter = VK_FILTER_LINEAR;
+			break;
+		default:
+			filter = VK_FILTER_NEAREST;
+			break;
+		}
+		vkh_image_create_sampler(ctx->source, filter, filter,
 								 VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
-		//}
-		/*if (vkh_image_get_layout (ctx->source) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL){
-			vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-			vkh_image_set_layout (ctx->cmd, ctx->source, VK_IMAGE_ASPECT_COLOR_BIT,
-								  VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-								  VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-			vkh_cmd_end (ctx->cmd);
-
-			_submit_wait_and_reset_cmd  (ctx);
-		}*/
 
 		_update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
 
@@ -648,11 +638,9 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		//to do, scale radial radiuses in cp[2]
 
 		memcpy(ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
-
-		//_init_cmd_buff (ctx);
 		break;
 	}
-
+	ctx->pushCstDirty = true;
 	if (lastPat)
 		vkvg_pattern_destroy    (lastPat);
 }
@@ -1189,9 +1177,9 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 		CmdSetScissor(ctx->cmd, 0, 1, &r);
 	}
 	VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
-	Vertex v = {{0,0},ctx->curColor};
-	for(int i=0; i<3; i++)
-		_add_vertex(ctx, v);
+	_add_vertexf(ctx, -1, -1);
+	_add_vertexf(ctx, 3, -1);
+	_add_vertexf(ctx, -1, 3);
 
 	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
 					   VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&one);
