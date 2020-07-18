@@ -309,11 +309,8 @@ void        vkvg_show_text_run      (VkvgContext ctx, VkvgText textRun);
 void        vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents);
 
 //pattern
-VkvgPattern vkvg_pattern_create             ();
 VkvgPattern vkvg_pattern_reference          (VkvgPattern pat);
 uint32_t    vkvg_pattern_get_reference_count(VkvgPattern pat);
-VkvgPattern vkvg_pattern_create_rgba        (float r, float g, float b, float a);
-VkvgPattern vkvg_pattern_create_rgb         (float r, float g, float b);
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
 VkvgPattern vkvg_pattern_create_linear      (float x0, float y0, float x1, float y1);
 VkvgPattern vkvg_pattern_create_radial      (float cx0, float cy0, float radius0,

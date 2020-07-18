@@ -59,7 +59,7 @@ void main()
 	outSrc = pc.srcType == SOLID ? inColor : pc.source;
 
 	if (pc.fullScreenQuad != 0) {
-		gl_Position = vec4(vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2) * 2.0f - 1.0f, 0.0f, 1.0f);
+		gl_Position = vec4(inPos, 0.0f, 1.0f);
 		return;
 	}
 

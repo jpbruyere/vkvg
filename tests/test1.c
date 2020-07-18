@@ -356,7 +356,7 @@ void cairo_tests () {
 	cairo_print_arc_neg(ctx);
 
 	vkvg_translate(ctx,250,0);
-	cairo_test_text(ctx);
+	//cairo_test_text(ctx);
 
 	vkvg_translate(ctx,-500,250);
 	cairo_test_curves(ctx);

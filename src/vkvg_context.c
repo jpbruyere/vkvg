@@ -572,7 +572,7 @@ void vkvg_fill (VkvgContext ctx){
 	_clear_path(ctx);
 }
 void vkvg_clip_preserve (VkvgContext ctx){
-	if (!(ctx->pathPtr || ctx->segmentPtr))//nothing to fill
+	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to clip
 		return;
 
 	_flush_undrawn_vertices(ctx);
@@ -592,6 +592,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 		CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 		_fill_ec(ctx);
+		_flush_undrawn_vertices(ctx);
 	}
 	CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
@@ -603,7 +604,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
 	CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 }
 void vkvg_fill_preserve (VkvgContext ctx){
-	if (!(ctx->pathPtr || ctx->segmentPtr))      //nothing to fill
+	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to fill
 		return;
 
 	_finish_path(ctx);
@@ -620,6 +621,8 @@ void vkvg_fill_preserve (VkvgContext ctx){
 		return;
 	}
 
+	if (ctx->pattern)//if not solid color, source img of gradient has to be bound
+		_ensure_renderpass_is_started(ctx);
 	_fill_ec(ctx);
 }
 
@@ -859,10 +862,18 @@ void vkvg_paint (VkvgContext ctx){
 void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
 	vkvg_set_source_rgba (ctx, r, g, b, 1);
 }
+/**
+ * @brief Set current pattern to solid color defined by arguments
+ * @param vkvg context
+ * @param red component
+ * @param green component
+ * @param blue component
+ * @param alpha value
+ */
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
 	ctx->curColor = CreateRgbaf(r,g,b,a);
-	//_update_cur_pattern (ctx, vkvg_pattern_create_rgba (r,g,b,a));
+	_update_cur_pattern (ctx, NULL);
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
 	_update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
@@ -1176,29 +1187,35 @@ void vkvg_restore (VkvgContext ctx){
 }
 
 void vkvg_translate (VkvgContext ctx, float dx, float dy){
+	_flush_undrawn_vertices(ctx);
 	vkvg_matrix_translate (&ctx->pushConsts.mat, dx, dy);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_scale (VkvgContext ctx, float sx, float sy){
+	_flush_undrawn_vertices(ctx);
 	vkvg_matrix_scale (&ctx->pushConsts.mat, sx, sy);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_rotate (VkvgContext ctx, float radians){
+	_flush_undrawn_vertices(ctx);
 	vkvg_matrix_rotate (&ctx->pushConsts.mat, radians);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix) {
+	_flush_undrawn_vertices(ctx);
 	vkvg_matrix_t res;
 	vkvg_matrix_multiply (&res, &ctx->pushConsts.mat, matrix);
 	ctx->pushConsts.mat = res;
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_identity_matrix (VkvgContext ctx) {
+	_flush_undrawn_vertices(ctx);
 	vkvg_matrix_t im = VKVG_IDENTITY_MATRIX;
 	ctx->pushConsts.mat = im;
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
+	_flush_undrawn_vertices(ctx);
 	ctx->pushConsts.mat = (*matrix);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }

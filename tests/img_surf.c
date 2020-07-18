@@ -2,6 +2,7 @@
 void paint () {
 	VkvgContext ctx = vkvg_create(surf);
 	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+	//vkvg_surface_write_to_png(imgSurf, "/tmp/test.png");
 
 	vkvg_set_source_surface(ctx, imgSurf, 0, 0);
 	vkvg_paint(ctx);
@@ -85,7 +86,7 @@ void test(){
 	//vkvg_rotate(ctx,M_PI_4);
 
 	vkvg_set_line_width(ctx,20.f);
-	vkvg_set_source_rgba(ctx,1,0,0,1);
+	//vkvg_set_source_rgba(ctx,1,0,0,1);
 	vkvg_arc(ctx,200,200,200,0,2.f*M_PIF);
 	vkvg_new_sub_path(ctx);
 	vkvg_arc(ctx,200,200,100,0,2.f*M_PIF);
