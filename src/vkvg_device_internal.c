@@ -409,13 +409,13 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 		{VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push_constants)},
 		//{VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push_constants)}
 	};
-	VkDescriptorSetLayout dsls[] = {dev->dslFont,dev->dslSrc,dev->dslGrad};
+	//VkDescriptorSetLayout dsls[] = {dev->dslSrc,dev->dslGrad};
 
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 															.pushConstantRangeCount = 1,
 															.pPushConstantRanges = (VkPushConstantRange*)&pushConstantRange,
-															.setLayoutCount = 3,
-															.pSetLayouts = dsls };
+															.setLayoutCount = 0,
+															.pSetLayouts = VK_NULL_HANDLE };
 	VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }
 

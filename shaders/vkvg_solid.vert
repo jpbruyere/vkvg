@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -26,22 +26,23 @@
 
 layout (location = 0) in vec2	inPos;
 layout (location = 1) in vec4	inColor;
-layout (location = 2) in vec3	inUV;
 
-=======
 layout (location = 0) out vec4	outSrc;
 
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
 layout(push_constant) uniform PushConsts {
-	vec4	source;
-	vec2	size;
-	int		fullScreenQuad_srcType;
-	float	opacity;
-	mat3x2	mat;
-	mat3x2	matInv;
+	vec4 source;
+	vec2 size;
+	int  srcType;
+	int  fullScreenQuad;
+	mat3x2 mat;
+	mat3x2 matInv;
 } pc;
 
-#define FULLSCREEN_BIT	0x10000000
-#define SRCTYPE_MASK	0x000000FF
 #define SOLID			0
 #define SURFACE			1
 #define LINEAR			2
@@ -53,13 +54,10 @@ void main()
 {
 	outSrc = pc.srcType == SOLID ? inColor : pc.source;
 
-	if ((pc.fullScreenQuad_srcType & FULLSCREEN_BIT)==FULLSCREEN_BIT) {
+	if (pc.fullScreenQuad != 0) {
 		gl_Position = vec4(inPos, 0.0f, 1.0f);
-		outUV = vec3(0,0,-1);
 		return;
 	}
-
-	outUV = inUV;
 
 	vec2 p = vec2(
 		pc.mat[0][0] * inPos.x + pc.mat[1][0] * inPos.y + pc.mat[2][0],
@@ -67,5 +65,4 @@ void main()
 	);
 
 	gl_Position = vec4(p * vec2(2) / pc.size - vec2(1), 0.0, 1.0);
-	gl_PointSize = 1;
 }

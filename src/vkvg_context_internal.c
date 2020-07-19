@@ -607,9 +607,9 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 
 	CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
-	VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc,ctx->dsGrad};
+	/*VkDescriptorSet dss[] = {ctx->dsSrc,ctx->dsGrad};
 	CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
-							0, 3, dss, 0, NULL);
+							0, 2, dss, 0, NULL);*/
 
 	VkDeviceSize offsets[1] = { 0 };
 	CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
