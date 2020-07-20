@@ -243,7 +243,9 @@ void _create_vertices_buff (VkvgContext ctx){
 void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
 	_wait_flush_fence (ctx);//wait previous cmd if not completed
 	ctx->sizeVBO = new_size;
-	ctx->sizeVBO += ctx->sizeVBO % VKVG_VBO_SIZE;
+	uint32_t mod = ctx->sizeVBO % VKVG_VBO_SIZE;
+	if (mod > 0)
+		ctx->sizeVBO += VKVG_VBO_SIZE - mod;
 	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %d\n", ctx->sizeVBO);
 	vkvg_buffer_destroy (&ctx->vertices);
 	vkvg_buffer_create (ctx->pSurf->dev,
@@ -253,8 +255,10 @@ void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
 }
 void _resize_ibo (VkvgContext ctx, size_t new_size) {
 	_wait_flush_fence (ctx);//wait previous cmd if not completed
-	ctx->sizeIBO = ctx->sizeIndices;
-	ctx->sizeIBO += ctx->sizeIBO % VKVG_IBO_SIZE;
+	ctx->sizeIBO = new_size;
+	uint32_t mod = ctx->sizeIBO % VKVG_IBO_SIZE;
+	if (mod > 0)
+		ctx->sizeIBO += VKVG_IBO_SIZE - mod;
 	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);
 	vkvg_buffer_destroy (&ctx->indices);
 	vkvg_buffer_create (ctx->pSurf->dev,
@@ -418,24 +422,30 @@ void _end_render_pass (VkvgContext ctx) {
 #endif
 	ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
 }
-//stroke and non-zero draw call for solid color flush
-void _flush_undrawn_vertices (VkvgContext ctx){
-	if (ctx->indCount == ctx->curIndStart)
-		return;
 
+void _check_vao_size (VkvgContext ctx) {
 	if (ctx->vertCount > ctx->sizeVBO || ctx->indCount > ctx->sizeIBO){
 		//vbo or ibo buffers too small
 		if (ctx->cmdStarted) {
 			//if cmd is started buffers, are already bound, so no resize is possible
 			//instead we flush, and clear vbo and ibo caches
 			_end_render_pass (ctx);
-			_flush_vertices_caches_until_vertex_base (ctx);
+			if (ctx->curVertOffset > 0)
+				_flush_vertices_caches_until_vertex_base (ctx);
 			vkh_cmd_end (ctx->cmd);
 			_wait_and_submit_cmd (ctx);
 		}
 		_resize_vbo(ctx, ctx->sizeVertices);
 		_resize_ibo(ctx, ctx->sizeIndices);
 	}
+}
+
+//stroke and non-zero draw call for solid color flush
+void _flush_undrawn_vertices (VkvgContext ctx){
+	if (ctx->indCount == ctx->curIndStart)
+		return;
+
+	_check_vao_size(ctx);
 
 	_ensure_renderpass_is_started(ctx);
 	CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
@@ -453,6 +463,7 @@ void _flush_undrawn_vertices (VkvgContext ctx){
 	ctx->curIndStart = ctx->indCount;
 	ctx->curVertOffset = ctx->vertCount;
 }
+
 void _flush_cmd_buff (VkvgContext ctx){
 	_flush_undrawn_vertices (ctx);
 	if (!ctx->cmdStarted)
