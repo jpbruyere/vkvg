@@ -581,12 +581,12 @@ void vkvg_clip_preserve (VkvgContext ctx){
 
 	LOG(VKVG_LOG_INFO, "CLIP: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
+	_ensure_renderpass_is_started(ctx);
+
 	if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
-		_ensure_renderpass_is_started(ctx);
 		_poly_fill (ctx);
 		CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 	}else{
-		_ensure_renderpass_is_started(ctx);
 		CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 		CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -613,6 +613,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
 	 if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
 		 _flush_undrawn_vertices(ctx);
+
 		_poly_fill (ctx);
 		_bind_draw_pipeline (ctx);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
@@ -621,11 +622,13 @@ void vkvg_fill_preserve (VkvgContext ctx){
 		return;
 	}
 
+	if (ctx->vertCount - ctx->curVertOffset + ctx->pointCount > VKVG_IBO_MAX)
+		_flush_undrawn_vertices(ctx);//limit draw call to addressable vx with choosen index type
+
 	if (ctx->pattern)//if not solid color, source img of gradient has to be bound
 		_ensure_renderpass_is_started(ctx);
 	_fill_ec(ctx);
 }
-
 void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
 	Vertex v = {{0},ctx->curColor};
 
@@ -733,16 +736,10 @@ void _draw_segment (VkvgContext ctx, float hw, bool isCurve) {
 		_build_vb_step (ctx, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], isCurve);
 	iL = curPathPointIdx++;
 }
-void vkvg_stroke_preserve (VkvgContext ctx)
-{
-	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to stroke
-		return;
-	_finish_path(ctx);
 
-	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
-
-	float hw = ctx->lineWidth / 2.0f;
+bool _process_stroke (VkvgContext ctx) {
 	curPathPointIdx = lastPathPointIdx = ptrPath = iL = iR = 0;
+	float hw = ctx->lineWidth / 2.0f;
 
 	while (ptrPath < ctx->pathPtr){
 		uint32_t ptrSegment = 0, lastSegmentPointIdx = 0;
@@ -771,7 +768,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 				totDashLength+=ctx->dashes[i];
 			if (totDashLength == 0){
 				ctx->status = VKVG_STATUS_INVALID_DASH;
-				return;
+				return true;
 			}
 			/*if (ctx->dashOffset == 0)
 				curDashOffset = 0;
@@ -842,6 +839,9 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		}else
 			_draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], vec2_line_norm(ctx->points[curPathPointIdx-1], ctx->points[curPathPointIdx]), false);
 
+		if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX)
+			return false;
+
 		curPathPointIdx = firstPathPointIdx + pathPointCount;
 
 		if (ptrSegment > 0)
@@ -849,7 +849,30 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		else
 			ptrPath++;
 	}
-	//_record_draw_cmd(ctx);
+
+
+
+
+	return true;
+}
+
+void vkvg_stroke_preserve (VkvgContext ctx)
+{
+	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to stroke
+		return;
+	_finish_path(ctx);
+
+	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path ptr = %d;\n", ctx, ctx->pathPtr);
+
+	uint32_t tmpVxCount = ctx->vertCount;
+	uint32_t tmpIxCount = ctx->indCount;
+
+	if (!_process_stroke(ctx)) {
+		ctx->vertCount = tmpVxCount;
+		ctx->indCount = tmpIxCount;
+		_flush_undrawn_vertices(ctx);//limit draw call to addressable vx with choosen index type
+		_process_stroke(ctx);
+	}
 }
 void vkvg_paint (VkvgContext ctx){
 	if (ctx->pathPtr || ctx->segmentPtr){//path to fill

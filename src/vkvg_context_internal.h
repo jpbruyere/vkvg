@@ -34,6 +34,13 @@
 #define VKVG_PATHES_SIZE			16
 #define VKVG_ARRAY_THRESHOLD		8
 #define VKVG_IBO_INDEX_TYPE         uint16_t
+#if VKVG_IBO_INDEX_TYPE == uint16_t
+	#define VKVG_IBO_MAX UINT16_MAX
+#else
+	#define VKVG_IBO_MAX UINT32_MAX
+#endif
+
+
 
 #define CreateRgba(r, g, b, a) ((a << 24) | (r << 16) | (g << 8) | b)
 #ifdef VKVG_PREMULT_ALPHA
@@ -209,7 +216,7 @@ void _bind_draw_pipeline    (VkvgContext ctx);
 void _create_cmd_buff		(VkvgContext ctx);
 void _ensure_renderpass_is_started  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
-void _flush_undrawn_vertices		(VkvgContext ctx);
+void _flush_undrawn_vertices(VkvgContext ctx);
 void _wait_flush_fence      (VkvgContext ctx);
 void _reset_flush_fence     (VkvgContext ctx);
 void _wait_and_submit_cmd   (VkvgContext ctx);
