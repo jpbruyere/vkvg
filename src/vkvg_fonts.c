@@ -161,8 +161,6 @@ void _init_next_line_in_tex_cache (VkvgDevice dev, _vkvg_font_t* f){
 void _destroy_font_cache (VkvgDevice dev){
 	_font_cache_t* cache = (_font_cache_t*)dev->fontCache;
 
-	//FcFini();
-
 	free (cache->hostBuff);
 
 	for (int i = 0; i < cache->fontsCount; ++i) {
@@ -188,6 +186,10 @@ void _destroy_font_cache (VkvgDevice dev){
 	vkh_image_destroy   (cache->texture);
 	//vkFreeCommandBuffers(dev->vkDev,dev->cmdPool, 1, &cache->cmd);
 	vkDestroyFence      (dev->vkDev,cache->uploadFence,NULL);
+
+	FT_Done_FreeType(cache->library);
+	FcConfigDestroy(cache->config);
+	FcFini();
 
 	free (dev->fontCache);
 

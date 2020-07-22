@@ -177,6 +177,8 @@ void vkvg_device_destroy (VkvgDevice dev)
 	vkFreeCommandBuffers            (dev->vkDev, dev->cmdPool, 1, &dev->cmd);
 	vkDestroyCommandPool            (dev->vkDev, dev->cmdPool, NULL);
 
+	vkh_queue_destroy(dev->gQueue);
+
 	_destroy_font_cache(dev);
 
 	vmaDestroyAllocator (dev->allocator);
