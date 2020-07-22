@@ -1188,10 +1188,11 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 		VkRect2D r = {{(int32_t)ctx->xMin, (int32_t)ctx->yMin}, {(int32_t)ctx->xMax - (int32_t)ctx->xMin + 1, (int32_t)ctx->yMax - (int32_t)ctx->yMin + 1}};
 		CmdSetScissor(ctx->cmd, 0, 1, &r);
 	}
-	VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
+	uint32_t firstVertIdx = ctx->vertCount;
 	_add_vertexf(ctx, -1, -1);
 	_add_vertexf(ctx, 3, -1);
 	_add_vertexf(ctx, -1, 3);
+	ctx->curVertOffset = ctx->vertCount;
 
 	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
 					   VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&one);
