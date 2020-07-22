@@ -116,6 +116,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
 	ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 	ctx->savedStencils = malloc(0);
+
 	ctx->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
 	ctx->currentFont = NULL;
 
@@ -145,7 +146,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	_create_cmd_buff        (ctx);
 	_createDescriptorPool   (ctx);
 	_init_descriptor_sets   (ctx);
-	//_update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
+	_update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
 	_update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc);
 	_update_gradient_desc_set(ctx);
 
@@ -166,7 +167,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)ctx->descriptorPool, "CTX Descriptor Pool");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc, "CTX DescSet SOURCE");
-//	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsGrad, "CTX DescSet GRADIENT");
 
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
@@ -231,8 +232,8 @@ void vkvg_destroy (VkvgContext ctx)
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
-	VkDescriptorSet dss[] = {ctx->dsSrc, ctx->dsGrad};
-	vkFreeDescriptorSets    (dev, ctx->descriptorPool, 2, dss);
+	VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc, ctx->dsGrad};
+	vkFreeDescriptorSets    (dev, ctx->descriptorPool, 3, dss);
 
 	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
 
@@ -630,7 +631,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 	_fill_ec(ctx);
 }
 void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
-	Vertex v = {{0},ctx->curColor};
+	Vertex v = {{0},ctx->curColor,{0,0,-1}};
 
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 

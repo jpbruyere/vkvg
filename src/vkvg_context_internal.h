@@ -52,6 +52,7 @@
 typedef struct{
 	vec2 pos;
 	uint32_t color;
+	vec3 uv;
 }Vertex;
 
 typedef struct {
@@ -100,7 +101,7 @@ typedef struct _vkvg_context_t {
 	bool                cmdStarted; //prevent flushing empty renderpass
 	bool                pushCstDirty;//prevent pushing to gpu if not requested
 	VkDescriptorPool	descriptorPool;//one pool per thread
-	//VkDescriptorSet     dsFont;     //fonts glyphs texture atlas descriptor (local for thread safety)
+	VkDescriptorSet     dsFont;     //fonts glyphs texture atlas descriptor (local for thread safety)
 	VkDescriptorSet     dsSrc;      //source ds
 	VkDescriptorSet     dsGrad;     //gradient uniform buffer
 
