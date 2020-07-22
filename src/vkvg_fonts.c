@@ -463,7 +463,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 	unsigned int glyph_count;
 	hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos (tr->hbBuf, &glyph_count);
 
-	Vertex v = {{0},0};
+	Vertex v = {{0},ctx->curColor,{0,0,-1}};
 	vec2 pen = {0,0};
 
 	if (!_current_path_is_empty(ctx))
@@ -485,7 +485,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 
 			VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
-			/*
+
 			v.uv.x = cr->bounds.x;
 			v.uv.y = cr->bounds.y;
 			v.uv.z = cr->pageIdx;
@@ -504,7 +504,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 			v.pos.y += cr->bounds.height;
 			v.uv.y += uvHeight;
 			_add_vertex(ctx,v);
-*/
+
 			_add_tri_indices_for_rect (ctx, firstIdx);
 		}
 
@@ -520,10 +520,10 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 #ifdef DEBUG
 void _show_texture (vkvg_context* ctx){
 	Vertex vs[] = {
-		{{0,0},                             {0,0,0}},
-		{{0,FONT_PAGE_SIZE},                {0,1,0}},
-		{{FONT_PAGE_SIZE,0},                {1,0,0}},
-		{{FONT_PAGE_SIZE,FONT_PAGE_SIZE},   {1,1,0}}
+		{{0,0},                           0,  {0,0,0}},
+		{{0,FONT_PAGE_SIZE},              0,  {0,1,0}},
+		{{FONT_PAGE_SIZE,0},              0,  {1,0,0}},
+		{{FONT_PAGE_SIZE,FONT_PAGE_SIZE}, 0,  {1,1,0}}
 	};
 
 	VKVG_IBO_INDEX_TYPE i = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
