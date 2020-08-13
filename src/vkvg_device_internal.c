@@ -28,6 +28,25 @@
 
 uint8_t vkvg_log_level = VKVG_LOG_ERR;
 
+PFN_vkCmdBindPipeline           CmdBindPipeline;
+PFN_vkCmdBindDescriptorSets     CmdBindDescriptorSets;
+PFN_vkCmdBindIndexBuffer        CmdBindIndexBuffer;
+PFN_vkCmdBindVertexBuffers      CmdBindVertexBuffers;
+
+PFN_vkCmdDrawIndexed    CmdDrawIndexed;
+PFN_vkCmdDraw           CmdDraw;
+
+PFN_vkCmdSetStencilCompareMask  CmdSetStencilCompareMask;
+PFN_vkCmdSetStencilReference    CmdSetStencilReference;
+PFN_vkCmdSetStencilWriteMask    CmdSetStencilWriteMask;
+PFN_vkCmdBeginRenderPass        CmdBeginRenderPass;
+PFN_vkCmdEndRenderPass          CmdEndRenderPass;
+PFN_vkCmdSetViewport            CmdSetViewport;
+PFN_vkCmdSetScissor             CmdSetScissor;
+
+PFN_vkCmdPushConstants          CmdPushConstants;
+PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
+
 void _flush_all_contexes (VkvgDevice dev){
 	VkvgContext next = dev->lastCtx;
 	while (next != NULL){
