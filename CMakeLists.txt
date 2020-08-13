@@ -231,7 +231,6 @@ if (VKVG_BUILD_TESTS)
     TARGET_LINK_LIBRARIES(tests_common
         ${Vulkan_LIBRARIES}
         ${GLFW3_LIBRARY}
-        #vkh_static
         vkvg_static
     )
 
