@@ -30,25 +30,24 @@
 #define STENCIL_CLIP_BIT    0x2
 #define STENCIL_ALL_BIT     0x3
 
-PFN_vkCmdBindPipeline           CmdBindPipeline;
-PFN_vkCmdBindDescriptorSets     CmdBindDescriptorSets;
-PFN_vkCmdBindIndexBuffer        CmdBindIndexBuffer;
-PFN_vkCmdBindVertexBuffers      CmdBindVertexBuffers;
+extern PFN_vkCmdBindPipeline           CmdBindPipeline;
+extern PFN_vkCmdBindDescriptorSets     CmdBindDescriptorSets;
+extern PFN_vkCmdBindIndexBuffer        CmdBindIndexBuffer;
+extern PFN_vkCmdBindVertexBuffers      CmdBindVertexBuffers;
 
-PFN_vkCmdDrawIndexed    CmdDrawIndexed;
-PFN_vkCmdDraw           CmdDraw;
+extern PFN_vkCmdDrawIndexed    CmdDrawIndexed;
+extern PFN_vkCmdDraw           CmdDraw;
 
-PFN_vkCmdSetStencilCompareMask  CmdSetStencilCompareMask;
-PFN_vkCmdSetStencilReference    CmdSetStencilReference;
-PFN_vkCmdSetStencilWriteMask    CmdSetStencilWriteMask;
-PFN_vkCmdBeginRenderPass        CmdBeginRenderPass;
-PFN_vkCmdEndRenderPass          CmdEndRenderPass;
-PFN_vkCmdSetViewport            CmdSetViewport;
-PFN_vkCmdSetScissor             CmdSetScissor;
+extern PFN_vkCmdSetStencilCompareMask  CmdSetStencilCompareMask;
+extern PFN_vkCmdSetStencilReference    CmdSetStencilReference;
+extern PFN_vkCmdSetStencilWriteMask    CmdSetStencilWriteMask;
+extern PFN_vkCmdBeginRenderPass        CmdBeginRenderPass;
+extern PFN_vkCmdEndRenderPass          CmdEndRenderPass;
+extern PFN_vkCmdSetViewport            CmdSetViewport;
+extern PFN_vkCmdSetScissor             CmdSetScissor;
 
-PFN_vkCmdPushConstants          CmdPushConstants;
-PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
-
+extern PFN_vkCmdPushConstants          CmdPushConstants;
+extern PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
 
 typedef struct _vkvg_device_t{
 	VkDevice				vkDev;                  /**< Vulkan Logical Device */
