@@ -1,1 +1,28 @@
-theme: jekyll-theme-cayman
+title: VKVG Documentation
+lang: en
+description: Open source 2d vector graphic library for vulkan writen in c.
+
+remote_theme: rundocs/jekyll-rtd-theme # rundocs/jekyll-theme-docsify
+
+edit: true
+addons_branch: true
+
+addons:
+  - github
+  - plugins
+  - analytics
+
+copyright:
+    revision: true
+
+readme_index:
+    with_frontmatter: trueremote_theme: pmarsceill/just-the-docs
+
+
+color_scheme: "dark"
+logo: "/assets/images/vkvg.png"
+
+# Google Analytics Tracking (optional)
+ga_tracking: UA-175345502-1
+
+
