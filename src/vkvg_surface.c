@@ -503,8 +503,3 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 	vkh_image_unmap (stagImg);
 	vkh_image_destroy (stagImg);
 }
-
-/*VkhImage vkvg_surface_get_vkh_image(VkvgSurface surf)
-{
-	return surf->img;
-}*/
