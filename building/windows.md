@@ -1,8 +1,5 @@
 ---
-layout: default
-title: Windows instructions
-parent: Building
-nav_order: 2
+sort: 3
 ---
 
 #  Build on Windows with Visual Studio IDE:
