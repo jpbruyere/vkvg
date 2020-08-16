@@ -4,3 +4,7 @@
 
 layout: home
 ---
+
+{% for p in site.posts %}
+    {{ p | inspect }}
+{% endfor %}
