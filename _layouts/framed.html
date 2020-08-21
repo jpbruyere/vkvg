@@ -3,7 +3,9 @@
     {%- include head.html -%}
     <div id="main">
         {% include sidenav.html %}
-        <article>{{ content }}</article>
+        <iframe src="documentation.html" width="100%"  frameBorder="0" name="docframe">
+            {{ content }}
+        </iframe>
         <!--<aside>Aside</aside>-->
     </div>    
 </html>

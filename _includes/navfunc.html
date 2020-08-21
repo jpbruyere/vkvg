@@ -1,0 +1,11 @@
+<li><span class="caret">{{include.file.slug}}</span>
+    <ul class="nested">
+        {% directory path: {{include.file.url}} %}
+            {% if file.isdir %}                
+                {%- include navfunc.html file=file -%}
+            {% else %}                
+                <li><a href="{{ file.url | replace:'.md','.html'}}" target="docframe">{{file.slug}}</a></li>
+            {% endif %}
+        {% enddirectory %}
+    </ul>
+</li>

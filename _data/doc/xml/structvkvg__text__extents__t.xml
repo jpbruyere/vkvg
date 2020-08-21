@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.18">
+  <compounddef id="structvkvg__text__extents__t" kind="struct" language="C++" prot="public">
+    <compoundname>vkvg_text_extents_t</compoundname>
+    <includes refid="vkvg_8h" local="no">vkvg.h</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structvkvg__text__extents__t_1a36152a2d5302d6860e555e77a4a8b456" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float x_bearing</definition>
+        <argsstring></argsstring>
+        <name>x_bearing</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="149" column="7" bodyfile="include/vkvg.h" bodystart="149" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__text__extents__t_1adb121426957cb2c536d442cb6fd1c90f" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float y_bearing</definition>
+        <argsstring></argsstring>
+        <name>y_bearing</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="150" column="7" bodyfile="include/vkvg.h" bodystart="150" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__text__extents__t_1ae426f00e82704fa09578f5446e22d915" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float width</definition>
+        <argsstring></argsstring>
+        <name>width</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="151" column="7" bodyfile="include/vkvg.h" bodystart="151" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__text__extents__t_1a48083b65ac9a863566dc3e3fff09a5b4" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float height</definition>
+        <argsstring></argsstring>
+        <name>height</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="152" column="7" bodyfile="include/vkvg.h" bodystart="152" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__text__extents__t_1ae83c02c42c97888eca5532a98ed4e2e4" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float x_advance</definition>
+        <argsstring></argsstring>
+        <name>x_advance</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="153" column="7" bodyfile="include/vkvg.h" bodystart="153" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__text__extents__t_1a35b39603f2d8ae8c01b5cb9dfbfd20d3" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float y_advance</definition>
+        <argsstring></argsstring>
+        <name>y_advance</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="154" column="7" bodyfile="include/vkvg.h" bodystart="154" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="include/vkvg.h" line="148" column="1" bodyfile="include/vkvg.h" bodystart="148" bodyend="155"/>
+    <listofallmembers>
+      <member refid="structvkvg__text__extents__t_1a48083b65ac9a863566dc3e3fff09a5b4" prot="public" virt="non-virtual"><scope>vkvg_text_extents_t</scope><name>height</name></member>
+      <member refid="structvkvg__text__extents__t_1ae426f00e82704fa09578f5446e22d915" prot="public" virt="non-virtual"><scope>vkvg_text_extents_t</scope><name>width</name></member>
+      <member refid="structvkvg__text__extents__t_1ae83c02c42c97888eca5532a98ed4e2e4" prot="public" virt="non-virtual"><scope>vkvg_text_extents_t</scope><name>x_advance</name></member>
+      <member refid="structvkvg__text__extents__t_1a36152a2d5302d6860e555e77a4a8b456" prot="public" virt="non-virtual"><scope>vkvg_text_extents_t</scope><name>x_bearing</name></member>
+      <member refid="structvkvg__text__extents__t_1a35b39603f2d8ae8c01b5cb9dfbfd20d3" prot="public" virt="non-virtual"><scope>vkvg_text_extents_t</scope><name>y_advance</name></member>
+      <member refid="structvkvg__text__extents__t_1adb121426957cb2c536d442cb6fd1c90f" prot="public" virt="non-virtual"><scope>vkvg_text_extents_t</scope><name>y_bearing</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

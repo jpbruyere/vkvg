@@ -1,0 +1,34 @@
+<nav>
+    <div class="sidenav">
+        <a href="/about.html">About</a>
+        <a href="/documentation.html">Documentation</a>
+        <a href="/testxml.html">xml data test</a>
+        <a href="#contact">Contact</a>
+        <ul id="myUL">
+            <li><span class="caret">documentation</span>
+                <ul class="nested">
+                    {% directory path: /documentation %}                    
+                        {% if file.isdir %}
+                            {%- include navfunc.html file=file -%}
+                        {% else %}
+                            <li>{{file.slug}}</li>
+                        {% endif %}
+                    {% enddirectory %}
+                </ul>
+            </li>      
+        </ul>
+        <script>
+            var toggler = document.getElementsByClassName("caret");
+            var i;
+            
+            for (i = 0; i < toggler.length; i++) {
+                toggler[i].addEventListener("click",
+                    function() {
+                        this.parentElement.querySelector(".nested").classList.toggle("active");
+                        this.classList.toggle("caret-down");
+                    }
+                );
+            }
+        </script>
+    </div>
+</nav>

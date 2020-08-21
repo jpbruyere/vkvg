@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.18">
+  <compounddef id="structvkvg__matrix__t" kind="struct" language="C++" prot="public">
+    <compoundname>vkvg_matrix_t</compoundname>
+    <includes refid="vkvg_8h" local="no">vkvg.h</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structvkvg__matrix__t_1a9fb9d00fbbf390e0263bcc204b03c7c8" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float xx</definition>
+        <argsstring></argsstring>
+        <name>xx</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="135" column="7" bodyfile="include/vkvg.h" bodystart="135" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__matrix__t_1a8e1608facba0c31efe99d65811fab570" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float yx</definition>
+        <argsstring></argsstring>
+        <name>yx</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="135" column="16" bodyfile="include/vkvg.h" bodystart="135" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__matrix__t_1a83a7590defc35766f789fbbf7fc41590" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float xy</definition>
+        <argsstring></argsstring>
+        <name>xy</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="136" column="7" bodyfile="include/vkvg.h" bodystart="136" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__matrix__t_1a342cbf7f29a65a0d1a2949ef4675008e" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float yy</definition>
+        <argsstring></argsstring>
+        <name>yy</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="136" column="16" bodyfile="include/vkvg.h" bodystart="136" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__matrix__t_1a3c9556645d92e863376a4063a3ad7001" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float x0</definition>
+        <argsstring></argsstring>
+        <name>x0</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="137" column="7" bodyfile="include/vkvg.h" bodystart="137" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__matrix__t_1adf19b8ba42d497d3093c3a51b1a32cca" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float y0</definition>
+        <argsstring></argsstring>
+        <name>y0</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="137" column="16" bodyfile="include/vkvg.h" bodystart="137" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="include/vkvg.h" line="134" column="1" bodyfile="include/vkvg.h" bodystart="134" bodyend="138"/>
+    <listofallmembers>
+      <member refid="structvkvg__matrix__t_1a3c9556645d92e863376a4063a3ad7001" prot="public" virt="non-virtual"><scope>vkvg_matrix_t</scope><name>x0</name></member>
+      <member refid="structvkvg__matrix__t_1a9fb9d00fbbf390e0263bcc204b03c7c8" prot="public" virt="non-virtual"><scope>vkvg_matrix_t</scope><name>xx</name></member>
+      <member refid="structvkvg__matrix__t_1a83a7590defc35766f789fbbf7fc41590" prot="public" virt="non-virtual"><scope>vkvg_matrix_t</scope><name>xy</name></member>
+      <member refid="structvkvg__matrix__t_1adf19b8ba42d497d3093c3a51b1a32cca" prot="public" virt="non-virtual"><scope>vkvg_matrix_t</scope><name>y0</name></member>
+      <member refid="structvkvg__matrix__t_1a8e1608facba0c31efe99d65811fab570" prot="public" virt="non-virtual"><scope>vkvg_matrix_t</scope><name>yx</name></member>
+      <member refid="structvkvg__matrix__t_1a342cbf7f29a65a0d1a2949ef4675008e" prot="public" virt="non-virtual"><scope>vkvg_matrix_t</scope><name>yy</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

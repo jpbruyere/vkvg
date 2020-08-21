@@ -1,10 +1,7 @@
 ---
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-
 layout: home
 ---
 
-{% for p in site.posts %}
-    {{ p | inspect }}
-{% endfor %}
+<div>
+    {% include post_list.html %}
+</div>

@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.18">
+  <compounddef id="structvkvg__font__extents__t" kind="struct" language="C++" prot="public">
+    <compoundname>vkvg_font_extents_t</compoundname>
+    <includes refid="vkvg_8h" local="no">vkvg.h</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structvkvg__font__extents__t_1a31ebc425eeae55d11acd591bb46dd468" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float ascent</definition>
+        <argsstring></argsstring>
+        <name>ascent</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="141" column="7" bodyfile="include/vkvg.h" bodystart="141" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__font__extents__t_1a5984964357202018e67f64fd879af95b" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float descent</definition>
+        <argsstring></argsstring>
+        <name>descent</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="142" column="7" bodyfile="include/vkvg.h" bodystart="142" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__font__extents__t_1a48083b65ac9a863566dc3e3fff09a5b4" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float height</definition>
+        <argsstring></argsstring>
+        <name>height</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="143" column="7" bodyfile="include/vkvg.h" bodystart="143" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__font__extents__t_1afef09feed3e6d406a79a4654bbfdf32e" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float max_x_advance</definition>
+        <argsstring></argsstring>
+        <name>max_x_advance</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="144" column="7" bodyfile="include/vkvg.h" bodystart="144" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structvkvg__font__extents__t_1a5a74d8c1db44409b96daa190fce554b1" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float max_y_advance</definition>
+        <argsstring></argsstring>
+        <name>max_y_advance</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/vkvg.h" line="145" column="7" bodyfile="include/vkvg.h" bodystart="145" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="include/vkvg.h" line="140" column="1" bodyfile="include/vkvg.h" bodystart="140" bodyend="146"/>
+    <listofallmembers>
+      <member refid="structvkvg__font__extents__t_1a31ebc425eeae55d11acd591bb46dd468" prot="public" virt="non-virtual"><scope>vkvg_font_extents_t</scope><name>ascent</name></member>
+      <member refid="structvkvg__font__extents__t_1a5984964357202018e67f64fd879af95b" prot="public" virt="non-virtual"><scope>vkvg_font_extents_t</scope><name>descent</name></member>
+      <member refid="structvkvg__font__extents__t_1a48083b65ac9a863566dc3e3fff09a5b4" prot="public" virt="non-virtual"><scope>vkvg_font_extents_t</scope><name>height</name></member>
+      <member refid="structvkvg__font__extents__t_1afef09feed3e6d406a79a4654bbfdf32e" prot="public" virt="non-virtual"><scope>vkvg_font_extents_t</scope><name>max_x_advance</name></member>
+      <member refid="structvkvg__font__extents__t_1a5a74d8c1db44409b96daa190fce554b1" prot="public" virt="non-virtual"><scope>vkvg_font_extents_t</scope><name>max_y_advance</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

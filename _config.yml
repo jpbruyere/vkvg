@@ -1,23 +1,15 @@
 title: VKVG Documentation
 author: Jean-Philippe Bruyère
 email: jp_bruyere@hotmail.com
-url: http://github.com/jpbruyere/vkvg # root address of the site
-description: >-
-  description: Open source 2d vector graphic library for vulkan writen in c.
-
-baseurl: "/vkvg" # the subpath of your site, e.g. /blog
-url: "https://jpbruyere.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: jpbruyere
 github_username: jpbruyere
+description: >-
+  description: Open source 2d vector graphic library for vulkan writen in c.
+url: http://github.com/jpbruyere/vkvg # root address of the site
 
-# Build settings
-# theme: no-style-please
-remote_theme: riggraz/no-style-please
+theme: no-style-please
+#remote_theme: riggraz/no-style-please
 
-theme_config:
-  back_home_text: ".." # customize text for homepage link in post layout
-  date_format: "%Y-%m-%d" # customize how date is formatted
-  show_description: false # show blog description in home page
 
 addons:
   - github
@@ -28,6 +20,19 @@ plugins:
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-remote-theme
+  - jekyll-admin
+  - jekyll-datapage-generator
+
+markdown: kramdown
+
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+theme_config:
+  back_home_text: ".." # customize text for homepage link in post layout
+  date_format: "%Y-%m-%d" # customize how date is formatted
+  show_description: true # show blog description in home page
 
 # Exclude from processing.
 # The following items will not be processed, by default.
@@ -37,7 +42,7 @@ plugins:
 # Excluded items can be processed by explicitly listing the directories or
 # their entries' file path in the `include:` list.
 #
-# exclude:
+#exclude:
 #   - .sass-cache/
 #   - .jekyll-cache/
 #   - gemfiles/
