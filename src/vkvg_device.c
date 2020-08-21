@@ -72,7 +72,10 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 		return dev;
 	}
 
-	_init_function_pointers (dev);
+	if (!_init_function_pointers (dev)){
+		dev->status = VKVG_STATUS_NULL_POINTER;
+		return dev;
+	}
 
 	VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 

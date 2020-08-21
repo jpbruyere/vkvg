@@ -96,7 +96,7 @@ typedef struct _vkvg_device_t{
 	VkvgContext     lastCtx;                        /**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
 }vkvg_device;
 
-void _init_function_pointers    (VkvgDevice dev);
+bool _init_function_pointers	(VkvgDevice dev);
 void _create_empty_texture      (VkvgDevice dev, VkFormat format, VkImageTiling tiling);
 bool _get_best_image_tiling		(VkvgDevice dev, VkFormat format, VkImageTiling* pTiling);
 void _create_pipeline_cache     (VkvgDevice dev);

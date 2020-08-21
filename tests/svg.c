@@ -6,8 +6,6 @@
 
 static float rotation = 0.f;
 static const char* path = "data/tiger.svg";
-//static const char* path = "data/vkvg.svg";
-//static const char* path = "data/testPiece.svg";
 
 void test_svg_surface() {
 	VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, path);
