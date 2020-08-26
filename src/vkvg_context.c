@@ -1272,6 +1272,11 @@ void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg, char *subId){
 			vkvg_move_to(ctx, p[0],p[1]);
 			for (int i = 1; i < path->npts-2; i += 3) {
 				p = &path->pts[i*2];
+				if ( i + 3 >= path -> npts -2 ) { //last one
+					if ( p [ 0 ] == p [ 4 ] && p [ 1 ] == p [ 5 ] ) {// same as first one
+						continue ;
+					}
+				}
 				vkvg_curve_to(ctx, p[0],p[1], p[2],p[3], p[4],p[5]);
 			}
 			if (path->closed)
