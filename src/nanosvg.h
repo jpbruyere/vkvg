@@ -29,8 +29,10 @@
 #ifndef NANOSVG_H
 #define NANOSVG_H
 
+#ifndef NANOSVG_CPLUSPLUS
 #ifdef __cplusplus
 extern "C" {
+#endif
 #endif
 
 // NanoSVG is a simple stupid single-header-file SVG parse. The output of the parser is a list of cubic bezier shapes.
@@ -45,15 +47,15 @@ extern "C" {
 // NanoSVG can return the paths in few different units. For example if you want to render an image, you may choose
 // to get the paths in pixels, or if you are feeding the data into a CNC-cutter, you may want to use millimeters.
 //
-// The units passed to NanoVG should be one of: 'px', 'pt', 'pc' 'mm', 'cm', or 'in'.
+// The units passed to NanoSVG should be one of: 'px', 'pt', 'pc' 'mm', 'cm', or 'in'.
 // DPI (dots-per-inch) controls how the unit conversion is done.
 //
 // If you don't know or care about the units stuff, "px" and 96 should get you going.
 
 
 /* Example Usage:
-	// Load
-	NSVGImage* image;
+	// Load SVG
+	NSVGimage* image;
 	image = nsvgParseFromFile("test.svg", "px", 96);
 	printf("size: %f x %f\n", image->width, image->height);
 	// Use...
@@ -167,11 +169,16 @@ NSVGimage* nsvgParseFromFile(const char* filename, const char* units, float dpi)
 // Important note: changes the string.
 NSVGimage* nsvgParse(char* input, const char* units, float dpi);
 
-// Deletes list of paths.
+// Duplicates a path.
+NSVGpath* nsvgDuplicatePath(NSVGpath* p);
+
+// Deletes an image.
 void nsvgDelete(NSVGimage* image);
 
+#ifndef NANOSVG_CPLUSPLUS
 #ifdef __cplusplus
 }
+#endif
 #endif
 
 #endif // NANOSVG_H
@@ -207,6 +214,10 @@ void nsvgDelete(NSVGimage* image);
 	#define NSVG_INLINE inline
 #endif
 
+#ifndef NANOSVG_DEBUG
+#define NANOSVG_DEBUG(x...)
+//#define NANOSVG_DEBUG printf
+#endif
 
 static int nsvg__isspace(char c)
 {
@@ -238,7 +249,7 @@ static void nsvg__parseContent(char* s,
 							   void* ud)
 {
 	// Trim start white spaces
-	while (*s && nsvg__isspace(*s)) s++;
+	while (nsvg__isspace(*s)) s++;
 	if (!*s) return;
 
 	if (contentCb)
@@ -258,7 +269,7 @@ static void nsvg__parseElement(char* s,
 	char quote;
 
 	// Skip white space after the '<'
-	while (*s && nsvg__isspace(*s)) s++;
+	while (nsvg__isspace(*s)) s++;
 
 	// Check if the tag is end tag
 	if (*s == '/') {
@@ -279,17 +290,17 @@ static void nsvg__parseElement(char* s,
 
 	// Get attribs
 	while (!end && *s && nattr < NSVG_XML_MAX_ATTRIBS-3) {
-		char* name2 = NULL;
+		char* name = NULL;
 		char* value = NULL;
 
 		// Skip white space before the attrib name
-		while (*s && nsvg__isspace(*s)) s++;
+		while (nsvg__isspace(*s)) s++;
 		if (!*s) break;
 		if (*s == '/') {
 			end = 1;
 			break;
 		}
-		name2 = s;
+		name = s;
 		// Find end of the attrib name.
 		while (*s && !nsvg__isspace(*s) && *s != '=') s++;
 		if (*s) { *s++ = '\0'; }
@@ -304,8 +315,8 @@ static void nsvg__parseElement(char* s,
 		if (*s) { *s++ = '\0'; }
 
 		// Store only well formed attributes
-		if (name2 && value) {
-			attr[nattr++] = name2;
+		if (name && value) {
+			attr[nattr++] = name;
 			attr[nattr++] = value;
 		}
 	}
@@ -792,7 +803,8 @@ static float nsvg__convertToPixels(NSVGparser* p, NSVGcoordinate c, float orig, 
 		case NSVG_UNITS_IN:			return c.value * p->dpi;
 		case NSVG_UNITS_EM:			return c.value * attr->fontSize;
 		case NSVG_UNITS_EX:			return c.value * attr->fontSize * 0.52f; // x-height of Helvetica.
-		case NSVG_UNITS_PERCENT:	return orig + c.value / 100.0f * length;		
+		case NSVG_UNITS_PERCENT:	return orig + c.value / 100.0f * length;
+		default:					return c.value;
 	}
 	return c.value;
 }
@@ -1122,7 +1134,7 @@ static double nsvg__atof(const char* s)
 
 	// Parse optional exponent
 	if (*cur == 'e' || *cur == 'E') {
-		int expPart = 0;
+		long expPart = 0;
 		cur++; // skip 'E'
 		expPart = strtol(cur, &end, 10); // Parse digit sequence with sign
 		if (cur != end) {
@@ -1145,29 +1157,35 @@ static const char* nsvg__parseNumber(const char* s, char* it, const int size)
 		s++;
 	}
 	// integer part
-	while (*s && nsvg__isdigit(*s)) {
+	// leading zero
+	if (*s == '0') {
 		if (i < last) it[i++] = *s;
 		s++;
 	}
+	else
+		while (nsvg__isdigit(*s)) {
+			if (i < last) it[i++] = *s;
+			s++;
+		}
 	if (*s == '.') {
 		// decimal point
 		if (i < last) it[i++] = *s;
 		s++;
 		// fraction part
-		while (*s && nsvg__isdigit(*s)) {
+		while (nsvg__isdigit(*s)) {
 			if (i < last) it[i++] = *s;
 			s++;
 		}
 	}
 	// exponent
-	if (*s == 'e' || *s == 'E') {
+	if ((*s == 'e' || *s == 'E') && (s[1] != 'm' && s[1] != 'x')) {
 		if (i < last) it[i++] = *s;
 		s++;
 		if (*s == '-' || *s == '+') {
 			if (i < last) it[i++] = *s;
 			s++;
 		}
-		while (*s && nsvg__isdigit(*s)) {
+		while (nsvg__isdigit(*s)) {
 			if (i < last) it[i++] = *s;
 			s++;
 		}
@@ -1177,11 +1195,23 @@ static const char* nsvg__parseNumber(const char* s, char* it, const int size)
 	return s;
 }
 
+static const char* nsvg__getNextPathItemWhenArcFlag(const char* s, char* it)
+{
+	it[0] = '\0';
+	while (nsvg__isspace(*s) || *s == ',') s++;
+	if (*s == '0' || *s == '1') {
+		it[0] = *s++;
+		it[1] = '\0';
+		return s;
+	}
+	return s;
+}
+
 static const char* nsvg__getNextPathItem(const char* s, char* it)
 {
 	it[0] = '\0';
 	// Skip white spaces and commas
-	while (*s && (nsvg__isspace(*s) || *s == ',')) s++;
+	while (nsvg__isspace(*s) || *s == ',') s++;
 	if (!*s) return s;
 	if (*s == '-' || *s == '+' || *s == '.' || nsvg__isdigit(*s)) {
 		s = nsvg__parseNumber(s, it, 64);
@@ -1414,8 +1444,7 @@ static unsigned int nsvg__parseColor(const char* str)
 
 static float nsvg__parseOpacity(const char* str)
 {
-	float val = 0;
-	sscanf(str, "%f", &val);
+	float val = nsvg__atof(str);
 	if (val < 0.0f) val = 0.0f;
 	if (val > 1.0f) val = 1.0f;
 	return val;
@@ -1423,8 +1452,7 @@ static float nsvg__parseOpacity(const char* str)
 
 static float nsvg__parseMiterLimit(const char* str)
 {
-	float val = 0;
-	sscanf(str, "%f", &val);
+	float val = nsvg__atof(str);
 	if (val < 0.0f) val = 0.0f;
 	return val;
 }
@@ -1455,9 +1483,9 @@ static int nsvg__parseUnits(const char* units)
 static NSVGcoordinate nsvg__parseCoordinateRaw(const char* str)
 {
 	NSVGcoordinate coord = {0, NSVG_UNITS_USER};
-	char units[32]="";
-	sscanf(str, "%f%31s", &coord.value, units);
-	coord.units = nsvg__parseUnits(units);
+	char buf[64];
+	coord.units = nsvg__parseUnits(nsvg__parseNumber(str, buf, 64));
+	coord.value = nsvg__atof(buf);
 	return coord;
 }
 
@@ -1667,7 +1695,7 @@ static const char* nsvg__getNextDashItem(const char* s, char* it)
 	int n = 0;
 	it[0] = '\0';
 	// Skip white spaces and commas
-	while (*s && (nsvg__isspace(*s) || *s == ',')) s++;
+	while (nsvg__isspace(*s) || *s == ',') s++;
 	// Advance until whitespace, comma or end.
 	while (*s && (!nsvg__isspace(*s) && *s != ',')) {
 		if (n < 63)
@@ -1818,7 +1846,7 @@ static void nsvg__parseStyle(NSVGparser* p, const char* str)
 
 	while (*str) {
 		// Left Trim
-		while(*str && nsvg__isspace(*str)) ++str;
+		while(nsvg__isspace(*str)) ++str;
 		start = str;
 		while(*str && *str != ';') ++str;
 		end = str;
@@ -2207,7 +2235,11 @@ static void nsvg__parsePath(NSVGparser* p, const char** attr)
 		nargs = 0;
 
 		while (*s) {
-			s = nsvg__getNextPathItem(s, item);
+			item[0] = '\0';
+			if ((cmd == 'A' || cmd == 'a') && (nargs == 3 || nargs == 4))
+				s = nsvg__getNextPathItemWhenArcFlag(s, item);
+			if (!*item)
+				s = nsvg__getNextPathItem(s, item);
 			if (!*item) break;
 			if (nsvg__isnum(item[0])) {
 				if (nargs < 10)
@@ -2270,6 +2302,10 @@ static void nsvg__parsePath(NSVGparser* p, const char** attr)
 					nargs = 0;
 				}
 			} else {
+				// New command
+				if (nargs) {
+					NANOSVG_DEBUG("unfinished command '%c' %d/%d args\n", cmd, nargs, rargs);
+				}
 				cmd = item[0];
 				rargs = nsvg__getArgsPerElement(cmd);
 				if (cmd == 'M' || cmd == 'm') {
@@ -2497,7 +2533,22 @@ static void nsvg__parseSVG(NSVGparser* p, const char** attr)
 			} else if (strcmp(attr[i], "height") == 0) {
 				p->image->height = nsvg__parseCoordinate(p, attr[i + 1], 0.0f, 0.0f);
 			} else if (strcmp(attr[i], "viewBox") == 0) {
-				sscanf(attr[i + 1], "%f%*[%%, \t]%f%*[%%, \t]%f%*[%%, \t]%f", &p->viewMinx, &p->viewMiny, &p->viewWidth, &p->viewHeight);
+				const char *s = attr[i + 1];
+				char buf[64];
+				s = nsvg__parseNumber(s, buf, 64);
+				p->viewMinx = nsvg__atof(buf);
+				while (nsvg__isspace(*s) || *s == '%' || *s == ',') s++;
+				if (!*s) return;
+				s = nsvg__parseNumber(s, buf, 64);
+				p->viewMiny = nsvg__atof(buf);
+				while (nsvg__isspace(*s) || *s == '%' || *s == ',') s++;
+				if (!*s) return;
+				s = nsvg__parseNumber(s, buf, 64);
+				p->viewWidth = nsvg__atof(buf);
+				while (nsvg__isspace(*s) || *s == '%' || *s == ',') s++;
+				if (!*s) return;
+				s = nsvg__parseNumber(s, buf, 64);
+				p->viewHeight = nsvg__atof(buf);
 			} else if (strcmp(attr[i], "preserveAspectRatio") == 0) {
 				if (strstr(attr[i + 1], "none") != 0) {
 					// No uniform scaling
@@ -2903,6 +2954,36 @@ error:
 	if (data) free(data);
 	if (image) nsvgDelete(image);
 	return NULL;
+}
+
+NSVGpath* nsvgDuplicatePath(NSVGpath* p)
+{
+    NSVGpath* res = NULL;
+
+    if (p == NULL)
+        return NULL;
+
+    res = (NSVGpath*)malloc(sizeof(NSVGpath));
+    if (res == NULL) goto error;
+    memset(res, 0, sizeof(NSVGpath));
+
+    res->pts = (float*)malloc(p->npts*2*sizeof(float));
+    if (res->pts == NULL) goto error;
+    memcpy(res->pts, p->pts, p->npts * sizeof(float) * 2);
+    res->npts = p->npts;
+
+    memcpy(res->bounds, p->bounds, sizeof(p->bounds));
+
+    res->closed = p->closed;
+
+    return res;
+
+error:
+    if (res != NULL) {
+        free(res->pts);
+        free(res);
+    }
+    return NULL;
 }
 
 void nsvgDelete(NSVGimage* image)
