@@ -56,33 +56,21 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->sizeIndices    = ctx->sizeIBO = VKVG_IBO_SIZE;
 	ctx->sizePathes     = VKVG_PATHES_SIZE;
 	ctx->lineWidth      = 1;
-	ctx->dashCount      = 0;
-	ctx->dashOffset     = 0;
-	ctx->dashes         = NULL;
 	ctx->curOperator    = VKVG_OPERATOR_OVER;
 	ctx->curFillRule    = VKVG_FILL_RULE_NON_ZERO;
-	ctx->curSavBit      = 0;
-	ctx->vertCount      = 0;
-	ctx->indCount       = 0;
-	ctx->curIndStart    = 0;
-	ctx->curVertOffset  = 0;
-
 	ctx->pSurf          = surf;
-	VkRect2D scissor = {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
-	ctx->bounds        = scissor;
-
-	push_constants pc = {
+	
+	ctx->bounds = (VkRect2D) {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
+	ctx->pushConsts = (push_constants) {
 			{.height=1},
 			{(float)ctx->pSurf->width,(float)ctx->pSurf->height},
 			VKVG_PATTERN_TYPE_SOLID,
 			0,
 			VKVG_IDENTITY_MATRIX,
 			VKVG_IDENTITY_MATRIX
-	};
-	ctx->pushConsts = pc;
+	};	
+	ctx->clearRect = (VkClearRect) {{{0},{ctx->pSurf->width, ctx->pSurf->height}},0,1};
 
-	const VkClearRect cr = {{{0},{ctx->pSurf->width, ctx->pSurf->height}},0,1};
-	ctx->clearRect = cr;
 	ctx->renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
 	ctx->renderPassBeginInfo.renderArea.extent.width = ctx->pSurf->width;
@@ -305,7 +293,7 @@ void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy){
 		return;
 	}
 	vec2 cp = _get_current_position(ctx);
-	vkvg_line_to(ctx, cp.x + x, cp.y + dy);
+	vkvg_line_to(ctx, cp.x + dx, cp.y + dy);
 }
 void vkvg_line_to (VkvgContext ctx, float x, float y)
 {

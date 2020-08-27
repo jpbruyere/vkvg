@@ -1,0 +1,19 @@
+ <svg width='400' height='400'>
+  <path fill='green' stroke='red' fill-opacity='0.45'  stroke-width='10'  d='
+ M 50,350
+ L 50,50
+ L 350,50
+ L 350,350
+ L 50,350
+ Z
+  '/>
+  <g fill-rule='nonzero'  transform='translate(400 400)'>
+  <path fill='green' stroke='red' fill-opacity='0.45'  stroke-width='10'  d='
+ M 50,350
+ C 25,300 25,100 50,50
+ C 100,25 300,25 350,50
+ C 375,100 375,300 350,350
+ C 300,375 100,375 50,350
+ Z
+  '/>
+</svg> 
