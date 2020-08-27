@@ -29,6 +29,15 @@ extern "C" {
 /*************************************************************************
  * Doxygen documentation
  *************************************************************************/
+/** @mainpage VKVG: vulkan vector graphics
+ *
+ * Documentation of all members: vkvg.h
+ *
+ * VKVG is an open source 2d vector drawing library written in @b c and using [vulkan](https://www.khronos.org/vulkan/) for hardware acceleration.
+ * Its api is modeled on the [cairo graphic library](https://www.cairographics.org/) with the following software components:
+ *
+ * - @ref surface
+ */
 
 /*! @file vkvg.h
  *  @brief The header of the VKVG library.
@@ -38,19 +47,13 @@ extern "C" {
  *
  *  For more information about how to use this file, see @ref build_include.
  */
-/*! @defgroup device Device reference
- *  @brief Functions and types related to VKVG device .
- *
- *  This is the reference documentation for creating, using and destroying VKVG
- *  Devices used to connect to vulkan context.
- */
-/*! @defgroup surface Surface reference
- *  @brief Functions and types related to VKVG device .
+/*! @defgroup surface Surface
+ *  @brief Functions and types related to VKVG surface.
  *
  *  This is the reference documentation for creating, using and destroying VKVG
  *  Surfaces used as backend for drawing operations.
  */
-/*! @defgroup context Context reference
+/*! @defgroup context Context
  *  @brief Functions and types related to VKVG contexts.
  *
  *  This is the reference documentation for VKVG contexts used to draw on @ref surface.
@@ -58,14 +61,23 @@ extern "C" {
 /*! @defgroup path Path creation and manipulation reference.
  *  @brief Functions and types related to path edition.
  */
+/*! @defgroup pattern Pattern
+ *  @brief Functions and types related to VKVG patterns.
+ *
+ *  This is the reference documentation for VKVG patters used as source for drawing operations.
+ */
 
 #include <vulkan/vulkan.h>
 #include <math.h>
 #include <stdbool.h>
 
-/*! @name GLFW version macros
+/*! @defgroup VKVG version macros
+ *	@brief Compile-time and run-time version checks.
+ *
+ *	vkvg library versioning follows the [Semantic Versioning 2.0.0](https://semver.org/)
+ *
  *  @{ */
-/*! @brief The major version number of the VKVG library.
+/*! @brief Major version number of the VKVG library.
  *
  *  This is incremented when the API is changed in non-compatible ways.
  *  @ingroup init
@@ -87,42 +99,38 @@ extern "C" {
 #define VKVG_VERSION_REVISION       1
 /*! @} */
 
-#define VKVG_LOG_ERR		0x10
-#define VKVG_LOG_DEBUG		0x20
-#define VKVG_LOG_INFO		0x40
-#define VKVG_LOG_INFO_PATH	0x41
-#define VKVG_LOG_DBG_ARRAYS	0x80
-#define VKVG_LOG_FULL		0xff
-
 #ifdef DEBUG
 extern uint8_t vkvg_log_level;
-#define LOG(level,...) (vkvg_log_level & level) ? fprintf (stdout, __VA_ARGS__):true;
-#else
-#define LOG
 #endif
 
+/**
+ * @brief vkvg operation status.
+ *
+ * vkvg_status_t is used to indicates errors that can occur when using vkvg. Several vkvg function directely
+ * return result, but when using a #VkvgContext, the last error is stored in the context and can be accessed
+ * with #vkvg_status.
+ */
 typedef enum {
-	VKVG_STATUS_SUCCESS = 0,
-	VKVG_STATUS_NO_MEMORY,
-	VKVG_STATUS_INVALID_RESTORE,
-	VKVG_STATUS_INVALID_POP_GROUP,
-	VKVG_STATUS_NO_CURRENT_POINT,
-	VKVG_STATUS_INVALID_MATRIX,
-	VKVG_STATUS_INVALID_STATUS,
-	VKVG_STATUS_NULL_POINTER,
-	VKVG_STATUS_INVALID_STRING,
-	VKVG_STATUS_INVALID_PATH_DATA,
-	VKVG_STATUS_READ_ERROR,
-	VKVG_STATUS_WRITE_ERROR,
-	VKVG_STATUS_SURFACE_FINISHED,
-	VKVG_STATUS_SURFACE_TYPE_MISMATCH,
-	VKVG_STATUS_PATTERN_TYPE_MISMATCH,
-	VKVG_STATUS_INVALID_CONTENT,
-	VKVG_STATUS_INVALID_FORMAT,
-	VKVG_STATUS_INVALID_VISUAL,
-	VKVG_STATUS_FILE_NOT_FOUND,
-	VKVG_STATUS_INVALID_DASH,
-	VKVG_STAtUS_NOT_ENOUGH_POINTS_TO_CLOSE_PATH
+	VKVG_STATUS_SUCCESS = 0,			/*!< no error occurred.*/
+	VKVG_STATUS_NO_MEMORY,				/*!< out of memory*/
+	VKVG_STATUS_INVALID_RESTORE,		/*!< call to #vkvg_restore without matching call to #vkvg_save*/
+	VKVG_STATUS_NO_CURRENT_POINT,		/*!< path command expecting a current point to be defined failed*/
+	VKVG_STATUS_INVALID_MATRIX,			/*!< invalid matrix (not invertible)*/
+	VKVG_STATUS_INVALID_STATUS,			/*!< */
+	VKVG_STATUS_NULL_POINTER,			/*!< NULL pointer*/
+	VKVG_STATUS_INVALID_STRING,			/*!< */
+	VKVG_STATUS_INVALID_PATH_DATA,		/*!< */
+	VKVG_STATUS_READ_ERROR,				/*!< */
+	VKVG_STATUS_WRITE_ERROR,			/*!< */
+	VKVG_STATUS_SURFACE_FINISHED,		/*!< */
+	VKVG_STATUS_SURFACE_TYPE_MISMATCH,	/*!< */
+	VKVG_STATUS_PATTERN_TYPE_MISMATCH,	/*!< */
+	VKVG_STATUS_INVALID_CONTENT,		/*!< */
+	VKVG_STATUS_INVALID_FORMAT,			/*!< */
+	VKVG_STATUS_INVALID_VISUAL,			/*!< */
+	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
+	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
+	VKVG_STAtUS_NOT_ENOUGH_POINTS_TO_CLOSE_PATH/*!< trying to close path with less than 3 points defined*/
 }vkvg_status_t;
 
 typedef enum {
@@ -136,13 +144,19 @@ typedef enum {
 	VKVG_FORMAT_A8,
 	VKVG_FORMAT_A1
 } vkvg_format_t;
-
+/**
+ * @brief pattern border policy
+ *
+ * when painting a pattern on a surface, if the input bounds are smaller than the target bounds,
+ * the extend defines how the pattern will be rendered outside its original bounds.
+ */
 typedef enum {
-	VKVG_EXTEND_NONE,
-	VKVG_EXTEND_REPEAT,
-	VKVG_EXTEND_REFLECT,
-	VKVG_EXTEND_PAD
+	VKVG_EXTEND_NONE,			/*!< nothing will be outputed outside the pattern original bounds */
+	VKVG_EXTEND_REPEAT,			/*!< pattern will be repeated to fill all the target bounds */
+	VKVG_EXTEND_REFLECT,		/*!< pattern will be repeated but mirrored on each repeat */
+	VKVG_EXTEND_PAD				/*!< the last pixels making the borders of the pattern will be extended to the whole target */
 } vkvg_extend_t;
+
 
 typedef enum {
 	VKVG_FILTER_FAST,
@@ -153,31 +167,52 @@ typedef enum {
 	VKVG_FILTER_GAUSSIAN,
 } vkvg_filter_t;
 
+/**
+ * @brief pattern types
+ *
+ *
+ */
 typedef enum {
-	VKVG_PATTERN_TYPE_SOLID,
-	VKVG_PATTERN_TYPE_SURFACE,
-	VKVG_PATTERN_TYPE_LINEAR,
-	VKVG_PATTERN_TYPE_RADIAL,
-	VKVG_PATTERN_TYPE_MESH,
-	VKVG_PATTERN_TYPE_RASTER_SOURCE,
+	VKVG_PATTERN_TYPE_SOLID,			/*!< single color pattern */
+	VKVG_PATTERN_TYPE_SURFACE,			/*!< vkvg surface pattern */
+	VKVG_PATTERN_TYPE_LINEAR,			/*!< linear gradient pattern */
+	VKVG_PATTERN_TYPE_RADIAL,			/*!< radial gradient pattern */
+	VKVG_PATTERN_TYPE_MESH,				/*!< not implemented */
+	VKVG_PATTERN_TYPE_RASTER_SOURCE,	/*!< not implemented */
 } vkvg_pattern_type_t;
 
+/**
+ * @brief line caps
+ *
+ * define the path ends shapes which may be rounded or squared. The context hold the current line cap
+ * configuration which may be accessed with #vkvg_set_line_cap and #vkvg_get_line_cap
+ */
 typedef enum {
-	VKVG_LINE_CAP_BUTT,
-	VKVG_LINE_CAP_ROUND,
-	VKVG_LINE_CAP_SQUARE
+	VKVG_LINE_CAP_BUTT,		/*!< normal line endings, this is the default. */
+	VKVG_LINE_CAP_ROUND,	/*!< rounded line caps */
+	VKVG_LINE_CAP_SQUARE	/*!< extend the caps with squared terminations having border equal to current line width. */
 } vkvg_line_cap_t;
-
-
+/**
+ * @brief lines articulations
+ *
+ * define the joins shape for the stroke command between consecutive lines or curves. This setting is holded
+ * in the context and may be accessed with #vkvg_set_line_join and #vkvg_get_line_join.
+ */
 typedef enum {
-	VKVG_LINE_JOIN_MITER,
-	VKVG_LINE_JOIN_ROUND,
-	VKVG_LINE_JOIN_BEVEL
+	VKVG_LINE_JOIN_MITER,	/*!< normal joins with sharp angles, this is the default. */
+	VKVG_LINE_JOIN_ROUND,	/*!< joins are rounded on the exterior border of the line. */
+	VKVG_LINE_JOIN_BEVEL	/*!< beveled line joins. */
 } vkvg_line_join_t;
 
+/**
+ * @brief shape fill method
+ *
+ * define technique used to fill a path with the #vkvg_fill command. This setting can be accessed in the context
+ * with #vkvg_set_fill_rule and #vkvg_get_fill_rule.
+ */
 typedef enum {
-	VKVG_FILL_RULE_EVEN_ODD,
-	VKVG_FILL_RULE_NON_ZERO
+	VKVG_FILL_RULE_EVEN_ODD,	/*!< stencil even-odd technique */
+	VKVG_FILL_RULE_NON_ZERO		/*!< ear clipping filling */
 } vkvg_fill_rule_t;
 
 typedef struct {
@@ -187,28 +222,6 @@ typedef struct {
 	float a;
 } vkvg_color_t;
 
-#define VKVG_IDENTITY_MATRIX {1,0,0,1,0,0}
-/**
- * @xx: xx component of the affine transformation
- * @yx: yx component of the affine transformation
- * @xy: xy component of the affine transformation
- * @yy: yy component of the affine transformation
- * @x0: X translation component of the affine transformation
- * @y0: Y translation component of the affine transformation
- *
- * A #vkvg_matrix_t holds an affine transformation, such as a scale,
- * rotation, shear, or a combination of those. The transformation of
- * a point (x, y) is given by:
- * <programlisting>
- *     x_new = xx * x + xy * y + x0;
- *     y_new = yx * x + yy * y + y0;
- * </programlisting>
- */
-typedef struct {
-	float xx; float yx;
-	float xy; float yy;
-	float x0; float y0;
-} vkvg_matrix_t;
 
 typedef struct {
 	float ascent;
@@ -275,6 +288,109 @@ typedef struct _vkvg_device_t*  VkvgDevice;
  * configurable parameters such as the wrap mode, the filtering, etc...
  */
 typedef struct _vkvg_pattern_t* VkvgPattern;
+
+/*!	@defgroup matrix Matrices
+ *	@brief Generic matrix operations
+ *
+ *	This is the reference documentation for handling matrices to use as transformation in drawing operations.
+ *	Matrix computations in vkvg are taken from the cairo library.
+ * @{ */
+#define VKVG_IDENTITY_MATRIX {1,0,0,1,0,0}
+/**
+ * @xx: xx component of the affine transformation
+ * @yx: yx component of the affine transformation
+ * @xy: xy component of the affine transformation
+ * @yy: yy component of the affine transformation
+ * @x0: X translation component of the affine transformation
+ * @y0: Y translation component of the affine transformation
+ *
+/**
+ * @brief vkvg matrix structure
+ *
+ * A #vkvg_matrix_t holds an affine transformation, such as a scale,
+ * rotation, shear, or a combination of those. The transformation of
+ * a point (x, y) is given by:
+ * @code
+ * x_new = xx * x + xy * y + x0;
+ * y_new = yx * x + yy * y + y0;
+ * @endcode
+ */
+typedef struct {
+	float xx; float yx;
+	float xy; float yy;
+	float x0; float y0;
+} vkvg_matrix_t;
+/**
+ * @brief Set matrix to identity
+ *
+ * Initialize members of the supplied #vkvg_matrix_t to make an identity matrix of it.
+ * @param matrix matrix to set to identity.
+ */
+void vkvg_matrix_init_identity (vkvg_matrix_t *matrix);
+/**
+ * @brief Matrix initialization.
+ *
+ * Initialize members of the supplied matrix to the values passed as arguments.
+ * @param matrix a valid #vkvg_matrix_t pointer
+ * @param xx xx component of the affine transformation
+ * @param yx yx component of the affine transformation
+ * @param xy xy component of the affine transformation
+ * @param yy yy component of the affine transformation
+ * @param x0 X translation component of the affine transformation
+ * @param y0 Y translation component of the affine transformation
+ */
+void vkvg_matrix_init (vkvg_matrix_t *matrix,
+		   float xx, float yx,
+		   float xy, float yy,
+		   float x0, float y0);
+/**
+ * @brief Rotation matrix initialization
+ *
+ * Initialize members of the supplied matrix to create a translation matrix.
+ * @param matrix a valid #vkvg_matrix_t pointer
+ * @param tx translation in the X direction
+ * @param ty translation in the Y direction
+ */
+void vkvg_matrix_init_translate     (vkvg_matrix_t *matrix, float tx, float ty);
+/**
+ * @brief scaling matrix initialization
+ *
+ * Initialize members of the supplied matrix to create a new scaling matrix
+ * @param matrix a valid #vkvg_matrix_t pointer
+ * @param sx scale in the x direction
+ * @param sy Scale in the y direction
+ */
+void vkvg_matrix_init_scale         (vkvg_matrix_t *matrix, float sx, float sy);
+/**
+ * @brief rotation matrix initialization
+ *
+ * Initialize members of the supplied matrix to create a new rotation matrix
+ * @param matrix a valid #vkvg_matrix_t pointer
+ * @param angle of rotation, in radians. The direction of rotation
+ * is defined such that positive angles rotate in the direction from
+ * the positive X axis toward the positive Y axis. With the default
+ * axis orientation of vkvg, positive angles rotate in a clockwise
+ * direction.
+ */
+void vkvg_matrix_init_rotate        (vkvg_matrix_t *matrix, float radians);
+void vkvg_matrix_translate          (vkvg_matrix_t *matrix, float tx, float ty);
+void vkvg_matrix_scale              (vkvg_matrix_t *matrix, float sx, float sy);
+void vkvg_matrix_rotate             (vkvg_matrix_t *matrix, float radians);
+void vkvg_matrix_multiply           (vkvg_matrix_t *result, const vkvg_matrix_t *a, const vkvg_matrix_t *b);
+void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, float *dy);
+void vkvg_matrix_transform_point    (const vkvg_matrix_t *matrix, float *x, float *y);
+void vkvg_matrix_invert             (vkvg_matrix_t *matrix);
+/** @}*/
+
+
+
+/*! @defgroup device Device
+ *  @brief Functions and types related to VKVG device.
+ *
+ *  This is the reference documentation for creating, using and destroying VKVG
+ *  Devices used to connect to vulkan context.
+ * @{ */
+
 /**
  * @brief Create a new vkvg device.
  *
@@ -348,6 +464,10 @@ void vkvg_device_set_dpy (VkvgDevice dev, int hdpy, int vdpy);
  * @param vdpy[out] The current vertical dot per inch.
  */
 void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy);
+/** @}*/
+
+/** @addtogroup surface
+ * @{ */
 /**
  * @brief Create a new vkvg surface.
  * @param dev The vkvg device used for creating the surface.
@@ -452,6 +572,7 @@ void        vkvg_surface_write_to_png   (VkvgSurface surf, const char* path);
  * @param The vkvg surface to resolve.
  */
 void        vkvg_multisample_surface_resolve (VkvgSurface surf);
+/** @}*/
 
 //nsvg interface for easy svg drawing
 typedef struct NSVGimage NSVGimage;
@@ -499,6 +620,9 @@ typedef enum _vkvg_operator {
 	VKVG_OPERATOR_HSL_COLOR,
 	VKVG_OPERATOR_HSL_LUMINOSITY
 } vkvg_operator_t;
+
+/** @addtogroup context
+ * @{ */
 
 /**
  * @brief Create a new vkvg context used for drawing on surfaces.
@@ -684,12 +808,74 @@ void vkvg_clear             (VkvgContext ctx);//use vkClearAttachment to speed u
 void vkvg_reset_clip        (VkvgContext ctx);
 void vkvg_clip              (VkvgContext ctx);
 void vkvg_clip_preserve     (VkvgContext ctx);
+/**
+ * @brief set color as new source with an alpha component.
+ *
+ * Set current source to the solid color defined by the rgba components with 'a' for transparency.
+ *
+ * @param ctx vkvg context pointer
+ * @param r the red component of the color.
+ * @param g the green component of the color.
+ * @param b the blue component of the color.
+ * @param a the alpha component holding the transparency for the current color.
+ */
 void vkvg_set_source_rgba	(VkvgContext ctx, float r, float g, float b, float a);
+/**
+ * @brief set color as new source.
+ *
+ * Set current source to the solid color defined by the rgb components.
+ *
+ * @param ctx vkvg context pointer
+ * @param r the red component of the color.
+ * @param g the green component of the color.
+ * @param b the blue component of the color.
+ * @param a the alpha component holding the transparency for the current color.
+ */
 void vkvg_set_source_rgb    (VkvgContext ctx, float r, float g, float b);
+/**
+ * @brief set line width.
+ *
+ * Set the current line width for the targeted context. All further calls to #vkvg_stroke on this context
+ * will use this new width.
+ *
+ * @param ctx vkvg context pointer.
+ * @param width new current line width for the context.
+ */
 void vkvg_set_line_width	(VkvgContext ctx, float width);
+/**
+ * @brief set line terminations
+ *
+ * Configure the line terminations to output for further path stroke commands.
+ * @param ctx vkvg context pointer.
+ * @param cap new line termination, may be one of the value of #vkvg_line_cap_t.
+ */
+
 void vkvg_set_line_cap      (VkvgContext ctx, vkvg_line_cap_t cap);
+/**
+ * @brief set line joins
+ *
+ * Configure the line join to output for further path stroke commands.
+ * @param ctx vkvg context pointer.
+ * @param join new line join as defined in #vkvg_line_joint_t.
+ */
 void vkvg_set_line_join     (VkvgContext ctx, vkvg_line_join_t join);
+/**
+ * @brief use supplied surface as current pattern
+ *
+ * set #VkvgSurface as the current context source.
+ * @param ctx vkvg context pointer
+ * @param surf the vkvg surface to use as source.
+ * @param x an x offset to apply for drawing operations using this surface.
+ * @param y an y offset to apply for drawing operations using this surface.
+ */
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y);
+/**
+ * @brief set supplied pattern as current source.
+ *
+ * set #VkvgPattern as the new source for the targeted context.
+ * @param ctx vkvg context pointer
+ * @param pat the new pattern to use as source for further drawing operations.
+ */
 void vkvg_set_source        (VkvgContext ctx, VkvgPattern pat);
 void vkvg_set_operator      (VkvgContext ctx, vkvg_operator_t op);
 void vkvg_set_fill_rule     (VkvgContext ctx, vkvg_fill_rule_t fr);
@@ -727,8 +913,10 @@ VkvgText    vkvg_text_run_create    (VkvgContext ctx, const char* text);
 void        vkvg_text_run_destroy   (VkvgText textRun);
 void        vkvg_show_text_run      (VkvgContext ctx, VkvgText textRun);
 void        vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents);
+/** @}*/
 
-//pattern
+/** @addtogroup pattern
+ * @{ */
 VkvgPattern vkvg_pattern_reference          (VkvgPattern pat);
 uint32_t    vkvg_pattern_get_reference_count(VkvgPattern pat);
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
@@ -743,23 +931,8 @@ void vkvg_pattern_set_filter    (VkvgPattern pat, vkvg_filter_t filter);
 
 vkvg_extend_t   vkvg_pattern_get_extend (VkvgPattern pat);
 vkvg_filter_t   vkvg_pattern_get_filter (VkvgPattern pat);
+/** @}*/
 
-//matrix
-void vkvg_matrix_init_identity (vkvg_matrix_t *matrix);
-void vkvg_matrix_init (vkvg_matrix_t *matrix,
-		   float xx, float yx,
-		   float xy, float yy,
-		   float x0, float y0);
-void vkvg_matrix_init_translate     (vkvg_matrix_t *matrix, float tx, float ty);
-void vkvg_matrix_init_scale         (vkvg_matrix_t *matrix, float sx, float sy);
-void vkvg_matrix_init_rotate        (vkvg_matrix_t *matrix, float radians);
-void vkvg_matrix_translate          (vkvg_matrix_t *matrix, float tx, float ty);
-void vkvg_matrix_scale              (vkvg_matrix_t *matrix, float sx, float sy);
-void vkvg_matrix_rotate             (vkvg_matrix_t *matrix, float radians);
-void vkvg_matrix_multiply           (vkvg_matrix_t *result, const vkvg_matrix_t *a, const vkvg_matrix_t *b);
-void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, float *dy);
-void vkvg_matrix_transform_point    (const vkvg_matrix_t *matrix, float *x, float *y);
-void vkvg_matrix_invert             (vkvg_matrix_t *matrix);
 
 #ifdef __cplusplus
 }

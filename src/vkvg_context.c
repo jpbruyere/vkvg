@@ -802,14 +802,6 @@ void vkvg_paint (VkvgContext ctx){
 void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
 	vkvg_set_source_rgba (ctx, r, g, b, 1);
 }
-/**
- * @brief Set current pattern to solid color defined by arguments
- * @param vkvg context
- * @param red component
- * @param green component
- * @param blue component
- * @param alpha value
- */
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
 	ctx->curColor = CreateRgbaf(r,g,b,a);
@@ -941,6 +933,8 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 }
 
 void vkvg_save (VkvgContext ctx){
+	if (ctx->status)
+		return;
 	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
 	_flush_cmd_buff (ctx);

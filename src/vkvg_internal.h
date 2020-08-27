@@ -38,10 +38,23 @@
 #define M_PIF               3.14159265358979323846f /* float pi */
 #define M_PIF_2             1.57079632679489661923f
 #define M_2_PIF             0.63661977236758134308f  // 2/pi
-
 /*#ifndef M_2_PI
 	#define M_2_PI		0.63661977236758134308	// 2/pi
 #endif*/
+
+#ifdef DEBUG
+#define LOG(level,...) (vkvg_log_level & level) ? fprintf (stdout, __VA_ARGS__):true;
+#else
+#define LOG
+#endif
+
+#define VKVG_LOG_ERR		0x10
+#define VKVG_LOG_DEBUG		0x20
+#define VKVG_LOG_INFO		0x40
+#define VKVG_LOG_INFO_PATH	0x41
+#define VKVG_LOG_DBG_ARRAYS	0x80
+#define VKVG_LOG_FULL		0xff
+
 
 #define PATH_CLOSED_BIT     0x80000000              /* most significant bit of path elmts is closed/open path state */
 #define PATH_HAS_CURVES_BIT 0x40000000              /* 2d most significant bit of path elmts  if curve data are present,
