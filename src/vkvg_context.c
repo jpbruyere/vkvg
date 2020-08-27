@@ -497,6 +497,11 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 }
 
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+	//prevent running _recursive_bezier when all 4 curve points are equal
+	if (EQUF(x1,x2) && EQUF(x2,x3) && EQUF(y1,y2) && EQUF(y2,y3)) {
+		if (_current_path_is_empty(ctx) || (EQUF(_get_current_position(ctx).x,x1) && EQUF(_get_current_position(ctx).y,y1)))
+			return;
+	}
 	_set_curve_start (ctx);
 	if (_current_path_is_empty(ctx))
 		_add_point(ctx, x1, y1);
@@ -1270,7 +1275,7 @@ void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg, char *subId){
 		for (path = shape->paths; path != NULL; path = path->next) {
 			float* p = path->pts;
 			vkvg_move_to(ctx, p[0],p[1]);
-			for (int i = 1; i < path->npts-2; i += 3) {
+			for (int i = 1; i < path->npts; i += 3) {
 				p = &path->pts[i*2];
 				vkvg_curve_to(ctx, p[0],p[1], p[2],p[3], p[4],p[5]);
 			}
