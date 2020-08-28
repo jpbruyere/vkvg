@@ -41,16 +41,6 @@ ELSE()
 	ENDIF()
 ENDIF()
 
-OPTION(VKVG_TEST_DIRECT_DRAW "(Experimental)Draw directly on backend surface, if off surface is blitted." OFF)
-IF (VKVG_TEST_DIRECT_DRAW)
-	ADD_DEFINITIONS (-DVKVG_TEST_DIRECT_DRAW)
-ENDIF ()
-
-OPTION(VKVG_TEST_OFFSCREEN "Draw offscreen without presenting result." OFF)
-IF (VKVG_TEST_OFFSCREEN)
-	ADD_DEFINITIONS (-DVKVG_TEST_OFFSCREEN)
-ENDIF ()
-
 OPTION(VKVG_PREMULT_ALPHA "use premultiplied alpha for internal rendering" ON)
 IF (VKVG_PREMULT_ALPHA)
 	ADD_DEFINITIONS (-DVKVG_PREMULT_ALPHA)
@@ -208,61 +198,9 @@ ADD_LIBRARY("${PROJECT_NAME}_shared" SHARED ${VKVG_SRC} ${SHADERS})
 SET_PROPERTY(TARGET "${PROJECT_NAME}_static" PROPERTY POSITION_INDEPENDENT_CODE ON)
 setup_lib ("${PROJECT_NAME}_shared")
 
-FUNCTION (buildtest TEST_NAME)
-	ADD_EXECUTABLE(test_${TEST_NAME} "tests/${TEST_NAME}.c" )
-	TARGET_INCLUDE_DIRECTORIES(test_${TEST_NAME} PRIVATE
-		${Vulkan_INCLUDE_DIRS}
-		${GLFW3_INCLUDE_DIR}
-		${CMAKE_CURRENT_SOURCE_DIR}/include
-		${CMAKE_CURRENT_SOURCE_DIR}/src
-		${CMAKE_CURRENT_SOURCE_DIR}/tests/common
-		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
-		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
-	)
-	TARGET_LINK_LIBRARIES(test_${TEST_NAME}
-		tests_common
-	)
-ENDFUNCTION (buildtest)
-
-if (VKVG_BUILD_TESTS)
-	ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
-	TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
-		${Vulkan_INCLUDE_DIRS}
-		${GLFW3_INCLUDE_DIR}
-		${CMAKE_CURRENT_SOURCE_DIR}/include
-		${CMAKE_CURRENT_SOURCE_DIR}/src
-		${CMAKE_CURRENT_SOURCE_DIR}/tests/common
-		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
-		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
-	)
-	TARGET_LINK_LIBRARIES(tests_common
-		${Vulkan_LIBRARIES}
-		${GLFW3_LIBRARY}
-		vkvg_static
-	)
-
-	file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/tests" "tests/data/*")
-	FOREACH(DATA_FILE ${DATAS})
-		GET_FILENAME_COMPONENT(copy-dest-dir ${CMAKE_CURRENT_BINARY_DIR}/${DATA_FILE} DIRECTORY)
-		SET(copy-output ${CMAKE_CURRENT_BINARY_DIR}/${DATA_FILE})
-		ADD_CUSTOM_COMMAND(
-		   OUTPUT  ${copy-output}
-		   COMMAND ${CMAKE_COMMAND} -E make_directory ${copy-dest-dir}
-		   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/tests/${DATA_FILE}" "${copy-output}"
-		   COMMENT "Copying ${DATA_FILE} to ${copy-output}"
-		   #DEPENDS ${DATA_FILE}
-		   VERBATIM
-		)
-	ENDFOREACH()
-	add_custom_target("${PROJECT_NAME}_DataCopy" ALL DEPENDS ${DATAS})
-
-	#build test apps
-	file(GLOB TESTS "tests/*.c")
-	FOREACH(TEST ${TESTS})
-		GET_FILENAME_COMPONENT(testname ${TEST} NAME_WE)
-		buildtest(${testname})
-	ENDFOREACH()
-endif ()
+IF (VKVG_BUILD_TESTS)
+	add_subdirectory(tests)
+ENDIF (VKVG_BUILD_TESTS)
 
 MESSAGE(STATUS "HarfBuzz_INCLUDE_DIRS = ${HarfBuzz_INCLUDE_DIRS}")
 
