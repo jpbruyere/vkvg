@@ -163,6 +163,136 @@ void clear_test () {
 VkvgSurface* surfaces;
 #endif
 
+void perform_test_offscreen (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
+	//init random gen
+	struct timeval currentTime;
+	gettimeofday(&currentTime, NULL);
+	srand((unsigned) currentTime.tv_usec);
+
+	//dumpLayerExts();
+	if (argc > 1)
+		iterations = atoi (argv[1]);
+	if (argc > 2)
+		test_size = atoi (argv[2]);
+	if (iterations == 0 || test_size == 0) {
+		printf("usage: test [iterations] [size]\n");
+		return;
+	}
+
+	char* whoami;
+	(whoami = strrchr(argv[0], '/')) ? ++whoami : (whoami = argv[0]);
+
+	uint32_t enabledExtsCount = 0, phyCount = 0;
+	const char* enabledExts [10];
+#ifdef VKVG_USE_RENDERDOC
+	const uint32_t enabledLayersCount = 2;
+	const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_RENDERDOC_Capture"};
+#elif defined (VKVG_USE_VALIDATION)
+	const uint32_t enabledLayersCount = 1;
+	const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation"};
+#else
+	const uint32_t enabledLayersCount = 0;
+	const char* enabledLayers[] = {NULL};
+#endif
+#ifdef DEBUG
+	enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
+	enabledExtsCount++;
+#endif
+
+	VkhApp app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+#ifdef DEBUG
+	vkh_app_enable_debug_messenger(app
+								   , VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+								   | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+								   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+								   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+								   , NULL);
+#endif
+	bool deferredResolve = false;
+	VkhPhyInfo* phys = vkh_app_get_phyinfos (app, &phyCount, VK_NULL_HANDLE);
+	VkhPhyInfo pi = 0;
+	for (uint32_t i=0; i<phyCount; i++){
+		pi = phys[i];
+		if (pi->properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+			break;
+	}
+
+	uint32_t qCount = 0;
+	float qPriorities[] = {0.0};
+	VkDeviceQueueCreateInfo pQueueInfos[] = { {0},{0},{0} };
+	if (vkh_phyinfo_create_queues (pi, pi->gQueue, 1, qPriorities, &pQueueInfos[qCount]))
+		qCount++;
+	VkPhysicalDeviceFeatures enabledFeatures = {
+		.fillModeNonSolid = true,
+	};
+
+	VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+									   .queueCreateInfoCount = qCount,
+									   .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
+									   .pEnabledFeatures = &enabledFeatures};
+
+	VkhDevice dev = vkh_device_create(app, pi, &device_info);
+
+
+	device  = vkvg_device_create_multisample(vkh_app_get_inst(app), dev->phy, dev->dev, pi->gQueue, 0, samples, deferredResolve);
+	vkvg_device_set_dpy(device, 96, 96);
+
+	vkh_app_free_phyinfos (phyCount, phys);
+
+	surf = vkvg_surface_create(device, test_width, test_height);
+
+	double start_time = 0.0, stop_time = 0.0, run_time = 0.0, run_total = 0.0, min_run_time = -1, max_run_time = 0.0;
+	double* run_time_values = (double*)malloc(iterations*sizeof(double));
+
+	uint32_t i = 0;
+	while (i < iterations) {
+		start_time = get_tick();
+
+		testfunc();
+
+		if (deferredResolve)
+			vkvg_multisample_surface_resolve(surf);
+
+		stop_time = get_tick();
+		run_time = stop_time - start_time;
+		run_time_values[i] = run_time;
+
+		if (min_run_time < 0)
+			min_run_time = run_time;
+		else
+			min_run_time = MIN(run_time, min_run_time);
+		max_run_time = MAX(run_time, max_run_time);
+		run_total += run_time;
+		i++;
+	}
+
+	double avg_run_time = run_total / (double)i;
+	double med_run_time = median_run_time (run_time_values, i);
+	double standard_dev = standard_deviation (run_time_values, i, avg_run_time);
+	double avg_frames_per_second = (1.0 / avg_run_time);
+	avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
+
+	free (run_time_values);
+
+	//printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+	printf ("| %-15s | %-25s | ",whoami + 5, testName);
+	printf ("%4d | %4d | %7.2f | %6.5f | %6.5f | %6.5f |\n",
+			test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+
+	//printf ("%s size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", whoami+5, test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+
+	vkDeviceWaitIdle(dev->dev);
+
+	vkvg_surface_destroy    (surf);
+	vkvg_device_destroy     (device);
+
+	vkh_device_destroy (dev);
+	vkh_app_destroy (app);
+}
+
 void perform_test (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
 	//init random gen
 	struct timeval currentTime;

@@ -40,10 +40,17 @@ ELSE()
 		SET(CMAKE_${LANG}_FLAGS "/TC /W0")
 	ENDIF()
 ENDIF()
+
 OPTION(VKVG_TEST_DIRECT_DRAW "(Experimental)Draw directly on backend surface, if off surface is blitted." OFF)
 IF (VKVG_TEST_DIRECT_DRAW)
 	ADD_DEFINITIONS (-DVKVG_TEST_DIRECT_DRAW)
 ENDIF ()
+
+OPTION(VKVG_TEST_OFFSCREEN "Draw offscreen without presenting result." OFF)
+IF (VKVG_TEST_OFFSCREEN)
+	ADD_DEFINITIONS (-DVKVG_TEST_OFFSCREEN)
+ENDIF ()
+
 OPTION(VKVG_PREMULT_ALPHA "use premultiplied alpha for internal rendering" ON)
 IF (VKVG_PREMULT_ALPHA)
 	ADD_DEFINITIONS (-DVKVG_PREMULT_ALPHA)
@@ -218,7 +225,7 @@ FUNCTION (buildtest TEST_NAME)
 ENDFUNCTION (buildtest)
 
 if (VKVG_BUILD_TESTS)
-    ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
+	ADD_LIBRARY("tests_common" STATIC tests/common/vkengine.c tests/common/test.c)
 	TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
 		${Vulkan_INCLUDE_DIRS}
 		${GLFW3_INCLUDE_DIR}
@@ -228,11 +235,11 @@ if (VKVG_BUILD_TESTS)
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
 	)
-    TARGET_LINK_LIBRARIES(tests_common
-        ${Vulkan_LIBRARIES}
-        ${GLFW3_LIBRARY}
-        vkvg_static
-    )
+	TARGET_LINK_LIBRARIES(tests_common
+		${Vulkan_LIBRARIES}
+		${GLFW3_LIBRARY}
+		vkvg_static
+	)
 
 	file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/tests" "tests/data/*")
 	FOREACH(DATA_FILE ${DATAS})
@@ -267,6 +274,9 @@ IF (VKVG_BUILD_TESTS)
 MESSAGE(STATUS "Build tests\t\t= true.")
 ELSE ()
 MESSAGE(STATUS "Build tests\t\t= false.")
+ENDIF ()
+IF (VKVG_TEST_OFFSCREEN)
+MESSAGE(STATUS "Offscreen\t\t= true.")
 ENDIF ()
 IF (ENABLE_VALIDATION)
 	MESSAGE(STATUS "Validation\t\t= enabled.")
