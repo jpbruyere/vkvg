@@ -92,17 +92,8 @@ double time_diff(struct timeval x , struct timeval y)
 	return diff;
 }
 
-void randomize_color (VkvgContext ctx) {
-	vkvg_set_source_rgba(ctx,
-		(float)rand()/RAND_MAX,
-		(float)rand()/RAND_MAX,
-		(float)rand()/RAND_MAX,
-		(float)rand()/RAND_MAX
-	);
-}
 /* from caskbench */
-double
-get_tick (void)
+double get_tick (void)
 {
 	struct timeval now;
 	gettimeofday (&now, NULL);
@@ -159,9 +150,6 @@ void init_test (uint32_t width, uint32_t height){
 
 	vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 }
-
-//	printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
-
 void clear_test () {
 	vkDeviceWaitIdle(e->dev->dev);
 
@@ -321,6 +309,7 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 
 	vkengine_destroy (e);
 }
+
 const int star_points[11][2] = {
 	{ 0, 85 },
 	{ 75, 75 },
@@ -334,7 +323,14 @@ const int star_points[11][2] = {
 	{ 50, 125 },
 	{ 0, 85 }
 };
-
+void randomize_color(VkvgContext ctx) {
+	vkvg_set_source_rgba(ctx,
+		(float)rand() / RAND_MAX,
+		(float)rand() / RAND_MAX,
+		(float)rand() / RAND_MAX,
+		(float)rand() / RAND_MAX
+	);
+}
 void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 	float w = (float)test_width;
 	float h = (float)test_height;
@@ -414,7 +410,6 @@ void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 		break;
 	}
 }
-
 /*void draw_random_shape (VkvgContext ctx, shape_t shape) {
 	float w = (float)test_width;
 	float h = (float)test_height;

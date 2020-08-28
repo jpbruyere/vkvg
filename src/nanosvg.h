@@ -217,7 +217,7 @@ void nsvgDelete(NSVGimage* image);
 #endif
 
 #ifndef NANOSVG_DEBUG
-#define NANOSVG_DEBUG(x...)
+#define NANOSVG_DEBUG(...)
 //#define NANOSVG_DEBUG printf
 #endif
 
