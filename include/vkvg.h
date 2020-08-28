@@ -222,7 +222,6 @@ typedef struct {
 	float a;
 } vkvg_color_t;
 
-
 typedef struct {
 	float ascent;
 	float descent;
@@ -255,7 +254,7 @@ typedef struct {
 typedef struct _vkvg_text_run_t* VkvgText;
 
 /**
- * @brief Opaque pointer on a Vkvg Context structure.
+ * @brief The Vkvg drawing Context.
  *
  * A #VkvgContext is the central object for drawing operations.
  * #vkvg_context_t structure internals this pointer point to are
@@ -268,7 +267,7 @@ typedef struct _vkvg_context_t* VkvgContext;
  * A #VkvgSurface represents an image, either as the destination
  * of a drawing operation or as source when drawing onto another
  * surface.  To draw to a #VkvgSurface, create a vkvg context
- * with the surface as the target, using vkvg_create().
+ * with the surface as the target, using #vkvg_create().
  * hidden internals.
  *
  * #VkvgSurface are created with a @ref VkvgDevice which has to stay
@@ -295,7 +294,7 @@ typedef struct _vkvg_pattern_t* VkvgPattern;
  *	This is the reference documentation for handling matrices to use as transformation in drawing operations.
  *	Matrix computations in vkvg are taken from the cairo library.
  * @{ */
-#define VKVG_IDENTITY_MATRIX {1,0,0,1,0,0}
+#define VKVG_IDENTITY_MATRIX {1,0,0,1,0,0}/*!< The identity matrix*/
 /**
  * @xx: xx component of the affine transformation
  * @yx: yx component of the affine transformation
@@ -324,13 +323,14 @@ typedef struct {
  * @brief Set matrix to identity
  *
  * Initialize members of the supplied #vkvg_matrix_t to make an identity matrix of it.
- * @param matrix matrix to set to identity.
+ * @param matrix a valid #vkvg_matrix_t pointer.
  */
 void vkvg_matrix_init_identity (vkvg_matrix_t *matrix);
 /**
  * @brief Matrix initialization.
  *
  * Initialize members of the supplied matrix to the values passed as arguments.
+ * Resulting matrix will hold an affine transformation defined by the parameters.
  * @param matrix a valid #vkvg_matrix_t pointer
  * @param xx xx component of the affine transformation
  * @param yx yx component of the affine transformation
@@ -366,20 +366,91 @@ void vkvg_matrix_init_scale         (vkvg_matrix_t *matrix, float sx, float sy);
  *
  * Initialize members of the supplied matrix to create a new rotation matrix
  * @param matrix a valid #vkvg_matrix_t pointer
- * @param angle of rotation, in radians. The direction of rotation
+ * @param radians angle of rotation, in radians. The direction of rotation
  * is defined such that positive angles rotate in the direction from
  * the positive X axis toward the positive Y axis. With the default
  * axis orientation of vkvg, positive angles rotate in a clockwise
  * direction.
  */
 void vkvg_matrix_init_rotate        (vkvg_matrix_t *matrix, float radians);
+/**
+ * @brief apply translation on matrix
+ *
+ * Apply the translation defined by tx and ty on the supplied matrix.
+ * The effect of the new transformation is to first translate the coordinates by tx and ty,
+ * then apply the original transformation to the coordinates.
+ * @param matrix a valid #vkvg_matrix_t pointer
+ * @param tx translation in the x direction
+ * @param ty translation in the y direction
+ */
 void vkvg_matrix_translate          (vkvg_matrix_t *matrix, float tx, float ty);
+/**
+ * @brief apply scale on matrix
+ *
+ * Apply scaling by sx and sy on the supplied transformation matrix.
+ * The effect of the new transformation is to first scale the coordinates by sx and sy,
+ * then apply the original transformation to the coordinates.
+ * @param matrix a valid #vkvg_matrix_t pointer on which the scaling will be applied.
+ * @param sx scale in the x direction
+ * @param sy scale in the y direction
+ */
 void vkvg_matrix_scale              (vkvg_matrix_t *matrix, float sx, float sy);
+/**
+ * @brief apply rotation on matrix
+ *
+ * Apply a rotation of radians on the supplied matrix.
+ * The effect of the new transformation is to first rotate the coordinates by radians,
+ * then apply the original transformation to the coordinates.
+ * @param matrix a valid #vkvg_matrix_t pointer on which the rotation will be applied
+ * @param radians angle of rotation in radians. The direction of rotation is defined such that positive angles
+ * rotate in the direction from the positive X axis toward the positive Y axis.
+ * With the default axis orientation of cairo, positive angles rotate in a clockwise direction.
+ */
 void vkvg_matrix_rotate             (vkvg_matrix_t *matrix, float radians);
+/**
+ * @brief matrices multiplication
+ *
+ * compute the multiplication of two matrix.
+ * @param result a valid #vkvg_matrix_t pointer to hold the resulting matrix
+ * @param a first operand of the multiplication
+ * @param b second operand of the multiplication
+ */
 void vkvg_matrix_multiply           (vkvg_matrix_t *result, const vkvg_matrix_t *a, const vkvg_matrix_t *b);
+/**
+ * @brief transform distances
+ *
+ * Transforms the distance vector (dx ,dy ) by matrix . This is similar to #cairo_matrix_transform_point() except that the translation
+ * components of the transformation are ignored. The calculation of the returned vector is as follows:
+ * @code
+ * dx2 = dx1 * a + dy1 * c;
+ * dy2 = dx1 * b + dy1 * d;
+ * @endcode
+ * Affine transformations are position invariant, so the same vector always transforms to the same vector. If (x1 ,y1 ) transforms to (x2 ,y2 )
+ * then (x1 +dx1 ,y1 +dy1 ) will transform to (x1 +dx2 ,y1 +dy2 ) for all values of x1 and x2 .
+ * @param matrix a valid #vkvg_matrix_t to use to transform distance
+ * @param dx X component of a distance vector. An in/out parameter
+ * @param dy Y component of a distance vector. An in/out parameter
+ */
 void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, float *dy);
+/**
+ * @brief transform point
+ *
+ * Transforms the point (x , y ) by matrix .
+ * @param matrix a valid #vkvg_matrix_t to use to transform point
+ * @param x X position. An in/out parameter
+ * @param y Y position. An in/out parameter
+ */
 void vkvg_matrix_transform_point    (const vkvg_matrix_t *matrix, float *x, float *y);
-void vkvg_matrix_invert             (vkvg_matrix_t *matrix);
+/**
+ * @brief invert matrix
+ *
+ * Changes matrix to be the inverse of its original value. Not all transformation matrices have inverses;
+ * if the matrix collapses points together (it is degenerate), then it has no inverse and this function will fail.
+ * @param matrix the matrix to invert
+ * @return If matrix has an inverse, modifies matrix to be the inverse matrix and returns VKVG_STATUS_SUCCESS.
+ * Otherwise, returns VKVG_STATUS_INVALID_MATRIX.
+ */
+vkvg_status_t vkvg_matrix_invert(vkvg_matrix_t *matrix);
 /** @}*/
 
 
