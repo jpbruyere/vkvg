@@ -140,12 +140,12 @@ void test(){
 	vkvg_move_to(ctx, 80,400);
 	vkvg_show_text (ctx,"Ленивый рыжий кот");
 
-	/*vkvg_move_to(ctx, 150,250);
+	vkvg_move_to(ctx, 150,250);
 	vkvg_show_text (ctx,"test string é€");
 	vkvg_move_to(ctx, 150,300);
 	vkvg_show_text (ctx,"كسول الزنجبيل القط");
 	vkvg_move_to(ctx, 150,350);
-	vkvg_show_text (ctx,"懶惰的姜貓");*/
+	vkvg_show_text (ctx,"懶惰的姜貓");
 
 	//vkvg_show_text (ctx,"ABCDABCD");
 	//vkvg_show_text (ctx,"j");
@@ -153,11 +153,22 @@ void test(){
 	vkvg_destroy(ctx);
 }
 
+void test_mono () {
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_source_rgb(ctx,1,1,1);
+	vkvg_select_font_face(ctx,"mono");
+	vkvg_set_font_size(ctx, 20);
+	vkvg_move_to(ctx,100,100);
+	vkvg_show_text(ctx,"This is a test string!");
+	vkvg_destroy(ctx);
+}
+
 int main(int argc, char *argv[]) {
 
-	PERFORM_TEST (test, argc, argv);
+	PERFORM_TEST (test_mono, argc, argv);
+	/*PERFORM_TEST (test, argc, argv);
 	PERFORM_TEST (test1, argc, argv);
-	PERFORM_TEST (test2, argc, argv);
+	PERFORM_TEST (test2, argc, argv);*/
 
 	return 0;
 }
