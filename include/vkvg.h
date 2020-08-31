@@ -61,18 +61,13 @@ extern "C" {
 /*! @defgroup path Path creation and manipulation reference.
  *  @brief Functions and types related to path edition.
  */
-/*! @defgroup pattern Pattern
- *  @brief Functions and types related to VKVG patterns.
- *
- *  This is the reference documentation for VKVG patters used as source for drawing operations.
- */
 
 #include <vulkan/vulkan.h>
 #include <math.h>
 #include <stdbool.h>
 
-#ifndef cairo_public
-# if defined (_MSC_VER)
+#ifndef vkvg_public
+# if defined (_MSC_VER) && !defined (VKVG_STATIC_BUILD)
 #  define vkvg_public __declspec(dllimport)
 # else
 #  define vkvg_public
@@ -274,11 +269,12 @@ typedef struct _vkvg_device_t*  VkvgDevice;
  */
 typedef struct _vkvg_pattern_t* VkvgPattern;
 
-/*!	@defgroup matrix Matrices
- *	@brief Generic matrix operations
+/**
+ * @defgroup matrix Matrices
+ * @brief Generic matrix operations
  *
- *	This is the reference documentation for handling matrices to use as transformation in drawing operations.
- *	Matrix computations in vkvg are taken from the cairo library.
+ * This is the reference documentation for handling matrices to use as transformation in drawing operations.
+ * Matrix computations in vkvg are taken from the cairo library.
  * @{ */
 #define VKVG_IDENTITY_MATRIX {1,0,0,1,0,0}/*!< The identity matrix*/
 /**
@@ -311,6 +307,7 @@ typedef struct {
  * Initialize members of the supplied #vkvg_matrix_t to make an identity matrix of it.
  * @param matrix a valid #vkvg_matrix_t pointer.
  */
+vkvg_public
 void vkvg_matrix_init_identity (vkvg_matrix_t *matrix);
 /**
  * @brief Matrix initialization.
@@ -325,6 +322,7 @@ void vkvg_matrix_init_identity (vkvg_matrix_t *matrix);
  * @param x0 X translation component of the affine transformation
  * @param y0 Y translation component of the affine transformation
  */
+vkvg_public
 void vkvg_matrix_init (vkvg_matrix_t *matrix,
 		   float xx, float yx,
 		   float xy, float yy,
@@ -560,22 +558,6 @@ VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height
 vkvg_public
 VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath);
 /**
- * @brief Create a new vkvg surface by loading a SVG file.
- * @param dev The vkvg device used for creating the surface.
- * @param filePath The path of the SVG file to load.
- * @return The new vkvg surface with the loaded SVG drawing as content, or null if an error occured.
- */
-vkvg_public
-VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, const char* filePath);
-/**
- * @brief Create a new vkvg surface by parsing a string with a valid SVG fragment passed as argument.
- * @param dev The vkvg device used for creating the surface.
- * @param fragment The SVG fragment to parse.
- * @return The new vkvg surface with the parsed SVG fragment as content, or null if an error occured.
- */
-vkvg_public
-VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, char *fragment);
-/**
  * @brief Create a new vkvg surface that will used an existing vulkan texture as backend.
  * @param dev The vkvg device used for creating the surface.
  * @param vkhImg The VkhImage to use as the backend texture for drawing operations.
@@ -773,6 +755,7 @@ void vkvg_close_path (VkvgContext ctx);
  * If the current path is empty, this function has no effect.
  * @param ctx The vkvg context pointer.
  */
+vkvg_public
 void vkvg_new_sub_path (VkvgContext ctx);
 /**
  * @brief Add a line to the current path from the current point to the coordinate given in arguments.
@@ -784,6 +767,7 @@ void vkvg_new_sub_path (VkvgContext ctx);
  * @param x absolute x coordinate of second point
  * @param y aboslute y coordinate of second point
  */
+vkvg_public
 void vkvg_line_to (VkvgContext ctx, float x, float y);
 /**
  * @brief Add a line to the current path from the current point to the coordinate relative to it.
@@ -795,6 +779,7 @@ void vkvg_line_to (VkvgContext ctx, float x, float y);
  * @param dx delta x
  * @param dy delta y
  */
+vkvg_public
 void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy);
 /**
  * @brief Move the context pen to the position given in argument.
@@ -808,6 +793,7 @@ void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy);
  * @param x new x position of the pen
  * @param y new y position of the pen
  */
+vkvg_public
 void vkvg_move_to (VkvgContext ctx, float x, float y);
 /**
  * @brief Move the context pen relative to the current point.
@@ -820,6 +806,7 @@ void vkvg_move_to (VkvgContext ctx, float x, float y);
  * @param x delta in the horizontal direction.
  * @param y delta in the vertical direction.
  */
+vkvg_public
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y);
 /**
  * @brief Adds a circular arc of the given radius to the current path.
@@ -844,6 +831,7 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y);
  * @param a1 start angle in radians of the arc as if on a trigonometric circle.
  * @param a2 end angle in radians of the arc to draw.
  */
+vkvg_public
 void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2);
 /**
  * @brief Add a circular arc in counter clockwise order to the current path.
@@ -861,6 +849,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
  * @param a1 start angle in radians of the arc as if on a trigonometric circle.
  * @param a2 end angle in radians of the arc to draw.
  */
+vkvg_public
 void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2);
 /**
  * @brief Adds a cubic Bézier spline to the current path.
@@ -890,30 +879,94 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
  * @param h The height in pixel of the rectangle to draw.
  */
 vkvg_public
-void vkvg_rectangle         (VkvgContext ctx, float x, float y, float w, float h);
-
-void vkvg_fill_rectangle    (VkvgContext ctx, float x, float y, float w, float h);
-void vkvg_stroke			(VkvgContext ctx);
-void vkvg_stroke_preserve	(VkvgContext ctx);
-void vkvg_fill				(VkvgContext ctx);
-void vkvg_fill_preserve		(VkvgContext ctx);
-void vkvg_paint             (VkvgContext ctx);
-void vkvg_clear             (VkvgContext ctx);//use vkClearAttachment to speed up clearing surf
-void vkvg_reset_clip        (VkvgContext ctx);
-void vkvg_clip              (VkvgContext ctx);
-void vkvg_clip_preserve     (VkvgContext ctx);
+void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h);
 /**
- * @brief set color as new source with an alpha component.
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param x 
+ * @param y 
+ * @param w 
+ * @param h 
+ */
+vkvg_public
+void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
+void vkvg_stroke (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
+void vkvg_stroke_preserve (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
+void vkvg_fill (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
+void vkvg_fill_preserve (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
+void vkvg_paint (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
+void vkvg_clear (VkvgContext ctx);//use vkClearAttachment to speed up clearing surf
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
+void vkvg_reset_clip (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
+void vkvg_clip (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
+void vkvg_clip_preserve (VkvgContext ctx);
+
+/**
+ * @brief set color with alpha.
  *
- * Set current source to the solid color defined by the rgba components with 'a' for transparency.
- *
- * @param ctx vkvg context pointer
+ * Set current source for drawing to the solid color defined by the rgba components with 'a' for transparency.
+ * @param ctx a valid vkvg #context
  * @param r the red component of the color.
  * @param g the green component of the color.
  * @param b the blue component of the color.
  * @param a the alpha component holding the transparency for the current color.
  */
-void vkvg_set_source_rgba	(VkvgContext ctx, float r, float g, float b, float a);
+vkvg_public
+void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a);
 /**
  * @brief set color as new source.
  *
@@ -925,6 +978,7 @@ void vkvg_set_source_rgba	(VkvgContext ctx, float r, float g, float b, float a);
  * @param b the blue component of the color.
  * @param a the alpha component holding the transparency for the current color.
  */
+vkvg_public
 void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b);
 /**
  * @brief set line width.
@@ -932,36 +986,40 @@ void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b);
  * Set the current line width for the targeted context. All further calls to #vkvg_stroke on this context
  * will use this new width.
  *
- * @param ctx vkvg context pointer.
+ * @param ctx a valid vkvg #context
  * @param width new current line width for the context.
  */
+vkvg_public
 void vkvg_set_line_width (VkvgContext ctx, float width);
 /**
  * @brief set line terminations
  *
  * Configure the line terminations to output for further path stroke commands.
- * @param ctx vkvg context pointer.
+ * @param ctx a valid vkvg #context
  * @param cap new line termination, may be one of the value of #vkvg_line_cap_t.
  */
 
+vkvg_public
 void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap);
 /**
  * @brief set line joins
  *
  * Configure the line join to output for further path stroke commands.
- * @param ctx vkvg context pointer.
+ * @param ctx a valid vkvg #context
  * @param join new line join as defined in #vkvg_line_joint_t.
  */
+vkvg_public
 void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join);
 /**
  * @brief use supplied surface as current pattern
  *
  * set #VkvgSurface as the current context source.
- * @param ctx vkvg context pointer
+ * @param ctx a valid vkvg #context
  * @param surf the vkvg surface to use as source.
  * @param x an x offset to apply for drawing operations using this surface.
  * @param y an y offset to apply for drawing operations using this surface.
  */
+vkvg_public
 void vkvg_set_source_surface (VkvgContext ctx, VkvgSurface surf, float x, float y);
 /**
  * @brief set supplied pattern as current source.
@@ -970,20 +1028,23 @@ void vkvg_set_source_surface (VkvgContext ctx, VkvgSurface surf, float x, float 
  * @param ctx a valid vkvg @ref context
  * @param pat the new pattern to use as source for further drawing operations.
  */
+vkvg_public
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat);
 /**
  * @brief
  *
- * @param ctx
+ * @param ctx a valid vkvg #context
  * @param op
  */
+vkvg_public
 void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op);
 /**
  * @brief
  *
- * @param ctx
+ * @param ctx a valid vkvg #context
  * @param fr
  */
+vkvg_public
 void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr);
 /**
  * @brief set the dash configuration for strokes
@@ -992,79 +1053,341 @@ void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr);
  * A dash pattern is specified by dashes, an array of positive values.
  * Each value provides the length of alternate "on" and "off" portions of the stroke.
  * The offset specifies an offset into the pattern at which the stroke begins.
- * @param ctx a valid vkvg @ref context
+ * @param ctx a valid vkvg #context
  * @param dashes a pointer on an array of float values defining alternate lengths of on and off stroke portions.
  * @param num_dashes the length of the dash array.
  * @param offset an offset into the dash pattern at which the stroke should start.
  */
+vkvg_public
 void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset);
 /**
  * @brief get current dash settings.
  *
  * Get the current dash configuration for the supplied #context.
  * If dashes pointer is NULL, only count and offset are returned, useful to query dash array dimension first.
- * @param ctx a valid vkvg @ref context
+ * @param ctx a valid vkvg #context
  * @param dashes[out] return value for the dash array. If count is 0, this pointer stay untouched.
  * If NULL, only count and offset are returned.
  * @param num_dashes[out] return length of dash array or 0 if dash is not set.
  * @param offset[out] return value for the current dash offset
  */
+vkvg_public
 void vkvg_get_dash (VkvgContext ctx, const float *dashes, uint32_t* num_dashes, float* offset);
 
 /**
  * @brief get current line width
  *
  * This function return the current line width to use by vkvg_stroke() as set by #vkvg_set_line_width().
- * @param ctx a valid vkvg @ref context
+ * @param ctx a valid vkvg #context
  * @return current line width.
  */
-float vkvg_get_line_width     (VkvgContext ctx);
-vkvg_line_cap_t vkvg_get_line_cap       (VkvgContext ctx);
-vkvg_line_join_t vkvg_get_line_join      (VkvgContext ctx);
-vkvg_operator_t vkvg_get_operator       (VkvgContext ctx);
-vkvg_fill_rule_t vkvg_get_fill_rule      (VkvgContext ctx);
-VkvgPattern vkvg_get_source         (VkvgContext ctx);
+vkvg_public
+float vkvg_get_line_width (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @return vkvg_line_cap_t 
+ */
+vkvg_public
+vkvg_line_cap_t vkvg_get_line_cap (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @return vkvg_line_join_t 
+ */
+vkvg_public
+vkvg_line_join_t vkvg_get_line_join (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @return vkvg_operator_t 
+ */
+vkvg_public
+vkvg_operator_t vkvg_get_operator (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @return vkvg_fill_rule_t 
+ */
+vkvg_public
+vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @return VkvgPattern 
+ */
+vkvg_public
+VkvgPattern vkvg_get_source (VkvgContext ctx);
 
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
 void vkvg_save (VkvgContext ctx);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
 void vkvg_restore (VkvgContext ctx);
-
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param dx 
+ * @param dy 
+ */
+vkvg_public
 void vkvg_translate (VkvgContext ctx, float dx, float dy);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param sx 
+ * @param sy 
+ */
+vkvg_public
 void vkvg_scale (VkvgContext ctx, float sx, float sy);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param radians 
+ */
+vkvg_public
 void vkvg_rotate (VkvgContext ctx, float radians);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param matrix 
+ */
+vkvg_public
 void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param matrix 
+ */
+vkvg_public
 void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param matrix 
+ */
+vkvg_public
 void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ */
+vkvg_public
 void vkvg_identity_matrix (VkvgContext ctx);
 
 //text
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param name 
+ */
+vkvg_public
 void vkvg_select_font_face (VkvgContext ctx, const char* name);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param size 
+ */
+vkvg_public
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param text 
+ */
+vkvg_public
 void vkvg_show_text (VkvgContext ctx, const char* text);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param text 
+ * @param extents 
+ */
+vkvg_public
 void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param extents 
+ */
+vkvg_public
 void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents);
 
 //text run holds harfbuz datas, and prevent recreating them multiple times for the same line of text.
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param text 
+ * @return VkvgText 
+ */
+vkvg_public
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text);
+/**
+ * @brief 
+ * 
+ * @param textRun 
+ */
+vkvg_public
 void vkvg_text_run_destroy (VkvgText textRun);
+/**
+ * @brief 
+ * 
+ * @param ctx a valid vkvg #context
+ * @param textRun 
+ */
+vkvg_public
 void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun);
-void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents);
+/**
+ * @brief 
+ * 
+ * @param textRun 
+ * @param extents 
+ */
+vkvg_public
+void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents);
 /** @}*/
 
-/** @addtogroup pattern
+/**
+ * @defgroup pattern Pattern
+ * @brief special sources for drawing
+ *
+ * A Pattern is a special source for drawing operations that can be an image, a gradient
+ * and which may have special configuration for filtering and border repeat.
+ * 
  * @{ */
+
+/**
+ * @brief add reference
+ * 
+ * increment reference count by one for the supplied #VkvgPattern.
+ * @param pat a valid #VkvgPattern pointer
+ * @return VkvgPattern 
+ */
+vkvg_public
 VkvgPattern vkvg_pattern_reference (VkvgPattern pat);
-uint32_t vkvg_pattern_get_reference_count(VkvgPattern pat);
+/**
+ * @brief get reference count
+ * 
+ * return the current reference count for the supplied #VkvgPattern
+ * @param pat a valid #VkvgPattern to query for its reference count
+ * @return uint32_t the current reference count for this instance.
+ */
+vkvg_public
+uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat);
+/**
+ * @brief create a surface pattern
+ * 
+ * Create a new pattern from the supplied #surface. The advantage of having
+ * a #VkvgPattern to paint an image resides in the hability to set filtering options
+ * as well as repeat behaviour on borders. Reference count of the supplied surface will
+ * be incremented so that it will not be destroyed before this pattern release it.
+ * @param surf a valid #VkvgSurface to use for pattern
+ * @return VkvgPattern a newly created pattern
+ */
+vkvg_public
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
+/**
+ * @brief 
+ * 
+ * @param x0 
+ * @param y0 
+ * @param x1 
+ * @param y1 
+ * @return VkvgPattern 
+ */
+vkvg_public
 VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1);
+/**
+ * @brief 
+ * 
+ * @param cx0 
+ * @param cy0 
+ * @param radius0 
+ * @param cx1 
+ * @param cy1 
+ * @param radius1 
+ * @return VkvgPattern 
+ */
+vkvg_public
 VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
 											 float cx1, float cy1, float radius1);
+/**
+ * @brief 
+ * 
+ * @param pat 
+ */
+vkvg_public
 void vkvg_pattern_destroy (VkvgPattern pat);
-
+/**
+ * @brief 
+ * 
+ * @param pat 
+ * @param offset 
+ * @param r 
+ * @param g 
+ * @param b 
+ * @param a 
+ */
+vkvg_public
 void vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a);
+/**
+ * @brief 
+ * 
+ * @param pat 
+ * @param extend 
+ */
+vkvg_public
 void vkvg_pattern_set_extend (VkvgPattern pat, vkvg_extend_t extend);
+/**
+ * @brief 
+ * 
+ * @param pat 
+ * @param filter 
+ */
+vkvg_public
 void vkvg_pattern_set_filter (VkvgPattern pat, vkvg_filter_t filter);
-
+/**
+ * @brief 
+ * 
+ * @param pat 
+ * @return vkvg_extend_t 
+ */
+vkvg_public
 vkvg_extend_t vkvg_pattern_get_extend (VkvgPattern pat);
+/**
+ * @brief 
+ * 
+ * @param pat 
+ * @return vkvg_filter_t 
+ */
+vkvg_public
 vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat);
 /** @}*/
 

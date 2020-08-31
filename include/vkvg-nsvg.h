@@ -26,7 +26,13 @@
 extern "C" {
 #endif
 
-#include "vkvg.h"
+#ifndef vkvg_public
+# if defined (_MSC_VER) && ! defined (VKVG_STATIC_BUILD)
+#  define vkvg_public __declspec(dllimport)
+# else
+#  define vkvg_public
+# endif
+#endif
 
 /*! @defgroup nsvg Nano SVG
  * @brief Render SVG drawings
@@ -43,6 +49,22 @@ extern "C" {
  *
  */
 typedef struct NSVGimage NSVGimage;
+/**
+ * @brief Create a new vkvg surface by loading a SVG file.
+ * @param dev The vkvg device used for creating the surface.
+ * @param filePath The path of the SVG file to load.
+ * @return The new vkvg surface with the loaded SVG drawing as content, or null if an error occured.
+ */
+vkvg_public
+VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, const char* filePath);
+/**
+ * @brief Create a new vkvg surface by parsing a string with a valid SVG fragment passed as argument.
+ * @param dev The vkvg device used for creating the surface.
+ * @param fragment The SVG fragment to parse.
+ * @return The new vkvg surface with the parsed SVG fragment as content, or null if an error occured.
+ */
+vkvg_public
+VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, char* fragment);
 /**
  * @brief load svg file
  *

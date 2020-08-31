@@ -26,6 +26,8 @@
 #define NANOSVG_IMPLEMENTATION	// Expands implementation
 #include "nanosvg.h"
 
+#include "vkvg-nsvg.h"
+
 void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 	float a = (c >> 24 & 255) / 255.f;
 	float b = (c >> 16 & 255) / 255.f;
