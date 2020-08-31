@@ -48,14 +48,6 @@
 #define LOG
 #endif
 
-#define VKVG_LOG_ERR		0x10
-#define VKVG_LOG_DEBUG		0x20
-#define VKVG_LOG_INFO		0x40
-#define VKVG_LOG_INFO_PATH	0x41
-#define VKVG_LOG_DBG_ARRAYS	0x80
-#define VKVG_LOG_FULL		0xff
-
-
 #define PATH_CLOSED_BIT     0x80000000              /* most significant bit of path elmts is closed/open path state */
 #define PATH_HAS_CURVES_BIT 0x40000000              /* 2d most significant bit of path elmts  if curve data are present,
 													   stored to avoid emiting joins in curves */

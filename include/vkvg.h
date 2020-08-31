@@ -99,6 +99,21 @@ extern "C" {
 #define VKVG_VERSION_REVISION       1
 /*! @} */
 
+#ifndef cairo_public
+# if defined (_MSC_VER)
+#  define vkvg_public __declspec(dllimport)
+# else
+#  define vkvg_public
+# endif
+#endif
+
+#define VKVG_LOG_ERR		0x10
+#define VKVG_LOG_DEBUG		0x20
+#define VKVG_LOG_INFO		0x40
+#define VKVG_LOG_INFO_PATH	0x41
+#define VKVG_LOG_DBG_ARRAYS	0x80
+#define VKVG_LOG_FULL		0xff
+
 #ifdef DEBUG
 extern uint8_t vkvg_log_level;
 #endif

@@ -48,10 +48,12 @@ PFN_vkCmdPushConstants          CmdPushConstants;
 PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
 
 void _flush_all_contexes (VkvgDevice dev){
-	VkvgContext next = dev->lastCtx;
-	while (next != NULL){
-		_flush_cmd_buff(next);
-		next = next->pPrev;
+	VkvgContext ctx = dev->lastCtx;
+	while (ctx != NULL){
+		if (ctx->cmdStarted)
+			_flush_cmd_until_vx_base (ctx);
+
+		ctx = ctx->pPrev;
 	}
 }
 

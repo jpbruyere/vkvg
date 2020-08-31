@@ -59,7 +59,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->curOperator    = VKVG_OPERATOR_OVER;
 	ctx->curFillRule    = VKVG_FILL_RULE_NON_ZERO;
 	ctx->pSurf          = surf;
-	
+
 	ctx->bounds = (VkRect2D) {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
 	ctx->pushConsts = (push_constants) {
 			{.height=1},
@@ -68,7 +68,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 			0,
 			VKVG_IDENTITY_MATRIX,
 			VKVG_IDENTITY_MATRIX
-	};	
+	};
 	ctx->clearRect = (VkClearRect) {{{0},{ctx->pSurf->width, ctx->pSurf->height}},0,1};
 
 	ctx->renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -904,9 +904,9 @@ void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
 }
 
 void vkvg_show_text (VkvgContext ctx, const char* text){
-	_ensure_renderpass_is_started(ctx);
+	//_ensure_renderpass_is_started(ctx);
 	_show_text (ctx, text);
-	_flush_undrawn_vertices (ctx);
+	//_flush_undrawn_vertices (ctx);
 }
 
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {

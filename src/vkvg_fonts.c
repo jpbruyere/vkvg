@@ -85,6 +85,10 @@ void _init_fonts_cache (VkvgDevice dev){
 }
 ///increase layer count of 2d texture array used as font cache.
 void _increase_font_tex_array (VkvgDevice dev){
+	LOG(VKVG_LOG_INFO, "_increase_font_tex_array\n");
+
+	_flush_all_contexes (dev);
+
 	_font_cache_t* cache = dev->fontCache;
 
 	vkWaitForFences     (dev->vkDev, 1, &cache->uploadFence, VK_TRUE, UINT64_MAX);
@@ -126,20 +130,19 @@ void _increase_font_tex_array (VkvgDevice dev){
 	_submit_cmd         (dev, &cache->cmd, cache->uploadFence);
 	vkWaitForFences     (dev->vkDev, 1, &cache->uploadFence, VK_TRUE, UINT64_MAX);
 
-	_flush_all_contexes (dev);
-
 	cache->pensY = (int*)realloc(cache->pensY, newSize * sizeof(int));
-	memset (cache->pensY + cache->texLength * sizeof(int),0,FONT_CACHE_INIT_LAYERS*sizeof(int));
+	void* tmp = memset (&cache->pensY[cache->texLength],0,FONT_CACHE_INIT_LAYERS*sizeof(int));
 
 	vkh_image_destroy   (cache->texture);
 	cache->texLength   = newSize;
 	cache->texture     = newImg;
 
-	/*VkvgContext next = dev->lastCtx;
+	VkvgContext next = dev->lastCtx;
 	while (next != NULL){
-		_update_descriptor_set (next, next->source, next->dsSrc);
+		_update_descriptor_set  (next, cache->texture, next->dsFont);
 		next = next->pPrev;
-	}*/
+	}
+	_wait_idle(dev);
 }
 ///Start a new line in font cache, increase texture layer count if needed.
 void _init_next_line_in_tex_cache (VkvgDevice dev, _vkvg_font_t* f){
@@ -220,6 +223,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 	if (cache->stagingX == 0)
 		return;
 
+	LOG(VKVG_LOG_INFO, "_flush_chars_to_tex pen(%d, %d)\n",f->curLine.penX, f->curLine.penY);
 	vkWaitForFences     (dev->vkDev,1,&cache->uploadFence,VK_TRUE,UINT64_MAX);
 	vkResetCommandBuffer(cache->cmd,0);
 	vkResetFences       (dev->vkDev,1,&cache->uploadFence);

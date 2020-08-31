@@ -327,6 +327,7 @@ void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float h
 }
 //start render pass if not yet started or update push const if requested
 void _ensure_renderpass_is_started (VkvgContext ctx) {
+	LOG(VKVG_LOG_INFO, "_ensure_renderpass_is_started\n");
 	if (!ctx->cmdStarted)
 		_start_cmd_for_render_pass(ctx);
 	else if (ctx->pushCstDirty)
@@ -427,15 +428,11 @@ void _end_render_pass (VkvgContext ctx) {
 void _check_vao_size (VkvgContext ctx) {
 	if (ctx->vertCount > ctx->sizeVBO || ctx->indCount > ctx->sizeIBO){
 		//vbo or ibo buffers too small
-		if (ctx->cmdStarted) {
+		if (ctx->cmdStarted)
 			//if cmd is started buffers, are already bound, so no resize is possible
 			//instead we flush, and clear vbo and ibo caches
-			_end_render_pass (ctx);
-			if (ctx->curVertOffset > 0)
-				_flush_vertices_caches_until_vertex_base (ctx);
-			vkh_cmd_end (ctx->cmd);
-			_wait_and_submit_cmd (ctx);
-		}
+			_flush_cmd_until_vx_base (ctx);
+
 		_resize_vbo(ctx, ctx->sizeVertices);
 		_resize_ibo(ctx, ctx->sizeIndices);
 	}
@@ -464,16 +461,25 @@ void _flush_undrawn_vertices (VkvgContext ctx){
 	ctx->curIndStart = ctx->indCount;
 	ctx->curVertOffset = ctx->vertCount;
 }
-
+//preflush vertices with drawcommand already emited
+void _flush_cmd_until_vx_base (VkvgContext ctx){
+	_end_render_pass (ctx);
+	if (ctx->curVertOffset > 0){
+		LOG(VKVG_LOG_INFO, "FLUSH UNTIL VX BASE CTX: ctx = %p; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
+		_flush_vertices_caches_until_vertex_base (ctx);
+	}
+	vkh_cmd_end (ctx->cmd);
+	_wait_and_submit_cmd (ctx);
+}
 void _flush_cmd_buff (VkvgContext ctx){
 	_flush_undrawn_vertices (ctx);
 	if (!ctx->cmdStarted)
 		return;
 	_end_render_pass        (ctx);
+	LOG(VKVG_LOG_INFO, "FLUSH CTX: ctx = %p; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
 	_flush_vertices_caches  (ctx);
 	vkh_cmd_end             (ctx->cmd);
 
-	LOG(VKVG_LOG_INFO, "FLUSH CTX: ctx = %p; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
 	_wait_and_submit_cmd(ctx);
 }
 

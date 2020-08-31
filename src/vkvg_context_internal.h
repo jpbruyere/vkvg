@@ -218,6 +218,7 @@ void _create_cmd_buff		(VkvgContext ctx);
 void _ensure_renderpass_is_started  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
 void _flush_undrawn_vertices(VkvgContext ctx);
+void _flush_cmd_until_vx_base (VkvgContext ctx);
 void _wait_flush_fence      (VkvgContext ctx);
 void _reset_flush_fence     (VkvgContext ctx);
 void _wait_and_submit_cmd   (VkvgContext ctx);

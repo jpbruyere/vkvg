@@ -152,23 +152,29 @@ void test(){
 
 	vkvg_destroy(ctx);
 }
-
-void test_mono () {
+void random_text () {
 	VkvgContext ctx = vkvg_create(surf);
-	vkvg_set_source_rgb(ctx,1,1,1);
+	vkvg_clear(ctx);
 	vkvg_select_font_face(ctx,"mono");
-	vkvg_set_font_size(ctx, 20);
-	vkvg_move_to(ctx,100,100);
-	vkvg_show_text(ctx,"This is a test string!");
+	for (uint32_t i=0; i<test_size; i++) {
+		randomize_color(ctx);
+		float x = (float)rand()/RAND_MAX * test_width;
+		float y = (float)rand()/RAND_MAX * test_height;
+		uint32_t c = (uint32_t)((float)rand()/RAND_MAX * 80)+1;
+
+		vkvg_set_font_size(ctx, c);
+		vkvg_move_to(ctx,x,y);
+		vkvg_show_text(ctx,"This is a test string!");
+	}
 	vkvg_destroy(ctx);
 }
-
 int main(int argc, char *argv[]) {
 
-	PERFORM_TEST (test_mono, argc, argv);
-	/*PERFORM_TEST (test, argc, argv);
+	//vkvg_log_level = VKVG_LOG_INFO;
+	PERFORM_TEST (random_text, argc, argv);
+	PERFORM_TEST (test, argc, argv);
 	PERFORM_TEST (test1, argc, argv);
-	PERFORM_TEST (test2, argc, argv);*/
+	PERFORM_TEST (test2, argc, argv);
 
 	return 0;
 }
