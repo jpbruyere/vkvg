@@ -19,14 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "vkvg.h"
-
 #ifndef VKVG_NSVG_H
 #define VKVG_NSVG_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "vkvg.h"
 
 /*! @defgroup nsvg Nano SVG
  * @brief Render SVG drawings
