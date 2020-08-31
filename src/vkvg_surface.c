@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2020 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -28,8 +28,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include "vkh_image.h"
-#define NANOSVG_IMPLEMENTATION	// Expands implementation
-#include "nanosvg.h"
 
 void _explicit_ms_resolve (VkvgSurface surf){
 	VkvgDevice      dev = surf->dev;
@@ -204,7 +202,7 @@ VkvgSurface _create_surface (VkvgDevice dev, VkFormat format) {
 void vkvg_surface_clear (VkvgSurface surf) {
 	_clear_surface(surf, VK_IMAGE_ASPECT_STENCIL_BIT|VK_IMAGE_ASPECT_COLOR_BIT);
 }
-VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height){
+VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height){
 	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
 	if (!surf)
 		return NULL;
@@ -359,61 +357,6 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 	stbi_image_free (img);
 
 	return surf;
-}
-
-void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
-	float a = (c >> 24 & 255) / 255.f;
-	float b = (c >> 16 & 255) / 255.f;
-	float g = (c >> 8 & 255) / 255.f;
-	float r = (c & 255) / 255.f;
-	vkvg_set_source_rgba(ctx,r,g,b,a*alpha);
-}
-
-VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
-	if (svg == NULL) {
-		LOG(VKVG_LOG_ERR, "nsvg error");
-		return NULL;
-	}
-	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
-	if (!surf)
-		return NULL;
-
-	surf->width = (uint32_t)svg->width;
-	surf->height = (uint32_t)svg->height;
-	surf->new = true;
-
-	_create_surface_images (surf);
-
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_render_svg(ctx, svg, NULL);
-	vkvg_destroy(ctx);
-
-	nsvgDelete(svg);
-
-	surf->references = 1;
-	vkvg_device_reference (surf->dev);
-
-	return surf;
-}
-
-VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, const char* filePath) {
-	return _svg_load(dev, nsvgParseFromFile(filePath, "px", (float)dev->hdpi));
-}
-VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, char* fragment) {
-	return _svg_load(dev, nsvgParse(fragment, "px", (float)dev->hdpi));
-}
-NSVGimage* nsvg_load_file (VkvgDevice dev, const char* filePath) {
-	return nsvgParseFromFile(filePath, "px", (float)dev->hdpi);
-}
-NSVGimage* nsvg_load (VkvgDevice dev, char* fragment) {
-	return nsvgParse (fragment, "px", (float)dev->hdpi);
-}
-void nsvg_destroy (NSVGimage* svg) {
-	nsvgDelete(svg);
-}
-void nsvg_get_size (NSVGimage* svg, int* width, int* height) {
-	*width = (int)svg->width;
-	*height = (int)svg->height;
 }
 
 void vkvg_surface_destroy(VkvgSurface surf)

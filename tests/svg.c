@@ -1,8 +1,7 @@
 #include "test.h"
 
 #include "string.h" //for nanosvg
-//#define NANOSVG_IMPLEMENTATION	// Expands implementation
-#include "nanosvg.h"
+#include "vkvg-nsvg.h"
 
 static float rotation = 0.f;
 static const char* path = "data/tiger.svg";

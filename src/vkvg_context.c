@@ -26,8 +26,6 @@
 #include "vkvg_pattern.h"
 #include "vkh_queue.h"
 
-#include "nanosvg.h"
-
 #ifdef DEBUG
 static vec2 debugLinePoints[1000];
 static uint32_t dlpCount = 0;
@@ -274,10 +272,9 @@ void vkvg_new_path (VkvgContext ctx){
 }
 void vkvg_close_path (VkvgContext ctx){
 	//check if at least 3 points are present
-	if (ctx->pathes[ctx->pathPtr] < 3){
-		ctx->status = VKVG_STAtUS_NOT_ENOUGH_POINTS_TO_CLOSE_PATH;
+	if (ctx->pathes[ctx->pathPtr] < 3)
 		return;
-	}
+	
 	//prevent closing on the same point
 	if (vec2_equ(ctx->points[ctx->pointCount-1],
 				 ctx->points[ctx->pointCount - ctx->pathes[ctx->pathPtr]]))
@@ -837,21 +834,9 @@ void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr){
 vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx){
 	return ctx->curFillRule;
 }
-/**
- * @brief This function return the current line width use by vkvg_stroke() as set by vkvg_set_line_width().
- * @param a vkvg context.
- * @return current line width.
- */
 float vkvg_get_line_width (VkvgContext ctx){
 	return ctx->lineWidth;
 }
-/**
- * @brief Sets the dash pattern to be used by vkvg_stroke(). A dash pattern is specified by dashes , an array of positive values. Each value provides the length of alternate "on" and "off" portions of the stroke. The offset specifies an offset into the pattern at which the stroke begins.
- * @param a vkvg context.
- * @param a pointer on an array of float values defining alternate lengths of on and off stroke portions.
- * @param the length of the dash array.
- * @param an offset into the dash pattern at which the stroke should start.
- */
 void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset){
 	if (ctx->dashCount > 0)
 		free (ctx->dashes);
@@ -862,13 +847,6 @@ void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, f
 	ctx->dashes = (float*)malloc (sizeof(float) * ctx->dashCount);
 	memcpy (ctx->dashes, dashes, sizeof(float) * ctx->dashCount);
 }
-/**
- * @brief get dash settings. If dashes pointer is NULL, only count and offset are returned.
- * @param a vkvg context.
- * @param return value for the dash array. If count is 0, this pointer stay untouched. If NULL, only count and offset are returned.
- * @param return length of dash array or 0 if dash not set.
- * @param return value for the current dash offset
- */
 void vkvg_get_dash (VkvgContext ctx, const float* dashes, uint32_t* num_dashes, float* offset){
 	*num_dashes = ctx->dashCount;
 	*offset = ctx->dashOffset;
@@ -1155,62 +1133,4 @@ void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
 }
 void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
 	memcpy ((void*)matrix, &ctx->pushConsts.mat, sizeof(vkvg_matrix_t));
-}
-
-void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg, char *subId){
-	NSVGshape* shape;
-	NSVGpath* path;
-
-	vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
-
-	vkvg_set_source_rgba(ctx,0.0,0.0,0.0,1);
-
-	for (shape = svg->shapes; shape != NULL; shape = shape->next) {
-		if (subId != NULL) {
-			if (strcmp(shape->id, subId)!=0)
-				continue;
-		}
-
-		vkvg_new_path(ctx);
-
-		float o = shape->opacity;
-
-		vkvg_set_line_width(ctx, shape->strokeWidth);
-
-		for (path = shape->paths; path != NULL; path = path->next) {
-			float* p = path->pts;
-			vkvg_move_to(ctx, p[0],p[1]);
-			for (int i = 1; i < path->npts; i += 3) {
-				p = &path->pts[i*2];
-				vkvg_curve_to(ctx, p[0],p[1], p[2],p[3], p[4],p[5]);
-			}
-			if (path->closed)
-				vkvg_close_path(ctx);
-		}
-
-		if (shape->fill.type == NSVG_PAINT_COLOR)
-			_svg_set_color(ctx, shape->fill.color, o);
-		else if (shape->fill.type == NSVG_PAINT_LINEAR_GRADIENT){
-			NSVGgradient* g = shape->fill.gradient;
-			_svg_set_color(ctx, g->stops[0].color, o);
-		}
-
-		if (shape->fill.type != NSVG_PAINT_NONE){
-			if (shape->stroke.type == NSVG_PAINT_NONE){
-				vkvg_fill(ctx);
-				continue;
-			}
-			vkvg_fill_preserve (ctx);
-		}
-
-		if (shape->stroke.type == NSVG_PAINT_COLOR)
-			_svg_set_color(ctx, shape->stroke.color, o);
-		else if (shape->stroke.type == NSVG_PAINT_LINEAR_GRADIENT){
-			NSVGgradient* g = shape->stroke.gradient;
-			_svg_set_color(ctx, g->stops[0].color, o);
-		}
-
-		vkvg_stroke(ctx);
-	}
-
 }
