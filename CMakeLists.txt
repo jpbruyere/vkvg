@@ -5,6 +5,12 @@ SET(LANG "CXX")
 #PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic" LANGUAGES ${LANG})
 PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic")
 
+ADD_COMPILE_DEFINITIONS(
+	"VKVG_VERSION_MAJOR=${vkvg_VERSION_MAJOR}"
+	"VKVG_VERSION_MINOR=${vkvg_VERSION_MINOR}"
+	"VKVG_VERSION_REVISION=${vkvg_VERSION_PATCH}"
+)
+
 INCLUDE(CheckSymbolExists)
 INCLUDE(CheckIncludeFile)
 INCLUDE(GNUInstallDirs)
@@ -206,11 +212,7 @@ IF (VKVG_BUILD_TESTS)
 	ADD_SUBDIRECTORY(tests)
 ENDIF (VKVG_BUILD_TESTS)
 
-MESSAGE(STATUS "\n\n--------------------------------------------------------------------------")
-MESSAGE(STATUS "VKVG VERSION ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}.${vkvg_VERSION_MAJOR}")
-MESSAGE(STATUS "Build type\t\t= ${CMAKE_BUILD_TYPE}")
-MESSAGE(STATUS "VULKAN_SDK\t\t= $ENV{VULKAN_SDK}")
-MESSAGE(STATUS "VK_LAYER_PATH\t= $ENV{VK_LAYER_PATH}")
+MESSAGE(STATUS "VKVG version\t\t= ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}.${vkvg_VERSION_PATCH}")
 IF (VKVG_BUILD_TESTS)
 	MESSAGE(STATUS "Build tests\t\t= true.")
 ELSE ()
@@ -239,7 +241,6 @@ IF (VKVG_LCD_FONT_FILTER)
 ELSE ()
 	MESSAGE(STATUS "Font filtering\t= Grayscale.")
 ENDIF ()
-MESSAGE(STATUS "---------------------------------------------------------------------------\n\n")
 
 IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 	INCLUDE(InstallRequiredSystemLibraries)

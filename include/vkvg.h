@@ -71,34 +71,6 @@ extern "C" {
 #include <math.h>
 #include <stdbool.h>
 
-/*! @defgroup VKVG version macros
- *	@brief Compile-time and run-time version checks.
- *
- *	vkvg library versioning follows the [Semantic Versioning 2.0.0](https://semver.org/)
- *
- *  @{ */
-/*! @brief Major version number of the VKVG library.
- *
- *  This is incremented when the API is changed in non-compatible ways.
- *  @ingroup init
- */
-#define VKVG_VERSION_MAJOR          0
-/*! @brief The minor version number of the VKVG library.
- *
- *  This is incremented when features are added to the API but it remains
- *  backward-compatible.
- *  @ingroup init
- */
-#define VKVG_VERSION_MINOR          1
-/*! @brief The revision number of the VKVG library.
- *
- *  This is incremented when a bug fix release is made that does not contain any
- *  API changes.
- *  @ingroup init
- */
-#define VKVG_VERSION_REVISION       1
-/*! @} */
-
 #ifndef cairo_public
 # if defined (_MSC_VER)
 #  define vkvg_public __declspec(dllimport)
@@ -694,8 +666,8 @@ void vkvg_multisample_surface_resolve (VkvgSurface surf);
 
 /**
  * @brief compositing operators
- * 
- * define the operation used to draw 
+ *
+ * define the operation used to draw
  */
 typedef enum _vkvg_operator {
 	VKVG_OPERATOR_CLEAR,
@@ -1000,22 +972,22 @@ void vkvg_set_source_surface (VkvgContext ctx, VkvgSurface surf, float x, float 
  */
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat);
 /**
- * @brief 
- * 
- * @param ctx 
- * @param op 
+ * @brief
+ *
+ * @param ctx
+ * @param op
  */
 void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op);
 /**
- * @brief 
- * 
- * @param ctx 
- * @param fr 
+ * @brief
+ *
+ * @param ctx
+ * @param fr
  */
 void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr);
 /**
  * @brief set the dash configuration for strokes
- * 
+ *
  * Sets the dash pattern to be used by the next #vkvg_stroke().
  * A dash pattern is specified by dashes, an array of positive values.
  * Each value provides the length of alternate "on" and "off" portions of the stroke.
@@ -1028,7 +1000,7 @@ void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr);
 void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset);
 /**
  * @brief get current dash settings.
- * 
+ *
  * Get the current dash configuration for the supplied #context.
  * If dashes pointer is NULL, only count and offset are returned, useful to query dash array dimension first.
  * @param ctx a valid vkvg @ref context
@@ -1041,7 +1013,7 @@ void vkvg_get_dash (VkvgContext ctx, const float *dashes, uint32_t* num_dashes, 
 
 /**
  * @brief get current line width
- * 
+ *
  * This function return the current line width to use by vkvg_stroke() as set by #vkvg_set_line_width().
  * @param ctx a valid vkvg @ref context
  * @return current line width.
