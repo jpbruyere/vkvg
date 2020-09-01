@@ -37,11 +37,13 @@ extern "C" {
 /*! @defgroup nsvg Nano SVG
  * @brief Render SVG drawings
  *
- * [NanoSVG](https://github.com/memononen/nanosvg) does not suit production needs, but is implemented
+ * [NanoSVG](https://github.com/memononen/nanosvg) is a simple svg parser.
+ * nanosvg does not suit production needs, but is implemented
  * in vkvg for quickly presenting some outputs with the library.
  *
  * First load svg file with #nsvg_load_file() then render it with vkvg by calling #vkvg_render_svg().
- * The #NSVGimage pointer has to be destroyed by calling #nsvg_destroy()
+ * The #NSVGimage pointer has to be destroyed by calling #nsvg_destroy(). @ref context use is guarded by
+ * a save/restore couple that will restore context at its state before the svg draw.
  * @{ */
 
 /**
@@ -50,15 +52,19 @@ extern "C" {
  */
 typedef struct NSVGimage NSVGimage;
 /**
- * @brief Create a new vkvg surface by loading a SVG file.
- * @param dev The vkvg device used for creating the surface.
+ * @brief load svg file into @ref surface
+ * 
+ * Create a new vkvg surface by loading a SVG file.
+ * @param dev The vkvg @ref device used for creating the surface.
  * @param filePath The path of the SVG file to load.
  * @return The new vkvg surface with the loaded SVG drawing as content, or null if an error occured.
  */
 vkvg_public
 VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, const char* filePath);
 /**
- * @brief Create a new vkvg surface by parsing a string with a valid SVG fragment passed as argument.
+ * @brief create surface from svg fragment
+ * 
+ * Create a new vkvg surface by parsing a string with a valid SVG fragment passed as argument.
  * @param dev The vkvg device used for creating the surface.
  * @param fragment The SVG fragment to parse.
  * @return The new vkvg surface with the parsed SVG fragment as content, or null if an error occured.
@@ -68,35 +74,40 @@ VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, char* fragment
 /**
  * @brief load svg file
  *
- * Load basic svg file and store datas in a #NSVGimage structure.
+ * Load basic svg file and store datas in a #NSVGimage structure. This structure
+ * has to be destroyed by a call to #nsvg_destroy() when no longuer in use.
  * @param dev VkvgDevice to use for loading the svg file, needed for dpy.
  * @param filePath the path of the svg file to load
- * @return NSVGimage* a pointer on a NSVGimage structure
+ * @return NSVGimage* a new pointer on a NSVGimage structure
  */
 vkvg_public
 NSVGimage* nsvg_load_file (VkvgDevice dev, const char* filePath);
 /**
- * @brief
+ * @brief load svg fragment
  *
- * @param dev
- * @param fragment
- * @return NSVGimage*
+ * create a new #NSVGimage by parsing an svg fragment passed as string. The
+ * vkvg @ref device is required to get the device dot per inch configuration.
+ * @param dev the vkvg @ref device
+ * @param fragment a valid svg expression
+ * @return NSVGimage* a new pointer on the resulting nanovg structure
  */
 vkvg_public
 NSVGimage* nsvg_load (VkvgDevice dev, char* fragment);
 /**
- * @brief
+ * @brief release #NSVGimage pointer
  *
- * @param svg
+ * destroy the #NSVGimage passed as argument.
+ * @param svg the nanovg structure to release
  */
 vkvg_public
 void nsvg_destroy (NSVGimage* svg);
 /**
- * @brief
+ * @brief get svg dimensions
  *
- * @param svg
- * @param width
- * @param height
+ * query an #NSVGimage for its width and height.
+ * @param svg a valid #NSVGimage pointer
+ * @param width[out] a valid integer pointer to hold the svg width
+ * @param height[out] a valid integer pointer to hold the svg height
  */
 vkvg_public
 void nsvg_get_size (NSVGimage* svg, int* width, int* height);

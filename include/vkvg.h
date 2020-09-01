@@ -222,20 +222,22 @@ typedef struct {
 
 /**
  * @brief Opaque pointer on a vkvg text run.
+ *
  * A #VkvgText is an intermediate representation
  * of a text to be drawn on a #VkvgSurface.
  * It contains the measurments computed for character poisitioning.
  *
- * This object is used to speed up the rendering of the same
- * text with the same font multiple times.
+ * This object is used to speed up the rendering of the same text with the same font multiple times
+ * by storing typographic computations.
  *
- * Drawing text with @ref vkvg_show_text implicitly create such intermediate structure
+ * Drawing text with #vkvg_show_text() implicitly create such intermediate structure
  * that is destroyed imediatly after the function call.
  */
 typedef struct _vkvg_text_run_t* VkvgText;
 
 /**
  * @brief The Vkvg drawing Context.
+ * @ingroup context
  *
  * A #VkvgContext is the central object for drawing operations.
  * #vkvg_context_t structure internals this pointer point to are
@@ -244,6 +246,7 @@ typedef struct _vkvg_text_run_t* VkvgText;
 typedef struct _vkvg_context_t* VkvgContext;
 /**
  * @brief Opaque pointer on a Vkvg Surface structure.
+ * @ingroup surface
  *
  * A #VkvgSurface represents an image, either as the destination
  * of a drawing operation or as source when drawing onto another
@@ -257,12 +260,14 @@ typedef struct _vkvg_context_t* VkvgContext;
 typedef struct _vkvg_surface_t* VkvgSurface;
 /**
  * @brief Opaque pointer on a Vkvg device structure.
+ * @ingroup device
  *
  * A #VkvgDevice is required for creating new surfaces.
  */
 typedef struct _vkvg_device_t*  VkvgDevice;
 /**
  * @brief Opaque pointer on a Vkvg pattern structure.
+ * @ingroup pattern
  *
  * Patterns are images to be drawn on surface with several
  * configurable parameters such as the wrap mode, the filtering, etc...
@@ -447,19 +452,40 @@ vkvg_public
 vkvg_status_t vkvg_matrix_invert (vkvg_matrix_t *matrix);
 /** @}*/
 
-/*! @defgroup device Device
- *  @brief Functions and types related to VKVG device.
+/*!
+ * @defgroup device Device
+ * @brief bind vulkan context and vkvg.
  *
- *  This is the reference documentation for creating, using and destroying VKVG
- *  Devices used to connect to vulkan context.
+ * #VkvgDevice is the starting point of a vkvg rendering infrastructure. It connects an
+ * existing vulkan context with vkvg.
+ *
+ * Most of the vulkan rendering component (pipelines, renderpass, ..) are part of the VkvgDevice,
+ * their are shared among drawing contexts.
+ *
+ * Antialiasing level is configured when creating the device by selecting the sample count.
+ * #vkvg_device_create will create a not antialiased by selecting VK_SAMPLE_COUNT_1_BIT as sample count.
+ * To create antialiased rendering device, call #vkvg_device_create_multisample with VkSampleCountFlags
+ * greater than one.
+ *
+ * vkvg use a single frame buffer format for now: VK_FORMAT_B8G8R8A8_UNORM.
+ *
+ * Device holds the font cache so that each time a context draws text, the same cache is used.
+ *
  * @{ */
 
 /**
  * @brief Create a new vkvg device.
  *
- * On success, create a new vkvg device set its reference count to 1.
+ * Create a new #VkvgDevice connected to the vulkan context define by an instance,
+ * a physical device, a logical device, a graphical queue family index and an index
  *
- * @param inst Vulkan instance to create the device from.
+ * On success, create a new vkvg device and set its reference count to 1.
+ * On error, query the device status by calling #vkvg_device_status(). Error could be
+ * one of the following:
+ * - VKVG_STATUS_INVALID_FORMAT: the combination of image format and tiling is not supported
+ * - VKVG_STATUS_NULL_POINTER: vulkan function pointer fetching failed.
+ *
+ * @param inst a valid Vulkan instance to create the device from.
  * @param phy Vulkan physical device used to create the vkvg device.
  * @param vkdev Vulkan logical device to create the vkvg device for.
  * @param qFamIdx Queue family Index of the graphic queue used for drawing operations.
@@ -656,7 +682,7 @@ typedef enum _vkvg_operator {
 
 	VKVG_OPERATOR_SOURCE,
 	VKVG_OPERATOR_OVER,
-	VKVG_OPERATOR_IN,
+/*	VKVG_OPERATOR_IN,
 	VKVG_OPERATOR_OUT,
 	VKVG_OPERATOR_ATOP,
 
@@ -679,12 +705,13 @@ typedef enum _vkvg_operator {
 	VKVG_OPERATOR_COLOR_BURN,
 	VKVG_OPERATOR_HARD_LIGHT,
 	VKVG_OPERATOR_SOFT_LIGHT,
-	VKVG_OPERATOR_DIFFERENCE,
+	*/VKVG_OPERATOR_DIFFERENCE,/*
 	VKVG_OPERATOR_EXCLUSION,
 	VKVG_OPERATOR_HSL_HUE,
 	VKVG_OPERATOR_HSL_SATURATION,
 	VKVG_OPERATOR_HSL_COLOR,
-	VKVG_OPERATOR_HSL_LUMINOSITY
+	VKVG_OPERATOR_HSL_LUMINOSITY,*/
+	VKVG_OPERATOR_MAX,
 } vkvg_operator_t;
 
 /** @addtogroup context
@@ -881,75 +908,75 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
 vkvg_public
 void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param x 
- * @param y 
- * @param w 
- * @param h 
+ * @param x
+ * @param y
+ * @param w
+ * @param h
  */
 vkvg_public
 void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_stroke (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_stroke_preserve (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_fill (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_fill_preserve (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_paint (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_clear (VkvgContext ctx);//use vkClearAttachment to speed up clearing surf
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_reset_clip (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_clip (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
@@ -1084,113 +1111,113 @@ void vkvg_get_dash (VkvgContext ctx, const float *dashes, uint32_t* num_dashes, 
 vkvg_public
 float vkvg_get_line_width (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @return vkvg_line_cap_t 
+ * @return vkvg_line_cap_t
  */
 vkvg_public
 vkvg_line_cap_t vkvg_get_line_cap (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @return vkvg_line_join_t 
+ * @return vkvg_line_join_t
  */
 vkvg_public
 vkvg_line_join_t vkvg_get_line_join (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @return vkvg_operator_t 
+ * @return vkvg_operator_t
  */
 vkvg_public
 vkvg_operator_t vkvg_get_operator (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @return vkvg_fill_rule_t 
+ * @return vkvg_fill_rule_t
  */
 vkvg_public
 vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @return VkvgPattern 
+ * @return VkvgPattern
  */
 vkvg_public
 VkvgPattern vkvg_get_source (VkvgContext ctx);
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_save (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_restore (VkvgContext ctx);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param dx 
- * @param dy 
+ * @param dx
+ * @param dy
  */
 vkvg_public
 void vkvg_translate (VkvgContext ctx, float dx, float dy);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param sx 
- * @param sy 
+ * @param sx
+ * @param sy
  */
 vkvg_public
 void vkvg_scale (VkvgContext ctx, float sx, float sy);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param radians 
+ * @param radians
  */
 vkvg_public
 void vkvg_rotate (VkvgContext ctx, float radians);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param matrix 
+ * @param matrix
  */
 vkvg_public
 void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param matrix 
+ * @param matrix
  */
 vkvg_public
 void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param matrix 
+ * @param matrix
  */
 vkvg_public
 void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
@@ -1198,77 +1225,77 @@ void vkvg_identity_matrix (VkvgContext ctx);
 
 //text
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param name 
+ * @param name
  */
 vkvg_public
 void vkvg_select_font_face (VkvgContext ctx, const char* name);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param size 
+ * @param size
  */
 vkvg_public
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param text 
+ * @param text
  */
 vkvg_public
 void vkvg_show_text (VkvgContext ctx, const char* text);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param text 
- * @param extents 
+ * @param text
+ * @param extents
  */
 vkvg_public
 void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param extents 
+ * @param extents
  */
 vkvg_public
 void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents);
 
 //text run holds harfbuz datas, and prevent recreating them multiple times for the same line of text.
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param text 
- * @return VkvgText 
+ * @param text
+ * @return VkvgText
  */
 vkvg_public
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text);
 /**
- * @brief 
- * 
- * @param textRun 
+ * @brief
+ *
+ * @param textRun
  */
 vkvg_public
 void vkvg_text_run_destroy (VkvgText textRun);
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param ctx a valid vkvg #context
- * @param textRun 
+ * @param textRun
  */
 vkvg_public
 void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun);
 /**
- * @brief 
- * 
- * @param textRun 
- * @param extents 
+ * @brief
+ *
+ * @param textRun
+ * @param extents
  */
 vkvg_public
 void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents);
@@ -1280,21 +1307,21 @@ void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents);
  *
  * A Pattern is a special source for drawing operations that can be an image, a gradient
  * and which may have special configuration for filtering and border repeat.
- * 
+ *
  * @{ */
 
 /**
  * @brief add reference
- * 
+ *
  * increment reference count by one for the supplied #VkvgPattern.
  * @param pat a valid #VkvgPattern pointer
- * @return VkvgPattern 
+ * @return VkvgPattern
  */
 vkvg_public
 VkvgPattern vkvg_pattern_reference (VkvgPattern pat);
 /**
  * @brief get reference count
- * 
+ *
  * return the current reference count for the supplied #VkvgPattern
  * @param pat a valid #VkvgPattern to query for its reference count
  * @return uint32_t the current reference count for this instance.
@@ -1303,7 +1330,7 @@ vkvg_public
 uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat);
 /**
  * @brief create a surface pattern
- * 
+ *
  * Create a new pattern from the supplied #surface. The advantage of having
  * a #VkvgPattern to paint an image resides in the hability to set filtering options
  * as well as repeat behaviour on borders. Reference count of the supplied surface will
@@ -1314,78 +1341,78 @@ uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat);
 vkvg_public
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
 /**
- * @brief 
- * 
- * @param x0 
- * @param y0 
- * @param x1 
- * @param y1 
- * @return VkvgPattern 
+ * @brief
+ *
+ * @param x0
+ * @param y0
+ * @param x1
+ * @param y1
+ * @return VkvgPattern
  */
 vkvg_public
 VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1);
 /**
- * @brief 
- * 
- * @param cx0 
- * @param cy0 
- * @param radius0 
- * @param cx1 
- * @param cy1 
- * @param radius1 
- * @return VkvgPattern 
+ * @brief
+ *
+ * @param cx0
+ * @param cy0
+ * @param radius0
+ * @param cx1
+ * @param cy1
+ * @param radius1
+ * @return VkvgPattern
  */
 vkvg_public
 VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
 											 float cx1, float cy1, float radius1);
 /**
- * @brief 
- * 
- * @param pat 
+ * @brief
+ *
+ * @param pat
  */
 vkvg_public
 void vkvg_pattern_destroy (VkvgPattern pat);
 /**
- * @brief 
- * 
- * @param pat 
- * @param offset 
- * @param r 
- * @param g 
- * @param b 
- * @param a 
+ * @brief
+ *
+ * @param pat
+ * @param offset
+ * @param r
+ * @param g
+ * @param b
+ * @param a
  */
 vkvg_public
 void vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a);
 /**
- * @brief 
- * 
- * @param pat 
- * @param extend 
+ * @brief
+ *
+ * @param pat
+ * @param extend
  */
 vkvg_public
 void vkvg_pattern_set_extend (VkvgPattern pat, vkvg_extend_t extend);
 /**
- * @brief 
- * 
- * @param pat 
- * @param filter 
+ * @brief
+ *
+ * @param pat
+ * @param filter
  */
 vkvg_public
 void vkvg_pattern_set_filter (VkvgPattern pat, vkvg_filter_t filter);
 /**
- * @brief 
- * 
- * @param pat 
- * @return vkvg_extend_t 
+ * @brief
+ *
+ * @param pat
+ * @return vkvg_extend_t
  */
 vkvg_public
 vkvg_extend_t vkvg_pattern_get_extend (VkvgPattern pat);
 /**
- * @brief 
- * 
- * @param pat 
- * @return vkvg_filter_t 
+ * @brief
+ *
+ * @param pat
+ * @return vkvg_filter_t
  */
 vkvg_public
 vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat);
