@@ -56,7 +56,7 @@ void sizes() {
 
 int main(int argc, char *argv[]) {
 	PERFORM_TEST (fill_and_stroke, argc, argv);
-	//PERFORM_TEST (sizes, argc, argv);
-	//PERFORM_TEST (scaled_up, argc, argv);
+	PERFORM_TEST (sizes, argc, argv);
+	PERFORM_TEST (scaled_up, argc, argv);
 	return 0;
 }

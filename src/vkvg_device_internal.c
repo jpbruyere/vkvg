@@ -412,7 +412,7 @@ void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
 }
 
 bool _init_function_pointers (VkvgDevice dev) {
-#ifdef DEBUG
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	if (vkGetInstanceProcAddr(dev->instance, "vkSetDebugUtilsObjectNameEXT")==VK_NULL_HANDLE){
 		LOG(VKVG_LOG_ERR, "vkvg create device failed: 'VK_EXT_debug_utils' has to be loaded for Debug build\n");
 		return false;

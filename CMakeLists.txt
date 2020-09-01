@@ -31,6 +31,7 @@ ENDIF()
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	ADD_DEFINITIONS (-DDEBUG)
 	OPTION(ENABLE_VALIDATION "enable vulkan validation layer" ON)
+	OPTION(ENABLE_DBG_UTILS "enable VK_EXT_debug_utils extension" ON)
 	OPTION(ENABLE_WIRED_FILL "enable wired polygon draw to check vertices and primitives" OFF)
 	IF (UNIX)
 		SET(CMAKE_${LANG}_FLAGS "-Wall -Wno-extra -Wno-unknown-pragmas -Wno-missing-braces -Wno-unused-variable")
@@ -39,6 +40,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	ENDIF()
 ELSE()
 	UNSET(ENABLE_VALIDATION CACHE)
+	UNSET(ENABLE_DBG_UTILS CACHE)
 	UNSET(ENABLE_WIRED_FILL CACHE)
 	IF (UNIX)
 		SET(CMAKE_${LANG}_FLAGS "-w")
@@ -83,6 +85,10 @@ ENDIF ()
 IF (ENABLE_WIRED_FILL)
 	ADD_DEFINITIONS (-DVKVG_WIRED_DEBUG)
 ENDIF ()
+IF (ENABLE_DBG_UTILS)
+	ADD_DEFINITIONS (-DVKVG_DBG_UTILS)
+ENDIF ()
+
 
 FIND_PACKAGE(Vulkan REQUIRED)
 FIND_PACKAGE(Freetype REQUIRED)
@@ -169,7 +175,7 @@ FUNCTION (setup_lib LibName)
 	SET_TARGET_PROPERTIES(${LibName} PROPERTIES
 			OUTPUT_NAME ${PROJECT_NAME}
 			VERSION ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}
-			SOVERSION ${vkvg_VERSION_MAJOR}			
+			SOVERSION ${vkvg_VERSION_MAJOR}
 			C_STANDARD 99
 			C_EXTENSIONS OFF
 			PUBLIC_HEADER "include/vkvg.h;include/vkvg-nsvg.h"
@@ -219,6 +225,11 @@ ELSE ()
 ENDIF ()
 IF (VKVG_TEST_OFFSCREEN)
 	MESSAGE(STATUS "Offscreen\t\t= true.")
+ENDIF ()
+IF (ENABLE_DBG_UTILS)
+	MESSAGE(STATUS "Debug utils\t\t= enabled.")
+ELSE ()
+	MESSAGE(STATUS "Debug utils\t\t= disabled.")
 ENDIF ()
 IF (ENABLE_VALIDATION)
 	MESSAGE(STATUS "Validation\t\t= enabled.")

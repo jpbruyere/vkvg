@@ -140,7 +140,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
 	LOG(VKVG_LOG_DBG_ARRAYS, "INIT\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, (uint64_t)ctx->sizePathes, (uint64_t)ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[0], "CTX Cmd Buff A");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1], "CTX Cmd Buff B");
@@ -274,7 +274,7 @@ void vkvg_close_path (VkvgContext ctx){
 	//check if at least 3 points are present
 	if (ctx->pathes[ctx->pathPtr] < 3)
 		return;
-	
+
 	//prevent closing on the same point
 	if (vec2_equ(ctx->points[ctx->pointCount-1],
 				 ctx->points[ctx->pointCount - ctx->pathes[ctx->pathPtr]]))

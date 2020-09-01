@@ -116,22 +116,22 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	const uint32_t enabledLayersCount = 0;
 	const char* enabledLayers[] = {NULL};
 #endif
-#ifdef DEBUG
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
 	enabledExtsCount++;
 #endif
 
 
 	e->app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
-#ifdef DEBUG
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_app_enable_debug_messenger(e->app
-								   , VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-								   | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-								   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+								   , VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
 								   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
-								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+								   //cma| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
 								   , NULL);
 #endif
 
@@ -196,7 +196,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 }
 
 void vkengine_destroy (VkEngine e) {
-	vkDeviceWaitIdle(e->dev->dev);
+	//vkDeviceWaitIdle(e->dev->dev);
 
 	VkSurfaceKHR surf = e->renderer->surface;
 
@@ -206,9 +206,9 @@ void vkengine_destroy (VkEngine e) {
 	vkh_device_destroy (e->dev);
 
 	glfwDestroyWindow (e->window);
-	glfwTerminate ();
-
 	vkh_app_destroy (e->app);
+
+	glfwTerminate ();
 
 	free(e);
 }

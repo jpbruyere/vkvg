@@ -419,7 +419,7 @@ void _flush_vertices_caches (VkvgContext ctx) {
 void _end_render_pass (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "END RENDER PASS: ctx = %p;\n", ctx);
 	CmdEndRenderPass      (ctx->cmd);
-#ifdef DEBUG
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_cmd_label_end (ctx->cmd);
 #endif
 	ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
@@ -516,7 +516,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 						 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 	}
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_cmd_label_start(ctx->cmd, "ctx render pass", LAB_COLOR_RP);
 #endif
 
@@ -1182,7 +1182,6 @@ void _fill_ec (VkvgContext ctx){
 			ptrPath++;
 		free (ecps);
 	}
-	//_record_draw_cmd(ctx);
 }
 
 static const uint32_t one = 1;

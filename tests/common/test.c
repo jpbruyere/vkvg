@@ -33,8 +33,8 @@ bool mouseDown = false;
 VkvgDevice device	= NULL;
 VkvgSurface surf	= NULL;
 
-uint32_t test_size	= 500;	// items drawn in one run, or complexity
-uint32_t iterations	= 500;// repeat test n times
+uint32_t test_size	= 100;	// items drawn in one run, or complexity
+uint32_t iterations	= 1000;// repeat test n times
 uint32_t test_width	= 1024;
 uint32_t test_height= 768;
 bool	 test_vsync = false;
@@ -194,13 +194,13 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 	const uint32_t enabledLayersCount = 0;
 	const char* enabledLayers[] = {NULL};
 #endif
-#ifdef DEBUG
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
 	enabledExtsCount++;
 #endif
 
 	VkhApp app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
-#ifdef DEBUG
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_app_enable_debug_messenger(app
 								   , VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
 								   | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
