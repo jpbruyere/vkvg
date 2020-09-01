@@ -24,15 +24,18 @@
 
 //cross platform os helpers
 #if defined(_WIN32) || defined(_WIN64)
-//disable warning on iostream functions on windows
-#define _CRT_SECURE_NO_WARNINGS
-#include "windows.h"
-#define isnanf _isnanf
+	//disable warning on iostream functions on windows
+	#define _CRT_SECURE_NO_WARNINGS
+	#include "windows.h"
+	#define isnanf _isnanf
 #elif __APPLE__
 #elif __unix__
-#include <unistd.h>
-#include <sys/types.h>
-#include <pwd.h>
+	#include <unistd.h>
+	#include <sys/types.h>
+	#include <pwd.h>
+	#ifndef isnanf
+		#define isnanf __isnanf
+	#endif
 #endif
 
 const char* getUserDir ();
