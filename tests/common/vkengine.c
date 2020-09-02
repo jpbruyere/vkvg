@@ -28,16 +28,6 @@
 #include "vkh_image.h"
 #include "vkh_device.h"
 
-bool vkeCheckPhyPropBlitSource (VkEngine e) {
-	VkFormatProperties formatProps;
-	vkGetPhysicalDeviceFormatProperties(e->dev->phy, e->renderer->format, &formatProps);
-#ifdef VKVG_TILING_OPTIMAL
-	return formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT;
-#else
-	return formatProps.linearTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT;
-#endif
-}
-
 VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts)
 {
 	if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
@@ -189,8 +179,6 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 			(e->dev, (uint32_t) pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, presentMode);
 
 	vkh_app_free_phyinfos (phyCount, phys);
-
-	vkeCheckPhyPropBlitSource (e);
 
 	return e;
 }
