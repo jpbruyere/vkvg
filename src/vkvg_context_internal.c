@@ -732,13 +732,14 @@ void _init_descriptor_sets (VkvgContext ctx){
 float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 
-	//if two of the three points are equal, normal is null
-	vec2 v0n = vec2_line_norm(pL, p0);
-	if (vec2_isnan(v0n))
-		return 0;
-	vec2 v1n = vec2_line_norm(p0, pR);
-	if (vec2_isnan(v1n))
-		return 0;
+    vec2 v0 = vec2_sub(p0, pL);
+    vec2 v1 = vec2_sub(pR, p0);
+    float length_v0 = vec2_length(v0);
+    float length_v1 = vec2_length(v1);
+    if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON)
+        return 0;
+    vec2 v0n = vec2_div (v0, length_v0);
+    vec2 v1n = vec2_div (v1, length_v1);
 
 	vec2 bisec = vec2_norm(vec2_add(v0n,v1n));
 
@@ -751,6 +752,10 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 
 	float lh = hw / cosf(alpha);
 	bisec = vec2_perp(bisec);
+
+    //limit bisectrice lenght, may be improved but ok for perf
+    lh=fminf (lh, fminf (sqrtf(length_v0*length_v0+hw*hw), sqrtf(length_v1*length_v1+hw*hw)));
+
 	bisec = vec2_mult(bisec,lh);
 
 	VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
@@ -758,9 +763,9 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
 		v.pos = vec2_add(p0, bisec);
 		_add_vertex(ctx, v);
-		v.pos = vec2_sub(p0, bisec);
-		_add_vertex(ctx, v);
-		_add_tri_indices_for_rect(ctx, idx);
+        v.pos = vec2_sub(p0, bisec);
+        _add_vertex(ctx, v);
+        _add_tri_indices_for_rect(ctx, idx);
 	}else{
 		vec2 vp = vec2_perp(v0n);
 		if (cross<0){
@@ -771,7 +776,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 			v.pos = vec2_add (p0, vec2_mult (vp, hw));
 			_add_vertex(ctx, v);
 			v.pos = vec2_sub (p0, bisec);
-		}
+        }
 		_add_vertex(ctx, v);
 
 		if (ctx->lineJoin == VKVG_LINE_JOIN_BEVEL){

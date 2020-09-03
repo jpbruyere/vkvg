@@ -62,11 +62,18 @@ vec2d vec2d_norm(vec2d a)
 }
 // multiply 2d vector by scalar
 vec2d vec2d_mult(vec2d a, double m){
-	return (vec2d){a.x*m,a.y*m};
+    return (vec2d){a.x*m,a.y*m};
+}
+// devide 2d vector by scalar
+vec2 vec2_div(vec2 a, float m){
+    return (vec2){a.x/m,a.y/m};
+}
+vec2d vec2d_div(vec2d a, double m){
+    return (vec2d){a.x/m,a.y/m};
 }
 // multiply 2d vector by scalar
 vec2 vec2_mult(vec2 a, float m){
-	return (vec2){a.x*m,a.y*m};
+    return (vec2){a.x*m,a.y*m};
 }
 // compute perpendicular vector
 vec2d vec2d_perp (vec2d a){

@@ -78,6 +78,7 @@ vec2		vec2_perp	(vec2 a);
 vec2		vec2_add	(vec2 a, vec2 b);
 vec2		vec2_sub	(vec2 a, vec2 b);
 vec2		vec2_mult	(vec2 a, float m);
+vec2		vec2_div	(vec2 a, float m);
 bool		vec2_equ	(vec2 a, vec2 b);
 vec2		vec2_line_norm	(vec2 a, vec2 b);
 bool        vec2_isnan  (vec2 v);
@@ -88,6 +89,7 @@ vec2d		vec2d_perp	(vec2d a);
 vec2d		vec2d_add	(vec2d a, vec2d b);
 vec2d		vec2d_sub	(vec2d a, vec2d b);
 vec2d		vec2d_mult	(vec2d a, double m);
+vec2d		vec2d_div	(vec2d a, double m);
 vec2d		vec2d_line_norm(vec2d a, vec2d b);
 bool        vec2d_isnan  (vec2d v);
 
