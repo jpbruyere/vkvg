@@ -1,6 +1,6 @@
 #include "test.h"
 
-static float line_width = 1.f;
+static float line_width = 4.f;
 static vkvg_line_cap_t line_cap = VKVG_LINE_CAP_BUTT;
 
 void horizontal() {
@@ -89,7 +89,26 @@ void multilines(){
 	vkvg_stroke (ctx);
 	vkvg_destroy(ctx);
 }
+void multi_segments() {
+    float w = (float)test_width-10;
+    float h = (float)test_height-10;
 
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_clear(ctx);
+    vkvg_set_line_width (ctx,line_width);
+
+    randomize_color(ctx);
+    float x1 = w*rand()/RAND_MAX;
+    float y1 = h*rand()/RAND_MAX;
+    vkvg_move_to (ctx, x1, y1);
+    for (uint32_t i=0; i<test_size; i++) {
+        x1 = w*rand()/RAND_MAX;
+        y1 = h*rand()/RAND_MAX;
+        vkvg_line_to (ctx, x1, y1);
+    }
+    vkvg_stroke (ctx);
+    vkvg_destroy(ctx);
+}
 
 int main(int argc, char *argv[]) {
 	struct timeval currentTime;
@@ -97,9 +116,10 @@ int main(int argc, char *argv[]) {
 
 	srand((unsigned) currentTime.tv_usec);
 
-	PERFORM_TEST(horizontal, argc, argv);
+    PERFORM_TEST(horizontal, argc, argv);
 	PERFORM_TEST(vertical, argc, argv);
 	PERFORM_TEST(horzAndVert, argc, argv);
-	PERFORM_TEST(multilines, argc, argv);
-	return 0;
+    PERFORM_TEST(multilines, argc, argv);
+    PERFORM_TEST(multi_segments, argc, argv);
+    return 0;
 }

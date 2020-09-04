@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2020 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -40,6 +40,11 @@ typedef struct _vkvg_surface_t {
 	bool        new;
 }vkvg_surface;
 
+void _explicit_ms_resolve (VkvgSurface surf);
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect);
-void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha);
+void _create_surface_main_image (VkvgSurface surf);
+void _create_surface_secondary_images (VkvgSurface surf);
+void _create_framebuffer (VkvgSurface surf);
+void _create_surface_images (VkvgSurface surf);
+VkvgSurface _create_surface (VkvgDevice dev, VkFormat format);
 #endif
