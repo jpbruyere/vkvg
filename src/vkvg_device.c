@@ -24,32 +24,11 @@
 #include "vkh_queue.h"
 #include "vkh_phyinfo.h"
 #include "vk_mem_alloc.h"
-/**
- * @brief Create VkvgDevice with default multisampling configuration
- * @param Vulkan instance, usefull to retrieve function pointers
- * @param Vulkan physical device
- * @param Vulkan Device
- * @param Queue familly index
- * @param Queue index in selected familly
- * @return
- */
+
 VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
 {
 	return vkvg_device_create_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_1_BIT, false);
 }
-/**
- * @brief Create VkvgDevice with default multisampling configuration
- * @param Vulkan instance, usefull to retrieve function pointers
- * @param Vulkan physical device
- * @param Vulkan Device
- * @param Queue familly index
- * @param Queue index in selected familly
- * @param multisample count
- * @param When set to false, surface is resolve after each renderpasses on resolve attachment of surface.
- * If set to true, multisample surface image is resolve with vkvg_multisample_surface_resolve. This function
- * is called automatically when surface's VkImage is querried with vkvg_surface_get_vk_image.
- * @return
- */
 VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve)
 {
 	LOG(VKVG_LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
@@ -198,24 +177,12 @@ VkvgDevice vkvg_device_reference (VkvgDevice dev) {
 uint32_t vkvg_device_get_reference_count (VkvgDevice dev) {
 	return dev->references;
 }
-/**
- * @brief set horizontal and vertical resolution of device in dot per inch
- * @param vkvg device pointer
- * @param horizontal device resolution in dot per inch
- * @param vertical device resolution in dot per inch
- */
 void vkvg_device_set_dpy (VkvgDevice dev, int hdpy, int vdpy) {
 	dev->hdpi = hdpy;
 	dev->vdpi = vdpy;
 
 	//TODO: reset font cache
 }
-/**
- * @brief get horizontal and vertical resolution of device in dot per inch
- * @param vkvg device pointer
- * @param return horizontal device resolution in dot per inch
- * @param return vertical device resolution in dot per inch
- */
 void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy) {
 	*hdpy = dev->hdpi;
 	*vdpy = dev->vdpi;

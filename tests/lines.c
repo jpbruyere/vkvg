@@ -1,16 +1,24 @@
 #include "test.h"
 
-static float line_width = 4.f;
-static vkvg_line_cap_t line_cap = VKVG_LINE_CAP_BUTT;
+static float line_width = 1.f;
+static vkvg_line_cap_t line_cap = VKVG_LINE_CAP_ROUND;
+static float dashes[] = {1.0f, 5.0f};
+static uint32_t dashes_count = 0;
+
+VkvgContext _initCtx() {
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
+	vkvg_set_line_width (ctx,line_width);
+	vkvg_set_line_cap(ctx, line_cap);
+	vkvg_set_dash (ctx, dashes, dashes_count, 0);
+	return ctx;
+}
 
 void horizontal() {
 	float w = (float)test_width;
 	float h = (float)test_height;
 
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_line_width (ctx,line_width);
-	vkvg_set_line_cap(ctx, line_cap);
+	VkvgContext ctx = _initCtx();
 
 	for (uint32_t i=0; i<test_size; i++) {
 		randomize_color(ctx);
@@ -28,9 +36,7 @@ void vertical() {
 	float w = (float)test_width;
 	float h = (float)test_height;
 
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_line_width (ctx,line_width);
+	VkvgContext ctx = _initCtx();
 
 	for (uint32_t i=0; i<test_size; i++) {
 		randomize_color(ctx);
@@ -48,9 +54,7 @@ void horzAndVert(){
 	float w = (float)test_width;
 	float h = (float)test_height;
 
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_line_width (ctx,line_width);
+	VkvgContext ctx = _initCtx();
 
 	for (uint32_t i=0; i<test_size; i++) {
 		randomize_color(ctx);
@@ -70,9 +74,7 @@ void multilines(){
 	float w = (float)test_width;
 	float h = (float)test_height;
 
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_line_width (ctx,line_width);
+	VkvgContext ctx = _initCtx();
 
 	randomize_color(ctx);
 
@@ -93,9 +95,7 @@ void multi_segments() {
     float w = (float)test_width-10;
     float h = (float)test_height-10;
 
-    VkvgContext ctx = vkvg_create(surf);
-    vkvg_clear(ctx);
-    vkvg_set_line_width (ctx,line_width);
+    VkvgContext ctx = _initCtx();
 
     randomize_color(ctx);
     float x1 = w*rand()/RAND_MAX;

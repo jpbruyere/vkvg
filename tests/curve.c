@@ -111,6 +111,8 @@ void test2() {
 static float line_width = 1.f;
 static vkvg_line_cap_t line_cap = VKVG_LINE_CAP_ROUND;
 static vkvg_fill_rule_t fill_rule = VKVG_FILL_RULE_NON_ZERO;
+static float dashes[] = {30.0f, 10.0f};
+static uint32_t dashes_count = 0;
 static bool fillAndStroke = true;
 
 void _rnd_curve (VkvgContext ctx) {
@@ -127,15 +129,20 @@ void _rnd_curve (VkvgContext ctx) {
 	vkvg_curve_to(ctx, cp_x1, cp_y1, cp_x2, cp_y2, x2, y2);
 }
 
+VkvgContext _initCtx() {
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
+	vkvg_set_line_width (ctx,line_width);
+	vkvg_set_line_cap(ctx, line_cap);
+	vkvg_set_dash (ctx, dashes, dashes_count, 0);
+	return ctx;
+}
 
 void random_curves () {
 	float w = (float)test_width;
 	float h = (float)test_height;
 
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_line_width (ctx,line_width);
-	vkvg_set_line_cap(ctx, line_cap);
+	VkvgContext ctx = _initCtx();
 
 	for (uint32_t i=0; i<test_size; i++) {
 		randomize_color(ctx);
@@ -153,10 +160,7 @@ void single_long_line_curved () {
 	float w = (float)test_width;
 	float h = (float)test_height;
 
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_line_width (ctx,line_width);
-	vkvg_set_line_cap(ctx, line_cap);
+	VkvgContext ctx = _initCtx();
 	vkvg_set_fill_rule(ctx, fill_rule);
 
 	randomize_color(ctx);
