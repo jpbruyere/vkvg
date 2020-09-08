@@ -5,6 +5,7 @@
 #include <math.h>
 #include <time.h>
 
+#include "rnd.h"
 #include "vkvg.h"
 
 #include "vkh_device.h"

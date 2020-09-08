@@ -24,7 +24,7 @@ FUNCTION (buildtest TEST_NAME)
 	)
 ENDFUNCTION (buildtest)
 
-ADD_LIBRARY("tests_common" STATIC common/vkengine.c common/test.c)
+ADD_LIBRARY("tests_common" STATIC common/vkengine.c common/test.c common/rnd.c)
 TARGET_INCLUDE_DIRECTORIES(tests_common PRIVATE
 	${Vulkan_INCLUDE_DIRS}
 	${GLFW3_INCLUDE_DIR}
