@@ -33,15 +33,21 @@ bool mouseDown = false;
 VkvgDevice device	= NULL;
 VkvgSurface surf	= NULL;
 
-uint32_t test_size	= 100;	// items drawn in one run, or complexity
-uint32_t iterations	= 1000;// repeat test n times
-uint32_t test_width	= 1024;
-uint32_t test_height= 768;
-bool	 test_vsync = false;
+uint32_t test_size	= 10;	// items drawn in one run, or complexity
+uint32_t iterations	= 100;// repeat test n times
+uint32_t test_width	= 512;
+uint32_t test_height= 512;
+bool	test_vsync	= false;
+bool 	quiet		= false;//if true, don't print details and head row
+bool 	first_test	= true;//if multiple tests, dont print header row.
+bool 	no_test_size= false;//several test consist of a single draw sequence without looping 'size' times
+							  //those test must be preceded by setting no_test_size to 'true'
+int 	test_index	= 0;
+int		single_test = -1;	//if not < 0, contains the index of the single test to run
 
 
 static bool paused = false;
-static VkSampleCountFlags samples = VK_SAMPLE_COUNT_8_BIT;
+static VkSampleCountFlags samples = VK_SAMPLE_COUNT_1_BIT;
 static vk_engine_t* e;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -162,6 +168,98 @@ void clear_test () {
 #ifdef VKVG_TEST_DIRECT_DRAW
 VkvgSurface* surfaces;
 #endif
+_print_usage_and_exit () {
+	printf("\nUsage: test [options]\n\n");
+	printf("\t-i iterations:\tSpecify the repeat count for the test.\n");
+	printf("\t-s size:\tWhen applicable, specify the size of the test.\n");
+	printf("\t-w width:\tOutput surface width.\n");
+	printf("\t-h height:\tOutput surface height.\n");
+	printf("\t-n index:\tRun only a single test, zero based index.\n");
+	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests\n");
+	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs\n");
+	printf("\t-vsync:\t\tEnable VSync, disabled by default\n");
+	printf("\t-h:\t\tthis help message.\n");
+	printf("\n");
+	exit(-1);
+}
+void _parse_args (int argc, char* argv[]) {
+	for (int i = 1; i < argc; i++) {
+		if (strcmp (argv[i], "-help\0") == 0)
+			_print_usage_and_exit ();
+		if (strcmp (argv[i], "-p\0") == 0) {
+			#ifdef DEBUG
+			printf("Debug build\n");
+			#else
+			printf("Release build\n");
+			#endif
+			#ifdef VKVG_USE_RENDERDOC
+			printf("Render doc enabled\n");
+			#endif
+			#ifdef VKVG_USE_VALIDATION
+			printf("Validation enabled\n");
+			#endif
+			printf("surf dims:\t%d x %d\n", test_width, test_height);
+			printf("Samples:\t%d\n", samples);
+			#ifdef VKVG_TEST_OFFSCREEN
+			printf("Offscreen:\ttrue\n");
+			#else
+			printf("Offscreen:\ttrue\n");
+			#endif
+			printf("\n");
+			exit(0);	
+		}
+		if (strcmp (argv[i], "-vsync\0") == 0)
+			test_vsync = true;		
+		else if (strcmp (argv[i], "-q\0") == 0)
+			quiet = true;
+		else if (strcmp (argv[i], "-i\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			iterations = atoi (argv[i]);
+		}else if (strcmp (argv[i], "-w\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			test_width = atoi (argv[i]);
+		}else if (strcmp (argv[i], "-h\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			test_height = atoi (argv[i]);
+		}else if (strcmp (argv[i], "-n\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			single_test = atoi (argv[i]);
+		}else if (strcmp (argv[i], "-s\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			test_size = atoi (argv[i]);			
+		}
+	}
+}
+
+void _print_results (const char *testName, int argc, char* argv[], uint32_t i, double run_total, double* run_time_values) {
+	char* whoami;
+	(whoami = strrchr(argv[0], '/')) ? ++whoami : (whoami = argv[0]);
+
+	double avg_run_time = run_total / (double)i;
+	double med_run_time = median_run_time (run_time_values, i);
+	double standard_dev = standard_deviation (run_time_values, i, avg_run_time);
+	double avg_frames_per_second = (1.0 / avg_run_time);
+	avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
+
+	if (!quiet && (test_index == 0 || test_index == single_test)) {
+		printf ("______________________________________________________________________________________________________\n");		
+		printf ("| N° | Test File Name  |       Sub Test            | Iter | Size |   FPS   | Average | Median  | Sigma   |\n");
+		printf ("|----|-----------------|---------------------------|------|------|---------|---------|---------|---------|\n");
+	}
+	printf ("| %2d | %-15s | %-25s | ", test_index, whoami + 5, testName);
+	if (no_test_size)
+		printf ("%4d | %4d | %7.2f | %6.5f | %6.5f | %6.5f |\n",
+			i, 1, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+	else
+		printf ("%4d | %4d | %7.2f | %6.5f | %6.5f | %6.5f |\n",
+			i, test_size, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+	
+}
 
 void perform_test_offscreen (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
 	//init random gen
@@ -170,18 +268,14 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 	srand((unsigned) currentTime.tv_usec);
 
 	//dumpLayerExts();
-	if (argc > 1)
-		iterations = atoi (argv[1]);
-	if (argc > 2)
-		test_size = atoi (argv[2]);
-	if (iterations == 0 || test_size == 0) {
-		printf("usage: test [iterations] [size]\n");
+	
+	_parse_args (argc, argv);
+
+	if (single_test >= 0 && test_index != single_test){
+		test_index++;
 		return;
 	}
-
-	char* whoami;
-	(whoami = strrchr(argv[0], '/')) ? ++whoami : (whoami = argv[0]);
-
+	
 	uint32_t enabledExtsCount = 0, phyCount = 0;
 	const char* enabledExts [10];
 #ifdef VKVG_USE_RENDERDOC
@@ -269,20 +363,9 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 		i++;
 	}
 
-	double avg_run_time = run_total / (double)i;
-	double med_run_time = median_run_time (run_time_values, i);
-	double standard_dev = standard_deviation (run_time_values, i, avg_run_time);
-	double avg_frames_per_second = (1.0 / avg_run_time);
-	avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
+	_print_results (testName, argc, argv, i, run_total, run_time_values);
 
-	free (run_time_values);
-
-	//printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
-	printf ("| %-15s | %-25s | ",whoami + 5, testName);
-	printf ("%4d | %4d | %7.2f | %6.5f | %6.5f | %6.5f |\n",
-			test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
-
-	//printf ("%s size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", whoami+5, test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+	free (run_time_values);	
 
 	vkDeviceWaitIdle(dev->dev);
 
@@ -291,6 +374,8 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 
 	vkh_device_destroy (dev);
 	vkh_app_destroy (app);
+
+	test_index++;
 }
 
 void perform_test (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
@@ -300,17 +385,12 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 	srand((unsigned) currentTime.tv_usec);
 
 	//dumpLayerExts();
-	if (argc > 1)
-		iterations = atoi (argv[1]);
-	if (argc > 2)
-		test_size = atoi (argv[2]);
-	if (iterations == 0 || test_size == 0) {
-		printf("usage: test [iterations] [size]\n");
+	_parse_args (argc, argv);
+
+	if (single_test >= 0 && test_index != single_test){
+		test_index++;
 		return;
 	}
-
-	char* whoami;
-	(whoami = strrchr(argv[0], '/')) ? ++whoami : (whoami = argv[0]);
 
 	if (test_vsync)
 		e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
@@ -337,7 +417,6 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 	surf = vkvg_surface_create(device, test_width, test_height);
 	vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), test_width, test_height);
 #endif
-
 
 	double start_time = 0.0, stop_time = 0.0, run_time = 0.0, run_total = 0.0, min_run_time = -1, max_run_time = 0.0;
 	double* run_time_values = (double*)malloc(iterations*sizeof(double));
@@ -408,21 +487,9 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 		i++;
 	}
 
-	double avg_run_time = run_total / (double)i;
-	double med_run_time = median_run_time (run_time_values, i);
-	double standard_dev = standard_deviation (run_time_values, i, avg_run_time);
-	double avg_frames_per_second = (1.0 / avg_run_time);
-	avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
+	_print_results (testName, argc, argv, i, run_total, run_time_values);
 
 	free (run_time_values);
-
-
-	//printf ("size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
-	printf ("| %-15s | %-25s | ",whoami + 5, testName);
-	printf ("%4d | %4d | %7.2f | %6.5f | %6.5f | %6.5f |\n",
-			test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
-
-	//printf ("%s size:%d iter:%d  avgFps: %f avg: %4.2f%% med: %4.2f%% sd: %4.2f%% \n", whoami+5, test_size, i, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 
 	vkDeviceWaitIdle(e->dev->dev);
 
@@ -438,7 +505,34 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 	vkvg_device_destroy     (device);
 
 	vkengine_destroy (e);
+	
+	test_index++;
 }
+
+
+/* common context init for several tests */
+vkvg_fill_rule_t	fill_rule	= VKVG_FILL_RULE_NON_ZERO;
+vkvg_line_cap_t		line_cap	= VKVG_LINE_CAP_BUTT;
+vkvg_line_join_t	line_join	= VKVG_LINE_JOIN_MITER;
+float		dashes[]	= {20.0f, 10.0f};
+uint32_t	dashes_count= 0;
+float		dash_offset	= 0;
+float		line_width	= 1.f;
+
+VkvgContext _initCtx() {
+	VkvgContext ctx = vkvg_create(surf);
+
+	vkvg_set_line_width	(ctx,line_width);
+	vkvg_set_line_join	(ctx, line_join);
+	vkvg_set_line_cap	(ctx, line_cap);
+	vkvg_set_dash		(ctx, dashes, dashes_count, dash_offset);
+	vkvg_set_fill_rule	(ctx, fill_rule);
+
+	vkvg_clear			(ctx);
+	return ctx;
+}
+
+
 
 const int star_points[11][2] = {
 	{ 0, 85 },
@@ -455,10 +549,10 @@ const int star_points[11][2] = {
 };
 void randomize_color(VkvgContext ctx) {
 	vkvg_set_source_rgba(ctx,
-		(float)rand() / RAND_MAX,
-		(float)rand() / RAND_MAX,
-		(float)rand() / RAND_MAX,
-		(float)rand() / RAND_MAX
+		rndf(),
+		rndf(),
+		rndf(),
+		rndf()
 	);
 }
 void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
@@ -471,29 +565,29 @@ void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 
 	switch (shape) {
 	case SHAPE_LINE:
-		x = (float)rand()/RAND_MAX * w;
-		y = (float)rand()/RAND_MAX * h;
-		z = (float)rand()/RAND_MAX * w;
-		v = (float)rand()/RAND_MAX * h;
+		x = rndf() * w;
+		y = rndf() * h;
+		z = rndf() * w;
+		v = rndf() * h;
 
 		vkvg_move_to(ctx, x, y);
 		vkvg_line_to(ctx, z, v);
 		vkvg_stroke(ctx);
 		break;
 	case SHAPE_RECTANGLE:
-		z = truncf((sizeFact*w*rand()/RAND_MAX)+1.f);
-		v = truncf((sizeFact*h*rand()/RAND_MAX)+1.f);
-		x = truncf((w-z)*rand()/RAND_MAX);
-		y = truncf((h-v)*rand()/RAND_MAX);
+		z = truncf((sizeFact*w*rndf())+1.f);
+		v = truncf((sizeFact*h*rndf())+1.f);
+		x = truncf((w-z)*rndf());
+		y = truncf((h-v)*rndf());
 
 		vkvg_rectangle(ctx, x+1, y+1, z, v);
 		break;
 	case SHAPE_ROUNDED_RECTANGLE:
-		z = truncf((sizeFact*w*rand()/RAND_MAX)+1.f);
-		v = truncf((sizeFact*h*rand()/RAND_MAX)+1.f);
-		x = truncf((w-z)*rand()/RAND_MAX);
-		y = truncf((h-v)*rand()/RAND_MAX);
-		r = truncf((0.2f*z*rand()/RAND_MAX)+1.f);
+		z = truncf((sizeFact*w*rndf())+1.f);
+		v = truncf((sizeFact*h*rndf())+1.f);
+		x = truncf((w-z)*rndf());
+		y = truncf((h-v)*rndf());
+		r = truncf((0.2f*z*rndf())+1.f);
 
 		if ((r > v / 2) || (r > z / 2))
 			r = MIN(v / 2, z / 2);
@@ -513,10 +607,10 @@ void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 		/*x = truncf((float)w * rnd()/RAND_MAX);
 		y = truncf((float)h * rnd()/RAND_MAX);
 		v = truncf((float)w * rnd()/RAND_MAX * 0.2f);*/
-		x = (float)rand()/RAND_MAX * w;
-		y = (float)rand()/RAND_MAX * h;
+		x = rndf() * w;
+		y = rndf() * h;
 
-		r = truncf((sizeFact*MIN(w,h)*rand()/RAND_MAX)+1.f);
+		r = truncf((sizeFact*MIN(w,h)*rndf())+1.f);
 
 		/*float r = 0.5f*w*rand()/RAND_MAX;
 		float x = truncf(0.5f * w*rand()/RAND_MAX + r);
@@ -526,9 +620,9 @@ void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 		break;
 	case SHAPE_TRIANGLE:
 	case SHAPE_STAR:
-		x = (float)rand()/RAND_MAX * w;
-		y = (float)rand()/RAND_MAX * h;
-		z = (float)rand()/RAND_MAX * sizeFact + 0.15f; //scale
+		x = rndf() * w;
+		y = rndf() * h;
+		z = rndf() * sizeFact + 0.15f; //scale
 
 		vkvg_move_to (ctx, x+star_points[0][0]*z, y+star_points[0][1]*z);
 		for (int s=1; s<11; s++)
@@ -536,9 +630,22 @@ void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 		vkvg_close_path (ctx);
 		break;
 	case SHAPE_RANDOM:
-		draw_random_shape(ctx, 1 + rand()%4, sizeFact);
+		draw_random_shape(ctx, 1 + (rndf() * 4), sizeFact);
 		break;
 	}
+}
+void draw_random_curve (VkvgContext ctx) {
+	float w = (float)test_width;
+	float h = (float)test_height;
+
+	float x2 = w*rndf();
+	float y2 = h*rndf();
+	float cp_x1 = w*rndf();
+	float cp_y1 = h*rndf();
+	float cp_x2 = w*rndf();
+	float cp_y2 = h*rndf();
+
+	vkvg_curve_to(ctx, cp_x1, cp_y1, cp_x2, cp_y2, x2, y2);
 }
 /*void draw_random_shape (VkvgContext ctx, shape_t shape) {
 	float w = (float)test_width;

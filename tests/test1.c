@@ -372,6 +372,7 @@ void cairo_tests () {
 
 
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST (cairo_tests, argc, argv);
 	return 0;
 }

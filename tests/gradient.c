@@ -87,6 +87,7 @@ void gradient_transform() {
 }
 
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST(paint, argc, argv);
 	PERFORM_TEST(paint_repeat, argc, argv);
 	PERFORM_TEST(gradient_transform, argc, argv);

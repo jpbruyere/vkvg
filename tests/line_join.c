@@ -174,6 +174,7 @@ void test3() {
 
 
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST(test, argc, argv);
 	PERFORM_TEST(test2, argc, argv);
 	PERFORM_TEST(test3, argc, argv);

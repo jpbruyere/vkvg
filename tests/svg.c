@@ -44,6 +44,7 @@ void test_nsvg() {
 }
 
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST (test_nsvg, argc, argv);
 	return 0;
 }
