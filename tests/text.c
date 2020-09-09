@@ -169,7 +169,7 @@ void random_text () {
 	vkvg_destroy(ctx);
 }
 int main(int argc, char *argv[]) {
-
+	no_test_size = true;
 	//vkvg_log_level = VKVG_LOG_INFO;
 	PERFORM_TEST (random_text, argc, argv);
 	PERFORM_TEST (test, argc, argv);

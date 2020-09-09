@@ -633,10 +633,9 @@ float _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR,
 
 		_draw_stoke_cap (ctx, hw, p0, normal, dashOn);
 		dashOn ^= true;
-
-		curDashOffset += ctx->dashes[curDash++];
-		if (curDash == ctx->dashCount)
+		if (++curDash == ctx->dashCount)
 			curDash = 0;
+		curDashOffset += ctx->dashes[curDash];
 	}
 	curDashOffset -= segmentLength;
 	return segmentLength;
@@ -727,7 +726,7 @@ bool _process_stroke (VkvgContext ctx) {
 			if (!dashOn){
 				//finishing last dash that is already started, draw end caps but not too close to start
 				//the default gap is the next void
-				uint32_t prevDash = curDash-1;
+				int32_t prevDash = (int32_t)curDash-1;
 				if (prevDash < 0)
 					curDash = ctx->dashCount-1;
 				float m = fminf (ctx->dashes[prevDash] - curDashOffset, ctx->dashes[curDash]);

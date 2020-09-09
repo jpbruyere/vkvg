@@ -306,7 +306,7 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
 	ctx->indCount+=3;
 
 	_check_index_cache_size(ctx);
-	LOG(VKVG_LOG_INFO, "Triangle IDX: %d %d %d (count=%d)\n", i0,i1,i2,ctx->indCount);
+	LOG(VKVG_LOG_INFO, "Triangle IDX: %d %d %d (indCount=%d)\n", i0,i1,i2,ctx->indCount);
 }
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
 	Vertex v[4] =

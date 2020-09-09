@@ -53,6 +53,7 @@ void paint_rect_with_scale(){
 	vkvg_destroy(ctx);
 }
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST (paint, argc, argv);
 	PERFORM_TEST (paint_with_rotation, argc, argv);
 	PERFORM_TEST (paint_with_scale, argc, argv);

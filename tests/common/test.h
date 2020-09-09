@@ -79,6 +79,7 @@ extern uint32_t test_size;
 extern uint32_t iterations;
 extern uint32_t test_width;
 extern uint32_t test_height;
+extern bool no_test_size;
 
 extern float panX;
 extern float panY;
@@ -90,12 +91,25 @@ extern bool mouseDown;
 extern VkvgDevice device;
 extern VkvgSurface surf;
 
+/* common context init for several tests */
+extern float dash_offset;
+extern float line_width;
+extern vkvg_fill_rule_t fill_rule;
+extern vkvg_line_cap_t line_cap;
+extern vkvg_line_join_t line_join;
+extern float dashes[];
+extern uint32_t dashes_count;
+
+VkvgContext _initCtx();
+/*******************************/
+
 //run test in one step
 void perform_test (void(*testfunc)(), const char* testName, int argc, char *argv[]);
 void perform_test_offscreen (void(*testfunc)(void), const char *testName, int argc, char* argv[]);
 
 void randomize_color	(VkvgContext ctx);
 void draw_random_shape	(VkvgContext ctx, shape_t shape, float sizeFact);
+void draw_random_curve (VkvgContext ctx);
 
 //run test in 3 step: init, run, clear.
 void init_test (uint32_t width, uint32_t height);

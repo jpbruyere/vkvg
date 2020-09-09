@@ -21,6 +21,7 @@ void test(){
 }
 
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST (test, argc, argv);
 	return 0;
 }

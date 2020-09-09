@@ -12,19 +12,10 @@
 
 	vkvg_rectangle(ctx, x, y, z, v);
 }*/
-static vkvg_fill_rule_t fill_rule = VKVG_FILL_RULE_EVEN_ODD;
-static vkvg_line_cap_t line_cap = VKVG_LINE_CAP_BUTT;
-static vkvg_line_join_t line_join = VKVG_LINE_JOIN_MITER;
-static float line_width = 1.f;
 static float shape_size = 0.2f;
-static float dashes[] = {3.0f, 10.0f};
-static uint32_t dashes_count = 0;
-
 
 void _shape_fill(shape_t shape){
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_fill_rule(ctx, fill_rule);
+	VkvgContext ctx = _initCtx ();
 	for (uint32_t i=0; i<test_size; i++) {
 		draw_random_shape(ctx, shape, shape_size);
 		vkvg_fill(ctx);
@@ -32,13 +23,7 @@ void _shape_fill(shape_t shape){
 	vkvg_destroy(ctx);
 }
 void _shape_stroke(shape_t shape){
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_line_width (ctx, line_width);
-	vkvg_set_line_cap(ctx, line_cap);
-	vkvg_set_line_join (ctx, line_join);
-	vkvg_set_dash (ctx, dashes, dashes_count, 0);
-	vkvg_set_fill_rule(ctx, fill_rule);
+	VkvgContext ctx = _initCtx ();
 	for (uint32_t i=0; i<test_size; i++) {
 		draw_random_shape(ctx, shape, shape_size);
 		vkvg_stroke (ctx);
@@ -46,14 +31,8 @@ void _shape_stroke(shape_t shape){
 	vkvg_destroy(ctx);
 }
 void _shape_fill_stroke(shape_t shape){
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_line_width (ctx, line_width);
-	vkvg_set_line_cap(ctx, line_cap);
-	vkvg_set_line_join (ctx, line_join);
+	VkvgContext ctx = _initCtx ();
 
-	vkvg_set_dash (ctx, dashes, dashes_count, 0);
-	vkvg_set_fill_rule(ctx, fill_rule);
 	for (uint32_t i=0; i<test_size; i++) {
 		draw_random_shape(ctx, shape, shape_size);
 		vkvg_fill_preserve(ctx);
@@ -109,7 +88,7 @@ void random_fill_stroke () {
 }
 
 int main(int argc, char *argv[]) {
-	srand(0);
+	//vkvg_log_level = VKVG_LOG_ERR|VKVG_LOG_DEBUG|VKVG_LOG_INFO|VKVG_LOG_INFO_PATH|VKVG_LOG_DBG_ARRAYS|VKVG_LOG_FULL;
 
 	PERFORM_TEST (rectangles_fill, argc, argv);
 	PERFORM_TEST (rectangles_stroke, argc, argv);

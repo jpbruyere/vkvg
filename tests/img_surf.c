@@ -42,7 +42,7 @@ void paint_pattern () {
 	vkvg_surface_destroy(imgSurf);
 	vkvg_destroy(ctx);
 }
-void paint_pattern_repeat () {
+void paint_patt_repeat () {
 	VkvgContext ctx = vkvg_create(surf);
 	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
 	VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
@@ -53,7 +53,7 @@ void paint_pattern_repeat () {
 	vkvg_surface_destroy(imgSurf);
 	vkvg_destroy(ctx);
 }
-void paint_pattern_repeat_scalled () {
+void paint_patt_repeat_scalled () {
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_scale (ctx, 0.2f,0.2f);
 	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
@@ -65,7 +65,7 @@ void paint_pattern_repeat_scalled () {
 	vkvg_surface_destroy(imgSurf);
 	vkvg_destroy(ctx);
 }
-void paint_pattern_pad () {
+void paint_patt_pad () {
 	VkvgContext ctx = vkvg_create(surf);
 	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
 	VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
@@ -103,13 +103,14 @@ void test(){
 }
 
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST (paint, argc, argv);
 	PERFORM_TEST (paint_offset, argc, argv);
 	PERFORM_TEST (paint_with_scale, argc, argv);
 	PERFORM_TEST (paint_pattern, argc, argv);
-	PERFORM_TEST (paint_pattern_repeat, argc, argv);
-	PERFORM_TEST (paint_pattern_repeat_scalled, argc, argv);
-	PERFORM_TEST (paint_pattern_pad, argc, argv);
+	PERFORM_TEST (paint_patt_repeat, argc, argv);
+	PERFORM_TEST (paint_patt_repeat_scalled, argc, argv);
+	PERFORM_TEST (paint_patt_pad, argc, argv);
 	PERFORM_TEST (test, argc, argv);
 
 	return 0;

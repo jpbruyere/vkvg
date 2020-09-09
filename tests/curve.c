@@ -108,37 +108,9 @@ void test2() {
 	vkvg_destroy(ctx);
 }
 
-static float line_width = 1.f;
-static vkvg_line_cap_t line_cap = VKVG_LINE_CAP_ROUND;
-static vkvg_fill_rule_t fill_rule = VKVG_FILL_RULE_NON_ZERO;
-static float dashes[] = {30.0f, 10.0f};
-static uint32_t dashes_count = 0;
 static bool fillAndStroke = true;
 
-void _rnd_curve (VkvgContext ctx) {
-	float w = (float)test_width;
-	float h = (float)test_height;
-
-	float x2 = w*rand()/RAND_MAX;
-	float y2 = h*rand()/RAND_MAX;
-	float cp_x1 = w*rand()/RAND_MAX;
-	float cp_y1 = h*rand()/RAND_MAX;
-	float cp_x2 = w*rand()/RAND_MAX;
-	float cp_y2 = h*rand()/RAND_MAX;
-
-	vkvg_curve_to(ctx, cp_x1, cp_y1, cp_x2, cp_y2, x2, y2);
-}
-
-VkvgContext _initCtx() {
-	VkvgContext ctx = vkvg_create(surf);
-	vkvg_clear(ctx);
-	vkvg_set_line_width (ctx,line_width);
-	vkvg_set_line_cap(ctx, line_cap);
-	vkvg_set_dash (ctx, dashes, dashes_count, 0);
-	return ctx;
-}
-
-void random_curves () {
+void random_curves_stroke () {
 	float w = (float)test_width;
 	float h = (float)test_height;
 
@@ -150,13 +122,14 @@ void random_curves () {
 		float y1 = h*rand()/RAND_MAX;
 
 		vkvg_move_to (ctx, x1, y1);
-		_rnd_curve(ctx);
+		draw_random_curve(ctx);
 
 		vkvg_stroke (ctx);
 	}
 	vkvg_destroy(ctx);
 }
-void single_long_line_curved () {
+
+void _long_curv () {
 	float w = (float)test_width;
 	float h = (float)test_height;
 
@@ -169,7 +142,7 @@ void single_long_line_curved () {
 	vkvg_move_to (ctx, x1, y1);
 
 	for (uint32_t i=0; i<test_size; i++) {
-		_rnd_curve(ctx);
+		draw_random_curve(ctx);
 	}
 
 	if (fillAndStroke) {
@@ -181,21 +154,37 @@ void single_long_line_curved () {
 
 	vkvg_destroy(ctx);
 }
+
+void long_curv_fill_nz () {
+	fillAndStroke = false;
+	fill_rule = VKVG_FILL_RULE_NON_ZERO;
+	_long_curv ();
+}
+void long_curv_fill_eo () {
+	fillAndStroke = false;
+	fill_rule = VKVG_FILL_RULE_EVEN_ODD;
+	_long_curv ();
+}
+void long_curv_fill_stroke_nz () {
+	fillAndStroke = true;
+	fill_rule = VKVG_FILL_RULE_NON_ZERO;
+	_long_curv ();
+}
+void long_curv_fill_stroke_eo () {
+	fillAndStroke = true;
+	fill_rule = VKVG_FILL_RULE_EVEN_ODD;
+	_long_curv ();
+}
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST(test, argc, argv);
 	PERFORM_TEST(test2, argc, argv);
 	PERFORM_TEST(curved_rect, argc, argv);
-	fillAndStroke = false;
-	fill_rule = VKVG_FILL_RULE_NON_ZERO;
-	PERFORM_TEST(single_long_line_curved, argc, argv);
-	fill_rule = VKVG_FILL_RULE_EVEN_ODD;
-	PERFORM_TEST(single_long_line_curved, argc, argv);
-	fillAndStroke = true;
-	fill_rule = VKVG_FILL_RULE_NON_ZERO;
-	PERFORM_TEST(single_long_line_curved, argc, argv);
-	fill_rule = VKVG_FILL_RULE_EVEN_ODD;
-	PERFORM_TEST(single_long_line_curved, argc, argv);
-
-	PERFORM_TEST(random_curves, argc, argv);
+	//PERFORM_TEST(long_curv_fill_nz, argc, argv);
+	no_test_size = false;
+	PERFORM_TEST(long_curv_fill_eo, argc, argv);
+	//PERFORM_TEST(long_curv_fill_stroke_nz, argc, argv);
+	PERFORM_TEST(long_curv_fill_stroke_eo, argc, argv);
+	PERFORM_TEST(random_curves_stroke, argc, argv);
 	return 0;
 }

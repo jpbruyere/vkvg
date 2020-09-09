@@ -52,14 +52,20 @@ logfile="$logdir/log-$today.txt"
 
 git log -n 1 --pretty=format:'%h %d %s%n%n' > $logfile
 
-echo "_____________________________________________________________________________________________________" >> $logfile
-echo "| Test File Name  |         Sub Test          | Iter | SIZE |   FPS   | Average | Median  | Sigma   |" >> $logfile
-echo "|-----------------|---------------------------|------|------|---------|---------|---------|---------|" >> $logfile
+files=( test_* )
+./"${files[0]}" -p >> $logfile
+
+echo "__________________________________________________________________________________________________________" >> $logfile
+echo "| N° | Test File Name  |         Sub Test          | Iter | Size |   FPS   | Average | Median  | Sigma   |" >> $logfile
+echo "|----|-----------------|---------------------------|------|------|---------|---------|---------|---------|" >> $logfile
 for file in test_*
 do
 	if [[ -x "$file" ]]
 	then
-		./"$file" $ITERATIONS $SIZE >> $logfile
+		printf "."
+		./"$file" -i $ITERATIONS -s $SIZE -q >> $logfile
 	fi
 done
-echo "_____________________________________________________________________________________________________" >> $logfile
+echo "__________________________________________________________________________________________________________" >> $logfile
+echo
+echo "results writen in $logfile"

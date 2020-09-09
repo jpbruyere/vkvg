@@ -84,8 +84,9 @@ void test(){
 }
 
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST (sizes, argc, argv);
 	PERFORM_TEST (scaled_up, argc, argv);
-	PERFORM_TEST (test, argc, argv);
+	PERFORM_TEST (test, argc, argv);	
 	return 0;
 }

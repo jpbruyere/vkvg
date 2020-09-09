@@ -16,6 +16,7 @@ void compositing(){
 }
 
 int main(int argc, char *argv[]) {
+	no_test_size = true;
 	PERFORM_TEST (compositing, argc, argv);
 	return 0;
 }
