@@ -1,11 +1,12 @@
 #include "test.h"
 
-void create_destroy_multi_512(){
-	VkvgSurface surfs[test_size];
+void create_destroy_multi_512(){	
+	VkvgSurface* surfs = (VkvgSurface*)malloc(sizeof(VkvgSurface)*test_size);
 	for (uint32_t i = 0; i < test_size; i++)
 		surfs[i] = vkvg_surface_create (device, 512, 512);
 	for (uint32_t i = 0; i < test_size; i++)	
 		vkvg_surface_destroy(surfs[i]);
+	free(surf);
 }
 
 void create_destroy_single_512(){

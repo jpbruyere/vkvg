@@ -1,11 +1,12 @@
 #include "test.h"
 
 void create_destroy_multi(){
-	VkvgContext ctxs[test_size];
+	VkvgContext* ctxs = (VkvgContext*)malloc(sizeof(VkvgContext)*test_size);
 	for (uint32_t i = 0; i < test_size; i++)
 		ctxs[i] = vkvg_create(surf);
-	for (uint32_t i = 0; i < test_size; i++)	
-		vkvg_destroy(ctxs[i]);		
+	for (uint32_t i = 0; i < test_size; i++)
+		vkvg_destroy(ctxs[i]);
+	free(ctxs);
 }
 
 void create_destroy_single(){
