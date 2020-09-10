@@ -33,8 +33,8 @@ bool mouseDown = false;
 VkvgDevice device	= NULL;
 VkvgSurface surf	= NULL;
 
-uint32_t test_size	= 10;	// items drawn in one run, or complexity
-uint32_t iterations	= 100;// repeat test n times
+uint32_t test_size	= 500;	// items drawn in one run, or complexity
+uint32_t iterations	= 500;// repeat test n times
 uint32_t test_width	= 512;
 uint32_t test_height= 512;
 bool	test_vsync	= false;

@@ -450,7 +450,7 @@ static const VkClearAttachment clearStencil        = {VK_IMAGE_ASPECT_STENCIL_BI
 static const VkClearAttachment clearColorAttach    = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
 
 void vkvg_reset_clip (VkvgContext ctx){
-	_flush_undrawn_vertices(ctx);
+	_emit_draw_cmd_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
 		//if command buffer is not already started and in a renderpass, we use the renderpass
 		//with the loadop clear for stencil
@@ -462,7 +462,7 @@ void vkvg_reset_clip (VkvgContext ctx){
 	vkCmdClearAttachments(ctx->cmd, 1, &clearStencil, 1, &ctx->clearRect);
 }
 void vkvg_clear (VkvgContext ctx){
-	_flush_undrawn_vertices(ctx);
+	_emit_draw_cmd_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
 		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearAll;
 		_start_cmd_for_render_pass(ctx);
@@ -489,7 +489,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
 	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to clip
 		return;
 
-	_flush_undrawn_vertices(ctx);
+	_emit_draw_cmd_undrawn_vertices(ctx);
 
 	_finish_path(ctx);
 
@@ -506,7 +506,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 		CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 		_fill_ec(ctx);
-		_flush_undrawn_vertices(ctx);
+		_emit_draw_cmd_undrawn_vertices(ctx);
 	}
 	CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
@@ -526,7 +526,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 	LOG(VKVG_LOG_INFO, "FILL: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
 	 if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
-		 _flush_undrawn_vertices(ctx);
+		 _emit_draw_cmd_undrawn_vertices(ctx);
 
 		_poly_fill (ctx);
 		_bind_draw_pipeline (ctx);
@@ -537,7 +537,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 	}
 
 	if (ctx->vertCount - ctx->curVertOffset + ctx->pointCount > VKVG_IBO_MAX)
-		_flush_undrawn_vertices(ctx);//limit draw call to addressable vx with choosen index type
+		_emit_draw_cmd_undrawn_vertices(ctx);//limit draw call to addressable vx with choosen index type
 
 	if (ctx->pattern)//if not solid color, source img of gradient has to be bound
 		_ensure_renderpass_is_started(ctx);
@@ -546,7 +546,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
 	Vertex v = {{0},ctx->curColor,{0,0,-1}};
 
-	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);	
 
 	if (isStart){
 		vec2 vhw = vec2_mult(n,hw);
@@ -650,7 +650,14 @@ void _draw_segment (VkvgContext ctx, float hw, bool isCurve) {
 	iL = curPathPointIdx++;
 }
 
-bool _process_stroke (VkvgContext ctx) {
+void vkvg_stroke_preserve (VkvgContext ctx)
+{
+	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to stroke
+		return;
+	_finish_path(ctx);
+
+	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path ptr = %d;\n", ctx, ctx->pathPtr);
+
 	curPathPointIdx = lastPathPointIdx = ptrPath = iL = iR = 0;
 	float hw = ctx->lineWidth / 2.0f;
 
@@ -681,7 +688,7 @@ bool _process_stroke (VkvgContext ctx) {
 				totDashLength+=ctx->dashes[i];
 			if (totDashLength == 0){
 				ctx->status = VKVG_STATUS_INVALID_DASH;
-				return true;
+				return;
 			}
 			/*if (ctx->dashOffset == 0)
 				curDashOffset = 0;
@@ -752,8 +759,28 @@ bool _process_stroke (VkvgContext ctx) {
 		}else
 			_draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], vec2_line_norm(ctx->points[curPathPointIdx-1], ctx->points[curPathPointIdx]), false);
 
-		if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX)
-			return false;
+		/*if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX) {
+			_check_vao_size (ctx);
+			_ensure_renderpass_is_started(ctx);
+
+			//split triangle emission into batch adressable by VKVG_IBO_MAX (index type)
+			VKVG_IBO_INDEX_TYPE indexMax = VKVG_IBO_MAX - VKVG_IBO_MAX % 3;
+			uint32_t vxTot = ctx->vertCount;
+			uint32_t idxTot = ctx->indCount;
+			ctx->indCount = ctx->curIndStart;
+
+
+			while (ctx->curVertOffset < vxTot) {
+				while (ctx->indexCache[ctx->indCount] < indexMax)
+					ctx->indCount++;
+				ctx->indCount -= ctx->indCount % 3;
+				uint32_t minInd = 
+				uint32_t newVertOffset = ctx->indexCache[ctx->indCount-1];
+
+				_emit_draw (ctx);				
+			}
+
+		}		*/	
 
 		curPathPointIdx = firstPathPointIdx + pathPointCount;
 
@@ -763,29 +790,6 @@ bool _process_stroke (VkvgContext ctx) {
 			ptrPath++;
 	}
 
-
-
-
-	return true;
-}
-
-void vkvg_stroke_preserve (VkvgContext ctx)
-{
-	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to stroke
-		return;
-	_finish_path(ctx);
-
-	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path ptr = %d;\n", ctx, ctx->pathPtr);
-
-	uint32_t tmpVxCount = ctx->vertCount;
-	uint32_t tmpIxCount = ctx->indCount;
-
-	if (!_process_stroke(ctx)) {
-		ctx->vertCount = tmpVxCount;
-		ctx->indCount = tmpIxCount;
-		_flush_undrawn_vertices(ctx);//limit draw call to addressable vx with choosen index type
-		_process_stroke(ctx);
-	}
 }
 void vkvg_paint (VkvgContext ctx){
 	if (ctx->pathPtr || ctx->segmentPtr){//path to fill
@@ -1098,35 +1102,35 @@ void vkvg_restore (VkvgContext ctx){
 }
 
 void vkvg_translate (VkvgContext ctx, float dx, float dy){
-	_flush_undrawn_vertices(ctx);
+	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_translate (&ctx->pushConsts.mat, dx, dy);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_scale (VkvgContext ctx, float sx, float sy){
-	_flush_undrawn_vertices(ctx);
+	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_scale (&ctx->pushConsts.mat, sx, sy);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_rotate (VkvgContext ctx, float radians){
-	_flush_undrawn_vertices(ctx);
+	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_rotate (&ctx->pushConsts.mat, radians);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix) {
-	_flush_undrawn_vertices(ctx);
+	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_t res;
 	vkvg_matrix_multiply (&res, &ctx->pushConsts.mat, matrix);
 	ctx->pushConsts.mat = res;
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_identity_matrix (VkvgContext ctx) {
-	_flush_undrawn_vertices(ctx);
+	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_t im = VKVG_IDENTITY_MATRIX;
 	ctx->pushConsts.mat = im;
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
-	_flush_undrawn_vertices(ctx);
+	_emit_draw_cmd_undrawn_vertices(ctx);
 	ctx->pushConsts.mat = (*matrix);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }

@@ -439,7 +439,7 @@ void _check_vao_size (VkvgContext ctx) {
 }
 
 //stroke and non-zero draw call for solid color flush
-void _flush_undrawn_vertices (VkvgContext ctx){
+void _emit_draw_cmd_undrawn_vertices (VkvgContext ctx){
 	if (ctx->indCount == ctx->curIndStart)
 		return;
 
@@ -472,7 +472,7 @@ void _flush_cmd_until_vx_base (VkvgContext ctx){
 	_wait_and_submit_cmd (ctx);
 }
 void _flush_cmd_buff (VkvgContext ctx){
-	_flush_undrawn_vertices (ctx);
+	_emit_draw_cmd_undrawn_vertices (ctx);
 	if (!ctx->cmdStarted)
 		return;
 	_end_render_pass        (ctx);
@@ -578,7 +578,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		break;
 	case VKVG_PATTERN_TYPE_SURFACE:
 	{
-		_flush_undrawn_vertices(ctx);
+		_emit_draw_cmd_undrawn_vertices(ctx);
 
 		VkvgSurface surf = (VkvgSurface)pat->data;
 

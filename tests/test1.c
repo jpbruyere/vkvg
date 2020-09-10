@@ -297,6 +297,23 @@ void cairo_test_line_joins (VkvgContext cr) {
 	vkvg_rel_line_to (cr, 51.2f, 51.2f);
 	vkvg_set_line_join (cr, VKVG_LINE_JOIN_ROUND);
 	vkvg_stroke (cr);
+
+		/* draw helping lines */
+	vkvg_set_source_rgb (cr, 1, 0.2f, 0.2f);
+	vkvg_set_line_width (cr, 2.56f);
+	vkvg_set_line_join (cr, VKVG_LINE_JOIN_MITER);
+	vkvg_move_to (cr, 76.8f, 84.48f);
+	vkvg_rel_line_to (cr, 51.2f, -51.2f);
+	vkvg_rel_line_to (cr, 51.2f, 51.2f);
+	vkvg_move_to (cr, 76.8f, 161.28f);
+	vkvg_rel_line_to (cr, 51.2f, -51.2f);
+	vkvg_rel_line_to (cr, 51.2f, 51.2f);
+	vkvg_move_to (cr, 76.8f, 238.08f);
+	vkvg_rel_line_to (cr, 51.2f, -51.2f);
+	vkvg_rel_line_to (cr, 51.2f, 51.2f);
+
+	vkvg_stroke (cr);
+
 }
 void cairo_print_arc (VkvgContext cr) {
 	float xc = 128.0f;
