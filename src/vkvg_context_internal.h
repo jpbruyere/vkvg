@@ -215,9 +215,10 @@ void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, flo
 
 void _bind_draw_pipeline    (VkvgContext ctx);
 void _create_cmd_buff		(VkvgContext ctx);
+void _check_vao_size		(VkvgContext ctx);
 void _ensure_renderpass_is_started  (VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
-void _flush_undrawn_vertices(VkvgContext ctx);
+void _emit_draw_cmd_undrawn_vertices(VkvgContext ctx);
 void _flush_cmd_until_vx_base (VkvgContext ctx);
 void _wait_flush_fence      (VkvgContext ctx);
 void _reset_flush_fence     (VkvgContext ctx);

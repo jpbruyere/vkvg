@@ -89,12 +89,12 @@ void curve () {
 int main(int argc, char *argv[]) {	
 	//PERFORM_TEST(test, argc, argv);
 	//vkvg_log_level = VKVG_LOG_ERR|VKVG_LOG_DEBUG|VKVG_LOG_INFO|VKVG_LOG_INFO_PATH|VKVG_LOG_DBG_ARRAYS|VKVG_LOG_FULL;
-	dashes_count = 1;
-	dashes[0] = 50;
-	dashes[1] = 60;
-	line_width = 10;
+	dashes_count = 2;
+	dashes[0] = 2;
+	dashes[1] = 3;
+	line_width = 2;
 	line_cap = VKVG_LINE_CAP_ROUND;
 	PERFORM_TEST(path, argc, argv);
-	PERFORM_TEST(curve, argc, argv);
+	//PERFORM_TEST(curve, argc, argv);
 	return 0;
 }
