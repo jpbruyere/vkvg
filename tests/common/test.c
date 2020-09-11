@@ -178,7 +178,7 @@ _print_usage_and_exit () {
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests\n");
 	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs\n");
 	printf("\t-vsync:\t\tEnable VSync, disabled by default\n");
-	printf("\t-h:\t\tthis help message.\n");
+	printf("\t-help:\t\tthis help message.\n");
 	printf("\n");
 	exit(-1);
 }
@@ -247,7 +247,7 @@ void _print_results (const char *testName, int argc, char* argv[], uint32_t i, d
 	avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
 
 	if (!quiet && (test_index == 0 || test_index == single_test)) {
-		printf ("______________________________________________________________________________________________________\n");		
+		printf ("__________________________________________________________________________________________________________\n");		
 		printf ("| N° | Test File Name  |       Sub Test            | Iter | Size |   FPS   | Average | Median  | Sigma   |\n");
 		printf ("|----|-----------------|---------------------------|------|------|---------|---------|---------|---------|\n");
 	}

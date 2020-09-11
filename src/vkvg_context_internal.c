@@ -38,10 +38,11 @@
 
 void _resize_vertex_cache (VkvgContext ctx, uint32_t newSize) {
 	Vertex* tmp = (Vertex*) realloc (ctx->vertexCache, (size_t)newSize * sizeof(Vertex));
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %u size(byte): %zu Ptr: %p -> %p\n", newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize vertex cache (vx count=%u): old size: %u -> new size: %u size(byte): %zu Ptr: %p -> %p\n",
+		ctx->vertCount, ctx->sizeVertices, newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
 	if (tmp == NULL){
 		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(VKVG_LOG_ERR, "resize VBO failed: vert count: %u byte size: %zu\n", ctx->sizeVertices, ctx->sizeVertices * sizeof(Vertex));
+		LOG(VKVG_LOG_ERR, "resize vertex cache failed: vert count: %u byte size: %zu\n", ctx->sizeVertices, ctx->sizeVertices * sizeof(Vertex));
 		return;
 	}
 	ctx->vertexCache = tmp;
@@ -124,7 +125,7 @@ void _set_curve_start (VkvgContext ctx) {
 //compute segment length and set is curved bit
 void _set_curve_end (VkvgContext ctx) {
 	//ctx->pathes [ctx->pathPtr + ctx->segmentPtr] = ctx->pathes [ctx->pathPtr] - ctx->pathes [ctx->pathPtr + ctx->segmentPtr];
-	ctx->pathes [ctx->pathPtr + ctx->segmentPtr] |= PATH_IS_CURVE_BIT;
+	ctx->pathes [ctx->pathPtr + ctx->segmentPtr] |= PATH_HAS_CURVES_BIT;
 	ctx->segmentPtr++;
 	_check_pathes_array(ctx);
 	ctx->pathes [ctx->pathPtr + ctx->segmentPtr] = 0;
@@ -147,7 +148,7 @@ void _finish_path (VkvgContext ctx){
 	if (ctx->segmentPtr > 0) {
 		ctx->pathes[ctx->pathPtr] |= PATH_HAS_CURVES_BIT;
 		//if last segment is not a curve and point count > 0
-		if ((ctx->pathes[ctx->pathPtr+ctx->segmentPtr]&PATH_IS_CURVE_BIT)==0 &&
+		if ((ctx->pathes[ctx->pathPtr+ctx->segmentPtr]&PATH_HAS_CURVES_BIT)==0 &&
 				(ctx->pathes[ctx->pathPtr+ctx->segmentPtr]&PATH_ELT_MASK) > 0)
 			ctx->segmentPtr++;//current segment has to be included
 		ctx->pathPtr += ctx->segmentPtr;
@@ -177,7 +178,7 @@ void _remove_last_point (VkvgContext ctx){
 		ctx->pathes [ctx->pathPtr + ctx->segmentPtr]--;//decrement last segment point count
 		if ((ctx->pathes [ctx->pathPtr + ctx->segmentPtr]&PATH_ELT_MASK) == 0)//if no point left (was only one)
 			ctx->pathes [ctx->pathPtr + ctx->segmentPtr] = 0;//reset current segment
-		else if (ctx->pathes [ctx->pathPtr + ctx->segmentPtr]&PATH_IS_CURVE_BIT)//if segment is a curve
+		else if (ctx->pathes [ctx->pathPtr + ctx->segmentPtr]&PATH_HAS_CURVES_BIT)//if segment is a curve
 			ctx->segmentPtr++;//then segPtr has to be forwarded to new segment
 	}
 }
@@ -432,9 +433,10 @@ void _check_vao_size (VkvgContext ctx) {
 			//if cmd is started buffers, are already bound, so no resize is possible
 			//instead we flush, and clear vbo and ibo caches
 			_flush_cmd_until_vx_base (ctx);
-
-		_resize_vbo(ctx, ctx->sizeVertices);
-		_resize_ibo(ctx, ctx->sizeIndices);
+		if (ctx->vertCount > ctx->sizeVBO)		
+			_resize_vbo(ctx, ctx->sizeVertices);
+		if (ctx->indCount > ctx->sizeIBO)
+			_resize_ibo(ctx, ctx->sizeIndices);
 	}
 }
 
@@ -542,7 +544,6 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 
 	_bind_draw_pipeline (ctx);
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-
 	ctx->cmdStarted = true;
 }
 //compute inverse mat used in shader when context matrix has changed
@@ -1051,8 +1052,9 @@ void _recursive_bezier (VkvgContext ctx,
 }
 #pragma warning(default:4127)
 
+//Even-Odd inside test with stencil buffer implementation.
 void _poly_fill (VkvgContext ctx){
-	//we anticipate the check for vbo buffer size
+	//we anticipate the check for vbo buffer size, ibo is not used in poly_fill
 	if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO) {
 		if (ctx->cmdStarted) {
 			_end_render_pass(ctx);
@@ -1118,10 +1120,9 @@ void _fill_ec (VkvgContext ctx){
 	while (ptrPath < ctx->pathPtr){
 		ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;//close path
 
-		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;		
 
 		VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-
 		ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
 		uint32_t ecps_count = pathPointCount;
 		VKVG_IBO_INDEX_TYPE i = 0;
@@ -1175,6 +1176,7 @@ void _fill_ec (VkvgContext ctx){
 		}
 		if (ecps_count == 3)
 			_add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
+		free (ecps);
 
 		firstPtIdx += pathPointCount;
 		if (_path_has_curves (ctx, ptrPath)) {
@@ -1185,7 +1187,6 @@ void _fill_ec (VkvgContext ctx){
 				totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
 		}else
 			ptrPath++;
-		free (ecps);
 	}
 }
 

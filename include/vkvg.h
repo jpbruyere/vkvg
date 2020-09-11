@@ -968,8 +968,9 @@ void vkvg_clear (VkvgContext ctx);//use vkClearAttachment to speed up clearing s
 vkvg_public
 void vkvg_reset_clip (VkvgContext ctx);
 /**
- * @brief
+ * @brief reset clip
  *
+ * Reset current context clip regions.
  * @param ctx a valid vkvg #context
  */
 vkvg_public
