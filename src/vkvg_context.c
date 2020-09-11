@@ -442,7 +442,7 @@ void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	_add_point (ctx, x, y);
 	_add_point (ctx, x + w, y);
 	_add_point (ctx, x + w, y + h);
-	_add_point (ctx, x, y + h);
+	_add_point (ctx, x, y + h);	
 
 	vkvg_close_path (ctx);
 }
@@ -539,7 +539,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 	if (ctx->vertCount - ctx->curVertOffset + ctx->pointCount > VKVG_IBO_MAX)
 		_emit_draw_cmd_undrawn_vertices(ctx);//limit draw call to addressable vx with choosen index type
 
-	if (ctx->pattern)//if not solid color, source img of gradient has to be bound
+	if (ctx->pattern)//if not solid color, source img or gradient has to be bound
 		_ensure_renderpass_is_started(ctx);
 	_fill_ec(ctx);
 }
@@ -707,7 +707,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		if (_path_has_curves (ctx,ptrPath)) {
 			while (curPathPointIdx < lastPathPointIdx){
 
-				bool curved = ctx->pathes [ptrPath + ptrSegment] & PATH_IS_CURVE_BIT;
+				bool curved = ctx->pathes [ptrPath + ptrSegment] & PATH_HAS_CURVES_BIT;
 				if (lastSegmentPointIdx == lastPathPointIdx)//last segment of path, dont draw end point here
 					lastSegmentPointIdx--;
 				while (curPathPointIdx <= lastSegmentPointIdx)
