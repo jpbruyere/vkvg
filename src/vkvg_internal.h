@@ -52,7 +52,22 @@
 #define PATH_HAS_CURVES_BIT 0x40000000              /* 2rd most significant bit of path elmts is curved status
 													 * for main path, this indicate that curve datas are present
 													 * for segments, this indicate that the segment is curved or not */
-#define PATH_ELT_MASK       0x3FFFFFFF              /* Bit mask for fetching path element value */
+#define PATH_IS_CONCAVE_BIT 0x20000000              /* 3rd most significant bit of path elmts is concave/convex bit
+													 * 0=>simple concave path
+													 * 1=>convex */
+#define PATH_DOT_PLUS_BIT	0x10000000              /* 4rd most significant bit of path elmts is current sign of dot product
+													 * dotproduct is computed for last vector, if the sign is the same along
+													 * a path, then it's a single concave path. This bit holds the current sign.
+													 * If the last dot product sign is different from the one held by this bit,
+													 * the 3rd bit is used to mark this path as convex.
+													 * Some draw primitive have known dot product. positive arc is -, negative is +,
+													 * rectangle is -.
+													 * 0=>current dot product sign is negative.
+													 * 1=>current dot product sign is positive.
+													 * 
+													 * 
+													 * 1=>convex */
+#define PATH_ELT_MASK       0x0FFFFFFF              /* Bit mask for fetching path element value */
 
 #define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
 #define ROUND_DOWN(v,p) (floorf(v * p) / p)

@@ -142,6 +142,8 @@ void vkvg_device_destroy (VkvgDevice dev)
 	vkDestroyPipeline               (dev->vkDev, dev->pipe_SUB,     NULL);
 	vkDestroyPipeline               (dev->vkDev, dev->pipe_CLEAR,   NULL);
 
+	vkDestroyPipeline               (dev->vkDev, dev->pipe_TF_OVER, NULL);
+
 #ifdef VKVG_WIRED_DEBUG
 	vkDestroyPipeline               (dev->vkDev, dev->pipelineWired, NULL);
 	vkDestroyPipeline               (dev->vkDev, dev->pipelineLineList, NULL);

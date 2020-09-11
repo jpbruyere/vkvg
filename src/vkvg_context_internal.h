@@ -143,6 +143,9 @@ typedef struct _vkvg_context_t {
 	uint32_t*	pathes;
 	uint32_t	sizePathes;
 
+
+	bool curPathIsConcave;
+	bool curPathDotSignPos;
 	uint32_t    segmentPtr;		//current segment count in current path having curves
 
 	float		lineWidth;

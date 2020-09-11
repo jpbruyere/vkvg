@@ -142,8 +142,13 @@ void _finish_path (VkvgContext ctx){
 		ctx->pointCount -= ctx->pathes[ctx->pathPtr];//what about the bounds?
 		ctx->pathes[ctx->pathPtr] = 0;
 		ctx->segmentPtr = 0;
+		ctx->curPathDotSignPos = ctx->curPathIsConcave = false;		
 		return;
 	}
+
+	if (ctx->curPathIsConcave)
+		ctx->pathes[ctx->pathPtr] |= PATH_IS_CONCAVE_BIT;
+	ctx->curPathDotSignPos = ctx->curPathIsConcave = false;
 
 	if (ctx->segmentPtr > 0) {
 		ctx->pathes[ctx->pathPtr] |= PATH_HAS_CURVES_BIT;
@@ -167,6 +172,7 @@ void _clear_path (VkvgContext ctx){
 	ctx->pathes [ctx->pathPtr] = 0;
 	ctx->pointCount = 0;
 	ctx->segmentPtr = 0;
+	ctx->curPathDotSignPos = ctx->curPathIsConcave = false;
 	_resetMinMax(ctx);
 }
 void _remove_last_point (VkvgContext ctx){
@@ -489,7 +495,7 @@ void _flush_cmd_buff (VkvgContext ctx){
 void _bind_draw_pipeline (VkvgContext ctx) {
 	switch (ctx->curOperator) {
 	case VKVG_OPERATOR_OVER:
-		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_TF_OVER);
 		break;
 	case VKVG_OPERATOR_CLEAR:
 		vkvg_set_source_rgba(ctx,0,0,0,0);
@@ -1122,62 +1128,86 @@ void _fill_ec (VkvgContext ctx){
 
 		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;		
 
-		VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-		ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
-		uint32_t ecps_count = pathPointCount;
-		VKVG_IBO_INDEX_TYPE i = 0;
+		if (!(ctx->pathes[ptrPath] & PATH_IS_CONCAVE_BIT)){//} && pathPointCount > 50) {
+			_emit_draw_cmd_undrawn_vertices (ctx);
+			VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount);
+			if (ctx->sizeVertices < ctx->vertCount + pathPointCount) {
+				uint32_t newSize = (uint32_t)ceilf((float)(ctx->vertCount + pathPointCount)/VKVG_VBO_SIZE) * VKVG_VBO_SIZE;
+				_resize_vertex_cache (ctx, newSize);
+			}
+			if (ctx->sizeVertices > ctx->sizeVBO) {
+				if (ctx->cmdStarted) {
+					_flush_cmd_until_vx_base (ctx);
+					firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount);
+				}
+				_resize_vbo(ctx, ctx->sizeVertices);
+			}			
+			firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount);
+			for (uint32_t i = 0; i < pathPointCount; i++) {
+				v.pos = ctx->points [i+firstPtIdx];
+				ctx->vertexCache[ctx->vertCount++] = v;				
+			}
+			LOG(VKVG_LOG_DBG_ARRAYS, "\tpoint count = %d; 1st vert = %d; vert count = %d; vx tot = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx, ctx->vertCount);			
+			_ensure_renderpass_is_started (ctx);			
+			CmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx , 0);
+			ctx->curVertOffset = ctx->vertCount;			
+		}else{
+			VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+			ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
+			uint32_t ecps_count = pathPointCount;
+			VKVG_IBO_INDEX_TYPE i = 0;
 
-		//init points link list
-		while (i < pathPointCount-1){
+			//init points link list
+			while (i < pathPointCount-1){
+				v.pos = ctx->points[i+firstPtIdx];
+				ear_clip_point ecp = {v.pos, firstVertIdx+i, &ecps[i+1]};
+				ecps[i] = ecp;
+				_add_vertex(ctx, v);
+				i++;
+			}
+
 			v.pos = ctx->points[i+firstPtIdx];
-			ear_clip_point ecp = {v.pos, firstVertIdx+i, &ecps[i+1]};
+			ear_clip_point ecp = {v.pos, firstVertIdx+i, ecps};
 			ecps[i] = ecp;
 			_add_vertex(ctx, v);
-			i++;
-		}
 
-		v.pos = ctx->points[i+firstPtIdx];
-		ear_clip_point ecp = {v.pos, firstVertIdx+i, ecps};
-		ecps[i] = ecp;
-		_add_vertex(ctx, v);
+			ear_clip_point* ecp_current = ecps;
+			uint32_t tries = 0;
 
-		ear_clip_point* ecp_current = ecps;
-		uint32_t tries = 0;
-
-		while (ecps_count > 3) {
-			if (tries > ecps_count) {
-				break;
-			}
-			ear_clip_point* v0 = ecp_current->next,
-					*v1 = ecp_current, *v2 = ecp_current->next->next;
-			if (ecp_zcross (v0, v2, v1)<0){
-				ecp_current = ecp_current->next;
-				tries++;
-				continue;
-			}
-			ear_clip_point* vP = v2->next;
-			bool isEar = true;
-			while (vP!=v1){
-				if (ptInTriangle (vP->pos, v0->pos, v2->pos, v1->pos)){
-					isEar = false;
+			while (ecps_count > 3) {
+				if (tries > ecps_count) {
 					break;
 				}
-				vP = vP->next;
+				ear_clip_point* v0 = ecp_current->next,
+						*v1 = ecp_current, *v2 = ecp_current->next->next;
+				if (ecp_zcross (v0, v2, v1)<0){
+					ecp_current = ecp_current->next;
+					tries++;
+					continue;
+				}
+				ear_clip_point* vP = v2->next;
+				bool isEar = true;
+				while (vP!=v1){
+					if (ptInTriangle (vP->pos, v0->pos, v2->pos, v1->pos)){
+						isEar = false;
+						break;
+					}
+					vP = vP->next;
+				}
+				if (isEar){
+					_add_triangle_indices (ctx, v0->idx, v1->idx, v2->idx);
+					v1->next = v2;
+					ecps_count --;
+					tries = 0;
+				}else{
+					ecp_current = ecp_current->next;
+					tries++;
+				}
 			}
-			if (isEar){
-				_add_triangle_indices (ctx, v0->idx, v1->idx, v2->idx);
-				v1->next = v2;
-				ecps_count --;
-				tries = 0;
-			}else{
-				ecp_current = ecp_current->next;
-				tries++;
-			}
+			if (ecps_count == 3)
+				_add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
+			free (ecps);
 		}
-		if (ecps_count == 3)
-			_add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
-		free (ecps);
-
 		firstPtIdx += pathPointCount;
 		if (_path_has_curves (ctx, ptrPath)) {
 			//skip segments lengths used in stroke
@@ -1187,6 +1217,7 @@ void _fill_ec (VkvgContext ctx){
 				totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
 		}else
 			ptrPath++;
+		
 	}
 }
 

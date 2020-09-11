@@ -48,6 +48,7 @@ extern PFN_vkCmdSetScissor             CmdSetScissor;
 
 extern PFN_vkCmdPushConstants          CmdPushConstants;
 extern PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
+//extern PFN_vkCmdSetPrimitiveTopologyEXT CmdSetPrimitiveTopology;
 
 typedef struct _vkvg_device_t{
 	VkDevice				vkDev;                  /**< Vulkan Logical Device */
@@ -70,6 +71,8 @@ typedef struct _vkvg_device_t{
 	VkPipeline				pipe_OVER;              /**< default operator */
 	VkPipeline				pipe_SUB;
 	VkPipeline				pipe_CLEAR;             /**< clear operator */
+
+	VkPipeline				pipe_TF_OVER;           /**< default operator triangle fan*/
 
 	VkPipeline				pipelinePolyFill;       /**< even-odd polygon filling first step */
 	VkPipeline				pipelineClipping;       /**< draw on stencil to update clipping regions */

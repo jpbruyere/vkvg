@@ -46,6 +46,7 @@ PFN_vkCmdSetScissor             CmdSetScissor;
 
 PFN_vkCmdPushConstants          CmdPushConstants;
 PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
+//PFN_vkCmdSetPrimitiveTopologyEXT CmdSetPrimitiveTopology;
 
 void _flush_all_contexes (VkvgDevice dev){
 	VkvgContext ctx = dev->lastCtx;
@@ -239,9 +240,9 @@ void _setupPipelines(VkvgDevice dev)
 	VkDynamicState dynamicStateEnables[] = {
 		VK_DYNAMIC_STATE_VIEWPORT,
 		VK_DYNAMIC_STATE_SCISSOR,
-		VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,
+		VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,		
 		VK_DYNAMIC_STATE_STENCIL_REFERENCE,
-		VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
+		VK_DYNAMIC_STATE_STENCIL_WRITE_MASK
 	};
 	VkPipelineDynamicStateCreateInfo dynamicState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
 				.dynamicStateCount = 2,
@@ -342,6 +343,9 @@ void _setupPipelines(VkvgDevice dev)
 	pipelineCreateInfo.stageCount = 2;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_OVER));
 
+	inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_TF_OVER));
+
 	blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
 
@@ -434,6 +438,7 @@ bool _init_function_pointers (VkvgDevice dev) {
 	CmdSetScissor           = GetInstProcAddress(dev->instance, vkCmdSetScissor);
 	CmdPushConstants        = GetInstProcAddress(dev->instance, vkCmdPushConstants);
 	CmdPushDescriptorSet    = (PFN_vkCmdPushDescriptorSetKHR)vkGetInstanceProcAddr(dev->instance, "vkCmdDescriptorSet");
+//	CmdSetPrimitiveTopology = (PFN_vkCmdSetPrimitiveTopologyEXT)vkGetInstanceProcAddr(dev->instance, "vkCmdSetPrimitiveTopologyEXT");
 	return true;
 }
 

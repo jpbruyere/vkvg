@@ -91,24 +91,24 @@ int main(int argc, char *argv[]) {
 	//vkvg_log_level = VKVG_LOG_ERR|VKVG_LOG_DEBUG|VKVG_LOG_INFO|VKVG_LOG_INFO_PATH|VKVG_LOG_DBG_ARRAYS|VKVG_LOG_FULL;
 
 	PERFORM_TEST (rectangles_fill, argc, argv);
-	PERFORM_TEST (rectangles_stroke, argc, argv);
-	PERFORM_TEST (rectangles_fill_stroke, argc, argv);
+	//PERFORM_TEST (rectangles_stroke, argc, argv);
+	//PERFORM_TEST (rectangles_fill_stroke, argc, argv);
 
 	PERFORM_TEST (rounded_rects_fill, argc, argv);
-	PERFORM_TEST (rounded_rects_stroke, argc, argv);
-	PERFORM_TEST (rounded_rects_fill_stroke, argc, argv);
+	//PERFORM_TEST (rounded_rects_stroke, argc, argv);
+	//PERFORM_TEST (rounded_rects_fill_stroke, argc, argv);
 
 	PERFORM_TEST (circles_fill, argc, argv);
-	PERFORM_TEST (circles_stroke, argc, argv);
-	PERFORM_TEST (circles_fill_stroke, argc, argv);
+	//PERFORM_TEST (circles_stroke, argc, argv);
+	//PERFORM_TEST (circles_fill_stroke, argc, argv);
 
 	PERFORM_TEST (stars_fill, argc, argv);
-	PERFORM_TEST (stars_stroke, argc, argv);
-	PERFORM_TEST (stars_fill_stroke, argc, argv);
+	//PERFORM_TEST (stars_stroke, argc, argv);
+	//PERFORM_TEST (stars_fill_stroke, argc, argv);
 
 	PERFORM_TEST (random_fill, argc, argv);
-	PERFORM_TEST (random_stroke, argc, argv);
-	PERFORM_TEST (random_fill_stroke, argc, argv);
+	//PERFORM_TEST (random_stroke, argc, argv);
+	//PERFORM_TEST (random_fill_stroke, argc, argv);
 
 	return 0;
 }
