@@ -274,6 +274,26 @@ typedef struct _vkvg_device_t*  VkvgDevice;
  */
 typedef struct _vkvg_pattern_t* VkvgPattern;
 
+#if VKVG_DBG_STATS
+/**
+ * @brief vkvg memory and vulkan statistiques.
+ * 
+ * @ingroup device
+ */
+typedef struct {
+	uint32_t	sizePoints;     /**< maximum point array size					*/
+	uint32_t	sizePathes;     /**< maximum path array size					*/
+	uint32_t	sizeVertices;   /**< maximum size of host vertice cache			*/
+	uint32_t	sizeIndices;    /**< maximum size of host index cache			*/
+	uint32_t	sizeVBO;        /**< maximum size of vulkan vertex buffer		*/
+	uint32_t	sizeIBO;        /**< maximum size of vulkan index buffer		*/
+} vkvg_debug_stats_t;
+
+vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev);
+vkvg_debug_stats_t vkvg_device_reset_stats (VkvgDevice dev);
+#endif
+
+
 /**
  * @defgroup matrix Matrices
  * @brief Generic matrix operations

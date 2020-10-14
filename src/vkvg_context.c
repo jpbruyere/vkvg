@@ -201,6 +201,23 @@ void vkvg_destroy (VkvgContext ctx)
 
 	VkDevice dev = ctx->pSurf->dev->vkDev;
 
+#if VKVG_DBG_STATS
+	vkvg_debug_stats_t* dbgstats = &ctx->pSurf->dev->debug_stats;
+	if (dbgstats->sizePoints < ctx->sizePoints)
+		dbgstats->sizePoints = ctx->sizePoints;
+	if (dbgstats->sizePathes < ctx->sizePathes)
+		dbgstats->sizePathes = ctx->sizePathes;
+	if (dbgstats->sizeVertices < ctx->sizeVertices)
+		dbgstats->sizeVertices = ctx->sizeVertices;
+	if (dbgstats->sizeIndices < ctx->sizeIndices)
+		dbgstats->sizeIndices = ctx->sizeIndices;
+	if (dbgstats->sizeVBO < ctx->sizeVBO)
+		dbgstats->sizeVBO = ctx->sizeVBO;
+	if (dbgstats->sizeIBO < ctx->sizeIBO)
+		dbgstats->sizeIBO = ctx->sizeIBO;
+
+#endif
+
 	vkDestroyFence      (dev, ctx->flushFence,NULL);
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);

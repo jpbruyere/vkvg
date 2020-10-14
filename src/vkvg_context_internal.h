@@ -33,11 +33,20 @@
 #define VKVG_IBO_SIZE				(VKVG_VBO_SIZE * 6)
 #define VKVG_PATHES_SIZE			16
 #define VKVG_ARRAY_THRESHOLD		8
-#define VKVG_IBO_INDEX_TYPE         uint16_t
-#if VKVG_IBO_INDEX_TYPE == uint16_t
-	#define VKVG_IBO_MAX UINT16_MAX
+
+#define VKVG_IBO_16					0
+#define VKVG_IBO_32					1
+
+#define VKVG_CUR_IBO_TYPE			VKVG_IBO_16//change this only
+
+#if VKVG_CUR_IBO_TYPE == VKVG_IBO_16
+	#define VKVG_IBO_MAX			UINT16_MAX
+	#define VKVG_IBO_INDEX_TYPE		uint16_t
+	#define VKVG_VK_INDEX_TYPE		VK_INDEX_TYPE_UINT16
 #else
-	#define VKVG_IBO_MAX UINT32_MAX
+	#define VKVG_IBO_MAX			UINT32_MAX
+	#define VKVG_IBO_INDEX_TYPE		uint32_t
+	#define VKVG_VK_INDEX_TYPE		VK_INDEX_TYPE_UINT32
 #endif
 
 

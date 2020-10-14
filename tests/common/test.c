@@ -247,19 +247,42 @@ void _print_results (const char *testName, int argc, char* argv[], uint32_t i, d
 	avg_frames_per_second = (avg_frames_per_second<9999) ? avg_frames_per_second:9999;
 
 	if (!quiet && (test_index == 0 || test_index == single_test)) {
-		printf ("__________________________________________________________________________________________________________\n");		
+#if VKVG_DBG_STATS
+		printf ("_____________________________________________________________________________________________________________________________\n");
+		printf ("| N° | Test File Name  |       Sub Test            | Iter | Size |  Pts  |Pathes| Vx cache | Ix cache |   VBO    |   IBO    |\n");
+		printf ("|----|-----------------|---------------------------|------|------|-------|------|----------|----------|----------|----------|\n");
+#else
+		printf ("__________________________________________________________________________________________________________\n");
 		printf ("| N° | Test File Name  |       Sub Test            | Iter | Size |   FPS   | Average | Median  | Sigma   |\n");
 		printf ("|----|-----------------|---------------------------|------|------|---------|---------|---------|---------|\n");
+#endif
 	}
-	printf ("| %2d | %-15s | %-25s | ", test_index, whoami + 5, testName);
-	if (no_test_size)
-		printf ("%4d | %4d | %7.2f | %6.5f | %6.5f | %6.5f |\n",
-			i, 1, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
-	else
-		printf ("%4d | %4d | %7.2f | %6.5f | %6.5f | %6.5f |\n",
-			i, test_size, avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
 	
+	printf ("| %2d | %-15s | %-25s | %4d | ", test_index, whoami + 5, testName, i);
+	if (no_test_size)
+		printf ("%4d | ", 1);
+	else
+		printf ("%4d | ", test_size);
+
+#if VKVG_DBG_STATS
+	vkvg_debug_stats_t dbgStats = vkvg_device_get_stats (device);	
+	printf ("%5d | %4d | %8d | %8d | %8d | %8d |\n",
+			dbgStats.sizePoints, dbgStats.sizePathes, dbgStats.sizeVertices,
+			dbgStats.sizeIndices, dbgStats.sizeVBO, dbgStats.sizeIBO);
+#else	
+	printf ("%7.2f | %6.5f | %6.5f | %6.5f |\n",
+		avg_frames_per_second, avg_run_time, med_run_time, standard_dev);
+#endif	
 }
+
+#if VKVG_DBG_STATS
+void _print_debug_stats () {
+
+	vkvg_debug_stats_t dbgStats = vkvg_device_get_stats (device);
+	printf ("| %8d | %8d | %8d | %8d | %8d | %8d |\n", dbgStats.sizePoints, dbgStats.sizePathes, dbgStats.sizeVertices,
+			dbgStats.sizeIndices, dbgStats.sizeVBO, dbgStats.sizeIBO);
+}
+#endif
 
 void perform_test_offscreen (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
 	//init random gen
@@ -501,7 +524,7 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 #else
 	vkvg_surface_destroy    (surf);
 #endif
-
+	
 	vkvg_device_destroy     (device);
 
 	vkengine_destroy (e);
@@ -517,7 +540,7 @@ vkvg_line_join_t	line_join	= VKVG_LINE_JOIN_MITER;
 float		dashes[]	= {20.0f, 10.0f};
 uint32_t	dashes_count= 0;
 float		dash_offset	= 0;
-float		line_width	= 1.f;
+float		line_width	= 10.f;
 
 VkvgContext _initCtx() {
 	VkvgContext ctx = vkvg_create(surf);

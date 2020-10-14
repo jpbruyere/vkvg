@@ -43,6 +43,10 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 	dev->vkDev  = vkdev;
 	dev->phy    = phy;
 
+#if VKVG_DBG_STATS
+	dev->debug_stats = (vkvg_debug_stats_t) {0};
+#endif
+
 	VkFormat format = FB_COLOR_FORMAT;
 	VkImageTiling tiling;
 	if (!_get_best_image_tiling (dev, format, &tiling)) {
@@ -187,3 +191,12 @@ void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy) {
 	*hdpy = dev->hdpi;
 	*vdpy = dev->vdpi;
 }
+
+#if VKVG_DBG_STATS
+vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev) {
+	return dev->debug_stats;
+}
+vkvg_debug_stats_t vkvg_device_reset_stats (VkvgDevice dev) {
+	dev->debug_stats = (vkvg_debug_stats_t) {0};
+}
+#endif
