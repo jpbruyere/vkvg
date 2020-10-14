@@ -78,6 +78,9 @@ typedef struct _vkvg_device_t{
 	VkPipeline				pipelineWired;
 	VkPipeline				pipelineLineList;
 #endif
+#if VKVG_DBG_STATS
+	vkvg_debug_stats_t		debug_stats;			/**< debug statistics on memory usage and vulkan ressources */
+#endif
 	VkPipelineCache			pipelineCache;          /**< speed up startup by caching configured pipelines on disk */
 	VkPipelineLayout		pipelineLayout;         /**< layout common to all pipelines */
 	VkDescriptorSetLayout	dslFont;                /**< font cache descriptors layout */

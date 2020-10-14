@@ -534,11 +534,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 
 	VkDeviceSize offsets[1] = { 0 };
 	CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
-#if VKVG_IBO_INDEX_TYPE == uint16_t
-	CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT16);
-#else
-	CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
-#endif
+	CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VKVG_VK_INDEX_TYPE);
 
 	_update_push_constants  (ctx);
 
