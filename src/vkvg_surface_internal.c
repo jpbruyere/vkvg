@@ -105,7 +105,7 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 }
 
 void _create_surface_main_image (VkvgSurface surf){
-	surf->img = vkh_image_create((VkhDevice)surf->dev,surf->format,surf->width,surf->height,surf->tiling,VMA_MEMORY_USAGE_GPU_ONLY,
+	surf->img = vkh_image_create((VkhDevice)surf->dev,surf->format,surf->width,surf->height,surf->dev->supportedTiling,VMA_MEMORY_USAGE_GPU_ONLY,
 									 VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	vkh_image_create_descriptor(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
@@ -127,7 +127,7 @@ void _create_surface_secondary_images (VkvgSurface surf) {
 		vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->imgMS), "SURF MS color SAMPLER");
 #endif
 	}
-	surf->stencil = vkh_image_ms_create((VkhDevice)surf->dev,FB_STENCIL_FORMAT,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,                                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+	surf->stencil = vkh_image_ms_create((VkhDevice)surf->dev,surf->dev->stencilFormat,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,                                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 	vkh_image_create_descriptor(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST,
 								VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
@@ -173,12 +173,9 @@ void _create_surface_images (VkvgSurface surf) {
 	vkh_image_set_name(surf->stencil, "surfStencil");
 #endif
 }
-VkvgSurface _create_surface (VkvgDevice dev, VkFormat format) {
-	VkImageTiling tiling;
-	if (!_get_best_image_tiling (dev, format, &tiling)) {
-		dev->status = VKVG_STATUS_INVALID_FORMAT;
+VkvgSurface _create_surface (VkvgDevice dev, VkFormat format) {	
+	if (dev->status != VKVG_STATUS_SUCCESS)
 		return NULL;
-	}
 
 	VkvgSurface surf = (vkvg_surface*)calloc(1,sizeof(vkvg_surface));
 	if (!surf) {
@@ -188,7 +185,6 @@ VkvgSurface _create_surface (VkvgDevice dev, VkFormat format) {
 
 	surf->dev = dev;
 	surf->format = format;
-	surf->tiling = tiling;
 
 	dev->status = VKVG_STATUS_SUCCESS;
 	return surf;

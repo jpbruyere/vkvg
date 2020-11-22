@@ -951,7 +951,7 @@ void vkvg_save (VkvgContext ctx){
 			return;
 		}
 		ctx->savedStencils = savedStencilsPtr;
-		VkhImage savStencil = vkh_image_ms_create ((VkhDevice)dev,FB_STENCIL_FORMAT, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
+		VkhImage savStencil = vkh_image_ms_create ((VkhDevice)dev, dev->stencilFormat, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
 								VMA_MEMORY_USAGE_GPU_ONLY, VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		ctx->savedStencils[curSaveStencil-1] = savStencil;
 

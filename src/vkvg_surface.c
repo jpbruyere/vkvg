@@ -194,6 +194,7 @@ void vkvg_surface_destroy(VkvgSurface surf)
 	surf->references--;
 	if (surf->references > 0)
 		return;
+
 	vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
 
 	if (!surf->img->imported)

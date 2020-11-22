@@ -31,7 +31,6 @@ typedef struct _vkvg_surface_t {
 	uint32_t	width;
 	uint32_t	height;
 	VkFormat    format;
-	VkImageTiling tiling;           /**< optimal is prefered if supported */
 	VkFramebuffer fb;
 	VkhImage	img;
 	VkhImage	imgMS;

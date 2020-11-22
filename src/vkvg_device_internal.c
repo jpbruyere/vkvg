@@ -75,7 +75,7 @@ VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadO
 					.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 					.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 	VkAttachmentDescription attDS = {
-					.format = FB_STENCIL_FORMAT,
+					.format = dev->stencilFormat,
 					.samples = dev->samples,
 					.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 					.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -138,7 +138,7 @@ VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAt
 					.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 					.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 	VkAttachmentDescription attDS = {
-					.format = FB_STENCIL_FORMAT,
+					.format = dev->stencilFormat,
 					.samples = dev->samples,
 					.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 					.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -452,18 +452,40 @@ void _create_empty_texture (VkvgDevice dev, VkFormat format, VkImageTiling tilin
 	vkh_cmd_end (dev->cmd);
 	_submit_cmd (dev, &dev->cmd, dev->fence);
 }
-bool _get_best_image_tiling (VkvgDevice dev, VkFormat format, VkImageTiling* pTiling) {
-	VkFormatProperties phyImgProps = {0};
+
+void _check_best_image_tiling (VkvgDevice dev, VkFormat format) {
+	VkFlags stencilFormats[] = { VK_FORMAT_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT };
+	VkFormatProperties phyStencilProps = { 0 }, phyImgProps = { 0 };
+
+	dev->stencilFormat = VK_FORMAT_UNDEFINED;
+	dev->supportedTiling = 0xff;
+	
 	vkGetPhysicalDeviceFormatProperties(dev->phy, format, &phyImgProps);
-	if (phyImgProps.optimalTilingFeatures & (VKVG_SURFACE_IMGS_REQUIREMENTS))
-		*pTiling = VK_IMAGE_TILING_OPTIMAL;
-	else if (phyImgProps.linearTilingFeatures & (VKVG_SURFACE_IMGS_REQUIREMENTS))
-		*pTiling = VK_IMAGE_TILING_LINEAR;
-	else {
-		dev->status = VKVG_STATUS_INVALID_FORMAT;
-		return false;
+	
+	if (phyImgProps.optimalTilingFeatures & (VKVG_SURFACE_IMGS_REQUIREMENTS)) {
+		for (int i = 0; i < 4; i++)
+		{
+			vkGetPhysicalDeviceFormatProperties(dev->phy, stencilFormats[i], &phyStencilProps);
+			if (phyStencilProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+				dev->stencilFormat = stencilFormats[i];
+				dev->supportedTiling = VK_IMAGE_TILING_OPTIMAL;
+				return;
+			}
+		}
 	}
-	return true;
+	if (phyImgProps.linearTilingFeatures & (VKVG_SURFACE_IMGS_REQUIREMENTS)) {
+		for (int i = 0; i < 4; i++)
+		{
+			vkGetPhysicalDeviceFormatProperties(dev->phy, stencilFormats[i], &phyStencilProps);
+			if (phyStencilProps.linearTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+				dev->stencilFormat = stencilFormats[i];
+				dev->supportedTiling = VK_IMAGE_TILING_LINEAR;
+				return;
+			}
+		}
+	}
+	dev->status = VKVG_STATUS_INVALID_FORMAT;
+	LOG(VKVG_LOG_ERR, "vkvg create device failed: image format not supported: %d\n", format);
 }
 
 void _dump_image_format_properties (VkvgDevice dev, VkFormat format) {
