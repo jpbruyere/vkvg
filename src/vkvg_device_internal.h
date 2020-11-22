@@ -56,6 +56,9 @@ typedef struct _vkvg_device_t{
 	VmaAllocator            allocator;              /**< Vulkan Memory allocator */
 	VkInstance              instance;               /**< Vulkan instance */
 
+	VkImageTiling			supportedTiling;		/**< Supported image tiling for surface, 0xFF=no support */
+	VkFormat				stencilFormat;			/**< Supported vulkan image format for stencil */
+
 	VkhQueue                gQueue;                 /**< Vulkan Queue with Graphic flag */
 	MUTEX                   gQMutex;                /**< queue submission has to be externally syncronized */
 	VkRenderPass			renderPass;             /**< Vulkan render pass, common for all surfaces */
@@ -101,7 +104,7 @@ typedef struct _vkvg_device_t{
 
 bool _init_function_pointers	(VkvgDevice dev);
 void _create_empty_texture      (VkvgDevice dev, VkFormat format, VkImageTiling tiling);
-bool _get_best_image_tiling		(VkvgDevice dev, VkFormat format, VkImageTiling* pTiling);
+void _get_best_image_tiling		(VkvgDevice dev, VkFormat format, VkImageTiling* pTiling);
 void _create_pipeline_cache     (VkvgDevice dev);
 VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
 VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);

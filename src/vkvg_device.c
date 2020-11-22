@@ -33,7 +33,7 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 {
 	LOG(VKVG_LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
 
-	VkvgDevice dev = (vkvg_device*)malloc(sizeof(vkvg_device));
+	VkvgDevice dev = (vkvg_device*)calloc(1,sizeof(vkvg_device));
 
 	dev->instance = inst;
 	dev->hdpi   = 96;
@@ -45,15 +45,13 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 
 #if VKVG_DBG_STATS
 	dev->debug_stats = (vkvg_debug_stats_t) {0};
-#endif
+#endif	
 
 	VkFormat format = FB_COLOR_FORMAT;
-	VkImageTiling tiling;
-	if (!_get_best_image_tiling (dev, format, &tiling)) {
-		dev->status = VKVG_STATUS_INVALID_FORMAT;
-		LOG(VKVG_LOG_ERR, "vkvg create device failed: image format not supported: %d\n", format);
-		return dev;
-	}
+
+	_check_best_image_tiling(dev, format);
+	if (dev->status != VKVG_STATUS_SUCCESS)		
+		return dev;	
 
 	if (!_init_function_pointers (dev)){
 		dev->status = VKVG_STATUS_NULL_POINTER;
@@ -94,7 +92,7 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 	_createDescriptorSetLayout  (dev);
 	_setupPipelines             (dev);
 
-	_create_empty_texture       (dev, format, tiling);
+	_create_empty_texture       (dev, format, dev->supportedTiling);
 
 	dev->references = 1;
 
