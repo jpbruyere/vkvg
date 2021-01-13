@@ -56,7 +56,7 @@ void _flush_all_contexes (VkvgDevice dev){
 		ctx = ctx->pPrev;
 	}
 }
-
+//TODO:save/reload cache in user temp directory
 void _create_pipeline_cache(VkvgDevice dev){
 
 	VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO};
@@ -282,7 +282,7 @@ void _setupPipelines(VkvgDevice dev)
 											.pCode = (uint32_t*)vkvg_main_vert_spv,
 											.codeSize = vkvg_main_vert_spv_len };
 	VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modVert));
-#ifdef VKVG_LCD_FONT_FILTER
+#if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
 	createInfo.pCode = (uint32_t*)vkvg_main_lcd_frag_spv;
 	createInfo.codeSize = vkvg_main_lcd_frag_spv_len;
 #else

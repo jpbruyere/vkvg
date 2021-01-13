@@ -50,8 +50,8 @@
 
 #define PATH_CLOSED_BIT     0x80000000              /* most significant bit of path elmts is closed/open path state */
 #define PATH_HAS_CURVES_BIT 0x40000000              /* 2rd most significant bit of path elmts is curved status
-													 * for main path, this indicate that curve datas are present
-													 * for segments, this indicate that the segment is curved or not */
+                                                     * for main path, this indicate that curve datas are present.
+                                                     * For segments, this indicate that the segment is curved or not */
 #define PATH_ELT_MASK       0x3FFFFFFF              /* Bit mask for fetching path element value */
 
 #define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))

@@ -42,7 +42,7 @@ void _init_fonts_cache (VkvgDevice dev){
 	FT_CHECK_RESULT(FT_Init_FreeType(&cache->library));
 
 
-#ifdef VKVG_LCD_FONT_FILTER
+#if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
 	FT_CHECK_RESULT(FT_Library_SetLcdFilter (cache->library, FT_LCD_FILTER_LIGHT));
 	cache->texFormat = FB_COLOR_FORMAT;
 	cache->texPixelSize = 4;
@@ -261,7 +261,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 //create a new char entry and put glyph in stagging buffer, ready for upload.
 _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
 
-#ifdef VKVG_LCD_FONT_FILTER
+#if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
 	FT_CHECK_RESULT(FT_Load_Glyph(f->face, gindex, FT_LOAD_TARGET_NORMAL));
 	FT_CHECK_RESULT(FT_Render_Glyph(f->face->glyph, FT_RENDER_MODE_LCD));
 #else
@@ -273,7 +273,7 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
 	uint8_t*        data    = dev->fontCache->hostBuff;
 	uint32_t        bmpWidth= bmp.width;   //real width in pixel of char bitmap
 
-#ifdef VKVG_LCD_FONT_FILTER
+#if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
 	bmpWidth /= 3;
 #endif
 
@@ -286,7 +286,7 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
 	int penX = dev->fontCache->stagingX;
 	for(uint32_t y=0; y<bmp.rows; y++) {
 		for(uint32_t x=0; x<bmpWidth; x++) {
-#ifdef VKVG_LCD_FONT_FILTER
+#if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
 			unsigned char r = bmp.buffer[y * bmp.pitch + x * 3];
 			unsigned char g = bmp.buffer[y * bmp.pitch + x * 3 + 1];
 			unsigned char b = bmp.buffer[y * bmp.pitch + x * 3 + 2];

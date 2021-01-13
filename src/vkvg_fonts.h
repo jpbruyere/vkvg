@@ -28,7 +28,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#ifdef VKVG_LCD_FONT_FILTER
+#if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
 #include <freetype/ftlcdfil.h>
 #endif
 
