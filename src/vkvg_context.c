@@ -31,6 +31,7 @@ static vec2 debugLinePoints[1000];
 static uint32_t dlpCount = 0;
 #endif
 
+//todo:this could be used to define a default background
 static VkClearValue clearValues[3] = {
 	{ {{0}} },
 	{ {{1.0f, 0}} },
