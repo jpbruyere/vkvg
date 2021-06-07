@@ -105,6 +105,7 @@ typedef struct _vkvg_device_t{
 bool _init_function_pointers	(VkvgDevice dev);
 void _create_empty_texture      (VkvgDevice dev, VkFormat format, VkImageTiling tiling);
 void _get_best_image_tiling		(VkvgDevice dev, VkFormat format, VkImageTiling* pTiling);
+void _check_best_image_tiling	(VkvgDevice dev, VkFormat format);
 void _create_pipeline_cache     (VkvgDevice dev);
 VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
 VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
