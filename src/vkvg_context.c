@@ -850,7 +850,9 @@ void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op){
 		_bind_draw_pipeline (ctx);
 }
 void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr){
+#ifndef __APPLE__
 	ctx->curFillRule = fr;
+#endif
 }
 vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx){
 	return ctx->curFillRule;

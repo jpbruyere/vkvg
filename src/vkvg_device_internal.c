@@ -328,8 +328,9 @@ void _setupPipelines(VkvgDevice dev)
 	pipelineCreateInfo.pDynamicState = &dynamicState;
 	pipelineCreateInfo.layout = dev->pipelineLayout;
 
-
+#ifndef __APPLE__
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelinePolyFill));
+#endif
 
 	inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	dsStateCreateInfo.back = dsStateCreateInfo.front = clipingOpState;
