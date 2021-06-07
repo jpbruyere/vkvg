@@ -28,6 +28,8 @@
 #include "process.h"
 #define MUTEX HANDLE
 #elif __APPLE__
+#include "pthread.h"
+#define MUTEX pthread_mutex_t
 #elif __unix__
 #include "pthread.h"
 #define MUTEX pthread_mutex_t

@@ -29,6 +29,8 @@
 	#include "windows.h"
 	#define isnanf _isnanf
 #elif __APPLE__
+	#include <math.h>
+	#define isnanf isnan
 #elif __unix__
 	#include <unistd.h>
 	#include <sys/types.h>
