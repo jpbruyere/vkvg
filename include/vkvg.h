@@ -1237,22 +1237,29 @@ void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
 vkvg_public
 void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
 /**
- * @brief
+ * @brief Reset the current transformation matrix of the provided context to the identity matrix.
  *
  * @param ctx a valid vkvg #context
  */
 vkvg_public
 void vkvg_identity_matrix (VkvgContext ctx);
 
-//text
 /**
- * @brief
+ * @brief Try find font with the specified name using the FontConfig library.
  *
  * @param ctx a valid vkvg #context
- * @param name
+ * @param name A name to be recognized by the FontConfig library
  */
 vkvg_public
 void vkvg_select_font_face (VkvgContext ctx, const char* name);
+/**
+ * @brief Select a new font by providing its file path.
+ *
+ * @param ctx a valid vkvg #context
+ * @param name A valid font file path.
+ */
+vkvg_public
+void vkvg_select_font_path (VkvgContext ctx, const char* path);
 /**
  * @brief
  *

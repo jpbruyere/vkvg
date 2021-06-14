@@ -220,7 +220,7 @@ void _dump_glyphs (FT_Face face){
 //flush font stagging buffer to cache texture array
 void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 	_font_cache_t* cache = dev->fontCache;
-	if (cache->stagingX == 0)
+	if (cache->stagingX == 0)//no char in stagging buff to flush
 		return;
 
 	LOG(VKVG_LOG_INFO, "_flush_chars_to_tex pen(%d, %d)\n",f->curLine.penX, f->curLine.penY);
@@ -321,6 +321,12 @@ void _set_font_size (VkvgContext ctx, uint32_t size){
 	ctx->selectedFont.charSize = size << 6;
 	ctx->currentFont = NULL;
 }
+
+void _select_font_path (VkvgContext ctx, const char* fontFile){
+	memset (ctx->selectedFont.fontFile, 0, FONT_FILE_NAME_MAX_SIZE);
+	memcpy (ctx->selectedFont.fontFile, fontFile, FONT_FILE_NAME_MAX_SIZE);
+	ctx->currentFont =  NULL;
+}
 //select current font for context
 void _select_font_face (VkvgContext ctx, const char* name){
 	_font_cache_t*  cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;
@@ -336,16 +342,13 @@ void _select_font_face (VkvgContext ctx, const char* name){
 	FcPattern* font = FcFontMatch(cache->config, pat, &result);
 	if (font)
 	{
-		if (FcPatternGetString(font, FC_FILE, 0, (FcChar8 **)&fontFile) == FcResultMatch){
-			memset (ctx->selectedFont.fontFile, 0, FONT_FILE_NAME_MAX_SIZE);
-			memcpy (ctx->selectedFont.fontFile, fontFile, FONT_FILE_NAME_MAX_SIZE);
-		}
+		if (FcPatternGetString(font, FC_FILE, 0, (FcChar8 **)&fontFile) == FcResultMatch)
+			_select_font_path (ctx, fontFile);
 	}
 	FcPatternDestroy(pat);
 	FcPatternDestroy(font);
-
-	ctx->currentFont =  NULL;
 }
+
 //try to find font in cache with same font file path and font size as selected in context.
 _vkvg_font_t* _tryFindVkvgFont (VkvgContext ctx){
 	_font_cache_t*  cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;

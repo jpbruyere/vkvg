@@ -896,6 +896,9 @@ VkvgPattern vkvg_get_source (VkvgContext ctx){
 void vkvg_select_font_face (VkvgContext ctx, const char* name){
 	_select_font_face (ctx, name);
 }
+void vkvg_select_font_path (VkvgContext ctx, const char* path){
+	_select_font_path (ctx, path);
+}
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
 	_set_font_size (ctx,size);
 }

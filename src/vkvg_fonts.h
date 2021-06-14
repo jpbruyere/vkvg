@@ -116,6 +116,7 @@ void _init_fonts_cache      (VkvgDevice dev);
 void _destroy_font_cache	(VkvgDevice dev);
 //Select current font for context from font name, create new font entry in cache if required
 void _select_font_face		(VkvgContext ctx, const char* name);
+void _select_font_path		(VkvgContext ctx, const char* fontFile);
 //Set current font size for context
 void _set_font_size         (VkvgContext ctx, uint32_t size);
 //Draw text

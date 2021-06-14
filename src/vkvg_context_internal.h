@@ -127,7 +127,7 @@ typedef struct _vkvg_context_t {
 
 	//vk buffers, holds data until flush
 	vkvg_buff	indices;        //index buffer with persistent map memory
-	uint32_t	sizeIBO;        //size of vk ibo size
+	uint32_t	sizeIBO;        //size of vk ibo
 	uint32_t	sizeIndices;    //reserved size
 	uint32_t	indCount;       //current indice count
 

@@ -13,7 +13,7 @@ for:
         VCPKG_DEFAULT_TRIPLET: x64-windows
         VULKAN_SDK: C:/VulkanSDK/1.1.130.0
         APPVEYOR_SAVE_CACHE_ON_ERROR: true
-        APPVEYOR_CACHE_SKIP_RESTORE: true
+        APPVEYOR_CACHE_SKIP_RESTORE: false
     cache:
         - VulkanSDK.exe
         - c:\tools\vcpkg\installed\

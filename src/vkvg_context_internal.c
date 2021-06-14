@@ -1056,7 +1056,7 @@ void _poly_fill (VkvgContext ctx){
 			_end_render_pass(ctx);
 			_flush_vertices_caches(ctx);
 			vkh_cmd_end(ctx->cmd);
-			_wait_and_submit_cmd(ctx);
+			_wait_and_submit_cmd(ctx);//the extra wait here is not useful.
 			if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO){
 				//_resize_vertex_cache(ctx, ctx->vertCount + ctx->pointCount);
 				_resize_vbo(ctx, ctx->vertCount + ctx->pointCount);

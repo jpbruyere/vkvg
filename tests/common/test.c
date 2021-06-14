@@ -48,6 +48,7 @@ int		single_test = -1;	//if not < 0, contains the index of the single test to ru
 
 static bool paused = false;
 static VkSampleCountFlags samples = VK_SAMPLE_COUNT_1_BIT;
+static VkPhysicalDeviceType preferedPhysicalDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 static vk_engine_t* e;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -136,9 +137,9 @@ double standard_deviation (const double data[], int n, double mean)
 
 void init_test (uint32_t width, uint32_t height){
 	if (test_vsync)
-		e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
+		e = vkengine_create (preferedPhysicalDeviceType, VK_PRESENT_MODE_FIFO_KHR, width, height);
 	else
-		e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
+		e = vkengine_create (preferedPhysicalDeviceType, VK_PRESENT_MODE_MAILBOX_KHR, width, height);
 
 	VkhPresenter r = e->renderer;
 	vkengine_set_key_callback (e, key_callback);
@@ -416,9 +417,9 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 	}
 
 	if (test_vsync)
-		e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
+		e = vkengine_create (preferedPhysicalDeviceType, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
 	else
-		e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_MAILBOX_KHR, test_width, test_height);
+		e = vkengine_create (preferedPhysicalDeviceType, VK_PRESENT_MODE_MAILBOX_KHR, test_width, test_height);
 
 	VkhPresenter r = e->renderer;
 	vkengine_set_key_callback (e, key_callback);
