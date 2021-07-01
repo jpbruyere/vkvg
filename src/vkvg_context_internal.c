@@ -491,9 +491,11 @@ void _bind_draw_pipeline (VkvgContext ctx) {
 	case VKVG_OPERATOR_OVER:
 		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
 		break;
-	case VKVG_OPERATOR_CLEAR:
-		vkvg_set_source_rgba(ctx,0,0,0,0);
+	case VKVG_OPERATOR_CLEAR:		
 		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_CLEAR);
+		break;
+	case VKVG_OPERATOR_DIFFERENCE:
+		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_SUB);
 		break;
 	default:
 		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);

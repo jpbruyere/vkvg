@@ -35,8 +35,8 @@ extern PFN_vkCmdBindDescriptorSets     CmdBindDescriptorSets;
 extern PFN_vkCmdBindIndexBuffer        CmdBindIndexBuffer;
 extern PFN_vkCmdBindVertexBuffers      CmdBindVertexBuffers;
 
-extern PFN_vkCmdDrawIndexed    CmdDrawIndexed;
-extern PFN_vkCmdDraw           CmdDraw;
+extern PFN_vkCmdDrawIndexed            CmdDrawIndexed;
+extern PFN_vkCmdDraw                   CmdDraw;
 
 extern PFN_vkCmdSetStencilCompareMask  CmdSetStencilCompareMask;
 extern PFN_vkCmdSetStencilReference    CmdSetStencilReference;
@@ -47,7 +47,6 @@ extern PFN_vkCmdSetViewport            CmdSetViewport;
 extern PFN_vkCmdSetScissor             CmdSetScissor;
 
 extern PFN_vkCmdPushConstants          CmdPushConstants;
-extern PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
 
 typedef struct _vkvg_device_t{
 	VkDevice				vkDev;                  /**< Vulkan Logical Device */

@@ -22,6 +22,8 @@
 
 #define GetInstProcAddress(inst, func)(PFN_##func)vkGetInstanceProcAddr(inst, #func);
 
+#define GetVkProcAddress(dev, inst, func)(vkGetDeviceProcAddr(dev,#func)==NULL)?(PFN_##func)vkGetInstanceProcAddr(inst, #func):(PFN_##func)vkGetDeviceProcAddr(dev, #func)
+
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
 #include "shaders.h"
@@ -33,8 +35,8 @@ PFN_vkCmdBindDescriptorSets     CmdBindDescriptorSets;
 PFN_vkCmdBindIndexBuffer        CmdBindIndexBuffer;
 PFN_vkCmdBindVertexBuffers      CmdBindVertexBuffers;
 
-PFN_vkCmdDrawIndexed    CmdDrawIndexed;
-PFN_vkCmdDraw           CmdDraw;
+PFN_vkCmdDrawIndexed            CmdDrawIndexed;
+PFN_vkCmdDraw                   CmdDraw;
 
 PFN_vkCmdSetStencilCompareMask  CmdSetStencilCompareMask;
 PFN_vkCmdSetStencilReference    CmdSetStencilReference;
@@ -45,7 +47,6 @@ PFN_vkCmdSetViewport            CmdSetViewport;
 PFN_vkCmdSetScissor             CmdSetScissor;
 
 PFN_vkCmdPushConstants          CmdPushConstants;
-PFN_vkCmdPushDescriptorSetKHR   CmdPushDescriptorSet;
 
 void _flush_all_contexes (VkvgDevice dev){
 	VkvgContext ctx = dev->lastCtx;
@@ -346,9 +347,11 @@ void _setupPipelines(VkvgDevice dev)
 	blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
 
-	blendAttachmentState.blendEnable = VK_FALSE;
+	//blendAttachmentState.blendEnable = VK_FALSE;
 	//rasterizationState.polygonMode = VK_POLYGON_MODE_POINT;
 	//shaderStages[1].pName = "op_CLEAR";
+	blendAttachmentState.srcAlphaBlendFactor = blendAttachmentState.dstAlphaBlendFactor =
+	blendAttachmentState.srcColorBlendFactor = blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
 
 
@@ -420,21 +423,20 @@ bool _init_function_pointers (VkvgDevice dev) {
 	}
 	vkh_device_init_debug_utils ((VkhDevice)dev);
 #endif
-	CmdBindPipeline         = GetInstProcAddress(dev->instance, vkCmdBindPipeline);
-	CmdBindDescriptorSets   = GetInstProcAddress(dev->instance, vkCmdBindDescriptorSets);
-	CmdBindIndexBuffer      = GetInstProcAddress(dev->instance, vkCmdBindIndexBuffer);
-	CmdBindVertexBuffers    = GetInstProcAddress(dev->instance, vkCmdBindVertexBuffers);
-	CmdDrawIndexed          = GetInstProcAddress(dev->instance, vkCmdDrawIndexed);
-	CmdDraw                 = GetInstProcAddress(dev->instance, vkCmdDraw);
-	CmdSetStencilCompareMask= GetInstProcAddress(dev->instance, vkCmdSetStencilCompareMask);
-	CmdSetStencilReference  = GetInstProcAddress(dev->instance, vkCmdSetStencilReference);
-	CmdSetStencilWriteMask  = GetInstProcAddress(dev->instance, vkCmdSetStencilWriteMask);
-	CmdBeginRenderPass      = GetInstProcAddress(dev->instance, vkCmdBeginRenderPass);
-	CmdEndRenderPass        = GetInstProcAddress(dev->instance, vkCmdEndRenderPass);
-	CmdSetViewport          = GetInstProcAddress(dev->instance, vkCmdSetViewport);
-	CmdSetScissor           = GetInstProcAddress(dev->instance, vkCmdSetScissor);
-	CmdPushConstants        = GetInstProcAddress(dev->instance, vkCmdPushConstants);
-	CmdPushDescriptorSet    = (PFN_vkCmdPushDescriptorSetKHR)vkGetInstanceProcAddr(dev->instance, "vkCmdDescriptorSet");
+	CmdBindPipeline         = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdBindPipeline);
+	CmdBindDescriptorSets   = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdBindDescriptorSets);
+	CmdBindIndexBuffer      = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdBindIndexBuffer);
+	CmdBindVertexBuffers    = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdBindVertexBuffers);
+	CmdDrawIndexed          = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdDrawIndexed);
+	CmdDraw                 = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdDraw);
+	CmdSetStencilCompareMask= GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetStencilCompareMask);
+	CmdSetStencilReference  = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetStencilReference);
+	CmdSetStencilWriteMask  = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetStencilWriteMask);
+	CmdBeginRenderPass      = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdBeginRenderPass);
+	CmdEndRenderPass        = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdEndRenderPass);
+	CmdSetViewport          = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetViewport);
+	CmdSetScissor           = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetScissor);
+	CmdPushConstants        = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdPushConstants);	
 	return true;
 }
 
