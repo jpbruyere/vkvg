@@ -67,6 +67,8 @@ void vkengine_dump_Infos (VkEngine e){
 	}
 }
 
+
+
 void vkengine_dump_available_layers () {
 	uint32_t layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, NULL);
@@ -110,7 +112,8 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
 	enabledExtsCount++;
 #endif
-
+	/*enabledExts[enabledExtsCount] = "VK_KHR_get_physical_device_properties2";
+	enabledExtsCount++;*/
 
 	e->app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
@@ -119,7 +122,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
 								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
 								   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
-								   //cma| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
 								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
 								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
 								   , NULL);
@@ -144,8 +147,10 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 			break;
 	}
 
-	e->memory_properties = pi->memProps;
-	e->gpu_props = pi->properties;
+	if (pi) {
+		e->memory_properties = pi->memProps;
+		e->gpu_props = pi->properties;
+	}
 
 	uint32_t qCount = 0;
 	float qPriorities[] = {0.0};
@@ -158,8 +163,15 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	if (vkh_phyinfo_create_transfer_queues		(pi, 1, qPriorities, &pQueueInfos[qCount]))
 		qCount++;*/
 
-	char const * dex [] = {"VK_KHR_swapchain"};
-	enabledExtsCount = 1;
+	enabledExtsCount=0;
+
+	enabledExts[enabledExtsCount] = "VK_KHR_swapchain";
+	enabledExtsCount++;
+
+	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_EXT_blend_operation_advanced", NULL)) {
+		enabledExts[enabledExtsCount] = "VK_EXT_blend_operation_advanced";
+		enabledExtsCount++;
+	}
 
 	VkPhysicalDeviceFeatures enabledFeatures = {
 		.fillModeNonSolid = true,
@@ -170,7 +182,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 									   .queueCreateInfoCount = qCount,
 									   .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
 									   .enabledExtensionCount = enabledExtsCount,
-									   .ppEnabledExtensionNames = dex,
+									   .ppEnabledExtensionNames = enabledExts,
 									   .pEnabledFeatures = &enabledFeatures};
 
 	e->dev = vkh_device_create(e->app, pi, &device_info);

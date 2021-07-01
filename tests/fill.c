@@ -15,7 +15,7 @@ void test(){
 	vkvg_rel_line_to(ctx,-190,-50);
 	vkvg_close_path(ctx);
 
-	vkvg_stroke(ctx);
+	vkvg_fill(ctx);
 
 	vkvg_destroy(ctx);
 }

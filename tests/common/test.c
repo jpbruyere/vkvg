@@ -169,12 +169,19 @@ void clear_test () {
 #ifdef VKVG_TEST_DIRECT_DRAW
 VkvgSurface* surfaces;
 #endif
-_print_usage_and_exit () {
+void _print_usage_and_exit () {
 	printf("\nUsage: test [options]\n\n");
 	printf("\t-i iterations:\tSpecify the repeat count for the test.\n");
 	printf("\t-s size:\tWhen applicable, specify the size of the test.\n");
-	printf("\t-w width:\tOutput surface width.\n");
-	printf("\t-h height:\tOutput surface height.\n");
+	printf("\t-x width:\tOutput surface width.\n");
+	printf("\t-y height:\tOutput surface height.\n");
+	printf("\t-S num samples:\tOutput surface filter, default is 1.\n");
+	printf("\t-G gpu_type:\tSet prefered GPU type:\n");
+	printf("\t\t\t\t- 0: Other\n");
+	printf("\t\t\t\t- 1: Integrated\n");
+	printf("\t\t\t\t- 2: Discrete\n");
+	printf("\t\t\t\t- 3: Virtual\n");
+	printf("\t\t\t\t- 4: Cpu\n");
 	printf("\t-n index:\tRun only a single test, zero based index.\n");
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests\n");
 	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs\n");
@@ -184,10 +191,46 @@ _print_usage_and_exit () {
 	exit(-1);
 }
 void _parse_args (int argc, char* argv[]) {
+	bool printTestDetailsAndExit = false;
 	for (int i = 1; i < argc; i++) {
-		if (strcmp (argv[i], "-help\0") == 0)
+		if (strcmp (argv[i], "-h\0") == 0)
 			_print_usage_and_exit ();
-		if (strcmp (argv[i], "-p\0") == 0) {
+		if (strcmp (argv[i], "-p\0") == 0)
+			printTestDetailsAndExit = true;
+		else if (strcmp (argv[i], "-vsync\0") == 0)
+			test_vsync = true;		
+		else if (strcmp (argv[i], "-q\0") == 0)
+			quiet = true;
+		else if (strcmp (argv[i], "-i\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			iterations = atoi (argv[i]);
+		}else if (strcmp (argv[i], "-x\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			test_width = atoi (argv[i]);
+		}else if (strcmp (argv[i], "-y\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			test_height = atoi (argv[i]);
+		}else if (strcmp (argv[i], "-n\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			single_test = atoi (argv[i]);
+		}else if (strcmp (argv[i], "-s\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			test_size = atoi (argv[i]);			
+		}else if (strcmp (argv[i], "-S\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			samples = (VkSampleCountFlags)atoi (argv[i]);
+		}else if (strcmp (argv[i], "-g\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			preferedPhysicalDeviceType = (VkPhysicalDeviceType)atoi (argv[i]);
+		}
+		if (printTestDetailsAndExit) {
 			#ifdef DEBUG
 			printf("Debug build\n");
 			#else
@@ -201,38 +244,32 @@ void _parse_args (int argc, char* argv[]) {
 			#endif
 			printf("surf dims:\t%d x %d\n", test_width, test_height);
 			printf("Samples:\t%d\n", samples);
+			printf("Gpu type:\t");
+			switch (preferedPhysicalDeviceType) {
+			case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+				printf("Other\n");
+				break;
+			case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+				printf("Integrated\n");
+				break;
+			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+				printf("Discrete\n");
+				break;
+			case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+				printf("Virtual\n");
+				break;
+			case VK_PHYSICAL_DEVICE_TYPE_CPU:
+				printf("CPU\n");
+				break;
+			}
+
 			#ifdef VKVG_TEST_OFFSCREEN
 			printf("Offscreen:\ttrue\n");
 			#else
-			printf("Offscreen:\ttrue\n");
+			printf("Offscreen:\tfalse\n");
 			#endif
 			printf("\n");
-			exit(0);	
-		}
-		if (strcmp (argv[i], "-vsync\0") == 0)
-			test_vsync = true;		
-		else if (strcmp (argv[i], "-q\0") == 0)
-			quiet = true;
-		else if (strcmp (argv[i], "-i\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			iterations = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-w\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			test_width = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-h\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			test_height = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-n\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			single_test = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-s\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			test_size = atoi (argv[i]);			
+			exit(0);
 		}
 	}
 }
@@ -334,7 +371,7 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 	VkhPhyInfo pi = 0;
 	for (uint32_t i=0; i<phyCount; i++){
 		pi = phys[i];
-		if (pi->properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		if (pi->properties.deviceType == preferedPhysicalDeviceType)
 			break;
 	}
 
