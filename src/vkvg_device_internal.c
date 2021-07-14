@@ -347,11 +347,12 @@ void _setupPipelines(VkvgDevice dev)
 	blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
 
-	//blendAttachmentState.blendEnable = VK_FALSE;
-	//rasterizationState.polygonMode = VK_POLYGON_MODE_POINT;
 	//shaderStages[1].pName = "op_CLEAR";
-	blendAttachmentState.srcAlphaBlendFactor = blendAttachmentState.dstAlphaBlendFactor =
-	blendAttachmentState.srcColorBlendFactor = blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	blendAttachmentState.colorBlendOp = blendAttachmentState.alphaBlendOp = VK_BLEND_OP_SUBTRACT;
+	blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
 
 

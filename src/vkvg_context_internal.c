@@ -491,7 +491,7 @@ void _bind_draw_pipeline (VkvgContext ctx) {
 	case VKVG_OPERATOR_OVER:
 		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
 		break;
-	case VKVG_OPERATOR_CLEAR:		
+	case VKVG_OPERATOR_CLEAR:
 		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_CLEAR);
 		break;
 	case VKVG_OPERATOR_DIFFERENCE:
@@ -583,7 +583,6 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 		//flush ctx in two steps to add the src transitioning in the cmd buff
 		if (ctx->cmdStarted){//transition of img without appropriate dependencies in subpass must be done outside renderpass.
-			//_flush_undrawn_vertices (ctx);//ensure all vertices are flushed
 			_end_render_pass (ctx);
 			_flush_vertices_caches (ctx);
 		}else {
