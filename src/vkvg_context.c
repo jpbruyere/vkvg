@@ -160,7 +160,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 }
 void vkvg_flush (VkvgContext ctx){
 	_flush_cmd_buff(ctx);
-	//_wait_flush_fence(ctx);
+	_wait_flush_fence(ctx);
 /*
 #ifdef DEBUG
 
@@ -456,6 +456,11 @@ void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 
 void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	_finish_path (ctx);
+
+	if (w <= 0 || h <= 0) {
+		ctx->status = VKVG_STATUS_INVALID_RECT;
+		return;
+	}
 
 	_add_point (ctx, x, y);
 	_add_point (ctx, x + w, y);
@@ -842,7 +847,13 @@ void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join){
 	ctx->lineJoin = join;
 }
 void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op){
+	if (op == ctx->curOperator)
+		return;
+
+	_emit_draw_cmd_undrawn_vertices(ctx);//draw call with different ops cant be combined, so emit draw cmd for previous vertices.
+
 	ctx->curOperator = op;
+
 	if (ctx->cmdStarted)
 		_bind_draw_pipeline (ctx);
 }

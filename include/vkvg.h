@@ -112,6 +112,7 @@ typedef enum {
 	VKVG_STATUS_INVALID_VISUAL,			/*!< */
 	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
 	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
+	VKVG_STATUS_INVALID_RECT,			/*!< invalid value for a dash setting */
 }vkvg_status_t;
 
 typedef enum {
@@ -926,7 +927,7 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
  * @param h The height in pixel of the rectangle to draw.
  */
 vkvg_public
-void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h);
+void vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h);
 /**
  * @brief
  *
