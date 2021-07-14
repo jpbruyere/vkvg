@@ -426,7 +426,7 @@ void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
 	FT_BBox* bbox = &ctx->currentFont->face->bbox;
 	FT_Size_Metrics* metrics = &ctx->currentFont->face->size->metrics;
 	extents->ascent = (float)(FT_MulFix(ctx->currentFont->face->ascender, metrics->y_scale) >> 6);//metrics->ascender >> 6;
-	extents->descent= (float)(FT_MulFix(ctx->currentFont->face->descender, metrics->y_scale) >> 6);//metrics->descender >> 6;
+	extents->descent= -(float)(FT_MulFix(ctx->currentFont->face->descender, metrics->y_scale) >> 6);//metrics->descender >> 6;
 	extents->height = (float)(FT_MulFix(ctx->currentFont->face->height, metrics->y_scale) >> 6);//metrics->height >> 6;
 	extents->max_x_advance = (float)(bbox->xMax >> 6);
 	extents->max_y_advance = (float)(bbox->yMax >> 6);
