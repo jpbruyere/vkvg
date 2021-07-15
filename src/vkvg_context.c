@@ -779,35 +779,16 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		}else
 			_draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], vec2_line_norm(ctx->points[curPathPointIdx-1], ctx->points[curPathPointIdx]), false);
 
-		/*if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX) {
-			_check_vao_size (ctx);
-			_ensure_renderpass_is_started(ctx);
-
-			//split triangle emission into batch adressable by VKVG_IBO_MAX (index type)
-			VKVG_IBO_INDEX_TYPE indexMax = VKVG_IBO_MAX - VKVG_IBO_MAX % 3;
-			uint32_t vxTot = ctx->vertCount;
-			uint32_t idxTot = ctx->indCount;
-			ctx->indCount = ctx->curIndStart;
-
-
-			while (ctx->curVertOffset < vxTot) {
-				while (ctx->indexCache[ctx->indCount] < indexMax)
-					ctx->indCount++;
-				ctx->indCount -= ctx->indCount % 3;
-				uint32_t minInd = 
-				uint32_t newVertOffset = ctx->indexCache[ctx->indCount-1];
-
-				_emit_draw (ctx);				
-			}
-
-		}		*/	
-
 		curPathPointIdx = firstPathPointIdx + pathPointCount;
 
 		if (ptrSegment > 0)
 			ptrPath += ptrSegment;
 		else
 			ptrPath++;
+
+		//limit batch size here to 1/3 of the ibo index type ability
+		if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3)
+			_emit_draw_cmd_undrawn_vertices(ctx);
 	}
 
 }
