@@ -477,12 +477,12 @@ void _flush_cmd_buff (VkvgContext ctx){
 	_emit_draw_cmd_undrawn_vertices (ctx);
 	if (!ctx->cmdStarted)
 		return;
-	_end_render_pass        (ctx);
+	_end_render_pass		(ctx);
 	LOG(VKVG_LOG_INFO, "FLUSH CTX: ctx = %p; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
 	_flush_vertices_caches  (ctx);
-	vkh_cmd_end             (ctx->cmd);
+	vkh_cmd_end				(ctx->cmd);
 
-	_wait_and_submit_cmd(ctx);
+	_wait_and_submit_cmd	(ctx);
 }
 
 //bind correct draw pipeline depending on current OPERATOR
@@ -502,13 +502,16 @@ void _bind_draw_pipeline (VkvgContext ctx) {
 		break;
 	}
 }
-const float LAB_COLOR_RP[4] = {0,0,1,1};
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+const float DBG_LAB_COLOR_RP[4]		= {0,0,1,1};
+const float DBG_LAB_COLOR_FSQ[4]	= {1,0,0,1};
+#endif
 
 void _start_cmd_for_render_pass (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "START RENDER PASS: ctx = %p\n", ctx);
 	vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	if (ctx->pSurf->img->layout == VK_IMAGE_LAYOUT_UNDEFINED){
+	if (ctx->pSurf->img->layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL){
 		VkhImage imgMs = ctx->pSurf->imgMS;
 		if (imgMs != NULL)
 			vkh_image_set_layout(ctx->cmd, imgMs, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -521,7 +524,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 	}
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	vkh_cmd_label_start(ctx->cmd, "ctx render pass", LAB_COLOR_RP);
+	vkh_cmd_label_start(ctx->cmd, "ctx render pass", DBG_LAB_COLOR_RP);
 #endif
 
 	CmdBeginRenderPass (ctx->cmd, &ctx->renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -560,14 +563,15 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 	VkvgPattern lastPat = ctx->pattern;
 	ctx->pattern = pat;
 
+	uint32_t newPatternType = VKVG_PATTERN_TYPE_SOLID;
+
 	if (pat == NULL) {//solid color
 		if (lastPat == NULL)//solid
 			return;//solid to solid transition, no extra action requested
-		ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SOLID;
 	}else
-		ctx->pushConsts.patternType = pat->type;
+		newPatternType = pat->type;
 
-	switch (ctx->pushConsts.patternType)  {
+	switch (newPatternType)  {
 	case VKVG_PATTERN_TYPE_SOLID:
 		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
 			//unbind current source surface by replacing it with empty texture
@@ -631,9 +635,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		_update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
 
 		vec4 srcRect = {{0},{0},{(float)surf->width},{(float)surf->height}};
-		ctx->pushConsts.source = srcRect;
-
-		//_init_cmd_buff                  (ctx);
+		ctx->pushConsts.source = srcRect;		
 		break;
 	}
 	case VKVG_PATTERN_TYPE_LINEAR:
@@ -656,6 +658,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		memcpy(ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
 		break;
 	}
+	ctx->pushConsts.patternType = newPatternType;
 	ctx->pushCstDirty = true;
 	if (lastPat)
 		vkvg_pattern_destroy    (lastPat);
@@ -1190,6 +1193,10 @@ void _fill_ec (VkvgContext ctx){
 static const uint32_t one = 1;
 static const uint32_t zero = 0;
 void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_cmd_label_start(ctx->cmd, "_draw_full_screen_quad", DBG_LAB_COLOR_FSQ);
+#endif
+
 	if (ctx->xMin < 0 || ctx->yMin < 0)
 		useScissor = false;
 	if (useScissor && ctx->xMin < FLT_MAX) {
@@ -1209,4 +1216,8 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 					   VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&zero);
 	if (useScissor && ctx->xMin < FLT_MAX)
 		CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_cmd_label_end (ctx->cmd);
+#endif
 }
