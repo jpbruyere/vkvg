@@ -89,8 +89,8 @@ typedef struct _vkvg_context_save_t{
 
 	FT_F26Dot6			selectedCharSize; /* Font size*/
 	char*				selectedFontName;
-	_vkvg_font_t        selectedFont;     //hold current face and size before cache addition
-	_vkvg_font_t*       currentFont;      //font ready for lookup
+	_vkvg_font_identity_t        selectedFont;     //hold current face and size before cache addition
+	_vkvg_font_identity_t*       currentFont;      //font ready for lookup
 	vkvg_direction_t    textDirection;
 	push_constants      pushConsts;
 	VkvgPattern         pattern;
@@ -169,7 +169,8 @@ typedef struct _vkvg_context_t {
 	FT_F26Dot6			selectedCharSize; /* Font size*/
 	char*				selectedFontName;
 	//_vkvg_font_t        selectedFont;     //hold current face and size before cache addition
-	_vkvg_font_t*       currentFont;      //font pointing to cached fonts ready for lookup
+	_vkvg_font_identity_t*       currentFont;		//font pointing to cached fonts identity
+	_vkvg_font_t*	currentFontSize;	//font structure by size ready for lookup
 	vkvg_direction_t    textDirection;
 
 	push_constants      pushConsts;

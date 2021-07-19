@@ -973,8 +973,12 @@ void vkvg_select_font_path (VkvgContext ctx, const char* path){
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
 	if (ctx->status)
 		return;
-	ctx->selectedCharSize = size << 6;
+	FT_F26Dot6 newSize = size << 6;
+	if (ctx->selectedCharSize == newSize)
+		return;
+	ctx->selectedCharSize = newSize;
 	ctx->currentFont = NULL;
+	ctx->currentFontSize = NULL;
 }
 
 void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
