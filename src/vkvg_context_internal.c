@@ -186,6 +186,7 @@ bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
 	return ctx->pathes[ptrPath] & PATH_CLOSED_BIT;
 }
 void _resetMinMax (VkvgContext ctx) {
+	LOG(VKVG_LOG_INFO_PTS, "_resetMinMax (scissor)\n");
 	ctx->xMin = ctx->yMin = FLT_MAX;
 	ctx->xMax = ctx->yMax = FLT_MIN;
 }
@@ -202,6 +203,8 @@ void _add_point (VkvgContext ctx, float x, float y){
 	//bounds are computed here to scissor the painting operation
 	//that speed up fill drastically.
 	vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x, &y);
+
+	LOG(VKVG_LOG_INFO_PTS, "_add_point transformed: (%f, %f)\n", x, y);
 
 	if (x < ctx->xMin)
 		ctx->xMin = x;
@@ -629,10 +632,10 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			filter = VK_FILTER_NEAREST;
 			break;
 		}
-		vkh_image_create_sampler(ctx->source, filter, filter,
-								 VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
+		vkh_image_create_sampler (ctx->source, filter, filter,
+									VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
 
-		_update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
+		_update_descriptor_set (ctx, ctx->source, ctx->dsSrc);
 
 		vec4 srcRect = {{0},{0},{(float)surf->width},{(float)surf->height}};
 		ctx->pushConsts.source = srcRect;		
@@ -649,19 +652,19 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 		//transform control point with current ctx matrix
 		vkvg_gradient_t grad = {0};
-		memcpy(&grad, pat->data, sizeof(vkvg_gradient_t));
+		memcpy (&grad, pat->data, sizeof(vkvg_gradient_t));
 
-		vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
-		vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
+		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
+		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
 		//to do, scale radial radiuses in cp[2]
 
-		memcpy(ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
+		memcpy (ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
 		break;
 	}
 	ctx->pushConsts.patternType = newPatternType;
 	ctx->pushCstDirty = true;
 	if (lastPat)
-		vkvg_pattern_destroy    (lastPat);
+		vkvg_pattern_destroy (lastPat);
 }
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
 	_wait_flush_fence(ctx);//descriptorSet update invalidate cmd buffs
@@ -868,7 +871,7 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
 void _free_ctx_save (vkvg_context_save_t* sav){
 	if (sav->dashCount > 0)
 		free (sav->dashes);
-	free(sav->selectedFont.fontFile);
+	free(sav->selectedFontName);
 	free (sav);
 }
 

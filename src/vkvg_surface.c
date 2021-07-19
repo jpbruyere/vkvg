@@ -81,7 +81,6 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 	surf->height = height;
 
 	_create_surface_images (surf);
-	_clear_surface(surf, VK_IMAGE_ASPECT_COLOR_BIT);
 
 	uint32_t imgSize = width * height * 4;
 	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
@@ -99,7 +98,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 	vkvg_buff buff = {0};
 	vkvg_buffer_create(dev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, imgSize, &buff);
 
-	memcpy (buff.allocInfo.pMappedData, img, imgSize);
+	memcpy (buff.allocInfo.pMappedData, img, imgSize);	
 
 	VkCommandBuffer cmd = dev->cmd;
 
@@ -146,6 +145,8 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
 	vkvg_buffer_destroy (&buff);
 	vkh_image_destroy   (stagImg);
+
+	surf->new = false;
 
 	//create tmp context with rendering pipeline to create the multisample img
 	VkvgContext ctx = vkvg_create (surf);

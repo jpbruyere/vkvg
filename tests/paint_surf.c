@@ -1,7 +1,7 @@
 #include "test.h"
 
 vkvg_fill_rule_t fillrule = VKVG_FILL_RULE_NON_ZERO;
-float lineWidth = 20.f;
+float lineWidth = 10.f;
 
 VkvgSurface createSurf (uint32_t width, uint32_t height) {
 	VkvgSurface s = vkvg_surface_create(device, width, height);
@@ -9,10 +9,13 @@ VkvgSurface createSurf (uint32_t width, uint32_t height) {
 	vkvg_set_fill_rule(ctx,fillrule);
 	vkvg_set_line_width(ctx,lineWidth);
 	float hlw = lineWidth/2.f;
-	vkvg_rectangle(ctx,hlw,hlw,(float)width-hlw,(float)height-hlw);
+	/*
 	vkvg_set_source_rgba(ctx,0,1,0,0.5);
-	vkvg_fill_preserve(ctx);
+	vkvg_fill_preserve(ctx);*/
+	vkvg_set_source_rgba(ctx,1,0,0,0.5);
+	vkvg_paint(ctx);
 	vkvg_set_source_rgba(ctx,0,0,1,0.5);
+	vkvg_rectangle(ctx,hlw,hlw,(float)width-lineWidth,(float)height-lineWidth);
 	vkvg_stroke(ctx);
 	vkvg_destroy(ctx);
 	return s;
@@ -30,6 +33,8 @@ void paint(){
 void paint_with_offset(){
 	VkvgSurface src = createSurf(256,256);
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_source_rgba(ctx,0,1,0,0.5);
+	vkvg_paint(ctx);
 	vkvg_set_fill_rule(ctx,fillrule);
 	vkvg_set_source_surface(ctx, src, 100, 100);
 	vkvg_paint(ctx);

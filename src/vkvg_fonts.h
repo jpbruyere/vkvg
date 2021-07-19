@@ -40,6 +40,7 @@
 #define FONT_PAGE_SIZE          1024
 #define FONT_CACHE_INIT_LAYERS  1
 #define FONT_FILE_NAME_MAX_SIZE 1024
+#define FONT_NAME_MAX_SIZE		128
 
 #include "vkvg_internal.h"
 #include "vkvg.h"
@@ -72,6 +73,8 @@ typedef struct {
 }_tex_ref_t;
 // Loaded font structure, holds informations for glyphes upload in cache and the lookup table of characters.
 typedef struct {
+	char**		fcNames;			/* Resolved Input names to this font by fontConfig */
+	uint32_t	fcNamesCount;		/* Count of resolved names by fontConfig */
 	char*       fontFile;           /* Font file full path*/
 	FT_F26Dot6  charSize;           /* Font size*/
 	hb_font_t*  hb_font;            /* HarfBuzz font instance*/
@@ -98,7 +101,7 @@ typedef struct {
 	VkFence			uploadFence;    /* Signaled when upload is finished */
 
 	_vkvg_font_t*	fonts;          /* Loaded fonts structure array */
-	uint8_t			fontsCount;     /* Loaded fonts array count*/
+	int32_t			fontsCount;     /* Loaded fonts array count*/
 }_font_cache_t;
 // Precompute everything necessary to draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
@@ -117,8 +120,6 @@ void _destroy_font_cache	(VkvgDevice dev);
 //Select current font for context from font name, create new font entry in cache if required
 void _select_font_face		(VkvgContext ctx, const char* name);
 void _select_font_path		(VkvgContext ctx, const char* fontFile);
-//Set current font size for context
-void _set_font_size         (VkvgContext ctx, uint32_t size);
 //Draw text
 void _show_text				(VkvgContext ctx, const char* text);
 //Get text dimmensions

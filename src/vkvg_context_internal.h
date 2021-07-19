@@ -87,6 +87,8 @@ typedef struct _vkvg_context_save_t{
 	vkvg_line_join_t    lineJoint;
 	vkvg_fill_rule_t    curFillRule;
 
+	FT_F26Dot6			selectedCharSize; /* Font size*/
+	char*				selectedFontName;
 	_vkvg_font_t        selectedFont;     //hold current face and size before cache addition
 	_vkvg_font_t*       currentFont;      //font ready for lookup
 	vkvg_direction_t    textDirection;
@@ -164,7 +166,9 @@ typedef struct _vkvg_context_t {
 	vkvg_line_join_t    lineJoin;
 	vkvg_fill_rule_t    curFillRule;
 
-	_vkvg_font_t        selectedFont;     //hold current face and size before cache addition
+	FT_F26Dot6			selectedCharSize; /* Font size*/
+	char*				selectedFontName;
+	//_vkvg_font_t        selectedFont;     //hold current face and size before cache addition
 	_vkvg_font_t*       currentFont;      //font pointing to cached fonts ready for lookup
 	vkvg_direction_t    textDirection;
 

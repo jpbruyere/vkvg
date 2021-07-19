@@ -4,7 +4,7 @@ static const char* txt = "The quick brown fox jumps over the lazy dog";
 
 void print(VkvgContext ctx, float penY, uint32_t size) {
 	vkvg_set_font_size(ctx,size);
-	vkvg_move_to(ctx, 10,penY);
+	vkvg_move_to(ctx, 10, penY);
 	vkvg_show_text (ctx,txt);
 }
 
@@ -23,7 +23,7 @@ void test2() {
 
 	float penY = 10.f;
 
-	for (uint32_t size=4;size<39;size++) {
+	for (uint32_t size = 4; size < 39; size++) {
 		print(ctx,(float)penY,size);
 		penY+=size;
 	}
@@ -82,19 +82,19 @@ void test(){
 	//vkvg_select_font_face(ctx, "/usr/local/share/fonts/DroidSansMono.ttf");
 	//vkvg_select_font_face(ctx, "/usr/share/fonts/truetype/unifont/unifont.ttf");
 
-	vkvg_set_font_size(ctx,12);
-	vkvg_select_font_face(ctx, "droid");
+	vkvg_set_font_size (ctx, 12);
+	vkvg_select_font_face (ctx, "droid");
 	vkvg_font_extents_t fe;
-	vkvg_font_extents (ctx,&fe);
-	vkvg_move_to(ctx, penX,penY);
-	vkvg_set_source_rgba(ctx,fg.r,fg.g,fg.b,fg.a);
+	vkvg_font_extents (ctx, &fe);
+	vkvg_move_to (ctx, penX,penY);
+	vkvg_set_source_rgba (ctx, fg.r, fg.g, fg.b, fg.a);
 	vkvg_text_extents_t te;
-	vkvg_text_extents(ctx,"abcdefghijk",&te);
-	vkvg_show_text (ctx,"abcdefghijk");
-	penX+= te.x_advance;
+	vkvg_text_extents (ctx, "abcdefghijk", &te);
+	vkvg_show_text (ctx, "abcdefghijk");
+	penX += te.x_advance;
 	vkvg_move_to(ctx, penX,penY);
 	vkvg_show_text (ctx,"*abcdefghijk2");
-	penY+=2.f*size;
+	penY += 2.f*size;
 
 	vkvg_select_font_face(ctx, "times");
 	vkvg_move_to(ctx, penX,penY);
@@ -152,15 +152,30 @@ void test(){
 
 	vkvg_destroy(ctx);
 }
-void random_text () {
+void single_font_and_size () {
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
+	for (uint32_t i=0; i<test_size; i++) {
+		randomize_color(ctx);
+		float x = rndf() * test_width;
+		float y = rndf() * test_height;
+		vkvg_select_font_face(ctx,"mono");
+		vkvg_set_font_size(ctx, 20);
+		vkvg_move_to(ctx,x,y);
+		vkvg_show_text(ctx,"This is a test string!");
+	}
+	vkvg_destroy(ctx);
+}
+
+void random_size () {
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_clear(ctx);
 	vkvg_select_font_face(ctx,"mono");
 	for (uint32_t i=0; i<test_size; i++) {
 		randomize_color(ctx);
-		float x = (float)rand()/RAND_MAX * test_width;
-		float y = (float)rand()/RAND_MAX * test_height;
-		uint32_t c = (uint32_t)((float)rand()/RAND_MAX * 80)+1;
+		float x = rndf() * test_width;
+		float y = rndf() * test_height;
+		uint32_t c = (uint32_t)(rndf() * 120)+1;
 
 		vkvg_set_font_size(ctx, c);
 		vkvg_move_to(ctx,x,y);
@@ -168,10 +183,34 @@ void random_text () {
 	}
 	vkvg_destroy(ctx);
 }
+const char* const fonts[] =
+	{ "mono", "droid", "times", "arial", "times:bold"};
+
+void random_font_and_size () {
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
+
+	for (uint32_t i=0; i<test_size; i++) {
+		randomize_color(ctx);
+		float x = rndf() * test_width;
+		float y = rndf() * test_height;
+		uint32_t c = (uint32_t)(rndf() * 80)+1;
+		uint32_t f = (uint32_t)(rndf() * 4);
+
+		vkvg_set_font_size(ctx, c);
+		vkvg_select_font_face(ctx, fonts[f]);
+		vkvg_move_to(ctx,x,y);
+		vkvg_show_text(ctx,"This is a test string!");
+	}
+	vkvg_destroy(ctx);
+}
+
 int main(int argc, char *argv[]) {
 	no_test_size = true;
 	//vkvg_log_level = VKVG_LOG_INFO;
-	PERFORM_TEST (random_text, argc, argv);
+	PERFORM_TEST (single_font_and_size, argc, argv);
+	PERFORM_TEST (random_size, argc, argv);
+	PERFORM_TEST (random_font_and_size, argc, argv);
 	PERFORM_TEST (test, argc, argv);
 	PERFORM_TEST (test1, argc, argv);
 	PERFORM_TEST (test2, argc, argv);

@@ -77,7 +77,8 @@ extern "C" {
 #define VKVG_LOG_ERR		0x10
 #define VKVG_LOG_DEBUG		0x20
 #define VKVG_LOG_INFO		0x40
-#define VKVG_LOG_INFO_PATH	0x41
+#define VKVG_LOG_INFO_PTS	0x41
+#define VKVG_LOG_INFO_PATH	0x42
 #define VKVG_LOG_DBG_ARRAYS	0x80
 #define VKVG_LOG_FULL		0xff
 
@@ -112,7 +113,7 @@ typedef enum {
 	VKVG_STATUS_INVALID_VISUAL,			/*!< */
 	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
 	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
-	VKVG_STATUS_INVALID_RECT,			/*!< invalid value for a dash setting */
+	VKVG_STATUS_INVALID_RECT,			/*!< rectangle with height or width equal to 0. */
 }vkvg_status_t;
 
 typedef enum {

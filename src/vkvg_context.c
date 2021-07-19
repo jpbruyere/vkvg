@@ -29,13 +29,18 @@
 #ifdef DEBUG
 static vec2 debugLinePoints[1000];
 static uint32_t dlpCount = 0;
+#if defined (VKVG_DBG_UTILS)
+const float DBG_LAB_COLOR_SAV[4] = {1,0,1,1};
+const float DBG_LAB_COLOR_CLIP[4] = {0,1,1,1};
 #endif
+#endif
+
 
 //todo:this could be used to define a default background
 static VkClearValue clearValues[3] = {
-	{ {{0}} },
-	{ {{1.0f, 0}} },
-	{ {{0}} }
+	{ .color.float32 = {0,0,0,0} },
+	{ .depthStencil = {1.0f, 0} },
+	{ .color.float32 = {0,0,0,0} }
 };
 
 VkvgContext vkvg_create(VkvgSurface surf)
@@ -99,10 +104,11 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 	ctx->savedStencils = malloc(0);
 
-	ctx->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
+	ctx->selectedFontName = (char*)calloc(FONT_NAME_MAX_SIZE, sizeof(char));
+	ctx->selectedCharSize = 10 << 6;
 	ctx->currentFont = NULL;
 
-	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache || !ctx->savedStencils || !ctx->selectedFont.fontFile) {
+	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache || !ctx->savedStencils || !ctx->selectedFontName) {
 		dev->status = VKVG_STATUS_NO_MEMORY;
 		if (ctx->points)
 			free(ctx->points);
@@ -114,8 +120,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
 			free(ctx->indexCache);
 		if (ctx->savedStencils)
 			free(ctx->savedStencils);
-		if (ctx->selectedFont.fontFile)
-			free(ctx->selectedFont.fontFile);
+		if (ctx->selectedFontName)
+			free(ctx->selectedFontName);
 		return NULL;
 	}
 
@@ -156,9 +162,14 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
 #endif
 
+	//force run of one renderpass (even empty) to perform clear load op
+	//_start_cmd_for_render_pass(ctx);
+
 	return ctx;
 }
 void vkvg_flush (VkvgContext ctx){
+	if (ctx->status)
+		return;
 	_flush_cmd_buff(ctx);
 	_wait_flush_fence(ctx);
 /*
@@ -238,7 +249,7 @@ void vkvg_destroy (VkvgContext ctx)
 	//TODO:check this for source counter
 	//vkh_image_destroy   (ctx->source);
 
-	free(ctx->selectedFont.fontFile);
+	free(ctx->selectedFontName);
 	free(ctx->pathes);
 	free(ctx->points);
 	if (ctx->dashCount > 0)
@@ -283,26 +294,39 @@ uint32_t vkvg_get_reference_count (VkvgContext ctx) {
 	return ctx->references;
 }
 void vkvg_new_sub_path (VkvgContext ctx){
+	if (ctx->status)
+		return;
 	_finish_path(ctx);
 }
 void vkvg_new_path (VkvgContext ctx){
+	if (ctx->status)
+		return;
 	_clear_path(ctx);
 }
 void vkvg_close_path (VkvgContext ctx){
+	if (ctx->status)
+		return;
+	if (ctx->pathes[ctx->pathPtr] & PATH_CLOSED_BIT) //already closed
+		return;
 	//check if at least 3 points are present
 	if (ctx->pathes[ctx->pathPtr] < 3)
 		return;
 
 	//prevent closing on the same point
 	if (vec2_equ(ctx->points[ctx->pointCount-1],
-				 ctx->points[ctx->pointCount - ctx->pathes[ctx->pathPtr]]))
+				 ctx->points[ctx->pointCount - ctx->pathes[ctx->pathPtr]])) {
+		if (ctx->pathes[ctx->pathPtr] < 4)//ensure enough points left for closing
+			return;
 		_remove_last_point(ctx);
+	}
 
 	ctx->pathes[ctx->pathPtr] |= PATH_CLOSED_BIT;
 
 	_finish_path(ctx);
 }
 void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy){
+	if (ctx->status)
+		return;
 	if (_current_path_is_empty(ctx)){
 		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
 		return;
@@ -312,6 +336,8 @@ void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy){
 }
 void vkvg_line_to (VkvgContext ctx, float x, float y)
 {
+	if (ctx->status)
+		return;
 	vec2 p = {x,y};
 	if (!_current_path_is_empty (ctx)){
 		//prevent adding the same point
@@ -321,6 +347,8 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
 	_add_point (ctx, x, y);
 }
 void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2){
+	if (ctx->status)
+		return;
 	while (a2 < a1)//positive arc must have a1<a2
 		a2 += 2.f*M_PIF;
 
@@ -366,6 +394,8 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 	_set_curve_end(ctx);
 }
 void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
+	if (ctx->status)
+		return;
 	while (a2 > a1)
 		a2 -= 2.f*M_PIF;
 	if (a1 - a2 > a1 + 2.f * M_PIF) //limit arc to 2PI
@@ -409,6 +439,8 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 }
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
+	if (ctx->status)
+		return;
 	if (_current_path_is_empty(ctx)){
 		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
 		return;
@@ -418,11 +450,15 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 }
 void vkvg_move_to (VkvgContext ctx, float x, float y)
 {
+	if (ctx->status)
+		return;
 	_finish_path(ctx);
 	_add_point (ctx, x, y);
 }
 
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+	if (ctx->status)
+		return;
 	//prevent running _recursive_bezier when all 4 curve points are equal
 	if (EQUF(x1,x2) && EQUF(x2,x3) && EQUF(y1,y2) && EQUF(y2,y3)) {
 		if (_current_path_is_empty(ctx) || (EQUF(_get_current_position(ctx).x,x1) && EQUF(_get_current_position(ctx).y,y1)))
@@ -442,6 +478,8 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
 	_set_curve_end (ctx);
 }
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+	if (ctx->status)
+		return;
 	if (_current_path_is_empty(ctx)){
 		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
 		return;
@@ -450,11 +488,15 @@ void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2,
 	vkvg_curve_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
 }
 void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
+	if (ctx->status)
+		return;
 	_vao_add_rectangle (ctx,x,y,w,h);
 	//_record_draw_cmd(ctx);
 }
 
 void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
+	if (ctx->status)
+		return;
 	_finish_path (ctx);
 
 	if (w <= 0 || h <= 0) {
@@ -473,6 +515,8 @@ static const VkClearAttachment clearStencil        = {VK_IMAGE_ASPECT_STENCIL_BI
 static const VkClearAttachment clearColorAttach    = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
 
 void vkvg_reset_clip (VkvgContext ctx){
+	if (ctx->status)
+		return;
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
 		//if command buffer is not already started and in a renderpass, we use the renderpass
@@ -485,6 +529,8 @@ void vkvg_reset_clip (VkvgContext ctx){
 	vkCmdClearAttachments(ctx->cmd, 1, &clearStencil, 1, &ctx->clearRect);
 }
 void vkvg_clear (VkvgContext ctx){
+	if (ctx->status)
+		return;
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
 		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearAll;
@@ -509,16 +555,22 @@ void vkvg_fill (VkvgContext ctx){
 	_clear_path(ctx);
 }
 void vkvg_clip_preserve (VkvgContext ctx){
-	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to clip
+	if (ctx->status)
 		return;
 
 	_emit_draw_cmd_undrawn_vertices(ctx);
 
 	_finish_path(ctx);
 
+	vkvg_close_path (ctx);
+
 	LOG(VKVG_LOG_INFO, "CLIP: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
 	_ensure_renderpass_is_started(ctx);
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_cmd_label_start(ctx->cmd, "clip", DBG_LAB_COLOR_CLIP);
+#endif
 
 	if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
 		_poly_fill (ctx);
@@ -539,12 +591,18 @@ void vkvg_clip_preserve (VkvgContext ctx){
 
 	_bind_draw_pipeline (ctx);
 	CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_cmd_label_end (ctx->cmd);
+#endif
 }
 void vkvg_fill_preserve (VkvgContext ctx){
-	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to fill
+	if (ctx->status)
 		return;
 
 	_finish_path(ctx);
+
+	vkvg_close_path (ctx);
 
 	LOG(VKVG_LOG_INFO, "FILL: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
@@ -677,6 +735,9 @@ void _draw_segment (VkvgContext ctx, float hw, bool isCurve) {
 
 void vkvg_stroke_preserve (VkvgContext ctx)
 {
+	if (ctx->status)
+		return;
+
 	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to stroke
 		return;
 	_finish_path(ctx);
@@ -793,9 +854,16 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
 }
 void vkvg_paint (VkvgContext ctx){
-	if (ctx->pathPtr || ctx->segmentPtr){//path to fill
-		vkvg_fill(ctx);
+	if (ctx->status)
 		return;
+
+	if (!_current_path_is_empty(ctx)){//maybe path to fill
+		vkvg_close_path(ctx);
+		if (ctx->pathes[ctx->pathPtr] & PATH_CLOSED_BIT) {
+			vkvg_fill(ctx);
+			return;
+		}
+		_clear_path (ctx);
 	}
 	_ensure_renderpass_is_started (ctx);
 	_draw_full_screen_quad (ctx, true);
@@ -805,16 +873,22 @@ void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
 }
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
+	if (ctx->status)
+		return;
 	ctx->curColor = CreateRgbaf(r,g,b,a);
 	_update_cur_pattern (ctx, NULL);
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
+	if (ctx->status)
+		return;
 	_update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
 	ctx->pushConsts.source.x = x;
 	ctx->pushConsts.source.y = y;
 	ctx->pushCstDirty = true;
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
+	if (ctx->status)
+		return;
 	_update_cur_pattern (ctx, pat);
 	vkvg_pattern_reference  (pat);
 }
@@ -828,6 +902,8 @@ void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join){
 	ctx->lineJoin = join;
 }
 void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op){
+	if (ctx->status)
+		return;
 	if (op == ctx->curOperator)
 		return;
 
@@ -850,6 +926,8 @@ float vkvg_get_line_width (VkvgContext ctx){
 	return ctx->lineWidth;
 }
 void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset){
+	if (ctx->status)
+		return;
 	if (ctx->dashCount > 0)
 		free (ctx->dashes);
 	ctx->dashCount = num_dashes;
@@ -883,13 +961,20 @@ VkvgPattern vkvg_get_source (VkvgContext ctx){
 }
 
 void vkvg_select_font_face (VkvgContext ctx, const char* name){
+	if (ctx->status)
+		return;
 	_select_font_face (ctx, name);
 }
 void vkvg_select_font_path (VkvgContext ctx, const char* path){
-	_select_font_path (ctx, path);
+	if (ctx->status)
+		return;
+	//_select_font_path (ctx, path);
 }
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
-	_set_font_size (ctx,size);
+	if (ctx->status)
+		return;
+	ctx->selectedCharSize = size << 6;
+	ctx->currentFont = NULL;
 }
 
 void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
@@ -897,12 +982,16 @@ void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
 }
 
 void vkvg_show_text (VkvgContext ctx, const char* text){
+	if (ctx->status)
+		return;
 	//_ensure_renderpass_is_started(ctx);
 	_show_text (ctx, text);
 	//_flush_undrawn_vertices (ctx);
 }
 
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
+	if (ctx->status)
+		return NULL;
 	VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
 	_create_text_run(ctx, text, tr);
 	return tr;
@@ -912,6 +1001,8 @@ void vkvg_text_run_destroy (VkvgText textRun) {
 	free (textRun);
 }
 void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun) {
+	if (ctx->status)
+		return;
 	_show_text_run(ctx, textRun);
 }
 void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents) {
@@ -919,9 +1010,13 @@ void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents) 
 }
 
 void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
+	if (ctx->status)
+		return;
 	_text_extents(ctx, text, extents);
 }
 void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
+	if (ctx->status)
+		return;
 	_font_extents(ctx, extents);
 }
 
@@ -953,6 +1048,10 @@ void vkvg_save (VkvgContext ctx){
 		vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		ctx->cmdStarted = true;
 
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+		vkh_cmd_label_start(ctx->cmd, "new save/restore stencil", DBG_LAB_COLOR_SAV);
+#endif
+
 		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
 							  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 							  VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
@@ -972,6 +1071,10 @@ void vkvg_save (VkvgContext ctx){
 							  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 							  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
 
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+		vkh_cmd_label_end (ctx->cmd);
+#endif
+
 		VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
 		_wait_and_submit_cmd(ctx);
 	}
@@ -979,6 +1082,10 @@ void vkvg_save (VkvgContext ctx){
 	uint8_t curSaveBit = 1 << (ctx->curSavBit % 6 + 2);
 
 	_start_cmd_for_render_pass (ctx);
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_cmd_label_start(ctx->cmd, "save rp", DBG_LAB_COLOR_SAV);
+#endif
 
 	CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 
@@ -990,6 +1097,10 @@ void vkvg_save (VkvgContext ctx){
 
 	_bind_draw_pipeline (ctx);
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_cmd_label_end (ctx->cmd);
+#endif
 
 	sav->dashOffset = ctx->dashOffset;
 	sav->dashCount  = ctx->dashCount;
@@ -1003,23 +1114,26 @@ void vkvg_save (VkvgContext ctx){
 	sav->lineWidth  = ctx->lineWidth;
 	sav->curFillRule= ctx->curFillRule;
 
-	sav->selectedFont = ctx->selectedFont;
-	sav->selectedFont.fontFile = (char*)calloc(FONT_FILE_NAME_MAX_SIZE,sizeof(char));
-	strcpy (sav->selectedFont.fontFile, ctx->selectedFont.fontFile);
+	sav->selectedCharSize = ctx->selectedCharSize;
+	sav->selectedFontName = (char*)calloc(FONT_NAME_MAX_SIZE,sizeof(char));
+	strcpy (sav->selectedFontName, ctx->selectedFontName);
 
 	sav->currentFont  = ctx->currentFont;
 	sav->textDirection= ctx->textDirection;
 	sav->pushConsts   = ctx->pushConsts;
-	sav->pattern      = ctx->pattern;
+	//sav->pattern      = ctx->pattern;//TODO:pattern sav must be imutable (copy?)
 
 	sav->pNext      = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav;
 	ctx->curSavBit++;
 
-	if (ctx->pattern)
-		vkvg_pattern_reference (ctx->pattern);
+	/*if (ctx->pattern)
+		vkvg_pattern_reference (ctx->pattern);*/
 }
 void vkvg_restore (VkvgContext ctx){
+	if (ctx->status)
+		return;
+
 	if (ctx->pSavedCtxs == NULL){
 		ctx->status = VKVG_STATUS_INVALID_RESTORE;
 		return;
@@ -1027,22 +1141,26 @@ void vkvg_restore (VkvgContext ctx){
 
 	LOG(VKVG_LOG_INFO, "RESTORE CONTEXT: ctx = %p\n", ctx);
 
+	_flush_cmd_buff (ctx);
+	_wait_flush_fence (ctx);
+
 	vkvg_context_save_t* sav = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav->pNext;
 
 	ctx->pushConsts   = sav->pushConsts;
 
-	if (sav->pattern)
-		_update_cur_pattern (ctx, sav->pattern);
-
-	_flush_cmd_buff (ctx);
-	_wait_flush_fence (ctx);
+	/*if (sav->pattern)
+		_update_cur_pattern (ctx, sav->pattern);*/
 
 	ctx->curSavBit--;
 
 	uint8_t curSaveBit = 1 << (ctx->curSavBit % 6 + 2);
 
 	_start_cmd_for_render_pass (ctx);
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_cmd_label_start(ctx->cmd, "restore rp", DBG_LAB_COLOR_SAV);
+#endif
 
 	CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 
@@ -1055,6 +1173,10 @@ void vkvg_restore (VkvgContext ctx){
 	_bind_draw_pipeline (ctx);
 	CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_cmd_label_end (ctx->cmd);
+#endif
+
 	_flush_cmd_buff (ctx);
 	_wait_flush_fence (ctx);
 
@@ -1064,6 +1186,10 @@ void vkvg_restore (VkvgContext ctx){
 
 		vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		ctx->cmdStarted = true;
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+		vkh_cmd_label_start(ctx->cmd, "additional stencil copy while restoring", DBG_LAB_COLOR_SAV);
+#endif
 
 		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
 							  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -1082,6 +1208,10 @@ void vkvg_restore (VkvgContext ctx){
 		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
 							  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 							  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+		vkh_cmd_label_end (ctx->cmd);
+#endif
 
 		VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
 		_wait_and_submit_cmd (ctx);
@@ -1104,8 +1234,8 @@ void vkvg_restore (VkvgContext ctx){
 	ctx->lineJoin   = sav->lineJoint;
 	ctx->curFillRule= sav->curFillRule;
 
-	ctx->selectedFont.charSize = sav->selectedFont.charSize;
-	strcpy (ctx->selectedFont.fontFile, sav->selectedFont.fontFile);
+	ctx->selectedCharSize = sav->selectedCharSize;
+	strcpy (ctx->selectedFontName, sav->selectedFontName);
 
 	ctx->currentFont  = sav->currentFont;
 	ctx->textDirection= sav->textDirection;
@@ -1114,21 +1244,29 @@ void vkvg_restore (VkvgContext ctx){
 }
 
 void vkvg_translate (VkvgContext ctx, float dx, float dy){
+	if (ctx->status)
+		return;
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_translate (&ctx->pushConsts.mat, dx, dy);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_scale (VkvgContext ctx, float sx, float sy){
+	if (ctx->status)
+		return;
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_scale (&ctx->pushConsts.mat, sx, sy);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_rotate (VkvgContext ctx, float radians){
+	if (ctx->status)
+		return;
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_rotate (&ctx->pushConsts.mat, radians);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix) {
+	if (ctx->status)
+		return;
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_t res;
 	vkvg_matrix_multiply (&res, &ctx->pushConsts.mat, matrix);
@@ -1136,12 +1274,16 @@ void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix) {
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_identity_matrix (VkvgContext ctx) {
+	if (ctx->status)
+		return;
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_t im = VKVG_IDENTITY_MATRIX;
 	ctx->pushConsts.mat = im;
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
 void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
+	if (ctx->status)
+		return;
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	ctx->pushConsts.mat = (*matrix);
 	_set_mat_inv_and_vkCmdPush (ctx);
