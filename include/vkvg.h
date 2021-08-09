@@ -451,7 +451,7 @@ void vkvg_matrix_multiply (vkvg_matrix_t *result, const vkvg_matrix_t *a, const 
  * @param dy Y component of a distance vector. An in/out parameter
  */
 vkvg_public
-void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, float *dy);
+void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, double* dx, double* dy);
 /**
  * @brief transform point
  *
@@ -461,7 +461,7 @@ void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, flo
  * @param y Y position. An in/out parameter
  */
 vkvg_public
-void vkvg_matrix_transform_point (const vkvg_matrix_t *matrix, float *x, float *y);
+void vkvg_matrix_transform_point (const vkvg_matrix_t *matrix, double* x, double* y);
 /**
  * @brief invert matrix
  *
@@ -825,7 +825,7 @@ void vkvg_new_sub_path (VkvgContext ctx);
  * @param y aboslute y coordinate of second point
  */
 vkvg_public
-void vkvg_line_to (VkvgContext ctx, float x, float y);
+void vkvg_line_to (VkvgContext ctx, double x, double y);
 /**
  * @brief Add a line to the current path from the current point to the coordinate relative to it.
  *
@@ -837,7 +837,7 @@ void vkvg_line_to (VkvgContext ctx, float x, float y);
  * @param dy delta y
  */
 vkvg_public
-void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy);
+void vkvg_rel_line_to (VkvgContext ctx, double dx, double dy);
 /**
  * @brief Move the context pen to the position given in argument.
  *
@@ -851,7 +851,7 @@ void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy);
  * @param y new y position of the pen
  */
 vkvg_public
-void vkvg_move_to (VkvgContext ctx, float x, float y);
+void vkvg_move_to (VkvgContext ctx, double x, double y);
 /**
  * @brief Move the context pen relative to the current point.
  *
@@ -864,7 +864,7 @@ void vkvg_move_to (VkvgContext ctx, float x, float y);
  * @param y delta in the vertical direction.
  */
 vkvg_public
-void vkvg_rel_move_to (VkvgContext ctx, float x, float y);
+void vkvg_rel_move_to (VkvgContext ctx, double x, double y);
 /**
  * @brief Adds a circular arc of the given radius to the current path.
  *
@@ -889,7 +889,7 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y);
  * @param a2 end angle in radians of the arc to draw.
  */
 vkvg_public
-void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2);
+void vkvg_arc (VkvgContext ctx, double xc, double yc, double radius, double a1, double a2);
 /**
  * @brief Add a circular arc in counter clockwise order to the current path.
  *
@@ -907,7 +907,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
  * @param a2 end angle in radians of the arc to draw.
  */
 vkvg_public
-void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2);
+void vkvg_arc_negative (VkvgContext ctx, double xc, double yc, double radius, double a1, double a2);
 /**
  * @brief Adds a cubic Bézier spline to the current path.
  *
@@ -924,7 +924,7 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
  * @param y3 The Y coordinate of the end of the curve.
  */
 vkvg_public
-void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3);
+void vkvg_curve_to (VkvgContext ctx, double x1, double y1, double x2, double y2, double x3, double y3);
 /**
  * @brief Add an axis aligned rectangle subpath to the current path.
  *
@@ -936,7 +936,7 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
  * @param h The height in pixel of the rectangle to draw.
  */
 vkvg_public
-void vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h);
+void vkvg_rectangle(VkvgContext ctx, double x, double y, double w, double h);
 /**
  * @brief
  *
@@ -947,7 +947,7 @@ void vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h);
  * @param h
  */
 vkvg_public
-void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h);
+void vkvg_fill_rectangle (VkvgContext ctx, double x, double y, double w, double h);
 /**
  * @brief
  *
@@ -1048,7 +1048,7 @@ void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b);
  * @param width new current line width for the context.
  */
 vkvg_public
-void vkvg_set_line_width (VkvgContext ctx, float width);
+void vkvg_set_line_width (VkvgContext ctx, double width);
 /**
  * @brief set line terminations
  *
@@ -1117,7 +1117,7 @@ void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr);
  * @param offset an offset into the dash pattern at which the stroke should start.
  */
 vkvg_public
-void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset);
+void vkvg_set_dash (VkvgContext ctx, const double* dashes, uint32_t num_dashes, double offset);
 /**
  * @brief get current dash settings.
  *
@@ -1130,7 +1130,7 @@ void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, f
  * @param offset[out] return value for the current dash offset
  */
 vkvg_public
-void vkvg_get_dash (VkvgContext ctx, const float *dashes, uint32_t* num_dashes, float* offset);
+void vkvg_get_dash (VkvgContext ctx, const double* dashes, uint32_t* num_dashes, double* offset);
 
 /**
  * @brief get current line width

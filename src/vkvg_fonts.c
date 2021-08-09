@@ -530,7 +530,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 	hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos (tr->hbBuf, &glyph_count);
 
 	Vertex v = {{0},ctx->curColor,{0,0,-1}};
-	vec2 pen = {0,0};
+	vec2d pen = {0,0};
 
 	if (!_current_path_is_empty(ctx))
 		pen = _get_current_position(ctx);

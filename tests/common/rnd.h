@@ -1,2 +1,2 @@
-float rndf();
-float rndf_reset();
+double rndf();
+double rndf_reset();

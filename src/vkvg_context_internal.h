@@ -76,10 +76,10 @@ typedef struct {
 typedef struct _vkvg_context_save_t{
 	struct _vkvg_context_save_t* pNext;
 
-	float       lineWidth;
+	double       lineWidth;
 	uint32_t    dashCount;      //value count in dash array, 0 if dash not set.
-	float       dashOffset;     //an offset for dash
-	float*      dashes;         //an array of alternate lengths of on and off stroke.
+	double       dashOffset;     //an offset for dash
+	double*      dashes;         //an array of alternate lengths of on and off stroke.
 
 
 	vkvg_operator_t     curOperator;
@@ -120,10 +120,10 @@ typedef struct _vkvg_context_t {
 
 	uint32_t            curColor;
 
-	float xMin;
-	float xMax;
-	float yMin;
-	float yMax;
+	double xMin;
+	double xMax;
+	double yMin;
+	double yMax;
 
 	vkvg_buff	uboGrad;        //uniform buff obj holdings gradient infos
 
@@ -145,7 +145,7 @@ typedef struct _vkvg_context_t {
 	VKVG_IBO_INDEX_TYPE* indexCache;
 
 	//pathes, exists until stroke of fill
-	vec2*		points;         //points array
+	vec2d*		points;         //points array
 	uint32_t	sizePoints;     //reserved size
 	uint32_t	pointCount;     //effective points count
 
@@ -156,10 +156,10 @@ typedef struct _vkvg_context_t {
 
 	uint32_t    segmentPtr;		//current segment count in current path having curves
 
-	float		lineWidth;
+	double		lineWidth;
 	uint32_t    dashCount;      //value count in dash array, 0 if dash not set.
-	float       dashOffset;     //an offset for dash
-	float*      dashes;         //an array of alternate lengths of on and off stroke.
+	double       dashOffset;     //an offset for dash
+	double*      dashes;         //an array of alternate lengths of on and off stroke.
 
 	vkvg_operator_t     curOperator;
 	vkvg_line_cap_t     lineCap;
@@ -186,7 +186,7 @@ typedef struct _vkvg_context_t {
 }vkvg_context;
 
 typedef struct _ear_clip_point{
-	vec2 pos;
+	vec2d pos;
 	VKVG_IBO_INDEX_TYPE idx;
 	struct _ear_clip_point* next;
 }ear_clip_point;
@@ -205,11 +205,11 @@ void _set_curve_start       (VkvgContext ctx);
 void _set_curve_end         (VkvgContext ctx);
 bool _path_has_curves       (VkvgContext ctx, uint32_t ptrPath);
 
-float _normalizeAngle       (float a);
-float _get_arc_step         (VkvgContext ctx, float radius);
+float _normalizeAngle       (double a);
+float _get_arc_step         (VkvgContext ctx, double radius);
 
-vec2 _get_current_position  (VkvgContext ctx);
-void _add_point         	(VkvgContext ctx, float x, float y);
+vec2d _get_current_position(VkvgContext ctx);
+void _add_point         	(VkvgContext ctx, double x, double y);
 
 void _resetMinMax           (VkvgContext ctx);
 
@@ -224,7 +224,7 @@ void _add_vertexf           (VkvgContext ctx, float x, float y);
 void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
 void _add_triangle_indices	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2);
 void _add_tri_indices_for_rect	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
-float _build_vb_step        (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve);
+float _build_vb_step        (vkvg_context* ctx, double hw, vec2d pL, vec2d p0, vec2d pR, bool isCurve);
 void _vao_add_rectangle     (VkvgContext ctx, float x, float y, float width, float height);
 
 void _bind_draw_pipeline    (VkvgContext ctx);
@@ -251,12 +251,15 @@ void _free_ctx_save         (vkvg_context_save_t* sav);
 static inline float vec2_zcross (vec2 v1, vec2 v2){
 	return v1.x*v2.y-v1.y*v2.x;
 }
-static inline float ecp_zcross (ear_clip_point* p0, ear_clip_point* p1, ear_clip_point* p2){
-	return vec2_zcross (vec2_sub (p1->pos, p0->pos), vec2_sub (p2->pos, p0->pos));
+static inline double vec2d_zcross (vec2d v1, vec2d v2){
+	return v1.x*v2.y-v1.y*v2.x;
+}
+static inline double ecp_zcross (ear_clip_point* p0, ear_clip_point* p1, ear_clip_point* p2){
+	return vec2d_zcross (vec2d_sub (p1->pos, p0->pos), vec2d_sub (p2->pos, p0->pos));
 }
 void _recursive_bezier(VkvgContext ctx,
-					   float x1, float y1, float x2, float y2,
-					   float x3, float y3, float x4, float y4,
+					   double x1, double y1, double x2, double y2,
+					   double x3, double y3, double x4, double y4,
 					   unsigned level);
 void _bezier (VkvgContext ctx,
 			  float x1, float y1, float x2, float y2,

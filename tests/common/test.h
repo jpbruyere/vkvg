@@ -108,7 +108,7 @@ void perform_test (void(*testfunc)(), const char* testName, int argc, char *argv
 void perform_test_offscreen (void(*testfunc)(void), const char *testName, int argc, char* argv[]);
 
 void randomize_color	(VkvgContext ctx);
-void draw_random_shape	(VkvgContext ctx, shape_t shape, float sizeFact);
+void draw_random_shape	(VkvgContext ctx, shape_t shape, double sizeFact);
 void draw_random_curve (VkvgContext ctx);
 
 //run test in 3 step: init, run, clear.

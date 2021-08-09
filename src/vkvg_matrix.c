@@ -240,9 +240,9 @@ void vkvg_matrix_multiply (vkvg_matrix_t *result, const vkvg_matrix_t *a, const 
 
 	*result = r;
 }
-void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, float *dy)
+void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, double *dx, double *dy)
 {
-	float new_x, new_y;
+	double new_x, new_y;
 
 	new_x = (matrix->xx * *dx + matrix->xy * *dy);
 	new_y = (matrix->yx * *dx + matrix->yy * *dy);
@@ -250,7 +250,7 @@ void vkvg_matrix_transform_distance (const vkvg_matrix_t *matrix, float *dx, flo
 	*dx = new_x;
 	*dy = new_y;
 }
-void vkvg_matrix_transform_point (const vkvg_matrix_t *matrix, float *x, float *y)
+void vkvg_matrix_transform_point (const vkvg_matrix_t *matrix, double *x, double *y)
 {
 	vkvg_matrix_transform_distance (matrix, x, y);
 

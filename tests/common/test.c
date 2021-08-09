@@ -616,11 +616,11 @@ void randomize_color(VkvgContext ctx) {
 		rndf()
 	);
 }
-void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
-	float w = (float)test_width;
-	float h = (float)test_height;
+void draw_random_shape (VkvgContext ctx, shape_t shape, double sizeFact) {
+	double w = (double)test_width;
+	double h = (double)test_height;
 
-	float x, y, z, v, r;
+	double x, y, z, v, r;
 
 	randomize_color (ctx);
 
@@ -654,13 +654,13 @@ void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 			r = MIN(v / 2, z / 2);
 
 		vkvg_move_to(ctx, x, y + r);
-		vkvg_arc(ctx, x + r, y + r, r, (float)M_PI, (float)-M_PI_2);
+		vkvg_arc(ctx, x + r, y + r, r, M_PI, -M_PI_2);
 		vkvg_line_to(ctx, x + z - r, y);
-		vkvg_arc(ctx, x + z - r, y + r, r, (float)-M_PI_2, 0);
+		vkvg_arc(ctx, x + z - r, y + r, r, -M_PI_2, 0);
 		vkvg_line_to(ctx, x + z, y + v - r);
-		vkvg_arc(ctx, x + z - r, y + v - r, r, 0, (float)M_PI_2);
+		vkvg_arc(ctx, x + z - r, y + v - r, r, 0, M_PI_2);
 		vkvg_line_to(ctx, x + r, y + v);
-		vkvg_arc(ctx, x + r, y + v - r, r, (float)M_PI_2, (float)M_PI);
+		vkvg_arc(ctx, x + r, y + v - r, r, M_PI_2, M_PI);
 		vkvg_line_to(ctx, x, y + r);
 		vkvg_close_path(ctx);
 		break;
@@ -671,19 +671,19 @@ void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 		x = rndf() * w;
 		y = rndf() * h;
 
-		r = truncf((sizeFact*MIN(w,h)*rndf())+1.f);
+		r = trunc((sizeFact*MIN(w,h)*rndf())+1.0);
 
 		/*float r = 0.5f*w*rand()/RAND_MAX;
 		float x = truncf(0.5f * w*rand()/RAND_MAX + r);
 		float y = truncf(0.5f * w*rand()/RAND_MAX + r);*/
 
-		vkvg_arc(ctx, x, y, r, 0, (float)M_PI * 2.0f);
+		vkvg_arc(ctx, x, y, r, 0, M_PI * 2.0);
 		break;
 	case SHAPE_TRIANGLE:
 	case SHAPE_STAR:
 		x = rndf() * w;
 		y = rndf() * h;
-		z = rndf() * sizeFact + 0.15f; //scale
+		z = rndf() * sizeFact + 0.15; //scale
 
 		vkvg_move_to (ctx, x+star_points[0][0]*z, y+star_points[0][1]*z);
 		for (int s=1; s<11; s++)
@@ -696,15 +696,15 @@ void draw_random_shape (VkvgContext ctx, shape_t shape, float sizeFact) {
 	}
 }
 void draw_random_curve (VkvgContext ctx) {
-	float w = (float)test_width;
-	float h = (float)test_height;
+	double w = (double)test_width;
+	double h = (double)test_height;
 
-	float x2 = w*rndf();
-	float y2 = h*rndf();
-	float cp_x1 = w*rndf();
-	float cp_y1 = h*rndf();
-	float cp_x2 = w*rndf();
-	float cp_y2 = h*rndf();
+	double x2 = w*rndf();
+	double y2 = h*rndf();
+	double cp_x1 = w*rndf();
+	double cp_y1 = h*rndf();
+	double cp_x2 = w*rndf();
+	double cp_y2 = h*rndf();
 
 	vkvg_curve_to(ctx, cp_x1, cp_y1, cp_x2, cp_y2, x2, y2);
 }

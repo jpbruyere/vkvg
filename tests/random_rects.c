@@ -12,7 +12,7 @@
 
 	vkvg_rectangle(ctx, x, y, z, v);
 }*/
-static float shape_size = 0.2f;
+static double shape_size = 0.2;
 
 void _shape_fill(shape_t shape){
 	VkvgContext ctx = _initCtx ();

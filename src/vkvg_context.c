@@ -313,7 +313,7 @@ void vkvg_close_path (VkvgContext ctx){
 		return;
 
 	//prevent closing on the same point
-	if (vec2_equ(ctx->points[ctx->pointCount-1],
+	if (vec2d_equ(ctx->points[ctx->pointCount-1],
 				 ctx->points[ctx->pointCount - ctx->pathes[ctx->pathPtr]])) {
 		if (ctx->pathes[ctx->pathPtr] < 4)//ensure enough points left for closing
 			return;
@@ -324,41 +324,41 @@ void vkvg_close_path (VkvgContext ctx){
 
 	_finish_path(ctx);
 }
-void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy){
+void vkvg_rel_line_to (VkvgContext ctx, double dx, double dy){
 	if (ctx->status)
 		return;
 	if (_current_path_is_empty(ctx)){
 		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
 		return;
 	}
-	vec2 cp = _get_current_position(ctx);
+	vec2d cp = _get_current_position(ctx);
 	vkvg_line_to(ctx, cp.x + dx, cp.y + dy);
 }
-void vkvg_line_to (VkvgContext ctx, float x, float y)
+void vkvg_line_to (VkvgContext ctx, double x, double y)
 {
 	if (ctx->status)
 		return;
-	vec2 p = {x,y};
+	vec2d p = {x,y};
 	if (!_current_path_is_empty (ctx)){
 		//prevent adding the same point
-		if (vec2_equ (_get_current_position (ctx), p))
+		if (vec2d_equ (_get_current_position (ctx), p))
 			return;
 	}
 	_add_point (ctx, x, y);
 }
-void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2){
+void vkvg_arc (VkvgContext ctx, double xc, double yc, double radius, double a1, double a2){
 	if (ctx->status)
 		return;
 	while (a2 < a1)//positive arc must have a1<a2
-		a2 += 2.f*M_PIF;
+		a2 += M_2PI;
 
-	if (a2 - a1 > 2.f * M_PIF) //limit arc to 2PI
-		a2 = a1 + 2.f * M_PIF;
+	if (a2 - a1 > M_2PI) //limit arc to 2PI
+		a2 = a1 + M_2PI;
 
-	vec2 v = {cosf(a1)*radius + xc, sinf(a1)*radius + yc};
+	vec2d v = {cos(a1)*radius + xc, sin(a1)*radius + yc};
 
-	float step = _get_arc_step(ctx, radius);
-	float a = a1;
+	double step = _get_arc_step(ctx, radius);
+	double a = a1;
 
 	if (_current_path_is_empty(ctx)){
 		_set_curve_start (ctx);
@@ -370,7 +370,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 
 	a+=step;
 
-	if (EQUF(a2, a1))
+	if (EQU(a2, a1))
 		return;
 
 	while(a < a2){
@@ -380,31 +380,31 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 		a+=step;
 	}
 
-	if (EQUF(a2-a1,M_PIF*2.f)){//if arc is complete circle, last point is the same as the first one
+	if (EQU(a2-a1,M_2PI)){//if arc is complete circle, last point is the same as the first one
 		_set_curve_end(ctx);
 		vkvg_close_path(ctx);
 		return;
 	}
 	a = a2;
 	//vec2 lastP = v;
-	v.x = cosf(a)*radius + xc;
-	v.y = sinf(a)*radius + yc;
+	v.x = cos(a)*radius + xc;
+	v.y = sin(a)*radius + yc;
 	//if (!vec2_equ (v,lastP))//this test should not be required
 		_add_point (ctx, v.x, v.y);
 	_set_curve_end(ctx);
 }
-void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
+void vkvg_arc_negative (VkvgContext ctx, double xc, double yc, double radius, double a1, double a2) {
 	if (ctx->status)
 		return;
 	while (a2 > a1)
-		a2 -= 2.f*M_PIF;
-	if (a1 - a2 > a1 + 2.f * M_PIF) //limit arc to 2PI
-		a2 = a1 - 2.f * M_PIF;
+		a2 -= M_2PI;
+	if (a1 - a2 > a1 + M_2PI) //limit arc to 2PI
+		a2 = a1 - M_2PI;
 
-	vec2 v = {cosf(a1)*radius + xc, sinf(a1)*radius + yc};
+	vec2d v = {cos(a1)*radius + xc, sin(a1)*radius + yc};
 
-	float step = _get_arc_step(ctx, radius);
-	float a = a1;
+	double step = _get_arc_step(ctx, radius);
+	double a = a1;
 
 	if (_current_path_is_empty(ctx)){
 		_set_curve_start (ctx);
@@ -416,28 +416,28 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 
 	a-=step;
 
-	if (EQUF(a2, a1))
+	if (EQU(a2, a1))
 		return;
 
 	while(a > a2){
-		v.x = cosf(a)*radius + xc;
-		v.y = sinf(a)*radius + yc;
+		v.x = cos(a)*radius + xc;
+		v.y = sin(a)*radius + yc;
 		_add_point (ctx,v.x,v.y);
 		a-=step;
 	}
 
-	if (EQUF(a1-a2,M_PIF*2.f))//if arc is complete circle, last point is the same as the first one
+	if (EQU(a1-a2,M_2PI))//if arc is complete circle, last point is the same as the first one
 		return;
 
 	a = a2;
 	//vec2 lastP = v;
-	v.x = cosf(a)*radius + xc;
-	v.y = sinf(a)*radius + yc;
+	v.x = cos(a)*radius + xc;
+	v.y = sin(a)*radius + yc;
 	//if (!vec2_equ (v,lastP))
 		_add_point (ctx, v.x, v.y);
 	_set_curve_end(ctx);
 }
-void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
+void vkvg_rel_move_to (VkvgContext ctx, double x, double y)
 {
 	if (ctx->status)
 		return;
@@ -445,10 +445,10 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
 		return;
 	}
-	vec2 cp = _get_current_position(ctx);
+	vec2d cp = _get_current_position(ctx);
 	vkvg_move_to(ctx, cp.x + x, cp.y + y);
 }
-void vkvg_move_to (VkvgContext ctx, float x, float y)
+void vkvg_move_to (VkvgContext ctx, double x, double y)
 {
 	if (ctx->status)
 		return;
@@ -456,19 +456,19 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 	_add_point (ctx, x, y);
 }
 
-void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+void vkvg_curve_to (VkvgContext ctx, double x1, double y1, double x2, double y2, double x3, double y3) {
 	if (ctx->status)
 		return;
 	//prevent running _recursive_bezier when all 4 curve points are equal
-	if (EQUF(x1,x2) && EQUF(x2,x3) && EQUF(y1,y2) && EQUF(y2,y3)) {
-		if (_current_path_is_empty(ctx) || (EQUF(_get_current_position(ctx).x,x1) && EQUF(_get_current_position(ctx).y,y1)))
+	if (EQU(x1,x2) && EQU(x2,x3) && EQU(y1,y2) && EQU(y2,y3)) {
+		if (_current_path_is_empty(ctx) || (EQU(_get_current_position(ctx).x,x1) && EQU(_get_current_position(ctx).y,y1)))
 			return;
 	}
 	_set_curve_start (ctx);
 	if (_current_path_is_empty(ctx))
 		_add_point(ctx, x1, y1);
 
-	vec2 cp = _get_current_position(ctx);
+	vec2d cp = _get_current_position(ctx);
 
 	_recursive_bezier (ctx, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
 	/*cp.x = x3;
@@ -477,24 +477,24 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
 		_add_point(ctx,x3,y3);
 	_set_curve_end (ctx);
 }
-void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
+void vkvg_rel_curve_to (VkvgContext ctx, double x1, double y1, double x2, double y2, double x3, double y3) {
 	if (ctx->status)
 		return;
 	if (_current_path_is_empty(ctx)){
 		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
 		return;
 	}
-	vec2 cp = _get_current_position(ctx);
+	vec2d cp = _get_current_position(ctx);
 	vkvg_curve_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
 }
-void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
+void vkvg_fill_rectangle (VkvgContext ctx, double x, double y, double w, double h){
 	if (ctx->status)
 		return;
 	_vao_add_rectangle (ctx,x,y,w,h);
 	//_record_draw_cmd(ctx);
 }
 
-void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
+void vkvg_rectangle (VkvgContext ctx, double x, double y, double w, double h){
 	if (ctx->status)
 		return;
 	_finish_path (ctx);
@@ -624,25 +624,25 @@ void vkvg_fill_preserve (VkvgContext ctx){
 		_ensure_renderpass_is_started(ctx);
 	_fill_ec(ctx);
 }
-void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
+void _draw_stoke_cap (VkvgContext ctx, double hw, vec2d p0, vec2d n, bool isStart) {
 	Vertex v = {{0},ctx->curColor,{0,0,-1}};
 
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);	
 
 	if (isStart){
-		vec2 vhw = vec2_mult(n,hw);
+		vec2d vhw = vec2d_mult(n,hw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-			p0 = vec2_sub(p0, vhw);
+			p0 = vec2d_sub(p0, vhw);
 
-		vhw = vec2_perp(vhw);
+		vhw = vec2d_perp(vhw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-			float step = M_PIF / fmaxf(hw, 4.f);
-			float a = acosf(n.x) + M_PIF_2;
+			double step = M_PI / fmaxf(hw, 4.f);
+			double a = acosf(n.x) + M_PI_2;
 			if (n.y < 0)
-				a = M_PIF-a;
-			float a1 = a + M_PIF;
+				a = M_PI-a;
+			double a1 = a + M_PI;
 
 			a+=step;
 			while (a < a1){
@@ -655,37 +655,37 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) 
 			firstIdx = p0Idx;
 		}
 
-		v.pos = vec2_add(p0, vhw);
+		v.pos = vec2d_to_vec2(vec2d_add(p0, vhw));
 		_add_vertex(ctx, v);
-		v.pos = vec2_sub(p0, vhw);
+		v.pos = vec2d_to_vec2 (vec2d_sub(p0, vhw));
 		_add_vertex(ctx, v);
 
 		_add_tri_indices_for_rect(ctx, firstIdx);
 	}else{
-		vec2 vhw = vec2_mult(n, hw);
+		vec2d vhw = vec2d_mult(n, hw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-			p0 = vec2_add(p0, vhw);
+			p0 = vec2d_add(p0, vhw);
 
-		vhw = vec2_perp(vhw);
+		vhw = vec2d_perp(vhw);
 
-		v.pos = vec2_add(p0, vhw);
+		v.pos = vec2d_to_vec2 (vec2d_add(p0, vhw));
 		_add_vertex(ctx, v);
-		v.pos = vec2_sub(p0, vhw);
+		v.pos = vec2d_to_vec2 (vec2d_sub(p0, vhw));
 		_add_vertex(ctx, v);
 
 		firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-			float step = M_PIF / fmaxf(hw, 4.f);
-			float a = acosf(n.x)+ M_PIF_2;
+			double step = M_PI / fmax(hw, 4.f);
+			double a = acos(n.x)+ M_PI_2;
 			if (n.y < 0)
-				a = M_PIF-a;
-			float a1 = a - M_PIF;
+				a = M_PI-a;
+			double a1 = a - M_PI;
 
 			a-=step;
 			while ( a > a1){
-				_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
+				_add_vertexf(ctx, cos(a) * hw + p0.x, sin(a) * hw + p0.y);
 				a-=step;
 			}
 
@@ -696,22 +696,22 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) 
 	}
 }
 
-static bool     dashOn          = true;
-static uint32_t curDash         = 0;    //current dash index
-static float    curDashOffset   = 0.f;  //cur dash offset between defined path point and last dash segment(on/off) start
-static float	totDashLength	= 0;	//total length of dashes
-static vec2     normal          = {0};
+static bool		dashOn			= true;
+static uint32_t curDash			= 0;	//current dash index
+static double	curDashOffset	= 0.0;	//cur dash offset between defined path point and last dash segment(on/off) start
+static double	totDashLength	= 0.0;	//total length of dashes
+static vec2d	normal			= {0};
 
-float _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR, bool isCurve) {
+float _draw_dashed_segment (VkvgContext ctx, double hw, vec2d pL, vec2d p, vec2d pR, bool isCurve) {
 	if (!dashOn)//we test in fact the next dash start, if dashOn = true => next segment is a void.
 		_build_vb_step (ctx, hw, pL, p, pR, isCurve);
 
-	vec2 d = vec2_sub (pR, p);
-	normal = vec2_norm (d);
-	float segmentLength = vec2_length(d);
+	vec2d d = vec2d_sub (pR, p);
+	normal = vec2d_norm (d);
+	double segmentLength = vec2d_length(d);
 
 	while (curDashOffset < segmentLength){
-		vec2 p0 = vec2_add (p, vec2_mult(normal, curDashOffset));
+		vec2d p0 = vec2d_add (p, vec2d_mult(normal, curDashOffset));
 
 		_draw_stoke_cap (ctx, hw, p0, normal, dashOn);
 		dashOn ^= true;
@@ -720,11 +720,11 @@ float _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR,
 			curDash = 0;
 	}
 	curDashOffset -= segmentLength;
-	curDashOffset = fmodf(curDashOffset, totDashLength);
+	curDashOffset = fmod(curDashOffset, totDashLength);
 	return segmentLength;
 }
 static uint32_t curPathPointIdx, lastPathPointIdx, ptrPath, iL, iR;
-void _draw_segment (VkvgContext ctx, float hw, bool isCurve) {
+void _draw_segment (VkvgContext ctx, double hw, bool isCurve) {
 	iR = curPathPointIdx+1;
 	if (ctx->dashCount > 0)
 		_draw_dashed_segment(ctx, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], isCurve);
@@ -745,7 +745,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path ptr = %d;\n", ctx, ctx->pathPtr);
 
 	curPathPointIdx = lastPathPointIdx = ptrPath = iL = iR = 0;
-	float hw = ctx->lineWidth / 2.0f;
+	double hw = ctx->lineWidth / 2.0f;
 
 	while (ptrPath < ctx->pathPtr){
 		uint32_t ptrSegment = 0, lastSegmentPointIdx = 0;
@@ -781,7 +781,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		} else if (_path_is_closed(ctx,ptrPath)){
 			iL = lastPathPointIdx;
 		}else{
-			_draw_stoke_cap(ctx, hw, ctx->points[curPathPointIdx], vec2_line_norm(ctx->points[curPathPointIdx], ctx->points[curPathPointIdx+1]), true);
+			_draw_stoke_cap(ctx, hw, ctx->points[curPathPointIdx], vec2d_line_norm(ctx->points[curPathPointIdx], ctx->points[curPathPointIdx+1]), true);
 			iL = curPathPointIdx++;
 		}
 
@@ -817,13 +817,13 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 				int32_t prevDash = (int32_t)curDash-1;
 				if (prevDash < 0)
 					curDash = ctx->dashCount-1;
-				float m = fminf (ctx->dashes[prevDash] - curDashOffset, ctx->dashes[curDash]);
-				vec2 p = vec2_sub(ctx->points[iR], vec2_mult(normal, m));
+				double m = fmin (ctx->dashes[prevDash] - curDashOffset, ctx->dashes[curDash]);
+				vec2d p = vec2d_sub(ctx->points[iR], vec2d_mult(normal, m));
 				_draw_stoke_cap (ctx, hw, p, normal, false);
 			}
 		} else if (_path_is_closed(ctx,ptrPath)){
 			iR = firstPathPointIdx;
-			float cross = _build_vb_step (ctx, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
+			double cross = _build_vb_step (ctx, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
 
 			VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
 			VKVG_IBO_INDEX_TYPE ii = firstIdx;
@@ -838,7 +838,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 			}
 			curPathPointIdx++;
 		}else
-			_draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], vec2_line_norm(ctx->points[curPathPointIdx-1], ctx->points[curPathPointIdx]), false);
+			_draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], vec2d_line_norm(ctx->points[curPathPointIdx-1], ctx->points[curPathPointIdx]), false);
 
 		curPathPointIdx = firstPathPointIdx + pathPointCount;
 
@@ -892,7 +892,7 @@ void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
 	_update_cur_pattern (ctx, pat);
 	vkvg_pattern_reference  (pat);
 }
-void vkvg_set_line_width (VkvgContext ctx, float width){
+void vkvg_set_line_width (VkvgContext ctx, double width){
 	ctx->lineWidth = width;
 }
 void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap){
@@ -925,7 +925,7 @@ vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx){
 float vkvg_get_line_width (VkvgContext ctx){
 	return ctx->lineWidth;
 }
-void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset){
+void vkvg_set_dash (VkvgContext ctx, const double* dashes, uint32_t num_dashes, double offset){
 	if (ctx->status)
 		return;
 	if (ctx->dashCount > 0)
@@ -934,15 +934,15 @@ void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, f
 	ctx->dashOffset = offset;
 	if (ctx->dashCount == 0)
 		return;
-	ctx->dashes = (float*)malloc (sizeof(float) * ctx->dashCount);
-	memcpy (ctx->dashes, dashes, sizeof(float) * ctx->dashCount);
+	ctx->dashes = (double*)malloc (sizeof(double) * ctx->dashCount);
+	memcpy (ctx->dashes, dashes, sizeof(double) * ctx->dashCount);
 }
-void vkvg_get_dash (VkvgContext ctx, const float* dashes, uint32_t* num_dashes, float* offset){
+void vkvg_get_dash (VkvgContext ctx, const double* dashes, uint32_t* num_dashes, double* offset){
 	*num_dashes = ctx->dashCount;
 	*offset = ctx->dashOffset;
 	if (ctx->dashCount == 0 || dashes == NULL)
 		return;
-	memcpy ((float*)dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
+	memcpy ((double*)dashes, ctx->dashes, sizeof(double) * ctx->dashCount);
 }
 
 
@@ -1109,8 +1109,8 @@ void vkvg_save (VkvgContext ctx){
 	sav->dashOffset = ctx->dashOffset;
 	sav->dashCount  = ctx->dashCount;
 	if (ctx->dashCount > 0) {
-		sav->dashes = (float*)malloc (sizeof(float) * ctx->dashCount);
-		memcpy (sav->dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
+		sav->dashes = (double*)malloc (sizeof(double) * ctx->dashCount);
+		memcpy (sav->dashes, ctx->dashes, sizeof(double) * ctx->dashCount);
 	}
 	sav->lineWidth  = ctx->lineWidth;
 	sav->curOperator= ctx->curOperator;
@@ -1228,8 +1228,8 @@ void vkvg_restore (VkvgContext ctx){
 		free (ctx->dashes);
 	ctx->dashCount  = sav->dashCount;
 	if (ctx->dashCount > 0) {
-		ctx->dashes = (float*)malloc (sizeof(float) * ctx->dashCount);
-		memcpy (ctx->dashes, sav->dashes, sizeof(float) * ctx->dashCount);
+		ctx->dashes = (double*)malloc (sizeof(double) * ctx->dashCount);
+		memcpy (ctx->dashes, sav->dashes, sizeof(double) * ctx->dashCount);
 	}
 
 	ctx->lineWidth  = sav->lineWidth;

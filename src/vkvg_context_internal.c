@@ -102,7 +102,7 @@ bool _current_path_is_empty (VkvgContext ctx) {
 	return ctx->pathes [ctx->pathPtr] == 0;
 }
 //this function expect that current point exists
-vec2 _get_current_position (VkvgContext ctx) {
+vec2d _get_current_position (VkvgContext ctx) {
 	return ctx->points[ctx->pointCount-1];
 }
 //set curve start point and set path has curve bit
@@ -190,11 +190,11 @@ void _resetMinMax (VkvgContext ctx) {
 	ctx->xMin = ctx->yMin = FLT_MAX;
 	ctx->xMax = ctx->yMax = FLT_MIN;
 }
-void _add_point (VkvgContext ctx, float x, float y){
+void _add_point (VkvgContext ctx, double x, double y){
 	if (_check_point_array(ctx))
 		return;
 
-	ctx->points[ctx->pointCount] = (vec2){x,y};
+	ctx->points[ctx->pointCount] = (vec2d){x,y};
 	ctx->pointCount++;//total point count of pathes, (for array bounds check)
 	ctx->pathes[ctx->pathPtr]++;//total point count in path
 	if (ctx->segmentPtr > 0)
@@ -215,18 +215,18 @@ void _add_point (VkvgContext ctx, float x, float y){
 	if (y > ctx->yMax)
 		ctx->yMax = y;
 }
-float _normalizeAngle(float a)
+float _normalizeAngle(double a)
 {
-	float res = ROUND_DOWN(fmodf(a,2.0f*M_PIF),100);
-	if (res < 0.0f)
-		return res + 2.0f*M_PIF;
+	float res = ROUND_DOWN(fmod(a,M_2PI),100);
+	if (res < 0.0)
+		return res + M_2PI;
 	else
 		return res;
 }
-float _get_arc_step (VkvgContext ctx, float radius) {
-	float dx = 1, dy = 1;
+float _get_arc_step (VkvgContext ctx, double radius) {
+	double dx = 1, dy = 1;
 	vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &dx, &dy);
-	return M_PIF/sqrtf(radius)*0.35f/fmaxf(dx,dy);
+	return M_PI/sqrt(radius)*0.35/fmax(dx,dy);
 }
 void _create_gradient_buff (VkvgContext ctx){
 	vkvg_buffer_create (ctx->pSurf->dev,
@@ -436,7 +436,7 @@ void _check_vao_size (VkvgContext ctx) {
 			//if cmd is started buffers, are already bound, so no resize is possible
 			//instead we flush, and clear vbo and ibo caches
 			_flush_cmd_until_vx_base (ctx);
-		if (ctx->vertCount > ctx->sizeVBO)		
+		if (ctx->vertCount > ctx->sizeVBO)
 			_resize_vbo(ctx, ctx->sizeVertices);
 		if (ctx->indCount > ctx->sizeIBO)
 			_resize_ibo(ctx, ctx->sizeIndices);
@@ -638,7 +638,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		_update_descriptor_set (ctx, ctx->source, ctx->dsSrc);
 
 		vec4 srcRect = {{0},{0},{(float)surf->width},{(float)surf->height}};
-		ctx->pushConsts.source = srcRect;		
+		ctx->pushConsts.source = srcRect;
 		break;
 	}
 	case VKVG_PATTERN_TYPE_LINEAR:
@@ -733,54 +733,54 @@ void _init_descriptor_sets (VkvgContext ctx){
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
 //populate vertice buff for stroke
-float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve){
+float _build_vb_step (vkvg_context* ctx, double hw, vec2d pL, vec2d p0, vec2d pR, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 
-    vec2 v0 = vec2_sub(p0, pL);
-    vec2 v1 = vec2_sub(pR, p0);
-    float length_v0 = vec2_length(v0);
-    float length_v1 = vec2_length(v1);
-    if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON)
-        return 0;
-    vec2 v0n = vec2_div (v0, length_v0);
-    vec2 v1n = vec2_div (v1, length_v1);
+	vec2d v0 = vec2d_sub(p0, pL);
+	vec2d v1 = vec2d_sub(pR, p0);
+	double length_v0 = vec2d_length(v0);
+	double length_v1 = vec2d_length(v1);
+	if (length_v0 < DBL_EPSILON || length_v1 < DBL_EPSILON)
+		return 0;
+	vec2d v0n = vec2d_div (v0, length_v0);
+	vec2d v1n = vec2d_div (v1, length_v1);
 
-	vec2 bisec = vec2_norm(vec2_add(v0n,v1n));
+	vec2d bisec = vec2d_norm(vec2d_add(v0n,v1n));
 
-	float dot = v0n.x * v1n.x + v0n.y * v1n.y;
-	float alpha = acosf(dot)/2;
-	float cross = v0n.x * v1n.y - v0n.y * v1n.x;
+	double dot = v0n.x * v1n.x + v0n.y * v1n.y;
+	double alpha = acos(dot)/2;
+	double cross = v0n.x * v1n.y - v0n.y * v1n.x;
 
 	if (cross<0)
 		alpha = -alpha;
 
-	float lh = hw / cosf(alpha);
-	bisec = vec2_perp(bisec);
+	double lh = hw / cos(alpha);
+	bisec = vec2d_perp(bisec);
 
-    //limit bisectrice lenght, may be improved but ok for perf
-    lh=fminf (lh, fminf (sqrtf(length_v0*length_v0+hw*hw), sqrtf(length_v1*length_v1+hw*hw)));
+	//limit bisectrice lenght, may be improved but ok for perf
+	lh=fmin (lh, fmin (sqrt(length_v0*length_v0+hw*hw), sqrt(length_v1*length_v1+hw*hw)));
 
-	bisec = vec2_mult(bisec,lh);
+	bisec = vec2d_mult(bisec,lh);
 
 	VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
-		v.pos = vec2_add(p0, bisec);
+		v.pos = vec2d_to_vec2(vec2d_add(p0, bisec));
 		_add_vertex(ctx, v);
-        v.pos = vec2_sub(p0, bisec);
-        _add_vertex(ctx, v);
-        _add_tri_indices_for_rect(ctx, idx);
+		v.pos = vec2d_to_vec2(vec2d_sub(p0, bisec));
+		_add_vertex(ctx, v);
+		_add_tri_indices_for_rect(ctx, idx);
 	}else{
-		vec2 vp = vec2_perp(v0n);
+		vec2d vp = vec2d_perp(v0n);
 		if (cross<0){
-			v.pos = vec2_add (p0, bisec);
+			v.pos = vec2d_to_vec2(vec2d_add (p0, bisec));
 			_add_vertex(ctx, v);
-			v.pos = vec2_sub (p0, vec2_mult (vp, hw));
+			v.pos = vec2d_to_vec2(vec2d_sub (p0, vec2d_mult (vp, hw)));
 		}else{
-			v.pos = vec2_add (p0, vec2_mult (vp, hw));
+			v.pos = vec2d_to_vec2(vec2d_add (p0, vec2d_mult (vp, hw)));
 			_add_vertex(ctx, v);
-			v.pos = vec2_sub (p0, bisec);
-        }
+			v.pos = vec2d_to_vec2(vec2d_sub (p0, bisec));
+		}
 		_add_vertex(ctx, v);
 
 		if (ctx->lineJoin == VKVG_LINE_JOIN_BEVEL){
@@ -794,24 +794,24 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 				_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
 			}
 		}else if (ctx->lineJoin == VKVG_LINE_JOIN_ROUND){
-			float step = M_PIF / hw;
-			float a = acosf(vp.x);
+			double step = M_PI / hw;
+			double a = acos(vp.x);
 			if (vp.y < 0)
 				a = -a;
 
 			if (cross<0){
-				a+=M_PIF;
-				float a1 = a + alpha*2;
+				a+=M_PI;
+				double a1 = a + alpha*2;
 				a-=step;
 				while (a > a1){
-					_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
+					_add_vertexf(ctx, cos(a) * hw + p0.x, sin(a) * hw + p0.y);
 					a-=step;
 				}
 			}else{
-				float a1 = a + alpha*2;
+				double a1 = a + alpha*2;
 				a+=step;
 				while (a < a1){
-					_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
+					_add_vertexf(ctx, cos(a) * hw + p0.x, sin(a) * hw + p0.y);
 					a+=step;
 				}
 			}
@@ -831,11 +831,11 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 
 		}
 
-		vp = vec2_mult (vec2_perp(v1n), hw);
+		vp = vec2d_mult (vec2d_perp(v1n), hw);
 		if (cross<0)
-			v.pos = vec2_sub (p0, vp);
+			v.pos = vec2d_to_vec2(vec2d_sub (p0, vp));
 		else
-			v.pos = vec2_add (p0, vp);
+			v.pos = vec2d_to_vec2(vec2d_add (p0, vp));
 		_add_vertex(ctx, v);
 	}
 
@@ -855,14 +855,14 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 	return cross;
 }
 
-bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
-	float dX = p.x-p2.x;
-	float dY = p.y-p2.y;
-	float dX21 = p2.x-p1.x;
-	float dY12 = p1.y-p2.y;
-	float D = dY12*(p0.x-p2.x) + dX21*(p0.y-p2.y);
-	float s = dY12*dX + dX21*dY;
-	float t = (p2.y-p0.y)*dX + (p0.x-p2.x)*dY;
+bool ptInTriangle(vec2d p, vec2d p0, vec2d p1, vec2d p2) {
+	double dX = p.x-p2.x;
+	double dY = p.y-p2.y;
+	double dX21 = p2.x-p1.x;
+	double dY12 = p1.y-p2.y;
+	double D = dY12*(p0.x-p2.x) + dX21*(p0.y-p2.y);
+	double s = dY12*dX + dX21*dY;
+	double t = (p2.y-p0.y)*dX + (p0.x-p2.x)*dY;
 	if (D<0)
 		return (s<=0) && (t<=0) && (s+t>=D);
 	return (s>=0) && (t>=0) && (s+t<=D);
@@ -886,8 +886,8 @@ void _free_ctx_save (vkvg_context_save_t* sav){
 //no floating point arithmetic operation allowed in macro.
 #pragma warning(disable:4127)
 void _recursive_bezier (VkvgContext ctx,
-						float x1, float y1, float x2, float y2,
-						float x3, float y3, float x4, float y4,
+						double x1, double y1, double x2, double y2,
+						double x3, double y3, double x4, double y4,
 						unsigned level) {
 	if(level > CURVE_RECURSION_LIMIT)
 	{
@@ -896,36 +896,36 @@ void _recursive_bezier (VkvgContext ctx,
 
 	// Calculate all the mid-points of the line segments
 	//----------------------
-	float x12   = (x1 + x2) / 2;
-	float y12   = (y1 + y2) / 2;
-	float x23   = (x2 + x3) / 2;
-	float y23   = (y2 + y3) / 2;
-	float x34   = (x3 + x4) / 2;
-	float y34   = (y3 + y4) / 2;
-	float x123  = (x12 + x23) / 2;
-	float y123  = (y12 + y23) / 2;
-	float x234  = (x23 + x34) / 2;
-	float y234  = (y23 + y34) / 2;
-	float x1234 = (x123 + x234) / 2;
-	float y1234 = (y123 + y234) / 2;
+	double x12   = (x1 + x2) / 2;
+	double y12   = (y1 + y2) / 2;
+	double x23   = (x2 + x3) / 2;
+	double y23   = (y2 + y3) / 2;
+	double x34   = (x3 + x4) / 2;
+	double y34   = (y3 + y4) / 2;
+	double x123  = (x12 + x23) / 2;
+	double y123  = (y12 + y23) / 2;
+	double x234  = (x23 + x34) / 2;
+	double y234  = (y23 + y34) / 2;
+	double x1234 = (x123 + x234) / 2;
+	double y1234 = (y123 + y234) / 2;
 
 	if(level > 0) // Enforce subdivision first time
 	{
 		// Try to approximate the full cubic curve by a single straight line
 		//------------------
-		float dx = x4-x1;
-		float dy = y4-y1;
+		double dx = x4-x1;
+		double dy = y4-y1;
 
-		float d2 = fabsf(((x2 - x4) * dy - (y2 - y4) * dx));
-		float d3 = fabsf(((x3 - x4) * dy - (y3 - y4) * dx));
+		double d2 = fabs(((x2 - x4) * dy - (y2 - y4) * dx));
+		double d3 = fabs(((x3 - x4) * dy - (y3 - y4) * dx));
 
-		float da1, da2;
+		double da1, da2;
 
 		if(d2 > CURVE_COLLINEARITY_EPSILON && d3 > CURVE_COLLINEARITY_EPSILON)
 		{
 			// Regular care
 			//-----------------
-			if((d2 + d3)*(d2 + d3) <= (dx*dx + dy*dy) * (float)M_DISTANCE_TOLERANCE)
+			if((d2 + d3)*(d2 + d3) <= (dx*dx + dy*dy) * M_DISTANCE_TOLERANCE)
 			{
 				// If the curvature doesn't exceed the distance_tolerance value
 				// we tend to finish subdivisions.
@@ -937,13 +937,13 @@ void _recursive_bezier (VkvgContext ctx,
 
 				// Angle & Cusp Condition
 				//----------------------
-				float a23 = atan2f(y3 - y2, x3 - x2);
-				da1 = fabsf(a23 - atan2f(y2 - y1, x2 - x1));
-				da2 = fabsf(atan2f(y4 - y3, x4 - x3) - a23);
-				if(da1 >= M_PIF) da1 = M_2_PIF - da1;
-				if(da2 >= M_PIF) da2 = M_2_PIF - da2;
+				double a23 = atan2(y3 - y2, x3 - x2);
+				da1 = fabs(a23 - atan2(y2 - y1, x2 - x1));
+				da2 = fabs(atan2(y4 - y3, x4 - x3) - a23);
+				if(da1 >= M_PI) da1 = M_2_PI - da1;
+				if(da2 >= M_PI) da2 = M_2_PI - da2;
 
-				if(da1 + da2 < (float)M_ANGLE_TOLERANCE)
+				if(da1 + da2 < M_ANGLE_TOLERANCE)
 				{
 					// Finally we can stop the recursion
 					//----------------------
@@ -971,7 +971,7 @@ void _recursive_bezier (VkvgContext ctx,
 			{
 				// p1,p3,p4 are collinear, p2 is considerable
 				//----------------------
-				if(d2 * d2 <= (float)M_DISTANCE_TOLERANCE * (dx*dx + dy*dy))
+				if(d2 * d2 <= M_DISTANCE_TOLERANCE * (dx*dx + dy*dy))
 				{
 					if(M_ANGLE_TOLERANCE < CURVE_ANGLE_TOLERANCE_EPSILON)
 					{
@@ -981,8 +981,8 @@ void _recursive_bezier (VkvgContext ctx,
 
 					// Angle Condition
 					//----------------------
-					da1 = fabsf(atan2f(y3 - y2, x3 - x2) - atan2f(y2 - y1, x2 - x1));
-					if(da1 >= M_PIF) da1 = M_2_PIF - da1;
+					da1 = fabs(atan2(y3 - y2, x3 - x2) - atan2(y2 - y1, x2 - x1));
+					if(da1 >= M_PI) da1 = M_2_PI - da1;
 
 					if(da1 < M_ANGLE_TOLERANCE)
 					{
@@ -1003,7 +1003,7 @@ void _recursive_bezier (VkvgContext ctx,
 			} else if(d3 > CURVE_COLLINEARITY_EPSILON) {
 				// p1,p2,p4 are collinear, p3 is considerable
 				//----------------------
-				if(d3 * d3 <= (float)M_DISTANCE_TOLERANCE * (dx*dx + dy*dy))
+				if(d3 * d3 <= M_DISTANCE_TOLERANCE * (dx*dx + dy*dy))
 				{
 					if(M_ANGLE_TOLERANCE < CURVE_ANGLE_TOLERANCE_EPSILON)
 					{
@@ -1013,8 +1013,8 @@ void _recursive_bezier (VkvgContext ctx,
 
 					// Angle Condition
 					//----------------------
-					da1 = fabsf(atan2f(y4 - y3, x4 - x3) - atan2f(y3 - y2, x3 - x2));
-					if(da1 >= M_PIF) da1 = M_2_PIF - da1;
+					da1 = fabs(atan2(y4 - y3, x4 - x3) - atan2(y3 - y2, x3 - x2));
+					if(da1 >= M_PI) da1 = M_2_PI - da1;
 
 					if(da1 < M_ANGLE_TOLERANCE)
 					{
@@ -1039,7 +1039,7 @@ void _recursive_bezier (VkvgContext ctx,
 				//-----------------
 				dx = x1234 - (x1 + x4) / 2;
 				dy = y1234 - (y1 + y4) / 2;
-				if(dx*dx + dy*dy <= (float)M_DISTANCE_TOLERANCE)
+				if(dx*dx + dy*dy <= M_DISTANCE_TOLERANCE)
 				{
 					_add_point (ctx, x1234, y1234);
 					return;
@@ -1092,7 +1092,7 @@ void _poly_fill (VkvgContext ctx){
 		VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
 
 		for (uint32_t i = 0; i < pathPointCount; i++) {
-			v.pos = ctx->points [i+firstPtIdx];
+			v.pos = vec2d_to_vec2(ctx->points [i+firstPtIdx]);
 			ctx->vertexCache[ctx->vertCount++] = v;
 			_check_vertex_cache_size(ctx);
 		}
@@ -1123,7 +1123,7 @@ void _fill_ec (VkvgContext ctx){
 	while (ptrPath < ctx->pathPtr){
 		ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;//close path
 
-		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;		
+		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
 
 		VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 		ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
@@ -1131,16 +1131,16 @@ void _fill_ec (VkvgContext ctx){
 		VKVG_IBO_INDEX_TYPE i = 0;
 
 		//init points link list
-		while (i < pathPointCount-1){
-			v.pos = ctx->points[i+firstPtIdx];
-			ear_clip_point ecp = {v.pos, firstVertIdx+i, &ecps[i+1]};
+		while (i < pathPointCount-1){			
+			ear_clip_point ecp = {ctx->points[i+firstPtIdx], firstVertIdx+i, &ecps[i+1]};
+			v.pos = vec2d_to_vec2(ecp.pos);
 			ecps[i] = ecp;
 			_add_vertex(ctx, v);
 			i++;
 		}
 
-		v.pos = ctx->points[i+firstPtIdx];
-		ear_clip_point ecp = {v.pos, firstVertIdx+i, ecps};
+		ear_clip_point ecp = {ctx->points[i+firstPtIdx], firstVertIdx+i, ecps};
+		v.pos = vec2d_to_vec2(ecp.pos);
 		ecps[i] = ecp;
 		_add_vertex(ctx, v);
 

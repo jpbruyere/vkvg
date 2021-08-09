@@ -33,9 +33,12 @@ typedef union {
 	};
 }vec2;
 
-typedef struct {
-	double x;
-	double y;
+typedef union {
+	__m128d raw;// __attribute__ ((vector_size (16)));
+	struct {
+		double x;
+		double y;
+	};
 }vec2d;
 
 typedef struct {
@@ -76,7 +79,6 @@ typedef struct {
 	int16_t x;
 	int16_t y;
 }vec2i16;
-
 // compute length of float vector 2d
 vkvg_inline	float vec2_length(vec2 v){
 	return sqrtf (v.x*v.x + v.y*v.y);
@@ -124,7 +126,8 @@ vkvg_inline	vec2 vec2_div(vec2 a, float m){
 	return (vec2){a.x/m,a.y/m};
 }
 vkvg_inline	vec2d vec2d_div(vec2d a, double m){
-	return (vec2d){a.x/m,a.y/m};
+	return (vec2d)_mm_div_pd (a.raw, _mm_set_pd1 (m));
+	//return (vec2d){a.x/m,a.y/m};
 }
 // multiply 2d vector by scalar
 vkvg_inline	vec2 vec2_mult(vec2 a, float m){
@@ -148,7 +151,8 @@ vkvg_inline	vec2 vec2_add (vec2 a, vec2 b){
 }
 // compute sum of two double precision vectors
 vkvg_inline	vec2d vec2d_add (vec2d a, vec2d b){
-	return (vec2d){a.x + b.x, a.y + b.y};
+	return (vec2d)_mm_add_pd (a.raw, b.raw);
+	//return (vec2d){a.x + b.x, a.y + b.y};
 }
 // compute subbstraction of two single precision vectors
 vkvg_inline	vec2 vec2_sub (vec2 a, vec2 b){
@@ -156,12 +160,17 @@ vkvg_inline	vec2 vec2_sub (vec2 a, vec2 b){
 }
 // compute subbstraction of two double precision vectors
 vkvg_inline	vec2d vec2d_sub (vec2d a, vec2d b){
-	return (vec2d){a.x - b.x, a.y - b.y};
+	return (vec2d)_mm_sub_pd (a.raw, b.raw);
+	//return (vec2d){a.x - b.x, a.y - b.y};
 }
 // test equality of two single precision vectors
 vkvg_inline	bool vec2_equ (vec2 a, vec2 b){
 	return (EQUF(a.x,b.x)&EQUF(a.y,b.y));
 }
+vkvg_inline	bool vec2d_equ (vec2d a, vec2d b){
+	return (EQU(a.x,b.x)&EQU(a.y,b.y));
+}
+
 // compute opposite of single precision vector
 vkvg_inline	void vec2_inv (vec2* v){
 	v->x = -v->x;
