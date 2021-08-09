@@ -79,10 +79,8 @@ uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat) {
 	return pat->references;
 }
 void vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a) {
-	if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID){
-
+	if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID)
 		return;
-	}
 
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
 	vkvg_color_t c = {r,g,b,a};

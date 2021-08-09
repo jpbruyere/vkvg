@@ -24,15 +24,15 @@
 
 //cross platform mutex
 #ifdef _WIN32
-#include "windows.h"
-#include "process.h"
-#define MUTEX HANDLE
+	#include "windows.h"
+	#include "process.h"
+	#define MUTEX HANDLE
 #elif __APPLE__
-#include "pthread.h"
-#define MUTEX pthread_mutex_t
+	#include "pthread.h"
+	#define MUTEX pthread_mutex_t
 #elif __unix__
-#include "pthread.h"
-#define MUTEX pthread_mutex_t
+	#include "pthread.h"
+	#define MUTEX pthread_mutex_t
 #endif
 
 int MUTEX_INIT(MUTEX *mutex);

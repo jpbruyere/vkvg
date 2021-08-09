@@ -24,48 +24,49 @@
 int MUTEX_INIT(MUTEX *mutex)
 {
 #ifdef _WIN32
-    *mutex = CreateMutex(0, FALSE, 0);;
-    return (*mutex==0);
+	*mutex = CreateMutex(0, FALSE, 0);;
+	return (*mutex==0);
 #elif __APPLE__
 #elif __unix__
-    return pthread_mutex_init (mutex, NULL);
+	return pthread_mutex_init (mutex, NULL);
 #else
-    return -1;
+	return -1;
 #endif
 }
 
 int MUTEX_LOCK(MUTEX *mutex)
 {
 #ifdef _WIN32
-    return (WaitForSingleObject(*mutex, INFINITE)==WAIT_FAILED?1:0);
+	return (WaitForSingleObject(*mutex, INFINITE)==WAIT_FAILED?1:0);
 #elif __APPLE__
 #elif __unix__
-    return pthread_mutex_lock( mutex );
+	return pthread_mutex_lock( mutex );
 #else
-    return -1;
+	return -1;
 #endif
 }
 
 int MUTEX_UNLOCK(MUTEX *mutex)
 {
 #ifdef _WIN32
-    return (ReleaseMutex(*mutex)==0);
+	return (ReleaseMutex(*mutex)==0);
 #elif __APPLE__
 #elif __unix__
-    return pthread_mutex_unlock( mutex );
+	return pthread_mutex_unlock( mutex );
 #else
-    return -1;
+	return -1;
 #endif
 }
 
 int MUTEX_DESTROY(MUTEX *mutex)
 {
 #ifdef _WIN32
-    return (CloseHandle(*mutex)==0);
+	return (CloseHandle(*mutex)==0);
 #elif __APPLE__
 #elif __unix__
-    return pthread_mutex_destroy(mutex);
+	return pthread_mutex_destroy(mutex);
 #else
-    return -1;
+	return -1;
 #endif
 }
+

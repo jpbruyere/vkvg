@@ -278,3 +278,44 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 	vkh_image_unmap (stagImg);
 	vkh_image_destroy (stagImg);
 }
+
+void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap){
+	uint32_t stride = surf->width * 4;
+	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
+	VkvgDevice dev = surf->dev;
+
+	//RGBA to blit to, surf img is bgra
+	VkhImage stagImg= vkh_image_create ((VkhDevice)surf->dev,VK_FORMAT_R8G8B8A8_UNORM,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
+										 VMA_MEMORY_USAGE_GPU_TO_CPU,
+										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+
+	VkCommandBuffer cmd = dev->cmd;
+	_wait_and_reset_device_fence (dev);
+
+	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
+						  VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+						  VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+	vkh_image_set_layout (cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
+						  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+						  VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+	VkImageBlit blit = {
+		.srcSubresource = imgSubResLayers,
+		.srcOffsets[1] = {(int32_t)surf->width, (int32_t)surf->height, 1},
+		.dstSubresource = imgSubResLayers,
+		.dstOffsets[1] = {(int32_t)surf->width, (int32_t)surf->height, 1},
+	};
+	vkCmdBlitImage  (cmd,
+					 vkh_image_get_vkimage (surf->img), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					 vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+
+	vkh_cmd_end     (cmd);
+	_submit_cmd     (dev, &cmd, dev->fence);
+	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
+
+	void* img = vkh_image_map (stagImg);
+	memcpy(bitmap, img, surf->height * stride);
+	vkh_image_unmap (stagImg);
+	vkh_image_destroy (stagImg);
+}

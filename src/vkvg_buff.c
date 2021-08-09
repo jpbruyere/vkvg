@@ -24,16 +24,16 @@
 #include "vkvg_device_internal.h"
 
 void vkvg_buffer_create(VkvgDevice pDev, VkBufferUsageFlags usage, VmaMemoryUsage memoryPropertyFlags, VkDeviceSize size, vkvg_buff *buff){
-    buff->pDev = pDev;
-    VkBufferCreateInfo bufCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .usage = usage, .size = size, .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
-    VmaAllocationCreateInfo allocInfo = { .usage = memoryPropertyFlags, .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT };
+	buff->pDev = pDev;
+	VkBufferCreateInfo bufCreateInfo = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.usage = usage, .size = size, .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
+	VmaAllocationCreateInfo allocInfo = { .usage = memoryPropertyFlags, .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT };
 
-    VK_CHECK_RESULT(vmaCreateBuffer (pDev->allocator, &bufCreateInfo, &allocInfo, &buff->buffer, &buff->alloc, &buff->allocInfo));
+	VK_CHECK_RESULT(vmaCreateBuffer (pDev->allocator, &bufCreateInfo, &allocInfo, &buff->buffer, &buff->alloc, &buff->allocInfo));
 }
 
 void vkvg_buffer_destroy(vkvg_buff *buff){
-    vmaDestroyBuffer (buff->pDev->allocator, buff->buffer, buff->alloc);
+	vmaDestroyBuffer (buff->pDev->allocator, buff->buffer, buff->alloc);
 }
 

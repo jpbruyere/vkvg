@@ -67,12 +67,13 @@ extern "C" {
 #include <stdbool.h>
 
 #ifndef vkvg_public
-# if defined (_MSC_VER) && !defined (VKVG_STATIC_BUILD)
-#  define vkvg_public __declspec(dllimport)
-# else
-#  define vkvg_public
-# endif
+	#if (defined(_WIN32) || defined(_WIN64)) && !defined (VKVG_STATIC_BUILD)
+		#define vkvg_public __declspec(dllimport)
+	#else
+		#define vkvg_public __attribute__((visibility("default")))
+	#endif
 #endif
+
 
 #define VKVG_LOG_ERR		0x10
 #define VKVG_LOG_DEBUG		0x20
@@ -678,6 +679,13 @@ uint32_t vkvg_surface_get_height (VkvgSurface surf);
  */
 vkvg_public
 void vkvg_surface_write_to_png (VkvgSurface surf, const char* path);
+/**
+ * @brief Save surface to memory
+ * @param The surface to save
+ * @param A valid pointer on cpu memory large enough to contain surface pixels (stride * height)
+ */
+vkvg_public
+void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap);
 /**
  * @brief Explicitly resolve a multisampled surface.
  *
