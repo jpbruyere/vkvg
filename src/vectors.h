@@ -26,20 +26,26 @@
 #include <immintrin.h>
 
 typedef union {
-	float v2si __attribute__ ((vector_size (8)));
 	struct {
 		float x;
 		float y;
 	};
 }vec2;
 
-typedef union {
-	__m128d raw;// __attribute__ ((vector_size (16)));
-	struct {
+#ifdef __SSE2__
+	typedef union {
+		__m128d raw;
+		struct {
+			double x;
+			double y;
+		};
+	}vec2d;
+#else
+	typedef struct {
 		double x;
 		double y;
-	};
-}vec2d;
+	}vec2d;
+#endif
 
 typedef struct {
 	float x;
@@ -79,6 +85,7 @@ typedef struct {
 	int16_t x;
 	int16_t y;
 }vec2i16;
+
 // compute length of float vector 2d
 vkvg_inline	float vec2_length(vec2 v){
 	return sqrtf (v.x*v.x + v.y*v.y);
@@ -111,27 +118,53 @@ vkvg_inline	vec2 vec2_norm(vec2 a)
 	float m = sqrtf (a.x*a.x + a.y*a.y);
 	return (vec2){a.x/m, a.y/m};
 }
-// normalize double vector
-vkvg_inline	vec2d vec2d_norm(vec2d a)
-{
-	double m = sqrt (a.x*a.x + a.y*a.y);
-	return (vec2d){a.x/m, a.y/m};
-}
-// multiply 2d vector by scalar
-vkvg_inline	vec2d vec2d_mult(vec2d a, double m){
-	return (vec2d){a.x*m,a.y*m};
-}
 // devide 2d vector by scalar
 vkvg_inline	vec2 vec2_div(vec2 a, float m){
 	return (vec2){a.x/m,a.y/m};
 }
-vkvg_inline	vec2d vec2d_div(vec2d a, double m){
-	return (vec2d)_mm_div_pd (a.raw, _mm_set_pd1 (m));
-	//return (vec2d){a.x/m,a.y/m};
-}
 // multiply 2d vector by scalar
 vkvg_inline	vec2 vec2_mult(vec2 a, float m){
 	return (vec2){a.x*m,a.y*m};
+}
+// compute sum of two double precision vectors
+vkvg_inline	vec2d vec2d_add (vec2d a, vec2d b){
+#ifdef __SSE2__
+	return (vec2d)_mm_add_pd (a.raw, b.raw);
+#else
+	return (vec2d){a.x + b.x, a.y + b.y};
+#endif
+}
+// compute subbstraction of two double precision vectors
+vkvg_inline	vec2d vec2d_sub (vec2d a, vec2d b){
+#ifdef __SSE2__
+	return (vec2d)_mm_sub_pd (a.raw, b.raw);
+#else
+	return (vec2d){a.x - b.x, a.y - b.y};
+#endif
+}
+// multiply 2d vector by scalar
+vkvg_inline	vec2d vec2d_mult(vec2d a, double m){
+#ifdef __SSE2__
+	return (vec2d)_mm_mul_pd (a.raw, _mm_set_pd1 (m));
+#else
+	return (vec2d){a.x*m,a.y*m};
+#endif
+
+}
+vkvg_inline	vec2d vec2d_div(vec2d a, double m){
+#ifdef __SSE2__
+	return (vec2d)_mm_div_pd (a.raw, _mm_set_pd1 (m));
+#else
+	return (vec2d){a.x/m,a.y/m};
+#endif
+}
+
+// normalize double vector
+vkvg_inline	vec2d vec2d_norm(vec2d a)
+{
+	double m = sqrt (a.x*a.x + a.y*a.y);
+	return (vec2d)vec2d_div (a, m);
+	//return (vec2d){a.x/m, a.y/m};
 }
 // compute perpendicular vector
 vkvg_inline	vec2d vec2d_perp (vec2d a){
@@ -149,19 +182,9 @@ vkvg_inline	vec2 vec2d_to_vec2(vec2d vd){
 vkvg_inline	vec2 vec2_add (vec2 a, vec2 b){
 	return (vec2){a.x + b.x, a.y + b.y};
 }
-// compute sum of two double precision vectors
-vkvg_inline	vec2d vec2d_add (vec2d a, vec2d b){
-	return (vec2d)_mm_add_pd (a.raw, b.raw);
-	//return (vec2d){a.x + b.x, a.y + b.y};
-}
 // compute subbstraction of two single precision vectors
 vkvg_inline	vec2 vec2_sub (vec2 a, vec2 b){
 	return (vec2){a.x - b.x, a.y - b.y};
-}
-// compute subbstraction of two double precision vectors
-vkvg_inline	vec2d vec2d_sub (vec2d a, vec2d b){
-	return (vec2d)_mm_sub_pd (a.raw, b.raw);
-	//return (vec2d){a.x - b.x, a.y - b.y};
 }
 // test equality of two single precision vectors
 vkvg_inline	bool vec2_equ (vec2 a, vec2 b){

@@ -86,7 +86,7 @@ typedef struct {
 	uint32_t			fcNamesCount;	/* Count of resolved names by fontConfig */
 	char*				fontFile;		/* Font file full path*/
 	uint32_t			sizeCount;		/* available font size loaded */
-	_vkvg_font_t*		sizes			/* loaded font size array */
+	_vkvg_font_t*		sizes;			/* loaded font size array */
 }_vkvg_font_identity_t;
 
 // Font cache global structure, entry point for all font related operations.

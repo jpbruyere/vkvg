@@ -87,11 +87,11 @@ bool _check_point_array (VkvgContext ctx){
 	if (ctx->sizePoints - ctx->pointCount > VKVG_ARRAY_THRESHOLD)
 		return false;
 	ctx->sizePoints += VKVG_PTS_SIZE;
-	vec2* tmp = (vec2*) realloc (ctx->points, (size_t)ctx->sizePoints * sizeof(vec2));
+	vec2d* tmp = (vec2d*) realloc (ctx->points, (size_t)ctx->sizePoints * sizeof(vec2d));
 	LOG(VKVG_LOG_DBG_ARRAYS, "resize Points: new size(point): %u Ptr: %p -> %p\n", ctx->sizePoints, ctx->points, tmp);
 	if (tmp == NULL){
 		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(VKVG_LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePoints * sizeof(vec2));
+		LOG(VKVG_LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePoints * sizeof(vec2d));
 		_clear_path (ctx);
 		return true;
 	}
@@ -733,7 +733,7 @@ void _init_descriptor_sets (VkvgContext ctx){
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
 //populate vertice buff for stroke
-float _build_vb_step (vkvg_context* ctx, double hw, vec2d pL, vec2d p0, vec2d pR, bool isCurve){
+float _build_vb_step (vkvg_context* restrict ctx, double hw, vec2d pL, vec2d p0, vec2d pR, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 
 	vec2d v0 = vec2d_sub(p0, pL);
@@ -868,7 +868,7 @@ bool ptInTriangle(vec2d p, vec2d p0, vec2d p1, vec2d p2) {
 	return (s>=0) && (t>=0) && (s+t<=D);
 }
 
-void _free_ctx_save (vkvg_context_save_t* sav){
+void _free_ctx_save (vkvg_context_save_t* restrict sav){
 	if (sav->dashCount > 0)
 		free (sav->dashes);
 	free(sav->selectedFontName);
@@ -885,7 +885,7 @@ void _free_ctx_save (vkvg_context_save_t* sav){
 #define CURVE_ANGLE_TOLERANCE_EPSILON 0.001
 //no floating point arithmetic operation allowed in macro.
 #pragma warning(disable:4127)
-void _recursive_bezier (VkvgContext ctx,
+void _recursive_bezier (VkvgContext restrict ctx,
 						double x1, double y1, double x2, double y2,
 						double x3, double y3, double x4, double y4,
 						unsigned level) {

@@ -48,7 +48,7 @@
 	#define M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
 	#define M_SQRT2		1.41421356237309504880	/* sqrt(2) */
 	#define M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
-#endif*/
+#endif
 
 #ifdef DEBUG
 #define LOG(level,...) (vkvg_log_level & level) ? fprintf (stdout, __VA_ARGS__):true;
@@ -56,10 +56,12 @@
 #define LOG
 #endif
 
+
+
 #define PATH_CLOSED_BIT     0x80000000              /* most significant bit of path elmts is closed/open path state */
 #define PATH_HAS_CURVES_BIT 0x40000000              /* 2rd most significant bit of path elmts is curved status
-                                                     * for main path, this indicate that curve datas are present.
-                                                     * For segments, this indicate that the segment is curved or not */
+													 * for main path, this indicate that curve datas are present.
+													 * For segments, this indicate that the segment is curved or not */
 #define PATH_ELT_MASK       0x3FFFFFFF              /* Bit mask for fetching path element value */
 
 #define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
@@ -67,7 +69,6 @@
 #define ROUND_DOWN(v,p) (floor(v * p) / p)
 #define EQUF(a, b) (fabsf(a-b)<=FLT_EPSILON)
 #define EQU(a, b) (fabs(a-b)<=DBL_EPSILON)
-
 
 #include "cross_os.h"
 #include "vectors.h"
@@ -78,6 +79,6 @@
 //used to store clipping bit on context saving. 8 bit stencil will allow 6 save/restore layer
 #define FB_COLOR_FORMAT VK_FORMAT_B8G8R8A8_UNORM
 #define VKVG_SURFACE_IMGS_REQUIREMENTS VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|\
-    VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_FORMAT_FEATURE_BLIT_SRC_BIT
+	VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_FORMAT_FEATURE_BLIT_SRC_BIT
 #define VKVG_FENCE_TIMEOUT UINT64_MAX
 #endif
