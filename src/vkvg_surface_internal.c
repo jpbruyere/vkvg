@@ -25,7 +25,7 @@
 #include "vkh_image.h"
 
 void _explicit_ms_resolve (VkvgSurface surf){
-	VkvgDevice      dev = surf->dev;
+	VkvgDevice		dev = surf->dev;
 	VkCommandBuffer cmd = dev->cmd;
 
 	_wait_and_reset_device_fence (dev);
@@ -58,7 +58,7 @@ void _explicit_ms_resolve (VkvgSurface surf){
 
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 {
-	VkvgDevice      dev = surf->dev;
+	VkvgDevice		dev = surf->dev;
 	VkCommandBuffer cmd = dev->cmd;
 
 	_wait_and_reset_device_fence (dev);
@@ -127,7 +127,7 @@ void _create_surface_secondary_images (VkvgSurface surf) {
 		vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->imgMS), "SURF MS color SAMPLER");
 #endif
 	}
-	surf->stencil = vkh_image_ms_create((VkhDevice)surf->dev,surf->dev->stencilFormat,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,                                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+	surf->stencil = vkh_image_ms_create((VkhDevice)surf->dev,surf->dev->stencilFormat,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,									 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 	vkh_image_create_descriptor(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST,
 								VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
@@ -162,11 +162,11 @@ void _create_framebuffer (VkvgSurface surf) {
 }
 void _create_surface_images (VkvgSurface surf) {
 
-	_create_surface_main_image      (surf);
+	_create_surface_main_image		(surf);
 	_create_surface_secondary_images(surf);
-	_create_framebuffer             (surf);
+	_create_framebuffer				(surf);
 
-	_clear_surface              (surf, VK_IMAGE_ASPECT_STENCIL_BIT);
+	_clear_surface				(surf, VK_IMAGE_ASPECT_STENCIL_BIT);
 #if defined(DEBUG) && defined(ENABLE_VALIDATION)
 	vkh_image_set_name(surf->img, "surfImg");
 	vkh_image_set_name(surf->imgMS, "surfImgMS");

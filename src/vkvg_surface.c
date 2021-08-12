@@ -63,8 +63,8 @@ VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
 							 VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 
 	_create_surface_secondary_images   (surf);
-	_create_framebuffer         (surf);
-	_clear_surface              (surf, VK_IMAGE_ASPECT_STENCIL_BIT);
+	_create_framebuffer			(surf);
+	_clear_surface				(surf, VK_IMAGE_ASPECT_STENCIL_BIT);
 
 	surf->references = 1;
 	vkvg_device_reference (surf->dev);
@@ -129,7 +129,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 		.dstSubresource = imgSubResLayers,
 		.dstOffsets[1] = {(int32_t)surf->width, (int32_t)surf->height, 1},
 	};
-	vkCmdBlitImage  (cmd,
+	vkCmdBlitImage	(cmd,
 					 vkh_image_get_vkimage (stagImg), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 					 vkh_image_get_vkimage (tmpImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
@@ -137,21 +137,21 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 						  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 						  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
-	vkh_cmd_end     (cmd);
-	_submit_cmd     (dev, &cmd, dev->fence);
+	vkh_cmd_end		(cmd);
+	_submit_cmd		(dev, &cmd, dev->fence);
 
 	//don't reset fence after completion as this is the last cmd. (signaled idle fence)
 	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
 	vkvg_buffer_destroy (&buff);
-	vkh_image_destroy   (stagImg);
+	vkh_image_destroy	(stagImg);
 
 	surf->new = false;
 
 	//create tmp context with rendering pipeline to create the multisample img
 	VkvgContext ctx = vkvg_create (surf);
 
-/*    VkClearAttachment ca = {VK_IMAGE_ASPECT_COLOR_BIT,0, { 0.0f, 0.0f, 0.0f, 0.0f }};
+/*	  VkClearAttachment ca = {VK_IMAGE_ASPECT_COLOR_BIT,0, { 0.0f, 0.0f, 0.0f, 0.0f }};
 	VkClearRect cr = {{{0,0},{surf->width,surf->height}},0,1};
 	vkCmdClearAttachments(ctx->cmd, 1, &ca, 1, &cr);*/
 
@@ -163,10 +163,10 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 	_update_descriptor_set (ctx, tmpImg, ctx->dsSrc);
 	_ensure_renderpass_is_started  (ctx);
 
-	vkvg_paint          (ctx);
-	vkvg_destroy        (ctx);
+	vkvg_paint			(ctx);
+	vkvg_destroy		(ctx);
 
-	vkh_image_destroy   (tmpImg);
+	vkh_image_destroy	(tmpImg);
 
 	surf->references = 1;
 	vkvg_device_reference (surf->dev);
@@ -236,8 +236,7 @@ uint32_t vkvg_surface_get_height (VkvgSurface surf) {
 	return surf->height;
 }
 
-void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
-	uint32_t stride = surf->width * 4;
+void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){	
 	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
 	VkvgDevice dev = surf->dev;
 
@@ -263,15 +262,17 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 		.dstSubresource = imgSubResLayers,
 		.dstOffsets[1] = {(int32_t)surf->width, (int32_t)surf->height, 1},
 	};
-	vkCmdBlitImage  (cmd,
+	vkCmdBlitImage	(cmd,
 					 vkh_image_get_vkimage (surf->img), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 					 vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
-	vkh_cmd_end     (cmd);
-	_submit_cmd     (dev, &cmd, dev->fence);
+	vkh_cmd_end		(cmd);
+	_submit_cmd		(dev, &cmd, dev->fence);
 	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
 	void* img = vkh_image_map (stagImg);
+
+	uint64_t stride = vkh_image_get_stride(stagImg);
 
 	stbi_write_png (path, (int32_t)surf->width, (int32_t)surf->height, 4, img, (int32_t)stride);
 
@@ -280,12 +281,11 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 }
 
 void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap){
-	uint32_t stride = surf->width * 4;
 	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
 	VkvgDevice dev = surf->dev;
 
 	//RGBA to blit to, surf img is bgra
-	VkhImage stagImg= vkh_image_create ((VkhDevice)surf->dev,VK_FORMAT_R8G8B8A8_UNORM,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
+	VkhImage stagImg= vkh_image_create ((VkhDevice)surf->dev,VK_FORMAT_B8G8R8A8_UNORM ,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
 										 VMA_MEMORY_USAGE_GPU_TO_CPU,
 										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
@@ -306,16 +306,25 @@ void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap
 		.dstSubresource = imgSubResLayers,
 		.dstOffsets[1] = {(int32_t)surf->width, (int32_t)surf->height, 1},
 	};
-	vkCmdBlitImage  (cmd,
+	vkCmdBlitImage	(cmd,
 					 vkh_image_get_vkimage (surf->img), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 					 vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
-	vkh_cmd_end     (cmd);
-	_submit_cmd     (dev, &cmd, dev->fence);
+	vkh_cmd_end		(cmd);
+	_submit_cmd		(dev, &cmd, dev->fence);
 	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
+	uint64_t stride = vkh_image_get_stride(stagImg);
+	uint32_t dest_stride = surf->width * 4;
+
 	void* img = vkh_image_map (stagImg);
-	memcpy(bitmap, img, surf->height * stride);
+	void* row = bitmap;
+	for (uint32_t y = 0; y < surf->height; y++) {
+		memcpy(row, img, dest_stride);
+		row += dest_stride;
+		img += stride;
+	}
+
 	vkh_image_unmap (stagImg);
 	vkh_image_destroy (stagImg);
 }

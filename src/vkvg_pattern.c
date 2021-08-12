@@ -119,4 +119,3 @@ void vkvg_pattern_destroy(VkvgPattern pat)
 
 	free(pat);
 }
-

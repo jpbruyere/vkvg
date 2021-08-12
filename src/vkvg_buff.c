@@ -36,4 +36,3 @@ void vkvg_buffer_create(VkvgDevice pDev, VkBufferUsageFlags usage, VmaMemoryUsag
 void vkvg_buffer_destroy(vkvg_buff *buff){
 	vmaDestroyBuffer (buff->pDev->allocator, buff->buffer, buff->alloc);
 }
-

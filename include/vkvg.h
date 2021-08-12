@@ -40,26 +40,26 @@ extern "C" {
  */
 
 /*! @file vkvg.h
- *  @brief The header of the VKVG library.
+ *	@brief The header of the VKVG library.
  *
- *  This is the header file of the VKVG library.  It defines all its types and
- *  declares all its functions.
+ *	This is the header file of the VKVG library.  It defines all its types and
+ *	declares all its functions.
  *
- *  For more information about how to use this file, see @ref build_include.
+ *	For more information about how to use this file, see @ref build_include.
  */
 /*! @defgroup surface Surface
- *  @brief Functions and types related to VKVG surface.
+ *	@brief Functions and types related to VKVG surface.
  *
- *  This is the reference documentation for creating, using and destroying VKVG
- *  Surfaces used as backend for drawing operations.
+ *	This is the reference documentation for creating, using and destroying VKVG
+ *	Surfaces used as backend for drawing operations.
  */
 /*! @defgroup context Context
- *  @brief Functions and types related to VKVG contexts.
+ *	@brief Functions and types related to VKVG contexts.
  *
- *  This is the reference documentation for VKVG contexts used to draw on @ref surface.
+ *	This is the reference documentation for VKVG contexts used to draw on @ref surface.
  */
 /*! @defgroup path Path creation and manipulation reference.
- *  @brief Functions and types related to path edition.
+ *	@brief Functions and types related to path edition.
  */
 
 #include <vulkan/vulkan.h>
@@ -253,7 +253,7 @@ typedef struct _vkvg_context_t* VkvgContext;
  *
  * A #VkvgSurface represents an image, either as the destination
  * of a drawing operation or as source when drawing onto another
- * surface.  To draw to a #VkvgSurface, create a vkvg context
+ * surface.	 To draw to a #VkvgSurface, create a vkvg context
  * with the surface as the target, using #vkvg_create().
  * hidden internals.
  *
@@ -267,7 +267,7 @@ typedef struct _vkvg_surface_t* VkvgSurface;
  *
  * A #VkvgDevice is required for creating new surfaces.
  */
-typedef struct _vkvg_device_t*  VkvgDevice;
+typedef struct _vkvg_device_t*	VkvgDevice;
 /**
  * @brief Opaque pointer on a Vkvg pattern structure.
  * @ingroup pattern
@@ -284,12 +284,12 @@ typedef struct _vkvg_pattern_t* VkvgPattern;
  * @ingroup device
  */
 typedef struct {
-	uint32_t	sizePoints;     /**< maximum point array size					*/
-	uint32_t	sizePathes;     /**< maximum path array size					*/
-	uint32_t	sizeVertices;   /**< maximum size of host vertice cache			*/
-	uint32_t	sizeIndices;    /**< maximum size of host index cache			*/
-	uint32_t	sizeVBO;        /**< maximum size of vulkan vertex buffer		*/
-	uint32_t	sizeIBO;        /**< maximum size of vulkan index buffer		*/
+	uint32_t	sizePoints;		/**< maximum point array size					*/
+	uint32_t	sizePathes;		/**< maximum path array size					*/
+	uint32_t	sizeVertices;	/**< maximum size of host vertice cache			*/
+	uint32_t	sizeIndices;	/**< maximum size of host index cache			*/
+	uint32_t	sizeVBO;		/**< maximum size of vulkan vertex buffer		*/
+	uint32_t	sizeIBO;		/**< maximum size of vulkan index buffer		*/
 } vkvg_debug_stats_t;
 
 vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev);

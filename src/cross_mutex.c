@@ -69,4 +69,3 @@ int MUTEX_DESTROY(MUTEX *mutex)
 	return -1;
 #endif
 }
-

@@ -55,14 +55,14 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		return NULL;
 	}
 
-	ctx->sizePoints     = VKVG_PTS_SIZE;
-	ctx->sizeVertices   = ctx->sizeVBO = VKVG_VBO_SIZE;
-	ctx->sizeIndices    = ctx->sizeIBO = VKVG_IBO_SIZE;
-	ctx->sizePathes     = VKVG_PATHES_SIZE;
-	ctx->lineWidth      = 1;
-	ctx->curOperator    = VKVG_OPERATOR_OVER;
-	ctx->curFillRule    = VKVG_FILL_RULE_NON_ZERO;
-	ctx->pSurf          = surf;
+	ctx->sizePoints		= VKVG_PTS_SIZE;
+	ctx->sizeVertices	= ctx->sizeVBO = VKVG_VBO_SIZE;
+	ctx->sizeIndices	= ctx->sizeIBO = VKVG_IBO_SIZE;
+	ctx->sizePathes		= VKVG_PATHES_SIZE;
+	ctx->lineWidth		= 1;
+	ctx->curOperator	= VKVG_OPERATOR_OVER;
+	ctx->curFillRule	= VKVG_FILL_RULE_NON_ZERO;
+	ctx->pSurf			= surf;
 
 	ctx->bounds = (VkRect2D) {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
 	ctx->pushConsts = (push_constants) {
@@ -129,16 +129,16 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	//for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
 	ctx->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
-	_create_vertices_buff   (ctx);
-	_create_gradient_buff   (ctx);
-	_create_cmd_buff        (ctx);
-	_createDescriptorPool   (ctx);
-	_init_descriptor_sets   (ctx);
-	_update_descriptor_set  (ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
-	_update_descriptor_set  (ctx, surf->dev->emptyImg, ctx->dsSrc);
+	_create_vertices_buff	(ctx);
+	_create_gradient_buff	(ctx);
+	_create_cmd_buff		(ctx);
+	_createDescriptorPool	(ctx);
+	_init_descriptor_sets	(ctx);
+	_update_descriptor_set	(ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
+	_update_descriptor_set	(ctx, surf->dev->emptyImg, ctx->dsSrc);
 	_update_gradient_desc_set(ctx);
 
-	_clear_path             (ctx);
+	_clear_path				(ctx);
 
 	ctx->cmd = ctx->cmdBuffers[0];//current recording buffer
 
@@ -230,12 +230,12 @@ void vkvg_destroy (VkvgContext ctx)
 
 #endif
 
-	vkDestroyFence      (dev, ctx->flushFence,NULL);
+	vkDestroyFence		(dev, ctx->flushFence,NULL);
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
 	VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc, ctx->dsGrad};
-	vkFreeDescriptorSets    (dev, ctx->descriptorPool, 3, dss);
+	vkFreeDescriptorSets	(dev, ctx->descriptorPool, 3, dss);
 
 	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
 
@@ -247,7 +247,7 @@ void vkvg_destroy (VkvgContext ctx)
 	free(ctx->indexCache);
 
 	//TODO:check this for source counter
-	//vkh_image_destroy   (ctx->source);
+	//vkh_image_destroy	  (ctx->source);
 
 	free(ctx->selectedFontName);
 	free(ctx->pathes);
@@ -511,8 +511,8 @@ void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 
 	vkvg_close_path (ctx);
 }
-static const VkClearAttachment clearStencil        = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {{{0}}}};
-static const VkClearAttachment clearColorAttach    = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
+static const VkClearAttachment clearStencil		   = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {{{0}}}};
+static const VkClearAttachment clearColorAttach	   = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
 
 void vkvg_reset_clip (VkvgContext ctx){
 	if (ctx->status)
@@ -574,18 +574,18 @@ void vkvg_clip_preserve (VkvgContext ctx){
 
 	if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
 		_poly_fill (ctx);
-		CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 	}else{
-		CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
-		CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+		CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-		CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+		CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 		_fill_ec(ctx);
 		_emit_draw_cmd_undrawn_vertices(ctx);
 	}
-	CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+	CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-	CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
+	CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
 
 	_draw_full_screen_quad (ctx, false);
 
@@ -696,11 +696,11 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) 
 	}
 }
 
-static bool     dashOn          = true;
-static uint32_t curDash         = 0;    //current dash index
-static float    curDashOffset   = 0.f;  //cur dash offset between defined path point and last dash segment(on/off) start
+static bool		dashOn			= true;
+static uint32_t curDash			= 0;	//current dash index
+static float	curDashOffset	= 0.f;	//cur dash offset between defined path point and last dash segment(on/off) start
 static float	totDashLength	= 0;	//total length of dashes
-static vec2     normal          = {0};
+static vec2		normal			= {0};
 
 float _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR, bool isCurve) {
 	if (!dashOn)//we test in fact the next dash start, if dashOn = true => next segment is a void.
@@ -766,7 +766,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		if (ctx->dashCount > 0) {
 			//init dash stroke
 			dashOn = true;
-			curDash = 0;    //current dash index
+			curDash = 0;	//current dash index
 
 			//limit offset to total length of dashes
 			totDashLength = 0;
@@ -776,7 +776,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 				ctx->status = VKVG_STATUS_INVALID_DASH;
 				return;
 			}
-			curDashOffset = fmodf(ctx->dashOffset, totDashLength);  //cur dash offset between defined path point and last dash segment(on/off) start
+			curDashOffset = fmodf(ctx->dashOffset, totDashLength);	//cur dash offset between defined path point and last dash segment(on/off) start
 			iL = lastPathPointIdx;
 		} else if (_path_is_closed(ctx,ptrPath)){
 			iL = lastPathPointIdx;
@@ -890,7 +890,7 @@ void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
 	if (ctx->status)
 		return;
 	_update_cur_pattern (ctx, pat);
-	vkvg_pattern_reference  (pat);
+	vkvg_pattern_reference	(pat);
 }
 void vkvg_set_line_width (VkvgContext ctx, float width){
 	ctx->lineWidth = width;
@@ -1068,7 +1068,7 @@ void vkvg_save (VkvgContext ctx){
 								.extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
 		vkCmdCopyImage(ctx->cmd,
 					   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-					   vkh_image_get_vkimage (savStencil),       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					   vkh_image_get_vkimage (savStencil),		 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 					   1, &cregion);
 
 		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
@@ -1091,11 +1091,11 @@ void vkvg_save (VkvgContext ctx){
 	vkh_cmd_label_start(ctx->cmd, "save rp", DBG_LAB_COLOR_SAV);
 #endif
 
-	CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+	CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 
-	CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
+	CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-	CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
+	CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
 
 	_draw_full_screen_quad (ctx, false);
 
@@ -1107,15 +1107,15 @@ void vkvg_save (VkvgContext ctx){
 #endif
 
 	sav->dashOffset = ctx->dashOffset;
-	sav->dashCount  = ctx->dashCount;
+	sav->dashCount	= ctx->dashCount;
 	if (ctx->dashCount > 0) {
 		sav->dashes = (float*)malloc (sizeof(float) * ctx->dashCount);
 		memcpy (sav->dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
 	}
-	sav->lineWidth  = ctx->lineWidth;
+	sav->lineWidth	= ctx->lineWidth;
 	sav->curOperator= ctx->curOperator;
-	sav->lineCap    = ctx->lineCap;
-	sav->lineWidth  = ctx->lineWidth;
+	sav->lineCap	= ctx->lineCap;
+	sav->lineWidth	= ctx->lineWidth;
 	sav->curFillRule= ctx->curFillRule;
 
 	sav->selectedCharSize = ctx->selectedCharSize;
@@ -1124,10 +1124,10 @@ void vkvg_save (VkvgContext ctx){
 
 	sav->currentFont  = ctx->currentFont;
 	sav->textDirection= ctx->textDirection;
-	sav->pushConsts   = ctx->pushConsts;
-	//sav->pattern      = ctx->pattern;//TODO:pattern sav must be imutable (copy?)
+	sav->pushConsts	  = ctx->pushConsts;
+	//sav->pattern		= ctx->pattern;//TODO:pattern sav must be imutable (copy?)
 
-	sav->pNext      = ctx->pSavedCtxs;
+	sav->pNext		= ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav;
 	ctx->curSavBit++;
 
@@ -1151,7 +1151,7 @@ void vkvg_restore (VkvgContext ctx){
 	vkvg_context_save_t* sav = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav->pNext;
 
-	ctx->pushConsts   = sav->pushConsts;
+	ctx->pushConsts	  = sav->pushConsts;
 
 	/*if (sav->pattern)
 		_update_cur_pattern (ctx, sav->pattern);*/
@@ -1166,11 +1166,11 @@ void vkvg_restore (VkvgContext ctx){
 	vkh_cmd_label_start(ctx->cmd, "restore rp", DBG_LAB_COLOR_SAV);
 #endif
 
-	CmdBindPipeline         (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+	CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 
-	CmdSetStencilReference  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
+	CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
-	CmdSetStencilWriteMask  (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+	CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
 	_draw_full_screen_quad (ctx, false);
 
@@ -1206,7 +1206,7 @@ void vkvg_restore (VkvgContext ctx){
 								.dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
 								.extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
 		vkCmdCopyImage(ctx->cmd,
-					   vkh_image_get_vkimage (savStencil),       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					   vkh_image_get_vkimage (savStencil),		 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 					   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 					   1, &cregion);
 		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
@@ -1226,16 +1226,16 @@ void vkvg_restore (VkvgContext ctx){
 	ctx->dashOffset = sav->dashOffset;
 	if (ctx->dashCount > 0)
 		free (ctx->dashes);
-	ctx->dashCount  = sav->dashCount;
+	ctx->dashCount	= sav->dashCount;
 	if (ctx->dashCount > 0) {
 		ctx->dashes = (float*)malloc (sizeof(float) * ctx->dashCount);
 		memcpy (ctx->dashes, sav->dashes, sizeof(float) * ctx->dashCount);
 	}
 
-	ctx->lineWidth  = sav->lineWidth;
+	ctx->lineWidth	= sav->lineWidth;
 	ctx->curOperator= sav->curOperator;
-	ctx->lineCap    = sav->lineCap;
-	ctx->lineJoin   = sav->lineJoint;
+	ctx->lineCap	= sav->lineCap;
+	ctx->lineJoin	= sav->lineJoint;
 	ctx->curFillRule= sav->curFillRule;
 
 	ctx->selectedCharSize = sav->selectedCharSize;
