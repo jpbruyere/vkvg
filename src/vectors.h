@@ -23,14 +23,10 @@
 #define VKVG_VECTORS_H
 
 #include "vkvg_internal.h"
-#include <immintrin.h>
 
-typedef union {
-	float v2si __attribute__ ((vector_size (8)));
-	struct {
+typedef struct {
 		float x;
 		float y;
-	};
 }vec2;
 
 typedef struct {

@@ -26,14 +26,6 @@
 extern "C" {
 #endif
 
-#ifndef vkvg_public
-# if defined (_MSC_VER) && ! defined (VKVG_STATIC_BUILD)
-#  define vkvg_public __declspec(dllimport)
-# else
-#  define vkvg_public
-# endif
-#endif
-
 /*! @defgroup nsvg Nano SVG
  * @brief Render SVG drawings
  *

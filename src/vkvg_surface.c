@@ -317,8 +317,8 @@ void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap
 	uint64_t stride = vkh_image_get_stride(stagImg);
 	uint32_t dest_stride = surf->width * 4;
 
-	void* img = vkh_image_map (stagImg);
-	void* row = bitmap;
+	char* img = vkh_image_map (stagImg);
+	char* row = bitmap;
 	for (uint32_t y = 0; y < surf->height; y++) {
 		memcpy(row, img, dest_stride);
 		row += dest_stride;

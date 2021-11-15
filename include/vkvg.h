@@ -67,10 +67,14 @@ extern "C" {
 #include <stdbool.h>
 
 #ifndef vkvg_public
-	#if (defined(_WIN32) || defined(_WIN64)) && !defined (VKVG_STATIC_BUILD)
-		#define vkvg_public __declspec(dllimport)
+	#ifndef VKVG_STATIC_BUILD
+		#if (defined(_WIN32) || defined(_WIN64))
+			#define vkvg_public __declspec(dllimport)
+		#else
+			#define vkvg_public __attribute__((visibility("default")))
+		#endif
 	#else
-		#define vkvg_public __attribute__((visibility("default")))
+		#define vkvg_public 
 	#endif
 #endif
 
