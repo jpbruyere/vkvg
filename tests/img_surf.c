@@ -1,8 +1,9 @@
 #include "test.h"
+
+const char* imgPath = "data/miroir.jpg";
 void paint () {
 	VkvgContext ctx = vkvg_create(surf);
-	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
-	//vkvg_surface_write_to_png(imgSurf, "/tmp/test.png");
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
 
 	vkvg_set_source_surface(ctx, imgSurf, 0, 0);
 	vkvg_paint(ctx);
@@ -12,7 +13,7 @@ void paint () {
 }
 void paint_offset () {
 	VkvgContext ctx = vkvg_create(surf);
-	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
 
 	vkvg_set_source_surface(ctx, imgSurf, 100, 100);
 	vkvg_paint(ctx);
@@ -23,7 +24,7 @@ void paint_offset () {
 void paint_with_scale(){
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_scale (ctx, 0.2f,0.2f);
-	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
 	vkvg_set_source_surface(ctx, imgSurf, 0, 0);
 
 	vkvg_paint(ctx);
@@ -34,7 +35,7 @@ void paint_with_scale(){
 
 void paint_pattern () {
 	VkvgContext ctx = vkvg_create(surf);
-	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
 	VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
 	vkvg_set_source(ctx, pat);
 	vkvg_paint(ctx);
@@ -44,7 +45,7 @@ void paint_pattern () {
 }
 void paint_patt_repeat () {
 	VkvgContext ctx = vkvg_create(surf);
-	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
 	VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
 	vkvg_pattern_set_extend(pat,VKVG_EXTEND_REPEAT);
 	vkvg_set_source(ctx, pat);
@@ -56,7 +57,7 @@ void paint_patt_repeat () {
 void paint_patt_repeat_scalled () {
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_scale (ctx, 0.2f,0.2f);
-	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
 	VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
 	vkvg_pattern_set_extend(pat,VKVG_EXTEND_REPEAT);
 	vkvg_set_source(ctx, pat);
@@ -67,7 +68,7 @@ void paint_patt_repeat_scalled () {
 }
 void paint_patt_pad () {
 	VkvgContext ctx = vkvg_create(surf);
-	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
 	VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
 	vkvg_pattern_set_extend(pat,VKVG_EXTEND_PAD);
 	vkvg_set_source(ctx, pat);
@@ -80,7 +81,7 @@ void paint_patt_pad () {
 void test(){
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_set_fill_rule(ctx,VKVG_FILL_RULE_EVEN_ODD);
-	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/miroir.jpg");
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
 
 	vkvg_translate(ctx,200,200);
 	//vkvg_rotate(ctx,M_PI_4);

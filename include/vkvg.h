@@ -40,26 +40,26 @@ extern "C" {
  */
 
 /*! @file vkvg.h
- *  @brief The header of the VKVG library.
+ *	@brief The header of the VKVG library.
  *
- *  This is the header file of the VKVG library.  It defines all its types and
- *  declares all its functions.
+ *	This is the header file of the VKVG library.  It defines all its types and
+ *	declares all its functions.
  *
- *  For more information about how to use this file, see @ref build_include.
+ *	For more information about how to use this file, see @ref build_include.
  */
 /*! @defgroup surface Surface
- *  @brief Functions and types related to VKVG surface.
+ *	@brief Functions and types related to VKVG surface.
  *
- *  This is the reference documentation for creating, using and destroying VKVG
- *  Surfaces used as backend for drawing operations.
+ *	This is the reference documentation for creating, using and destroying VKVG
+ *	Surfaces used as backend for drawing operations.
  */
 /*! @defgroup context Context
- *  @brief Functions and types related to VKVG contexts.
+ *	@brief Functions and types related to VKVG contexts.
  *
- *  This is the reference documentation for VKVG contexts used to draw on @ref surface.
+ *	This is the reference documentation for VKVG contexts used to draw on @ref surface.
  */
 /*! @defgroup path Path creation and manipulation reference.
- *  @brief Functions and types related to path edition.
+ *	@brief Functions and types related to path edition.
  */
 
 #include <vulkan/vulkan.h>
@@ -67,17 +67,23 @@ extern "C" {
 #include <stdbool.h>
 
 #ifndef vkvg_public
-# if defined (_MSC_VER) && !defined (VKVG_STATIC_BUILD)
-#  define vkvg_public __declspec(dllimport)
-# else
-#  define vkvg_public
-# endif
+	#ifndef VKVG_STATIC_BUILD
+		#if (defined(_WIN32) || defined(_WIN64))
+			#define vkvg_public __declspec(dllimport)
+		#else
+			#define vkvg_public __attribute__((visibility("default")))
+		#endif
+	#else
+		#define vkvg_public 
+	#endif
 #endif
+
 
 #define VKVG_LOG_ERR		0x10
 #define VKVG_LOG_DEBUG		0x20
 #define VKVG_LOG_INFO		0x40
-#define VKVG_LOG_INFO_PATH	0x41
+#define VKVG_LOG_INFO_PTS	0x41
+#define VKVG_LOG_INFO_PATH	0x42
 #define VKVG_LOG_DBG_ARRAYS	0x80
 #define VKVG_LOG_FULL		0xff
 
@@ -112,7 +118,7 @@ typedef enum {
 	VKVG_STATUS_INVALID_VISUAL,			/*!< */
 	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
 	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
-	VKVG_STATUS_INVALID_RECT,			/*!< invalid value for a dash setting */
+	VKVG_STATUS_INVALID_RECT,			/*!< rectangle with height or width equal to 0. */
 }vkvg_status_t;
 
 typedef enum {
@@ -251,7 +257,7 @@ typedef struct _vkvg_context_t* VkvgContext;
  *
  * A #VkvgSurface represents an image, either as the destination
  * of a drawing operation or as source when drawing onto another
- * surface.  To draw to a #VkvgSurface, create a vkvg context
+ * surface.	 To draw to a #VkvgSurface, create a vkvg context
  * with the surface as the target, using #vkvg_create().
  * hidden internals.
  *
@@ -265,7 +271,7 @@ typedef struct _vkvg_surface_t* VkvgSurface;
  *
  * A #VkvgDevice is required for creating new surfaces.
  */
-typedef struct _vkvg_device_t*  VkvgDevice;
+typedef struct _vkvg_device_t*	VkvgDevice;
 /**
  * @brief Opaque pointer on a Vkvg pattern structure.
  * @ingroup pattern
@@ -282,12 +288,12 @@ typedef struct _vkvg_pattern_t* VkvgPattern;
  * @ingroup device
  */
 typedef struct {
-	uint32_t	sizePoints;     /**< maximum point array size					*/
-	uint32_t	sizePathes;     /**< maximum path array size					*/
-	uint32_t	sizeVertices;   /**< maximum size of host vertice cache			*/
-	uint32_t	sizeIndices;    /**< maximum size of host index cache			*/
-	uint32_t	sizeVBO;        /**< maximum size of vulkan vertex buffer		*/
-	uint32_t	sizeIBO;        /**< maximum size of vulkan index buffer		*/
+	uint32_t	sizePoints;		/**< maximum point array size					*/
+	uint32_t	sizePathes;		/**< maximum path array size					*/
+	uint32_t	sizeVertices;	/**< maximum size of host vertice cache			*/
+	uint32_t	sizeIndices;	/**< maximum size of host index cache			*/
+	uint32_t	sizeVBO;		/**< maximum size of vulkan vertex buffer		*/
+	uint32_t	sizeIBO;		/**< maximum size of vulkan index buffer		*/
 } vkvg_debug_stats_t;
 
 vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev);
@@ -677,6 +683,13 @@ uint32_t vkvg_surface_get_height (VkvgSurface surf);
  */
 vkvg_public
 void vkvg_surface_write_to_png (VkvgSurface surf, const char* path);
+/**
+ * @brief Save surface to memory
+ * @param The surface to save
+ * @param A valid pointer on cpu memory large enough to contain surface pixels (stride * height)
+ */
+vkvg_public
+void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap);
 /**
  * @brief Explicitly resolve a multisampled surface.
  *

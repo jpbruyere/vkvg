@@ -79,11 +79,11 @@ void _vkvg_matrix_get_affine (const vkvg_matrix_t *matrix,
 			  float *xy, float *yy,
 			  float *x0, float *y0)
 {
-	*xx  = matrix->xx;
-	*yx  = matrix->yx;
+	*xx	 = matrix->xx;
+	*yx	 = matrix->yx;
 
-	*xy  = matrix->xy;
-	*yy  = matrix->yy;
+	*xy	 = matrix->xy;
+	*yy	 = matrix->yy;
 
 	if (x0)
 	*x0 = matrix->x0;
@@ -184,7 +184,7 @@ void vkvg_matrix_init_translate (vkvg_matrix_t *matrix, float tx, float ty)
 void vkvg_matrix_init_scale (vkvg_matrix_t *matrix, float sx, float sy)
 {
 	vkvg_matrix_init (matrix,
-			   sx,  0,
+			   sx,	0,
 			   0, sy,
 			   0, 0);
 }

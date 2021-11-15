@@ -28,21 +28,20 @@
 
 int directoryExists (const char* path) {
 #if defined(_WIN32) || defined(_WIN64)
-    return getenv("HOME") != NULL;
 #elif __APPLE__
 #elif __unix__
-    struct stat st = {0};
-    return stat(path, &st)+1;
+	struct stat st = {0};
+	return stat(path, &st)+1;
 #else
-    return -1;
+	return -1;
 #endif
 }
 const char* getUserDir () {
 #if defined(_WIN32) || defined(_WIN64)
-    return getenv("HOME");
+	return getenv("HOME");
 #elif __APPLE__
 #elif __unix__
-    struct passwd *pw = getpwuid(getuid());
-    return pw->pw_dir;
+	struct passwd *pw = getpwuid(getuid());
+	return pw->pw_dir;
 #endif
 }

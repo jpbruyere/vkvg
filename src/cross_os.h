@@ -28,9 +28,11 @@
 	#define _CRT_SECURE_NO_WARNINGS
 	#include "windows.h"
 	#define isnanf _isnanf
+	#define vkvg_inline __forceinline
 #elif __APPLE__
 	#include <math.h>
 	#define isnanf isnan
+	#define vkvg_inline
 #elif __unix__
 	#include <unistd.h>
 	#include <sys/types.h>
@@ -38,6 +40,7 @@
 	#ifndef isnanf
 		#define isnanf __isnanf
 	#endif
+	#define vkvg_inline static inline __attribute((always_inline))
 #endif
 
 const char* getUserDir ();

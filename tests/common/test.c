@@ -176,7 +176,7 @@ void _print_usage_and_exit () {
 	printf("\t-x width:\tOutput surface width.\n");
 	printf("\t-y height:\tOutput surface height.\n");
 	printf("\t-S num samples:\tOutput surface filter, default is 1.\n");
-	printf("\t-G gpu_type:\tSet prefered GPU type:\n");
+    printf("\t-g gpu_type:\tSet prefered GPU type:\n");
 	printf("\t\t\t\t- 0: Other\n");
 	printf("\t\t\t\t- 1: Integrated\n");
 	printf("\t\t\t\t- 2: Discrete\n");

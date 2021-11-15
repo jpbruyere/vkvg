@@ -27,14 +27,14 @@
 #include "vk_mem_alloc.h"
 
 typedef struct vkvg_buff_t {
-    VkvgDevice          pDev;
-    VkBuffer            buffer;
-    VmaAllocation       alloc;
-    VmaAllocationInfo   allocInfo;
-    VkDescriptorBufferInfo descriptor;
+	VkvgDevice			pDev;
+	VkBuffer			buffer;
+	VmaAllocation		alloc;
+	VmaAllocationInfo	allocInfo;
+	VkDescriptorBufferInfo descriptor;
 }vkvg_buff;
 
-void vkvg_buffer_create         (VkvgDevice pDev, VkBufferUsageFlags usage,
-                                    VmaMemoryUsage memoryPropertyFlags, VkDeviceSize size, vkvg_buff *buff);
-void vkvg_buffer_destroy        (vkvg_buff* buff);
+void vkvg_buffer_create			(VkvgDevice pDev, VkBufferUsageFlags usage,
+									VmaMemoryUsage memoryPropertyFlags, VkDeviceSize size, vkvg_buff *buff);
+void vkvg_buffer_destroy		(vkvg_buff* buff);
 #endif

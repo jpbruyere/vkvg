@@ -21,12 +21,12 @@
  */
 
 //credits for bezier algorithms to:
-//      Anti-Grain Geometry (AGG) - Version 2.5
-//      A high quality rendering engine for C++
-//      Copyright (C) 2002-2006 Maxim Shemanarev
-//      Contact: mcseem@antigrain.com
-//               mcseemagg@yahoo.com
-//               http://antigrain.com
+//		Anti-Grain Geometry (AGG) - Version 2.5
+//		A high quality rendering engine for C++
+//		Copyright (C) 2002-2006 Maxim Shemanarev
+//		Contact: mcseem@antigrain.com
+//				 mcseemagg@yahoo.com
+//				 http://antigrain.com
 
 
 #include "vkvg_surface_internal.h"
@@ -186,6 +186,7 @@ bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
 	return ctx->pathes[ptrPath] & PATH_CLOSED_BIT;
 }
 void _resetMinMax (VkvgContext ctx) {
+	LOG(VKVG_LOG_INFO_PTS, "_resetMinMax (scissor)\n");
 	ctx->xMin = ctx->yMin = FLT_MAX;
 	ctx->xMax = ctx->yMax = FLT_MIN;
 }
@@ -203,6 +204,8 @@ void _add_point (VkvgContext ctx, float x, float y){
 	//that speed up fill drastically.
 	vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x, &y);
 
+	LOG(VKVG_LOG_INFO_PTS, "_add_point transformed: (%f, %f)\n", x, y);
+
 	if (x < ctx->xMin)
 		ctx->xMin = x;
 	if (x > ctx->xMax)
@@ -214,11 +217,10 @@ void _add_point (VkvgContext ctx, float x, float y){
 }
 float _normalizeAngle(float a)
 {
-	float res = ROUND_DOWN(fmodf(a,2.0f*M_PIF),100);
+    float res = ROUND_DOWN(fmodf(a, 2.0f * M_PIF), 100);
 	if (res < 0.0f)
-		return res + 2.0f*M_PIF;
-	else
-		return res;
+        res += 2.0f * M_PIF;
+    return res;
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
 	float dx = 1, dy = 1;
@@ -312,9 +314,9 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
 	Vertex v[4] =
 	{
-		{{x,y},             ctx->curColor, {0,0,-1}},
-		{{x,y+height},      ctx->curColor, {0,0,-1}},
-		{{x+width,y},       ctx->curColor, {0,0,-1}},
+		{{x,y},				ctx->curColor, {0,0,-1}},
+		{{x,y+height},		ctx->curColor, {0,0,-1}},
+		{{x+width,y},		ctx->curColor, {0,0,-1}},
 		{{x+width,y+height},ctx->curColor, {0,0,-1}}
 	};
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
@@ -419,7 +421,7 @@ void _flush_vertices_caches (VkvgContext ctx) {
 //this func expect cmdStarted to be true
 void _end_render_pass (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "END RENDER PASS: ctx = %p;\n", ctx);
-	CmdEndRenderPass      (ctx->cmd);
+	CmdEndRenderPass	  (ctx->cmd);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_cmd_label_end (ctx->cmd);
 #endif
@@ -479,7 +481,7 @@ void _flush_cmd_buff (VkvgContext ctx){
 		return;
 	_end_render_pass		(ctx);
 	LOG(VKVG_LOG_INFO, "FLUSH CTX: ctx = %p; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
-	_flush_vertices_caches  (ctx);
+	_flush_vertices_caches	(ctx);
 	vkh_cmd_end				(ctx->cmd);
 
 	_wait_and_submit_cmd	(ctx);
@@ -541,7 +543,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 	CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
 	CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VKVG_VK_INDEX_TYPE);
 
-	_update_push_constants  (ctx);
+	_update_push_constants	(ctx);
 
 	_bind_draw_pipeline (ctx);
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -571,12 +573,12 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 	}else
 		newPatternType = pat->type;
 
-	switch (newPatternType)  {
+	switch (newPatternType)	 {
 	case VKVG_PATTERN_TYPE_SOLID:
 		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
 			//unbind current source surface by replacing it with empty texture
-			_flush_cmd_buff             (ctx);
-			_update_descriptor_set      (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
+			_flush_cmd_buff				(ctx);
+			_update_descriptor_set		(ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
 		}
 		break;
 	case VKVG_PATTERN_TYPE_SURFACE:
@@ -629,10 +631,10 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			filter = VK_FILTER_NEAREST;
 			break;
 		}
-		vkh_image_create_sampler(ctx->source, filter, filter,
-								 VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
+		vkh_image_create_sampler (ctx->source, filter, filter,
+									VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
 
-		_update_descriptor_set          (ctx, ctx->source, ctx->dsSrc);
+		_update_descriptor_set (ctx, ctx->source, ctx->dsSrc);
 
 		vec4 srcRect = {{0},{0},{(float)surf->width},{(float)surf->height}};
 		ctx->pushConsts.source = srcRect;		
@@ -649,19 +651,19 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 		//transform control point with current ctx matrix
 		vkvg_gradient_t grad = {0};
-		memcpy(&grad, pat->data, sizeof(vkvg_gradient_t));
+		memcpy (&grad, pat->data, sizeof(vkvg_gradient_t));
 
-		vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
-		vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
+		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
+		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
 		//to do, scale radial radiuses in cp[2]
 
-		memcpy(ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
+		memcpy (ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
 		break;
 	}
 	ctx->pushConsts.patternType = newPatternType;
 	ctx->pushCstDirty = true;
 	if (lastPat)
-		vkvg_pattern_destroy    (lastPat);
+		vkvg_pattern_destroy (lastPat);
 }
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
 	_wait_flush_fence(ctx);//descriptorSet update invalidate cmd buffs
@@ -694,7 +696,7 @@ void _update_gradient_desc_set (VkvgContext ctx){
 /*void _reset_src_descriptor_set (VkvgContext ctx){
 	VkvgDevice dev = ctx->pSurf->dev;
 	//VkDescriptorSet dss[] = {ctx->dsSrc};
-	vkFreeDescriptorSets    (dev->vkDev, ctx->descriptorPool, 1, &ctx->dsSrc);
+	vkFreeDescriptorSets	(dev->vkDev, ctx->descriptorPool, 1, &ctx->dsSrc);
 
 	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 															  .descriptorPool = ctx->descriptorPool,
@@ -733,14 +735,14 @@ void _init_descriptor_sets (VkvgContext ctx){
 float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 
-    vec2 v0 = vec2_sub(p0, pL);
-    vec2 v1 = vec2_sub(pR, p0);
-    float length_v0 = vec2_length(v0);
-    float length_v1 = vec2_length(v1);
-    if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON)
-        return 0;
-    vec2 v0n = vec2_div (v0, length_v0);
-    vec2 v1n = vec2_div (v1, length_v1);
+	vec2 v0 = vec2_sub(p0, pL);
+	vec2 v1 = vec2_sub(pR, p0);
+	float length_v0 = vec2_length(v0);
+	float length_v1 = vec2_length(v1);
+	if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON)
+		return 0;
+	vec2 v0n = vec2_div (v0, length_v0);
+	vec2 v1n = vec2_div (v1, length_v1);
 
 	vec2 bisec = vec2_norm(vec2_add(v0n,v1n));
 
@@ -754,8 +756,8 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 	float lh = hw / cosf(alpha);
 	bisec = vec2_perp(bisec);
 
-    //limit bisectrice lenght, may be improved but ok for perf
-    lh=fminf (lh, fminf (sqrtf(length_v0*length_v0+hw*hw), sqrtf(length_v1*length_v1+hw*hw)));
+	//limit bisectrice lenght, may be improved but ok for perf
+	lh=fminf (lh, fminf (sqrtf(length_v0*length_v0+hw*hw), sqrtf(length_v1*length_v1+hw*hw)));
 
 	bisec = vec2_mult(bisec,lh);
 
@@ -764,9 +766,9 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
 		v.pos = vec2_add(p0, bisec);
 		_add_vertex(ctx, v);
-        v.pos = vec2_sub(p0, bisec);
-        _add_vertex(ctx, v);
-        _add_tri_indices_for_rect(ctx, idx);
+		v.pos = vec2_sub(p0, bisec);
+		_add_vertex(ctx, v);
+		_add_tri_indices_for_rect(ctx, idx);
 	}else{
 		vec2 vp = vec2_perp(v0n);
 		if (cross<0){
@@ -777,7 +779,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 			v.pos = vec2_add (p0, vec2_mult (vp, hw));
 			_add_vertex(ctx, v);
 			v.pos = vec2_sub (p0, bisec);
-        }
+		}
 		_add_vertex(ctx, v);
 
 		if (ctx->lineJoin == VKVG_LINE_JOIN_BEVEL){
@@ -868,16 +870,16 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
 void _free_ctx_save (vkvg_context_save_t* sav){
 	if (sav->dashCount > 0)
 		free (sav->dashes);
-	free(sav->selectedFont.fontFile);
+	free(sav->selectedFontName);
 	free (sav);
 }
 
 
-#define M_APPROXIMATION_SCALE   1.0
-#define M_ANGLE_TOLERANCE       0.01
-#define M_DISTANCE_TOLERANCE    1.0
-#define M_CUSP_LIMIT            0.01
-#define CURVE_RECURSION_LIMIT   10
+#define M_APPROXIMATION_SCALE	1.0
+#define M_ANGLE_TOLERANCE		0.01
+#define M_DISTANCE_TOLERANCE	1.0
+#define M_CUSP_LIMIT			0.01
+#define CURVE_RECURSION_LIMIT	10
 #define CURVE_COLLINEARITY_EPSILON 1.7
 #define CURVE_ANGLE_TOLERANCE_EPSILON 0.001
 //no floating point arithmetic operation allowed in macro.
@@ -893,16 +895,16 @@ void _recursive_bezier (VkvgContext ctx,
 
 	// Calculate all the mid-points of the line segments
 	//----------------------
-	float x12   = (x1 + x2) / 2;
-	float y12   = (y1 + y2) / 2;
-	float x23   = (x2 + x3) / 2;
-	float y23   = (y2 + y3) / 2;
-	float x34   = (x3 + x4) / 2;
-	float y34   = (y3 + y4) / 2;
-	float x123  = (x12 + x23) / 2;
-	float y123  = (y12 + y23) / 2;
-	float x234  = (x23 + x34) / 2;
-	float y234  = (y23 + y34) / 2;
+	float x12	= (x1 + x2) / 2;
+	float y12	= (y1 + y2) / 2;
+	float x23	= (x2 + x3) / 2;
+	float y23	= (y2 + y3) / 2;
+	float x34	= (x3 + x4) / 2;
+	float y34	= (y3 + y4) / 2;
+	float x123	= (x12 + x23) / 2;
+	float y123	= (y12 + y23) / 2;
+	float x234	= (x23 + x34) / 2;
+	float y234	= (y23 + y34) / 2;
 	float x1234 = (x123 + x234) / 2;
 	float y1234 = (y123 + y234) / 2;
 
