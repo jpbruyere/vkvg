@@ -186,7 +186,7 @@ void _print_usage_and_exit () {
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests\n");
 	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs\n");
 	printf("\t-vsync:\t\tEnable VSync, disabled by default\n");
-	printf("\t-help:\t\tthis help message.\n");
+	printf("\t-h:\t\t\tthis help message.\n");
 	printf("\n");
 	exit(-1);
 }
@@ -198,7 +198,7 @@ void _parse_args (int argc, char* argv[]) {
 		if (strcmp (argv[i], "-p\0") == 0)
 			printTestDetailsAndExit = true;
 		else if (strcmp (argv[i], "-vsync\0") == 0)
-			test_vsync = true;		
+			test_vsync = true;
 		else if (strcmp (argv[i], "-q\0") == 0)
 			quiet = true;
 		else if (strcmp (argv[i], "-i\0") == 0) {
@@ -220,7 +220,7 @@ void _parse_args (int argc, char* argv[]) {
 		}else if (strcmp (argv[i], "-s\0") == 0) {
 			if (argc -1 < ++i)
 				_print_usage_and_exit();
-			test_size = atoi (argv[i]);			
+			test_size = atoi (argv[i]);
 		}else if (strcmp (argv[i], "-S\0") == 0) {
 			if (argc -1 < ++i)
 				_print_usage_and_exit();

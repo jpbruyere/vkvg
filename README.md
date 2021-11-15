@@ -65,7 +65,7 @@ if `glslc` or `xxd` are not present, a precompiled version of the shaders is sto
 
 ```bash
 #fetch sources from github
-git clone --recursive https://github.com/jpbruyere/vkvg.git    
+git clone --recursive https://github.com/jpbruyere/vkvg.git
 cd vkvg
 # Create build directory
 mkdir build
@@ -76,6 +76,11 @@ make
 ```
 
 A [detailed tutorial](doc/windows_build_tutorial.md) is available for Windows.
+
+### Running tests
+
+Append the `-h` option to see available command line parameters.
+
 
 ### To Do
 
