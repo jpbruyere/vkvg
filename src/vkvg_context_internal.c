@@ -217,11 +217,10 @@ void _add_point (VkvgContext ctx, float x, float y){
 }
 float _normalizeAngle(float a)
 {
-	float res = ROUND_DOWN(fmodf(a,2.0f*M_PIF),100);
+    float res = ROUND_DOWN(fmodf(a, 2.0f * M_PIF), 100);
 	if (res < 0.0f)
-		return res + 2.0f*M_PIF;
-	else
-		return res;
+        res += 2.0f * M_PIF;
+    return res;
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
 	float dx = 1, dy = 1;
