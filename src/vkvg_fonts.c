@@ -484,6 +484,11 @@ void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
 }
 //compute text extends for provided string.
 void _text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents) {
+	if (text == NULL) {
+		memset(extents, 0, sizeof(vkvg_text_extents_t));
+		return;
+	}
+
 	_update_current_font (ctx);
 
 	if (ctx->status)
