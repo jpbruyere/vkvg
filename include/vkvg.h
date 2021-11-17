@@ -37,6 +37,7 @@ extern "C" {
  * Its api is modeled on the [cairo graphic library](https://www.cairographics.org/) with the following software components:
  *
  * - @ref surface
+ * - @ref context
  */
 
 /*! @file vkvg.h
@@ -95,7 +96,7 @@ extern uint8_t vkvg_log_level;
  * @brief vkvg operation status.
  *
  * vkvg_status_t is used to indicates errors that can occur when using vkvg. Several vkvg function directely
- * return result, but when using a #VkvgContext, the last error is stored in the context and can be accessed
+ * return result, but when using a @ref context, the last error is stored in the context and can be accessed
  * with #vkvg_status.
  */
 typedef enum {
@@ -819,6 +820,16 @@ void vkvg_close_path (VkvgContext ctx);
 vkvg_public
 void vkvg_new_sub_path (VkvgContext ctx);
 /**
+ * @brief vkvg_path_extents
+ * @param ctx a valid @ref context
+ * @param x1 left of the resulting extents
+ * @param y1 top of the resulting extents
+ * @param x2 right of the resulting extents
+ * @param y2 bottom of the resulting extents
+ */
+vkvg_public
+void vkvg_path_extents (VkvgContext ctx, float *x1, float *y1, float *x2, float *y2);
+/**
  * @brief Add a line to the current path from the current point to the coordinate given in arguments.
  *
  * After this call, the current position will be (x,y).
@@ -944,60 +955,49 @@ void vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
- * @param x
- * @param y
- * @param w
- * @param h
- */
-vkvg_public
-void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h);
-/**
- * @brief
- *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_stroke (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_stroke_preserve (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_fill (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_fill_preserve (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_paint (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_clear (VkvgContext ctx);//use vkClearAttachment to speed up clearing surf
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_reset_clip (VkvgContext ctx);
@@ -1005,14 +1005,14 @@ void vkvg_reset_clip (VkvgContext ctx);
  * @brief reset clip
  *
  * Reset current context clip regions.
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_clip (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_clip_preserve (VkvgContext ctx);
@@ -1021,7 +1021,7 @@ void vkvg_clip_preserve (VkvgContext ctx);
  * @brief set color with alpha.
  *
  * Set current source for drawing to the solid color defined by the rgba components with 'a' for transparency.
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param r the red component of the color.
  * @param g the green component of the color.
  * @param b the blue component of the color.
@@ -1043,40 +1043,40 @@ void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a);
 vkvg_public
 void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b);
 /**
- * @brief set line width.
+ * @brief set line width for the next draw command.
  *
  * Set the current line width for the targeted context. All further calls to #vkvg_stroke on this context
  * will use this new width.
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param width new current line width for the context.
  */
 vkvg_public
 void vkvg_set_line_width (VkvgContext ctx, float width);
 /**
- * @brief set line terminations
+ * @brief set line terminations for the next draw command.
  *
  * Configure the line terminations to output for further path stroke commands.
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param cap new line termination, may be one of the value of #vkvg_line_cap_t.
  */
 
 vkvg_public
 void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap);
 /**
- * @brief set line joins
+ * @brief set line joins for the next draw command.
  *
  * Configure the line join to output for further path stroke commands.
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param join new line join as defined in #vkvg_line_joint_t.
  */
 vkvg_public
 void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join);
 /**
- * @brief use supplied surface as current pattern
+ * @brief use supplied surface as current pattern.
  *
  * set #VkvgSurface as the current context source.
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param surf the vkvg surface to use as source.
  * @param x an x offset to apply for drawing operations using this surface.
  * @param y an y offset to apply for drawing operations using this surface.
@@ -1095,7 +1095,7 @@ void vkvg_set_source (VkvgContext ctx, VkvgPattern pat);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param op
  */
 vkvg_public
@@ -1103,7 +1103,7 @@ void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param fr
  */
 vkvg_public
@@ -1115,7 +1115,7 @@ void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr);
  * A dash pattern is specified by dashes, an array of positive values.
  * Each value provides the length of alternate "on" and "off" portions of the stroke.
  * The offset specifies an offset into the pattern at which the stroke begins.
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param dashes a pointer on an array of float values defining alternate lengths of on and off stroke portions.
  * @param num_dashes the length of the dash array.
  * @param offset an offset into the dash pattern at which the stroke should start.
@@ -1125,9 +1125,9 @@ void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, f
 /**
  * @brief get current dash settings.
  *
- * Get the current dash configuration for the supplied #context.
+ * Get the current dash configuration for the supplied @ref context.
  * If dashes pointer is NULL, only count and offset are returned, useful to query dash array dimension first.
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param dashes[out] return value for the dash array. If count is 0, this pointer stay untouched.
  * If NULL, only count and offset are returned.
  * @param num_dashes[out] return length of dash array or 0 if dash is not set.
@@ -1140,7 +1140,7 @@ void vkvg_get_dash (VkvgContext ctx, const float *dashes, uint32_t* num_dashes, 
  * @brief get current line width
  *
  * This function return the current line width to use by vkvg_stroke() as set by #vkvg_set_line_width().
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @return current line width.
  */
 vkvg_public
@@ -1148,7 +1148,7 @@ float vkvg_get_line_width (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @return vkvg_line_cap_t
  */
 vkvg_public
@@ -1156,7 +1156,7 @@ vkvg_line_cap_t vkvg_get_line_cap (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @return vkvg_line_join_t
  */
 vkvg_public
@@ -1164,7 +1164,7 @@ vkvg_line_join_t vkvg_get_line_join (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @return vkvg_operator_t
  */
 vkvg_public
@@ -1172,7 +1172,7 @@ vkvg_operator_t vkvg_get_operator (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @return vkvg_fill_rule_t
  */
 vkvg_public
@@ -1180,7 +1180,7 @@ vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @return VkvgPattern
  */
 vkvg_public
@@ -1189,21 +1189,21 @@ VkvgPattern vkvg_get_source (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_save (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_restore (VkvgContext ctx);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param dx
  * @param dy
  */
@@ -1212,7 +1212,7 @@ void vkvg_translate (VkvgContext ctx, float dx, float dy);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param sx
  * @param sy
  */
@@ -1221,7 +1221,7 @@ void vkvg_scale (VkvgContext ctx, float sx, float sy);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param radians
  */
 vkvg_public
@@ -1229,7 +1229,7 @@ void vkvg_rotate (VkvgContext ctx, float radians);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param matrix
  */
 vkvg_public
@@ -1237,7 +1237,7 @@ void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param matrix
  */
 vkvg_public
@@ -1245,7 +1245,7 @@ void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param matrix
  */
 vkvg_public
@@ -1253,7 +1253,7 @@ void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
 /**
  * @brief Reset the current transformation matrix of the provided context to the identity matrix.
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_identity_matrix (VkvgContext ctx);
@@ -1261,7 +1261,7 @@ void vkvg_identity_matrix (VkvgContext ctx);
 /**
  * @brief Try find font with the specified name using the FontConfig library.
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param name A name to be recognized by the FontConfig library
  */
 vkvg_public
@@ -1269,7 +1269,7 @@ void vkvg_select_font_face (VkvgContext ctx, const char* name);
 /**
  * @brief Select a new font by providing its file path.
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param name A valid font file path.
  */
 vkvg_public
@@ -1277,7 +1277,7 @@ void vkvg_select_font_path (VkvgContext ctx, const char* path);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param size
  */
 vkvg_public
@@ -1285,7 +1285,7 @@ void vkvg_set_font_size (VkvgContext ctx, uint32_t size);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param text
  */
 vkvg_public
@@ -1293,7 +1293,7 @@ void vkvg_show_text (VkvgContext ctx, const char* text);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param text
  * @param extents
  */
@@ -1302,7 +1302,7 @@ void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* 
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param extents
  */
 vkvg_public
@@ -1312,7 +1312,7 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param text
  * @return VkvgText
  */
@@ -1328,7 +1328,7 @@ void vkvg_text_run_destroy (VkvgText textRun);
 /**
  * @brief
  *
- * @param ctx a valid vkvg #context
+ * @param ctx a valid vkvg @ref context
  * @param textRun
  */
 vkvg_public
