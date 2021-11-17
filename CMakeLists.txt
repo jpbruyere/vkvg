@@ -241,26 +241,26 @@ IF (VKVG_BUILD_DOCS)
 					   COMMENT "Generating docs")
 	add_custom_target(Doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
 
-	find_package(Sphinx)
+#	find_package(Sphinx)
 
-	set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/docs/source)
-	set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/doc/sphinx)
-	set(SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html)
+#	set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/docs/source)
+#	set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/doc/sphinx)
+#	set(SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html)
 	
-	add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
-					  COMMAND
-					  ${SPHINX_EXECUTABLE} -b html
-					  -Dbreathe_projects.VKVG=${DOXYGEN_OUTPUT_DIR}/xml
-					  ${SPHINX_SOURCE} ${SPHINX_BUILD}
-					  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-					  DEPENDS
-						   # Other docs files you want to track should go here (or in some variable)
-						   ${SPHINX_SOURCE}/index.rst
-						   ${DOXYGEN_INDEX_FILE}
-					MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
-					COMMENT "Generating documentation with Sphinx")
+#	add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
+#					  COMMAND
+#					  ${SPHINX_EXECUTABLE} -b html
+#					  -Dbreathe_projects.VKVG=${DOXYGEN_OUTPUT_DIR}/xml
+#					  ${SPHINX_SOURCE} ${SPHINX_BUILD}
+#					  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+#					  DEPENDS
+#						   # Other docs files you want to track should go here (or in some variable)
+#						   ${SPHINX_SOURCE}/index.rst
+#						   ${DOXYGEN_INDEX_FILE}
+#					MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
+#					COMMENT "Generating documentation with Sphinx")
 	
-	add_custom_target(Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
+#	add_custom_target(Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
 
 ENDIF (VKVG_BUILD_DOCS)
 
@@ -304,6 +304,11 @@ IF (VKVG_LCD_FONT_FILTER)
 	MESSAGE(STATUS "Font filtering\t= LCD.")
 ELSE ()
 	MESSAGE(STATUS "Font filtering\t= Grayscale.")
+ENDIF ()
+IF (VKVG_BUILD_DOCS)
+	MESSAGE(STATUS "Build documentation\t= enabled.")
+ELSE ()
+	MESSAGE(STATUS "Build documentation\t= disabled.")
 ENDIF ()
 
 IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
