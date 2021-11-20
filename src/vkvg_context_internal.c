@@ -223,9 +223,9 @@ float _normalizeAngle(float a)
     return res;
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
-	float dx = 1, dy = 1;
-	vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &dx, &dy);
-	return M_PIF/sqrtf(radius)*0.35f/fmaxf(dx,dy);
+	if (radius < 3.0f)
+		return asinf (1.0f / radius) * 0.25f;
+	return asinf (1.0f / radius) * 1.5f * sqrtf(radius);
 }
 void _create_gradient_buff (VkvgContext ctx){
 	vkvg_buffer_create (ctx->pSurf->dev,
