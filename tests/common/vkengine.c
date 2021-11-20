@@ -84,7 +84,15 @@ void vkengine_dump_available_layers () {
 	printf("-----------------\n\n");
 	free (availableLayers);
 }
-
+bool vkengine_try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
+	for (uint32_t i=0; i<phyCount; i++){
+		if (phys[i]->properties.deviceType == gpuType) {
+			 *phy = phys[i];
+			 return true;
+		}
+	}
+	return false;
+}
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
 	vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 
@@ -106,7 +114,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation"};
 #else
 	const uint32_t enabledLayersCount = 0;
-	const char* enabledLayers[] = {NULL};
+	const char** enabledLayers = NULL;
 #endif
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
@@ -141,11 +149,10 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	VkhPhyInfo* phys = vkh_app_get_phyinfos (e->app, &phyCount, surf);
 
 	VkhPhyInfo pi = 0;
-	for (uint32_t i=0; i<phyCount; i++){
-		pi = phys[i];
-		if (pi->properties.deviceType == preferedGPU)
-			break;
-	}
+	if (!vkengine_try_get_phyinfo(phys, phyCount, preferedGPU, &pi))
+		if (!vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
+			if (!vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
+				pi = phys[0];
 
 	if (pi) {
 		e->memory_properties = pi->memProps;

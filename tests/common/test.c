@@ -177,16 +177,16 @@ void _print_usage_and_exit () {
 	printf("\t-y height:\tOutput surface height.\n");
 	printf("\t-S num samples:\tOutput surface filter, default is 1.\n");
     printf("\t-g gpu_type:\tSet prefered GPU type:\n");
-	printf("\t\t\t\t- 0: Other\n");
-	printf("\t\t\t\t- 1: Integrated\n");
-	printf("\t\t\t\t- 2: Discrete\n");
-	printf("\t\t\t\t- 3: Virtual\n");
-	printf("\t\t\t\t- 4: Cpu\n");
+	printf("\t\t\t - 0: Other\n");
+	printf("\t\t\t - 1: Integrated (second choice)\n");
+	printf("\t\t\t - 2: Discrete (first choice)\n");
+	printf("\t\t\t - 3: Virtual\n");
+	printf("\t\t\t - 4: Cpu\n");
 	printf("\t-n index:\tRun only a single test, zero based index.\n");
-	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests\n");
-	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs\n");
-	printf("\t-vsync:\t\tEnable VSync, disabled by default\n");
-	printf("\t-h:\t\t\tthis help message.\n");
+	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests.\n");
+	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs.\n");
+	printf("\t-vsync:\t\tEnable VSync, disabled by default.\n");
+	printf("\t-h:\t\tThis help message.\n");
 	printf("\n");
 	exit(-1);
 }
@@ -369,11 +369,10 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 	bool deferredResolve = false;
 	VkhPhyInfo* phys = vkh_app_get_phyinfos (app, &phyCount, VK_NULL_HANDLE);
 	VkhPhyInfo pi = 0;
-	for (uint32_t i=0; i<phyCount; i++){
-		pi = phys[i];
-		if (pi->properties.deviceType == preferedPhysicalDeviceType)
-			break;
-	}
+	if (!vkengine_try_get_phyinfo(phys, phyCount, preferedPhysicalDeviceType, &pi))
+		if (!vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
+			if (!vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
+				pi = phys[0];
 
 	uint32_t qCount = 0;
 	float qPriorities[] = {0.0};
@@ -517,8 +516,10 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 			vkQueuePresentKHR(r->queue, &present);
 		}
 #else
-		if (!paused)
-			testfunc();
+		if (paused)
+			continue;
+
+		testfunc();
 
 		if (deferredResolve)
 			vkvg_multisample_surface_resolve(surf);
@@ -531,9 +532,6 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 			continue;
 		}
 #endif
-
-		if (paused)
-			continue;
 
 		stop_time = get_tick();
 		run_time = stop_time - start_time;
@@ -578,7 +576,7 @@ vkvg_line_join_t	line_join	= VKVG_LINE_JOIN_MITER;
 float		dashes[]	= {20.0f, 10.0f};
 uint32_t	dashes_count= 0;
 float		dash_offset	= 0;
-float		line_width	= 10.f;
+float		line_width	= 2.f;
 
 VkvgContext _initCtx() {
 	VkvgContext ctx = vkvg_create(surf);
