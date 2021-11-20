@@ -18,6 +18,9 @@
   <a href="https://www.paypal.me/GrandTetraSoftware">
 	<img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square">
   </a>
+  <a href="https://gitter.im/CSharpRapidOpenWidgets?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
+	<img src="https://badges.gitter.im/CSharpRapidOpenWidgets.svg">
+  </a>
 </p>
 </h1>
 
@@ -81,6 +84,11 @@ A [detailed tutorial](doc/windows_build_tutorial.md) is available for Windows.
 
 Append the `-h` option to see available command line parameters.
 
+### Contributing
+
+See the [contribution guide](https://github.com/glfw/glfw/blob/master/docs/CONTRIBUTING.md) for more information.
+
+Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
 
 ### To Do
 
