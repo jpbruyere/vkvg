@@ -28,7 +28,7 @@
 #include "vkh.h"
 #include "vkvg_fonts.h"
 
-#define VKVG_PTS_SIZE				256
+#define VKVG_PTS_SIZE				1024
 #define VKVG_VBO_SIZE				(VKVG_PTS_SIZE * 4)
 #define VKVG_IBO_SIZE				(VKVG_VBO_SIZE * 6)
 #define VKVG_PATHES_SIZE			16

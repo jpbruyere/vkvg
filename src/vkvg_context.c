@@ -171,7 +171,7 @@ void vkvg_flush (VkvgContext ctx){
 	if (ctx->status)
 		return;
 	_flush_cmd_buff(ctx);
-	_wait_flush_fence(ctx);
+//	_wait_flush_fence(ctx);
 /*
 #ifdef DEBUG
 
@@ -509,7 +509,9 @@ void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	_add_point (ctx, x + w, y + h);
 	_add_point (ctx, x, y + h);	
 
-	vkvg_close_path (ctx);
+	ctx->pathes[ctx->pathPtr] |= PATH_CLOSED_BIT;
+
+	_finish_path(ctx);
 }
 static const VkClearAttachment clearStencil		   = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {{{0}}}};
 static const VkClearAttachment clearColorAttach	   = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
@@ -558,11 +560,12 @@ void vkvg_clip_preserve (VkvgContext ctx){
 	if (ctx->status)
 		return;
 
-	_emit_draw_cmd_undrawn_vertices(ctx);
-
 	_finish_path(ctx);
 
-	vkvg_close_path (ctx);
+	if (!ctx->pathPtr)//nothing to clip
+		return;
+
+	_emit_draw_cmd_undrawn_vertices(ctx);
 
 	LOG(VKVG_LOG_INFO, "CLIP: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
@@ -602,7 +605,7 @@ void vkvg_path_extents (VkvgContext ctx, float *x1, float *y1, float *x2, float 
 
 	_finish_path(ctx);
 
-	if (_current_path_is_empty(ctx)) {
+	if (!ctx->pathPtr) {//no path
 		*x1 = *x2 = *y1 = *y2 = 0;
 		return;
 	}
@@ -618,7 +621,8 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
 	_finish_path(ctx);
 
-	vkvg_close_path (ctx);
+	if (!ctx->pathPtr)//nothing to fill
+		return;
 
 	LOG(VKVG_LOG_INFO, "FILL: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
@@ -754,9 +758,10 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 	if (ctx->status)
 		return;
 
-	if (ctx->pathPtr == 0 && _current_path_is_empty(ctx))//nothing to stroke
-		return;
 	_finish_path(ctx);
+
+	if (!ctx->pathPtr)//nothing to stroke
+		return;
 
 	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path ptr = %d;\n", ctx, ctx->pathPtr);
 
@@ -873,14 +878,13 @@ void vkvg_paint (VkvgContext ctx){
 	if (ctx->status)
 		return;
 
-	if (!_current_path_is_empty(ctx)){//maybe path to fill
-		vkvg_close_path(ctx);
-		if (ctx->pathes[ctx->pathPtr] & PATH_CLOSED_BIT) {
-			vkvg_fill(ctx);
-			return;
-		}
-		_clear_path (ctx);
+	_finish_path (ctx);
+
+	if (ctx->pathPtr) {
+		vkvg_fill(ctx);
+		return;
 	}
+
 	_ensure_renderpass_is_started (ctx);
 	_draw_full_screen_quad (ctx, true);
 }

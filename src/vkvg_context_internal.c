@@ -223,9 +223,12 @@ float _normalizeAngle(float a)
     return res;
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
-	if (radius < 3.0f)
-		return asinf (1.0f / radius) * 0.25f;
-	return asinf (1.0f / radius) * 1.5f * sqrtf(radius);
+	float dx = radius, dy = radius;
+	vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &dx, &dy);
+	float r = fmaxf(dx,dy);
+	if (r < 3.0f)
+		return asinf (1.0f / r) * 0.25f;
+	return asinf (1.0f / r) * 1.5f * sqrtf(r);
 }
 void _create_gradient_buff (VkvgContext ctx){
 	vkvg_buffer_create (ctx->pSurf->dev,
@@ -1083,22 +1086,19 @@ void _poly_fill (VkvgContext ctx){
 	uint32_t firstPtIdx = 0;
 
 	while (ptrPath < ctx->pathPtr){
-		//close path
-		ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;
-
 		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+		if (pathPointCount > 2) {
+			VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
 
-		VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
+			for (uint32_t i = 0; i < pathPointCount; i++) {
+				v.pos = ctx->points [i+firstPtIdx];
+				ctx->vertexCache[ctx->vertCount++] = v;
+				_check_vertex_cache_size(ctx);
+			}
 
-		for (uint32_t i = 0; i < pathPointCount; i++) {
-			v.pos = ctx->points [i+firstPtIdx];
-			ctx->vertexCache[ctx->vertCount++] = v;
-			_check_vertex_cache_size(ctx);
+			LOG(VKVG_LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
+			CmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx , 0);
 		}
-
-		LOG(VKVG_LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
-		CmdDraw (ctx->cmd, pathPointCount, 1, firstVertIdx , 0);
-
 		firstPtIdx += pathPointCount;
 
 		if (_path_has_curves (ctx, ptrPath)) {
@@ -1120,65 +1120,69 @@ void _fill_ec (VkvgContext ctx){
 	uint32_t firstPtIdx = 0;
 
 	while (ptrPath < ctx->pathPtr){
-		ctx->pathes[ptrPath] |= PATH_CLOSED_BIT;//close path
+		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
 
-		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;		
+		if (pathPointCount > 2) {
+			VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+			ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
+			uint32_t ecps_count = pathPointCount;
+			VKVG_IBO_INDEX_TYPE i = 0;
 
-		VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-		ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
-		uint32_t ecps_count = pathPointCount;
-		VKVG_IBO_INDEX_TYPE i = 0;
+			//init points link list
+			while (i < pathPointCount-1){
+				v.pos = ctx->points[i+firstPtIdx];
+				ear_clip_point ecp = {v.pos, firstVertIdx+i, &ecps[i+1]};
+				ecps[i] = ecp;
+				_add_vertex(ctx, v);
+				i++;
+			}
 
-		//init points link list
-		while (i < pathPointCount-1){
 			v.pos = ctx->points[i+firstPtIdx];
-			ear_clip_point ecp = {v.pos, firstVertIdx+i, &ecps[i+1]};
+			ear_clip_point ecp = {v.pos, firstVertIdx+i, ecps};
 			ecps[i] = ecp;
 			_add_vertex(ctx, v);
-			i++;
-		}
 
-		v.pos = ctx->points[i+firstPtIdx];
-		ear_clip_point ecp = {v.pos, firstVertIdx+i, ecps};
-		ecps[i] = ecp;
-		_add_vertex(ctx, v);
+			ear_clip_point* ecp_current = ecps;
+			uint32_t tries = 0;
 
-		ear_clip_point* ecp_current = ecps;
-		uint32_t tries = 0;
-
-		while (ecps_count > 3) {
-			if (tries > ecps_count) {
-				break;
-			}
-			ear_clip_point* v0 = ecp_current->next,
-					*v1 = ecp_current, *v2 = ecp_current->next->next;
-			if (ecp_zcross (v0, v2, v1)<0){
-				ecp_current = ecp_current->next;
-				tries++;
-				continue;
-			}
-			ear_clip_point* vP = v2->next;
-			bool isEar = true;
-			while (vP!=v1){
-				if (ptInTriangle (vP->pos, v0->pos, v2->pos, v1->pos)){
-					isEar = false;
+			while (ecps_count > 3) {
+				if (tries > ecps_count) {
 					break;
 				}
-				vP = vP->next;
+				ear_clip_point* v0 = ecp_current->next,
+						*v1 = ecp_current, *v2 = ecp_current->next->next;
+				if (ecp_zcross (v0, v2, v1)<0){
+					ecp_current = ecp_current->next;
+					tries++;
+					continue;
+				}
+				ear_clip_point* vP = v2->next;
+				bool isEar = true;
+				while (vP!=v1){
+					if (ptInTriangle (vP->pos, v0->pos, v2->pos, v1->pos)){
+						isEar = false;
+						break;
+					}
+					vP = vP->next;
+				}
+				if (isEar){
+					_add_triangle_indices (ctx, v0->idx, v1->idx, v2->idx);
+					v1->next = v2;
+					ecps_count --;
+					tries = 0;
+				}else{
+					ecp_current = ecp_current->next;
+					tries++;
+				}
 			}
-			if (isEar){
-				_add_triangle_indices (ctx, v0->idx, v1->idx, v2->idx);
-				v1->next = v2;
-				ecps_count --;
-				tries = 0;
-			}else{
-				ecp_current = ecp_current->next;
-				tries++;
-			}
+			if (ecps_count == 3)
+				_add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
+			free (ecps);
+
+			//limit batch size here to 1/3 of the ibo index type ability
+			if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3)
+				_emit_draw_cmd_undrawn_vertices(ctx);
 		}
-		if (ecps_count == 3)
-			_add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
-		free (ecps);
 
 		firstPtIdx += pathPointCount;
 		if (_path_has_curves (ctx, ptrPath)) {
