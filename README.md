@@ -39,7 +39,16 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
   </a>
 </p>
 
-#### Current status:
+## Performance comparison
+
+<p align="center">
+  <a href="https://github.com/jpbruyere/vgperf/blob/master/vgperf.png">
+	<kbd><img src="https://raw.githubusercontent.com/jpbruyere/vgperf/master/vgperf.png" height="300"></kbd>
+  </a>
+   <br>major libs perf comparison</br>
+</p>
+
+## Current status:
 
 - Fill (stencil even-odd, non-zero with ear clipping).
 - Stroke.
@@ -51,7 +60,7 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 - Image loading and writing with [stb lib](https://github.com/nothings/stb)
 - Test includes svg rendering with [nanoSVG](https://github.com/memononen/nanosvg)
 
-### Requirements:
+## Requirements:
 
 - [CMake](https://cmake.org/): version > 12.
 - [Vulkan](https://www.khronos.org/vulkan/)
@@ -64,7 +73,7 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 
 if `glslc` or `xxd` are not present, a precompiled version of the shaders is stored in the git tree.
 
-### Building
+## Building
 
 ```bash
 #fetch sources from github
@@ -80,17 +89,17 @@ make
 
 A [detailed tutorial](doc/windows_build_tutorial.md) is available for Windows.
 
-### Running tests
+## Running tests
 
 Append the `-h` option to see available command line parameters.
 
-### Contributing
+## Contributing
 
 See the [contribution guide](https://github.com/jpbruyere/vkvg/blob/master/CONTRIBUTING.md) for more information.
 
 Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
 
-### To Do
+## To Do
 
 - [x] Use Scissor where possible.
 - [x] Improve stroke algorithms.
