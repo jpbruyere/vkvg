@@ -86,7 +86,7 @@ Append the `-h` option to see available command line parameters.
 
 ### Contributing
 
-See the [contribution guide](https://github.com/glfw/glfw/blob/master/docs/CONTRIBUTING.md) for more information.
+See the [contribution guide](https://github.com/jpbruyere/vkvg/blob/master/CONTRIBUTING.md) for more information.
 
 Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
 
