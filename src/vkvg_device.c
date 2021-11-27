@@ -36,8 +36,8 @@ VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy,
 	VkvgDevice dev = (vkvg_device*)calloc(1,sizeof(vkvg_device));
 
 	dev->instance = inst;
-	dev->hdpi	= 96;
-	dev->vdpi	= 96;
+	dev->hdpi	= 72;
+	dev->vdpi	= 72;
 	dev->samples= samples;
 	dev->deferredResolve = deferredResolve;
 	dev->vkDev	= vkdev;

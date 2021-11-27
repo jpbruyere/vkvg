@@ -311,14 +311,6 @@ vkvg_debug_stats_t vkvg_device_reset_stats (VkvgDevice dev);
  * @{ */
 #define VKVG_IDENTITY_MATRIX {1,0,0,1,0,0}/*!< The identity matrix*/
 /**
- * @xx: xx component of the affine transformation
- * @yx: yx component of the affine transformation
- * @xy: xy component of the affine transformation
- * @yy: yy component of the affine transformation
- * @x0: X translation component of the affine transformation
- * @y0: Y translation component of the affine transformation
- *
-/**
  * @brief vkvg matrix structure
  *
  * A #vkvg_matrix_t holds an affine transformation, such as a scale,
@@ -328,6 +320,12 @@ vkvg_debug_stats_t vkvg_device_reset_stats (VkvgDevice dev);
  * x_new = xx * x + xy * y + x0;
  * y_new = yx * x + yy * y + y0;
  * @endcode
+ * @xx: xx component of the affine transformation
+ * @yx: yx component of the affine transformation
+ * @xy: xy component of the affine transformation
+ * @yy: yy component of the affine transformation
+ * @x0: X translation component of the affine transformation
+ * @y0: Y translation component of the affine transformation
  */
 typedef struct {
 	float xx; float yx;
@@ -830,6 +828,14 @@ void vkvg_new_sub_path (VkvgContext ctx);
 vkvg_public
 void vkvg_path_extents (VkvgContext ctx, float *x1, float *y1, float *x2, float *y2);
 /**
+ * @brief Get the current point of the context, return 0,0 if no point is defined.
+ * @param ctx
+ * @param x
+ * @param y
+ */
+vkvg_public
+void vkvg_get_current_point (VkvgContext ctx, float* x, float* y);
+/**
  * @brief Add a line to the current path from the current point to the coordinate given in arguments.
  *
  * After this call, the current position will be (x,y).
@@ -941,6 +947,46 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 vkvg_public
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3);
 /**
+ * @brief Adds a cubic Bézier spline to the current path relative to the current point.
+ *
+ * Adds a cubic Bézier spline to the path from the current point to position (x3, y3) in relative coordinate to the current point,
+ * using (x1, y1) and (x2, y2) as the control points relative to the current point.
+ * After this call the current point will be (x3, y3).
+ *
+ * If there is no current point before the call to vkvg_rel_curve_to() => error:VKVG_STATUS_NO_CURRENT_POINT.
+ * @param ctx The vkvg context pointer.
+ * @param x1 The X coordinate of the first control point.
+ * @param y1 The Y coordinate of the first control point.
+ * @param x2 The X coordinate of the second control point.
+ * @param y2 The Y coordinate of the second control point.
+ * @param x3 The X coordinate of the end of the curve.
+ * @param y3 The Y coordinate of the end of the curve.
+ */
+vkvg_public
+void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3);
+/**
+ * @brief Add a quadratic Bezizer curve to the current path
+ *
+ * If there is no current point before the call to vkvg_quadratic_to() this function will behave as if preceded by a call to vkvg_move_to(ctx, x1, y1).
+ * @param ctx The vkvg context pointer.
+ * @param x1 The X coordinate of the control point.
+ * @param y1 The Y coordinate of the control point.
+ * @param x2 The X coordinate of the end point of the curve.
+ * @param y2 The Y coordinate of the end point of the curve.
+ */
+vkvg_public
+void vkvg_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2);
+/**
+ * @brief Add a quadratic Bezizer curve to the current path relative to the current point
+ *
+ * @param ctx The vkvg context pointer.
+ * @param x1 The X coordinate of the control point relative to the current point.
+ * @param y1 The Y coordinate of the control point relative to the current point.
+ * @param x2 The X coordinate of the end point of the curve relative to the current point.
+ * @param y2 The Y coordinate of the end point of the curve relative to the current point.
+ */
+vkvg_public
+void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2);/**
  * @brief Add an axis aligned rectangle subpath to the current path.
  *
  * Adds a closed sub-path rectangle of the given size to the current path at position (x, y).
@@ -1016,7 +1062,13 @@ void vkvg_clip (VkvgContext ctx);
  */
 vkvg_public
 void vkvg_clip_preserve (VkvgContext ctx);
-
+/**
+ * @brief Set current source for drawing to the solid color defined by the supplied 32bit integer.
+ * @param ctx a valid vkvg @ref context
+ * @param rgba color coded in 32bit integer.
+ */
+vkvg_public
+void vkvg_set_source_color (VkvgContext ctx, uint32_t c);
 /**
  * @brief set color with alpha.
  *

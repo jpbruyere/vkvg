@@ -327,10 +327,8 @@ void vkvg_close_path (VkvgContext ctx){
 void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy){
 	if (ctx->status)
 		return;
-	if (_current_path_is_empty(ctx)){
-		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
-		return;
-	}
+	if (_current_path_is_empty(ctx))
+		_add_point(ctx, 0, 0);
 	vec2 cp = _get_current_position(ctx);
 	vkvg_line_to(ctx, cp.x + dx, cp.y + dy);
 }
@@ -441,10 +439,8 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
 	if (ctx->status)
 		return;
-	if (_current_path_is_empty(ctx)){
-		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
-		return;
-	}
+	if (_current_path_is_empty(ctx))
+		_add_point(ctx, 0, 0);
 	vec2 cp = _get_current_position(ctx);
 	vkvg_move_to(ctx, cp.x + x, cp.y + y);
 }
@@ -455,7 +451,37 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 	_finish_path(ctx);
 	_add_point (ctx, x, y);
 }
-
+void vkvg_get_current_point (VkvgContext ctx, float* x, float* y) {
+	if (_current_path_is_empty(ctx)) {
+		*x = *y = 0;
+		return;
+	}
+	vec2 cp = _get_current_position(ctx);
+	*x = cp.x;
+	*y = cp.y;
+}
+void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
+	if (ctx->status)
+		return;
+	vec2 cp = _get_current_position(ctx);
+	vkvg_quadratic_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2);
+}
+void vkvg_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
+	if (ctx->status)
+		return;
+	_set_curve_start (ctx);
+	if (_current_path_is_empty(ctx))
+		_add_point(ctx, x1, y1);
+	float x0, y0;
+	vkvg_get_current_point (ctx, &x0, &y0);
+	vkvg_curve_to (ctx,
+				  2.0 / 3.0 * x1 + 1.0 / 3.0 * x0,
+				  2.0 / 3.0 * y1 + 1.0 / 3.0 * y0,
+				  2.0 / 3.0 * x1 + 1.0 / 3.0 * x2,
+				  2.0 / 3.0 * y1 + 1.0 / 3.0 * y2,
+				  y1, y2);
+	_set_curve_end (ctx);
+}
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	if (ctx->status)
 		return;
@@ -480,10 +506,6 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	if (ctx->status)
 		return;
-	if (_current_path_is_empty(ctx)){
-		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
-		return;
-	}
 	vec2 cp = _get_current_position(ctx);
 	vkvg_curve_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
 }
@@ -887,6 +909,12 @@ void vkvg_paint (VkvgContext ctx){
 
 	_ensure_renderpass_is_started (ctx);
 	_draw_full_screen_quad (ctx, true);
+}
+void vkvg_set_source_color (VkvgContext ctx, uint32_t c) {
+	if (ctx->status)
+		return;
+	ctx->curColor = c;
+	_update_cur_pattern (ctx, NULL);
 }
 void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
 	vkvg_set_source_rgba (ctx, r, g, b, 1);
