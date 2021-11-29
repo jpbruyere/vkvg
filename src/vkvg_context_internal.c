@@ -880,14 +880,13 @@ void _free_ctx_save (vkvg_context_save_t* sav){
 
 #define M_APPROXIMATION_SCALE	1.0
 #define M_ANGLE_TOLERANCE		0.01
-#define M_DISTANCE_TOLERANCE	1.0
 #define M_CUSP_LIMIT			0.01
-#define CURVE_RECURSION_LIMIT	10
+#define CURVE_RECURSION_LIMIT	100
 #define CURVE_COLLINEARITY_EPSILON 1.7
 #define CURVE_ANGLE_TOLERANCE_EPSILON 0.001
 //no floating point arithmetic operation allowed in macro.
 #pragma warning(disable:4127)
-void _recursive_bezier (VkvgContext ctx,
+void _recursive_bezier (VkvgContext ctx, float distanceTolerance,
 						float x1, float y1, float x2, float y2,
 						float x3, float y3, float x4, float y4,
 						unsigned level) {
@@ -927,7 +926,7 @@ void _recursive_bezier (VkvgContext ctx,
 		{
 			// Regular care
 			//-----------------
-			if((d2 + d3)*(d2 + d3) <= (dx*dx + dy*dy) * (float)M_DISTANCE_TOLERANCE)
+			if((d2 + d3)*(d2 + d3) <= (dx*dx + dy*dy) * distanceTolerance)
 			{
 				// If the curvature doesn't exceed the distance_tolerance value
 				// we tend to finish subdivisions.
@@ -973,7 +972,7 @@ void _recursive_bezier (VkvgContext ctx,
 			{
 				// p1,p3,p4 are collinear, p2 is considerable
 				//----------------------
-				if(d2 * d2 <= (float)M_DISTANCE_TOLERANCE * (dx*dx + dy*dy))
+				if(d2 * d2 <= distanceTolerance * (dx*dx + dy*dy))
 				{
 					if(M_ANGLE_TOLERANCE < CURVE_ANGLE_TOLERANCE_EPSILON)
 					{
@@ -1005,7 +1004,7 @@ void _recursive_bezier (VkvgContext ctx,
 			} else if(d3 > CURVE_COLLINEARITY_EPSILON) {
 				// p1,p2,p4 are collinear, p3 is considerable
 				//----------------------
-				if(d3 * d3 <= (float)M_DISTANCE_TOLERANCE * (dx*dx + dy*dy))
+				if(d3 * d3 <= distanceTolerance* (dx*dx + dy*dy))
 				{
 					if(M_ANGLE_TOLERANCE < CURVE_ANGLE_TOLERANCE_EPSILON)
 					{
@@ -1041,7 +1040,7 @@ void _recursive_bezier (VkvgContext ctx,
 				//-----------------
 				dx = x1234 - (x1 + x4) / 2;
 				dy = y1234 - (y1 + y4) / 2;
-				if(dx*dx + dy*dy <= (float)M_DISTANCE_TOLERANCE)
+				if(dx*dx + dy*dy <= distanceTolerance)
 				{
 					_add_point (ctx, x1234, y1234);
 					return;
@@ -1052,8 +1051,8 @@ void _recursive_bezier (VkvgContext ctx,
 
 	// Continue subdivision
 	//----------------------
-	_recursive_bezier (ctx, x1, y1, x12, y12, x123, y123, x1234, y1234, level + 1);
-	_recursive_bezier (ctx, x1234, y1234, x234, y234, x34, y34, x4, y4, level + 1);
+	_recursive_bezier (ctx, distanceTolerance, x1, y1, x12, y12, x123, y123, x1234, y1234, level + 1);
+	_recursive_bezier (ctx, distanceTolerance,x1234, y1234, x234, y234, x34, y34, x4, y4, level + 1);
 }
 #pragma warning(default:4127)
 

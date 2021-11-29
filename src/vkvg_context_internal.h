@@ -254,7 +254,7 @@ static inline float vec2_zcross (vec2 v1, vec2 v2){
 static inline float ecp_zcross (ear_clip_point* p0, ear_clip_point* p1, ear_clip_point* p2){
 	return vec2_zcross (vec2_sub (p1->pos, p0->pos), vec2_sub (p2->pos, p0->pos));
 }
-void _recursive_bezier(VkvgContext ctx,
+void _recursive_bezier(VkvgContext ctx, float distanceTolerance,
 					   float x1, float y1, float x2, float y2,
 					   float x3, float y3, float x4, float y4,
 					   unsigned level);
