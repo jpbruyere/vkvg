@@ -92,6 +92,8 @@ typedef struct _vkvg_device_t{
 	int		hdpi,									/**< only used for FreeType fonts and svg loading */
 			vdpi;
 
+	VkhDevice				vkhDev;					/**< old VkhDev created during vulkan context creation by @ref vkvg_device_create. */
+
 	VkhImage				emptyImg;				/**< prevent unbound descriptor to trigger Validation error 61 */
 	VkSampleCountFlags		samples;				/**< samples count common to all surfaces */
 	bool					deferredResolve;		/**< if true, resolve only on context destruction and set as source */
@@ -101,6 +103,7 @@ typedef struct _vkvg_device_t{
 	VkvgContext		lastCtx;						/**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
 }vkvg_device;
 
+bool _try_get_phyinfo			(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);
 bool _init_function_pointers	(VkvgDevice dev);
 void _create_empty_texture		(VkvgDevice dev, VkFormat format, VkImageTiling tiling);
 void _get_best_image_tiling		(VkvgDevice dev, VkFormat format, VkImageTiling* pTiling);

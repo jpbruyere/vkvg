@@ -25,11 +25,73 @@
 #include "vkh_phyinfo.h"
 #include "vk_mem_alloc.h"
 
-VkvgDevice vkvg_device_create(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
-{
-	return vkvg_device_create_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_1_BIT, false);
+VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) {
+	const char* enabledExts [10];
+	uint32_t enabledExtsCount = 0, phyCount = 0;
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
+#endif
+
+	VkhApp app =  vkh_app_create("vkvg", 0, NULL, enabledExtsCount, enabledExts);
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_app_enable_debug_messenger(app
+								   , VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+								   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+								   , NULL);
+#endif
+	VkhPhyInfo* phys = vkh_app_get_phyinfos (app, &phyCount, VK_NULL_HANDLE);
+	if (phyCount == 0) {
+		vkh_app_destroy (app);
+		return NULL;
+	}
+
+	VkhPhyInfo pi = 0;
+	if (!_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
+		if (!_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
+			pi = phys[0];
+
+	uint32_t qCount = 0;
+	float qPriorities[] = {0.0};
+	VkDeviceQueueCreateInfo pQueueInfos[] = { {0},{0},{0} };
+
+	if (vkh_phyinfo_create_queues (pi, pi->gQueue, 1, qPriorities, &pQueueInfos[qCount]))
+		qCount++;
+
+	VkPhysicalDeviceFeatures enabledFeatures = {
+		//.fillModeNonSolid = true,
+	};
+
+	enabledExtsCount=0;
+	//enabledExts[enabledExtsCount++] = "VK_KHR_swapchain";
+
+	VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+									   .queueCreateInfoCount = qCount,
+									   .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
+									   .enabledExtensionCount = enabledExtsCount,
+									   .ppEnabledExtensionNames = enabledExts,
+									   .pEnabledFeatures = &enabledFeatures};
+
+	VkhDevice vkhd = vkh_device_create(app, pi, &device_info);
+
+	VkvgDevice vkvgDev = vkvg_device_create_from_vk_multisample (
+				vkh_app_get_inst(app),
+				vkh_device_get_phy(vkhd),
+				vkh_device_get_vkdev(vkhd),
+				pi->gQueue, 0,
+				samples, deferredResolve);
+
+	vkvgDev->vkhDev = vkhd;
+
+	vkh_app_free_phyinfos (phyCount, phys);
+
+	return vkvgDev;
 }
-VkvgDevice vkvg_device_create_multisample(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve)
+VkvgDevice vkvg_device_create_from_vk(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
+{
+	return vkvg_device_create_from_vk_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_1_BIT, false);
+}
+VkvgDevice vkvg_device_create_from_vk_multisample(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve)
 {
 	LOG(VKVG_LOG_INFO, "CREATE Device: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
 
@@ -168,6 +230,12 @@ void vkvg_device_destroy (VkvgDevice dev)
 	vmaDestroyAllocator (dev->allocator);
 
 	MUTEX_DESTROY (&dev->gQMutex);
+
+	if (dev->vkhDev) {
+		VkhApp app = vkh_device_get_app (dev->vkhDev);
+		vkh_device_destroy (dev->vkhDev);
+		vkh_app_destroy (app);
+	}
 
 	free(dev);
 }

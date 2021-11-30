@@ -480,17 +480,17 @@ vkvg_status_t vkvg_matrix_invert (vkvg_matrix_t *matrix);
 
 /*!
  * @defgroup device Device
- * @brief bind vulkan context and vkvg.
+ * @brief create or use an existing vulkan context for vkvg.
  *
  * #VkvgDevice is the starting point of a vkvg rendering infrastructure. It connects an
- * existing vulkan context with vkvg.
+ * existing vulkan context with vkvg, or may create a new one.
  *
  * Most of the vulkan rendering component (pipelines, renderpass, ..) are part of the VkvgDevice,
  * their are shared among drawing contexts.
  *
  * Antialiasing level is configured when creating the device by selecting the sample count.
- * #vkvg_device_create will create a not antialiased by selecting VK_SAMPLE_COUNT_1_BIT as sample count.
- * To create antialiased rendering device, call #vkvg_device_create_multisample with VkSampleCountFlags
+ * @ref vkvg_device_create will create a non-antialiased dev by selecting VK_SAMPLE_COUNT_1_BIT as sample count.
+ * To create antialiased rendering device, call @ref vkvg_device_create_multisample with VkSampleCountFlags
  * greater than one.
  *
  * vkvg use a single frame buffer format for now: VK_FORMAT_B8G8R8A8_UNORM.
@@ -502,8 +502,24 @@ vkvg_status_t vkvg_matrix_invert (vkvg_matrix_t *matrix);
 /**
  * @brief Create a new vkvg device.
  *
+ * Create a new #VkvgDevice owning vulkan instance and device.
+ *
+ * On success, create a new vkvg device and set its reference count to 1.
+ * On error, query the device status by calling @ ref vkvg_device_status(). Error could be
+ * one of the following:
+ * - VKVG_STATUS_INVALID_FORMAT: the combination of image format and tiling is not supported
+ * - VKVG_STATUS_NULL_POINTER: vulkan function pointer fetching failed.
+ *
+ * @param samples The sample count that will be setup for the surfaces created by this device.
+ * @param deferredResolve If true, the final simple sampled image of the surface will only be resolved on demand
+ */
+vkvg_public
+VkvgDevice vkvg_device_create (VkSampleCountFlags samples, bool deferredResolve);
+/**
+ * @brief Create a new vkvg device from an existing vulkan logical device.
+ *
  * Create a new #VkvgDevice connected to the vulkan context define by an instance,
- * a physical device, a logical device, a graphical queue family index and an index
+ * a physical device, a logical device, a graphical queue family index and an its index.
  *
  * On success, create a new vkvg device and set its reference count to 1.
  * On error, query the device status by calling #vkvg_device_status(). Error could be
@@ -519,7 +535,7 @@ vkvg_status_t vkvg_matrix_invert (vkvg_matrix_t *matrix);
  * @return The handle of the created vkvg device, or null if an error occured.
  */
 vkvg_public
-VkvgDevice vkvg_device_create (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex);
+VkvgDevice vkvg_device_create_from_vk (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex);
 /**
  * @brief Create a new multisampled vkvg device.
  *
@@ -539,7 +555,7 @@ VkvgDevice vkvg_device_create (VkInstance inst, VkPhysicalDevice phy, VkDevice v
  * @return The handle of the created vkvg device, or null if an error occured.
  */
 vkvg_public
-VkvgDevice vkvg_device_create_multisample (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve);
+VkvgDevice vkvg_device_create_from_vk_multisample (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve);
 /**
  * @brief Decrement the reference count of the device by 1. Release all it's ressources if count reach 0.
  *

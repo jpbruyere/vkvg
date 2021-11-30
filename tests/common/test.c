@@ -149,7 +149,7 @@ void init_test (uint32_t width, uint32_t height){
 
 	bool deferredResolve = false;
 
-	device = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
+	device = vkvg_device_create_from_vk_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
 	surf = vkvg_surface_create(device, width, height);
 
 	vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
@@ -388,7 +388,7 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 	VkhDevice dev = vkh_device_create(app, pi, &device_info);
 
 
-	device  = vkvg_device_create_multisample(vkh_app_get_inst(app), dev->phy, dev->dev, pi->gQueue, 0, samples, deferredResolve);
+	device  = vkvg_device_create_from_vk_multisample(vkh_app_get_inst(app), dev->phy, dev->dev, pi->gQueue, 0, samples, deferredResolve);
 	//vkvg_device_set_dpy(device, 96, 96);
 
 	vkh_app_free_phyinfos (phyCount, phys);
@@ -462,7 +462,7 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 
 	bool deferredResolve = false;
 
-	device  = vkvg_device_create_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
+	device  = vkvg_device_create_from_vk_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
 
 	vkvg_device_set_dpy(device, 96, 96);
 

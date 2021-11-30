@@ -48,6 +48,15 @@ PFN_vkCmdSetScissor				CmdSetScissor;
 
 PFN_vkCmdPushConstants			CmdPushConstants;
 
+bool _try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
+	for (uint32_t i=0; i<phyCount; i++){
+		if (vkh_phyinfo_get_properties(phys[i]).deviceType == gpuType) {
+			 *phy = phys[i];
+			 return true;
+		}
+	}
+	return false;
+}
 void _flush_all_contexes (VkvgDevice dev){
 	VkvgContext ctx = dev->lastCtx;
 	while (ctx != NULL){
