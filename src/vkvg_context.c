@@ -466,21 +466,23 @@ void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float
 	vec2 cp = _get_current_position(ctx);
 	vkvg_quadratic_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2);
 }
+const double quadraticFact = 2.0/3.0;
 void vkvg_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
 	if (ctx->status)
 		return;
-	_set_curve_start (ctx);
-	if (_current_path_is_empty(ctx))
-		_add_point(ctx, x1, y1);
+
 	float x0, y0;
-	vkvg_get_current_point (ctx, &x0, &y0);
+	if (_current_path_is_empty(ctx)) {
+		x0 = x1;
+		y0 = y1;
+	} else
+		vkvg_get_current_point (ctx, &x0, &y0);
 	vkvg_curve_to (ctx,
-				  2.0 / 3.0 * x1 + 1.0 / 3.0 * x0,
-				  2.0 / 3.0 * y1 + 1.0 / 3.0 * y0,
-				  2.0 / 3.0 * x1 + 1.0 / 3.0 * x2,
-				  2.0 / 3.0 * y1 + 1.0 / 3.0 * y2,
-				  y1, y2);
-	_set_curve_end (ctx);
+					x0 + (x1 - x0) * quadraticFact,
+					y0 + (y1 - y0) * quadraticFact,
+					x2 + (x1 - x2) * quadraticFact,
+					y2 + (y1 - y2) * quadraticFact,
+					x2, y2);
 }
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	if (ctx->status)
