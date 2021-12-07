@@ -31,6 +31,7 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
 #endif
+	enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
 
 	VkhApp app =  vkh_app_create("vkvg", 0, NULL, enabledExtsCount, enabledExts);
 
@@ -64,11 +65,8 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 
 	enabledExtsCount=0;
 	//https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VK_KHR_portability_subset
-	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_get_physical_device_properties2", NULL) &&
-		vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_portability_subset", NULL)) {
+	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_portability_subset", NULL))
 		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
-		enabledExts[enabledExtsCount++] = "VK_KHR_portability_subset";
-	}
 
 	VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 									   .queueCreateInfoCount = qCount,

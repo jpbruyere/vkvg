@@ -117,11 +117,9 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	const char** enabledLayers = NULL;
 #endif
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
-	enabledExtsCount++;
+	enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
 #endif
-	/*enabledExts[enabledExtsCount] = "VK_KHR_get_physical_device_properties2";
-	enabledExtsCount++;*/
+	enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
 
 	e->app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
@@ -178,12 +176,9 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_EXT_blend_operation_advanced", NULL))
 		enabledExts[enabledExtsCount++] = "VK_EXT_blend_operation_advanced";
 
-	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_get_physical_device_properties2", NULL) &&
-		vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_portability_subset", NULL)) {
+	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_portability_subset", NULL))
 		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
-		enabledExts[enabledExtsCount++] = "VK_KHR_portability_subset";
 
-	}
 	VkPhysicalDeviceFeatures enabledFeatures = {
 		.fillModeNonSolid = true,
 		//.sampleRateShading = true

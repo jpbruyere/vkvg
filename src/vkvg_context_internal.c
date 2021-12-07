@@ -759,7 +759,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bo
 	float lh = hw / cosf(alpha);
 	bisec = vec2_perp(bisec);
 
-	//limit bisectrice lenght, may be improved but ok for perf
+	//limit bisectrice length, may be improved but ok for perf
 	lh=fminf (lh, fminf (sqrtf(length_v0*length_v0+hw*hw), sqrtf(length_v1*length_v1+hw*hw)));
 
 	bisec = vec2_mult(bisec,lh);
