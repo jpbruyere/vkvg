@@ -178,7 +178,7 @@ FUNCTION (setup_lib LibName)
 			OUTPUT_NAME ${PROJECT_NAME}
 			VERSION ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}
 			SOVERSION ${vkvg_VERSION_MAJOR}
-			C_STANDARD 99
+			C_STANDARD 11
 			C_EXTENSIONS OFF
 			PUBLIC_HEADER "include/vkvg.h;include/vkvg-nsvg.h"
 	)
