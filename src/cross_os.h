@@ -32,7 +32,7 @@
 #elif __APPLE__
 	#include <math.h>
 	#define isnanf isnan
-	#define vkvg_inline
+#define vkvg_inline static
 #elif __unix__
 	#include <unistd.h>
 	#include <sys/types.h>

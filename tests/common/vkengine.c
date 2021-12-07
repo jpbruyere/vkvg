@@ -175,11 +175,15 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	enabledExts[enabledExtsCount] = "VK_KHR_swapchain";
 	enabledExtsCount++;
 
-	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_EXT_blend_operation_advanced", NULL)) {
-		enabledExts[enabledExtsCount] = "VK_EXT_blend_operation_advanced";
-		enabledExtsCount++;
-	}
+	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_EXT_blend_operation_advanced", NULL))
+		enabledExts[enabledExtsCount++] = "VK_EXT_blend_operation_advanced";
 
+	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_get_physical_device_properties2", NULL) &&
+		vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_portability_subset", NULL)) {
+		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
+		enabledExts[enabledExtsCount++] = "VK_KHR_portability_subset";
+
+	}
 	VkPhysicalDeviceFeatures enabledFeatures = {
 		.fillModeNonSolid = true,
 		//.sampleRateShading = true
