@@ -93,6 +93,13 @@ bool vkengine_try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDe
 	}
 	return false;
 }
+bool instance_extension_supported (VkExtensionProperties* instanceExtProps, uint32_t extCount, const char* instanceName) {
+	for (uint32_t i=0; i<extCount; i++) {
+		if (!strcmp(instanceExtProps[i].extensionName, instanceName))
+			return true;
+	}
+	return false;
+}
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
 	vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 
@@ -119,7 +126,15 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
 #endif
-	enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
+	uint32_t instanceExtCount;
+	VK_CHECK_RESULT(vkEnumerateInstanceExtensionProperties(NULL, &instanceExtCount, NULL));
+	VkExtensionProperties* instanceExtProps =(VkExtensionProperties*)malloc(instanceExtCount * sizeof(VkExtensionProperties));
+	VK_CHECK_RESULT(vkEnumerateInstanceExtensionProperties(NULL, &instanceExtCount, instanceExtProps));
+
+	if (instance_extension_supported(instanceExtProps, instanceExtCount, "VK_KHR_get_physical_device_properties2"))
+		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
+
+	free(instanceExtProps);
 
 	e->app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
@@ -169,7 +184,6 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 		qCount++;*/
 
 	enabledExtsCount=0;
-
 	enabledExts[enabledExtsCount] = "VK_KHR_swapchain";
 	enabledExtsCount++;
 
