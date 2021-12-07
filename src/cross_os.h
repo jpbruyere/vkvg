@@ -29,10 +29,14 @@
 	#include "windows.h"
 	#define isnanf _isnanf
 	#define vkvg_inline __forceinline
+	#define disable_warning (warn)
+	#define reset_warning (warn)
 #elif __APPLE__
 	#include <math.h>
 	#define isnanf isnan
-#define vkvg_inline static
+	#define vkvg_inline static
+	#define disable_warning (warn)
+	#define reset_warning (warn)
 #elif __unix__
 	#include <unistd.h>
 	#include <sys/types.h>
@@ -41,6 +45,8 @@
 		#define isnanf __isnanf
 	#endif
 	#define vkvg_inline static inline __attribute((always_inline))
+	#define disable_warning (warn) #pragma GCC diagnostic ignored "-W"#warn
+	#define reset_warning (warn) #pragma GCC diagnostic warning "-W"#warn
 #endif
 
 const char* getUserDir ();

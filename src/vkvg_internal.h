@@ -43,7 +43,10 @@
 #endif*/
 
 #ifdef DEBUG
-#define LOG(level,...) (vkvg_log_level & level) ? fprintf (stdout, __VA_ARGS__):true;
+#define LOG(level,...) {				\
+	if (vkvg_log_level & level)			\
+		fprintf (stdout, __VA_ARGS__);	\
+}
 #else
 #define LOG
 #endif
