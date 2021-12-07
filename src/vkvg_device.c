@@ -63,7 +63,12 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 	};
 
 	enabledExtsCount=0;
-	//enabledExts[enabledExtsCount++] = "VK_KHR_swapchain";
+	//https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VK_KHR_portability_subset
+	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_get_physical_device_properties2", NULL) &&
+		vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_portability_subset", NULL)) {
+		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
+		enabledExts[enabledExtsCount++] = "VK_KHR_portability_subset";
+	}
 
 	VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 									   .queueCreateInfoCount = qCount,
