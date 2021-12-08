@@ -182,7 +182,9 @@ VkvgDevice vkvg_device_create_from_vk_multisample(VkInstance inst, VkPhysicalDev
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
 
+#ifndef __APPLE__
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelinePolyFill, "PL Poly fill");
+#endif
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelineClipping, "PL Clipping");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_OVER, "PL draw Over");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_SUB, "PL draw Substract");
@@ -209,8 +211,9 @@ void vkvg_device_destroy (VkvgDevice dev)
 	vkDestroyDescriptorSetLayout	(dev->vkDev, dev->dslGrad,NULL);
 	vkDestroyDescriptorSetLayout	(dev->vkDev, dev->dslFont,NULL);
 	vkDestroyDescriptorSetLayout	(dev->vkDev, dev->dslSrc, NULL);
-
+#ifndef __APPLE__
 	vkDestroyPipeline				(dev->vkDev, dev->pipelinePolyFill, NULL);
+#endif
 	vkDestroyPipeline				(dev->vkDev, dev->pipelineClipping, NULL);
 
 	vkDestroyPipeline				(dev->vkDev, dev->pipe_OVER,	NULL);
