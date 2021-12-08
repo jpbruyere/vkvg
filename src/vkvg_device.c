@@ -28,18 +28,26 @@
 VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) {
 	const char* enabledExts [10];
 	uint32_t enabledExtsCount = 0, phyCount = 0;
+	_instance_extensions_check_init ();
+
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
+	bool dbgUtilsSupported = _instance_extension_supported("VK_EXT_debug_utils");
+	 if (dbgUtilsSupported)
+		enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
 #endif
-	enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
+	if (_instance_extension_supported("VK_KHR_get_physical_device_properties2"))
+		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
+
+	_instance_extensions_check_release();
 
 	VkhApp app =  vkh_app_create("vkvg", 0, NULL, enabledExtsCount, enabledExts);
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	vkh_app_enable_debug_messenger(app
-								   , VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-								   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
-								   , NULL);
+	if (dbgUtilsSupported)
+		vkh_app_enable_debug_messenger(app
+								, VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+								, VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+								, NULL);
 #endif
 	VkhPhyInfo* phys = vkh_app_get_phyinfos (app, &phyCount, VK_NULL_HANDLE);
 	if (phyCount == 0) {

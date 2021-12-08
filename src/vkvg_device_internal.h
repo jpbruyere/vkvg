@@ -117,4 +117,9 @@ void _flush_all_contexes		(VkvgDevice dev);
 void _wait_idle					(VkvgDevice dev);
 void _wait_and_reset_device_fence (VkvgDevice dev);
 void _submit_cmd				(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
+
+bool _instance_extension_supported		(const char* instanceName);
+void _instance_extensions_check_init	();
+void _instance_extensions_check_release ();
+
 #endif
