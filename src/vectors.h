@@ -25,8 +25,8 @@
 #include "vkvg_internal.h"
 
 typedef struct {
-		float x;
-		float y;
+	float x;
+	float y;
 }vec2;
 
 typedef struct {
@@ -170,6 +170,9 @@ vkvg_inline	bool vec2_isnan (vec2 v){
 // test if one component of double vector is nan
 vkvg_inline	bool vec2d_isnan (vec2d v){
 	return (bool)(isnan (v.x) || isnan (v.y));
+}
+vkvg_inline float vec2_dot (vec2 a, vec2 b) {
+	return (a.x * b.x) + (a.y * b.y);
 }
 
 vkvg_inline	bool vec4_equ (vec4 a, vec4 b){
