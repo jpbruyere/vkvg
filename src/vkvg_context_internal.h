@@ -191,6 +191,23 @@ typedef struct _ear_clip_point{
 	struct _ear_clip_point* next;
 }ear_clip_point;
 
+typedef struct {
+	bool	dashOn;
+	uint32_t curDash;	//current dash index
+	float	curDashOffset;	//cur dash offset between defined path point and last dash segment(on/off) start
+	float	totDashLength;	//total length of dashes
+	vec2	normal;
+}dash_context_t;
+
+typedef struct {
+	uint32_t iL;
+	uint32_t iR;
+	uint32_t iR2;
+	uint32_t cp;//current point
+	bool has_prev_v0n;//true if set
+	vec2 prev_v0n;//store previous left normal for path correction
+}stroke_context_t;
+
 void _check_vertex_cache_size(VkvgContext ctx);
 void _resize_vertex_cache	(VkvgContext ctx, uint32_t newSize);
 void _check_index_cache_size(VkvgContext ctx);
@@ -213,6 +230,10 @@ void _add_point				(VkvgContext ctx, float x, float y);
 
 void _resetMinMax			(VkvgContext ctx);
 
+void _draw_stoke_cap		(VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart);
+void _draw_segment			(VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve);
+float _draw_dashed_segment	(VkvgContext ctx, float hw, stroke_context_t *str, dash_context_t* dc, bool isCurve);
+
 void _poly_fill				(VkvgContext ctx);
 void _fill_ec				(VkvgContext ctx);//earclipping fill
 void _draw_full_screen_quad (VkvgContext ctx, bool useScissor);
@@ -224,7 +245,8 @@ void _add_vertexf			(VkvgContext ctx, float x, float y);
 void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
 void _add_triangle_indices	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2);
 void _add_tri_indices_for_rect	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
-float _build_vb_step		(vkvg_context* ctx, float hw, vec2 pL, vec2 p0, vec2 pR, bool isCurve);
+float _build_vb_step		(vkvg_context* ctx, float hw, stroke_context_t *str, bool isCurve);
+
 void _vao_add_rectangle		(VkvgContext ctx, float x, float y, float width, float height);
 
 void _bind_draw_pipeline	(VkvgContext ctx);

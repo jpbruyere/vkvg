@@ -673,124 +673,6 @@ void vkvg_fill_preserve (VkvgContext ctx){
 		_ensure_renderpass_is_started(ctx);
 	_fill_ec(ctx);
 }
-void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
-	Vertex v = {{0},ctx->curColor,{0,0,-1}};
-
-	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);	
-
-	if (isStart){
-		vec2 vhw = vec2_mult(n,hw);
-
-		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-			p0 = vec2_sub(p0, vhw);
-
-		vhw = vec2_perp(vhw);
-
-		if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-			float step = M_PIF / fmaxf(hw, 4.f);
-			float a = acosf(n.x) + M_PIF_2;
-			if (n.y < 0)
-				a = M_PIF-a;
-			float a1 = a + M_PIF;
-
-			a+=step;
-			while (a < a1){
-				_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-				a+=step;
-			}
-			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-			for (VKVG_IBO_INDEX_TYPE p = firstIdx; p < p0Idx; p++)
-				_add_triangle_indices(ctx, p0Idx+1, p, p+1);
-			firstIdx = p0Idx;
-		}
-
-		v.pos = vec2_add(p0, vhw);
-		_add_vertex(ctx, v);
-		v.pos = vec2_sub(p0, vhw);
-		_add_vertex(ctx, v);
-
-		_add_tri_indices_for_rect(ctx, firstIdx);
-	}else{
-		vec2 vhw = vec2_mult(n, hw);
-
-		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-			p0 = vec2_add(p0, vhw);
-
-		vhw = vec2_perp(vhw);
-
-		v.pos = vec2_add(p0, vhw);
-		_add_vertex(ctx, v);
-		v.pos = vec2_sub(p0, vhw);
-		_add_vertex(ctx, v);
-
-		firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-
-		if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-			float step = M_PIF / fmaxf(hw, 4.f);
-			float a = acosf(n.x)+ M_PIF_2;
-			if (n.y < 0)
-				a = M_PIF-a;
-			float a1 = a - M_PIF;
-
-			a-=step;
-			while ( a > a1){
-				_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-				a-=step;
-			}
-
-			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset - 1);
-			for (VKVG_IBO_INDEX_TYPE p = firstIdx-1 ; p < p0Idx; p++)
-				_add_triangle_indices(ctx, p+1, p, firstIdx-2);
-		}
-	}
-}
-
-typedef struct {
-	bool	dashOn;
-	uint32_t curDash;	//current dash index
-	float	curDashOffset;	//cur dash offset between defined path point and last dash segment(on/off) start
-	float	totDashLength;	//total length of dashes
-	vec2	normal;
-}dash_context_t;
-
-typedef struct {
-	uint32_t iL;
-	uint32_t iR;
-	uint32_t cp;//current point
-}stroke_context_t;
-
-float _draw_dashed_segment (VkvgContext ctx, float hw, dash_context_t* dc, vec2 pL, vec2 p, vec2 pR, bool isCurve) {
-	if (!dc->dashOn)//we test in fact the next dash start, if dashOn = true => next segment is a void.
-		_build_vb_step (ctx, hw, pL, p, pR, isCurve);
-
-	vec2 d = vec2_sub (pR, p);
-	dc->normal = vec2_norm (d);
-	float segmentLength = vec2_length(d);
-
-	while (dc->curDashOffset < segmentLength){
-		vec2 p0 = vec2_add (p, vec2_mult(dc->normal, dc->curDashOffset));
-
-		_draw_stoke_cap (ctx, hw, p0, dc->normal, dc->dashOn);
-		dc->dashOn ^= true;
-		dc->curDashOffset += ctx->dashes[dc->curDash];
-		if (++dc->curDash == ctx->dashCount)
-			dc->curDash = 0;
-	}
-	dc->curDashOffset -= segmentLength;
-	dc->curDashOffset = fmodf(dc->curDashOffset, dc->totDashLength);
-	return segmentLength;
-}
-
-
-
-void _draw_segment (VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
-	str->iR = str->cp + 1;
-	if (ctx->dashCount > 0)
-		_draw_dashed_segment(ctx, hw, dc, ctx->points[str->iL], ctx->points[str->cp], ctx->points[str->iR], isCurve);
-	else
-		_build_vb_step (ctx, hw, ctx->points[str->iL], ctx->points[str->cp], ctx->points[str->iR], isCurve);
-	str->iL = str->cp++;
-}
 
 void vkvg_stroke_preserve (VkvgContext ctx)
 {
@@ -870,7 +752,11 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 		if (ctx->dashCount > 0) {
 			if (_path_is_closed(ctx,ptrPath)){
 				str.iR = firstPathPointIdx;
-				_draw_dashed_segment(ctx, hw, &dc, ctx->points[str.iL++], ctx->points[str.cp++], ctx->points[str.iR], false);
+
+				_draw_dashed_segment(ctx, hw, &str, &dc, false);
+
+				str.iL++;
+				str.cp++;
 			}
 			if (!dc.dashOn){
 				//finishing last dash that is already started, draw end caps but not too close to start
@@ -884,7 +770,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 			}
 		} else if (_path_is_closed(ctx,ptrPath)){
 			str.iR = firstPathPointIdx;
-			float cross = _build_vb_step (ctx, hw, ctx->points[str.iL], ctx->points[str.cp], ctx->points[str.iR], false);
+			float cross = _build_vb_step (ctx, hw, &str, false);
 
 			VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
 			VKVG_IBO_INDEX_TYPE ii = firstIdx;
