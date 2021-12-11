@@ -101,6 +101,7 @@ extern float dashes[];
 extern uint32_t dashes_count;
 
 VkvgContext _initCtx();
+void _parse_args (int argc, char* argv[]);
 /*******************************/
 
 //run test in one step

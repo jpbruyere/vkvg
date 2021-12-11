@@ -174,6 +174,13 @@ vkvg_inline	bool vec2d_isnan (vec2d v){
 vkvg_inline float vec2_dot (vec2 a, vec2 b) {
 	return (a.x * b.x) + (a.y * b.y);
 }
+vkvg_inline float vec2_det (vec2 a, vec2 b) {
+	return a.x * b.y - a.y * b.x;
+}
+vkvg_inline float vec2_slope (vec2 a, vec2 b) {
+	return (b.y - a.y) / (b.x - a.x);
+}
+
 
 vkvg_inline	bool vec4_equ (vec4 a, vec4 b){
 	return (EQUF(a.x,b.x)&EQUF(a.y,b.y)&EQUF(a.z,b.z)&EQUF(a.w,b.w));

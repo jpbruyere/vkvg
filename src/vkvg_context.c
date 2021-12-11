@@ -745,41 +745,51 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) 
 	}
 }
 
-static bool		dashOn			= true;
-static uint32_t curDash			= 0;	//current dash index
-static float	curDashOffset	= 0.f;	//cur dash offset between defined path point and last dash segment(on/off) start
-static float	totDashLength	= 0;	//total length of dashes
-static vec2		normal			= {0};
+typedef struct {
+	bool	dashOn;
+	uint32_t curDash;	//current dash index
+	float	curDashOffset;	//cur dash offset between defined path point and last dash segment(on/off) start
+	float	totDashLength;	//total length of dashes
+	vec2	normal;
+}dash_context_t;
 
-float _draw_dashed_segment (VkvgContext ctx, float hw, vec2 pL, vec2 p, vec2 pR, bool isCurve) {
-	if (!dashOn)//we test in fact the next dash start, if dashOn = true => next segment is a void.
+typedef struct {
+	uint32_t iL;
+	uint32_t iR;
+	uint32_t cp;//current point
+}stroke_context_t;
+
+float _draw_dashed_segment (VkvgContext ctx, float hw, dash_context_t* dc, vec2 pL, vec2 p, vec2 pR, bool isCurve) {
+	if (!dc->dashOn)//we test in fact the next dash start, if dashOn = true => next segment is a void.
 		_build_vb_step (ctx, hw, pL, p, pR, isCurve);
 
 	vec2 d = vec2_sub (pR, p);
-	normal = vec2_norm (d);
+	dc->normal = vec2_norm (d);
 	float segmentLength = vec2_length(d);
 
-	while (curDashOffset < segmentLength){
-		vec2 p0 = vec2_add (p, vec2_mult(normal, curDashOffset));
+	while (dc->curDashOffset < segmentLength){
+		vec2 p0 = vec2_add (p, vec2_mult(dc->normal, dc->curDashOffset));
 
-		_draw_stoke_cap (ctx, hw, p0, normal, dashOn);
-		dashOn ^= true;
-		curDashOffset += ctx->dashes[curDash];
-		if (++curDash == ctx->dashCount)
-			curDash = 0;
+		_draw_stoke_cap (ctx, hw, p0, dc->normal, dc->dashOn);
+		dc->dashOn ^= true;
+		dc->curDashOffset += ctx->dashes[dc->curDash];
+		if (++dc->curDash == ctx->dashCount)
+			dc->curDash = 0;
 	}
-	curDashOffset -= segmentLength;
-	curDashOffset = fmodf(curDashOffset, totDashLength);
+	dc->curDashOffset -= segmentLength;
+	dc->curDashOffset = fmodf(dc->curDashOffset, dc->totDashLength);
 	return segmentLength;
 }
-static uint32_t curPathPointIdx, lastPathPointIdx, ptrPath, iL, iR;
-void _draw_segment (VkvgContext ctx, float hw, bool isCurve) {
-	iR = curPathPointIdx+1;
+
+
+
+void _draw_segment (VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
+	str->iR = str->cp + 1;
 	if (ctx->dashCount > 0)
-		_draw_dashed_segment(ctx, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], isCurve);
+		_draw_dashed_segment(ctx, hw, dc, ctx->points[str->iL], ctx->points[str->cp], ctx->points[str->iR], isCurve);
 	else
-		_build_vb_step (ctx, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], isCurve);
-	iL = curPathPointIdx++;
+		_build_vb_step (ctx, hw, ctx->points[str->iL], ctx->points[str->cp], ctx->points[str->iR], isCurve);
+	str->iL = str->cp++;
 }
 
 void vkvg_stroke_preserve (VkvgContext ctx)
@@ -794,18 +804,21 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
 	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path ptr = %d;\n", ctx, ctx->pathPtr);
 
-	curPathPointIdx = lastPathPointIdx = ptrPath = iL = iR = 0;
+	stroke_context_t str = {0};
+	uint32_t ptrPath = 0;
 	float hw = ctx->lineWidth / 2.0f;
 
 	while (ptrPath < ctx->pathPtr){
 		uint32_t ptrSegment = 0, lastSegmentPointIdx = 0;
-		uint32_t firstPathPointIdx = curPathPointIdx;
+		uint32_t firstPathPointIdx = str.cp;
 		uint32_t pathPointCount = ctx->pathes[ptrPath]&PATH_ELT_MASK;
-		lastPathPointIdx = curPathPointIdx + pathPointCount - 1;
+		uint32_t lastPathPointIdx = str.cp + pathPointCount - 1;
+
+		dash_context_t dc = {0};
 
 		if (_path_has_curves (ctx,ptrPath)) {
 			ptrSegment = 1;
-			lastSegmentPointIdx = curPathPointIdx + (ctx->pathes[ptrPath+ptrSegment]&PATH_ELT_MASK)-1;
+			lastSegmentPointIdx = str.cp + (ctx->pathes[ptrPath+ptrSegment]&PATH_ELT_MASK)-1;
 		}
 
 		VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
@@ -815,65 +828,63 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 
 		if (ctx->dashCount > 0) {
 			//init dash stroke
-			dashOn = true;
-			curDash = 0;	//current dash index
-
-			//limit offset to total length of dashes
-			totDashLength = 0;
+			dc.dashOn = true;
+			dc.curDash = 0;	//current dash index
+			dc.totDashLength = 0;//limit offset to total length of dashes
 			for (uint32_t i=0;i<ctx->dashCount;i++)
-				totDashLength += ctx->dashes[i];
-			if (totDashLength == 0){
+				dc.totDashLength += ctx->dashes[i];
+			if (dc.totDashLength == 0){
 				ctx->status = VKVG_STATUS_INVALID_DASH;
 				return;
 			}
-			curDashOffset = fmodf(ctx->dashOffset, totDashLength);	//cur dash offset between defined path point and last dash segment(on/off) start
-			iL = lastPathPointIdx;
+			dc.curDashOffset = fmodf(ctx->dashOffset, dc.totDashLength);	//cur dash offset between defined path point and last dash segment(on/off) start
+			str.iL = lastPathPointIdx;
 		} else if (_path_is_closed(ctx,ptrPath)){
-			iL = lastPathPointIdx;
+			str.iL = lastPathPointIdx;
 		}else{
-			_draw_stoke_cap(ctx, hw, ctx->points[curPathPointIdx], vec2_line_norm(ctx->points[curPathPointIdx], ctx->points[curPathPointIdx+1]), true);
-			iL = curPathPointIdx++;
+			_draw_stoke_cap(ctx, hw, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp], ctx->points[str.cp+1]), true);
+			str.iL = str.cp++;
 		}
 
 		if (_path_has_curves (ctx,ptrPath)) {
-			while (curPathPointIdx < lastPathPointIdx){
+			while (str.cp < lastPathPointIdx){
 
 				bool curved = ctx->pathes [ptrPath + ptrSegment] & PATH_HAS_CURVES_BIT;
 				if (lastSegmentPointIdx == lastPathPointIdx)//last segment of path, dont draw end point here
 					lastSegmentPointIdx--;
-				while (curPathPointIdx <= lastSegmentPointIdx)
-					_draw_segment(ctx, hw, curved);
+				while (str.cp <= lastSegmentPointIdx)
+					_draw_segment(ctx, hw, &str, &dc, curved);
 
 				ptrSegment ++;
 				uint32_t cptSegPts = ctx->pathes [ptrPath + ptrSegment]&PATH_ELT_MASK;
-				lastSegmentPointIdx = curPathPointIdx + cptSegPts - 1;
+				lastSegmentPointIdx = str.cp + cptSegPts - 1;
 				if (lastSegmentPointIdx == lastPathPointIdx && cptSegPts == 1) {
 					//single point last segment
 					ptrSegment++;
 					break;
 				}
 			}
-		}else while (curPathPointIdx < lastPathPointIdx)
-			_draw_segment(ctx, hw, false);
+		}else while (str.cp < lastPathPointIdx)
+			_draw_segment(ctx, hw, &str, &dc, false);
 
 		if (ctx->dashCount > 0) {
 			if (_path_is_closed(ctx,ptrPath)){
-				iR = firstPathPointIdx;
-				_draw_dashed_segment(ctx, hw, ctx->points[iL++], ctx->points[curPathPointIdx++], ctx->points[iR], false);
+				str.iR = firstPathPointIdx;
+				_draw_dashed_segment(ctx, hw, &dc, ctx->points[str.iL++], ctx->points[str.cp++], ctx->points[str.iR], false);
 			}
-			if (!dashOn){
+			if (!dc.dashOn){
 				//finishing last dash that is already started, draw end caps but not too close to start
 				//the default gap is the next void
-				int32_t prevDash = (int32_t)curDash-1;
+				int32_t prevDash = (int32_t)dc.curDash-1;
 				if (prevDash < 0)
-					curDash = ctx->dashCount-1;
-				float m = fminf (ctx->dashes[prevDash] - curDashOffset, ctx->dashes[curDash]);
-				vec2 p = vec2_sub(ctx->points[iR], vec2_mult(normal, m));
-				_draw_stoke_cap (ctx, hw, p, normal, false);
+					dc.curDash = ctx->dashCount-1;
+				float m = fminf (ctx->dashes[prevDash] - dc.curDashOffset, ctx->dashes[dc.curDash]);
+				vec2 p = vec2_sub(ctx->points[str.iR], vec2_mult(dc.normal, m));
+				_draw_stoke_cap (ctx, hw, p, dc.normal, false);
 			}
 		} else if (_path_is_closed(ctx,ptrPath)){
-			iR = firstPathPointIdx;
-			float cross = _build_vb_step (ctx, hw, ctx->points[iL], ctx->points[curPathPointIdx], ctx->points[iR], false);
+			str.iR = firstPathPointIdx;
+			float cross = _build_vb_step (ctx, hw, ctx->points[str.iL], ctx->points[str.cp], ctx->points[str.iR], false);
 
 			VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
 			VKVG_IBO_INDEX_TYPE ii = firstIdx;
@@ -886,11 +897,11 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 				inds[4] = ii;
 				inds[5] = ii+1;
 			}
-			curPathPointIdx++;
+			str.cp++;
 		}else
-			_draw_stoke_cap (ctx, hw, ctx->points[curPathPointIdx], vec2_line_norm(ctx->points[curPathPointIdx-1], ctx->points[curPathPointIdx]), false);
+			_draw_stoke_cap (ctx, hw, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp-1], ctx->points[str.cp]), false);
 
-		curPathPointIdx = firstPathPointIdx + pathPointCount;
+		str.cp = firstPathPointIdx + pathPointCount;
 
 		if (ptrSegment > 0)
 			ptrPath += ptrSegment;
