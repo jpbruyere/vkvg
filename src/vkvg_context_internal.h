@@ -202,10 +202,7 @@ typedef struct {
 typedef struct {
 	uint32_t iL;
 	uint32_t iR;
-	uint32_t iR2;
 	uint32_t cp;//current point
-	bool has_prev_v0n;//true if set
-	vec2 prev_v0n;//store previous left normal for path correction
 }stroke_context_t;
 
 void _check_vertex_cache_size(VkvgContext ctx);
