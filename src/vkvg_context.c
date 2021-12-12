@@ -703,7 +703,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 			lastSegmentPointIdx = str.cp + (ctx->pathes[ptrPath+ptrSegment]&PATH_ELT_MASK)-1;
 		}
 
-		VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+		str.firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 		//LOG(VKVG_LOG_INFO_PATH, "\tPATH: start=%d end=%d", ctx->pathes[ptrPath]&PATH_ELT_MASK, ctx->pathes[ptrPath+1]&PATH_ELT_MASK);
 		LOG(VKVG_LOG_INFO_PATH, "end = %d\n", lastPathPointIdx);
@@ -773,7 +773,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 			float cross = _build_vb_step (ctx, hw, &str, false);
 
 			VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
-			VKVG_IBO_INDEX_TYPE ii = firstIdx;
+			VKVG_IBO_INDEX_TYPE ii = str.firstIdx;
 			if (cross < 0 && ctx->lineJoin != VKVG_LINE_JOIN_MITER){
 				inds[1] = ii+1;
 				inds[4] = ii+1;

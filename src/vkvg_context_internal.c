@@ -1021,6 +1021,16 @@ void _draw_segment (VkvgContext ctx, float hw, stroke_context_t* str, dash_conte
 	else
 		_build_vb_step (ctx, hw, str, isCurve);
 	str->iL = str->cp++;
+	if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3) {
+		Vertex v0 = ctx->vertexCache[ctx->curVertOffset + str->firstIdx];
+		Vertex v1 = ctx->vertexCache[ctx->curVertOffset + str->firstIdx + 1];
+		_emit_draw_cmd_undrawn_vertices(ctx);
+		//repeat first 2 vertices for closed pathes
+		str->firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+		_add_vertex(ctx, v0);
+		_add_vertex(ctx, v1);
+		ctx->curVertOffset = ctx->vertCount;//prevent redrawing them at the start of the batch
+	}
 }
 
 bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
