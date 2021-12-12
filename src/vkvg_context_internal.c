@@ -735,15 +735,6 @@ void _init_descriptor_sets (VkvgContext ctx){
 	descriptorSetAllocateInfo.pSetLayouts = &dev->dslGrad;
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
-vec2 intersect (float x1, float y1,float x2, float y2,float x3, float y3,float x4, float y4) {
-	float t = ((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4))/((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4));
-	//float u = ((x1-x3)*(y1-y2)-(y1-y3)*(x1-x2))/((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4));
-	vec2 a = {
-		x1 + t * (x2 - x1),
-		y1 + t * (y2 - y1)
-	};
-	return a;
-}
 //populate vertice buff for stroke
 float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
@@ -776,19 +767,14 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 	float lh = hw / cosf(alpha/2);
 	bisec_n = vec2_perp(bisec_n);
 
+	//limit bisectrice length
 	vkvg_line_join_t join = ctx->lineJoin;
 	if (dot < -0.9 && join == VKVG_LINE_JOIN_MITER)
 		join =  VKVG_LINE_JOIN_BEVEL;
-
-	//limit bisectrice length, may be improved but ok for perf
-//	if (lh > fminf (lh, fminf (sqrtf(length_v0*length_v0+hw*hw), sqrtf(length_v1*length_v1+hw*hw))))
-	//bool reducedLH = (lh > fminf (lh, fminf (sqrtf(length_v0*length_v0+hw*hw), sqrtf(length_v1*length_v1+hw*hw))));
-	//bool reducedLH = (lh > sqrtf(length_v0*length_v0+hw*hw));
 	bool reducedLH = EQUF(dot,-1) || (lh > fminf (lh, fminf (length_v0, length_v1)));
-	//lh = fmax(hw, fminf (lh, fminf (length_v0, length_v1)));
+	//---
 
 	vec2 bisec = vec2_mult(bisec_n,lh);
-
 
 	VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
@@ -801,20 +787,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 		} else
 			v.pos = vec2_add(p0, bisec);
 
-		/*vec2 vA = vec2_sub(v.pos, ctx->vertexCache[ctx->vertCount-2].pos);
-		float determ = vec2_det(vA, v1);
-		if (str->has_prev_v0n) {
-			if ((det > 0 && determ < 0)||(det < 0 && determ > 0)) {
-				vec2 pA = vec2_add (vec2_mult (vec2_perp (str->prev_v0n), hw), pL);
-				vec2 pA2 = vec2_add (pA, str->prev_v0n);
-				vec2 pB = vec2_add (vec2_mult (vec2_perp (v1n), hw), p0);
-				vec2 pB2 = vec2_add (pB, v1n);
-				v.pos = intersect(pA.x, pA.y,pA2.x, pA2.y, pB.x, pB.y,pB2.x, pB2.y);
-				ctx->vertexCache[ctx->vertCount-2].pos = v.pos;
-			}
-			_add_vertex(ctx, v);
-		} else*/
-			_add_vertex(ctx, v);
+		_add_vertex(ctx, v);
 
 		if (dot < 0 && reducedLH && det > 0) {
 			if (length_v0 < length_v1)
@@ -939,9 +912,9 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 	debugLinePoints[dlpCount+1] = pR;
 	dlpCount+=2;
 #endif*/
-	/*if (reducedLH)
+	if (reducedLH)
 		return -det;
-	else*/
+	else
 		return det;
 }
 
