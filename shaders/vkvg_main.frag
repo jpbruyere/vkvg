@@ -81,6 +81,13 @@ void main()
 		for ( int i=1; i<uboGrad.count-1; ++i )
 			c = mix(c, uboGrad.colors[i+1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[i].r*d, gradientStartPosRotatedX + uboGrad.stops[i+1].r*d, xLocRotated ) );
 		break;
+	case RADIAL:
+		vec2 pos_ndc = (gl_FragCoord.xy-uboGrad.cp[0].xy) / vec2(uboGrad.cp[2].y);
+		float dist = length(pos_ndc + (uboGrad.cp[2].x / inSrc.x));
+		c = mix (uboGrad.colors[0], uboGrad.colors[1], smoothstep(uboGrad.stops[0].r, uboGrad.stops[1].r, dist));
+		for (int i=2; i < uboGrad.count; i++ )
+			c = mix(c, uboGrad.colors[i], smoothstep(uboGrad.stops[i-1].r, uboGrad.stops[i].r, dist));
+		break;
 	}
 
 	if (inFontUV.z >= 0.0)

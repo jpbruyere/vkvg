@@ -33,10 +33,10 @@ layout (location = 1) out vec4	outSrc;
 layout (location = 2) out flat int outPatType;
 layout (location = 3) out mat3x2 outMat;
 
-out gl_PerVertex
+/*out gl_PerVertex
 {
 	vec4 gl_Position;
-};
+};*/
 
 layout(push_constant) uniform PushConsts {
 	vec4 source;
@@ -74,4 +74,5 @@ void main()
 	);
 
 	gl_Position = vec4(p * vec2(2) / pc.size - vec2(1), 0.0, 1.0);
+	gl_PointSize = 3;
 }
