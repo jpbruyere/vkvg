@@ -454,13 +454,12 @@ void _emit_draw_cmd_undrawn_vertices (VkvgContext ctx){
 
 	_ensure_renderpass_is_started(ctx);
 
+	CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
+
 #ifdef VKVG_WIRED_DEBUG
 	CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
 	CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
 	//CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
-#else
-	CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
-
 #endif
 	LOG(VKVG_LOG_INFO, "RECORD DRAW CMD: ctx = %p; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
 		ctx, ctx->vertCount - ctx->curVertOffset,
@@ -799,8 +798,6 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 				v.pos = vec2_add (p0, vec2_mult (vec2_perp(v1n), hw));
 			else
 				v.pos = vec2_sub (p0, vec2_mult (vec2_perp(v1n), hw));
-			/*else
-				v.pos = vec2_add (p0, vec2_mult (vec2_perp(v1n), hw));*/
 		} else
 			v.pos = vec2_add(p0, bisec);
 
@@ -819,9 +816,6 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 		} else*/
 			_add_vertex(ctx, v);
 
-		/*if (reducedLH)
-			v.pos = ctx->vertexCache[ctx->vertCount-3].pos;
-		else*/
 		if (dot < 0 && reducedLH && det > 0) {
 			if (length_v0 < length_v1)
 				v.pos = vec2_sub (p0, vec2_mult (vec2_perp(v1n), hw));
@@ -836,37 +830,41 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 	}else{
 		vec2 vp = vec2_perp(v0n);
 		if (det<0){
-			if (reducedLH) {
-				if (length_v0 < length_v1)
-					v.pos = vec2_add (p0, vec2_mult (vec2_perp(v1n), hw));
-				else
-					v.pos = vec2_sub (p0, vec2_mult (vec2_perp(v1n), hw));
-			} else
+			if (dot < 0 && reducedLH)
+				v.pos = vec2_sub (p0, vec2_mult (vec2_perp(v1n), hw));
+			else
 				v.pos = vec2_add (p0, bisec);
 			_add_vertex(ctx, v);
 			v.pos = vec2_sub (p0, vec2_mult (vp, hw));
 		}else{
 			v.pos = vec2_add (p0, vec2_mult (vp, hw));
 			_add_vertex(ctx, v);
-			if (reducedLH) {
-				if (length_v0 < length_v1)
-					v.pos = vec2_sub (p0, vec2_mult (vec2_perp(v1n), hw));
-				else
-					v.pos = vec2_add (p0, vec2_mult (vec2_perp(v1n), hw));
-			} else
+			if (dot < 0 && reducedLH)
+				v.pos = vec2_add (p0, vec2_mult (vec2_perp(v1n), hw));
+			else
 				v.pos = vec2_sub (p0, bisec);
 		}
 		_add_vertex(ctx, v);
 
 		if (join == VKVG_LINE_JOIN_BEVEL){
 			if (det<0){
-				_add_triangle_indices(ctx, idx, idx+2, idx+1);
-				_add_triangle_indices(ctx, idx+2, idx+4, idx+0);
-				_add_triangle_indices(ctx, idx, idx+3, idx+4);
+				if (dot < 0 && reducedLH) {
+					_add_triangle_indices(ctx, idx, idx+3, idx+4);
+					_add_triangle_indices(ctx, idx+1, idx+3, idx+0);
+				}else{
+					_add_triangle_indices(ctx, idx, idx+2, idx+1);
+					_add_triangle_indices(ctx, idx+2, idx+4, idx+0);
+					_add_triangle_indices(ctx, idx, idx+3, idx+4);
+				}
 			}else{
-				_add_triangle_indices(ctx, idx, idx+2, idx+1);
-				_add_triangle_indices(ctx, idx+2, idx+3, idx+1);
-				_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
+				if (dot < 0 && reducedLH) {
+					_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
+					_add_triangle_indices(ctx, idx, idx+1, idx+4);
+				}else{
+					_add_triangle_indices(ctx, idx, idx+2, idx+1);
+					_add_triangle_indices(ctx, idx+2, idx+3, idx+1);
+					_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
+				}
 			}
 		}else if (join == VKVG_LINE_JOIN_ROUND){
 			float step = M_PIF / hw;
@@ -893,15 +891,29 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 			_add_triangle_indices(ctx, idx, idx+2, idx+1);
 			if (det < 0){
-				for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
-					_add_triangle_indices(ctx, p, p+1, idx);
-				_add_triangle_indices(ctx, p0Idx, p0Idx+2, idx);
-				_add_triangle_indices(ctx, idx, p0Idx+1, p0Idx+2);
+				if (dot < 0 && reducedLH) {
+					for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
+						_add_triangle_indices(ctx, p, p+1, idx);
+					_add_triangle_indices(ctx, idx+1, p0Idx+1, idx);
+					_add_triangle_indices(ctx, idx, p0Idx+1, p0Idx+2);
+				}else{
+					for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
+						_add_triangle_indices(ctx, p, p+1, idx);
+					_add_triangle_indices(ctx, p0Idx, p0Idx+2, idx);
+					_add_triangle_indices(ctx, idx, p0Idx+1, p0Idx+2);
+				}
 			}else{
-				for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
-					_add_triangle_indices(ctx, p, p+1, idx+1);
-				_add_triangle_indices(ctx, p0Idx, p0Idx+1, idx+1);
-				_add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
+				if (dot < 0 && reducedLH) {
+					for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
+						_add_triangle_indices(ctx, p, p+1, idx+1);
+					_add_triangle_indices(ctx, idx, p0Idx+2, idx+1);
+					_add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
+				}else{
+					for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
+						_add_triangle_indices(ctx, p, p+1, idx+1);
+					_add_triangle_indices(ctx, p0Idx, p0Idx+1, idx+1);
+					_add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
+				}
 			}
 
 		}
@@ -927,7 +939,10 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 	debugLinePoints[dlpCount+1] = pR;
 	dlpCount+=2;
 #endif*/
-	return det;
+	/*if (reducedLH)
+		return -det;
+	else*/
+		return det;
 }
 
 void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {

@@ -19,13 +19,22 @@ vec2 pts[] = {
 int hoverPt = -1;
 double pointSize = 7;
 
+float dash[] = {0, 60};
+uint32_t dashCountInit = 2;
+uint32_t dashCount = 0;
+
+
 
 void draw (){
+
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_clear(ctx);
+	if (dashCount > 0)
+		vkvg_set_dash(ctx, dash, dashCount,0);
 	vkvg_set_source_rgba(ctx,1,0,0,1);
 	vkvg_set_line_width(ctx,lineWidth);
-	vkvg_set_line_join	(ctx, line_join);
+	vkvg_set_line_join	(ctx, lineJoin);
+	vkvg_set_line_cap	(ctx, lineCap);
 	vkvg_move_to(ctx,pts[0].x,pts[0].y);
 	for (int i=1; i<ptsCount; i++)
 		vkvg_line_to(ctx,pts[i].x,pts[i].y);
@@ -34,6 +43,7 @@ void draw (){
 
 	if (hoverPt>=0) {
 		vkvg_stroke_preserve(ctx);
+		vkvg_set_dash(ctx, NULL, 0, 0);
 		vkvg_set_line_width(ctx,2);
 		vkvg_set_source_rgba(ctx,0,0,0,1);
 		vkvg_stroke(ctx);
@@ -55,8 +65,30 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	case GLFW_KEY_ESCAPE :
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 		break;
-	case GLFW_KEY_C :
+	case GLFW_KEY_W :
 		isClosed ^= true;
+		break;
+	case GLFW_KEY_J :
+		lineJoin++;
+		if (lineJoin > 2)
+			lineJoin = 0;
+		break;
+	case GLFW_KEY_C :
+		lineCap++;
+		if (lineCap > 2)
+			lineCap = 0;
+		break;
+	case GLFW_KEY_D :
+		if (dashCount == 0)
+			dashCount = dashCountInit;
+		else
+			dashCount = 0;
+		break;
+	case GLFW_KEY_E :
+		if (dash[0] > 0)
+			dash[0] = 0;
+		else
+			dash[0] = 80;
 		break;
 	case GLFW_KEY_KP_ADD :
 		if (ptsCount < initPtsCount)

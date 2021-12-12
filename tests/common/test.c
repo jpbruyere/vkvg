@@ -179,6 +179,16 @@ void _print_usage_and_exit () {
 	printf("\t\t\t - 2: Discrete (first choice)\n");
 	printf("\t\t\t - 3: Virtual\n");
 	printf("\t\t\t - 4: Cpu\n");
+	printf("\t-l line_width:\tset lines width for stokes.\n");
+	printf("\t-j line_join:\tset line joins for strokes:\n");
+	printf("\t\t\t - m: Mitter(default)\n");
+	printf("\t\t\t - r: Rount\n");
+	printf("\t\t\t - b: Bevel\n");
+	printf("\t-c line_cap:\tset line caps for strokes:\n");
+	printf("\t\t\t - b: Butt (default)\n");
+	printf("\t\t\t - r: Rount\n");
+	printf("\t\t\t - s: Square\n");
+	printf("\t-d:\t\tenable dashes.\n");
 	printf("\t-n index:\tRun only a single test, zero based index.\n");
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests.\n");
 	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs.\n");
@@ -226,48 +236,86 @@ void _parse_args (int argc, char* argv[]) {
 			if (argc -1 < ++i)
 				_print_usage_and_exit();
 			preferedPhysicalDeviceType = (VkPhysicalDeviceType)atoi (argv[i]);
-		}
-		if (printTestDetailsAndExit) {
-			#ifdef DEBUG
-			printf("Debug build\n");
-			#else
-			printf("Release build\n");
-			#endif
-			#ifdef VKVG_USE_RENDERDOC
-			printf("Render doc enabled\n");
-			#endif
-			#ifdef VKVG_USE_VALIDATION
-			printf("Validation enabled\n");
-			#endif
-			printf("surf dims:\t%d x %d\n", test_width, test_height);
-			printf("Samples:\t%d\n", samples);
-			printf("Gpu type:\t");
-			switch (preferedPhysicalDeviceType) {
-			case VK_PHYSICAL_DEVICE_TYPE_OTHER:
-				printf("Other\n");
+		}else if (strcmp (argv[i], "-l\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			line_width = atoi (argv[i]);
+		}else if (strcmp (argv[i], "-d\0") == 0) {
+			dashes_count = 2;
+		}else if (strcmp (argv[i], "-j\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			switch (argv[i][0]) {
+			case 'm':
+				line_join = VKVG_LINE_JOIN_MITER;
 				break;
-			case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-				printf("Integrated\n");
+			case 'r':
+				line_join = VKVG_LINE_JOIN_ROUND;
 				break;
-			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-				printf("Discrete\n");
+			case 'b':
+				line_join = VKVG_LINE_JOIN_BEVEL;
 				break;
-			case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-				printf("Virtual\n");
-				break;
-			case VK_PHYSICAL_DEVICE_TYPE_CPU:
-				printf("CPU\n");
-				break;
+			default:
+				_print_usage_and_exit();
 			}
-
-			#ifdef VKVG_TEST_OFFSCREEN
-			printf("Offscreen:\ttrue\n");
-			#else
-			printf("Offscreen:\tfalse\n");
-			#endif
-			printf("\n");
-			exit(0);
+		}else if (strcmp (argv[i], "-c\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			switch (argv[i][0]) {
+			case 'b':
+				line_cap = VKVG_LINE_CAP_BUTT;
+				break;
+			case 'r':
+				line_cap = VKVG_LINE_CAP_ROUND;
+				break;
+			case 's':
+				line_cap = VKVG_LINE_CAP_SQUARE;
+				break;
+			default:
+				_print_usage_and_exit();
+			}
 		}
+	}
+	if (printTestDetailsAndExit) {
+		#ifdef DEBUG
+		printf("Debug build\n");
+		#else
+		printf("Release build\n");
+		#endif
+		#ifdef VKVG_USE_RENDERDOC
+		printf("Render doc enabled\n");
+		#endif
+		#ifdef VKVG_USE_VALIDATION
+		printf("Validation enabled\n");
+		#endif
+		printf("surf dims:\t%d x %d\n", test_width, test_height);
+		printf("Samples:\t%d\n", samples);
+		printf("Gpu type:\t");
+		switch (preferedPhysicalDeviceType) {
+		case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+			printf("Other\n");
+			break;
+		case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+			printf("Integrated\n");
+			break;
+		case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+			printf("Discrete\n");
+			break;
+		case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+			printf("Virtual\n");
+			break;
+		case VK_PHYSICAL_DEVICE_TYPE_CPU:
+			printf("CPU\n");
+			break;
+		}
+
+		#ifdef VKVG_TEST_OFFSCREEN
+		printf("Offscreen:\ttrue\n");
+		#else
+		printf("Offscreen:\tfalse\n");
+		#endif
+		printf("\n");
+		exit(0);
 	}
 }
 
@@ -570,7 +618,8 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 vkvg_fill_rule_t	fill_rule	= VKVG_FILL_RULE_NON_ZERO;
 vkvg_line_cap_t		line_cap	= VKVG_LINE_CAP_BUTT;
 vkvg_line_join_t	line_join	= VKVG_LINE_JOIN_MITER;
-float		dashes[]	= {20.0f, 10.0f};
+float		dashes[]	= {10.0f, 6.0f};
+//float		dashes[]	= {0.0f, 10.0f};
 uint32_t	dashes_count= 0;
 float		dash_offset	= 0;
 float		line_width	= 2.f;
