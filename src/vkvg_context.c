@@ -765,7 +765,7 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 				if (prevDash < 0)
 					dc.curDash = ctx->dashCount-1;
 				float m = fminf (ctx->dashes[prevDash] - dc.curDashOffset, ctx->dashes[dc.curDash]);
-				vec2 p = vec2_sub(ctx->points[str.iR], vec2_mult(dc.normal, m));
+				vec2 p = vec2_sub(ctx->points[str.iR], vec2_mult_s(dc.normal, m));
 				_draw_stoke_cap (ctx, hw, p, dc.normal, false);
 			}
 		} else if (_path_is_closed(ctx,ptrPath)){

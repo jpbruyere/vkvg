@@ -748,8 +748,8 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 	float length_v1 = vec2_length(v1);
 	if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON)
 		return 0;
-	vec2 v0n = vec2_div (v0, length_v0);
-	vec2 v1n = vec2_div (v1, length_v1);
+	vec2 v0n = vec2_div_s (v0, length_v0);
+	vec2 v1n = vec2_div_s (v1, length_v1);
 
 	vec2 bisec_n = vec2_norm(vec2_add(v0n,v1n));
 
@@ -774,16 +774,16 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 	bool reducedLH = EQUF(dot,-1) || (lh > fminf (lh, fminf (length_v0, length_v1)));
 	//---
 
-	vec2 bisec = vec2_mult(bisec_n,lh);
+	vec2 bisec = vec2_mult_s(bisec_n,lh);
 
 	VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 	if (join == VKVG_LINE_JOIN_MITER || isCurve){
 		if (dot < 0 && reducedLH && det < 0) {
 			if (length_v0 < length_v1)
-				v.pos = vec2_add (p0, vec2_mult (vec2_perp(v1n), hw));
+				v.pos = vec2_add (p0, vec2_mult_s (vec2_perp(v1n), hw));
 			else
-				v.pos = vec2_sub (p0, vec2_mult (vec2_perp(v1n), hw));
+				v.pos = vec2_sub (p0, vec2_mult_s (vec2_perp(v1n), hw));
 		} else
 			v.pos = vec2_add(p0, bisec);
 
@@ -791,9 +791,9 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 
 		if (dot < 0 && reducedLH && det > 0) {
 			if (length_v0 < length_v1)
-				v.pos = vec2_sub (p0, vec2_mult (vec2_perp(v1n), hw));
+				v.pos = vec2_sub (p0, vec2_mult_s (vec2_perp(v1n), hw));
 			else
-				v.pos = vec2_add (p0, vec2_mult (vec2_perp(v1n), hw));
+				v.pos = vec2_add (p0, vec2_mult_s (vec2_perp(v1n), hw));
 		} else
 			v.pos = vec2_sub(p0, bisec);
 
@@ -804,16 +804,16 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 		vec2 vp = vec2_perp(v0n);
 		if (det<0){
 			if (dot < 0 && reducedLH)
-				v.pos = vec2_sub (p0, vec2_mult (vec2_perp(v1n), hw));
+				v.pos = vec2_sub (p0, vec2_mult_s (vec2_perp(v1n), hw));
 			else
 				v.pos = vec2_add (p0, bisec);
 			_add_vertex(ctx, v);
-			v.pos = vec2_sub (p0, vec2_mult (vp, hw));
+			v.pos = vec2_sub (p0, vec2_mult_s (vp, hw));
 		}else{
-			v.pos = vec2_add (p0, vec2_mult (vp, hw));
+			v.pos = vec2_add (p0, vec2_mult_s (vp, hw));
 			_add_vertex(ctx, v);
 			if (dot < 0 && reducedLH)
-				v.pos = vec2_add (p0, vec2_mult (vec2_perp(v1n), hw));
+				v.pos = vec2_add (p0, vec2_mult_s (vec2_perp(v1n), hw));
 			else
 				v.pos = vec2_sub (p0, bisec);
 		}
@@ -891,7 +891,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 
 		}
 
-		vp = vec2_mult (vec2_perp(v1n), hw);
+		vp = vec2_mult_s (vec2_perp(v1n), hw);
 		if (det < 0)
 			v.pos = vec2_sub (p0, vp);
 		else
@@ -924,7 +924,7 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) 
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 	if (isStart){
-		vec2 vhw = vec2_mult(n,hw);
+		vec2 vhw = vec2_mult_s(n,hw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
 			p0 = vec2_sub(p0, vhw);
@@ -956,7 +956,7 @@ void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) 
 
 		_add_tri_indices_for_rect(ctx, firstIdx);
 	}else{
-		vec2 vhw = vec2_mult(n, hw);
+		vec2 vhw = vec2_mult_s(n, hw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
 			p0 = vec2_add(p0, vhw);
@@ -1002,7 +1002,7 @@ float _draw_dashed_segment (VkvgContext ctx, float hw, stroke_context_t* str, da
 	float segmentLength = vec2_length(d);
 
 	while (dc->curDashOffset < segmentLength){
-		vec2 p0 = vec2_add (p, vec2_mult(dc->normal, dc->curDashOffset));
+		vec2 p0 = vec2_add (p, vec2_mult_s(dc->normal, dc->curDashOffset));
 
 		_draw_stoke_cap (ctx, hw, p0, dc->normal, dc->dashOn);
 		dc->dashOn ^= true;
