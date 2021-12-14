@@ -46,6 +46,7 @@
 #include "vkvg.h"
 #include "vkvg_buff.h"
 #include "vkh.h"
+#include "vectors.h"
 
 #define FT_CHECK_RESULT(f)																				\
 {																										\

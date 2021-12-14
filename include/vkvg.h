@@ -38,6 +38,8 @@ extern "C" {
  *
  * - @ref surface
  * - @ref context
+ * - @ref device
+ * - @ref pattern
  */
 
 /*! @file vkvg.h
@@ -505,7 +507,7 @@ vkvg_status_t vkvg_matrix_invert (vkvg_matrix_t *matrix);
  * Create a new #VkvgDevice owning vulkan instance and device.
  *
  * On success, create a new vkvg device and set its reference count to 1.
- * On error, query the device status by calling @ ref vkvg_device_status(). Error could be
+ * On error, query the device status by calling @ref vkvg_device_status. Error could be
  * one of the following:
  * - VKVG_STATUS_INVALID_FORMAT: the combination of image format and tiling is not supported
  * - VKVG_STATUS_NULL_POINTER: vulkan function pointer fetching failed.
@@ -568,15 +570,28 @@ VkvgDevice vkvg_device_create_from_vk_multisample (VkInstance inst, VkPhysicalDe
 vkvg_public
 void vkvg_device_destroy (VkvgDevice dev);
 /**
- * @brief Increment by one the reference count on the device.
- * @param The vkvg device pointer to increment reference for.
- * @return ?
+ * @brief Get the current status of the device.
+ *
+ * Query current status of device. See @ref vkvg_status_t for more informations.
+ * @param dev a valid vkvg device pointer.
+ * @return current state.
+ */
+vkvg_public
+vkvg_status_t vkvg_device_status (VkvgDevice dev);
+/**
+ * @brief Increment the reference count on this device.
+ *
+ * Increment by one the reference count on the device.
+ * @param The vkvg device pointer to increment the reference count for.
+ * @return
  */
 vkvg_public
 VkvgDevice vkvg_device_reference (VkvgDevice dev);
 /**
- * @brief Get the actual reference count on this device.
- * @param dev The vkvg device to get the reference of.
+ * @brief Query the reference count of the device.
+ *
+ * Get the actual reference count on this device.
+ * @param dev The vkvg device to get the reference count for.
  * @return The reference count on this device.
  */
 vkvg_public
@@ -626,7 +641,9 @@ VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height
 vkvg_public
 VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath);
 /**
- * @brief Create a new vkvg surface that will used an existing vulkan texture as backend.
+ * @brief Create a new vkvg surface using an existing vulkan texture as backend.
+ *
+ * Create a new vkvg surface that will used an existing vulkan texture as backend.
  * @param dev The vkvg device used for creating the surface.
  * @param vkhImg The VkhImage to use as the backend texture for drawing operations.
  * @return A new surface, or null if an error occured.

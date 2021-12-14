@@ -102,7 +102,7 @@ FIND_PACKAGE(Doxygen)
 
 CMAKE_DEPENDENT_OPTION(VKVG_BUILD_TESTS "build tests with glfw" ON "GLFW3_FOUND" OFF)
 
-CMAKE_DEPENDENT_OPTION(VKVG_BUILD_DOCS "build documentation" ON "DOXYGEN_FOUND" OFF)
+CMAKE_DEPENDENT_OPTION(VKVG_BUILD_DOCS "build documentation" OFF "DOXYGEN_FOUND" OFF)
 
 #Freetype lcd font filtering
 #CHECK_SYMBOL_EXISTS (FT_CONFIG_OPTION_SUBPIXEL_RENDERING "${FREETYPE_INCLUDE_DIR_freetype2}/freetype/config/ftoption.h" FT_HAS_SUBPIXEL_RENDERING)
@@ -230,38 +230,46 @@ IF (VKVG_BUILD_DOCS)
 	set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html)
 
 	set(DOXYFILE_IN ${DOXYGEN_DIR}/Doxygen.in)
-	set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+	set(DOXYFILE_OUT ${DOXYGEN_OUTPUT_DIR}/Doxyfile)
+
+	#configure_file(${DOXYGEN_DIR}/dox_layout.xml ${DOXYGEN_OUTPUT_DIR}/dox_layout.xml @ONLY)
 
 	configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
 
+	add_custom_target(copy-doc-files ALL
+		COMMAND ${CMAKE_COMMAND} -E copy_directory "${DOXYGEN_DIR}/doxy_theme" ${DOXYGEN_OUTPUT_DIR})
+
 	add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
-					   DEPENDS "${VKVG_PUBLIC_HEADERS}"
+					   DEPENDS "${VKVG_PUBLIC_HEADERS}" copy-doc-files
 					   COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
 					   MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
 					   COMMENT "Generating docs")
-	add_custom_target(Doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
+	add_custom_target(doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
 
-#	find_package(Sphinx)
+	find_package(Sphinx)
 
-#	set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/docs/source)
-#	set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/doc/sphinx)
-#	set(SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html)
-	
-#	add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
-#					  COMMAND
-#					  ${SPHINX_EXECUTABLE} -b html
-#					  -Dbreathe_projects.VKVG=${DOXYGEN_OUTPUT_DIR}/xml
-#					  ${SPHINX_SOURCE} ${SPHINX_BUILD}
-#					  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-#					  DEPENDS
-#						   # Other docs files you want to track should go here (or in some variable)
-#						   ${SPHINX_SOURCE}/index.rst
-#						   ${DOXYGEN_INDEX_FILE}
-#					MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
-#					COMMENT "Generating documentation with Sphinx")
-	
-#	add_custom_target(Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
+	IF (Sphinx_FOUND)
 
+		set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/doc)
+		set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/doc/sphinx)
+		set(SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html)
+
+		add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
+						COMMAND
+						${SPHINX_EXECUTABLE} -b html
+						-Dbreathe_projects.VKVG=${DOXYGEN_OUTPUT_DIR}/xml
+						${SPHINX_SOURCE} ${SPHINX_BUILD}
+						WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+						DEPENDS
+								doxygen
+								# Other docs files you want to track should go here (or in some variable)
+								${SPHINX_SOURCE}/index.rst
+								${DOXYGEN_INDEX_FILE}
+						MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
+						COMMENT "Generating documentation with Sphinx")
+
+		add_custom_target(sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
+	ENDIF ()
 ENDIF (VKVG_BUILD_DOCS)
 
 MESSAGE(STATUS "VKVG_PUBLIC_HEADERS = ${VKVG_PUBLIC_HEADERS}")
@@ -307,9 +315,15 @@ ELSE ()
 ENDIF ()
 IF (VKVG_BUILD_DOCS)
 	MESSAGE(STATUS "Build documentation\t= enabled.")
+	IF (Sphinx_FOUND)
+		MESSAGE(STATUS "Sphinx documentation\t= enabled.")
+	ELSE ()
+		MESSAGE(STATUS "Sphinx documentation\t= disabled.")
+	ENDIF ()
 ELSE ()
 	MESSAGE(STATUS "Build documentation\t= disabled.")
 ENDIF ()
+
 
 IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 	INCLUDE(InstallRequiredSystemLibraries)

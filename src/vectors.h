@@ -29,10 +29,16 @@ typedef struct {
 	float y;
 }vec2;
 
+static const vec2 vec2_unit_x = {1.f,0};
+static const vec2 vec2_unit_y = {0,1.f};
+
 typedef struct {
 	double x;
 	double y;
 }vec2d;
+
+/*const vec2d vec2d_unit_x = {1.0,0};
+const vec2d vec2d_unit_y = {0,1.0};*/
 
 typedef struct {
 	float x;
@@ -72,6 +78,11 @@ typedef struct {
 	int16_t x;
 	int16_t y;
 }vec2i16;
+
+typedef struct {
+	vec2 row0;
+	vec2 row1;
+}mat2;
 
 // compute length of float vector 2d
 vkvg_inline	float vec2_length(vec2 v){
@@ -187,4 +198,14 @@ vkvg_inline	vec2 vec2d_to_vec2(vec2d vd){
 vkvg_inline	bool vec4_equ (vec4 a, vec4 b){
 	return (EQUF(a.x,b.x)&EQUF(a.y,b.y)&EQUF(a.z,b.z)&EQUF(a.w,b.w));
 }
+vkvg_inline	vec2 mat2_mult_vec2 (mat2 m, vec2 v) {
+	return (vec2){
+		(m.row0.x * v.x) + (m.row0.y * v.y),
+		(m.row1.x * v.x) + (m.row1.y * v.y)
+	};
+}
+vkvg_inline	float mat2_det (mat2* m) {
+	return (m->row0.x * m->row1.y) - (m->row0.y * m->row1.y);
+}
+
 #endif

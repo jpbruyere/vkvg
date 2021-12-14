@@ -115,6 +115,7 @@ VkvgDevice vkvg_device_create_from_vk_multisample(VkInstance inst, VkPhysicalDev
 	dev->deferredResolve = deferredResolve;
 	dev->vkDev	= vkdev;
 	dev->phy	= phy;
+	dev->status = VKVG_STATUS_SUCCESS;
 
 #if VKVG_DBG_STATS
 	dev->debug_stats = (vkvg_debug_stats_t) {0};
@@ -194,7 +195,6 @@ VkvgDevice vkvg_device_create_from_vk_multisample(VkInstance inst, VkPhysicalDev
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(dev->emptyImg), "empty IMG VIEW");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(dev->emptyImg), "empty IMG SAMPLER");
 #endif
-
 	return dev;
 }
 
@@ -254,6 +254,9 @@ void vkvg_device_destroy (VkvgDevice dev)
 	free(dev);
 }
 
+vkvg_status_t vkvg_device_status (VkvgDevice dev) {
+	return dev->status;
+}
 VkvgDevice vkvg_device_reference (VkvgDevice dev) {
 	dev->references++;
 	return dev;
@@ -271,7 +274,6 @@ void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy) {
 	*hdpy = dev->hdpi;
 	*vdpy = dev->vdpi;
 }
-
 #if VKVG_DBG_STATS
 vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev) {
 	return dev->debug_stats;
