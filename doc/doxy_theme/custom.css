@@ -13,19 +13,75 @@ p.definition {
     font: 400 14px/22px Roboto, sans-serif;
 }
 
+html {
+    height: 97%;
+}
+
 body {
     background-color: #DDD;
     color: black;
     margin: auto;
-    width: 80%;
+    max-width: 760px;
+    border: thin solid black;
+    background-color: white;
 }
+
+div.PageDoc {}
 
 div.contents {
     margin: auto;
     padding: 10px;
-    width: 80%;
-    border: thin solid black;
-    background-color: white;
+    /*width: 80%;*/
+}
+
+@import url(https://fonts.googleapis.com/css?family=Open+Sans);
+body {
+    background: #f2f2f2;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.search {
+    width: 100%;
+    position: relative;
+    display: flex;
+}
+
+.searchTerm {
+    width: 100%;
+    border: 3px solid #00B4CC;
+    border-right: none;
+    padding: 5px;
+    height: 20px;
+    border-radius: 5px 0 0 5px;
+    outline: none;
+    color: #9DBFAF;
+}
+
+.searchTerm:focus {
+    color: #00B4CC;
+}
+
+.searchButton {
+    width: 40px;
+    height: 36px;
+    border: 1px solid #00B4CC;
+    background: #00B4CC;
+    text-align: center;
+    color: #fff;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+
+/*Resize the wrap to see the search bar change!*/
+
+.wrap {
+    width: 30%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 
@@ -39,12 +95,11 @@ h1.groupheader {
     font: 400 14px/28px Roboto, sans-serif;
     font-size: 150%;
     font-weight: bold;
-    width: 80%;
-    margin: auto;
+    margin: 0 auto;
     background-color: #ccc;
     color: #444;
     padding: 10px;
-    border: thin solid #2c2c2c;
+    /*border: thin solid #2c2c2c;*/
 }
 
 h2.groupheader {
@@ -1168,7 +1223,7 @@ div.header {
 }
 
 div.headertitle {
-    padding: 5px 5px 5px 10px;
+    /*padding: 5px 5px 5px 10px;*/
 }
 
 .PageDocRTL-title div.headertitle {
@@ -1338,13 +1393,14 @@ dl.section dd {
 
 #projectalign {
     vertical-align: middle;
+    text-align: center;
 }
 
 #projectname {
     font: 300% Courier, Tahoma, Arial, sans-serif;
     /*font-weight: bold;*/
     margin: 0px;
-    padding: 2px 0px;
+    padding-left: 20px;
     color: white;
 }
 

@@ -188,9 +188,9 @@ HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
 HTML_STYLESHEET        = doc/custom.css
 
-#HTML_HEADER            = doc/header.html
-#HTML_FOOTER            = doc/footer.html
-#HTML_EXTRA_STYLESHEET  = 
+HTML_HEADER            = doc/header.html
+HTML_FOOTER            = doc/footer.html
+#HTML_EXTRA_STYLESHEET  = doc/search.css
 HTML_EXTRA_FILES       =
 HTML_COLORSTYLE_HUE    = 234
 HTML_COLORSTYLE_SAT    = 26
