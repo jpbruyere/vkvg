@@ -103,7 +103,7 @@ Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
 
 - [x] Use Scissor where possible.
 - [x] Improve stroke algorithms.
-- [ ] Radial gradients.
+- [x] Radial gradients.
 - [x] Dashed lines.
 - [ ] Operators.
 - [x] Optimize vulkan memory allocations by sub-allocating from a single shared memory chunk per type.
@@ -111,6 +111,6 @@ Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
 - [x] Test SDF font rendering.
 - [x] Avoid line joins inside curves and arc.
 - [ ] Structured unit testing.
-- [ ] Perf and memory checks.
+- [x] Perf and memory checks.
 - [ ] Code clean and comment.
 - [ ] Documentations.

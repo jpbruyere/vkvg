@@ -23,13 +23,14 @@
 
 #extension GL_ARB_separate_shader_objects	: enable
 #extension GL_ARB_shading_language_420pack	: enable
+#extension GL_EXT_scalar_block_layout	: enable
 
 layout (set=0, binding = 0) uniform sampler2DArray fontMap;
 layout (set=1, binding = 0) uniform sampler2D		source;
-layout (set=2, binding = 0) uniform _uboGrad {
-	vec4    cp[3];
+layout (std430, set=2, binding = 0) uniform _uboGrad {
+	vec4    cp[2];
 	vec4	colors[16];
-	vec4	stops[16];
+	float	stops[16];
 	uint	count;
 }uboGrad;
 
@@ -77,16 +78,17 @@ void main()
 		float x = gl_FragCoord.x;
 		float xLocRotated = x*cos( alpha ) - y*sin( alpha );
 
-		c = mix(uboGrad.colors[0], uboGrad.colors[1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[0].r*d, gradientStartPosRotatedX + uboGrad.stops[1].r*d, xLocRotated ) );
+		c = mix(uboGrad.colors[0], uboGrad.colors[1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[0]*d, gradientStartPosRotatedX + uboGrad.stops[1]*d, xLocRotated ) );
 		for ( int i=1; i<uboGrad.count-1; ++i )
-			c = mix(c, uboGrad.colors[i+1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[i].r*d, gradientStartPosRotatedX + uboGrad.stops[i+1].r*d, xLocRotated ) );
+			c = mix(c, uboGrad.colors[i+1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[i]*d, gradientStartPosRotatedX + uboGrad.stops[i+1]*d, xLocRotated ) );
 		break;
 	case RADIAL:
 		p = gl_FragCoord.xy / inSrc.xy;
-		float r0 = uboGrad.cp[2].x / inSrc.x;
-		float r1 = uboGrad.cp[2].y / inSrc.x;
+
 		vec2 c0 = uboGrad.cp[0].xy / inSrc.xy;
 		vec2 c1 = uboGrad.cp[1].xy / inSrc.xy;
+		float r0 = uboGrad.cp[0].z / inSrc.x;
+		float r1 = uboGrad.cp[1].z / inSrc.x;
 
 		/// APPLY FOCUS MODIFIER
 		//project a point on the circle such that it passes through the focus and through the coord,
@@ -112,9 +114,9 @@ void main()
 
 		/// OUTPUT
 		float grad = (distance(p, c0)-r0) / gradLength ;
-		c = mix (uboGrad.colors[0], uboGrad.colors[1], smoothstep(uboGrad.stops[0].r,uboGrad.stops[1].r, grad));
+		c = mix (uboGrad.colors[0], uboGrad.colors[1], smoothstep(uboGrad.stops[0],uboGrad.stops[1], grad));
 		for (int i=2; i < uboGrad.count; i++ )
-			c = mix(c, uboGrad.colors[i], smoothstep(uboGrad.stops[i-1].r,uboGrad.stops[i].r, grad));
+			c = mix(c, uboGrad.colors[i], smoothstep(uboGrad.stops[i-1],uboGrad.stops[i], grad));
 		break;
 	}
 

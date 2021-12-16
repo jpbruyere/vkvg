@@ -42,9 +42,7 @@ VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
 	pat->extend = VKVG_EXTEND_PAD;
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)calloc(1,sizeof(vkvg_gradient_t));
 
-	vec4 cp0 = {x0, y0}, cp1 = {x1, y1};
-	grad->cp[0] = cp0;
-	grad->cp[1] = cp1;
+	grad->cp[0] = (vec4){{x0}, {y0}, {x1}, {y1}};
 
 	pat->data = grad;
 
@@ -60,10 +58,8 @@ VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
 
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)calloc(1,sizeof(vkvg_gradient_t));
 
-	vec4 cp0 = {cx0, cy0}, cp1 = {cx1, cy1}, rads = {radius0, radius1};
-	grad->cp[0] = cp0;
-	grad->cp[1] = cp1;
-	grad->cp[2] = rads;
+	grad->cp[0] = (vec4){{cx0}, {cy0},{radius0},{0}};
+	grad->cp[1] = (vec4){{cx1}, {cy1},{radius1},{0}};
 
 	pat->data = grad;
 
@@ -85,7 +81,7 @@ void vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float 
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
 	vkvg_color_t c = {r,g,b,a};
 	grad->colors[grad->count] = c;
-	grad->stops[grad->count].r = offset;
+	grad->stops[grad->count] = offset;
 	grad->count++;
 }
 void vkvg_pattern_set_extend (VkvgPattern pat, vkvg_extend_t extend){
