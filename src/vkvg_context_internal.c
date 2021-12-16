@@ -646,6 +646,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 	case VKVG_PATTERN_TYPE_LINEAR:
 	case VKVG_PATTERN_TYPE_RADIAL:
 		_flush_cmd_buff (ctx);
+		_wait_flush_fence(ctx);
 
 		if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
 			_update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
@@ -662,6 +663,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		//to do, scale radial radiuses in cp[2]
 
 		memcpy (ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
+		vkvg_buffer_flush(&ctx->uboGrad);
 		break;
 	}
 	ctx->pushConsts.patternType = newPatternType;

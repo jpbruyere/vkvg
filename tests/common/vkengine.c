@@ -208,7 +208,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	e->dev = vkh_device_create(e->app, pi, &device_info);
 
 	e->renderer = vkh_presenter_create
-			(e->dev, (uint32_t) pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, presentMode);
+			(e->dev, (uint32_t) pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_SRGB, presentMode);
 
 	vkh_app_free_phyinfos (phyCount, phys);
 
@@ -262,6 +262,9 @@ VkQueue vkengine_get_queue (VkEngine e){
 }
 uint32_t vkengine_get_queue_fam_idx (VkEngine e){
 	return e->renderer->qFam;
+}
+void vkengine_wait_idle (VkEngine e) {
+	vkDeviceWaitIdle(e->dev->dev);
 }
 
 void vkengine_set_key_callback (VkEngine e, GLFWkeyfun key_callback){

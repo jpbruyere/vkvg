@@ -68,4 +68,6 @@ void vkengine_set_mouse_but_callback    (VkEngine e, GLFWmousebuttonfun onMouseB
 void vkengine_set_cursor_pos_callback   (VkEngine e, GLFWcursorposfun onMouseMove);
 void vkengine_set_scroll_callback       (VkEngine e, GLFWscrollfun onScroll);
 void vkengine_set_char_callback         (VkEngine e, GLFWcharfun onChar);
+
+void vkengine_wait_idle					(VkEngine e);
 #endif

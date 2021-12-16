@@ -37,4 +37,6 @@ typedef struct vkvg_buff_t {
 void vkvg_buffer_create			(VkvgDevice pDev, VkBufferUsageFlags usage,
 									VmaMemoryUsage memoryPropertyFlags, VkDeviceSize size, vkvg_buff *buff);
 void vkvg_buffer_destroy		(vkvg_buff* buff);
+
+void vkvg_buffer_flush			(vkvg_buff* buff);
 #endif

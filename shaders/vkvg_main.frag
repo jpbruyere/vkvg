@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2021 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -49,14 +49,14 @@ layout (constant_id = 0) const int NUM_SAMPLES = 8;
 #define RADIAL			3
 #define MESH			4
 #define RASTER_SOURCE	5
+#ifndef saturate
+#define saturate(v) clamp(v, 0, 1)
+#endif
 
 void main()
 {
-	vec4 c = vec4(0);
+	vec4 c = inSrc;
 	switch(inPatType){
-	case SOLID:
-		c = inSrc;
-		break;
 	case SURFACE:
 		vec2 p = (gl_FragCoord.xy - inSrc.xy);
 		vec2 uv = vec2(
@@ -82,11 +82,14 @@ void main()
 			c = mix(c, uboGrad.colors[i+1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[i].r*d, gradientStartPosRotatedX + uboGrad.stops[i+1].r*d, xLocRotated ) );
 		break;
 	case RADIAL:
-		vec2 pos_ndc = (gl_FragCoord.xy-uboGrad.cp[0].xy) / vec2(uboGrad.cp[2].y);
-		float dist = length(pos_ndc + (uboGrad.cp[2].x / inSrc.x));
-		c = mix (uboGrad.colors[0], uboGrad.colors[1], smoothstep(uboGrad.stops[0].r, uboGrad.stops[1].r, dist));
+		p = gl_FragCoord.xy / inSrc.xy;
+		float r0 = uboGrad.cp[2].x / inSrc.x;
+		float r1 = uboGrad.cp[2].y / inSrc.x;
+		vec2 c0 = uboGrad.cp[0].xy / inSrc.xy;
+		float dist = length(p - c0);
+		c = mix (uboGrad.colors[0], uboGrad.colors[1], smoothstep(r0 + uboGrad.stops[0].r*(r1-r0), r0 + uboGrad.stops[1].r*(r1-r0), dist));
 		for (int i=2; i < uboGrad.count; i++ )
-			c = mix(c, uboGrad.colors[i], smoothstep(uboGrad.stops[i-1].r, uboGrad.stops[i].r, dist));
+			c = mix(c, uboGrad.colors[i], smoothstep(r0 + uboGrad.stops[i-1].r*(r1-r0), r0 + uboGrad.stops[i].r*(r1-r0), dist));
 		break;
 	}
 

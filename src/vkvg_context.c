@@ -171,7 +171,7 @@ void vkvg_flush (VkvgContext ctx){
 	if (ctx->status)
 		return;
 	_flush_cmd_buff(ctx);
-//	_wait_flush_fence(ctx);
+	_wait_flush_fence(ctx);
 /*
 #ifdef DEBUG
 
