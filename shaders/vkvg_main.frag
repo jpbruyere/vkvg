@@ -28,9 +28,9 @@
 layout (set=0, binding = 0) uniform sampler2DArray fontMap;
 layout (set=1, binding = 0) uniform sampler2D		source;
 layout (std430, set=2, binding = 0) uniform _uboGrad {
-	vec4    cp[2];
 	vec4	colors[16];
 	float	stops[16];
+	vec4    cp[2];
 	uint	count;
 }uboGrad;
 
@@ -50,9 +50,6 @@ layout (constant_id = 0) const int NUM_SAMPLES = 8;
 #define RADIAL			3
 #define MESH			4
 #define RASTER_SOURCE	5
-#ifndef saturate
-#define saturate(v) clamp(v, 0, 1)
-#endif
 
 void main()
 {
@@ -69,9 +66,9 @@ void main()
 		break;
 	case LINEAR:
 		//credit to Nikita Rokotyan for linear grad
-		float  alpha = atan( -uboGrad.cp[1].y + uboGrad.cp[0].y, uboGrad.cp[1].x - uboGrad.cp[0].x );
+		float  alpha = atan( -uboGrad.cp[0].w + uboGrad.cp[0].y, uboGrad.cp[0].z - uboGrad.cp[0].x );
 		float  gradientStartPosRotatedX = uboGrad.cp[0].x*cos(alpha) - uboGrad.cp[0].y*sin(alpha);
-		float  gradientEndPosRotatedX   = uboGrad.cp[1].x*cos(alpha) - uboGrad.cp[1].y*sin(alpha);
+		float  gradientEndPosRotatedX   = uboGrad.cp[0].z*cos(alpha) - uboGrad.cp[0].w*sin(alpha);
 		float  d = gradientEndPosRotatedX - gradientStartPosRotatedX;
 
 		float y = gl_FragCoord.y;//inSrc.y - gl_FragCoord.y;

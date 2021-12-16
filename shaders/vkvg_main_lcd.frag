@@ -23,13 +23,14 @@
 
 #extension GL_ARB_separate_shader_objects	: enable
 #extension GL_ARB_shading_language_420pack	: enable
+#extension GL_EXT_scalar_block_layout	: require
 
 layout (set=0, binding = 0) uniform sampler2DArray fontMap;
 layout (set=1, binding = 0) uniform sampler2D		source;
 layout (set=2, binding = 0) uniform _uboGrad {
-	vec4    cp[2];
 	vec4	colors[16];
 	float	stops[16];
+	vec4    cp[2];
 	uint	count;
 }uboGrad;
 

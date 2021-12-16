@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2021 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -27,6 +27,11 @@
 #include "vkh_presenter.h"
 #include "vkh_image.h"
 #include "vkh_device.h"
+
+#define TRY_LOAD_DEVICE_EXT(ext) {								\
+if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))	\
+	enabledExts[enabledExtsCount++] = #ext;						\
+}
 
 VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts)
 {
@@ -100,6 +105,7 @@ bool instance_extension_supported (VkExtensionProperties* instanceExtProps, uint
 	}
 	return false;
 }
+
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
 	vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 
@@ -184,14 +190,11 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 		qCount++;*/
 
 	enabledExtsCount=0;
-	enabledExts[enabledExtsCount] = "VK_KHR_swapchain";
-	enabledExtsCount++;
 
-	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_EXT_blend_operation_advanced", NULL))
-		enabledExts[enabledExtsCount++] = "VK_EXT_blend_operation_advanced";
-
-	if (vkh_phyinfo_try_get_extension_properties(pi, "VK_KHR_portability_subset", NULL))
-		enabledExts[enabledExtsCount++] = "VK_KHR_portability_subset";
+	TRY_LOAD_DEVICE_EXT (VK_KHR_swapchain)
+	TRY_LOAD_DEVICE_EXT (VK_EXT_blend_operation_advanced)
+	TRY_LOAD_DEVICE_EXT (VK_KHR_portability_subset)
+	TRY_LOAD_DEVICE_EXT (VK_KHR_relaxed_block_layout)
 
 	VkPhysicalDeviceFeatures enabledFeatures = {
 		.fillModeNonSolid = true,

@@ -35,9 +35,9 @@ typedef struct _vkvg_pattern_t {
 }vkvg_pattern_t;
 
 typedef struct _vkvg_gradient_t {
-	vec4			cp[2];
 	vkvg_color_t	colors[16];
 	float			stops[16];
+	vec4			cp[2];
 	uint32_t		count;
 }vkvg_gradient_t;
 
