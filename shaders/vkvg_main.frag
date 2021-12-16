@@ -86,10 +86,35 @@ void main()
 		float r0 = uboGrad.cp[2].x / inSrc.x;
 		float r1 = uboGrad.cp[2].y / inSrc.x;
 		vec2 c0 = uboGrad.cp[0].xy / inSrc.xy;
-		float dist = length(p - c0);
-		c = mix (uboGrad.colors[0], uboGrad.colors[1], smoothstep(r0 + uboGrad.stops[0].r*(r1-r0), r0 + uboGrad.stops[1].r*(r1-r0), dist));
+		vec2 c1 = uboGrad.cp[1].xy / inSrc.xy;
+
+		/// APPLY FOCUS MODIFIER
+		//project a point on the circle such that it passes through the focus and through the coord,
+		//and then get the distance of the focus from that point.
+		//that is the effective gradient length
+		float gradLength = 1.0;
+		vec2 diff =c0 - c1;
+		vec2 rayDir = normalize(p - c0);
+		float a = dot(rayDir, rayDir);
+		float b = 2.0 * dot(rayDir, diff);
+		float cc = dot(diff, diff) - r1 * r1;
+		float disc = b * b - 4.0 * a * cc;
+		if (disc >= 0.0)
+		{
+			float t = (-b + sqrt(abs(disc))) / (2.0 * a);
+			vec2 projection = c0 + rayDir * t;
+			gradLength = distance(projection, c0)-r0;
+		}
+		else
+		{
+			//gradient is undefined for this coordinate
+		}
+
+		/// OUTPUT
+		float grad = (distance(p, c0)-r0) / gradLength ;
+		c = mix (uboGrad.colors[0], uboGrad.colors[1], smoothstep(uboGrad.stops[0].r,uboGrad.stops[1].r, grad));
 		for (int i=2; i < uboGrad.count; i++ )
-			c = mix(c, uboGrad.colors[i], smoothstep(r0 + uboGrad.stops[i-1].r*(r1-r0), r0 + uboGrad.stops[i].r*(r1-r0), dist));
+			c = mix(c, uboGrad.colors[i], smoothstep(uboGrad.stops[i-1].r,uboGrad.stops[i].r, grad));
 		break;
 	}
 
