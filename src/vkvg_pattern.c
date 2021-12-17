@@ -58,8 +58,20 @@ VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
 
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)calloc(1,sizeof(vkvg_gradient_t));
 
-	grad->cp[0] = (vec4){{cx0}, {cy0},{radius0},{0}};
-	grad->cp[1] = (vec4){{cx1}, {cy1},{radius1},{0}};
+	vec2 c0 = {cx0, cy0};
+	vec2 c1 = {cx1, cy1};
+
+	if (radius0 > radius1 - 1.0f)
+		radius0 = radius1 - 1.0f;
+	vec2 u = vec2_sub (c0, c1);
+	float l = vec2_length(u);
+	if (l + radius0 + 1.0f >= radius1) {
+		vec2 v = vec2_div_s(u, l);
+		c0 = vec2_add(c1, vec2_mult_s (v, radius1 - radius0 - 1.0f));
+	}
+
+	grad->cp[0] = (vec4){{c0.x}, {c0.y},{radius0},{0}};
+	grad->cp[1] = (vec4){{c1.x}, {c1.y},{radius1},{0}};
 
 	pat->data = grad;
 
