@@ -578,12 +578,10 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 	switch (newPatternType)	 {
 	case VKVG_PATTERN_TYPE_SOLID:
-		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
-			//unbind current source surface by replacing it with empty texture
-			_flush_cmd_buff				(ctx);
-			_wait_flush_fence			(ctx);
+		_flush_cmd_buff				(ctx);
+		_wait_flush_fence			(ctx);
+		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE)//unbind current source surface by replacing it with empty texture
 			_update_descriptor_set		(ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
-		}
 		break;
 	case VKVG_PATTERN_TYPE_SURFACE:
 	{
@@ -661,7 +659,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		memcpy (&grad, pat->data, sizeof(vkvg_gradient_t));
 
 		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
-		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
+		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].z, &grad.cp[0].w);
 		//to do, scale radial radiuses in cp[2]
 
 		memcpy (ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
