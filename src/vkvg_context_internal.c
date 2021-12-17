@@ -581,6 +581,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE){
 			//unbind current source surface by replacing it with empty texture
 			_flush_cmd_buff				(ctx);
+			_wait_flush_fence			(ctx);
 			_update_descriptor_set		(ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
 		}
 		break;
@@ -604,8 +605,9 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 							  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 							  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
-		vkh_cmd_end (ctx->cmd);
-		_wait_and_submit_cmd (ctx);
+		vkh_cmd_end				(ctx->cmd);
+		_wait_and_submit_cmd	(ctx);
+		_wait_flush_fence		(ctx);
 
 		ctx->source = surf->img;
 
