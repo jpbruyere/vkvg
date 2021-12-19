@@ -352,14 +352,14 @@ void _clear_attachment (VkvgContext ctx) {
 }
 bool _wait_flush_fence (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "CTX: _wait_flush_fence\n");
-	if (vkWaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
+	if (WaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
 		return true;
 	ctx->status = VKVG_STATUS_TIMEOUT;
 	return false;
 }
 void _reset_flush_fence (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "CTX: _reset_flush_fence\n");
-	vkResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
+	ResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
 }
 bool _wait_and_submit_cmd (VkvgContext ctx){
 	if (!ctx->cmdStarted)//current cmd buff is empty, be aware that wait is also canceled!!
@@ -378,7 +378,7 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 	else
 		ctx->cmd = ctx->cmdBuffers[0];
 
-	vkResetCommandBuffer (ctx->cmd, 0);
+	ResetCommandBuffer (ctx->cmd, 0);
 	ctx->cmdStarted = false;
 	return true;
 }

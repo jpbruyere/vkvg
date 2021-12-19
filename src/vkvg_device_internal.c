@@ -48,8 +48,8 @@ PFN_vkCmdSetScissor				CmdSetScissor;
 
 PFN_vkCmdPushConstants			CmdPushConstants;
 
-PFN_vkWaitForFences				WaitForFence;
-PFN_vkResetFences				ResetFence;
+PFN_vkWaitForFences				WaitForFences;
+PFN_vkResetFences				ResetFences;
 PFN_vkResetCommandBuffer		ResetCommandBuffer;
 
 bool _try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
@@ -451,8 +451,8 @@ bool _init_function_pointers (VkvgDevice dev) {
 	CmdSetViewport			= GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetViewport);
 	CmdSetScissor			= GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetScissor);
 	CmdPushConstants		= GetVkProcAddress(dev->vkDev, dev->instance, vkCmdPushConstants);
-	WaitForFence			= GetVkProcAddress(dev->vkDev, dev->instance, vkWaitForFences);
-	ResetFence				= GetVkProcAddress(dev->vkDev, dev->instance, vkResetFences);
+	WaitForFences			= GetVkProcAddress(dev->vkDev, dev->instance, vkWaitForFences);
+	ResetFences				= GetVkProcAddress(dev->vkDev, dev->instance, vkResetFences);
 	ResetCommandBuffer		= GetVkProcAddress(dev->vkDev, dev->instance, vkResetCommandBuffer);
 	return true;
 }

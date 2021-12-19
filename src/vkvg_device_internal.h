@@ -47,8 +47,8 @@ extern PFN_vkCmdSetViewport				CmdSetViewport;
 extern PFN_vkCmdSetScissor				CmdSetScissor;
 
 extern PFN_vkCmdPushConstants			CmdPushConstants;
-extern PFN_vkWaitForFences				WaitForFence;
-extern PFN_vkResetFences				ResetFence;
+extern PFN_vkWaitForFences				WaitForFences;
+extern PFN_vkResetFences				ResetFences;
 extern PFN_vkResetCommandBuffer			ResetCommandBuffer;
 
 typedef struct _vkvg_device_t{
