@@ -40,7 +40,7 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 
 	_instance_extensions_check_release();
 
-	VkhApp app =  vkh_app_create("vkvg", 0, NULL, enabledExtsCount, enabledExts);
+	VkhApp app =  vkh_app_create(1, 1, "vkvg", 0, NULL, enabledExtsCount, enabledExts);
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	if (dbgUtilsSupported)

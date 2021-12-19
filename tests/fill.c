@@ -2,6 +2,7 @@
 
 void test(){
 	VkvgContext ctx = vkvg_create(surf);
+	vkvg_save(ctx);
 	vkvg_set_line_width(ctx,30);
 	vkvg_set_line_join(ctx,VKVG_LINE_JOIN_ROUND);
 

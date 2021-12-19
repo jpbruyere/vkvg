@@ -8,55 +8,64 @@ vkvg_line_join_t lineJoin = VKVG_LINE_JOIN_MITER;
 vkvg_line_cap_t lineCap = VKVG_LINE_CAP_BUTT;
 bool isClosed = false;
 
-int ptsCount = 4;
+int ptsCount = 2;
 int initPtsCount = 4;
 vec2 pts[] = {
 	{150,150},
-	{200,300},
 	{250,150},
-	{280,350},
+	{125,125},
+	{145,125},
 };
 int hoverPt = -1;
 double pointSize = 7;
 
-float dash[] = {0, 60};
-uint32_t dashCountInit = 2;
-uint32_t dashCount = 0;
-
-
+static vkvg_pattern_type_t patternType = VKVG_PATTERN_TYPE_LINEAR;
+static VkEngine e;
 
 void draw (){
 
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_clear(ctx);
-	if (dashCount > 0)
-		vkvg_set_dash(ctx, dash, dashCount,0);
-	vkvg_set_source_rgba(ctx,1,0,0,1);
-	vkvg_set_line_width(ctx,lineWidth);
-	vkvg_set_line_join	(ctx, lineJoin);
-	vkvg_set_line_cap	(ctx, lineCap);
-	vkvg_move_to(ctx,pts[0].x,pts[0].y);
-	for (int i=1; i<ptsCount; i++)
-		vkvg_line_to(ctx,pts[i].x,pts[i].y);
-	if (isClosed)
-		vkvg_close_path(ctx);
 
-	if (hoverPt>=0) {
-		vkvg_stroke_preserve(ctx);
-		vkvg_set_dash(ctx, NULL, 0, 0);
-		vkvg_set_line_width(ctx,2);
-		vkvg_set_source_rgba(ctx,0,0,0,1);
-		vkvg_stroke(ctx);
-		vkvg_set_source_rgba(ctx,0.5f,0.5f,1.0f,0.7f);
-		vkvg_arc(ctx, pts[hoverPt].x, pts[hoverPt].y, pointSize, 0, M_PIF*2);
+	VkvgPattern pat;
+
+	switch (patternType) {
+	case VKVG_PATTERN_TYPE_LINEAR:
+		pat = vkvg_pattern_create_linear(pts[0].x,pts[0].y, pts[1].x,pts[1].y);
+		break;
+	case VKVG_PATTERN_TYPE_RADIAL:
+		pat = vkvg_pattern_create_radial(
+					pts[2].x,pts[2].y, vec2_length(vec2_sub(pts[3], pts[2])),
+					pts[0].x,pts[0].y, vec2_length(vec2_sub(pts[1], pts[0]))
+		);
+		break;
+	}
+
+	/**/
+
+	vkvg_pattern_add_color_stop(pat, 0.0, 1 ,0 ,0, 0.5);
+	vkvg_pattern_add_color_stop(pat, 0.3, 0 ,1 ,0, 0.5);
+	vkvg_pattern_add_color_stop(pat, 0.6, 0 ,0 ,1, 0.5);
+	vkvg_pattern_add_color_stop(pat, 1.0, 0 ,0 ,0, 0.5);
+
+	vkvg_set_source (ctx, pat);
+	vkvg_paint (ctx);
+
+	vkvg_set_dash(ctx, NULL, 0, 0);
+	vkvg_set_line_width(ctx,1);
+	for (int i=0; i<ptsCount; i++) {
+		if (hoverPt == i)
+			vkvg_set_source_rgba(ctx,0.5f,0.5f,1.0f,0.7f);
+		else
+			vkvg_set_source_rgba(ctx,1.0f,0.5f,0.5f,0.9f);
+		vkvg_arc(ctx, pts[i].x, pts[i].y, pointSize, 0, M_PIF*2);
 		vkvg_fill_preserve(ctx);
 		vkvg_stroke(ctx);
-	} else
-		vkvg_stroke(ctx);
+	}
 
-	//draw_v(ctx, 200, 20, VKVG_LINE_JOIN_BEVEL);
-	//draw_v(ctx, 300, 80, VKVG_LINE_JOIN_ROUND);
-	vkvg_destroy(ctx);
+
+	vkvg_pattern_destroy	(pat);
+	vkvg_destroy			(ctx);
 }
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (action != GLFW_PRESS)
@@ -65,30 +74,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	case GLFW_KEY_ESCAPE :
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 		break;
-	case GLFW_KEY_W :
-		isClosed ^= true;
+	case GLFW_KEY_P :
+		patternType++;
+		if (patternType > VKVG_PATTERN_TYPE_RADIAL)
+			patternType = VKVG_PATTERN_TYPE_LINEAR;
 		break;
-	case GLFW_KEY_J :
-		lineJoin++;
-		if (lineJoin > 2)
-			lineJoin = 0;
-		break;
-	case GLFW_KEY_C :
-		lineCap++;
-		if (lineCap > 2)
-			lineCap = 0;
-		break;
-	case GLFW_KEY_D :
-		if (dashCount == 0)
-			dashCount = dashCountInit;
-		else
-			dashCount = 0;
-		break;
-	case GLFW_KEY_E :
-		if (dash[0] > 0)
-			dash[0] = 0;
-		else
-			dash[0] = 80;
+	case GLFW_KEY_S :
+		vkengine_wait_idle(e);
+		vkvg_surface_write_to_png(surf, "/home/jp/test.png");
 		break;
 	case GLFW_KEY_KP_ADD :
 		if (ptsCount < initPtsCount)
@@ -139,7 +132,7 @@ static void mouse_button_callback(GLFWwindow* window, int but, int state, int mo
 int main(int argc, char* argv[]) {
 
 	_parse_args (argc, argv);
-	VkEngine e;
+
 	e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
 
 	VkhPresenter r = e->renderer;

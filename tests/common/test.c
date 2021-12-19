@@ -399,7 +399,7 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 	enabledExtsCount++;
 #endif
 
-	VkhApp app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+	VkhApp app = vkh_app_create(1, 1, "vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_app_enable_debug_messenger(app
 								   , VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT

@@ -142,14 +142,14 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
 	free(instanceExtProps);
 
-	e->app = vkh_app_create("vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+	e->app = vkh_app_create(1 ,2 , "vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_app_enable_debug_messenger(e->app
 								   , VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
 								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
 								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
 								   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
-								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
 								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
 								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
 								   , NULL);
@@ -191,10 +191,17 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
 	enabledExtsCount=0;
 
+	VkPhysicalDeviceFeatures2 phyFeat2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+	VkPhysicalDeviceScalarBlockLayoutFeatures scalarBlockLayoutSupport = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES};
+	phyFeat2.pNext = &scalarBlockLayoutSupport;
+
+	vkGetPhysicalDeviceFeatures2(pi->phy, &phyFeat2);
+
 	TRY_LOAD_DEVICE_EXT (VK_KHR_swapchain)
 	TRY_LOAD_DEVICE_EXT (VK_EXT_blend_operation_advanced)
 	TRY_LOAD_DEVICE_EXT (VK_KHR_portability_subset)
 	TRY_LOAD_DEVICE_EXT (VK_KHR_relaxed_block_layout)
+	TRY_LOAD_DEVICE_EXT (VK_EXT_scalar_block_layout)
 
 	VkPhysicalDeviceFeatures enabledFeatures = {
 		.fillModeNonSolid = true,

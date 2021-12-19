@@ -19,8 +19,8 @@ void scaled_up() {
 	vkvg_paint(ctx);
 	vkvg_set_source_rgb   (ctx, 0,0,0);
 
-	vkvg_scale(ctx,100,100);
-	vkvg_arc(ctx, 2, 2, 0.5f, 0, M_PIF/2.f);
+	vkvg_scale(ctx,10,10);
+	vkvg_arc(ctx, 20, 20, 2.0f, 0, M_PIF/2.f);
 	vkvg_stroke(ctx);
 
 	vkvg_destroy(ctx);

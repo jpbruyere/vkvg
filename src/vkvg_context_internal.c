@@ -247,7 +247,8 @@ void _create_vertices_buff (VkvgContext ctx){
 		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
 }
 void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
-	_wait_flush_fence (ctx);//wait previous cmd if not completed
+	if (!_wait_flush_fence (ctx))//wait previous cmd if not completed
+		return;
 	ctx->sizeVBO = new_size;
 	uint32_t mod = ctx->sizeVBO % VKVG_VBO_SIZE;
 	if (mod > 0)
@@ -260,7 +261,8 @@ void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
 		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
 }
 void _resize_ibo (VkvgContext ctx, size_t new_size) {
-	_wait_flush_fence (ctx);//wait previous cmd if not completed
+	if (!_wait_flush_fence (ctx))//wait previous cmd if not completed
+		return;
 	ctx->sizeIBO = new_size;
 	uint32_t mod = ctx->sizeIBO % VKVG_IBO_SIZE;
 	if (mod > 0)
@@ -348,17 +350,25 @@ void _create_cmd_buff (VkvgContext ctx){
 void _clear_attachment (VkvgContext ctx) {
 
 }
-void _wait_flush_fence (VkvgContext ctx) {
-	vkWaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
+bool _wait_flush_fence (VkvgContext ctx) {
+	LOG(VKVG_LOG_INFO, "CTX: _wait_flush_fence\n");
+	if (vkWaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
+		return true;
+	ctx->status = VKVG_STATUS_TIMEOUT;
+	return false;
 }
 void _reset_flush_fence (VkvgContext ctx) {
+	LOG(VKVG_LOG_INFO, "CTX: _reset_flush_fence\n");
 	vkResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
 }
-void _wait_and_submit_cmd (VkvgContext ctx){
+bool _wait_and_submit_cmd (VkvgContext ctx){
 	if (!ctx->cmdStarted)//current cmd buff is empty, be aware that wait is also canceled!!
-		return;
+		return true;
 
-	_wait_flush_fence (ctx);
+	LOG(VKVG_LOG_INFO, "CTX: _wait_and_submit_cmd\n");
+
+	if (!_wait_flush_fence (ctx))
+		return false;
 	_reset_flush_fence(ctx);
 
 	_submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
@@ -370,6 +380,7 @@ void _wait_and_submit_cmd (VkvgContext ctx){
 
 	vkResetCommandBuffer (ctx->cmd, 0);
 	ctx->cmdStarted = false;
+	return true;
 }
 /*void _explicit_ms_resolve (VkvgContext ctx){//should init cmd before calling this (unused, using automatic resolve by renderpass)
 	vkh_image_set_layout (ctx->cmd, ctx->pSurf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -414,7 +425,8 @@ void _flush_vertices_caches_until_vertex_base (VkvgContext ctx) {
 //copy vertex and index caches to the vbo and ibo vkbuffers used by gpu for drawing
 //current running cmd has to be completed to free usage of those
 void _flush_vertices_caches (VkvgContext ctx) {
-	_wait_flush_fence (ctx);
+	if (!_wait_flush_fence (ctx))
+		return;
 
 	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
 	memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
@@ -570,6 +582,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 	uint32_t newPatternType = VKVG_PATTERN_TYPE_SOLID;
 
+	LOG(VKVG_LOG_INFO, "CTX: _update_cur_pattern: %p -> %p\n", lastPat, pat);
+
 	if (pat == NULL) {//solid color
 		if (lastPat == NULL)//solid
 			return;//solid to solid transition, no extra action requested
@@ -579,7 +593,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 	switch (newPatternType)	 {
 	case VKVG_PATTERN_TYPE_SOLID:
 		_flush_cmd_buff				(ctx);
-		_wait_flush_fence			(ctx);
+		if (!_wait_flush_fence (ctx))
+			return;
 		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE)//unbind current source surface by replacing it with empty texture
 			_update_descriptor_set		(ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
 		break;
@@ -605,7 +620,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 		vkh_cmd_end				(ctx->cmd);
 		_wait_and_submit_cmd	(ctx);
-		_wait_flush_fence		(ctx);
+		if (!_wait_flush_fence (ctx))
+			return;
 
 		ctx->source = surf->img;
 
@@ -646,7 +662,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 	case VKVG_PATTERN_TYPE_LINEAR:
 	case VKVG_PATTERN_TYPE_RADIAL:
 		_flush_cmd_buff (ctx);
-		_wait_flush_fence(ctx);
+		if (!_wait_flush_fence (ctx))
+			return;
 
 		if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
 			_update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
@@ -657,6 +674,11 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		//transform control point with current ctx matrix
 		vkvg_gradient_t grad = {0};
 		memcpy (&grad, pat->data, sizeof(vkvg_gradient_t));
+
+		if (grad.count < 2) {
+			ctx->status = VKVG_STATUS_PATTERN_INVALID_GRADIENT;
+			return;
+		}
 
 		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
 		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].z, &grad.cp[0].w);
@@ -672,7 +694,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		vkvg_pattern_destroy (lastPat);
 }
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
-	_wait_flush_fence(ctx);//descriptorSet update invalidate cmd buffs
+	if (!_wait_flush_fence(ctx))//descriptorSet update invalidate cmd buffs
+		return;
 	VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	VkWriteDescriptorSet writeDescriptorSet = {
 			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,

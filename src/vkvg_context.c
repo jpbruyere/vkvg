@@ -170,8 +170,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
 void vkvg_flush (VkvgContext ctx){
 	if (ctx->status)
 		return;
-	_flush_cmd_buff(ctx);
-	_wait_flush_fence(ctx);
+	_flush_cmd_buff		(ctx);
+	_wait_flush_fence	(ctx);
 /*
 #ifdef DEBUG
 
@@ -202,10 +202,10 @@ void vkvg_destroy (VkvgContext ctx)
 	if (ctx->references > 0)
 		return;
 
-	_flush_cmd_buff(ctx);
-	_wait_flush_fence(ctx);
+	LOG(VKVG_LOG_INFO, "DESTROY Context: ctx = %p (status:%d); surf = %p\n", ctx, ctx->status, ctx->pSurf);
 
-	LOG(VKVG_LOG_INFO, "DESTROY Context: ctx = %p; surf = %p\n", ctx, ctx->pSurf);
+	vkvg_flush (ctx);
+
 	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
 
 	if (ctx->pattern)
@@ -982,7 +982,8 @@ void vkvg_save (VkvgContext ctx){
 	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
 	_flush_cmd_buff (ctx);
-	_wait_flush_fence (ctx);
+	if (!_wait_flush_fence (ctx))
+		return;
 
 	VkvgDevice dev = ctx->pSurf->dev;
 	vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
@@ -1098,7 +1099,8 @@ void vkvg_restore (VkvgContext ctx){
 	LOG(VKVG_LOG_INFO, "RESTORE CONTEXT: ctx = %p\n", ctx);
 
 	_flush_cmd_buff (ctx);
-	_wait_flush_fence (ctx);
+	if (!_wait_flush_fence (ctx))
+		return;
 
 	vkvg_context_save_t* sav = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav->pNext;
@@ -1134,7 +1136,8 @@ void vkvg_restore (VkvgContext ctx){
 #endif
 
 	_flush_cmd_buff (ctx);
-	_wait_flush_fence (ctx);
+	if (!_wait_flush_fence (ctx))
+		return;
 
 	uint8_t curSaveStencil = ctx->curSavBit / 6;
 	if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0){//addtional save/restore stencil image have to be copied back to surf stencil first
@@ -1171,7 +1174,8 @@ void vkvg_restore (VkvgContext ctx){
 
 		VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
 		_wait_and_submit_cmd (ctx);
-		_wait_flush_fence (ctx);
+		if (!_wait_flush_fence (ctx))
+			return;
 		vkh_image_destroy (savStencil);
 	}
 

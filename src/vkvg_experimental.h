@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2021 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -19,27 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef VKVG_PATTERN_H
-#define VKVG_PATTERN_H
+#ifndef VKVG_EXPERIMENTAL_H
+#define VKVG_EXPERIMENTAL_H
 
 #include "vkvg_internal.h"
 #include "vkvg.h"
-#include "vkh.h"
-
-typedef struct _vkvg_pattern_t {
-	vkvg_pattern_type_t type;
-	vkvg_extend_t		extend;
-	vkvg_filter_t		filter;
-	void*				data;
-	uint32_t			references;
-	vkvg_status_t		status;
-}vkvg_pattern_t;
-
-typedef struct _vkvg_gradient_t {
-	vkvg_color_t	colors[16];
-	float			stops[16];
-	vec4			cp[2];
-	uint32_t		count;
-}vkvg_gradient_t;
 
 #endif

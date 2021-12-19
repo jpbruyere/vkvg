@@ -23,7 +23,7 @@
 
 #extension GL_ARB_separate_shader_objects	: enable
 #extension GL_ARB_shading_language_420pack	: enable
-#extension GL_EXT_scalar_block_layout	: enable
+#extension GL_EXT_scalar_block_layout		: require
 
 layout (set=0, binding = 0) uniform sampler2DArray fontMap;
 layout (set=1, binding = 0) uniform sampler2D		source;
@@ -34,10 +34,10 @@ layout (std430, set=2, binding = 0) uniform _uboGrad {
 	uint	count;
 }uboGrad;
 
-layout (location = 0) in vec3	inFontUV;		//if it is a text drawing, inFontUV.z hold fontMap layer
-layout (location = 1) in vec4	inSrc;			//source bounds or color depending on pattern type
-layout (location = 2) in flat int inPatType;	//pattern type
-layout (location = 3) in mat3x2 inMat;
+layout (location = 0) in vec3		inFontUV;	//if it is a text drawing, inFontUV.z hold fontMap layer
+layout (location = 1) in vec4		inSrc;		//source bounds or color depending on pattern type
+layout (location = 2) in flat int	inPatType;	//pattern type
+layout (location = 3) in mat3x2		inMat;
 
 layout (location = 0) out vec4 outFragColor;
 
@@ -65,19 +65,30 @@ void main()
 		c = texture (source, uv / inSrc.zw);
 		break;
 	case LINEAR:
-		//credit to Nikita Rokotyan for linear grad
-		float  alpha = atan( -uboGrad.cp[0].w + uboGrad.cp[0].y, uboGrad.cp[0].z - uboGrad.cp[0].x );
-		float  gradientStartPosRotatedX = uboGrad.cp[0].x*cos(alpha) - uboGrad.cp[0].y*sin(alpha);
-		float  gradientEndPosRotatedX   = uboGrad.cp[0].z*cos(alpha) - uboGrad.cp[0].w*sin(alpha);
-		float  d = gradientEndPosRotatedX - gradientStartPosRotatedX;
+		float dist = 1;
+		vec2 p0 = uboGrad.cp[0].xy / inSrc.xy;
+		vec2 p1 = uboGrad.cp[0].zw / inSrc.xy;
+		p = gl_FragCoord.xy / inSrc.xy;
 
-		float y = gl_FragCoord.y;//inSrc.y - gl_FragCoord.y;
-		float x = gl_FragCoord.x;
-		float xLocRotated = x*cos( alpha ) - y*sin( alpha );
+		float l = length (p1 - p0);
+		vec2 u = normalize (p1 - p0);
 
-		c = mix(uboGrad.colors[0], uboGrad.colors[1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[0]*d, gradientStartPosRotatedX + uboGrad.stops[1]*d, xLocRotated ) );
+		if (u.y == 0)
+			if (u.x < 0)
+				dist = -(p.x-p0.x) / l;
+			else
+				dist = (p.x-p0.x) / l;
+		else {
+			float m = -u.x / u.y;
+			float bb = p0.y - m * p0.x;
+			dist =((p.y - m * p.x - bb) / sqrt (1 + m * m)) / l;
+			if (u.y < 0)
+				dist = - dist;
+		}
+
+		c = mix(uboGrad.colors[0], uboGrad.colors[1], smoothstep(uboGrad.stops[0], uboGrad.stops[1], dist));
 		for ( int i=1; i<uboGrad.count-1; ++i )
-			c = mix(c, uboGrad.colors[i+1], smoothstep( gradientStartPosRotatedX + uboGrad.stops[i]*d, gradientStartPosRotatedX + uboGrad.stops[i+1]*d, xLocRotated ) );
+			c = mix(c, uboGrad.colors[i+1], smoothstep(uboGrad.stops[i], uboGrad.stops[i+1], dist));
 		break;
 	case RADIAL:
 		p = gl_FragCoord.xy / inSrc.xy;

@@ -31,8 +31,6 @@ extern "C" {
  *************************************************************************/
 /** @mainpage VKVG: vulkan vector graphics
  *
- * Documentation of all members: vkvg.h
- *
  * VKVG is an open source 2d vector drawing library written in @b c and using [vulkan](https://www.khronos.org/vulkan/) for hardware acceleration.
  * Its api is modeled on the [cairo graphic library](https://www.cairographics.org/) with the following software components:
  *
@@ -100,6 +98,8 @@ extern uint8_t vkvg_log_level;
  * vkvg_status_t is used to indicates errors that can occur when using vkvg. Several vkvg function directely
  * return result, but when using a @ref context, the last error is stored in the context and can be accessed
  * with #vkvg_status.
+ *
+ * As soon as a status is not success, further operations will be canceled.
  */
 typedef enum {
 	VKVG_STATUS_SUCCESS = 0,			/*!< no error occurred.*/
@@ -116,12 +116,14 @@ typedef enum {
 	VKVG_STATUS_SURFACE_FINISHED,		/*!< */
 	VKVG_STATUS_SURFACE_TYPE_MISMATCH,	/*!< */
 	VKVG_STATUS_PATTERN_TYPE_MISMATCH,	/*!< */
+	VKVG_STATUS_PATTERN_INVALID_GRADIENT,/*!< occurs when stops count is zero */
 	VKVG_STATUS_INVALID_CONTENT,		/*!< */
 	VKVG_STATUS_INVALID_FORMAT,			/*!< */
 	VKVG_STATUS_INVALID_VISUAL,			/*!< */
 	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
 	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
 	VKVG_STATUS_INVALID_RECT,			/*!< rectangle with height or width equal to 0. */
+	VKVG_STATUS_TIMEOUT,				/*!< waiting for a vulkan operation to finish resulted in a fence timeout (5 seconds)*/
 }vkvg_status_t;
 
 typedef enum {
@@ -213,21 +215,32 @@ typedef struct {
 	float a;
 } vkvg_color_t;
 
+/**
+  * @brief font metrics
+  *
+  * structure defining global font metrics for a particular font. It can be retrieve by calling @ref vkvg_font_extents
+  * on a valid context.
+  */
 typedef struct {
-	float ascent;
-	float descent;
-	float height;
-	float max_x_advance;
-	float max_y_advance;
+	float ascent;			/*!< the distance that the font extends above the baseline. */
+	float descent;			/*!< the distance that the font extends below the baseline.*/
+	float height;			/*!< the recommended vertical distance between baselines. */
+	float max_x_advance;	/*!< the maximum distance in the X direction that the origin is advanced for any glyph in the font.*/
+	float max_y_advance;	/*!< the maximum distance in the Y direction that the origin is advanced for any glyph in the font. This will be zero for normal fonts used for horizontal writing.*/
 } vkvg_font_extents_t;
-
+/**
+  * @brief text metrics
+  *
+  * structure defining metrics for a single or a string of glyphs. To measure text, call @ref vkvg_text_extents
+  * on a valid context.
+  */
 typedef struct {
-	float x_bearing;
-	float y_bearing;
-	float width;
-	float height;
-	float x_advance;
-	float y_advance;
+	float x_bearing;		/*!< the horizontal distance from the origin to the leftmost part of the glyphs as drawn. Positive if the glyphs lie entirely to the right of the origin. */
+	float y_bearing;		/*!< the vertical distance from the origin to the topmost part of the glyphs as drawn. Positive only if the glyphs lie completely below the origin; will usually be negative.*/
+	float width;			/*!< width of the glyphs as drawn*/
+	float height;			/*!< height of the glyphs as drawn*/
+	float x_advance;		/*!< distance to advance in the X direction after drawing these glyphs*/
+	float y_advance;		/*!< distance to advance in the Y direction after drawing these glyphs. Will typically be zero except for vertical text layout as found in East-Asian languages.*/
 } vkvg_text_extents_t;
 
 /**
@@ -1468,67 +1481,122 @@ uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat);
 vkvg_public
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
 /**
- * @brief
+ * @brief create a new linear gradient.
  *
- * @param x0
- * @param y0
- * @param x1
- * @param y1
- * @return VkvgPattern
+ * Create a new linear gradient along the line defined by (x0, y0) and (x1, y1).
+ * Before using the gradient pattern, a number of color stops should be defined using @ref vkvg_pattern_add_color_stop.
+ *
+ * @param x0 x coordinate of the start point
+ * @param y0 y coordinate of the start point
+ * @param x1 x coordinate of the end point
+ * @param y1 y coordinate of the end point
+ * @return VkvgPattern the newly created pattern, call @ref vkvg_pattern_destroy when finished with it.
  */
 vkvg_public
 VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1);
 /**
- * @brief
+ * @brief edit an existing linear gradient.
  *
- * @param cx0
- * @param cy0
- * @param radius0
- * @param cx1
- * @param cy1
- * @param radius1
- * @return VkvgPattern
+ * edit control points of an existing linear gradient. If supplied pattern is not a linear gradient,
+ * @ref VKVG_STATUS_PATTERN_TYPE_MISMATCH is set for pattern.
+ *
+ * @param x0 x coordinate of the start point
+ * @param y0 y coordinate of the start point
+ * @param x1 x coordinate of the end point
+ * @param y1 y coordinate of the end point
+ */
+vkvg_public
+void vkvg_pattern_edit_linear (VkvgPattern pat, float x0, float y0, float x1, float y1);
+/**
+ * @brief get the gradient end points for a linear gradient
+ *
+ * If supplied pattern is not a linear gradient, @ref VKVG_STATUS_PATTERN_TYPE_MISMATCH is set for pattern.
+ *
+ * @param x0 x coordinate of the start point
+ * @param y0 y coordinate of the start point
+ * @param x1 x coordinate of the end point
+ * @param y1 y coordinate of the end point
+ */
+vkvg_public
+void vkvg_pattern_get_linear_points (VkvgPattern pat, float* x0, float* y0, float* x1, float* y1);
+/**
+ * @brief create a new radial gradient.
+ * 
+ * Creates a new radial gradient between the two circles defined by (cx0, cy0, radius0) and (cx1, cy1, radius1).
+ * Before using the gradient pattern, a number of color stops should be defined using vkvg_pattern_add_color_stop.
+ *
+ * @param cx0 x coordinate for the center of the start circle, the inner circle. Must stand inside outer circle.
+ * @param cy0 y coordinate for the center of the start circle, the inner circle. Must stand inside outer circle.
+ * @param radius0 radius for the center of the start circle, the inner circle. Can't be greater than radius1
+ * @param cx1 x coordinate for the center of the end circle, the outer circle.
+ * @param cy1 y coordinate for the center of the end circle, the outer circle.
+ * @param radius1 radius for the center of the end circle, the outer circle.
+ * @return VkvgPattern the newly created pattern to be disposed when finished by calling @ref vkvg_pattern_destroy.
  */
 vkvg_public
 VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
-											 float cx1, float cy1, float radius1);
+										float cx1, float cy1, float radius1);
 /**
- * @brief
+ * @brief edit an existing radial gradient.
  *
- * @param pat
+ * Edit control points of an existing radial gradient
+ *
+ * @param pat the pattern to edit
+ * @param cx0 x coordinate for the center of the start circle, the inner circle. Must stand inside outer circle.
+ * @param cy0 y coordinate for the center of the start circle, the inner circle. Must stand inside outer circle.
+ * @param radius0 radius for the center of the start circle, the inner circle. Can't be greater than radius1
+ * @param cx1 x coordinate for the center of the end circle, the outer circle.
+ * @param cy1 y coordinate for the center of the end circle, the outer circle.
+ * @param radius1 radius for the center of the end circle, the outer circle.
+ */
+vkvg_public
+void vkvg_pattern_edit_radial (VkvgPattern pat,
+								float cx0, float cy0, float radius0,
+								float cx1, float cy1, float radius1);
+/**
+ * @brief dispose pattern.
+ * 
+ * When you have finished using a pattern, free its ressources by calling this method.
+ *
+ * @param pat the pattern to destroy.
  */
 vkvg_public
 void vkvg_pattern_destroy (VkvgPattern pat);
 /**
- * @brief
+ * @brief add colors to gradients
+ * 
+ * for each color step in the gradient, call this method and provide an absolute position between 0 and 1
+ * and a color.
  *
- * @param pat
- * @param offset
- * @param r
- * @param g
- * @param b
- * @param a
+ * @param pat the gradient pattern to add a color step.
+ * @param offset location along the gradient's control vector, value ranging from zero (start of the gradient) to one.
+ * @param r the red component of the color step
+ * @param g the green component of the color stop
+ * @param b the blue component of the color stop
+ * @param a the alpha chanel of the color stop
  */
 vkvg_public
 void vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a);
 /**
- * @brief
+ * @brief control the extend of the pattern
+ * 
+ * control whether the pattern has to be repeated or extended when painted on a surface.
  *
- * @param pat
- * @param extend
+ * @param pat the pattern to set extend for.
+ * @param extend one value of the @ref vkvg_extend_t enumeration.
  */
 vkvg_public
 void vkvg_pattern_set_extend (VkvgPattern pat, vkvg_extend_t extend);
 /**
- * @brief
+ * @brief control the filtering when using this pattern on a surface.
  *
- * @param pat
- * @param filter
+ * @param pat pat the pattern to set filter for.
+ * @param filter one value of the @ref vkvg_filter_t enumeration.
  */
 vkvg_public
 void vkvg_pattern_set_filter (VkvgPattern pat, vkvg_filter_t filter);
 /**
- * @brief
+ * @brief query the current extend value for a pa
  *
  * @param pat
  * @return vkvg_extend_t
@@ -1543,8 +1611,23 @@ vkvg_extend_t vkvg_pattern_get_extend (VkvgPattern pat);
  */
 vkvg_public
 vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat);
+/**
+ * @brief get pattern type
+ *
+ * may be one of the @ref vkvg_pattern_type_t enumeration
+ *
+ * @param pat the pattern to query
+ * @return vkvg_pattern_type_t
+ */
+vkvg_public
+vkvg_pattern_type_t vkvg_pattern_get_type (VkvgPattern pat);
 /** @}*/
 
+/********* EXPERIMENTAL **************/
+vkvg_public
+void vkvg_set_source_color_name (VkvgContext ctx, const char* color);
+
+/*************************************/
 
 #ifdef __cplusplus
 }
