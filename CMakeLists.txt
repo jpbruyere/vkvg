@@ -50,6 +50,16 @@ ELSE()
 	ENDIF()
 ENDIF()
 
+OPTION(ENABLE_PROFILING "compile with the -pg options..." OFF)
+
+IF (ENABLE_PROFILING)
+	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-pg -fno-reorder-functions -fno-inline")
+	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-O1")
+	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-fthread-jumps")
+	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-falign-functions  -falign-jumps")
+	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-falign-loops  -falign-labels")
+ENDIF()
+
 OPTION(VKVG_PREMULT_ALPHA "use premultiplied alpha for internal rendering" ON)
 IF (VKVG_PREMULT_ALPHA)
 	ADD_DEFINITIONS (-DVKVG_PREMULT_ALPHA)
