@@ -30,23 +30,26 @@
 #define STENCIL_CLIP_BIT	0x2
 #define STENCIL_ALL_BIT		0x3
 
-extern PFN_vkCmdBindPipeline		   CmdBindPipeline;
-extern PFN_vkCmdBindDescriptorSets	   CmdBindDescriptorSets;
-extern PFN_vkCmdBindIndexBuffer		   CmdBindIndexBuffer;
-extern PFN_vkCmdBindVertexBuffers	   CmdBindVertexBuffers;
+extern PFN_vkCmdBindPipeline			CmdBindPipeline;
+extern PFN_vkCmdBindDescriptorSets		CmdBindDescriptorSets;
+extern PFN_vkCmdBindIndexBuffer			CmdBindIndexBuffer;
+extern PFN_vkCmdBindVertexBuffers		CmdBindVertexBuffers;
 
-extern PFN_vkCmdDrawIndexed			   CmdDrawIndexed;
-extern PFN_vkCmdDraw				   CmdDraw;
+extern PFN_vkCmdDrawIndexed				CmdDrawIndexed;
+extern PFN_vkCmdDraw					CmdDraw;
 
-extern PFN_vkCmdSetStencilCompareMask  CmdSetStencilCompareMask;
-extern PFN_vkCmdSetStencilReference	   CmdSetStencilReference;
-extern PFN_vkCmdSetStencilWriteMask	   CmdSetStencilWriteMask;
-extern PFN_vkCmdBeginRenderPass		   CmdBeginRenderPass;
-extern PFN_vkCmdEndRenderPass		   CmdEndRenderPass;
-extern PFN_vkCmdSetViewport			   CmdSetViewport;
-extern PFN_vkCmdSetScissor			   CmdSetScissor;
+extern PFN_vkCmdSetStencilCompareMask	CmdSetStencilCompareMask;
+extern PFN_vkCmdSetStencilReference		CmdSetStencilReference;
+extern PFN_vkCmdSetStencilWriteMask		CmdSetStencilWriteMask;
+extern PFN_vkCmdBeginRenderPass			CmdBeginRenderPass;
+extern PFN_vkCmdEndRenderPass			CmdEndRenderPass;
+extern PFN_vkCmdSetViewport				CmdSetViewport;
+extern PFN_vkCmdSetScissor				CmdSetScissor;
 
-extern PFN_vkCmdPushConstants		   CmdPushConstants;
+extern PFN_vkCmdPushConstants			CmdPushConstants;
+extern PFN_vkWaitForFences				WaitForFence;
+extern PFN_vkResetFences				ResetFence;
+extern PFN_vkResetCommandBuffer			ResetCommandBuffer;
 
 typedef struct _vkvg_device_t{
 	VkDevice				vkDev;					/**< Vulkan Logical Device */

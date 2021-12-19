@@ -48,6 +48,10 @@ PFN_vkCmdSetScissor				CmdSetScissor;
 
 PFN_vkCmdPushConstants			CmdPushConstants;
 
+PFN_vkWaitForFences				WaitForFence;
+PFN_vkResetFences				ResetFence;
+PFN_vkResetCommandBuffer		ResetCommandBuffer;
+
 bool _try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
 	for (uint32_t i=0; i<phyCount; i++){
 		if (vkh_phyinfo_get_properties(phys[i]).deviceType == gpuType) {
@@ -275,13 +279,13 @@ void _setupPipelines(VkvgDevice dev)
 	VkVertexInputAttributeDescription vertexInputAttributs[3] = {
 		{0, 0, VK_FORMAT_R32G32_SFLOAT, 0},
 		{1, 0, VK_FORMAT_R8G8B8A8_UNORM, 8},
-		{2, 0, VK_FORMAT_R32G32B32_SFLOAT, 12}
+		//{2, 0, VK_FORMAT_R32G32B32_SFLOAT, 12}
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertexInputState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 		.vertexBindingDescriptionCount = 1,
 		.pVertexBindingDescriptions = &vertexInputBinding,
-		.vertexAttributeDescriptionCount = 3,
+		.vertexAttributeDescriptionCount = 2,
 		.pVertexAttributeDescriptions = vertexInputAttributs };
 #ifdef VKVG_WIRED_DEBUG
 	VkShaderModule modVert, modFrag, modFragWired;
@@ -446,7 +450,10 @@ bool _init_function_pointers (VkvgDevice dev) {
 	CmdEndRenderPass		= GetVkProcAddress(dev->vkDev, dev->instance, vkCmdEndRenderPass);
 	CmdSetViewport			= GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetViewport);
 	CmdSetScissor			= GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetScissor);
-	CmdPushConstants		= GetVkProcAddress(dev->vkDev, dev->instance, vkCmdPushConstants);	
+	CmdPushConstants		= GetVkProcAddress(dev->vkDev, dev->instance, vkCmdPushConstants);
+	WaitForFence			= GetVkProcAddress(dev->vkDev, dev->instance, vkWaitForFences);
+	ResetFence				= GetVkProcAddress(dev->vkDev, dev->instance, vkResetFences);
+	ResetCommandBuffer		= GetVkProcAddress(dev->vkDev, dev->instance, vkResetCommandBuffer);
 	return true;
 }
 
