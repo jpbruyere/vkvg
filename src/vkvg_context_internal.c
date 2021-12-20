@@ -795,7 +795,9 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 	vec2 bisec_n_perp = vec2_perp(bisec_n);
 
 	//limit bisectrice length
-	float rlh = fminf (lh, fminf (length_v0, length_v1));
+	float rlh = lh;
+	if (dot<0.f)
+		rlh = fminf (rlh, fminf (length_v0, length_v1));
 	//---
 
 	vec2 bisec = vec2_mult_s (bisec_n_perp, rlh);
@@ -804,7 +806,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 	vec2 rlh_inside_pos;
 
-	if (rlh < lh || ctx->lineJoin != VKVG_LINE_JOIN_MITER) {
+	if (!isCurve && (rlh < lh || ctx->lineJoin != VKVG_LINE_JOIN_MITER)) {
 		vec2 vnPerp;
 		if (length_v0 < length_v1)
 			vnPerp = vec2_perp (v1n);
@@ -819,7 +821,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 	}
 
 	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
-		if (dot < 0.f && rlh < lh) {
+		if (!isCurve && dot < 0.f && rlh < lh) {
 			double x = (lh - rlh) * cosf (halfAlpha);
 			vec2 bisecPerp = vec2_mult_s (bisec_n, x);
 			vec2 p = vec2_add(p0, bisec);
