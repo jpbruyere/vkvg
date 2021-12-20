@@ -802,24 +802,32 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 	VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
+	vec2 rlh_inside_pos;
+
+	if (rlh < lh || ctx->lineJoin != VKVG_LINE_JOIN_MITER) {
+		vec2 vnPerp;
+		if (length_v0 < length_v1)
+			vnPerp = vec2_perp (v1n);
+		else
+			vnPerp = vec2_perp (v0n);
+		vec2 vHwPerp = vec2_mult_s(vnPerp, hw);
+		double lbc = cosf(halfAlpha) * rlh;
+		if (det < 0.f)
+			rlh_inside_pos = vec2_add (vec2_add (vec2_mult_s(vnPerp, -lbc), vec2_add(p0, bisec)), vHwPerp);
+		else
+			rlh_inside_pos = vec2_sub (vec2_add (vec2_mult_s(vnPerp, lbc), vec2_sub(p0, bisec)), vHwPerp);
+	}
+
 	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
 		if (dot < 0.f && rlh < lh) {
 			double x = (lh - rlh) * cosf (halfAlpha);
-			double lbc = cosf(halfAlpha) * rlh;
 			vec2 bisecPerp = vec2_mult_s (bisec_n, x);
-			vec2 vnPerp;
-			if (length_v0 < length_v1)
-				vnPerp = vec2_perp (v1n);
-			else
-				vnPerp = vec2_perp (v0n);
-			vec2 vHwPerp = vec2_mult_s(vnPerp, hw);
 			vec2 p = vec2_add(p0, bisec);
-
 			if (det > 0) {
 				v.pos = vec2_sub(p, bisecPerp);
 				_add_vertex(ctx, v);
 
-				v.pos = vec2_sub (vec2_add (vec2_mult_s(vnPerp, lbc), vec2_sub(p0, bisec)), vHwPerp);
+				v.pos = rlh_inside_pos;
 				_add_vertex(ctx, v);
 
 				v.pos = vec2_add(p, bisecPerp);
@@ -830,7 +838,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 				_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
 				return false;
 			} else {
-				v.pos = vec2_add (vec2_add (vec2_mult_s(vnPerp, -lbc), vec2_add(p0, bisec)), vHwPerp);
+				v.pos = v.pos = rlh_inside_pos;
 				_add_vertex(ctx, v);
 
 				p = vec2_sub(p0, bisec);
@@ -859,32 +867,18 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 		vec2 vp = vec2_perp(v0n);
 
 		if (det<0){
-			if (dot < 0 && rlh < lh) {
-				vec2 vnPerp;
-				if (length_v0 < length_v1)
-					vnPerp = vec2_perp (v1n);
-				else
-					vnPerp = vec2_perp (v0n);
-				vec2 vHwPerp = vec2_mult_s(vnPerp, hw);
-				double lbc = cosf(halfAlpha) * rlh;
-				v.pos = vec2_add (vec2_add (vec2_mult_s(vnPerp, -lbc), vec2_add(p0, bisec)), vHwPerp);
-			} else
+			if (dot < 0 && rlh < lh)
+				v.pos = rlh_inside_pos;
+			else
 				v.pos = vec2_add (p0, bisec);
 			_add_vertex(ctx, v);
 			v.pos = vec2_sub (p0, vec2_mult_s (vp, hw));
 		}else{
 			v.pos = vec2_add (p0, vec2_mult_s (vp, hw));
 			_add_vertex(ctx, v);
-			if (dot < 0 && rlh < lh) {
-				vec2 vnPerp;
-				if (length_v0 < length_v1)
-					vnPerp = vec2_perp (v1n);
-				else
-					vnPerp = vec2_perp (v0n);
-				vec2 vHwPerp = vec2_mult_s(vnPerp, hw);
-				double lbc = cosf(halfAlpha) * rlh;
-				v.pos = vec2_sub (vec2_add (vec2_mult_s(vnPerp, lbc), vec2_sub(p0, bisec)), vHwPerp);
-			}else
+			if (dot < 0 && rlh < lh)
+				v.pos = rlh_inside_pos;
+			else
 				v.pos = vec2_sub (p0, bisec);
 		}
 		_add_vertex(ctx, v);
