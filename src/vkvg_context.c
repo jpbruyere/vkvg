@@ -424,8 +424,11 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 		a-=step;
 	}
 
-	if (EQUF(a1-a2,M_PIF*2.f))//if arc is complete circle, last point is the same as the first one
+	if (EQUF(a1-a2,M_PIF*2.f)){//if arc is complete circle, last point is the same as the first one
+		_set_curve_end(ctx);
+		vkvg_close_path(ctx);
 		return;
+	}
 
 	a = a2;
 	//vec2 lastP = v;
