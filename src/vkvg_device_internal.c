@@ -279,13 +279,13 @@ void _setupPipelines(VkvgDevice dev)
 	VkVertexInputAttributeDescription vertexInputAttributs[3] = {
 		{0, 0, VK_FORMAT_R32G32_SFLOAT, 0},
 		{1, 0, VK_FORMAT_R8G8B8A8_UNORM, 8},
-		//{2, 0, VK_FORMAT_R32G32B32_SFLOAT, 12}
+		{2, 0, VK_FORMAT_R32G32B32_SFLOAT, 12}
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertexInputState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 		.vertexBindingDescriptionCount = 1,
 		.pVertexBindingDescriptions = &vertexInputBinding,
-		.vertexAttributeDescriptionCount = 2,
+		.vertexAttributeDescriptionCount = 3,
 		.pVertexAttributeDescriptions = vertexInputAttributs };
 #ifdef VKVG_WIRED_DEBUG
 	VkShaderModule modVert, modFrag, modFragWired;
