@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -792,14 +792,13 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 	float halfAlpha = alpha / 2.f;
 
 	float lh = hw / cosf(halfAlpha);
-	bisec_n = vec2_perp(bisec_n);
+	vec2 bisec_n_perp = vec2_perp(bisec_n);
 
 	//limit bisectrice length
-	bool reducedLH = EQUF(dot,-1) || (lh > fminf (lh, fminf (length_v0, length_v1)));
 	float rlh = fminf (lh, fminf (length_v0, length_v1));
 	//---
 
-	vec2 bisec = vec2_mult_s (bisec_n, rlh);
+	vec2 bisec = vec2_mult_s (bisec_n_perp, rlh);
 
 	VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
@@ -807,7 +806,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 		if (dot < 0.f && rlh < lh) {
 			double x = (lh - rlh) * cosf (halfAlpha);
 			double lbc = cosf(halfAlpha) * rlh;
-			vec2 bisecPerp = vec2_mult_s (vec2_perp(bisec_n), x);
+			vec2 bisecPerp = vec2_mult_s (bisec_n, x);
 			vec2 vnPerp;
 			if (length_v0 < length_v1)
 				vnPerp = vec2_perp (v1n);
@@ -817,13 +816,13 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 			vec2 p = vec2_add(p0, bisec);
 
 			if (det > 0) {
-				v.pos = vec2_add(p, bisecPerp);
+				v.pos = vec2_sub(p, bisecPerp);
 				_add_vertex(ctx, v);
 
 				v.pos = vec2_sub (vec2_add (vec2_mult_s(vnPerp, lbc), vec2_sub(p0, bisec)), vHwPerp);
 				_add_vertex(ctx, v);
 
-				v.pos = vec2_sub(p, bisecPerp);
+				v.pos = vec2_add(p, bisecPerp);
 				_add_vertex(ctx, v);
 
 				_add_triangle_indices(ctx, idx, idx+2, idx+1);
@@ -836,9 +835,9 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 				p = vec2_sub(p0, bisec);
 
-				v.pos = vec2_add(p, bisecPerp);
-				_add_vertex(ctx, v);
 				v.pos = vec2_sub(p, bisecPerp);
+				_add_vertex(ctx, v);
+				v.pos = vec2_add(p, bisecPerp);
 				_add_vertex(ctx, v);
 
 				_add_triangle_indices(ctx, idx, idx+2, idx+1);
@@ -858,42 +857,47 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 		}
 	}else{
 		vec2 vp = vec2_perp(v0n);
+
 		if (det<0){
-			if (dot < 0 && reducedLH)
-				v.pos = vec2_sub (p0, vec2_mult_s (vec2_perp(v1n), hw));
-			else
+			if (dot < 0 && rlh < lh) {
+				vec2 vnPerp;
+				if (length_v0 < length_v1)
+					vnPerp = vec2_perp (v1n);
+				else
+					vnPerp = vec2_perp (v0n);
+				vec2 vHwPerp = vec2_mult_s(vnPerp, hw);
+				double lbc = cosf(halfAlpha) * rlh;
+				v.pos = vec2_add (vec2_add (vec2_mult_s(vnPerp, -lbc), vec2_add(p0, bisec)), vHwPerp);
+			} else
 				v.pos = vec2_add (p0, bisec);
 			_add_vertex(ctx, v);
 			v.pos = vec2_sub (p0, vec2_mult_s (vp, hw));
 		}else{
 			v.pos = vec2_add (p0, vec2_mult_s (vp, hw));
 			_add_vertex(ctx, v);
-			if (dot < 0 && reducedLH)
-				v.pos = vec2_add (p0, vec2_mult_s (vec2_perp(v1n), hw));
-			else
+			if (dot < 0 && rlh < lh) {
+				vec2 vnPerp;
+				if (length_v0 < length_v1)
+					vnPerp = vec2_perp (v1n);
+				else
+					vnPerp = vec2_perp (v0n);
+				vec2 vHwPerp = vec2_mult_s(vnPerp, hw);
+				double lbc = cosf(halfAlpha) * rlh;
+				v.pos = vec2_sub (vec2_add (vec2_mult_s(vnPerp, lbc), vec2_sub(p0, bisec)), vHwPerp);
+			}else
 				v.pos = vec2_sub (p0, bisec);
 		}
 		_add_vertex(ctx, v);
 
 		if (ctx->lineJoin == VKVG_LINE_JOIN_BEVEL){
 			if (det<0){
-				if (dot < 0 && reducedLH) {
-					_add_triangle_indices(ctx, idx, idx+3, idx+4);
-					_add_triangle_indices(ctx, idx+1, idx+3, idx+0);
-				}else{
-					_add_triangle_indices(ctx, idx, idx+2, idx+1);
-					_add_triangle_indices(ctx, idx+2, idx+4, idx+0);
-					_add_triangle_indices(ctx, idx, idx+3, idx+4);
-				}
+				_add_triangle_indices(ctx, idx, idx+2, idx+1);
+				_add_triangle_indices(ctx, idx+2, idx+4, idx+0);
+				_add_triangle_indices(ctx, idx, idx+3, idx+4);
 			}else{
-				if (dot < 0 && reducedLH) {
-					_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
-					_add_triangle_indices(ctx, idx, idx+1, idx+4);
-				}else{
-					_add_triangle_indices(ctx, idx, idx+2, idx+1);
-					_add_triangle_indices(ctx, idx+2, idx+3, idx+1);
-					_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
-				}
+				_add_triangle_indices(ctx, idx, idx+2, idx+1);
+				_add_triangle_indices(ctx, idx+2, idx+3, idx+1);
+				_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
 			}
 		}else if (ctx->lineJoin == VKVG_LINE_JOIN_ROUND){
 			float step = M_PIF / hw;
@@ -920,29 +924,15 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 			_add_triangle_indices(ctx, idx, idx+2, idx+1);
 			if (det < 0){
-				if (dot < 0 && reducedLH) {
-					for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
-						_add_triangle_indices(ctx, p, p+1, idx);
-					_add_triangle_indices(ctx, idx+1, p0Idx+1, idx);
-					_add_triangle_indices(ctx, idx, p0Idx+1, p0Idx+2);
-				}else{
-					for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
-						_add_triangle_indices(ctx, p, p+1, idx);
-					_add_triangle_indices(ctx, p0Idx, p0Idx+2, idx);
-					_add_triangle_indices(ctx, idx, p0Idx+1, p0Idx+2);
-				}
+				for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
+					_add_triangle_indices(ctx, p, p+1, idx);
+				_add_triangle_indices(ctx, p0Idx, p0Idx+2, idx);
+				_add_triangle_indices(ctx, idx, p0Idx+1, p0Idx+2);
 			}else{
-				if (dot < 0 && reducedLH) {
-					for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
-						_add_triangle_indices(ctx, p, p+1, idx+1);
-					_add_triangle_indices(ctx, idx, p0Idx+2, idx+1);
-					_add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
-				}else{
-					for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
-						_add_triangle_indices(ctx, p, p+1, idx+1);
-					_add_triangle_indices(ctx, p0Idx, p0Idx+1, idx+1);
-					_add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
-				}
+				for (VKVG_IBO_INDEX_TYPE p = idx+2; p < p0Idx; p++)
+					_add_triangle_indices(ctx, p, p+1, idx+1);
+				_add_triangle_indices(ctx, p0Idx, p0Idx+1, idx+1);
+				_add_triangle_indices(ctx, idx+1, p0Idx+1, p0Idx+2);
 			}
 
 		}
