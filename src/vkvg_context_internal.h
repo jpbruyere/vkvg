@@ -243,7 +243,7 @@ void _add_vertexf			(VkvgContext ctx, float x, float y);
 void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
 void _add_triangle_indices	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2);
 void _add_tri_indices_for_rect	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
-float _build_vb_step		(vkvg_context* ctx, float hw, stroke_context_t *str, bool isCurve);
+bool _build_vb_step		(vkvg_context* ctx, float hw, stroke_context_t *str, bool isCurve);
 
 void _vao_add_rectangle		(VkvgContext ctx, float x, float y, float width, float height);
 

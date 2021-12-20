@@ -761,7 +761,7 @@ void _init_descriptor_sets (VkvgContext ctx){
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
 //populate vertice buff for stroke
-float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool isCurve){
+bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 	vec2 pL = ctx->points[str->iL];
 	vec2 p0 = ctx->points[str->cp];
@@ -772,7 +772,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 	float length_v0 = vec2_length(v0);
 	float length_v1 = vec2_length(v1);
 	if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON)
-		return 0;
+		return false;
 	vec2 v0n = vec2_div_s (v0, length_v0);
 	vec2 v1n = vec2_div_s (v1, length_v1);
 
@@ -784,47 +784,78 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 	float det = v0n.x * v1n.y - v0n.y * v1n.x;
 
 	if (EQUF(dot,1.0f))
-		return det;
+		return false;
 
 	if (det<0)
 		alpha = -alpha;
 
-	float lh = hw / cosf(alpha/2);
+	float halfAlpha = alpha / 2.f;
+
+	float lh = hw / cosf(halfAlpha);
 	bisec_n = vec2_perp(bisec_n);
 
 	//limit bisectrice length
-	vkvg_line_join_t join = ctx->lineJoin;
-	if (dot < -0.9 && join == VKVG_LINE_JOIN_MITER)
-		join =  VKVG_LINE_JOIN_BEVEL;
 	bool reducedLH = EQUF(dot,-1) || (lh > fminf (lh, fminf (length_v0, length_v1)));
+	float rlh = fminf (lh, fminf (length_v0, length_v1));
 	//---
 
-	vec2 bisec = vec2_mult_s(bisec_n,lh);
+	vec2 bisec = vec2_mult_s (bisec_n, rlh);
 
 	VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
-	if (join == VKVG_LINE_JOIN_MITER || isCurve){
-		if (dot < 0 && reducedLH && det < 0) {
+	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
+		if (dot < 0.f && rlh < lh) {
+			double x = (lh - rlh) * cosf (halfAlpha);
+			double lbc = cosf(halfAlpha) * rlh;
+			vec2 bisecPerp = vec2_mult_s (vec2_perp(bisec_n), x);
+			vec2 vnPerp;
 			if (length_v0 < length_v1)
-				v.pos = vec2_add (p0, vec2_mult_s (vec2_perp(v1n), hw));
+				vnPerp = vec2_perp (v1n);
 			else
-				v.pos = vec2_sub (p0, vec2_mult_s (vec2_perp(v1n), hw));
-		} else
+				vnPerp = vec2_perp (v0n);
+			vec2 vHwPerp = vec2_mult_s(vnPerp, hw);
+			vec2 p = vec2_add(p0, bisec);
+
+			if (det > 0) {
+				v.pos = vec2_add(p, bisecPerp);
+				_add_vertex(ctx, v);
+
+				v.pos = vec2_sub (vec2_add (vec2_mult_s(vnPerp, lbc), vec2_sub(p0, bisec)), vHwPerp);
+				_add_vertex(ctx, v);
+
+				v.pos = vec2_sub(p, bisecPerp);
+				_add_vertex(ctx, v);
+
+				_add_triangle_indices(ctx, idx, idx+2, idx+1);
+				_add_triangle_indices(ctx, idx+2, idx+3, idx+1);
+				_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
+				return false;
+			} else {
+				v.pos = vec2_add (vec2_add (vec2_mult_s(vnPerp, -lbc), vec2_add(p0, bisec)), vHwPerp);
+				_add_vertex(ctx, v);
+
+				p = vec2_sub(p0, bisec);
+
+				v.pos = vec2_add(p, bisecPerp);
+				_add_vertex(ctx, v);
+				v.pos = vec2_sub(p, bisecPerp);
+				_add_vertex(ctx, v);
+
+				_add_triangle_indices(ctx, idx, idx+2, idx+1);
+				_add_triangle_indices(ctx, idx+2, idx+4, idx);
+				_add_triangle_indices(ctx, idx, idx+3, idx+4);
+				return true;
+			}
+
+		} else {
 			v.pos = vec2_add(p0, bisec);
-
-		_add_vertex(ctx, v);
-
-		if (dot < 0 && reducedLH && det > 0) {
-			if (length_v0 < length_v1)
-				v.pos = vec2_sub (p0, vec2_mult_s (vec2_perp(v1n), hw));
-			else
-				v.pos = vec2_add (p0, vec2_mult_s (vec2_perp(v1n), hw));
-		} else
+			_add_vertex(ctx, v);
 			v.pos = vec2_sub(p0, bisec);
+			_add_vertex(ctx, v);
 
-		_add_vertex(ctx, v);
-		_add_tri_indices_for_rect(ctx, idx);
-
+			_add_tri_indices_for_rect(ctx, idx);
+			return false;
+		}
 	}else{
 		vec2 vp = vec2_perp(v0n);
 		if (det<0){
@@ -844,7 +875,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 		}
 		_add_vertex(ctx, v);
 
-		if (join == VKVG_LINE_JOIN_BEVEL){
+		if (ctx->lineJoin == VKVG_LINE_JOIN_BEVEL){
 			if (det<0){
 				if (dot < 0 && reducedLH) {
 					_add_triangle_indices(ctx, idx, idx+3, idx+4);
@@ -864,7 +895,7 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 					_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
 				}
 			}
-		}else if (join == VKVG_LINE_JOIN_ROUND){
+		}else if (ctx->lineJoin == VKVG_LINE_JOIN_ROUND){
 			float step = M_PIF / hw;
 			float a = acosf(vp.x);
 			if (vp.y < 0)
@@ -937,10 +968,10 @@ float _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool i
 	debugLinePoints[dlpCount+1] = pR;
 	dlpCount+=2;
 #endif*/
-	if (reducedLH)
+	/*if (reducedLH)
 		return -det;
-	else
-		return det;
+	else*/
+	return (det < 0);
 }
 
 void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {

@@ -770,11 +770,11 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 			}
 		} else if (_path_is_closed(ctx,ptrPath)){
 			str.iR = firstPathPointIdx;
-			float cross = _build_vb_step (ctx, hw, &str, false);
+			bool inverse = _build_vb_step (ctx, hw, &str, false);
 
 			VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
 			VKVG_IBO_INDEX_TYPE ii = str.firstIdx;
-			if (cross < 0 && ctx->lineJoin != VKVG_LINE_JOIN_MITER){
+			if (inverse){
 				inds[1] = ii+1;
 				inds[4] = ii+1;
 				inds[5] = ii;
