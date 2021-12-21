@@ -193,8 +193,11 @@ void _resetMinMax (VkvgContext ctx) {
 void _add_point (VkvgContext ctx, float x, float y){
 	if (_check_point_array(ctx))
 		return;
+	vec2 v = {x,y};
+	/*if (!_current_path_is_empty(ctx) && vec2_length(vec2_sub(ctx->points[ctx->pointCount-1], v))<1.f)
+		return;*/
 
-	ctx->points[ctx->pointCount] = (vec2){x,y};
+	ctx->points[ctx->pointCount] = v;
 	ctx->pointCount++;//total point count of pathes, (for array bounds check)
 	ctx->pathes[ctx->pathPtr]++;//total point count in path
 	if (ctx->segmentPtr > 0)
@@ -796,7 +799,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 	//limit bisectrice length
 	float rlh = lh;
-	if (dot<0.f)
+	if (dot < 0.f)
 		rlh = fminf (rlh, fminf (length_v0, length_v1));
 	//---
 
@@ -804,28 +807,55 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 	VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
-	vec2 rlh_inside_pos;
-
-	if (!isCurve && (rlh < lh || ctx->lineJoin != VKVG_LINE_JOIN_MITER)) {
+	vec2 rlh_inside_pos, rlh_outside_pos;
+	if (rlh < lh) {
 		vec2 vnPerp;
 		if (length_v0 < length_v1)
 			vnPerp = vec2_perp (v1n);
 		else
 			vnPerp = vec2_perp (v0n);
 		vec2 vHwPerp = vec2_mult_s(vnPerp, hw);
+
 		double lbc = cosf(halfAlpha) * rlh;
-		if (det < 0.f)
-			rlh_inside_pos = vec2_add (vec2_add (vec2_mult_s(vnPerp, -lbc), vec2_add(p0, bisec)), vHwPerp);
-		else
-			rlh_inside_pos = vec2_sub (vec2_add (vec2_mult_s(vnPerp, lbc), vec2_sub(p0, bisec)), vHwPerp);
+		if (det < 0.f) {
+			rlh_inside_pos	= vec2_add (vec2_add (vec2_mult_s(vnPerp, -lbc), vec2_add(p0, bisec)), vHwPerp);
+			rlh_outside_pos	= vec2_sub (p0, vec2_mult_s (bisec_n_perp, lh));
+		} else {
+			rlh_inside_pos	= vec2_sub (vec2_add (vec2_mult_s(vnPerp, lbc), vec2_sub(p0, bisec)), vHwPerp);
+			rlh_outside_pos	= vec2_add (p0, vec2_mult_s (bisec_n_perp, lh));
+		}
+	} else {
+		if (det < 0.0) {
+			rlh_inside_pos	= vec2_add (p0, bisec);
+			rlh_outside_pos	= vec2_sub (p0, bisec);
+		} else {
+			rlh_inside_pos	= vec2_sub (p0, bisec);
+			rlh_outside_pos	= vec2_add (p0, bisec);
+		}
 	}
 
+
 	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
-		if (!isCurve && dot < 0.f && rlh < lh) {
+		if (dot < -0.95f && rlh < lh) {
 			double x = (lh - rlh) * cosf (halfAlpha);
 			vec2 bisecPerp = vec2_mult_s (bisec_n, x);
-			vec2 p = vec2_add(p0, bisec);
-			if (det > 0) {
+			if (det < 0) {
+				v.pos = rlh_inside_pos;
+				_add_vertex(ctx, v);
+
+				vec2 p = vec2_sub(p0, bisec);
+
+				v.pos = vec2_sub(p, bisecPerp);
+				_add_vertex(ctx, v);
+				v.pos = vec2_add(p, bisecPerp);
+				_add_vertex(ctx, v);
+
+				_add_triangle_indices(ctx, idx, idx+2, idx+1);
+				_add_triangle_indices(ctx, idx+2, idx+4, idx);
+				_add_triangle_indices(ctx, idx, idx+3, idx+4);
+				return true;
+			} else {
+				vec2 p = vec2_add(p0, bisec);
 				v.pos = vec2_sub(p, bisecPerp);
 				_add_vertex(ctx, v);
 
@@ -839,28 +869,20 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 				_add_triangle_indices(ctx, idx+2, idx+3, idx+1);
 				_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
 				return false;
-			} else {
-				v.pos = v.pos = rlh_inside_pos;
-				_add_vertex(ctx, v);
-
-				p = vec2_sub(p0, bisec);
-
-				v.pos = vec2_sub(p, bisecPerp);
-				_add_vertex(ctx, v);
-				v.pos = vec2_add(p, bisecPerp);
-				_add_vertex(ctx, v);
-
-				_add_triangle_indices(ctx, idx, idx+2, idx+1);
-				_add_triangle_indices(ctx, idx+2, idx+4, idx);
-				_add_triangle_indices(ctx, idx, idx+3, idx+4);
-				return true;
 			}
 
 		} else {
-			v.pos = vec2_add(p0, bisec);
-			_add_vertex(ctx, v);
-			v.pos = vec2_sub(p0, bisec);
-			_add_vertex(ctx, v);
+			if (det < 0) {
+				v.pos = rlh_inside_pos;
+				_add_vertex(ctx, v);
+				v.pos = rlh_outside_pos;
+				_add_vertex(ctx, v);
+			} else {
+				v.pos = rlh_outside_pos;
+				_add_vertex(ctx, v);
+				v.pos = rlh_inside_pos;
+				_add_vertex(ctx, v);
+			}
 
 			_add_tri_indices_for_rect(ctx, idx);
 			return false;
