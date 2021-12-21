@@ -101,7 +101,7 @@ void cairo_test_text (VkvgContext cr) {
 	vkvg_stroke (cr);
 
 	vkvg_move_to (cr, x,y);
-	vkvg_rel_line_to (cr, 0, -ft.descent);
+	vkvg_rel_line_to (cr, 0, ft.descent);
 	vkvg_rel_line_to (cr, extents.width, 0);
 	vkvg_set_source_rgba (cr, 0.9f, 0.0, 0.0, 0.6f);
 
@@ -238,13 +238,13 @@ void cairo_print_arc_neg (VkvgContext cr){
 	float angle2 = 180.0f * (M_PIF/180.0f);  /* in radians           */
 
 	vkvg_set_source_rgba(cr, 0, 0, 0, 1);
-	vkvg_set_line_width (cr, 5.0f);
+	vkvg_set_line_width (cr, 10.0f);
 	vkvg_arc_negative (cr, xc, yc, radius, angle1, angle2);
 	vkvg_stroke (cr);
 
 	/* draw helping lines */
 	vkvg_set_source_rgba (cr, 1, 0.2f, 0.2f, 0.6f);
-	vkvg_set_line_width (cr, 10.0f);
+	vkvg_set_line_width (cr, 6.0f);
 
 	vkvg_arc (cr, xc, yc, 10.0f, 0, 2.f*M_PIF);
 	vkvg_fill (cr);

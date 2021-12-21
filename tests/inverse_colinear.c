@@ -7,14 +7,21 @@ float lineWidth = 50.0f;
 vkvg_line_join_t lineJoin = VKVG_LINE_JOIN_MITER;
 vkvg_line_cap_t lineCap = VKVG_LINE_CAP_BUTT;
 bool isClosed = false;
+bool startWithArc = false, endWithArc = false;
 
 int ptsCount = 4;
 int initPtsCount = 4;
-vec2 pts[] = {
+/*vec2 pts[] = {
 	{150,150},
 	{200,300},
 	{250,150},
 	{280,350},
+};*/
+vec2 pts[] = {
+	{150,150},
+	{250,150},
+	{100,150},
+	{150,200},
 };
 int hoverPt = -1;
 double pointSize = 7;
@@ -35,9 +42,18 @@ void draw (){
 	vkvg_set_line_width(ctx,lineWidth);
 	vkvg_set_line_join	(ctx, lineJoin);
 	vkvg_set_line_cap	(ctx, lineCap);
-	vkvg_move_to(ctx,pts[0].x,pts[0].y);
-	for (int i=1; i<ptsCount; i++)
+
+	if (startWithArc)
+		vkvg_arc(ctx,pts[0].x,pts[0].y,200, 0.3f, M_PIF);
+	else
+		vkvg_move_to(ctx,pts[0].x,pts[0].y);
+	for (int i=1; i<ptsCount-1; i++)
 		vkvg_line_to(ctx,pts[i].x,pts[i].y);
+	if (endWithArc)
+		vkvg_arc(ctx,pts[ptsCount-1].x,pts[ptsCount-1].y,200, 0.3f, M_PIF);
+	else
+		vkvg_line_to(ctx,pts[ptsCount-1].x,pts[ptsCount-1].y);
+
 	if (isClosed)
 		vkvg_close_path(ctx);
 
@@ -67,6 +83,12 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		break;
 	case GLFW_KEY_W :
 		isClosed ^= true;
+		break;
+	case GLFW_KEY_Q :
+		startWithArc ^= true;
+		break;
+	case GLFW_KEY_A :
+		endWithArc ^= true;
 		break;
 	case GLFW_KEY_J :
 		lineJoin++;
