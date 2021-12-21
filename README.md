@@ -99,6 +99,14 @@ See the [contribution guide](https://github.com/jpbruyere/vkvg/blob/master/CONTR
 
 Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
 
+## Change log
+
+* v0.2.0
+	- radial gradients.
+	- better stroke joins handling.
+	- png saved in srgb format.
+	- doxygen cmake target and style
+
 ## To Do
 
 - [x] Use Scissor where possible.

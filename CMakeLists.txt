@@ -3,8 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 SET(LANG "CXX")
 SET(CMAKE_CXX_STANDARD 11)
 
-#PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic" LANGUAGES ${LANG})
-PROJECT(vkvg VERSION 0.1.1 DESCRIPTION "Vulkan Vector Graphic")
+PROJECT(vkvg VERSION 0.2.0 DESCRIPTION "Vulkan Vector Graphic")
 
 ADD_COMPILE_DEFINITIONS(
 	"VKVG_VERSION_MAJOR=${vkvg_VERSION_MAJOR}"
@@ -35,7 +34,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	OPTION(ENABLE_DBG_UTILS "enable VK_EXT_debug_utils extension" ON)
 	OPTION(ENABLE_WIRED_FILL "enable wired polygon draw to check vertices and primitives" OFF)
 	IF (UNIX)
-		SET(CMAKE_${LANG}_FLAGS "-Wall -Wno-extra -Wno-unknown-pragmas -Wno-missing-braces -Wno-unused-variable")
+		SET(CMAKE_${LANG}_FLAGS "-Wall -Wno-extra -Wno-unknown-pragmas -Wno-missing-braces -Wno-unused-variable -Wno-switch")
 	ELSEIF(MSVC)
 		SET(CMAKE_${LANG}_FLAGS "/TC /W4 /wd4201 /wd4204 /wd4221 /wd4100")#c11 complient
 	ENDIF()
@@ -44,9 +43,9 @@ ELSE()
 	UNSET(ENABLE_DBG_UTILS CACHE)
 	UNSET(ENABLE_WIRED_FILL CACHE)
 	IF (UNIX)
-		SET(CMAKE_${LANG}_FLAGS "-O3 -march=native -w ")
+		SET(CMAKE_${LANG}_FLAGS  "${CMAKE_CXX_FLAGS} -O3 -march=native -w -ansi -pedantic")
 	ELSEIF(MSVC)
-		SET(CMAKE_${LANG}_FLAGS "/O2 /TC /W0")
+		SET(CMAKE_${LANG}_FLAGS "${CMAKE_CXX_FLAGS} /O2 /TC /W0")
 	ENDIF()
 ENDIF()
 
@@ -288,6 +287,8 @@ ENDIF (VKVG_BUILD_DOCS)
 MESSAGE(STATUS "VKVG_PUBLIC_HEADERS = ${VKVG_PUBLIC_HEADERS}")
 
 MESSAGE(STATUS "VKVG version\t\t= ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}.${vkvg_VERSION_PATCH}")
+MESSAGE(STATUS "comp flags\t\t= ${CMAKE_${LANG}_FLAGS}")
+
 IF (VKVG_BUILD_TESTS)
 	MESSAGE(STATUS "Build tests\t\t= true.")
 ELSE ()
