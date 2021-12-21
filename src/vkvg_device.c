@@ -67,8 +67,8 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 	if (vkh_phyinfo_create_queues (pi, pi->gQueue, 1, qPriorities, &pQueueInfos[qCount]))
 		qCount++;
 
-	VkPhysicalDeviceFeatures enabledFeatures = {
-		//.fillModeNonSolid = true,
+	VkPhysicalDeviceFeatures enabledFeatures = { 0 
+		//.fillModeNonSolid = true
 	};
 
 	enabledExtsCount=0;

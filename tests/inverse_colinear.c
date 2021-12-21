@@ -11,18 +11,18 @@ bool startWithArc = false, endWithArc = false;
 
 int ptsCount = 4;
 int initPtsCount = 4;
-/*vec2 pts[] = {
+vec2 pts[] = {
 	{150,150},
 	{200,300},
 	{250,150},
 	{280,350},
-};*/
-vec2 pts[] = {
+};
+/*vec2 pts[] = {
 	{150,150},
 	{250,150},
 	{100,150},
 	{150,200},
-};
+};*/
 int hoverPt = -1;
 double pointSize = 7;
 
