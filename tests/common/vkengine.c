@@ -218,7 +218,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	e->dev = vkh_device_create(e->app, pi, &device_info);
 
 	e->renderer = vkh_presenter_create
-			(e->dev, (uint32_t) pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_SRGB, presentMode);
+			(e->dev, (uint32_t) pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_UNORM, presentMode);
 
 	vkh_app_free_phyinfos (phyCount, phys);
 

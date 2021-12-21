@@ -118,8 +118,8 @@ void random_curves_stroke () {
 
 	for (uint32_t i=0; i<test_size; i++) {
 		randomize_color(ctx);
-		float x1 = w*rand()/RAND_MAX;
-		float y1 = h*rand()/RAND_MAX;
+		float x1 = rndf() * w;
+		float y1 = rndf() * h;
 
 		vkvg_move_to (ctx, x1, y1);
 		draw_random_curve(ctx);
@@ -137,8 +137,8 @@ void _long_curv () {
 	vkvg_set_fill_rule(ctx, fill_rule);
 
 	randomize_color(ctx);
-	float x1 = w*rand()/RAND_MAX;
-	float y1 = h*rand()/RAND_MAX;
+	float x1 = rndf() * w;
+	float y1 = rndf() * h;
 	vkvg_move_to (ctx, x1, y1);
 
 	for (uint32_t i=0; i<test_size; i++) {
