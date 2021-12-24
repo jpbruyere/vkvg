@@ -11,7 +11,7 @@ for:
         - image: Visual Studio 2019
     environment:
         VCPKG_DEFAULT_TRIPLET: x64-windows
-        VULKAN_SDK: C:/VulkanSDK/1.1.130.0
+        VULKAN_SDK: C:/VulkanSDK/1.2.198.1
         APPVEYOR_SAVE_CACHE_ON_ERROR: true
         APPVEYOR_CACHE_SKIP_RESTORE: false
     cache:
@@ -19,7 +19,7 @@ for:
         - c:\tools\vcpkg\installed\
         - c:\VulkanSDK\
     install:
-        - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.130.0/windows/VulkanSDK-1.1.130.0-Installer.exe?Human=true && VulkanSDK.exe /S
+        - if not exist VulkanSDK.exe curl -L --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.2.198.1/windows/VulkanSDK-1.2.198.1-Installer.exe?Human=true && VulkanSDK.exe --accept-licenses --default-answer --confirm-command install
         - vcpkg install freetype harfbuzz fontconfig glfw3 --recurse
     before_build:
         - git submodule update --init --recursive
@@ -55,7 +55,7 @@ for:
         - cpack
     after_build:
         - cd ..
-        - appveyor PushArtifact build/vkvg_0.1.1.deb
+        - appveyor PushArtifact build/vkvg_0.2.0.deb
 
 
 
