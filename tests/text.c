@@ -7,6 +7,22 @@ void print(VkvgContext ctx, float penY, uint32_t size) {
 	vkvg_move_to(ctx, 10, penY);
 	vkvg_show_text (ctx,txt);
 }
+void print_boxed(VkvgContext ctx, const char* text, float penX, float penY, uint32_t size) {
+	vkvg_set_font_size(ctx,size);
+	vkvg_text_extents_t te = {0};
+	vkvg_text_extents(ctx,text,&te);
+	vkvg_font_extents_t fe = {0};
+	vkvg_font_extents(ctx, &fe);
+
+	vkvg_move_to(ctx, penX, penY);
+	vkvg_rectangle(ctx, penX, penY -fe.ascent, te.width, fe.height);
+	vkvg_set_source_rgb(ctx,0.2f,0,0);
+	vkvg_fill(ctx);
+
+	vkvg_move_to(ctx, penX, penY);
+	vkvg_set_source_rgb(ctx,1,1,1);
+	vkvg_show_text (ctx,text);
+}
 
 void test2() {
 	VkvgContext ctx = vkvg_create(surf);
@@ -166,7 +182,18 @@ void single_font_and_size () {
 	}
 	vkvg_destroy(ctx);
 }
+void simple_text () {
+	VkvgContext ctx = vkvg_create(surf);
 
+	vkvg_set_source_rgb		(ctx, 0, 0, 0);
+	vkvg_paint				(ctx);
+	vkvg_set_source_rgb		(ctx, 1, 1, 1);
+	vkvg_select_font_face	(ctx, "mono");
+	print_boxed				(ctx, "This is a test string!", 50,20,12);
+	print_boxed				(ctx, "This is a test string!", 50,50,20);
+	print_boxed				(ctx, "ANOTHER ONE TO CHECK..", 50,80,20);
+	vkvg_destroy			(ctx);
+}
 void random_size () {
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_clear(ctx);
@@ -208,6 +235,7 @@ void random_font_and_size () {
 int main(int argc, char *argv[]) {
 	no_test_size = true;
 	//vkvg_log_level = VKVG_LOG_INFO;
+	PERFORM_TEST (simple_text, argc, argv);
 	PERFORM_TEST (single_font_and_size, argc, argv);
 	PERFORM_TEST (random_size, argc, argv);
 	PERFORM_TEST (random_font_and_size, argc, argv);

@@ -50,6 +50,7 @@ static bool paused = false;
 static VkSampleCountFlags samples = VK_SAMPLE_COUNT_1_BIT;
 static VkPhysicalDeviceType preferedPhysicalDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 static vk_engine_t* e;
+static char* saveToPng = NULL;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (action != GLFW_PRESS)
@@ -193,6 +194,7 @@ void _print_usage_and_exit () {
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests.\n");
 	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs.\n");
 	printf("\t-vsync:\t\tEnable VSync, disabled by default.\n");
+	printf("\t-w filepath:\t\twrite last image to png.\n");
 	printf("\t-h:\t\tThis help message.\n");
 	printf("\n");
 	exit(-1);
@@ -274,7 +276,12 @@ void _parse_args (int argc, char* argv[]) {
 			default:
 				_print_usage_and_exit();
 			}
-		}
+		}else if (strcmp (argv[i], "-w\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			saveToPng = argv[i];
+		}else
+			_print_usage_and_exit();
 	}
 	if (printTestDetailsAndExit) {
 		#ifdef DEBUG
@@ -474,6 +481,9 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 
 	vkDeviceWaitIdle(dev->dev);
 
+	if (saveToPng)
+		vkvg_surface_write_to_png (surf, saveToPng);
+
 	vkvg_surface_destroy    (surf);
 	vkvg_device_destroy     (device);
 
@@ -590,6 +600,9 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 		run_total += run_time;
 		i++;
 	}
+
+	if (saveToPng)
+		vkvg_surface_write_to_png (surf, saveToPng);
 
 	_print_results (testName, argc, argv, i, run_total, run_time_values);
 
