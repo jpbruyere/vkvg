@@ -125,4 +125,7 @@ bool _instance_extension_supported		(const char* instanceName);
 void _instance_extensions_check_init	();
 void _instance_extensions_check_release ();
 
+bool _layer_is_present (const char* layerName);
+void _layers_check_init ();
+void _layers_check_release ();
 #endif
