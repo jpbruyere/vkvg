@@ -1,4 +1,4 @@
-version: 0.1.{build}
+version: 0.3.{build}
 
 image:
   - Visual Studio 2019
@@ -55,7 +55,7 @@ for:
         - cpack
     after_build:
         - cd ..
-        - appveyor PushArtifact build/vkvg_0.2.0.deb
+		- appveyor PushArtifact build/vkvg_0.3.0.deb
 
 
 
