@@ -189,10 +189,10 @@ void _destroy_font_cache (VkvgDevice dev){
 		}
 		free (f->sizes);
 		free(f->fontFile);
-		for (uint32_t j = 0; j < f->fcNamesCount; j++)
-			free (f->fcNames[j]);
-		if (f->fcNamesCount > 0)
-			free (f->fcNames);
+		for (uint32_t j = 0; j < f->namesCount; j++)
+			free (f->names[j]);
+		if (f->namesCount > 0)
+			free (f->names);
 	}
 
 	free(cache->fonts);
@@ -333,8 +333,29 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, FT_UInt gindex){
 	dev->fontCache->stagingX += bmpWidth;
 	return cr;
 }
-void _select_font_path (VkvgContext ctx, const char* fontFile){
-	ctx->currentFont =	NULL;
+void _font_add_name (_vkvg_font_identity_t* font, const char* name, int nameLength) {
+	if (++font->namesCount == 1)
+		font->names = (char**) malloc (sizeof(char*));
+	else
+		font->names = (char**) realloc (font->names, font->namesCount * sizeof(char*));
+
+	font->names[font->namesCount-1] = (char*)calloc(nameLength, sizeof (char));
+	strcpy (font->names[font->namesCount-1], name);
+}
+void _add_new_font_identity (VkvgContext ctx, const char* fontFile, const char* name){
+	_font_cache_t*	cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;
+	if (++cache->fontsCount == 1)
+		cache->fonts = (_vkvg_font_identity_t*) malloc (cache->fontsCount * sizeof(_vkvg_font_identity_t));
+	else
+		cache->fonts = (_vkvg_font_identity_t*) realloc (cache->fonts, cache->fontsCount * sizeof(_vkvg_font_identity_t));
+	_vkvg_font_identity_t nf = {0};
+
+	int fflength = strlen (fontFile) + 1;
+	nf.fontFile = (char*)malloc (fflength * sizeof(char));
+	strcpy (nf.fontFile, fontFile);
+	_font_add_name (&nf, name, fflength);
+
+	cache->fonts[cache->fontsCount-1] = nf;
 }
 //select current font for context
 void _select_font_face (VkvgContext ctx, const char* name){
@@ -343,15 +364,6 @@ void _select_font_face (VkvgContext ctx, const char* name){
 	strcpy (ctx->selectedFontName, name);
 	ctx->currentFont = NULL;
 	ctx->currentFontSize = NULL;
-}
-void _font_add_fc_name (_vkvg_font_identity_t* font, const char* fcname, int nameLength) {
-	if (++font->fcNamesCount == 1)
-		font->fcNames = (char**) malloc (sizeof(char*));
-	else
-		font->fcNames = (char**) realloc (font->fcNames, font->fcNamesCount * sizeof(char*));
-
-	font->fcNames[font->fcNamesCount-1] = (char*)calloc(nameLength, sizeof (char));
-	strcpy (font->fcNames[font->fcNamesCount-1], fcname);
 }
 _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx, _vkvg_font_identity_t* font, FT_F26Dot6 charSize) {
 	for (uint32_t i = 0; i < font->sizeCount; ++i) {
@@ -368,7 +380,7 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx, _vkvg_font_identity_t*
 		font->sizes = (_vkvg_font_t*) realloc (font->sizes, font->sizeCount * sizeof(_vkvg_font_t));
 	_vkvg_font_t newSize = {.charSize = charSize};
 
-	FT_CHECK_RESULT(FT_New_Face(cache->library, font->fontFile, 0, &newSize.face));
+	FT_CHECK_RESULT(FT_New_Face (cache->library, font->fontFile, 0, &newSize.face));
 	FT_CHECK_RESULT(FT_Set_Char_Size(newSize.face, 0, newSize.charSize, dev->hdpi, dev->vdpi ));
 
 #ifdef VKVG_USE_HARFBUZZ
@@ -393,8 +405,8 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx, _vkvg_font_identity_t*
 _vkvg_font_identity_t* _tryFindFontByName (VkvgContext ctx){
 	_font_cache_t*	cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;
 	for (int i = 0; i < cache->fontsCount; ++i) {
-		for (uint32_t j = 0; j < cache->fonts[i].fcNamesCount; j++) {
-			if (strcmp (cache->fonts[i].fcNames[j], ctx->selectedFontName) == 0)
+		for (uint32_t j = 0; j < cache->fonts[i].namesCount; j++) {
+			if (strcmp (cache->fonts[i].names[j], ctx->selectedFontName) == 0)
 				return &cache->fonts[i];
 		}
 	}
@@ -419,28 +431,14 @@ _vkvg_font_identity_t* _tryResolveFontNameWithFontConfig (VkvgContext ctx) {
 		for (int i = 0; i < cache->fontsCount; ++i) {
 			if (strcmp (cache->fonts[i].fontFile, fontFile) == 0) {
 				int fflength = strlen(fontFile) + 1;
-				_font_add_fc_name (&cache->fonts[i], ctx->selectedFontName, fflength);
+				_font_add_name (&cache->fonts[i], ctx->selectedFontName, fflength);
 				resolvedFont = &cache->fonts[i];
 				break;;
 			}
 		}
 		if (!resolvedFont) {
 			//if not found, create a new vkvg_font
-			cache->fontsCount++;
-
-			if (cache->fontsCount == 1)
-				cache->fonts = (_vkvg_font_identity_t*) malloc (cache->fontsCount * sizeof(_vkvg_font_identity_t));
-			else
-				cache->fonts = (_vkvg_font_identity_t*) realloc (cache->fonts, cache->fontsCount * sizeof(_vkvg_font_identity_t));
-
-			_vkvg_font_identity_t nf = {0};
-
-			int fflength = strlen(fontFile) + 1;
-			nf.fontFile = (char*)malloc (fflength * sizeof(char));
-			strcpy (nf.fontFile, fontFile);
-			_font_add_fc_name (&nf, ctx->selectedFontName, fflength);
-
-			cache->fonts[cache->fontsCount-1] = nf;
+			_add_new_font_identity(cache, fontFile, ctx->selectedFontName);
 			resolvedFont = &cache->fonts[cache->fontsCount-1];
 		}
 	}
@@ -466,8 +464,8 @@ void _update_current_font (VkvgContext ctx) {
 		if (ctx->selectedFontName[0] == 0)
 			_select_font_face (ctx, "sans");
 
-		ctx->currentFont = _find_or_create_font (ctx);
-		ctx->currentFontSize = _find_or_create_font_size (ctx, ctx->currentFont, ctx->selectedCharSize);
+		ctx->currentFont		= _find_or_create_font (ctx);
+		ctx->currentFontSize	= _find_or_create_font_size (ctx, ctx->currentFont, ctx->selectedCharSize);
 	}	
 }
 
@@ -545,6 +543,7 @@ void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
 #else
 	int textByteLength = strlen (text);
 	if (textByteLength > 0) {
+		setlocale(LC_ALL, "");
 		size_t wsize = mbstowcs(NULL, text, 0);
 		wchar_t *tmp = (wchar_t*)malloc((wsize+1) * sizeof (wchar_t));
 		textRun->glyph_count = mbstowcs (tmp, text, wsize);

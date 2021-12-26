@@ -91,11 +91,11 @@ typedef struct {
 
 /* Font identification structure */
 typedef struct {
-	char**				fcNames;		/* Resolved Input names to this font by fontConfig */
-	uint32_t			fcNamesCount;	/* Count of resolved names by fontConfig */
-	char*				fontFile;		/* Font file full path*/
-	uint32_t			sizeCount;		/* available font size loaded */
-	_vkvg_font_t*		sizes;			/* loaded font size array */
+	char**				names;		/* Resolved Input names to this font by fontConfig */
+	uint32_t			namesCount;	/* Count of resolved names by fontConfig */
+	char*				fontFile;	/* Font file full path*/
+	uint32_t			sizeCount;	/* available font size loaded */
+	_vkvg_font_t*		sizes;		/* loaded font size array */
 }_vkvg_font_identity_t;
 
 // Font cache global structure, entry point for all font related operations.
@@ -149,7 +149,7 @@ void _init_fonts_cache		(VkvgDevice dev);
 void _destroy_font_cache	(VkvgDevice dev);
 //Select current font for context from font name, create new font entry in cache if required
 void _select_font_face		(VkvgContext ctx, const char* name);
-void _select_font_path		(VkvgContext ctx, const char* fontFile);
+void _add_new_font_identity	(VkvgContext ctx, const char* fontFile, const char *name);
 //Draw text
 void _show_text				(VkvgContext ctx, const char* text);
 //Get text dimmensions

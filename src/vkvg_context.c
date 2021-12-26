@@ -920,10 +920,11 @@ void vkvg_select_font_face (VkvgContext ctx, const char* name){
 		return;
 	_select_font_face (ctx, name);
 }
-void vkvg_select_font_path (VkvgContext ctx, const char* path){
+void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char* name){
 	if (ctx->status)
 		return;
-	//_select_font_path (ctx, path);
+	_add_new_font_identity(ctx, path, name);
+	_select_font_face (ctx, name);
 }
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
 	if (ctx->status)

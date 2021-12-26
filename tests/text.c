@@ -194,6 +194,20 @@ void simple_text () {
 	print_boxed				(ctx, "ANOTHER ONE TO CHECK..", 50,80,20);
 	vkvg_destroy			(ctx);
 }
+void font_file_path () {
+	VkvgContext ctx = vkvg_create(surf);
+
+	vkvg_set_source_rgb		(ctx, 0, 0, 0);
+	vkvg_paint				(ctx);
+	vkvg_set_source_rgb		(ctx, 1, 1, 1);
+	vkvg_load_font_from_path (ctx, "data/DancingScript-Regular.ttf", "droid");
+	print_boxed				(ctx, "This is a test string!", 50,20,12);
+	print_boxed				(ctx, "This is a test string!", 50,50,20);
+	print_boxed				(ctx, "ANOTHER ONE TO CHECK..", 50,80,20);
+	print_boxed				(ctx, "this is another string to check if ligature are well set", 10,120,20);
+	vkvg_destroy			(ctx);
+}
+
 void random_size () {
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_clear(ctx);
@@ -236,6 +250,7 @@ int main(int argc, char *argv[]) {
 	no_test_size = true;
 	//vkvg_log_level = VKVG_LOG_INFO;
 	PERFORM_TEST (simple_text, argc, argv);
+	PERFORM_TEST (font_file_path, argc, argv);
 	PERFORM_TEST (single_font_and_size, argc, argv);
 	PERFORM_TEST (random_size, argc, argv);
 	PERFORM_TEST (random_font_and_size, argc, argv);

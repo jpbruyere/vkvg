@@ -1368,10 +1368,11 @@ void vkvg_select_font_face (VkvgContext ctx, const char* name);
  * @brief Select a new font by providing its file path.
  *
  * @param ctx a valid vkvg @ref context
- * @param name A valid font file path.
+ * @param path A valid font file path.
+ * @param name A short name to select this font afteward
  */
 vkvg_public
-void vkvg_select_font_path (VkvgContext ctx, const char* path);
+void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char *name);
 /**
  * @brief
  *
