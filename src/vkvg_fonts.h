@@ -25,20 +25,33 @@
  //disable warning on iostream functions on windows
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
-#if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
-#include <freetype/ftlcdfil.h>
+#ifdef VKVG_USE_FREETYPE
+	#include <ft2build.h>
+	#include FT_FREETYPE_H
+	#if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
+		#include <freetype/ftlcdfil.h>
+	#endif
+	#define FT_CHECK_RESULT(f)																				\
+	{																										\
+		FT_Error res = (f);																					\
+		if (res != 0)																				\
+		{																									\
+			fprintf(stderr,"Fatal : FreeType error is %d in %s at line %d\n", res,	__FILE__, __LINE__); \
+			assert(res == 0);																		\
+		}																									\
+	}
+#else
+	#include "stb_truetype.h"
 #endif
+
 #ifdef VKVG_USE_HARFBUZZ
-#include <harfbuzz/hb.h>
-#include <harfbuzz/hb-ft.h>
+	#include <harfbuzz/hb.h>
+	#include <harfbuzz/hb-ft.h>
 #else
 #endif
 
 #ifdef VKVG_USE_FONTCONFIG
-#include <fontconfig/fontconfig.h>
+	#include <fontconfig/fontconfig.h>
 #endif
 
 #define FONT_PAGE_SIZE			1024
@@ -52,22 +65,17 @@
 #include "vkh.h"
 #include "vectors.h"
 
-#define FT_CHECK_RESULT(f)																				\
-{																										\
-	FT_Error res = (f);																					\
-	if (res != 0)																				\
-	{																									\
-		fprintf(stderr,"Fatal : FreeType error is %d in %s at line %d\n", res,	__FILE__, __LINE__); \
-		assert(res == 0);																		\
-	}																									\
-}
 
 //texture coordinates of one character in font cache array texture.
 typedef struct {
 	vec4		bounds;				/* normalized float bounds of character bitmap in font cache texture. */
 	vec2i16		bmpDiff;			/* Difference in pixel between char bitmap top left corner and char glyph*/
 	uint8_t		pageIdx;			/* Page index in font cache texture array */
+#ifdef VKVG_USE_FREETYPE
 	FT_Vector	advance;			/* horizontal or vertical advance */
+#else
+	vec2		advance;
+#endif
 }_char_ref;
 // Current location in font cache texture array for new character addition. Each font holds such structure to locate
 // where to upload new chars.
@@ -79,8 +87,15 @@ typedef struct {
 }_tex_ref_t;
 // Loaded font structure, one per size, holds informations for glyphes upload in cache and the lookup table of characters.
 typedef struct {
+#ifdef VKVG_USE_FREETYPE
 	FT_F26Dot6	charSize;			/* Font size*/
 	FT_Face		face;				/* FreeType face*/
+#else
+	stbtt_fontinfo*	pStbInfo;		/* stb font structure pointer*/
+	uint32_t		charSize;		/* Font size in pixel */
+	float			scale;			/* scale factor for the given size */
+#endif
+
 #ifdef VKVG_USE_HARFBUZZ
 	hb_font_t*	hb_font;			/* HarfBuzz font instance*/
 #endif
@@ -91,16 +106,26 @@ typedef struct {
 
 /* Font identification structure */
 typedef struct {
-	char**				names;		/* Resolved Input names to this font by fontConfig */
+	char**				names;		/* Resolved Input names to this font by fontConfig or custom name set by @ref vkvg_load_from_path*/
 	uint32_t			namesCount;	/* Count of resolved names by fontConfig */
 	char*				fontFile;	/* Font file full path*/
+#ifndef VKVG_USE_FREETYPE
+	unsigned char*		fontBuffer;	/* stb_truetype in memory buffer */
+	stbtt_fontinfo		stbInfo;	/* stb_truetype structure */
+	int					ascent;		/* unscalled stb font metrics */
+	int					descent;
+	int					lineGap;
+#endif
 	uint32_t			sizeCount;	/* available font size loaded */
 	_vkvg_font_t*		sizes;		/* loaded font size array */
 }_vkvg_font_identity_t;
 
 // Font cache global structure, entry point for all font related operations.
 typedef struct {
+#ifdef VKVG_USE_FREETYPE
 	FT_Library		library;		/* FreeType library*/
+#else
+#endif
 #ifdef VKVG_USE_FONTCONFIG
 	FcConfig*		config;			/* Font config, used to find font files by font names*/
 #endif
@@ -122,16 +147,16 @@ typedef struct {
 }_font_cache_t;
 #ifndef VKVG_USE_HARFBUZZ
 typedef struct _glyph_info_t {
-  int32_t x_advance;
-  int32_t y_advance;
-  int32_t x_offset;
-  int32_t y_offset;
-  FT_UInt codepoint;//should be named glyphIndex, but for harfbuzz compatibility...
+  int32_t  x_advance;
+  int32_t  y_advance;
+  int32_t  x_offset;
+  int32_t  y_offset;
+  uint32_t codepoint;//should be named glyphIndex, but for harfbuzz compatibility...
 } vkvg_glyph_info_t;
 #endif
 // Precompute everything necessary to draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
-	_vkvg_font_t*	font;		/* vkvg font structure pointer */
+	_vkvg_font_t*		font;		/* vkvg font structure pointer */
 	VkvgDevice			dev;		/* vkvg device associated with this text run */
 	vkvg_text_extents_t extents;	/* store computed text extends */
 	const char*			text;		/* utf8 char array of text*/

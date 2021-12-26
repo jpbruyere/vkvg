@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -87,7 +87,7 @@ typedef struct _vkvg_context_save_t{
 	vkvg_line_join_t	lineJoint;
 	vkvg_fill_rule_t	curFillRule;
 
-	FT_F26Dot6			selectedCharSize; /* Font size*/
+	long				selectedCharSize; /* Font size*/
 	char*				selectedFontName;
 	_vkvg_font_identity_t		 selectedFont;	   //hold current face and size before cache addition
 	_vkvg_font_identity_t*		 currentFont;	   //font ready for lookup
@@ -166,7 +166,7 @@ typedef struct _vkvg_context_t {
 	vkvg_line_join_t	lineJoin;
 	vkvg_fill_rule_t	curFillRule;
 
-	FT_F26Dot6			selectedCharSize; /* Font size*/
+	long				selectedCharSize; /* Font size*/
 	char*				selectedFontName;
 	//_vkvg_font_t		  selectedFont;		//hold current face and size before cache addition
 	_vkvg_font_identity_t*		 currentFont;		//font pointing to cached fonts identity
