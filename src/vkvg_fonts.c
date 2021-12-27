@@ -189,7 +189,7 @@ void _destroy_font_cache (VkvgDevice dev){
 			}
 			FT_Done_Face (s->face);
 #else
-			for (int g = 0; g < s->pStbInfo->numGlyphs; ++g) {
+			for (int g = 0; g < f->stbInfo.numGlyphs; ++g) {
 				if (s->charLookup[g]!=NULL)
 					free(s->charLookup[g]);
 			}
@@ -275,7 +275,8 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 	memset(cache->hostBuff, 0, (uint64_t)FONT_PAGE_SIZE * FONT_PAGE_SIZE * cache->texPixelSize);
 }
 //create a new char entry and put glyph in stagging buffer, ready for upload.
-_char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, uint32_t gindex){
+_char_ref* _prepare_char (VkvgDevice dev, VkvgText tr, uint32_t gindex){
+	_vkvg_font_t* f = tr->font;
 #ifdef VKVG_USE_FREETYPE
 	#if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
 		FT_CHECK_RESULT(FT_Load_Glyph(f->face, gindex, FT_LOAD_TARGET_NORMAL));
@@ -295,9 +296,9 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, uint32_t gindex){
 	bmpPixelWidth /= 3;
 #endif
 #else
-
+	stbtt_fontinfo*	pStbInfo = &tr->fontId->stbInfo;
 	int c_x1, c_y1, c_x2, c_y2;
-	stbtt_GetGlyphBitmapBox (f->pStbInfo, gindex, f->scale, f->scale, &c_x1, &c_y1, &c_x2, &c_y2);
+	stbtt_GetGlyphBitmapBox (pStbInfo, gindex, f->scale, f->scale, &c_x1, &c_y1, &c_x2, &c_y2);
 	uint32_t bmpByteWidth	= c_x2 - c_x1;
 	uint32_t bmpPixelWidth	= bmpByteWidth;
 	uint32_t bmpRows		= c_y2 - c_y1;
@@ -333,13 +334,13 @@ _char_ref* _prepare_char (VkvgDevice dev, _vkvg_font_t* f, uint32_t gindex){
 	cr->bmpDiff.y	= (int16_t)slot->bitmap_top;
 	cr->advance		= slot->advance;
 #else
-	stbtt_MakeGlyphBitmap (f->pStbInfo, data + penX, bmpPixelWidth, bmpRows, FONT_PAGE_SIZE, f->scale, f->scale, gindex);
 	int advance;
 	int lsb;
-	stbtt_GetGlyphHMetrics(f->pStbInfo, gindex, &advance, &lsb);
+	stbtt_GetGlyphHMetrics(pStbInfo, gindex, &advance, &lsb);
+	stbtt_MakeGlyphBitmap (pStbInfo, data + penX, bmpPixelWidth, bmpRows, FONT_PAGE_SIZE, f->scale, f->scale, gindex);
 	cr->bmpDiff.x	= (int16_t)c_x1;
-	cr->bmpDiff.y	= (int16_t)c_y1;
-	cr->advance		= (vec2) {roundf (f->scale * advance), 0};
+	cr->bmpDiff.y	= (int16_t)-c_y1;
+	cr->advance		= (vec2) {(uint32_t)roundf (f->scale * advance) << 6, 0};
 #endif
 	vec4 uvBounds = {
 		{(float)(penX + f->curLine.penX) / (float)FONT_PAGE_SIZE},
@@ -389,7 +390,7 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 	_vkvg_font_identity_t* font = ctx->currentFont;
 #ifndef VKVG_USE_FREETYPE
 	if (!font->stbInfo.data) {
-		FILE* fontFile = fopen(ctx->currentFont->fontFile, "rb");
+		FILE* fontFile = fopen(font->fontFile, "rb");
 		fseek(fontFile, 0, SEEK_END);
 		long ffsize = ftell(fontFile); /* how long is the file ? */
 		fseek(fontFile, 0, SEEK_SET); /* reset */
@@ -425,10 +426,13 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 	else
 		newSize.curLine.height = newSize.face->height >> 6;
 #else
-	newSize.pStbInfo	= &font->stbInfo;
 	newSize.charLookup	= (_char_ref**)calloc (font->stbInfo.numGlyphs, sizeof(_char_ref*));
-	newSize.scale		= stbtt_ScaleForPixelHeight(&font->stbInfo, newSize.charSize);
-	newSize.curLine.height = roundf (newSize.scale * font->lineGap);
+	//newSize.scale		= stbtt_ScaleForPixelHeight(&font->stbInfo, newSize.charSize);
+	newSize.scale		= stbtt_ScaleForMappingEmToPixels(&font->stbInfo, newSize.charSize);
+	newSize.curLine.height = roundf (newSize.scale * (font->ascent - font->descent + font->lineGap));
+	newSize.ascent		= roundf (newSize.scale * font->ascent);
+	newSize.descent		= roundf (newSize.scale * font->descent);
+	newSize.lineGap		= roundf (newSize.scale * font->lineGap);
 #endif
 
 #ifdef VKVG_USE_HARFBUZZ
@@ -547,7 +551,7 @@ void _font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
 #else
 	extents->ascent = roundf (font->scale * ctx->currentFont->ascent);
 	extents->descent= -roundf (font->scale * ctx->currentFont->descent);
-	extents->height = roundf (font->scale * ctx->currentFont->lineGap);
+	extents->height = roundf (font->scale * (ctx->currentFont->ascent - ctx->currentFont->descent + ctx->currentFont->lineGap));
 	extents->max_x_advance = 0;//TODO
 	extents->max_y_advance = 0;
 #endif
@@ -578,6 +582,7 @@ void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
 	if (ctx->status)
 		return;
 
+	textRun->fontId = ctx->currentFont;
 	textRun->font = ctx->currentFontSize;
 	textRun->dev = ctx->pSurf->dev;
 
@@ -596,11 +601,11 @@ void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
 #ifdef VKVG_USE_FREETYPE
 			uint32_t gindex = FT_Get_Char_Index( textRun->font->face, tmp[i]);
 #else
-			uint32_t gindex = stbtt_FindGlyphIndex(&ctx->currentFont->stbInfo, tmp[i]);
+			uint32_t gindex = stbtt_FindGlyphIndex(&textRun->fontId->stbInfo, tmp[i]);
 #endif
 			_char_ref* cr = textRun->font->charLookup[gindex];
 			if (cr==NULL)
-				cr = _prepare_char(textRun->dev, textRun->font, gindex);
+				cr = _prepare_char(textRun->dev, textRun, gindex);
 			textRun->glyphs[i].codepoint = gindex;
 			textRun->glyphs[i].x_advance = cr->advance.x;
 			textRun->glyphs[i].y_advance = cr->advance.y;
@@ -614,14 +619,13 @@ void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
 #endif
 
 	unsigned int string_width_in_pixels = 0;
-#ifdef VKVG_USE_FREETYPE
 	for (uint32_t i=0; i < textRun->glyph_count; ++i)
 		string_width_in_pixels += textRun->glyphs[i].x_advance >> 6;
+#ifdef VKVG_USE_FREETYPE
 	FT_Size_Metrics* metrics = &ctx->currentFontSize->face->size->metrics;
 	textRun->extents.height = (float)(FT_MulFix(ctx->currentFontSize->face->height, metrics->y_scale) >> 6);// (metrics->ascender + metrics->descender) >> 6;
 #else
-	for (uint32_t i=0; i < textRun->glyph_count; ++i)
-		string_width_in_pixels += textRun->glyphs[i].x_advance;
+	textRun->extents.height = textRun->font->ascent - textRun->font->descent + textRun->font->lineGap;
 #endif
 	textRun->extents.x_advance = (float)string_width_in_pixels;
 	if (textRun->glyph_count > 0) {
@@ -640,6 +644,25 @@ void _destroy_text_run (VkvgText textRun) {
 		free (textRun->glyphs);
 #endif
 }
+#ifdef DEBUG
+void _show_texture (vkvg_context* ctx){
+	Vertex vs[] = {
+		{{0,0},							  0,  {0,0,0}},
+		{{0,FONT_PAGE_SIZE},			  0,  {0,1,0}},
+		{{FONT_PAGE_SIZE,0},			  0,  {1,0,0}},
+		{{FONT_PAGE_SIZE,FONT_PAGE_SIZE}, 0,  {1,1,0}}
+	};
+
+	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+	Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
+	memcpy (pVert,vs,4*sizeof(Vertex));
+	ctx->vertCount+=4;
+
+	_check_vertex_cache_size(ctx);
+
+	_add_tri_indices_for_rect(ctx, firstIdx);
+}
+#endif
 void _show_text_run (VkvgContext ctx, VkvgText tr) {
 	unsigned int glyph_count;
 #ifdef VKVG_USE_HARFBUZZ
@@ -659,7 +682,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 		_char_ref* cr = tr->font->charLookup[glyph_info[i].codepoint];
 
 		if (cr==NULL)
-			cr = _prepare_char(tr->dev, tr->font, glyph_info[i].codepoint);
+			cr = _prepare_char(tr->dev, tr, glyph_info[i].codepoint);
 
 		//continue;
 		if (cr!=NULL){
@@ -703,25 +726,6 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 	_flush_chars_to_tex(tr->dev, tr->font);
 }
 
-#ifdef DEBUG
-void _show_texture (vkvg_context* ctx){
-	Vertex vs[] = {
-		{{0,0},							  0,  {0,0,0}},
-		{{0,FONT_PAGE_SIZE},			  0,  {0,1,0}},
-		{{FONT_PAGE_SIZE,0},			  0,  {1,0,0}},
-		{{FONT_PAGE_SIZE,FONT_PAGE_SIZE}, 0,  {1,1,0}}
-	};
-
-	VKVG_IBO_INDEX_TYPE i = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
-
-	_add_vertex(ctx,vs[0]);
-	_add_vertex(ctx,vs[1]);
-	_add_vertex(ctx,vs[2]);
-	_add_vertex(ctx,vs[3]);
-
-	_add_tri_indices_for_rect (ctx, i);
-}
-#endif
 
 void _show_text (VkvgContext ctx, const char* text){
 

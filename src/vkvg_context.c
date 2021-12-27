@@ -929,7 +929,11 @@ void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char* na
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
 	if (ctx->status)
 		return;
+#ifdef VKVG_USE_FREETYPE
 	long newSize = size << 6;
+#else
+	long newSize = size;
+#endif
 	if (ctx->selectedCharSize == newSize)
 		return;
 	ctx->selectedCharSize = newSize;

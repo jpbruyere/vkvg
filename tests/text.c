@@ -23,7 +23,12 @@ void print_boxed(VkvgContext ctx, const char* text, float penX, float penY, uint
 	vkvg_set_source_rgb(ctx,1,1,1);
 	vkvg_show_text (ctx,text);
 }
-
+void print_unboxed(VkvgContext ctx, const char* text, float penX, float penY, uint32_t size) {
+	vkvg_set_font_size(ctx,size);
+	vkvg_move_to(ctx, penX, penY);
+	vkvg_set_source_rgb(ctx,1,1,1);
+	vkvg_show_text (ctx,text);
+}
 void test2() {
 	VkvgContext ctx = vkvg_create(surf);
 
@@ -188,11 +193,16 @@ void simple_text () {
 	vkvg_set_source_rgb		(ctx, 0, 0, 0);
 	vkvg_paint				(ctx);
 	vkvg_set_source_rgb		(ctx, 1, 1, 1);
+
+	vkvg_load_font_from_path (ctx, "data/DancingScript-Regular.ttf", "dancing");
+	print_boxed				(ctx, "abcdefghijklmnopqrstuvwxyz", 20,60,20);
+	print_boxed				(ctx, "ABC", 20,160,60);
 	vkvg_select_font_face	(ctx, "mono");
-	print_boxed				(ctx, "This is a test string!", 50,20,12);
-	print_boxed				(ctx, "This is a test string!", 50,50,20);
-	print_boxed				(ctx, "ANOTHER ONE TO CHECK..", 50,80,20);
+	print_boxed				(ctx, "This is a test string!", 20, 250, 20);
+	print_boxed				(ctx, "ANOTHER ONE TO CHECK..", 20, 350, 20);
+
 	vkvg_destroy			(ctx);
+
 }
 void font_file_path () {
 	VkvgContext ctx = vkvg_create(surf);

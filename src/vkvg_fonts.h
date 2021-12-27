@@ -91,9 +91,11 @@ typedef struct {
 	FT_F26Dot6	charSize;			/* Font size*/
 	FT_Face		face;				/* FreeType face*/
 #else
-	stbtt_fontinfo*	pStbInfo;		/* stb font structure pointer*/
 	uint32_t		charSize;		/* Font size in pixel */
 	float			scale;			/* scale factor for the given size */
+	int				ascent;			/* unscalled stb font metrics */
+	int				descent;
+	int				lineGap;
 #endif
 
 #ifdef VKVG_USE_HARFBUZZ
@@ -156,6 +158,7 @@ typedef struct _glyph_info_t {
 #endif
 // Precompute everything necessary to draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
+	_vkvg_font_identity_t*fontId;	/* vkvg font structure pointer */
 	_vkvg_font_t*		font;		/* vkvg font structure pointer */
 	VkvgDevice			dev;		/* vkvg device associated with this text run */
 	vkvg_text_extents_t extents;	/* store computed text extends */
