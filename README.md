@@ -62,13 +62,13 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 
 ## Requirements:
 
-- [CMake](https://cmake.org/): version > 12.
+- [CMake](https://cmake.org/): version >= 3.21
 - [Vulkan](https://www.khronos.org/vulkan/)
-- [FontConfig](https://www.freedesktop.org/wiki/Software/fontconfig/)
-- [Freetype](https://www.freetype.org/)
-- [Harfbuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/)
-- GLSLC: spirv compiler, included in [LunarG SDK](https://www.lunarg.com/vulkan-sdk/) (building only)
-- [xxd](https://linux.die.net/man/1/xxd): generate headers with precompiled shaders (building only)
+- [FontConfig](https://www.freedesktop.org/wiki/Software/fontconfig/): optional, without fontconfig, use `vkvg_load_font_from_path`.
+- [Freetype](https://www.freetype.org/): optional, stb_truetype as alternative.
+- [Harfbuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/): optional, without complex text shaping may be wrong.
+- GLSLC: spirv compiler, included in [LunarG SDK](https://www.lunarg.com/vulkan-sdk/): compile shader to spir-V (building only, optional)
+- [xxd](https://linux.die.net/man/1/xxd): generate headers with precompiled shaders (building only, optional)
 - [GLFW](http://www.glfw.org/): optional, if present tests are built.
 
 if `glslc` or `xxd` are not present, a precompiled version of the shaders is stored in the git tree.
