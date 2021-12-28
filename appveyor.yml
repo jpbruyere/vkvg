@@ -55,9 +55,5 @@ for:
         - cpack
     after_build:
         - cd ..
-		- appveyor PushArtifact build/vkvg_0.3.0.deb
-
-
-
-
+        - appveyor PushArtifact build/vkvg_0.3.0.deb
 
