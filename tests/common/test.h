@@ -22,11 +22,9 @@
 #ifndef MAX
 # define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
-#ifdef VKVG_TEST_OFFSCREEN
-#define PERFORM_TEST(testName, argc, argv) perform_test_offscreen(testName, #testName, argc, argv);
-#else
+
 #define PERFORM_TEST(testName, argc, argv) perform_test(testName, #testName, argc, argv);
-#endif
+
 #if defined(_WIN32) || defined(_WIN64)
 	#define WIN32_LEAN_AND_MEAN
 	#define NOMINMAX
@@ -106,6 +104,7 @@ void _parse_args (int argc, char* argv[]);
 
 //run test in one step
 void perform_test (void(*testfunc)(), const char* testName, int argc, char *argv[]);
+void perform_test_onscreen (void(*testfunc)(void), const char *testName, int argc, char* argv[]);
 void perform_test_offscreen (void(*testfunc)(void), const char *testName, int argc, char* argv[]);
 
 void randomize_color	(VkvgContext ctx);

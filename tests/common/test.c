@@ -47,6 +47,7 @@ int		single_test = -1;	//if not < 0, contains the index of the single test to ru
 
 
 static bool paused = false;
+static bool offscreen = false;
 static VkSampleCountFlags samples = VK_SAMPLE_COUNT_1_BIT;
 static VkPhysicalDeviceType preferedPhysicalDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 static vk_engine_t* e;
@@ -194,7 +195,8 @@ void _print_usage_and_exit () {
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests.\n");
 	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs.\n");
 	printf("\t-vsync:\t\tEnable VSync, disabled by default.\n");
-	printf("\t-w filepath:\t\twrite last image to png.\n");
+	printf("\t-o:\t\tPerform test offscreen.\n");
+	printf("\t-w filepath:\twrite last image to png.\n");
 	printf("\t-h:\t\tThis help message.\n");
 	printf("\n");
 	exit(-1);
@@ -244,6 +246,8 @@ void _parse_args (int argc, char* argv[]) {
 			line_width = atoi (argv[i]);
 		}else if (strcmp (argv[i], "-d\0") == 0) {
 			dashes_count = 2;
+		} else if (strcmp (argv[i], "-o\0") == 0) {
+			offscreen = true;
 		}else if (strcmp (argv[i], "-j\0") == 0) {
 			if (argc -1 < ++i)
 				_print_usage_and_exit();
@@ -315,12 +319,10 @@ void _parse_args (int argc, char* argv[]) {
 			printf("CPU\n");
 			break;
 		}
-
-		#ifdef VKVG_TEST_OFFSCREEN
-		printf("Offscreen:\ttrue\n");
-		#else
-		printf("Offscreen:\tfalse\n");
-		#endif
+		if (offscreen)
+			printf("Offscreen:\ttrue\n");
+		else
+			printf("Offscreen:\tfalse\n");
 		printf("\n");
 		exit(0);
 	}
@@ -374,6 +376,14 @@ void _print_debug_stats () {
 }
 #endif
 
+void perform_test (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
+	_parse_args (argc, argv);
+	if (offscreen)
+		perform_test_offscreen(testfunc, testName, argc, argv);
+	else
+		perform_test_onscreen(testfunc, testName, argc, argv);
+}
+
 void perform_test_offscreen (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
 	//init random gen
 	struct timeval currentTime;
@@ -382,8 +392,6 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 
 	//dumpLayerExts();
 	
-	_parse_args (argc, argv);
-
 	if (single_test >= 0 && test_index != single_test){
 		test_index++;
 		return;
@@ -493,7 +501,7 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 	test_index++;
 }
 
-void perform_test (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
+void perform_test_onscreen (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
 	//init random gen
 	struct timeval currentTime;
 	gettimeofday(&currentTime, NULL);
