@@ -32,7 +32,6 @@ typedef struct _vkvg_pattern_t {
 	vkvg_filter_t		filter;
 	void*				data;
 	uint32_t			references;
-	vkvg_status_t		status;
 }vkvg_pattern_t;
 
 typedef struct _vkvg_gradient_t {

@@ -36,33 +36,26 @@ VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf){
 
 	return pat;
 }
-void vkvg_pattern_get_linear_points (VkvgPattern pat, float* x0, float* y0, float* x1, float* y1) {
-	if (pat->status)
-		return;
+vkvg_status_t vkvg_pattern_get_linear_points (VkvgPattern pat, float* x0, float* y0, float* x1, float* y1) {
+	if (pat->type != VKVG_PATTERN_TYPE_LINEAR)
+		return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 
-	if (pat->type != VKVG_PATTERN_TYPE_LINEAR) {
-		pat->status = VKVG_STATUS_PATTERN_TYPE_MISMATCH;
-		return;
-	}
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
 
 	*x0 = grad->cp[0].x;
 	*y0 = grad->cp[0].y;
 	*x1 = grad->cp[0].z;
 	*y1 = grad->cp[0].w;
+	return VKVG_STATUS_SUCCESS;
 }
-void vkvg_pattern_edit_linear (VkvgPattern pat, float x0, float y0, float x1, float y1){
-	if (pat->status)
-		return;
-
-	if (pat->type != VKVG_PATTERN_TYPE_LINEAR) {
-		pat->status = VKVG_STATUS_PATTERN_TYPE_MISMATCH;
-		return;
-	}
+vkvg_status_t vkvg_pattern_edit_linear (VkvgPattern pat, float x0, float y0, float x1, float y1){
+	if (pat->type != VKVG_PATTERN_TYPE_LINEAR)
+		return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
 
 	grad->cp[0] = (vec4){{x0}, {y0}, {x1}, {y1}};
+	return VKVG_STATUS_SUCCESS;
 }
 VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
 	VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
@@ -73,8 +66,8 @@ VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
 
 	pat->data = (void*)calloc(1,sizeof(vkvg_gradient_t));
 	if (!pat->data) {
-		pat->status = VKVG_STATUS_NO_MEMORY;
-		return pat;
+		free (pat);
+		return NULL;
 	}
 
 	vkvg_pattern_edit_linear(pat, x0, y0, x1, y1);
@@ -83,16 +76,11 @@ VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
 
 	return pat;
 }
-void vkvg_pattern_edit_radial (VkvgPattern pat,
+vkvg_status_t vkvg_pattern_edit_radial (VkvgPattern pat,
 										float cx0, float cy0, float radius0,
 										float cx1, float cy1, float radius1) {
-	if (pat->status)
-		return;
-
-	if (pat->type != VKVG_PATTERN_TYPE_RADIAL) {
-		pat->status = VKVG_STATUS_PATTERN_TYPE_MISMATCH;
-		return;
-	}
+	if (pat->type != VKVG_PATTERN_TYPE_RADIAL)
+		return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
 
@@ -110,6 +98,7 @@ void vkvg_pattern_edit_radial (VkvgPattern pat,
 
 	grad->cp[0] = (vec4){{c0.x}, {c0.y},{radius0},{0}};
 	grad->cp[1] = (vec4){{c1.x}, {c1.y},{radius1},{0}};
+	return VKVG_STATUS_SUCCESS;
 }
 VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
 										float cx1, float cy1, float radius1){
@@ -121,8 +110,8 @@ VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
 
 	pat->data = (void*)calloc(1,sizeof(vkvg_gradient_t));
 	if (!pat->data) {
-		pat->status = VKVG_STATUS_NO_MEMORY;
-		return pat;
+		free (pat);
+		return NULL;
 	}
 
 	vkvg_pattern_edit_radial (pat, cx0, cy0, radius0, cx1, cy1, radius1);
@@ -131,9 +120,6 @@ VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
 
 	return pat;
 }
-vkvg_status_t vkvg_pattern_status (VkvgPattern pat) {
-	return pat->status;
-}
 VkvgPattern vkvg_pattern_reference (VkvgPattern pat) {
 	pat->references++;
 	return pat;
@@ -141,9 +127,9 @@ VkvgPattern vkvg_pattern_reference (VkvgPattern pat) {
 uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat) {
 	return pat->references;
 }
-void vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a) {
+vkvg_status_t vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a) {
 	if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID)
-		return;
+		return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
 	vkvg_color_t c = {r,g,b,a};
@@ -166,6 +152,26 @@ vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat){
 }
 vkvg_pattern_type_t vkvg_pattern_get_type (VkvgPattern pat){
 	return pat->type;
+}
+vkvg_status_t vkvg_pattern_get_color_stop_count (VkvgPattern pat, uint32_t* count) {
+	if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID)
+		return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
+	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
+	*count = grad->count;
+	return VKVG_STATUS_SUCCESS;
+}
+vkvg_status_t vkvg_pattern_get_color_stop_rgba (VkvgPattern pat, uint32_t index,
+												float* offset, float* r, float* g, float* b, float* a) {
+	if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID)
+		return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
+	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
+	*offset = grad->stops[index];
+	vkvg_color_t c = grad->colors[index];
+	*r = c.r;
+	*g = c.g;
+	*b = c.b;
+	*a = c.a;
+	return VKVG_STATUS_SUCCESS;
 }
 
 void vkvg_pattern_destroy(VkvgPattern pat)

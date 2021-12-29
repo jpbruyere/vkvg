@@ -108,6 +108,7 @@ typedef enum {
 	VKVG_STATUS_NO_CURRENT_POINT,		/*!< path command expecting a current point to be defined failed*/
 	VKVG_STATUS_INVALID_MATRIX,			/*!< invalid matrix (not invertible)*/
 	VKVG_STATUS_INVALID_STATUS,			/*!< */
+	VKVG_STATUS_INVALID_INDEX,			/*!< */
 	VKVG_STATUS_NULL_POINTER,			/*!< NULL pointer*/
 	VKVG_STATUS_INVALID_STRING,			/*!< */
 	VKVG_STATUS_INVALID_PATH_DATA,		/*!< */
@@ -1045,42 +1046,56 @@ void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float
 vkvg_public
 void vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h);
 /**
- * @brief
+ * @brief Stroke command
+ *
+ * Perform a stroke of the current path and reset it.
  *
  * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_stroke (VkvgContext ctx);
 /**
- * @brief
+ * @brief Stroke command that preserve current path.
+ *
+ * Perform a stroke of the current path and preserve it after the operation.
  *
  * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_stroke_preserve (VkvgContext ctx);
 /**
- * @brief
+ * @brief Fill command
+ *
+ * Perform the filling of the current path. If no path is defined, this command has no effect.
+ * The current path is reseted after this operation.
  *
  * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_fill (VkvgContext ctx);
 /**
- * @brief
+ * @brief Fill command that preserve current path.
+ *
+ * Same as @ref vkvg_fill, but don't reset the current path after the operation.
  *
  * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_fill_preserve (VkvgContext ctx);
 /**
- * @brief
+ * @brief Paint command.
+ *
+ * perform a fill operation on the current path or on the full surface if no path is defined with
+ * the currently active pattern.
  *
  * @param ctx a valid vkvg @ref context
  */
 vkvg_public
 void vkvg_paint (VkvgContext ctx);
 /**
- * @brief
+ * @brief clear surface
+ *
+ * Color and clipping are reset to 0.
  *
  * @param ctx a valid vkvg @ref context
  */
@@ -1498,16 +1513,16 @@ VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1);
 /**
  * @brief edit an existing linear gradient.
  *
- * edit control points of an existing linear gradient. If supplied pattern is not a linear gradient,
- * @ref VKVG_STATUS_PATTERN_TYPE_MISMATCH is set for pattern.
+ * edit control points of an existing linear gradient.
  *
  * @param x0 x coordinate of the start point
  * @param y0 y coordinate of the start point
  * @param x1 x coordinate of the end point
  * @param y1 y coordinate of the end point
+ * @return VKVG_STATUS_SUCCESS, or VKVG_STATUS_PATTERN_TYPE_MISMATCH if the pattern is not a linear gradient.
  */
 vkvg_public
-void vkvg_pattern_edit_linear (VkvgPattern pat, float x0, float y0, float x1, float y1);
+vkvg_status_t vkvg_pattern_edit_linear(VkvgPattern pat, float x0, float y0, float x1, float y1);
 /**
  * @brief get the gradient end points for a linear gradient
  *
@@ -1517,9 +1532,10 @@ void vkvg_pattern_edit_linear (VkvgPattern pat, float x0, float y0, float x1, fl
  * @param y0 y coordinate of the start point
  * @param x1 x coordinate of the end point
  * @param y1 y coordinate of the end point
+ * @return VKVG_STATUS_SUCCESS, or VKVG_STATUS_PATTERN_TYPE_MISMATCH if the pattern is not a linear gradient.
  */
 vkvg_public
-void vkvg_pattern_get_linear_points (VkvgPattern pat, float* x0, float* y0, float* x1, float* y1);
+vkvg_status_t vkvg_pattern_get_linear_points(VkvgPattern pat, float* x0, float* y0, float* x1, float* y1);
 /**
  * @brief create a new radial gradient.
  * 
@@ -1549,11 +1565,42 @@ VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
  * @param cx1 x coordinate for the center of the end circle, the outer circle.
  * @param cy1 y coordinate for the center of the end circle, the outer circle.
  * @param radius1 radius for the center of the end circle, the outer circle.
+ * @return VKVG_STATUS_SUCCESS, or VKVG_STATUS_PATTERN_TYPE_MISMATCH if the pattern is not a radial gradient.
  */
 vkvg_public
-void vkvg_pattern_edit_radial (VkvgPattern pat,
+vkvg_status_t vkvg_pattern_edit_radial(VkvgPattern pat,
 								float cx0, float cy0, float radius0,
 								float cx1, float cy1, float radius1);
+/**
+ * @brief get color stop count.
+ *
+ * Retrieve the color stop count of a gradient pattern.
+ *
+ * @param pat a valid pattern pointer.
+ * @param count a valid integer pointer to old the current stop count returned.
+ * @return VKVG_STATUS_SUCCESS, or VKVG_STATUS_PATTERN_TYPE_MISMATCH if the pattern is not a gradient.
+ */
+vkvg_public
+vkvg_status_t vkvg_pattern_get_color_stop_count (VkvgPattern pat, uint32_t* count);
+/**
+ * @brief get color stop.
+ *
+ * Gets the color and offset information at the given index for a gradient pattern. Values of index range from 0 to n-1 where n is the number
+ * returned by @ref vkvg_pattern_get_color_stop_count().
+ *
+ * @param pat a valid pattern pointer.
+ * @param index index of the stop to return data for.
+ * @param offset a valid float pointer to old the stop offset.
+ * @param r a valid float pointer to old the red component.
+ * @param g a valid float pointer to old the green component.
+ * @param b a valid float pointer to old the blue component.
+ * @param a a valid float pointer to old the alpha component.
+ * @return VKVG_STATUS_SUCCESS, VKVG_STATUS_PATTERN_TYPE_MISMATCH if the pattern is not a gradient, VKVG_STATUS_INVALID_INDEX if index is out of bounds.
+ */
+vkvg_public
+vkvg_status_t vkvg_pattern_get_color_stop_rgba (VkvgPattern pat, uint32_t index,
+												float* offset, float* r, float* g, float* b, float* a);
+
 /**
  * @brief dispose pattern.
  * 
@@ -1577,7 +1624,7 @@ void vkvg_pattern_destroy (VkvgPattern pat);
  * @param a the alpha chanel of the color stop
  */
 vkvg_public
-void vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float g, float b, float a);
+vkvg_status_t vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r, float g, float b, float a);
 /**
  * @brief control the extend of the pattern
  * 
@@ -1585,6 +1632,7 @@ void vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float r, float 
  *
  * @param pat the pattern to set extend for.
  * @param extend one value of the @ref vkvg_extend_t enumeration.
+ * @return VKVG_STATUS_SUCCESS, or VKVG_STATUS_PATTERN_TYPE_MISMATCH if the pattern is not a gradient.
  */
 vkvg_public
 void vkvg_pattern_set_extend (VkvgPattern pat, vkvg_extend_t extend);
