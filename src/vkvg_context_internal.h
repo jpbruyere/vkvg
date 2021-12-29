@@ -101,6 +101,7 @@ typedef struct _vkvg_context_save_t{
 	vkvg_direction_t	textDirection;
 	push_constants		pushConsts;
 	VkvgPattern			pattern;
+	bool				clippingState;	//true if previous clipping region as been saved
 
 }vkvg_context_save_t;
 
@@ -200,6 +201,7 @@ typedef struct _vkvg_context_t {
 
 	VkClearRect			clearRect;
 	VkRenderPassBeginInfo renderPassBeginInfo;
+	bool				isClipped;			//true if clipped since the last clip reset or last save
 }vkvg_context;
 
 typedef struct _ear_clip_point{

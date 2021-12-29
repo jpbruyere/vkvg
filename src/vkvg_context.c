@@ -670,6 +670,8 @@ static const VkClearAttachment clearColorAttach	   = {VK_IMAGE_ASPECT_COLOR_BIT,
 void vkvg_reset_clip (VkvgContext ctx){
 	if (ctx->status)
 		return;
+	if (!(ctx->isClipped || ctx->curSavBit))//if not clipped and no clipping has been saved, nothing to reset
+		return;
 	RECORD(ctx, VKVG_CMD_RESET_CLIP);
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
@@ -681,6 +683,8 @@ void vkvg_reset_clip (VkvgContext ctx){
 		return;
 	}
 	vkCmdClearAttachments(ctx->cmd, 1, &clearStencil, 1, &ctx->clearRect);
+	if (!ctx->curSavBit)//if another clipping has been saved, reset preserve isClipped=true
+		ctx->isClipped = false;
 }
 void vkvg_clear (VkvgContext ctx){
 	if (ctx->status)
@@ -694,6 +698,9 @@ void vkvg_clear (VkvgContext ctx){
 	}
 	VkClearAttachment ca[2] = {clearColorAttach, clearStencil};
 	vkCmdClearAttachments(ctx->cmd, 2, ca, 1, &ctx->clearRect);
+
+	if (!ctx->curSavBit)//if another clipping has been saved, reset preserve isClipped=true
+		ctx->isClipped = false;
 }
 void _clip_preserve (VkvgContext ctx){
 	_finish_path(ctx);
@@ -734,6 +741,7 @@ void _clip_preserve (VkvgContext ctx){
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_cmd_label_end (ctx->cmd);
 #endif
+	ctx->isClipped = true;
 }
 void _fill_preserve (VkvgContext ctx){
 	_finish_path(ctx);
@@ -1131,84 +1139,90 @@ void vkvg_save (VkvgContext ctx){
 	RECORD(ctx, VKVG_CMD_SAVE);
 	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
-	_flush_cmd_buff (ctx);
-	if (!_wait_flush_fence (ctx))
-		return;
-
 	VkvgDevice dev = ctx->pSurf->dev;
 	vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
-	uint8_t curSaveStencil = ctx->curSavBit / 6;
+	if (ctx->isClipped) {
 
-	if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0){//new save/restore stencil image have to be created
-		VkhImage* savedStencilsPtr = (VkhImage*)realloc(ctx->savedStencils, curSaveStencil * sizeof(VkhImage));
-		if (savedStencilsPtr == NULL) {
-			free(sav);
-			ctx->status = VKVG_STATUS_NO_MEMORY;
+		_flush_cmd_buff (ctx);
+		if (!_wait_flush_fence (ctx)) {
+			free (sav);
 			return;
 		}
-		ctx->savedStencils = savedStencilsPtr;
-		VkhImage savStencil = vkh_image_ms_create ((VkhDevice)dev, dev->stencilFormat, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
-								VMA_MEMORY_USAGE_GPU_ONLY, VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-		ctx->savedStencils[curSaveStencil-1] = savStencil;
 
-		vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-		ctx->cmdStarted = true;
+		sav->clippingState = true;
+		uint8_t curSaveStencil = ctx->curSavBit / 6;
 
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-		vkh_cmd_label_start(ctx->cmd, "new save/restore stencil", DBG_LAB_COLOR_SAV);
-#endif
+		if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0){//new save/restore stencil image have to be created
+			VkhImage* savedStencilsPtr = (VkhImage*)realloc(ctx->savedStencils, curSaveStencil * sizeof(VkhImage));
+			if (savedStencilsPtr == NULL) {
+				free(sav);
+				ctx->status = VKVG_STATUS_NO_MEMORY;
+				return;
+			}
+			ctx->savedStencils = savedStencilsPtr;
+			VkhImage savStencil = vkh_image_ms_create ((VkhDevice)dev, dev->stencilFormat, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
+									VMA_MEMORY_USAGE_GPU_ONLY, VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+			ctx->savedStencils[curSaveStencil-1] = savStencil;
 
-		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-							  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-							  VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-		vkh_image_set_layout (ctx->cmd, savStencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-							  VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-							  VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+			vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+			ctx->cmdStarted = true;
 
-		VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
-								.dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
-								.extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
-		vkCmdCopyImage(ctx->cmd,
-					   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-					   vkh_image_get_vkimage (savStencil),		 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-					   1, &cregion);
+	#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+			vkh_cmd_label_start(ctx->cmd, "new save/restore stencil", DBG_LAB_COLOR_SAV);
+	#endif
 
-		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-							  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-							  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+			vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
+								  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+								  VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+			vkh_image_set_layout (ctx->cmd, savStencil, VK_IMAGE_ASPECT_STENCIL_BIT,
+								  VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+								  VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+			VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
+									.dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
+									.extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
+			vkCmdCopyImage(ctx->cmd,
+						   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+						   vkh_image_get_vkimage (savStencil),		 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+						   1, &cregion);
+
+			vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
+								  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+								  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+
+	#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+			vkh_cmd_label_end (ctx->cmd);
+	#endif
+
+			VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
+			_wait_and_submit_cmd(ctx);
+		}
+
+		uint8_t curSaveBit = 1 << (ctx->curSavBit % 6 + 2);
+
+		_start_cmd_for_render_pass (ctx);
+
+	#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+		vkh_cmd_label_start(ctx->cmd, "save rp", DBG_LAB_COLOR_SAV);
+	#endif
+
+		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+
+		CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
+		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+		CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
+
+		_draw_full_screen_quad (ctx, false);
+
+		_bind_draw_pipeline (ctx);
+		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+
+	#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 		vkh_cmd_label_end (ctx->cmd);
-#endif
-
-		VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
-		_wait_and_submit_cmd(ctx);
+	#endif
+		ctx->curSavBit++;
 	}
-
-	uint8_t curSaveBit = 1 << (ctx->curSavBit % 6 + 2);
-
-	_start_cmd_for_render_pass (ctx);
-
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	vkh_cmd_label_start(ctx->cmd, "save rp", DBG_LAB_COLOR_SAV);
-#endif
-
-	CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
-
-	CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
-	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-	CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
-
-	_draw_full_screen_quad (ctx, false);
-
-	_bind_draw_pipeline (ctx);
-	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	vkh_cmd_label_end (ctx->cmd);
-#endif
-
 	sav->dashOffset = ctx->dashOffset;
 	sav->dashCount	= ctx->dashCount;
 	if (ctx->dashCount > 0) {
@@ -1232,7 +1246,6 @@ void vkvg_save (VkvgContext ctx){
 
 	sav->pNext		= ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav;
-	ctx->curSavBit++;
 
 	/*if (ctx->pattern)
 		vkvg_pattern_reference (ctx->pattern);*/
@@ -1261,75 +1274,84 @@ void vkvg_restore (VkvgContext ctx){
 	/*if (sav->pattern)
 		_update_cur_pattern (ctx, sav->pattern);*/
 
-	ctx->curSavBit--;
+	if (ctx->isClipped) {//previous clipping state has to be restored
+		if (!ctx->curSavBit) {//no clipping state has been saved, clipping has to be reseted
+			vkvg_reset_clip (ctx);
+		} else {
 
-	uint8_t curSaveBit = 1 << (ctx->curSavBit % 6 + 2);
+			uint8_t curSaveBit = 1 << ((ctx->curSavBit-1) % 6 + 2);
 
-	_start_cmd_for_render_pass (ctx);
+			_start_cmd_for_render_pass (ctx);
 
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	vkh_cmd_label_start(ctx->cmd, "restore rp", DBG_LAB_COLOR_SAV);
-#endif
+		#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+			vkh_cmd_label_start(ctx->cmd, "restore rp", DBG_LAB_COLOR_SAV);
+		#endif
 
-	CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+			CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
 
-	CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
-	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
-	CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+			CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
+			CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
+			CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-	_draw_full_screen_quad (ctx, false);
+			_draw_full_screen_quad (ctx, false);
 
-	_bind_draw_pipeline (ctx);
-	CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+			_bind_draw_pipeline (ctx);
+			CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	vkh_cmd_label_end (ctx->cmd);
-#endif
+		#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+			vkh_cmd_label_end (ctx->cmd);
+		#endif
 
-	_flush_cmd_buff (ctx);
-	if (!_wait_flush_fence (ctx))
-		return;
+			_flush_cmd_buff (ctx);
+			if (!_wait_flush_fence (ctx))
+				return;
 
-	uint8_t curSaveStencil = ctx->curSavBit / 6;
-	if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0){//addtional save/restore stencil image have to be copied back to surf stencil first
-		VkhImage savStencil = ctx->savedStencils[curSaveStencil-1];
+			if (sav->clippingState) {//if clipping is saved on that level, process savebit decrease
+				ctx->curSavBit--;
 
-		vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-		ctx->cmdStarted = true;
 
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-		vkh_cmd_label_start(ctx->cmd, "additional stencil copy while restoring", DBG_LAB_COLOR_SAV);
-#endif
+				uint8_t curSaveStencil = ctx->curSavBit / 6;
+				if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0){//addtional save/restore stencil image have to be copied back to surf stencil first
+					VkhImage savStencil = ctx->savedStencils[curSaveStencil-1];
 
-		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-							  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-							  VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-		vkh_image_set_layout (ctx->cmd, savStencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-							  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-							  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+					vkh_cmd_begin (ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+					ctx->cmdStarted = true;
 
-		VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
-								.dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
-								.extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
-		vkCmdCopyImage(ctx->cmd,
-					   vkh_image_get_vkimage (savStencil),		 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-					   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-					   1, &cregion);
-		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
-							  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-							  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+			#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+					vkh_cmd_label_start(ctx->cmd, "additional stencil copy while restoring", DBG_LAB_COLOR_SAV);
+			#endif
 
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-		vkh_cmd_label_end (ctx->cmd);
-#endif
+					vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
+										  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+										  VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+					vkh_image_set_layout (ctx->cmd, savStencil, VK_IMAGE_ASPECT_STENCIL_BIT,
+										  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+										  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-		VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
-		_wait_and_submit_cmd (ctx);
-		if (!_wait_flush_fence (ctx))
-			return;
-		vkh_image_destroy (savStencil);
+					VkImageCopy cregion = { .srcSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
+											.dstSubresource = {VK_IMAGE_ASPECT_STENCIL_BIT, 0, 0, 1},
+											.extent = {ctx->pSurf->width,ctx->pSurf->height,1}};
+					vkCmdCopyImage(ctx->cmd,
+								   vkh_image_get_vkimage (savStencil),		 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+								   vkh_image_get_vkimage (ctx->pSurf->stencil),VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+								   1, &cregion);
+					vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
+										  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+										  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+
+			#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+					vkh_cmd_label_end (ctx->cmd);
+			#endif
+
+					VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
+					_wait_and_submit_cmd (ctx);
+					if (!_wait_flush_fence (ctx))
+						return;
+					vkh_image_destroy (savStencil);
+				}
+			}
+		}
 	}
-
 	ctx->dashOffset = sav->dashOffset;
 	if (ctx->dashCount > 0)
 		free (ctx->dashes);
