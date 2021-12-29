@@ -1262,14 +1262,11 @@ void vkvg_restore (VkvgContext ctx){
 
 	LOG(VKVG_LOG_INFO, "RESTORE CONTEXT: ctx = %p\n", ctx);
 
-	_flush_cmd_buff (ctx);
-	if (!_wait_flush_fence (ctx))
-		return;
-
 	vkvg_context_save_t* sav = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav->pNext;
 
 	ctx->pushConsts	  = sav->pushConsts;
+	ctx->pushCstDirty = true;
 
 	/*if (sav->pattern)
 		_update_cur_pattern (ctx, sav->pattern);*/
@@ -1278,6 +1275,9 @@ void vkvg_restore (VkvgContext ctx){
 		if (!ctx->curSavBit) {//no clipping state has been saved, clipping has to be reseted
 			vkvg_reset_clip (ctx);
 		} else {
+			_flush_cmd_buff (ctx);
+			if (!_wait_flush_fence (ctx))
+				return;
 
 			uint8_t curSaveBit = 1 << ((ctx->curSavBit-1) % 6 + 2);
 
