@@ -24,11 +24,11 @@
 </p>
 </h1>
 
-**vkvg** is an open source *2D graphics library* written in **c**  using [Vulkan](https://www.khronos.org/vulkan/) as backend. It's **api** follows the same pattern as [Cairo](https://www.cairographics.org/), but new functions and original drawing mechanics may be added.
+**vkvg** is an open-source *2D graphics library* written in **C** using [Vulkan](https://www.khronos.org/vulkan/) as backend. The **API** follows the same pattern as [Cairo](https://www.cairographics.org/), but new functions and original drawing mechanics may be added.
 
-**vkvg** is in early development stage, api may change, any contribution is welcome.
+**vkvg** is in early development stage, the API is subject to change. All contributions are welcome.
 
-For API documentation and usage, please refer to the [Cairo](https://www.cairographics.org/) documentation for now.
+For API documentation and usage, please refer to the [Cairo](https://www.cairographics.org/) for now.
 
 <p align="center">
   <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
@@ -120,5 +120,5 @@ Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
 - [x] Avoid line joins inside curves and arc.
 - [ ] Structured unit testing.
 - [x] Perf and memory checks.
-- [ ] Code clean and comment.
+- [ ] Code cleanup and comments.
 - [ ] Documentations.
