@@ -286,6 +286,9 @@ void vkvg_destroy (VkvgContext ctx)
 
 	free(ctx);
 }
+vkvg_status_t vkvg_status (VkvgContext ctx) {
+	return ctx->status;
+}
 VkvgContext vkvg_reference (VkvgContext ctx) {
 	ctx->references++;
 	return ctx;
@@ -526,15 +529,13 @@ void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	//_record_draw_cmd(ctx);
 }
 
-void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
+vkvg_status_t vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	if (ctx->status)
-		return;
+		return ctx->status;
 	_finish_path (ctx);
 
-	if (w <= 0 || h <= 0) {
-		ctx->status = VKVG_STATUS_INVALID_RECT;
-		return;
-	}
+	if (w <= 0 || h <= 0)
+		return VKVG_STATUS_INVALID_RECT;
 
 	_add_point (ctx, x, y);
 	_add_point (ctx, x + w, y);
@@ -544,6 +545,7 @@ void vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	ctx->pathes[ctx->pathPtr] |= PATH_CLOSED_BIT;
 
 	_finish_path(ctx);
+	return VKVG_STATUS_SUCCESS;
 }
 static const VkClearAttachment clearStencil		   = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {{{0}}}};
 static const VkClearAttachment clearColorAttach	   = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};

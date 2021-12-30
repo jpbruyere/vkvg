@@ -97,7 +97,7 @@ extern uint8_t vkvg_log_level;
  *
  * vkvg_status_t is used to indicates errors that can occur when using vkvg. Several vkvg function directely
  * return result, but when using a @ref context, the last error is stored in the context and can be accessed
- * with #vkvg_status.
+ * with @ref vkvg_status().
  *
  * As soon as a status is not success, further operations will be canceled.
  */
@@ -811,6 +811,15 @@ VkvgContext vkvg_create (VkvgSurface surf);
 vkvg_public
 void vkvg_destroy (VkvgContext ctx);
 /**
+ * @brief Get context status
+ *
+ * Get the current context status.
+ *
+ * @param ctx The vkvg context to query the status for.
+ */
+vkvg_public
+vkvg_status_t vkvg_status (VkvgContext ctx);
+/**
  * @brief Increment by one the reference count on this context.
  * @param ctx The context to increment the reference count for.
  * @return
@@ -1042,9 +1051,10 @@ void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float
  * @param y The y coordinate of the top left corner of the rectangle to emit.
  * @param w The width in pixel of the rectangle to draw.
  * @param h The height in pixel of the rectangle to draw.
+ * @return VKVG_STATUS_SUCCESS or VKVG_STATUS_INVALID_RECT if width or height is equal to 0.
  */
 vkvg_public
-void vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h);
+vkvg_status_t vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h);
 /**
  * @brief Stroke command
  *
