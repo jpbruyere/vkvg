@@ -633,6 +633,8 @@ void vkvg_clip_preserve (VkvgContext ctx){
 	vkh_cmd_label_end (ctx->cmd);
 #endif
 }
+
+
 void vkvg_path_extents (VkvgContext ctx, float *x1, float *y1, float *x2, float *y2) {
 	if (ctx->status)
 		return;
@@ -644,10 +646,7 @@ void vkvg_path_extents (VkvgContext ctx, float *x1, float *y1, float *x2, float 
 		return;
 	}
 
-	*x1 = ctx->xMin;
-	*x2 = ctx->xMax;
-	*y1 = ctx->yMin;
-	*y2 = ctx->yMax;
+	_vkvg_path_extents(ctx, false, x1, y1, x2, y2);
 }
 void vkvg_fill_preserve (VkvgContext ctx){
 	if (ctx->status)

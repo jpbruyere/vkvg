@@ -167,7 +167,6 @@ void _clear_path (VkvgContext ctx){
 	ctx->pathes [ctx->pathPtr] = 0;
 	ctx->pointCount = 0;
 	ctx->segmentPtr = 0;
-	_resetMinMax(ctx);
 }
 void _remove_last_point (VkvgContext ctx){
 	ctx->pathes[ctx->pathPtr]--;
@@ -185,38 +184,19 @@ void _remove_last_point (VkvgContext ctx){
 bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
 	return ctx->pathes[ptrPath] & PATH_CLOSED_BIT;
 }
-void _resetMinMax (VkvgContext ctx) {
-	LOG(VKVG_LOG_INFO_PTS, "_resetMinMax (scissor)\n");
-	ctx->xMin = ctx->yMin = FLT_MAX;
-	ctx->xMax = ctx->yMax = FLT_MIN;
-}
 void _add_point (VkvgContext ctx, float x, float y){
 	if (_check_point_array(ctx))
 		return;
 	vec2 v = {x,y};
 	/*if (!_current_path_is_empty(ctx) && vec2_length(vec2_sub(ctx->points[ctx->pointCount-1], v))<1.f)
 		return;*/
+	LOG(VKVG_LOG_INFO_PTS, "_add_point: (%f, %f)\n", x, y);
 
 	ctx->points[ctx->pointCount] = v;
 	ctx->pointCount++;//total point count of pathes, (for array bounds check)
 	ctx->pathes[ctx->pathPtr]++;//total point count in path
 	if (ctx->segmentPtr > 0)
 		ctx->pathes[ctx->pathPtr + ctx->segmentPtr]++;//total point count in path's segment
-
-	//bounds are computed here to scissor the painting operation
-	//that speed up fill drastically.
-	vkvg_matrix_transform_point (&ctx->pushConsts.mat, &x, &y);
-
-	LOG(VKVG_LOG_INFO_PTS, "_add_point transformed: (%f, %f)\n", x, y);
-
-	if (x < ctx->xMin)
-		ctx->xMin = x;
-	if (x > ctx->xMax)
-		ctx->xMax = x;
-	if (y < ctx->yMin)
-		ctx->yMin = y;
-	if (y > ctx->yMax)
-		ctx->yMax = y;
 }
 float _normalizeAngle(float a)
 {
@@ -683,9 +663,17 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			return;
 		}
 
-		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
-		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].z, &grad.cp[0].w);
-		//to do, scale radial radiuses in cp[2]
+		if (pat->type == VKVG_PATTERN_TYPE_LINEAR) {
+			vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
+			vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].z, &grad.cp[0].w);
+		} else {
+			//centers
+			vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
+			vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
+			//radii
+			vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &grad.cp[0].z, &grad.cp[0].w);
+			vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &grad.cp[1].z, &grad.cp[0].w);
+		}
 
 		memcpy (ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
 		vkvg_buffer_flush(&ctx->uboGrad);
@@ -1434,24 +1422,67 @@ void _fill_ec (VkvgContext ctx){
 			ptrPath++;
 	}
 }
+void _vkvg_path_extents (VkvgContext ctx, bool transformed, float *x1, float *y1, float *x2, float *y2) {
+	uint32_t ptrPath = 0;
+	uint32_t firstPtIdx = 0;
 
+	float xMin = FLT_MAX, yMin = FLT_MAX;
+	float xMax = FLT_MIN, yMax = FLT_MIN;
+
+	while (ptrPath < ctx->pathPtr){
+		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+
+		for (uint32_t i = firstPtIdx; i < firstPtIdx + pathPointCount - 1; i++){
+			vec2 p = ctx->points[i];
+			if (transformed)
+				vkvg_matrix_transform_point (&ctx->pushConsts.mat, &p.x, &p.y);
+			if (p.x < xMin)
+				xMin = p.x;
+			if (p.x > xMax)
+				xMax = p.x;
+			if (p.y < yMin)
+				yMin = p.y;
+			if (p.y > yMax)
+				yMax = p.y;
+		}
+
+		firstPtIdx += pathPointCount;
+		if (_path_has_curves (ctx, ptrPath)) {
+			//skip segments lengths used in stroke
+			ptrPath++;
+			uint32_t totPts = 0;
+			while (totPts < pathPointCount)
+				totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
+		}else
+			ptrPath++;
+	}
+	*x1 = xMin;
+	*x2 = xMax;
+	*y1 = yMin;
+	*y2 = yMax;
+}
 static const uint32_t one = 1;
 static const uint32_t zero = 0;
 void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_cmd_label_start(ctx->cmd, "_draw_full_screen_quad", DBG_LAB_COLOR_FSQ);
 #endif
-
-	if (ctx->xMin < 0 || ctx->yMin < 0)
-		useScissor = false;
-	if (useScissor && ctx->xMin < FLT_MAX) {
-		VkRect2D r = {{(int32_t)ctx->xMin, (int32_t)ctx->yMin}, {(int32_t)ctx->xMax - (int32_t)ctx->xMin + 1, (int32_t)ctx->yMax - (int32_t)ctx->yMin + 1}};
-		CmdSetScissor(ctx->cmd, 0, 1, &r);
+	bool us = false;//=useScissor//bounds must be computed for even odd fill
+	if (us) {
+		float x1, y1, x2, y2;
+		_vkvg_path_extents(ctx, true, &x1, &y1, &x2, &y2);
+		if (x1 < 0 || y1 < 0 || EQUF(x1,x2) || EQUF(y1, y2))
+			us = false;
+		else {
+			VkRect2D r = {{(int32_t)x1, (int32_t)y1}, {(int32_t)x2 - (int32_t)x1 + 1, (int32_t)y2 - (int32_t)y1 + 1}};
+			CmdSetScissor(ctx->cmd, 0, 1, &r);
+		}
 	}
+
 	uint32_t firstVertIdx = ctx->vertCount;
-	_add_vertexf(ctx, -1, -1);
-	_add_vertexf(ctx, 3, -1);
-	_add_vertexf(ctx, -1, 3);
+	_add_vertexf (ctx, -1, -1);
+	_add_vertexf (ctx,  3, -1);
+	_add_vertexf (ctx, -1,  3);
 	ctx->curVertOffset = ctx->vertCount;
 
 	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
@@ -1459,7 +1490,7 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 	CmdDraw (ctx->cmd,3,1,firstVertIdx,0);
 	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
 					   VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&zero);
-	if (useScissor && ctx->xMin < FLT_MAX)
+	if (us)
 		CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)

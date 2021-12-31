@@ -120,10 +120,10 @@ typedef struct _vkvg_context_t {
 
 	uint32_t			curColor;
 
-	float xMin;
+	/*float xMin;
 	float xMax;
 	float yMin;
-	float yMax;
+	float yMax;*/
 
 	vkvg_buff	uboGrad;		//uniform buff obj holdings gradient infos
 
@@ -227,7 +227,7 @@ vec2 _get_current_position	(VkvgContext ctx);
 void _add_point				(VkvgContext ctx, float x, float y);
 
 void _resetMinMax			(VkvgContext ctx);
-
+void _vkvg_path_extents		(VkvgContext ctx, bool transformed, float *x1, float *y1, float *x2, float *y2);
 void _draw_stoke_cap		(VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart);
 void _draw_segment			(VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve);
 float _draw_dashed_segment	(VkvgContext ctx, float hw, stroke_context_t *str, dash_context_t* dc, bool isCurve);

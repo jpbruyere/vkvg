@@ -62,7 +62,7 @@ VkvgPattern vkvg_pattern_create_linear (float x0, float y0, float x1, float y1){
 	if (!pat)
 		return NULL;
 	pat->type = VKVG_PATTERN_TYPE_LINEAR;
-	pat->extend = VKVG_EXTEND_PAD;
+	pat->extend = VKVG_EXTEND_NONE;
 
 	pat->data = (void*)calloc(1,sizeof(vkvg_gradient_t));
 	if (!pat->data) {
@@ -106,7 +106,7 @@ VkvgPattern vkvg_pattern_create_radial (float cx0, float cy0, float radius0,
 	if (!pat)
 		return NULL;
 	pat->type = VKVG_PATTERN_TYPE_RADIAL;
-	pat->extend = VKVG_EXTEND_PAD;
+	pat->extend = VKVG_EXTEND_NONE;
 
 	pat->data = (void*)calloc(1,sizeof(vkvg_gradient_t));
 	if (!pat->data) {
