@@ -132,7 +132,11 @@ vkvg_status_t vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float 
 		return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
+#ifdef VKVG_PREMULT_ALPHA
+	vkvg_color_t c = {a*r,a*g,a*b,a};
+#else
 	vkvg_color_t c = {r,g,b,a};
+#endif
 	grad->colors[grad->count] = c;
 	grad->stops[grad->count] = offset;
 	grad->count++;
