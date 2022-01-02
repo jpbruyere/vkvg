@@ -1042,7 +1042,8 @@ void vkvg_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2)
  * @param y2 The Y coordinate of the end point of the curve relative to the current point.
  */
 vkvg_public
-void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2);/**
+void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2);
+/**
  * @brief Add an axis aligned rectangle subpath to the current path.
  *
  * Adds a closed sub-path rectangle of the given size to the current path at position (x, y).
@@ -1055,6 +1056,20 @@ void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float
  */
 vkvg_public
 vkvg_status_t vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h);
+/**
+* @brief Add an axis aligned rectangle with rounded corners to the current path.
+*
+* Adds a closed sub-path rectangle of the given size to the current path at position (x, y).
+* @param ctx The vkvg context pointer.
+* @param x The x coordinate of the top left corner of the rectangle to emit.
+* @param y The y coordinate of the top left corner of the rectangle to emit.
+* @param w The width in pixel of the rectangle to draw.
+* @param h The height in pixel of the rectangle to draw.
+* @param radius The radius of the corners.
+* @return VKVG_STATUS_SUCCESS or VKVG_STATUS_INVALID_RECT if width or height is equal to 0.
+*/
+vkvg_public
+vkvg_status_t vkvg_rounded_rectangle (VkvgContext ctx, float x, float y, float w, float h, float radius);
 /**
  * @brief Stroke command
  *

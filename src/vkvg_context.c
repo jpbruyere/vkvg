@@ -547,6 +547,31 @@ vkvg_status_t vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float 
 	_finish_path(ctx);
 	return VKVG_STATUS_SUCCESS;
 }
+vkvg_status_t vkvg_rounded_rectangle (VkvgContext ctx, float x, float y, float w, float h, float radius){
+	if (ctx->status)
+		return ctx->status;
+	_finish_path (ctx);
+
+	if (w <= 0 || h <= 0)
+		return VKVG_STATUS_INVALID_RECT;
+
+	if ((radius > w / 2.0f) || (radius > h / 2.0f))
+		radius = fmin (w / 2.0f, h / 2.0f);
+
+	vkvg_move_to(ctx, x, y + radius);
+	vkvg_arc(ctx, x + radius, y + radius, radius, (float)M_PI, (float)-M_PI_2);
+	vkvg_line_to(ctx, x + w - radius, y);
+	vkvg_arc(ctx, x + w - radius, y + radius, radius, (float)-M_PI_2, 0);
+	vkvg_line_to(ctx, x + w, y + h - radius);
+	vkvg_arc(ctx, x + w - radius, y + h - radius, radius, 0, (float)M_PI_2);
+	vkvg_line_to(ctx, x + radius, y + h);
+	vkvg_arc(ctx, x + radius, y + h - radius, radius, (float)M_PI_2, (float)M_PI);
+	vkvg_line_to(ctx, x, y + radius);
+	vkvg_close_path(ctx);
+
+	return VKVG_STATUS_SUCCESS;
+}
+
 static const VkClearAttachment clearStencil		   = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {{{0}}}};
 static const VkClearAttachment clearColorAttach	   = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
 
