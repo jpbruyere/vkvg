@@ -337,6 +337,7 @@ bool _wait_flush_fence (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "CTX: _wait_flush_fence\n");
 	if (WaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
 		return true;
+	LOG(VKVG_LOG_DEBUG, "CTX: _wait_flush_fence timeout\n");
 	ctx->status = VKVG_STATUS_TIMEOUT;
 	return false;
 }
