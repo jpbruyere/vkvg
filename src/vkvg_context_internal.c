@@ -160,6 +160,7 @@ void _finish_path (VkvgContext ctx){
 
 	ctx->pathes[ctx->pathPtr] = 0;
 	ctx->segmentPtr = 0;
+	ctx->subpathCount++;
 }
 //clear path datas in context
 void _clear_path (VkvgContext ctx){
@@ -167,6 +168,7 @@ void _clear_path (VkvgContext ctx){
 	ctx->pathes [ctx->pathPtr] = 0;
 	ctx->pointCount = 0;
 	ctx->segmentPtr = 0;
+	ctx->subpathCount = 0;
 }
 void _remove_last_point (VkvgContext ctx){
 	ctx->pathes[ctx->pathPtr]--;
@@ -208,7 +210,7 @@ float _normalizeAngle(float a)
 float _get_arc_step (VkvgContext ctx, float radius) {
 	float dx = radius, dy = radius;
 	vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &dx, &dy);
-	float r = fmaxf(dx,dy);
+	float r = fabsf(fmaxf(dx,dy));
 	if (r < 3.0f)
 		return asinf (1.0f / r) * 0.25f;
 	return asinf (1.0f / r) * 1.5f * sqrtf(r);
@@ -639,8 +641,12 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 		_update_descriptor_set (ctx, ctx->source, ctx->dsSrc);
 
-		vec4 srcRect = {{0},{0},{(float)surf->width},{(float)surf->height}};
-		ctx->pushConsts.source = srcRect;		
+		if (pat->hasMatrix) {
+
+		}
+
+		ctx->pushConsts.source.width	= (float)surf->width;
+		ctx->pushConsts.source.height	= (float)surf->height;
 		break;
 	}
 	case VKVG_PATTERN_TYPE_LINEAR:
@@ -663,15 +669,30 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			ctx->status = VKVG_STATUS_PATTERN_INVALID_GRADIENT;
 			return;
 		}
+		vkvg_matrix_t mat;
+		if (pat->hasMatrix) {
+			vkvg_pattern_get_matrix (pat, &mat);
+			if (vkvg_matrix_invert (&mat) != VKVG_STATUS_SUCCESS)
+				mat = VKVG_IDENTITY_MATRIX;
+		}
 
+		if (pat->hasMatrix)
+			vkvg_matrix_transform_point (&mat, &grad.cp[0].x, &grad.cp[0].y);
+		vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
 		if (pat->type == VKVG_PATTERN_TYPE_LINEAR) {
-			vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
+			if (pat->hasMatrix)
+				vkvg_matrix_transform_point (&mat, &grad.cp[0].z, &grad.cp[0].w);
 			vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].z, &grad.cp[0].w);
 		} else {
-			//centers
-			vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
+			if (pat->hasMatrix)
+				vkvg_matrix_transform_point (&mat, &grad.cp[1].x, &grad.cp[1].y);
 			vkvg_matrix_transform_point (&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
+
 			//radii
+			if (pat->hasMatrix) {
+				vkvg_matrix_transform_distance (&mat, &grad.cp[0].z, &grad.cp[0].w);
+				vkvg_matrix_transform_distance (&mat, &grad.cp[1].z, &grad.cp[0].w);
+			}
 			vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &grad.cp[0].z, &grad.cp[0].w);
 			vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &grad.cp[1].z, &grad.cp[0].w);
 		}
@@ -680,7 +701,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		vkvg_buffer_flush(&ctx->uboGrad);
 		break;
 	}
-	ctx->pushConsts.patternType = newPatternType;
+	ctx->pushConsts.fsq_patternType = (ctx->pushConsts.fsq_patternType & FULLSCREEN_BIT) + newPatternType;
 	ctx->pushCstDirty = true;
 	if (lastPat)
 		vkvg_pattern_destroy (lastPat);
@@ -1433,7 +1454,7 @@ void _vkvg_path_extents (VkvgContext ctx, bool transformed, float *x1, float *y1
 	while (ptrPath < ctx->pathPtr){
 		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
 
-		for (uint32_t i = firstPtIdx; i < firstPtIdx + pathPointCount - 1; i++){
+		for (uint32_t i = firstPtIdx; i < firstPtIdx + pathPointCount; i++){
 			vec2 p = ctx->points[i];
 			if (transformed)
 				vkvg_matrix_transform_point (&ctx->pushConsts.mat, &p.x, &p.y);
@@ -1462,8 +1483,7 @@ void _vkvg_path_extents (VkvgContext ctx, bool transformed, float *x1, float *y1
 	*y1 = yMin;
 	*y2 = yMax;
 }
-static const uint32_t one = 1;
-static const uint32_t zero = 0;
+
 void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_cmd_label_start(ctx->cmd, "_draw_full_screen_quad", DBG_LAB_COLOR_FSQ);
@@ -1486,11 +1506,13 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 	_add_vertexf (ctx, -1,  3);
 	ctx->curVertOffset = ctx->vertCount;
 
+	ctx->pushConsts.fsq_patternType |= FULLSCREEN_BIT;
 	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
-					   VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&one);
+					   VK_SHADER_STAGE_VERTEX_BIT, 24, 4,&ctx->pushConsts.fsq_patternType);
 	CmdDraw (ctx->cmd,3,1,firstVertIdx,0);
+	ctx->pushConsts.fsq_patternType &= ~FULLSCREEN_BIT;
 	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
-					   VK_SHADER_STAGE_VERTEX_BIT, 28, 4,&zero);
+					   VK_SHADER_STAGE_VERTEX_BIT, 24, 4,&ctx->pushConsts.fsq_patternType);
 	if (us)
 		CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 

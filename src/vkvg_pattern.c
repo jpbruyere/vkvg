@@ -177,6 +177,16 @@ vkvg_status_t vkvg_pattern_get_color_stop_rgba (VkvgPattern pat, uint32_t index,
 	*a = c.a;
 	return VKVG_STATUS_SUCCESS;
 }
+void vkvg_pattern_set_matrix (VkvgPattern pat, const vkvg_matrix_t* matrix) {
+	pat->matrix		= *matrix;
+	pat->hasMatrix	= true;
+}
+void vkvg_pattern_get_matrix (VkvgPattern pat, vkvg_matrix_t* matrix) {
+	if (pat->hasMatrix)
+		*matrix = pat->matrix;
+	else
+		*matrix = VKVG_IDENTITY_MATRIX;
+}
 
 void vkvg_pattern_destroy(VkvgPattern pat)
 {

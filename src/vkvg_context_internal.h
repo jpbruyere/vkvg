@@ -49,7 +49,8 @@
 	#define VKVG_VK_INDEX_TYPE		VK_INDEX_TYPE_UINT32
 #endif
 
-
+#define FULLSCREEN_BIT	0x10000000
+#define SRCTYPE_MASK	0x000000FF
 
 #define CreateRgba(r, g, b, a) ((a << 24) | (r << 16) | (g << 8) | b)
 #ifdef VKVG_PREMULT_ALPHA
@@ -67,8 +68,8 @@ typedef struct{
 typedef struct {
 	vec4			source;
 	vec2			size;
-	uint32_t		patternType;
-	uint32_t		fullScreenQuad;
+	uint32_t		fsq_patternType;
+	float			opacity;
 	vkvg_matrix_t	mat;
 	vkvg_matrix_t	matInv;
 }push_constants;
@@ -155,6 +156,7 @@ typedef struct _vkvg_context_t {
 	uint32_t	sizePathes;
 
 	uint32_t	segmentPtr;		//current segment count in current path having curves
+	uint32_t	subpathCount;	//store count of subpath, not straight forward to retrieve from segmented path array
 
 	float		lineWidth;
 	uint32_t	dashCount;		//value count in dash array, 0 if dash not set.

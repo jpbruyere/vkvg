@@ -157,7 +157,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
 	vec4 srcRect = {.x=0,.y=0,.width=(float)surf->width,.height=(float)surf->height};
 	ctx->pushConsts.source = srcRect;
-	ctx->pushConsts.patternType = VKVG_PATTERN_TYPE_SURFACE;
+	ctx->pushConsts.fsq_patternType = (ctx->pushConsts.fsq_patternType & FULLSCREEN_BIT) + VKVG_PATTERN_TYPE_SURFACE;
 
 	//_update_push_constants (ctx);
 	_update_descriptor_set (ctx, tmpImg, ctx->dsSrc);

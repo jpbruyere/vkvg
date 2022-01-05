@@ -325,7 +325,7 @@ vkvg_debug_stats_t vkvg_device_reset_stats (VkvgDevice dev);
  * This is the reference documentation for handling matrices to use as transformation in drawing operations.
  * Matrix computations in vkvg are taken from the cairo library.
  * @{ */
-#define VKVG_IDENTITY_MATRIX {1,0,0,1,0,0}/*!< The identity matrix*/
+#define VKVG_IDENTITY_MATRIX (vkvg_matrix_t){1,0,0,1,0,0}/*!< The identity matrix*/
 /**
  * @brief vkvg matrix structure
  *
@@ -1148,6 +1148,10 @@ void vkvg_clip (VkvgContext ctx);
  */
 vkvg_public
 void vkvg_clip_preserve (VkvgContext ctx);
+vkvg_public
+void vkvg_set_opacity (VkvgContext ctx, float opacity);
+vkvg_public
+float vkvg_get_opacity (VkvgContext ctx);
 /**
  * @brief Set current source for drawing to the solid color defined by the supplied 32bit integer.
  * @param ctx a valid vkvg @ref context
@@ -1695,6 +1699,11 @@ vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat);
  */
 vkvg_public
 vkvg_pattern_type_t vkvg_pattern_get_type (VkvgPattern pat);
+vkvg_public
+void vkvg_pattern_set_matrix (VkvgPattern pat, const vkvg_matrix_t* matrix);
+vkvg_public
+void vkvg_pattern_get_matrix (VkvgPattern pat, vkvg_matrix_t* matrix);
+
 /** @}*/
 
 /********* EXPERIMENTAL **************/

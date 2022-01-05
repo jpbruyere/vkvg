@@ -66,10 +66,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
 	ctx->bounds = (VkRect2D) {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
 	ctx->pushConsts = (push_constants) {
-			{.height=1},
+			{.a = 1},
 			{(float)ctx->pSurf->width,(float)ctx->pSurf->height},
 			VKVG_PATTERN_TYPE_SOLID,
-			0,
+			1.0f,
 			VKVG_IDENTITY_MATRIX,
 			VKVG_IDENTITY_MATRIX
 	};
@@ -285,6 +285,20 @@ void vkvg_destroy (VkvgContext ctx)
 	}
 
 	free(ctx);
+}
+void vkvg_set_opacity (VkvgContext ctx, float opacity) {
+	if (ctx->status)
+			return;
+
+	if (EQUF(ctx->pushConsts.opacity, opacity))
+		return;
+
+	_emit_draw_cmd_undrawn_vertices (ctx);
+	ctx->pushConsts.opacity = opacity;
+	ctx->pushCstDirty = true;
+}
+float vkvg_get_opacity (VkvgContext ctx) {
+		return ctx->pushConsts.opacity;
 }
 vkvg_status_t vkvg_status (VkvgContext ctx) {
 	return ctx->status;
@@ -506,8 +520,8 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
 
 	//compute dyn distanceTolerance depending on current transform
 	float dx = 1, dy = 1;
-	vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &dx, &dy);
-	float distanceTolerance = 0.02f / fmaxf(dx,dy);
+	vkvg_matrix_transform_point (&ctx->pushConsts.mat, &dx, &dy);
+	float distanceTolerance = fabs(0.02f / fmaxf(dx,dy));
 
 	_recursive_bezier (ctx, distanceTolerance, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
 	/*cp.x = x3;
@@ -862,9 +876,9 @@ void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
 	if (ctx->status)
 		return;
-	_update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
 	ctx->pushConsts.source.x = x;
 	ctx->pushConsts.source.y = y;
+	_update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
 	ctx->pushCstDirty = true;
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){

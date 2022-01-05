@@ -31,22 +31,24 @@ layout (location = 2) in vec3	inUV;
 layout (location = 0) out vec3	outUV;
 layout (location = 1) out vec4	outSrc;
 layout (location = 2) out flat int outPatType;
-layout (location = 3) out mat3x2 outMat;
-
+layout (location = 3) out flat float outOpacity;
+layout (location = 4) out mat3x2 outMat;
 /*out gl_PerVertex
 {
 	vec4 gl_Position;
 };*/
 
 layout(push_constant) uniform PushConsts {
-	vec4 source;
-	vec2 size;
-	int  srcType;
-	int  fullScreenQuad;
-	mat3x2 mat;
-	mat3x2 matInv;
+	vec4	source;
+	vec2	size;
+	int		fullScreenQuad_srcType;
+	float	opacity;
+	mat3x2	mat;
+	mat3x2	matInv;
 } pc;
 
+#define FULLSCREEN_BIT	0x10000000
+#define SRCTYPE_MASK	0x000000FF
 #define SOLID			0
 #define SURFACE			1
 #define LINEAR			2
@@ -56,11 +58,12 @@ layout(push_constant) uniform PushConsts {
 
 void main()
 {
-	outPatType	= pc.srcType;
+	outPatType	= pc.fullScreenQuad_srcType & SRCTYPE_MASK;
 	outMat		= pc.matInv;
-	outSrc = pc.srcType == SOLID ? inColor : pc.source;
+	outSrc		= outPatType == SOLID ? inColor : pc.source;
+	outOpacity	= pc.opacity;
 
-	if (pc.fullScreenQuad != 0) {
+	if ((pc.fullScreenQuad_srcType & FULLSCREEN_BIT)==FULLSCREEN_BIT) {
 		gl_Position = vec4(inPos, 0.0f, 1.0f);
 		outUV = vec3(0,0,-1);
 		return;
