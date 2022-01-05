@@ -32,6 +32,58 @@ void paint_with_scale(){
 	vkvg_surface_destroy(imgSurf);
 	vkvg_destroy(ctx);
 }
+void translate(){
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_translate (ctx, 150,50);
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+	vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+
+	vkvg_paint(ctx);
+
+	vkvg_surface_destroy(imgSurf);
+	vkvg_destroy(ctx);
+}
+void offset_and_scale(){
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_scale (ctx, 0.2f,0.2f);
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+	vkvg_set_source_surface(ctx, imgSurf, 100, 100);
+
+	vkvg_paint(ctx);
+
+	vkvg_surface_destroy(imgSurf);
+	vkvg_destroy(ctx);
+}
+
+static float angle = 0;
+void paint_with_rot(){
+	angle += 0.005;
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
+
+	vkvg_rotate (ctx, angle);
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+	vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+
+	vkvg_paint(ctx);
+
+	vkvg_surface_destroy(imgSurf);
+	vkvg_destroy(ctx);
+}
+void offset_and_rot(){
+	angle += 0.005;
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear(ctx);
+
+	vkvg_rotate (ctx, angle);
+	VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+	vkvg_set_source_surface(ctx, imgSurf, 100, 100);
+
+	vkvg_paint(ctx);
+
+	vkvg_surface_destroy(imgSurf);
+	vkvg_destroy(ctx);
+}
 
 void paint_pattern () {
 	VkvgContext ctx = vkvg_create(surf);
@@ -108,6 +160,10 @@ int main(int argc, char *argv[]) {
 	PERFORM_TEST (paint, argc, argv);
 	PERFORM_TEST (paint_offset, argc, argv);
 	PERFORM_TEST (paint_with_scale, argc, argv);
+	PERFORM_TEST (offset_and_scale, argc, argv);
+	PERFORM_TEST (translate, argc, argv);
+	PERFORM_TEST (paint_with_rot, argc, argv);
+	PERFORM_TEST (offset_and_rot, argc, argv);
 	PERFORM_TEST (paint_pattern, argc, argv);
 	PERFORM_TEST (paint_patt_repeat, argc, argv);
 	PERFORM_TEST (paint_patt_repeat_scalled, argc, argv);

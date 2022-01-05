@@ -6,10 +6,10 @@ void recurse_draw(VkvgContext ctx, int depth) {
 
 	vkvg_translate (ctx, 5,5);
 	vkvg_rectangle(ctx, (float)depth,(float)depth,200,200);
-	vkvg_clip_preserve(ctx);
+	/*vkvg_clip_preserve(ctx);
 	vkvg_set_source_rgb(ctx, 1.f/depth, 1.f / depth, 1.f / depth);
-	vkvg_fill_preserve(ctx);
-	vkvg_set_source_rgb(ctx, 0,0,0);
+	vkvg_fill_preserve(ctx);*/
+	vkvg_set_source_rgb(ctx, 0,1,0);
 	vkvg_stroke(ctx);
 
 	if (depth < 20)

@@ -21,7 +21,27 @@ void paint(){
 	float x = 100;
 	pat = create_grad(ctx,x);
 	//vkvg_pattern_set_extend(pat,VKVG_EXTEND_NONE);
-	vkvg_rectangle(ctx, x,200,20,20);
+	vkvg_rectangle(ctx, x,200,50,50);
+	vkvg_set_source (ctx, pat);
+	vkvg_pattern_destroy (pat);
+	vkvg_fill(ctx);
+
+	x+=100;
+
+	pat = vkvg_pattern_create_linear(10,0,300,0);
+	vkvg_pattern_add_color_stop(pat, 0, 0, 0, 1, 0);
+	vkvg_pattern_add_color_stop(pat, 1, 1, 0, 0, 1);
+	//vkvg_pattern_set_extend(pat,VKVG_EXTEND_NONE);
+	vkvg_rectangle(ctx, 10,10,300,50);
+	vkvg_set_source (ctx, pat);
+	vkvg_pattern_destroy (pat);
+	vkvg_fill(ctx);
+
+	x+=200;
+
+	pat = create_grad(ctx,x);
+	//vkvg_pattern_set_extend(pat,VKVG_EXTEND_NONE);
+	vkvg_rectangle(ctx, x,200,50,50);
 	vkvg_set_source (ctx, pat);
 	vkvg_pattern_destroy (pat);
 	vkvg_fill(ctx);
@@ -30,25 +50,7 @@ void paint(){
 
 	pat = create_grad(ctx,x);
 	//vkvg_pattern_set_extend(pat,VKVG_EXTEND_NONE);
-	vkvg_rectangle(ctx, x,200,20,20);
-	vkvg_set_source (ctx, pat);
-	vkvg_pattern_destroy (pat);
-	vkvg_fill(ctx);
-
-	x+=100;
-
-	pat = create_grad(ctx,x);
-	//vkvg_pattern_set_extend(pat,VKVG_EXTEND_NONE);
-	vkvg_rectangle(ctx, x,200,20,20);
-	vkvg_set_source (ctx, pat);
-	vkvg_pattern_destroy (pat);
-	vkvg_fill(ctx);
-
-	x+=100;
-
-	pat = create_grad(ctx,x);
-	//vkvg_pattern_set_extend(pat,VKVG_EXTEND_NONE);
-	vkvg_rectangle(ctx, x,200,20,20);
+	vkvg_rectangle(ctx, x,200,50,50);
 	vkvg_set_source (ctx, pat);
 	vkvg_pattern_destroy (pat);
 	vkvg_fill(ctx);
@@ -134,7 +136,7 @@ void gradient_transform() {
 int main(int argc, char *argv[]) {
 	no_test_size = true;
 	PERFORM_TEST(paint, argc, argv);
-	/*PERFORM_TEST(paint_repeat, argc, argv);
-	PERFORM_TEST(gradient_transform, argc, argv);*/
+	PERFORM_TEST(paint_repeat, argc, argv);
+	PERFORM_TEST(gradient_transform, argc, argv);
 	return 0;
 }

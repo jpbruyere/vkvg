@@ -6,7 +6,7 @@ void test(){
 	vkvg_move_to (ctx, 100, 100);
 	vkvg_rel_line_to (ctx, 50, -80);
 	vkvg_rel_line_to (ctx, 50, 80);
-	//vkvg_close_path (ctx);
+	vkvg_close_path (ctx);
 
 	vkvg_move_to (ctx, 300, 100);
 	vkvg_rel_line_to (ctx, 50, -80);

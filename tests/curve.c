@@ -3,7 +3,6 @@
 void test(){
 	VkvgContext ctx = vkvg_create(surf);
 
-	vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
 	vkvg_set_line_width(ctx, 20);
 
 	vkvg_scale(ctx,2,2);
@@ -134,7 +133,6 @@ void _long_curv () {
 	float h = (float)test_height;
 
 	VkvgContext ctx = _initCtx();
-	vkvg_set_fill_rule(ctx, fill_rule);
 
 	randomize_color(ctx);
 	float x1 = rndf() * w;

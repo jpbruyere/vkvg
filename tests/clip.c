@@ -68,6 +68,22 @@ void clipped_transformed_ec () {
 	vkvg_paint(ctx);
 	vkvg_destroy(ctx);
 }
+void clip_transformed_ec () {
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
+	vkvg_set_source_rgb(ctx,1,0,0);
+	vkvg_paint(ctx);
+	vkvg_rotate(ctx,0.1f);
+	vkvg_set_source_rgb(ctx,0,1,0);
+	vkvg_rectangle(ctx, 100,100,300,200);
+	vkvg_clip(ctx);
+	vkvg_paint(ctx);
+	vkvg_translate (ctx,200,100);
+	vkvg_set_source_rgb(ctx,0,0,1);
+	vkvg_paint(ctx);
+
+	vkvg_destroy(ctx);
+}
 void clipped_transformed_eo () {
 	VkvgContext ctx = vkvg_create(surf);
 	vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
@@ -122,10 +138,8 @@ void test_clip2(){
 	vkvg_clip(ctx);
 	vkvg_save(ctx);
 
-
 	vkvg_set_source_rgb(ctx,1,1,0);
 	vkvg_paint(ctx);
-
 
 	vkvg_rectangle(ctx, 200,200,200,200);
 	vkvg_clip(ctx);
@@ -134,7 +148,6 @@ void test_clip2(){
 	vkvg_paint(ctx);
 
 	vkvg_restore(ctx);
-
 
 	vkvg_rectangle(ctx, 350,350,420,420);
 	vkvg_set_source_rgb(ctx,0,0,1);
@@ -160,6 +173,7 @@ void test_clip2(){
 }
 int main(int argc, char *argv[]) {
 	no_test_size = true;
+	PERFORM_TEST (clip_transformed_ec, argc, argv);
 	PERFORM_TEST (clipped_paint_ec, argc, argv);
 	PERFORM_TEST (clipped_paint_eo, argc, argv);
 	PERFORM_TEST (clipped_transformed_ec, argc, argv);

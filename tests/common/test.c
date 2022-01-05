@@ -190,6 +190,9 @@ void _print_usage_and_exit () {
 	printf("\t\t\t - b: Butt (default)\n");
 	printf("\t\t\t - r: Rount\n");
 	printf("\t\t\t - s: Square\n");
+	printf("\t-f fill_rule:\tset current fill rule:\n");
+	printf("\t\t\t - 0: Even Odd\n");
+	printf("\t\t\t - 1: Non Zero\n");
 	printf("\t-d:\t\tenable dashes.\n");
 	printf("\t-n index:\tRun only a single test, zero based index.\n");
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests.\n");
@@ -246,6 +249,10 @@ void _parse_args (int argc, char* argv[]) {
 			line_width = atoi (argv[i]);
 		}else if (strcmp (argv[i], "-d\0") == 0) {
 			dashes_count = 2;
+		}else if (strcmp (argv[i], "-f\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			fill_rule = atoi (argv[i]);
 		} else if (strcmp (argv[i], "-o\0") == 0) {
 			offscreen = true;
 		}else if (strcmp (argv[i], "-j\0") == 0) {

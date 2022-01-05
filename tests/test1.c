@@ -345,10 +345,11 @@ void cairo_tests () {
 	rotation+=0.002f;
 
 	vkvg_matrix_t mat;
-	vkvg_matrix_init_translate (&mat, 512,400);
-	vkvg_matrix_rotate(&mat,rotation);
+	vkvg_matrix_init_translate (&mat, panX,panY);
 	vkvg_matrix_scale(&mat,zoom,zoom);
-	vkvg_matrix_translate(&mat,-512.f + panX,-400.f +panY);
+	vkvg_matrix_translate (&mat, 400,400);
+	vkvg_matrix_rotate(&mat,rotation);
+	vkvg_matrix_translate(&mat,-400.f,-400.f);
 
 
 	VkvgContext ctx = vkvg_create(surf);
@@ -357,6 +358,11 @@ void cairo_tests () {
 	vkvg_paint(ctx);
 
 	//vkvg_set_matrix(ctx,&mat);
+	vkvg_translate (ctx, panX,panY);
+	vkvg_scale(ctx,zoom,zoom);
+	vkvg_translate (ctx, 400,400);
+	vkvg_rotate(ctx,rotation);
+	vkvg_translate(ctx,-400.f,-400.f);
 
 	cairo_print_arc(ctx);
 
