@@ -209,7 +209,7 @@ float _normalizeAngle(float a)
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
 	float dx = radius, dy = radius;
-	vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &dx, &dy);
+	vkvg_matrix_transform_point (&ctx->pushConsts.mat, &dx, &dy);
 	float r = fabsf(fmaxf(dx,dy));
 	if (r < 3.0f)
 		return asinf (1.0f / r) * 0.25f;
@@ -1361,6 +1361,7 @@ void _poly_fill (VkvgContext ctx){
 	}
 	ctx->curVertOffset = ctx->vertCount;
 }
+
 //create fill from current path with ear clipping technic
 void _fill_ec (VkvgContext ctx){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
