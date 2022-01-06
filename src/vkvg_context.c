@@ -588,16 +588,16 @@ vkvg_status_t vkvg_rounded_rectangle (VkvgContext ctx, float x, float y, float w
 void vkvg_rounded_rectangle2 (VkvgContext ctx, float x, float y, float w, float h, float rx, float ry){
 	vkvg_move_to (ctx, x+rx, y);
 	vkvg_line_to (ctx, x+w-rx, y);
-	vkvg_elliptic_arc(ctx, x+w, y+ry, false, true, rx, ry, 0);
+	vkvg_elliptic_arc_to(ctx, x+w, y+ry, false, true, rx, ry, 0);
 
 	vkvg_line_to (ctx, x+w, y+h-ry);
-	vkvg_elliptic_arc(ctx, x+w-rx, y+h, false, true, rx, ry, 0);
+	vkvg_elliptic_arc_to(ctx, x+w-rx, y+h, false, true, rx, ry, 0);
 
 	vkvg_line_to (ctx, x+rx, y+h);
-	vkvg_elliptic_arc(ctx, x, y+h-ry , false, true, rx, ry, 0);
+	vkvg_elliptic_arc_to(ctx, x, y+h-ry , false, true, rx, ry, 0);
 
 	vkvg_line_to (ctx, x, y+ry);
-	vkvg_elliptic_arc(ctx, x+rx, y , false, true, rx, ry, 0);
+	vkvg_elliptic_arc_to(ctx, x+rx, y , false, true, rx, ry, 0);
 
 	vkvg_close_path(ctx);
 }
@@ -1316,10 +1316,15 @@ void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
 	memcpy ((void*)matrix, &ctx->pushConsts.mat, sizeof(vkvg_matrix_t));
 }
 
-void vkvg_elliptic_arc (VkvgContext ctx, float x2, float y2, bool largeArc, bool counterClockWise, float rx, float ry, float phi) {
+void vkvg_elliptic_arc_to (VkvgContext ctx, float x2, float y2, bool largeArc, bool counterClockWise, float rx, float ry, float phi) {
 	float x1, y1;
 	vkvg_get_current_point(ctx, &x1, &y1);
 	_elliptic_arc(ctx, x1, y1, x2, y2, largeArc, counterClockWise, rx, ry, phi);
+}
+void vkvg_rel_elliptic_arc_to (VkvgContext ctx, float x2, float y2, bool largeArc, bool counterClockWise, float rx, float ry, float phi) {
+	float x1, y1;
+	vkvg_get_current_point(ctx, &x1, &y1);
+	_elliptic_arc(ctx, x1, y1, x2+x1, y2+y1, largeArc, counterClockWise, rx, ry, phi);
 }
 
 void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float y, float rotationAngle) {

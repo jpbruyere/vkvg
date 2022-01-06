@@ -1088,7 +1088,9 @@ void vkvg_rounded_rectangle2 (VkvgContext ctx, float x, float y, float w, float 
 vkvg_public
 void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float y, float rotationAngle);
 vkvg_public
-void vkvg_elliptic_arc (VkvgContext ctx, float x2, float y2, bool largeArc, bool counterClockWise, float rx, float ry, float phi);
+void vkvg_elliptic_arc_to (VkvgContext ctx, float x2, float y2, bool largeArc, bool counterClockWise, float rx, float ry, float phi);
+vkvg_public
+void vkvg_rel_elliptic_arc_to (VkvgContext ctx, float x2, float y2, bool largeArc, bool counterClockWise, float rx, float ry, float phi);
 /**
  * @brief Stroke command
  *
