@@ -1071,6 +1071,25 @@ vkvg_status_t vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h
 vkvg_public
 vkvg_status_t vkvg_rounded_rectangle (VkvgContext ctx, float x, float y, float w, float h, float radius);
 /**
+* @brief Add an axis aligned rectangle with rounded corners defined in both axis to the current path.
+*
+* Adds a closed sub-path rectangle of the given size to the current path at position (x, y).
+* @param ctx The vkvg context pointer.
+* @param x The x coordinate of the top left corner of the rectangle to emit.
+* @param y The y coordinate of the top left corner of the rectangle to emit.
+* @param w The width in pixel of the rectangle to draw.
+* @param h The height in pixel of the rectangle to draw.
+* @param rx The horizontal radius of the corners.
+* @param ry The vertical radius of the corners.
+* @return VKVG_STATUS_SUCCESS or VKVG_STATUS_INVALID_RECT if width or height is equal to 0.
+*/
+vkvg_public
+void vkvg_rounded_rectangle2 (VkvgContext ctx, float x, float y, float w, float h, float rx, float ry);
+vkvg_public
+void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float y, float rotationAngle);
+vkvg_public
+void vkvg_elliptic_arc (VkvgContext ctx, float x2, float y2, bool largeArc, bool counterClockWise, float rx, float ry, float phi);
+/**
  * @brief Stroke command
  *
  * Perform a stroke of the current path and reset it.

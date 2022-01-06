@@ -1314,6 +1314,132 @@ void _recursive_bezier (VkvgContext ctx, float distanceTolerance,
 }
 #pragma warning(default:4127)
 
+void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, bool largeArc, bool counterClockWise, float _rx, float _ry, float phi) {
+	if (ctx->status)
+		return;
+
+	if (_rx==0||_ry==0) {
+		if (_current_path_is_empty(ctx))
+			vkvg_move_to(ctx, x1, y1);
+		vkvg_line_to(ctx, x2, y2);
+		return;
+	}
+	float rx = fabsf(_rx);
+	float ry = fabsf(_ry);
+
+	mat2 m = {
+		{ cosf (phi), sinf (phi)},
+		{-sinf (phi), cosf (phi)}
+	};
+	vec2 p = {(x1 - x2)/2, (y1 - y2)/2};
+	vec2 p1 = mat2_mult_vec2 (m, p);
+
+	//radii corrections
+	double lambda = powf (p1.x, 2) / powf (rx, 2) + powf (p1.y, 2) / powf (ry, 2);
+	if (lambda > 1) {
+		lambda = sqrtf (lambda);
+		rx *= lambda;
+		ry *= lambda;
+	}
+
+	p = (vec2){rx * p1.y / ry, -ry * p1.x / rx};
+
+	vec2 cp = vec2_mult_s (p, sqrtf (fabsf (
+		(powf (rx,2) * powf (ry,2) - powf (rx,2) * powf (p1.y, 2) - powf (ry,2) * powf (p1.x, 2)) /
+		(powf (rx,2) * powf (p1.y, 2) + powf (ry,2) * powf (p1.x, 2))
+	)));
+
+	if (largeArc == counterClockWise)
+		vec2_inv(&cp);
+
+	m = (mat2) {
+		{cosf (phi),-sinf (phi)},
+		{sinf (phi), cosf (phi)}
+	};
+	p = (vec2){(x1 + x2)/2, (y1 + y2)/2};
+	vec2 c = vec2_add (mat2_mult_vec2(m, cp) , p);
+
+	vec2 u = vec2_unit_x;
+	vec2 v = {(p1.x-cp.x)/rx, (p1.y-cp.y)/ry};
+	double sa = acosf (vec2_dot (u, v) / (fabsf(vec2_length(v)) * fabsf(vec2_length(u))));
+	if (isnanf(sa))
+		sa=M_PIF;
+	if (u.x*v.y-u.y*v.x < 0)
+		sa = -sa;
+
+	u = v;
+	v = (vec2) {(-p1.x-cp.x)/rx, (-p1.y-cp.y)/ry};
+	double delta_theta = acosf (vec2_dot (u, v) / (fabsf(vec2_length (v)) * fabsf(vec2_length (u))));
+	if (isnanf(delta_theta))
+		delta_theta=M_PIF;
+	if (u.x*v.y-u.y*v.x < 0)
+		delta_theta = -delta_theta;
+
+	if (counterClockWise) {
+		if (delta_theta < 0)
+			delta_theta += M_PIF * 2.0;
+	} else if (delta_theta > 0)
+		delta_theta -= M_PIF * 2.0;
+
+	m = (mat2) {
+		{cosf (phi),-sinf (phi)},
+		{sinf (phi), cosf (phi)}
+	};
+
+	double theta = sa;
+	double ea = sa + delta_theta;
+
+	float step = _get_arc_step(ctx, fminf (rx, ry))*0.1f;
+
+	p = (vec2) {
+		rx * cosf (theta),
+		ry * sinf (theta)
+	};
+	vec2 xy = vec2_add (mat2_mult_vec2 (m, p), c);
+
+	if (_current_path_is_empty(ctx)){
+		_set_curve_start (ctx);
+		_add_point (ctx, xy.x, xy.y);
+	}else{
+		vkvg_line_to(ctx, xy.x, xy.y);
+		_set_curve_start (ctx);
+	}
+
+	_set_curve_start (ctx);
+
+	if (sa < ea) {
+		theta += step;
+		while (theta < ea) {
+			p = (vec2) {
+				rx * cosf (theta),
+				ry * sinf (theta)
+			};
+			xy = vec2_add (mat2_mult_vec2 (m, p), c);
+			_add_point (ctx, xy.x, xy.y);
+			theta += step;
+		}
+	} else {
+		theta -= step;
+		while (theta > ea) {
+			p = (vec2) {
+				rx * cosf (theta),
+				ry * sinf (theta)
+			};
+			xy = vec2_add (mat2_mult_vec2 (m, p), c);
+			_add_point (ctx, xy.x, xy.y);
+			theta -= step;
+		}
+	}
+	p = (vec2) {
+		rx * cosf (ea),
+		ry * sinf (ea)
+	};
+	xy = vec2_add (mat2_mult_vec2 (m, p), c);
+	_add_point (ctx, xy.x, xy.y);
+	_set_curve_end(ctx);
+}
+
+
 //Even-Odd inside test with stencil buffer implementation.
 void _poly_fill (VkvgContext ctx){
 	//we anticipate the check for vbo buffer size, ibo is not used in poly_fill
