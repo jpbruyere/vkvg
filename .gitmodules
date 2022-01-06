@@ -1,3 +1,6 @@
 [submodule "vkh"]
 	path = vkh
-	url = https://github.com/jpbruyere/vkhelpers.git
+	url = git@github.com/jpbruyere/vkhelpers.git
+[submodule "external/glutess"]
+	path = external/glutess
+	url = git@github.com:jpbruyere/glutess.git

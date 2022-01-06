@@ -28,7 +28,7 @@
 #include "vkvg_context_internal.h"
 #include "shaders.h"
 
-uint8_t vkvg_log_level = VKVG_LOG_ERR;
+uint8_t vkvg_log_level = VKVG_LOG_DEBUG;
 
 PFN_vkCmdBindPipeline			CmdBindPipeline;
 PFN_vkCmdBindDescriptorSets		CmdBindDescriptorSets;

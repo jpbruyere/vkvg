@@ -235,7 +235,7 @@ void _draw_segment			(VkvgContext ctx, float hw, stroke_context_t* str, dash_con
 float _draw_dashed_segment	(VkvgContext ctx, float hw, stroke_context_t *str, dash_context_t* dc, bool isCurve);
 
 void _poly_fill				(VkvgContext ctx);
-void _fill_ec				(VkvgContext ctx);//earclipping fill
+void _fill_non_zero			(VkvgContext ctx);
 void _draw_full_screen_quad (VkvgContext ctx, bool useScissor);
 
 void _create_gradient_buff	(VkvgContext ctx);

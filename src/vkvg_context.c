@@ -656,7 +656,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
 		CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 		CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-		_fill_ec(ctx);
+		_fill_non_zero(ctx);
 		_emit_draw_cmd_undrawn_vertices(ctx);
 	}
 	CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -714,7 +714,7 @@ void vkvg_fill_preserve (VkvgContext ctx){
 
 	if (ctx->pattern)//if not solid color, source img or gradient has to be bound
 		_ensure_renderpass_is_started(ctx);
-	_fill_ec(ctx);
+	_fill_non_zero(ctx);
 }
 
 void vkvg_stroke_preserve (VkvgContext ctx)

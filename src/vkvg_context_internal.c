@@ -36,6 +36,10 @@
 #include "vkh_queue.h"
 #include "vkh_image.h"
 
+#ifdef VKVG_FILL_NZ_GLUTESS
+#include "tessellate.h"
+#endif
+
 void _resize_vertex_cache (VkvgContext ctx, uint32_t newSize) {
 	Vertex* tmp = (Vertex*) realloc (ctx->vertexCache, (size_t)newSize * sizeof(Vertex));
 	LOG(VKVG_LOG_DBG_ARRAYS, "resize vertex cache (vx count=%u): old size: %u -> new size: %u size(byte): %zu Ptr: %p -> %p\n",
@@ -189,6 +193,10 @@ bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
 void _add_point (VkvgContext ctx, float x, float y){
 	if (_check_point_array(ctx))
 		return;
+	if (isnanf(x) || isnanf(y)) {
+		LOG(VKVG_LOG_DEBUG, "_add_point: (%f, %f)\n", x, y);
+		return;
+	}
 	vec2 v = {x,y};
 	/*if (!_current_path_is_empty(ctx) && vec2_length(vec2_sub(ctx->points[ctx->pointCount-1], v))<1.f)
 		return;*/
@@ -1361,9 +1369,73 @@ void _poly_fill (VkvgContext ctx){
 	}
 	ctx->curVertOffset = ctx->vertCount;
 }
+#ifdef VKVG_FILL_NZ_GLUTESS
+void _fill_non_zero (VkvgContext ctx){
+	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 
+	uint32_t ptrPath = 0;
+	uint32_t firstPtIdx = 0;
+
+	double* vertices_array = (double*)malloc(ctx->pointCount*2*sizeof(double));
+	const double **contours_array = (const double**)malloc ((ctx->subpathCount + 1)*sizeof (double*));
+	int contours_size = ctx->subpathCount+1;
+	for (uint32_t i=0; i<ctx->pointCount; i++) {
+		vertices_array[i*2] = (double)ctx->points[i].x;
+		vertices_array[i*2+1] = (double)ctx->points[i].y;
+	}
+
+	contours_array[0] = vertices_array;
+	uint32_t i = 1;
+	while (ptrPath < ctx->pathPtr){
+		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+		firstPtIdx += pathPointCount;
+		contours_array[i] = &vertices_array[firstPtIdx*2];
+		if (_path_has_curves (ctx, ptrPath)) {
+			//skip segments lengths used in stroke
+			ptrPath++;
+			uint32_t totPts = 0;
+			while (totPts < pathPointCount)
+				totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
+		}else
+			ptrPath++;
+		i++;
+	}
+
+	double *coordinates_out;
+	int *tris_out;
+	int nverts, ntris;
+
+	tessellate(&coordinates_out, &nverts,
+			   &tris_out, &ntris,
+			   contours_array, contours_array + contours_size);
+
+	const double *p;
+	const int* indices;
+	VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+
+	for (int i=0; i<nverts; ++i) {
+		p = &coordinates_out[i*2];
+		v.pos.x = (float)p[0];
+		v.pos.y = (float)p[1];
+		_add_vertex(ctx, v);
+	}
+	for (int i=0; i<ntris; i++) {
+		indices = &tris_out[i*3];
+		_add_triangle_indices (ctx,
+				(VKVG_IBO_INDEX_TYPE)(firstVertIdx + indices[0]),
+				(VKVG_IBO_INDEX_TYPE)(firstVertIdx + indices[1]),
+				(VKVG_IBO_INDEX_TYPE)(firstVertIdx + indices[2]));
+	}
+
+	free(vertices_array);
+	free(contours_array);
+	free(coordinates_out);
+	if (tris_out)
+		free(tris_out);
+}
+#else
 //create fill from current path with ear clipping technic
-void _fill_ec (VkvgContext ctx){
+void _fill_non_zero (VkvgContext ctx){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 
 	uint32_t ptrPath = 0;
@@ -1445,6 +1517,8 @@ void _fill_ec (VkvgContext ctx){
 			ptrPath++;
 	}
 }
+#endif
+
 void _vkvg_path_extents (VkvgContext ctx, bool transformed, float *x1, float *y1, float *x2, float *y2) {
 	uint32_t ptrPath = 0;
 	uint32_t firstPtIdx = 0;
