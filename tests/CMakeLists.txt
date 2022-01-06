@@ -33,6 +33,7 @@ TARGET_LINK_LIBRARIES(tests_common
 		${Vulkan_LIBRARIES}
 		${GLFW3_LIBRARY}
 		vkvg
+		$<$<BOOL:${VKVG_SVG}>:vkvg-svg>
 )
 
 file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "data/*")

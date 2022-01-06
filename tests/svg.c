@@ -1,17 +1,16 @@
 #include "test.h"
 
-#include "string.h" //for nanosvg
-#include "vkvg-nsvg.h"
+#include "vkvg-svg.h"
 
 static float rotation = 0.f;
 static const char* path = "data/tiger.svg";
 
-void test_svg_surface() {
-	VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, path);
+void svg_surface() {
+	VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, test_width, test_height, path);
 
 	VkvgContext ctx = vkvg_create(surf);
 
-	vkvg_set_source_rgb(ctx,0,0,0);
+	vkvg_set_source_rgb(ctx,1,1,1);
 	vkvg_paint(ctx);
 
 	vkvg_set_source_surface(ctx, svgSurf, 0,0);
@@ -20,8 +19,8 @@ void test_svg_surface() {
 	vkvg_destroy(ctx);
 	vkvg_surface_destroy(svgSurf);
 }
-
-void test_nsvg() {
+#ifndef VKVG_SVG
+void nsvg() {
 	NSVGimage* svg = nsvg_load_file(device, path);
 	if (svg == NULL) {
 		fprintf (stderr, "svg file not found: %s", path);
@@ -42,9 +41,13 @@ void test_nsvg() {
 
 	nsvg_destroy(svg);
 }
+#endif
 
 int main(int argc, char *argv[]) {
 	no_test_size = true;
-	PERFORM_TEST (test_nsvg, argc, argv);
+	PERFORM_TEST (svg_surface, argc, argv);
+#ifndef VKVG_SVG
+	PERFORM_TEST (nsvg, argc, argv);
+#endif
 	return 0;
 }

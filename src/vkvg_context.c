@@ -585,6 +585,22 @@ vkvg_status_t vkvg_rounded_rectangle (VkvgContext ctx, float x, float y, float w
 
 	return VKVG_STATUS_SUCCESS;
 }
+void vkvg_rounded_rectangle2 (VkvgContext ctx, float x, float y, float w, float h, float rx, float ry){
+	vkvg_move_to (ctx, x+rx, y);
+	vkvg_line_to (ctx, x+w-rx, y);
+	vkvg_elliptic_arc(ctx, x+w, y+ry, false, true, rx, ry, 0);
+
+	vkvg_line_to (ctx, x+w, y+h-ry);
+	vkvg_elliptic_arc(ctx, x+w-rx, y+h, false, true, rx, ry, 0);
+
+	vkvg_line_to (ctx, x+rx, y+h);
+	vkvg_elliptic_arc(ctx, x, y+h-ry , false, true, rx, ry, 0);
+
+	vkvg_line_to (ctx, x, y+ry);
+	vkvg_elliptic_arc(ctx, x+rx, y , false, true, rx, ry, 0);
+
+	vkvg_close_path(ctx);
+}
 
 static const VkClearAttachment clearStencil		   = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {{{0}}}};
 static const VkClearAttachment clearColorAttach	   = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
@@ -1335,20 +1351,4 @@ void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float
 	vkvg_curve_to (ctx, bottomRightX, bottomRightY, topRightX, topRightY, topCenterX, topCenterY);
 	vkvg_curve_to (ctx, topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
 	vkvg_close_path (ctx);
-}
-void vkvg_rounded_rectangle2 (VkvgContext ctx, float x, float y, float w, float h, float rx, float ry){
-	vkvg_move_to (ctx, x+rx, y);
-	vkvg_line_to (ctx, x+w-rx, y);
-	vkvg_elliptic_arc(ctx, x+w, y+ry, false, true, rx, ry, 0);
-
-	vkvg_line_to (ctx, x+w, y+h-ry);
-	vkvg_elliptic_arc(ctx, x+w-rx, y+h, false, true, rx, ry, 0);
-
-	vkvg_line_to (ctx, x+rx, y+h);
-	vkvg_elliptic_arc(ctx, x, y+h-ry , false, true, rx, ry, 0);
-
-	vkvg_line_to (ctx, x, y+ry);
-	vkvg_elliptic_arc(ctx, x+rx, y , false, true, rx, ry, 0);
-
-	vkvg_close_path(ctx);
 }

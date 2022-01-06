@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -19,13 +19,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef VKVG_NSVG_H
-#define VKVG_NSVG_H
+#ifndef VKVG_SVG_H
+#define VKVG_SVG_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+/**
+ * @brief load svg file into @ref surface
+ *
+ * Create a new vkvg surface by loading a SVG file.
+ * @param dev The vkvg @ref device used for creating the surface.
+ * @param filePath The path of the SVG file to load.
+ * @param width force the rendering width, if 0 autosize from svg.
+ * @param height force the rendering height, if 0 autosize from svg.
+ * @return The new vkvg surface with the loaded SVG drawing as content, or null if an error occured.
+ */
+vkvg_public
+VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_t height, const char* filePath);
+/**
+ * @brief create surface from svg fragment
+ *
+ * Create a new vkvg surface by parsing a string with a valid SVG fragment passed as argument.
+ * @param dev The vkvg device used for creating the surface.
+ * @param width force the rendering width, if 0 autosize from svg.
+ * @param height force the rendering height, if 0 autosize from svg.
+ * @param fragment The SVG fragment to parse.
+ * @return The new vkvg surface with the parsed SVG fragment as content, or null if an error occured.
+ */
+vkvg_public
+VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width, uint32_t height, char* svgFragment);
 
+#ifndef VKVG_SVG
 /*! @defgroup nsvg Nano SVG
  * @brief Render SVG drawings
  *
@@ -43,26 +68,6 @@ extern "C" {
  *
  */
 typedef struct NSVGimage NSVGimage;
-/**
- * @brief load svg file into @ref surface
- * 
- * Create a new vkvg surface by loading a SVG file.
- * @param dev The vkvg @ref device used for creating the surface.
- * @param filePath The path of the SVG file to load.
- * @return The new vkvg surface with the loaded SVG drawing as content, or null if an error occured.
- */
-vkvg_public
-VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, const char* filePath);
-/**
- * @brief create surface from svg fragment
- * 
- * Create a new vkvg surface by parsing a string with a valid SVG fragment passed as argument.
- * @param dev The vkvg device used for creating the surface.
- * @param fragment The SVG fragment to parse.
- * @return The new vkvg surface with the parsed SVG fragment as content, or null if an error occured.
- */
-vkvg_public
-VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, char* fragment);
 /**
  * @brief load svg file
  *
@@ -123,4 +128,5 @@ void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg, char* subId);
 }
 #endif
 
+#endif
 #endif
