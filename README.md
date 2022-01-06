@@ -34,6 +34,9 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
   <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
 	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png" height="260"></kbd>
   </a>
+  <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot3.png">
+	<kbd><img src="https://raw.githubusercontent.com/jpbruyere/vkvg/master/screenshot3.png" height="260"></kbd>
+  </a>
   <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png">
 	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" height="260"></kbd>
   </a>

@@ -4,3 +4,6 @@
 [submodule "external/glutess"]
 	path = external/glutess
 	url = git@github.com:jpbruyere/glutess.git
+[submodule "external/vkvg-svg"]
+	path = external/vkvg-svg
+	url = git@github.com:jpbruyere/vkvg-svg.git

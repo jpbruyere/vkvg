@@ -79,6 +79,12 @@ IF (VKVG_FILL_NZ_GLUTESS)
 	ADD_DEFINITIONS (-DVKVG_FILL_NZ_GLUTESS)
 ENDIF ()
 
+OPTION(VKVG_SVG "render svg with vkvg-svg library" ON)
+IF (VKVG_SVG)
+	ADD_DEFINITIONS (-DVKVG_SVG)
+ENDIF ()
+
+
 FUNCTION (updateGitSubmodule SUBMOD_NAME)
 	MESSAGE(STATUS "Git Submodule ${SUBMOD_NAME} update")
 	EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive ${SUBMOD_NAME}
@@ -98,6 +104,9 @@ IF(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
 		updateGitSubmodule(vkh)
 		IF (VKVG_FILL_NZ_GLUTESS)
 			updateGitSubmodule(external/glutess)
+		ENDIF ()
+		IF (VKVG_SVG)
+			updateGitSubmodule(external/vkvg-svg)
 		ENDIF ()
 	endif()
 ENDIF ()
@@ -205,6 +214,10 @@ ENDIF()
 IF (VKVG_FILL_NZ_GLUTESS)
 	ADD_SUBDIRECTORY (external/glutess)
 ENDIF ()
+IF (VKVG_SVG AND NOT TARGET vkvk-svg)
+	ADD_SUBDIRECTORY (external/vkvg-svg)
+ENDIF()
+
 
 FILE(GLOB VKVG_SRC src/*.c)
 SET (VKVG_PUBLIC_HEADERS "include/vkvg.h;include/vkvg-nsvg.h")
@@ -219,7 +232,6 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
 		VERSION ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}
 		SOVERSION ${vkvg_VERSION_MAJOR}
 		C_STANDARD 11
-		#C_EXTENSIONS OFF
 		PUBLIC_HEADER "${VKVG_PUBLIC_HEADERS}"
 )
 
@@ -234,6 +246,7 @@ TARGET_INCLUDE_DIRECTORIES("${PROJECT_NAME}"
 		${Vulkan_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
+		"$<$<BOOL:${VKVG_SVG}>:${CMAKE_CURRENT_SOURCE_DIR}/external/vkvg-svg/include>"
 )
 TARGET_LINK_LIBRARIES("${PROJECT_NAME}"
 	PUBLIC
@@ -245,6 +258,7 @@ TARGET_LINK_LIBRARIES("${PROJECT_NAME}"
 		"$<$<BOOL:${VKVG_USE_HARFBUZZ}>:${HarfBuzz_LIBRARIES}>"
 		"$<$<BOOL:${VKVG_USE_FONTCONFIG}>:${Fontconfig_LIBRARIES}>"
 		"$<$<BOOL:${VKVG_FILL_NZ_GLUTESS}>:glutess>"
+		"$<$<BOOL:${VKVG_SVG}>:vkvg-svg>"
 )
 
 INSTALL(TARGETS "${PROJECT_NAME}"
