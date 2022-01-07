@@ -37,7 +37,7 @@
 #include "vkh_image.h"
 
 #ifdef VKVG_FILL_NZ_GLUTESS
-#include "tessellate.h"
+#include "glutess.h"
 #endif
 
 void _resize_vertex_cache (VkvgContext ctx, uint32_t newSize) {
@@ -288,6 +288,32 @@ void _add_vertex(VkvgContext ctx, Vertex v){
 }
 void _set_vertex(VkvgContext ctx, uint32_t idx, Vertex v){
 	ctx->vertexCache[idx] = v;
+}
+void _add_indice (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i) {
+	ctx->indexCache[ctx->indCount++] = i;
+	_check_index_cache_size(ctx);
+}
+void _add_indice_for_fan (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i) {
+	VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
+	inds[0] = ctx->tesselator_fan_start;
+	inds[1] = ctx->indexCache[ctx->indCount-1];
+	inds[2] = i;
+	ctx->indCount+=3;
+	_check_index_cache_size(ctx);
+}
+void _add_indice_for_strip (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i, bool odd) {
+	VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
+	if (odd) {
+		inds[0] = ctx->indexCache[ctx->indCount-2];
+		inds[1] = i;
+		inds[2] = ctx->indexCache[ctx->indCount-1];
+	} else {
+		inds[0] = ctx->indexCache[ctx->indCount-1];
+		inds[1] = ctx->indexCache[ctx->indCount-2];
+		inds[2] = i;
+	}
+	ctx->indCount+=3;
+	_check_index_cache_size(ctx);
 }
 void _add_tri_indices_for_rect (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i){
 	VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
@@ -1515,26 +1541,114 @@ void _poly_fill (VkvgContext ctx){
 	ctx->curVertOffset = ctx->vertCount;
 }
 #ifdef VKVG_FILL_NZ_GLUTESS
+void fan_vertex2(VKVG_IBO_INDEX_TYPE v, VkvgContext ctx) {
+	VKVG_IBO_INDEX_TYPE i = (VKVG_IBO_INDEX_TYPE)v;
+	switch (ctx->tesselator_idx_counter) {
+	case 0:
+		_add_indice(ctx, i);
+		ctx->tesselator_fan_start = i;
+		ctx->tesselator_idx_counter ++;
+		break;
+	case 1:
+	case 2:
+		_add_indice(ctx, i);
+		ctx->tesselator_idx_counter ++;
+		break;
+	default:
+		_add_indice_for_fan (ctx, i);
+		break;
+	}
+}
+
+void strip_vertex2(VKVG_IBO_INDEX_TYPE v, VkvgContext ctx) {
+	VKVG_IBO_INDEX_TYPE i = (VKVG_IBO_INDEX_TYPE)v;
+	if (ctx->tesselator_idx_counter < 3) {
+		_add_indice(ctx, i);
+	} else
+		_add_indice_for_strip(ctx, i, ctx->tesselator_idx_counter % 2);
+	ctx->tesselator_idx_counter ++;
+}
+
+void triangle_vertex2 (VKVG_IBO_INDEX_TYPE v, VkvgContext ctx) {
+	VKVG_IBO_INDEX_TYPE i = (VKVG_IBO_INDEX_TYPE)v;
+	_add_indice(ctx, i);
+}
+void skip_vertex2 (VKVG_IBO_INDEX_TYPE v, VkvgContext ctx) {}
+void begin2(GLenum which, void *poly_data)
+{
+	VkvgContext ctx = (VkvgContext)poly_data;
+	switch (which) {
+	case GL_TRIANGLES:
+		ctx->vertex_cb = &triangle_vertex2;
+		break;
+	case GL_TRIANGLE_STRIP:
+		ctx->tesselator_idx_counter = 0;
+		ctx->vertex_cb = &strip_vertex2;
+		break;
+	case GL_TRIANGLE_FAN:
+		ctx->tesselator_idx_counter = ctx->tesselator_fan_start = 0;
+		ctx->vertex_cb = &fan_vertex2;
+		break;
+	default:
+		fprintf(stderr, "ERROR, can't handle %d\n", (int)which);
+		ctx->vertex_cb = &skip_vertex2;
+	}
+}
+
+void combine2(const GLdouble newVertex[3],
+			 const void *neighborVertex_s[4],
+			 const GLfloat neighborWeight[4], void **outData, void *poly_data)
+{
+	VkvgContext ctx = (VkvgContext)poly_data;
+	Vertex v = {{newVertex[0],newVertex[1]},ctx->curColor, {0,0,-1}};
+	*outData = (void*)((unsigned long)(ctx->vertCount - ctx->curVertOffset));
+	_add_vertex(ctx, v);
+}
+void vertex2(void *vertex_data, void *poly_data)
+{
+	VKVG_IBO_INDEX_TYPE i = (VKVG_IBO_INDEX_TYPE)vertex_data;
+	VkvgContext ctx = (VkvgContext)poly_data;
+	ctx->vertex_cb(i, ctx);
+}
 void _fill_non_zero (VkvgContext ctx){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 
 	uint32_t ptrPath = 0;
 	uint32_t firstPtIdx = 0;
 
-	double* vertices_array = (double*)malloc(ctx->pointCount*2*sizeof(double));
-	const double **contours_array = (const double**)malloc ((ctx->subpathCount + 1)*sizeof (double*));
-	int contours_size = ctx->subpathCount+1;
-	for (uint32_t i=0; i<ctx->pointCount; i++) {
-		vertices_array[i*2] = (double)ctx->points[i].x;
-		vertices_array[i*2+1] = (double)ctx->points[i].y;
-	}
 
-	contours_array[0] = vertices_array;
-	uint32_t i = 1;
+	GLUtesselator *tess = gluNewTess();
+	gluTessProperty(tess, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NONZERO);
+	gluTessCallback(tess, GLU_TESS_VERTEX_DATA,  (GLvoid (*) ()) &vertex2);
+	gluTessCallback(tess, GLU_TESS_BEGIN_DATA,   (GLvoid (*) ()) &begin2);
+	gluTessCallback(tess, GLU_TESS_COMBINE_DATA, (GLvoid (*) ()) &combine2);
+
+	gluTessBeginPolygon(tess, ctx);
+
 	while (ptrPath < ctx->pathPtr){
 		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+
+		if (pathPointCount > 2) {
+			VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+			gluTessBeginContour(tess);
+
+			VKVG_IBO_INDEX_TYPE i = 0;
+
+			while (i < pathPointCount){
+				v.pos = ctx->points[i+firstPtIdx];
+				double dp[] = {v.pos.x,v.pos.y,0};
+				_add_vertex(ctx, v);
+				gluTessVertex(tess, dp, (void*)((unsigned long)firstVertIdx + i));
+				i++;
+			}
+			gluTessEndContour(tess);
+
+			//limit batch size here to 1/3 of the ibo index type ability
+			//if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3)
+			//	_emit_draw_cmd_undrawn_vertices(ctx);
+		}
+
 		firstPtIdx += pathPointCount;
-		contours_array[i] = &vertices_array[firstPtIdx*2];
 		if (_path_has_curves (ctx, ptrPath)) {
 			//skip segments lengths used in stroke
 			ptrPath++;
@@ -1543,42 +1657,11 @@ void _fill_non_zero (VkvgContext ctx){
 				totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
 		}else
 			ptrPath++;
-		i++;
 	}
 
-	double *coordinates_out;
-	int *tris_out;
-	int nverts, ntris;
+	gluTessEndPolygon(tess);
 
-	LOG(VKVG_LOG_INFO, "glutess: ctx = %p; point cpt = %d;\n", ctx, ctx->pointCount);
-
-	tessellate(&coordinates_out, &nverts,
-			   &tris_out, &ntris,
-			   contours_array, contours_array + contours_size);
-
-	const double *p;
-	const int* indices;
-	VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-
-	for (int i=0; i<nverts; ++i) {
-		p = &coordinates_out[i*2];
-		v.pos.x = (float)p[0];
-		v.pos.y = (float)p[1];
-		_add_vertex(ctx, v);
-	}
-	for (int i=0; i<ntris; i++) {
-		indices = &tris_out[i*3];
-		_add_triangle_indices (ctx,
-				(VKVG_IBO_INDEX_TYPE)(firstVertIdx + indices[0]),
-				(VKVG_IBO_INDEX_TYPE)(firstVertIdx + indices[1]),
-				(VKVG_IBO_INDEX_TYPE)(firstVertIdx + indices[2]));
-	}
-
-	free(vertices_array);
-	free(contours_array);
-	free(coordinates_out);
-	if (tris_out)
-		free(tris_out);
+	gluDeleteTess(tess);
 }
 #else
 //create fill from current path with ear clipping technic

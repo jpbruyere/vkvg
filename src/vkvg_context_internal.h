@@ -125,6 +125,11 @@ typedef struct _vkvg_context_t {
 	float xMax;
 	float yMin;
 	float yMax;*/
+#if VKVG_FILL_NZ_GLUTESS
+	void (*vertex_cb)(VKVG_IBO_INDEX_TYPE, VkvgContext);//tesselator vertex callback
+	VKVG_IBO_INDEX_TYPE tesselator_fan_start;
+	uint32_t tesselator_idx_counter;
+#endif
 
 	vkvg_buff	uboGrad;		//uniform buff obj holdings gradient infos
 
