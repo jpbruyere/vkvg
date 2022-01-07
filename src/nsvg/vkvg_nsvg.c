@@ -25,8 +25,7 @@
 
 #define NANOSVG_IMPLEMENTATION	// Expands implementation
 #include "nanosvg.h"
-
-#include "vkvg-nsvg.h"
+#include "vkvg-svg.h"
 
 void _svg_set_color (VkvgContext ctx, uint32_t c, float alpha) {
 	float a = (c >> 24 & 255) / 255.f;
@@ -63,10 +62,10 @@ VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
 	return surf;
 }
 
-VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, const char* filePath) {
+VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, uint32_t width, uint32_t height, const char* filePath) {
 	return _svg_load(dev, nsvgParseFromFile(filePath, "px", (float)dev->hdpi));
 }
-VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, char* fragment) {
+VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, uint32_t width, uint32_t height, char* fragment) {
 	return _svg_load(dev, nsvgParse(fragment, "px", (float)dev->hdpi));
 }
 NSVGimage* nsvg_load_file (VkvgDevice dev, const char* filePath) {
