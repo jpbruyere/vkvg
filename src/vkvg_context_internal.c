@@ -289,6 +289,7 @@ void _add_vertex(VkvgContext ctx, Vertex v){
 void _set_vertex(VkvgContext ctx, uint32_t idx, Vertex v){
 	ctx->vertexCache[idx] = v;
 }
+#ifdef VKVG_FILL_NZ_GLUTESS
 void _add_indice (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i) {
 	ctx->indexCache[ctx->indCount++] = i;
 	_check_index_cache_size(ctx);
@@ -315,6 +316,7 @@ void _add_indice_for_strip (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i, bool odd) {
 	ctx->indCount+=3;
 	_check_index_cache_size(ctx);
 }
+#endif
 void _add_tri_indices_for_rect (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i){
 	VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
 	inds[0] = i;
