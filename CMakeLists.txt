@@ -169,7 +169,7 @@ IF(GLSLC AND XXD)
 		ADD_CUSTOM_COMMAND (
 		  OUTPUT ${shader-output}
 		  COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}"
-		  COMMAND ${GLSLC} ${shader-input} -o ${shader-output} --target-env=vulkan1.2
+		  COMMAND ${GLSLC} ${shader-input} -o ${shader-output}# --target-env=vulkan1.2
 		  COMMENT "Compiling ${shader-input}"
 		  DEPENDS ${SHADER}
 		  VERBATIM

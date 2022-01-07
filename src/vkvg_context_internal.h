@@ -37,7 +37,7 @@
 #define VKVG_IBO_16					0
 #define VKVG_IBO_32					1
 
-#define VKVG_CUR_IBO_TYPE			VKVG_IBO_16//change this only
+#define VKVG_CUR_IBO_TYPE			VKVG_IBO_32//change this only
 
 #if VKVG_CUR_IBO_TYPE == VKVG_IBO_16
 	#define VKVG_IBO_MAX			UINT16_MAX

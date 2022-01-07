@@ -149,6 +149,8 @@ void _finish_path (VkvgContext ctx){
 		return;
 	}
 
+	LOG(VKVG_LOG_INFO_PATH, "PATH: points count=%10d\n", ctx->pathes[ctx->pathPtr]&PATH_ELT_MASK);
+
 	if (ctx->segmentPtr > 0) {
 		ctx->pathes[ctx->pathPtr] |= PATH_HAS_CURVES_BIT;
 		//if last segment is not a curve and point count > 0
@@ -217,11 +219,12 @@ float _normalizeAngle(float a)
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
 	float dx = radius, dy = radius;
-	vkvg_matrix_transform_point (&ctx->pushConsts.mat, &dx, &dy);
+	vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &dx, &dy);
 	float r = fabsf(fmaxf(dx,dy));
-	if (r < 3.0f)
+	/*if (r < 3.0f)
 		return asinf (1.0f / r) * 0.25f;
-	return asinf (1.0f / r) * 1.5f * sqrtf(r);
+	return asinf (1.0f / r) * 1.5f * sqrtf(r);*/
+	return M_PI / (r * 1.5f);
 }
 void _create_gradient_buff (VkvgContext ctx){
 	vkvg_buffer_create (ctx->pSurf->dev,
@@ -273,14 +276,14 @@ void _add_vertexf (VkvgContext ctx, float x, float y){
 	pVert->pos.y = y;
 	pVert->color = ctx->curColor;
 	pVert->uv.z = -1;
+	LOG(VKVG_LOG_INFO_VBO, "Add Vertexf %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n", ctx->vertCount, pVert->pos.x, pVert->pos.y, pVert->uv.x, pVert->uv.y, pVert->uv.z, pVert->color);
 	ctx->vertCount++;
-
 	_check_vertex_cache_size(ctx);
 }
 void _add_vertex(VkvgContext ctx, Vertex v){
 	ctx->vertexCache[ctx->vertCount] = v;
+	LOG(VKVG_LOG_INFO_VBO, "Add Vertex  %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n", ctx->vertCount, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.uv.z, v.color);
 	ctx->vertCount++;
-
 	_check_vertex_cache_size(ctx);
 }
 void _set_vertex(VkvgContext ctx, uint32_t idx, Vertex v){
@@ -297,7 +300,7 @@ void _add_tri_indices_for_rect (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i){
 	ctx->indCount+=6;
 
 	_check_index_cache_size(ctx);
-	LOG(VKVG_LOG_INFO, "Rectangle IDX: %d %d %d | %d %d %d (count=%d)\n", inds[0], inds[1], inds[2], inds[3], inds[4], inds[5], ctx->indCount);
+	LOG(VKVG_LOG_INFO_IBO, "Rectangle IDX: %d %d %d | %d %d %d (count=%d)\n", inds[0], inds[1], inds[2], inds[3], inds[4], inds[5], ctx->indCount);
 }
 void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2){
 	VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
@@ -307,7 +310,7 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
 	ctx->indCount+=3;
 
 	_check_index_cache_size(ctx);
-	LOG(VKVG_LOG_INFO, "Triangle IDX: %d %d %d (indCount=%d)\n", i0,i1,i2,ctx->indCount);
+	LOG(VKVG_LOG_INFO_IBO, "Triangle IDX: %d %d %d (indCount=%d)\n", i0,i1,i2,ctx->indCount);
 }
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
 	Vertex v[4] =
@@ -796,16 +799,32 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 		return false;
 	vec2 v0n = vec2_div_s (v0, length_v0);
 	vec2 v1n = vec2_div_s (v1, length_v1);
+	float dot = vec2_dot (v0n, v1n);
+	float det = v0n.x * v1n.y - v0n.y * v1n.x;
+	if (EQUF(dot,1.0f))
+		return false;
+
+	if (EQUF(dot,-1.0f)) {
+		vec2 vPerp = vec2_mult_s(vec2_perp (v0n), hw);
+
+		VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+
+		v.pos = vec2_add(p0, vPerp);
+		_add_vertex(ctx, v);
+		v.pos = vec2_sub(p0, vPerp);
+		_add_vertex(ctx, v);
+
+		_add_triangle_indices(ctx, idx, idx+1, idx+2);
+		_add_triangle_indices(ctx, idx, idx+2, idx+3);
+		return true;
+	}
+
 
 	vec2 bisec_n = vec2_norm(vec2_add(v0n,v1n));
 
-	float dot = vec2_dot (v0n, v1n);
 
 	float alpha = acosf(dot);
-	float det = v0n.x * v1n.y - v0n.y * v1n.x;
 
-	if (EQUF(dot,1.0f))
-		return false;
 
 	if (det<0)
 		alpha = -alpha;
@@ -1389,7 +1408,7 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 	double theta = sa;
 	double ea = sa + delta_theta;
 
-	float step = _get_arc_step(ctx, fminf (rx, ry))*0.1f;
+	float step = fmaxf(0.0001f, fminf(M_PI, _get_arc_step(ctx, fminf (rx, ry))*0.1f));
 
 	p = (vec2) {
 		rx * cosf (theta),
@@ -1530,6 +1549,8 @@ void _fill_non_zero (VkvgContext ctx){
 	double *coordinates_out;
 	int *tris_out;
 	int nverts, ntris;
+
+	LOG(VKVG_LOG_INFO, "glutess: ctx = %p; point cpt = %d;\n", ctx, ctx->pointCount);
 
 	tessellate(&coordinates_out, &nverts,
 			   &tris_out, &ntris,
