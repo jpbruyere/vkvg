@@ -35,7 +35,6 @@ const float DBG_LAB_COLOR_CLIP[4] = {0,1,1,1};
 #endif
 #endif
 
-
 //todo:this could be used to define a default background
 static VkClearValue clearValues[3] = {
 	{ .color.float32 = {0,0,0,0} },
@@ -314,6 +313,7 @@ void vkvg_new_sub_path (VkvgContext ctx){
 	if (ctx->status)
 		return;
 
+	RECORD(ctx, VKVG_CMD_NEW_SUB_PATH);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: new_sub_path:\n");
 
 	_finish_path(ctx);
@@ -322,6 +322,7 @@ void vkvg_new_path (VkvgContext ctx){
 	if (ctx->status)
 		return;
 
+	RECORD(ctx, VKVG_CMD_NEW_PATH);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: new_path:\n");
 
 	_clear_path(ctx);
@@ -330,6 +331,7 @@ void vkvg_close_path (VkvgContext ctx){
 	if (ctx->status)
 		return;
 
+	RECORD(ctx, VKVG_CMD_CLOSE_PATH);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: close_path:\n");
 
 	if (ctx->pathes[ctx->pathPtr] & PATH_CLOSED_BIT) //already closed
@@ -350,24 +352,7 @@ void vkvg_close_path (VkvgContext ctx){
 
 	_finish_path(ctx);
 }
-void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy){
-	if (ctx->status)
-		return;
-
-	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_line_to:\n");
-
-	if (_current_path_is_empty(ctx))
-		_add_point(ctx, 0, 0);
-	vec2 cp = _get_current_position(ctx);
-	vkvg_line_to(ctx, cp.x + dx, cp.y + dy);
-}
-void vkvg_line_to (VkvgContext ctx, float x, float y)
-{
-	if (ctx->status)
-		return;
-
-	LOG(VKVG_LOG_INFO_CMD, "\tCMD: line_to:\n");
-
+void _line_to (VkvgContext ctx, float x, float y) {
 	vec2 p = {x,y};
 	if (!_current_path_is_empty (ctx)){
 		//prevent adding the same point
@@ -376,10 +361,32 @@ void vkvg_line_to (VkvgContext ctx, float x, float y)
 	}
 	_add_point (ctx, x, y);
 }
+void vkvg_rel_line_to (VkvgContext ctx, float dx, float dy){
+	if (ctx->status)
+		return;
+
+	RECORD(ctx, VKVG_CMD_REL_LINE_TO, dx, dy);
+	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_line_to:\n");
+
+	if (_current_path_is_empty(ctx))
+		_add_point(ctx, 0, 0);
+	vec2 cp = _get_current_position(ctx);
+	_line_to(ctx, cp.x + dx, cp.y + dy);
+}
+void vkvg_line_to (VkvgContext ctx, float x, float y)
+{
+	if (ctx->status)
+		return;
+
+	RECORD(ctx, VKVG_CMD_LINE_TO, x, y);
+	LOG(VKVG_LOG_INFO_CMD, "\tCMD: line_to:\n");
+	_line_to(ctx, x, y);
+}
 void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2){
 	if (ctx->status)
 		return;
 
+	RECORD(ctx, VKVG_CMD_ARC, xc, yc, radius, a1, a2);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: arc:\n");
 
 	while (a2 < a1)//positive arc must have a1<a2
@@ -429,6 +436,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_ARC_NEG, xc, yc, radius, a1, a2);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: arc_neg:\n");
 	while (a2 > a1)
 		a2 -= 2.f*M_PIF;
@@ -478,6 +486,7 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_REL_MOVE_TO, x, y);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_mote_to:\n");
 	if (_current_path_is_empty(ctx))
 		_add_point(ctx, 0, 0);
@@ -488,6 +497,7 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_MOVE_TO, x, y);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: move_to:\n");
 	_finish_path(ctx);
 	_add_point (ctx, x, y);
@@ -504,6 +514,7 @@ void vkvg_get_current_point (VkvgContext ctx, float* x, float* y) {
 void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_REL_QUADRATIC_TO, x1, y1, x2, y2);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_quadratic_to:\n");
 	vec2 cp = _get_current_position(ctx);
 	vkvg_quadratic_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2);
@@ -512,6 +523,7 @@ const double quadraticFact = 2.0/3.0;
 void vkvg_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_QUADRATIC_TO, x1, y1, x2, y2);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: quadratic_to:\n");
 
 	float x0, y0;
@@ -530,6 +542,7 @@ void vkvg_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2)
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_CURVE_TO, x1, y1, x2, y2, x3, y3);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: curve_to:\n");
 	//prevent running _recursive_bezier when all 4 curve points are equal
 	if (EQUF(x1,x2) && EQUF(x2,x3) && EQUF(y1,y2) && EQUF(y2,y3)) {
@@ -557,6 +570,7 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_REL_CURVE_TO, x1, y1, x2, y2, x3, y3);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_curve_to:\n");
 	vec2 cp = _get_current_position(ctx);
 	vkvg_curve_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
@@ -572,6 +586,7 @@ void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 vkvg_status_t vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	if (ctx->status)
 		return ctx->status;
+	RECORD(ctx, VKVG_CMD_RECTANGLE, x, y, w, h);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rectangle:\n");
 	_finish_path (ctx);
 
@@ -632,6 +647,20 @@ void vkvg_rounded_rectangle2 (VkvgContext ctx, float x, float y, float w, float 
 
 	vkvg_close_path(ctx);
 }
+void vkvg_path_extents (VkvgContext ctx, float *x1, float *y1, float *x2, float *y2) {
+	if (ctx->status)
+		return;
+
+	_finish_path(ctx);
+
+	if (!ctx->pathPtr) {//no path
+		*x1 = *x2 = *y1 = *y2 = 0;
+		return;
+	}
+
+	_vkvg_path_extents(ctx, false, x1, y1, x2, y2);
+}
+
 
 static const VkClearAttachment clearStencil		   = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {{{0}}}};
 static const VkClearAttachment clearColorAttach	   = {VK_IMAGE_ASPECT_COLOR_BIT,   0, {{{0}}}};
@@ -653,6 +682,7 @@ void vkvg_reset_clip (VkvgContext ctx){
 void vkvg_clear (VkvgContext ctx){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_CLEAR);
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
 		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearAll;
@@ -662,24 +692,7 @@ void vkvg_clear (VkvgContext ctx){
 	VkClearAttachment ca[2] = {clearColorAttach, clearStencil};
 	vkCmdClearAttachments(ctx->cmd, 2, ca, 1, &ctx->clearRect);
 }
-
-void vkvg_clip (VkvgContext ctx){
-	vkvg_clip_preserve(ctx);
-	_clear_path(ctx);
-}
-void vkvg_stroke (VkvgContext ctx)
-{
-	vkvg_stroke_preserve(ctx);
-	_clear_path(ctx);
-}
-void vkvg_fill (VkvgContext ctx){
-	vkvg_fill_preserve(ctx);
-	_clear_path(ctx);
-}
-void vkvg_clip_preserve (VkvgContext ctx){
-	if (ctx->status)
-		return;
-
+void _clip_preserve (VkvgContext ctx){
 	_finish_path(ctx);
 
 	if (!ctx->pathPtr)//nothing to clip
@@ -719,25 +732,7 @@ void vkvg_clip_preserve (VkvgContext ctx){
 	vkh_cmd_label_end (ctx->cmd);
 #endif
 }
-
-
-void vkvg_path_extents (VkvgContext ctx, float *x1, float *y1, float *x2, float *y2) {
-	if (ctx->status)
-		return;
-
-	_finish_path(ctx);
-
-	if (!ctx->pathPtr) {//no path
-		*x1 = *x2 = *y1 = *y2 = 0;
-		return;
-	}
-
-	_vkvg_path_extents(ctx, false, x1, y1, x2, y2);
-}
-void vkvg_fill_preserve (VkvgContext ctx){
-	if (ctx->status)
-		return;
-
+void _fill_preserve (VkvgContext ctx){
 	_finish_path(ctx);
 
 	if (!ctx->pathPtr)//nothing to fill
@@ -763,12 +758,8 @@ void vkvg_fill_preserve (VkvgContext ctx){
 		_ensure_renderpass_is_started(ctx);
 	_fill_non_zero(ctx);
 }
-
-void vkvg_stroke_preserve (VkvgContext ctx)
+void _stroke_preserve (VkvgContext ctx)
 {
-	if (ctx->status)
-		return;
-
 	_finish_path(ctx);
 
 	if (!ctx->pathPtr)//nothing to stroke
@@ -889,10 +880,52 @@ void vkvg_stroke_preserve (VkvgContext ctx)
 	}
 
 }
+
+void vkvg_clip (VkvgContext ctx){
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_CLIP);
+	_clip_preserve(ctx);
+	_clear_path(ctx);
+}
+void vkvg_stroke (VkvgContext ctx)
+{
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_STROKE);
+	_stroke_preserve(ctx);
+	_clear_path(ctx);
+}
+void vkvg_fill (VkvgContext ctx){
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_FILL);
+	_fill_preserve(ctx);
+	_clear_path(ctx);
+}
+void vkvg_clip_preserve (VkvgContext ctx) {
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_CLIP_PRESERVE);
+	_clip_preserve (ctx);
+}
+void vkvg_fill_preserve (VkvgContext ctx) {
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_FILL_PRESERVE);
+	_fill_preserve (ctx);
+}
+void vkvg_stroke_preserve (VkvgContext ctx) {
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_STROKE_PRESERVE);
+	_stroke_preserve (ctx);
+}
+
 void vkvg_paint (VkvgContext ctx){
 	if (ctx->status)
 		return;
-
+	RECORD(ctx, VKVG_CMD_PAINT);
 	_finish_path (ctx);
 
 	if (ctx->pathPtr) {
@@ -910,18 +943,24 @@ void vkvg_set_source_color (VkvgContext ctx, uint32_t c) {
 	_update_cur_pattern (ctx, NULL);
 }
 void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
-	vkvg_set_source_rgba (ctx, r, g, b, 1);
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_SET_SOURCE_RGB, r, g, b);
+	ctx->curColor = CreateRgbaf(r,g,b,1);
+	_update_cur_pattern (ctx, NULL);
 }
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SET_SOURCE_RGBA, r, g, b, a);
 	ctx->curColor = CreateRgbaf(r,g,b,a);
 	_update_cur_pattern (ctx, NULL);
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SET_SOURCE_SURFACE, x, y, surf);
 	ctx->pushConsts.source.x = x;
 	ctx->pushConsts.source.y = y;
 	_update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
@@ -930,21 +969,26 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SET_SOURCE, pat);
 	_update_cur_pattern (ctx, pat);
 	vkvg_pattern_reference	(pat);
 }
 void vkvg_set_line_width (VkvgContext ctx, float width){
+	RECORD(ctx, VKVG_CMD_SET_LINE_WIDTH, width);
 	ctx->lineWidth = width;
 }
 void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap){
+	RECORD(ctx, VKVG_CMD_SET_LINE_CAP, cap);
 	ctx->lineCap = cap;
 }
 void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join){
+	RECORD(ctx, VKVG_CMD_SET_LINE_JOIN, join);
 	ctx->lineJoin = join;
 }
 void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SET_OPERATOR, op);
 	if (op == ctx->curOperator)
 		return;
 
@@ -957,6 +1001,7 @@ void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op){
 }
 void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr){
 #ifndef __APPLE__
+	RECORD(ctx, VKVG_CMD_SET_FILL_RULE, fr);
 	ctx->curFillRule = fr;
 #endif
 }
@@ -971,6 +1016,7 @@ void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, f
 		return;
 	if (ctx->dashCount > 0)
 		free (ctx->dashes);
+	RECORD(ctx, VKVG_CMD_SET_DASH, num_dashes, offset, dashes);
 	ctx->dashCount = num_dashes;
 	ctx->dashOffset = offset;
 	if (ctx->dashCount == 0)
@@ -1004,17 +1050,20 @@ VkvgPattern vkvg_get_source (VkvgContext ctx){
 void vkvg_select_font_face (VkvgContext ctx, const char* name){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SET_FONT_FACE, name);
 	_select_font_face (ctx, name);
 }
 void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char* name){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
 	_add_new_font_identity(ctx, path, name);
 	_select_font_face (ctx, name);
 }
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SET_FONT_SIZE, size);
 #ifdef VKVG_USE_FREETYPE
 	long newSize = size << 6;
 #else
@@ -1034,6 +1083,7 @@ void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
 void vkvg_show_text (VkvgContext ctx, const char* text){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SHOW_TEXT, text);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text:\n");
 	//_ensure_renderpass_is_started(ctx);
 	_show_text (ctx, text);
@@ -1074,6 +1124,7 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 void vkvg_save (VkvgContext ctx){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SAVE);
 	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
 	_flush_cmd_buff (ctx);
@@ -1185,6 +1236,7 @@ void vkvg_save (VkvgContext ctx){
 void vkvg_restore (VkvgContext ctx){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_RESTORE);
 
 	if (ctx->pSavedCtxs == NULL){
 		ctx->status = VKVG_STATUS_INVALID_RESTORE;
@@ -1301,6 +1353,7 @@ void vkvg_restore (VkvgContext ctx){
 void vkvg_translate (VkvgContext ctx, float dx, float dy){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_TRANSLATE, dx, dy);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: translate:\n");
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_translate (&ctx->pushConsts.mat, dx, dy);
@@ -1309,6 +1362,7 @@ void vkvg_translate (VkvgContext ctx, float dx, float dy){
 void vkvg_scale (VkvgContext ctx, float sx, float sy){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SCALE, sx, sy);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: scale:\n");
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_scale (&ctx->pushConsts.mat, sx, sy);
@@ -1317,6 +1371,7 @@ void vkvg_scale (VkvgContext ctx, float sx, float sy){
 void vkvg_rotate (VkvgContext ctx, float radians){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_ROTATE, radians);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: rotate:\n");
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_rotate (&ctx->pushConsts.mat, radians);
@@ -1325,6 +1380,7 @@ void vkvg_rotate (VkvgContext ctx, float radians){
 void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix) {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_TRANSFORM, matrix);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: transform:\n");
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_t res;
@@ -1335,6 +1391,7 @@ void vkvg_transform (VkvgContext ctx, const vkvg_matrix_t* matrix) {
 void vkvg_identity_matrix (VkvgContext ctx) {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_IDENTITY_MATRIX);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: identity_matrix:\n");
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	vkvg_matrix_t im = VKVG_IDENTITY_MATRIX;
@@ -1344,6 +1401,7 @@ void vkvg_identity_matrix (VkvgContext ctx) {
 void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SET_MATRIX, matrix);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: set_matrix:\n");
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	ctx->pushConsts.mat = (*matrix);
@@ -1353,22 +1411,24 @@ void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
 	memcpy ((void*)matrix, &ctx->pushConsts.mat, sizeof(vkvg_matrix_t));
 }
 
-void vkvg_elliptic_arc_to (VkvgContext ctx, float x2, float y2, bool largeArc, bool counterClockWise, float rx, float ry, float phi) {
+void vkvg_elliptic_arc_to (VkvgContext ctx, float x2, float y2, bool largeArc, bool sweepFlag, float rx, float ry, float phi) {
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_ELLIPTICAL_ARC_TO, x2, y2, rx, ry, phi, largeArc, sweepFlag);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: elliptic_arc_to:\n");
 	float x1, y1;
 	vkvg_get_current_point(ctx, &x1, &y1);
-	_elliptic_arc(ctx, x1, y1, x2, y2, largeArc, counterClockWise, rx, ry, phi);
+	_elliptic_arc(ctx, x1, y1, x2, y2, largeArc, sweepFlag, rx, ry, phi);
 }
-void vkvg_rel_elliptic_arc_to (VkvgContext ctx, float x2, float y2, bool largeArc, bool counterClockWise, float rx, float ry, float phi) {
+void vkvg_rel_elliptic_arc_to (VkvgContext ctx, float x2, float y2, bool largeArc, bool sweepFlag, float rx, float ry, float phi) {
 	if (ctx->status)
 		return;
-	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_elliptic_arc_to: x2:%10.5f y2:%10.5f large:%d sweep:%d rx:%10.5f ry:%10.5f phi:%10.5f \n", x2,y2,largeArc,counterClockWise,rx,ry,phi);
+	RECORD(ctx, VKVG_CMD_REL_ELLIPTICAL_ARC_TO, x2, y2, rx, ry, phi, largeArc, sweepFlag);
+	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_elliptic_arc_to: x2:%10.5f y2:%10.5f large:%d sweep:%d rx:%10.5f ry:%10.5f phi:%10.5f \n", x2,y2,largeArc,sweepFlag,rx,ry,phi);
 
 	float x1, y1;
 	vkvg_get_current_point(ctx, &x1, &y1);
-	_elliptic_arc(ctx, x1, y1, x2+x1, y2+y1, largeArc, counterClockWise, rx, ry, phi);
+	_elliptic_arc(ctx, x1, y1, x2+x1, y2+y1, largeArc, sweepFlag, rx, ry, phi);
 }
 
 void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float y, float rotationAngle) {

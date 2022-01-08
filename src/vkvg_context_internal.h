@@ -28,6 +28,12 @@
 #include "vkh.h"
 #include "vkvg_fonts.h"
 
+#if VKVG_RECORDING
+#include "vkvg_record_internal.h"
+#else
+#define RECORD(ctx,cmd,...)
+#endif
+
 #define VKVG_PTS_SIZE				1024
 #define VKVG_VBO_SIZE				(VKVG_PTS_SIZE * 4)
 #define VKVG_IBO_SIZE				(VKVG_VBO_SIZE * 6)
@@ -129,6 +135,10 @@ typedef struct _vkvg_context_t {
 	void (*vertex_cb)(VKVG_IBO_INDEX_TYPE, VkvgContext);//tesselator vertex callback
 	VKVG_IBO_INDEX_TYPE tesselator_fan_start;
 	uint32_t tesselator_idx_counter;
+#endif
+
+#if VKVG_RECORDING
+	vkvg_recording_t*	recording;
 #endif
 
 	vkvg_buff	uboGrad;		//uniform buff obj holdings gradient infos

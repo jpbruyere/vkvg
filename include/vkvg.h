@@ -1748,6 +1748,19 @@ void vkvg_set_source_color_name (VkvgContext ctx, const char* color);
 
 /*************************************/
 
+#ifdef VKVG_RECORDING
+typedef struct _vkvg_recording_t* VkvgRecording;
+
+vkvg_public
+void			vkvg_start_recording	(VkvgContext ctx);
+VkvgRecording	vkvg_stop_recording		(VkvgContext ctx);
+void			vkvg_replay				(VkvgContext ctx, VkvgRecording rec);
+uint32_t		vkvg_recording_get_count(VkvgRecording rec);
+void			vkvg_recording_destroy	(VkvgRecording rec);
+
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
