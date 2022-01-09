@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Configure Vulkan
     - uses: actions/checkout@v2
       with:
         repository: 'krOoze/vk_sdk_lite'
