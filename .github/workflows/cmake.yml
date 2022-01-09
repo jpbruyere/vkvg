@@ -2,21 +2,51 @@ name: CMake
 
 on:
   push:
-    branches: [ worflow_test ]
+    branches: [ '*' ]
   pull_request:
-    branches: [ worflow_test ]
+    branches: [ master ]
+  workflow_dispatch:
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-  VULKAN_SDK: ${{ github.workspace }}/VulkanSDK/x86_64
-  
 jobs:
-  build:
-    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
-    # You can convert this to a matrix build if you need cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  Win_jorb:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_config: ['Debug', 'Release']
+        arch: ['x64', 'Win32']
+    defaults:
+      run:
+        shell: cmd
+    env:
+      VULKAN_SDK: ${{ github.workspace }}\VulkanSDK
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: 'krOoze/vk_sdk_lite'
+        path: ${{ env.VULKAN_SDK }}
+        ref: windows
+        persist-credentials: false
+    - uses: actions/checkout@v2
+      with:
+        path: 'source'
+        persist-credentials: false
+    - run: md source\build
+    - run: cmake -G "Visual Studio 16 2019" -A ${{ matrix.arch }} ..
+      working-directory: source\build
+    - run: cmake --build . --config ${{ matrix.build_config }}
+      working-directory: source\build
+
+  linux_jorb:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_config: ['Debug', 'Release']
+    defaults:
+      run:
+        shell: bash
+    env:
+      VULKAN_SDK: ${{ github.workspace }}/VulkanSDK/x86_64
 
     steps:
     - uses: actions/checkout@v2
@@ -26,19 +56,42 @@ jobs:
         ref: linux
         persist-credentials: false
     - run: echo "${{ env.VULKAN_SDK }}/bin" >> $GITHUB_PATH
+    - run: sudo apt update && sudo apt install xorg-dev
     - uses: actions/checkout@v2
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      with:
+        path: 'source'
+        persist-credentials: false
+    - run: mkdir -p source/build
+    - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} -G "Unix Makefiles" ..
+      working-directory: source/build
+    - run: cmake --build .
+      working-directory: source/build
 
-    - name: Build
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+  mac_jorb:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_config: ['Debug', 'Release']
+    defaults:
+      run:
+        shell: bash
+    env:
+      VULKAN_SDK: ${{ github.workspace }}/VulkanSDK/macOS
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.  
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}}
-      
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: 'krOoze/vk_sdk_lite'
+        path: 'VulkanSDK'
+        ref: macos
+        persist-credentials: false
+    - run: echo "${{ env.VULKAN_SDK }}/bin" >> $GITHUB_PATH
+    - uses: actions/checkout@v2
+      with:
+        path: 'source'
+        persist-credentials: false
+    - run: mkdir -p source/build
+    - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} ..
+      working-directory: source/build
+    - run: cmake --build .
+      working-directory: source/build
