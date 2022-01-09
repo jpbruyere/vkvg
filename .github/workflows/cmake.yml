@@ -34,7 +34,7 @@ jobs:
     - run: md source\build
     - run: cmake -G "Visual Studio 14 2015" -A ${{ matrix.arch }} .. -DVKVG_SVG=false
       working-directory: source\build
-    - run: msbuild vkvg.sln /p:Configuration=${{ matrix.build_config }}
+    - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source\build
 
   linux_jorb:
