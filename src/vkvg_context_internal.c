@@ -1369,7 +1369,15 @@ void _recursive_bezier (VkvgContext ctx, float distanceTolerance,
 	_recursive_bezier (ctx, distanceTolerance,x1234, y1234, x234, y234, x34, y34, x4, y4, level + 1);
 }
 #pragma warning(default:4127)
-
+void _line_to (VkvgContext ctx, float x, float y) {
+	vec2 p = {x,y};
+	if (!_current_path_is_empty (ctx)){
+		//prevent adding the same point
+		if (vec2_equ (_get_current_position (ctx), p))
+			return;
+	}
+	_add_point (ctx, x, y);
+}
 void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, bool largeArc, bool counterClockWise, float _rx, float _ry, float phi) {
 	if (ctx->status)
 		return;
@@ -1457,7 +1465,7 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 		_set_curve_start (ctx);
 		_add_point (ctx, xy.x, xy.y);
 	}else{
-		vkvg_line_to(ctx, xy.x, xy.y);
+		_line_to(ctx, xy.x, xy.y);
 		_set_curve_start (ctx);
 	}
 
