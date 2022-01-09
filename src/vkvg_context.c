@@ -395,7 +395,7 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 		_set_curve_start (ctx);
 		_add_point (ctx, v.x, v.y);
 	}else{
-		vkvg_line_to(ctx, v.x, v.y);
+		_line_to(ctx, v.x, v.y);
 		_set_curve_start (ctx);
 	}
 
@@ -443,7 +443,7 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 		_set_curve_start (ctx);
 		_add_point (ctx, v.x, v.y);
 	}else{
-		vkvg_line_to(ctx, v.x, v.y);
+		_line_to(ctx, v.x, v.y);
 		_set_curve_start (ctx);
 	}
 
