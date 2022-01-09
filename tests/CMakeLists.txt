@@ -57,6 +57,11 @@ file(GLOB TESTS
 	"*.c"
 	"perfs/*.c"
 )
+
+IF (VKVG_SVG)
+	LIST (APPEND TESTS "vkvg-svg/svg-viewer.c")
+ENDIF()
+
 FOREACH(TEST ${TESTS})
 	buildtest(${TEST})
 ENDFOREACH()
