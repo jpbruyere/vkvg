@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Configure Vulkan
     - uses: actions/checkout@v2
       with:
         repository: 'krOoze/vk_sdk_lite'
@@ -26,7 +27,6 @@ jobs:
         ref: linux
         persist-credentials: false
     - run: echo "${{ env.VULKAN_SDK }}/bin" >> $GITHUB_PATH
-    
     - uses: actions/checkout@v2
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
