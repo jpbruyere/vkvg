@@ -32,7 +32,8 @@ TARGET_LINK_LIBRARIES(tests_common
 	PUBLIC
 		${Vulkan_LIBRARIES}
 		${GLFW3_LIBRARY}
-		vkvg
+		$<$<TARGET_EXISTS:vkvg_static>:vkvg_static>
+		$<$<TARGET_EXISTS:vkvg>:vkvg>
 		$<$<BOOL:${VKVG_SVG}>:vkvg-svg>
 )
 
