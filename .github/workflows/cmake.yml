@@ -32,7 +32,7 @@ jobs:
         path: 'source'
         persist-credentials: false
     - run: md source\build
-    - run: cmake -G "Visual Studio 14 2015" -A ${{ matrix.arch }} .. -DVKVG_SVG=false
+    - run: cmake -G "Visual Studio 16 2019" -A ${{ matrix.arch }} .. -DVKVG_SVG=false
       working-directory: source\build
     - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source\build
@@ -64,7 +64,7 @@ jobs:
     - run: mkdir -p source/build
     - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} -G "Unix Makefiles" .. -DVKVG_SVG=false
       working-directory: source/build
-    - run: cmake --build .
+    - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source/build
 
   mac_jorb:
@@ -93,5 +93,5 @@ jobs:
     - run: mkdir -p source/build
     - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} .. -DVKVG_SVG=false
       working-directory: source/build
-    - run: cmake --build .
+    - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source/build
