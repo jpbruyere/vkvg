@@ -68,7 +68,7 @@ extern "C" {
 #include <stdbool.h>
 
 #ifndef vkvg_public
-	#ifndef VKVG_STATIC_BUILD
+	#ifdef VKVG_SHARED_BUILD
 		#if (defined(_WIN32) || defined(_WIN64))
 			#define vkvg_public __declspec(dllimport)
 		#else

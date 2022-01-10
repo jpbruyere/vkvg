@@ -10,31 +10,43 @@ ENDIF ()
 
 FUNCTION (buildtest TEST_FILE)
 	GET_FILENAME_COMPONENT(TEST_NAME ${TEST_FILE} NAME_WE)
-	ADD_EXECUTABLE(${TEST_NAME} ${TEST_FILE})
-	TARGET_LINK_LIBRARIES(${TEST_NAME}
-		tests_common
+	ADD_EXECUTABLE(${TEST_NAME} ${TEST_FILE} $<TARGET_OBJECTS:tests_common>)
+	TARGET_INCLUDE_DIRECTORIES(${TEST_NAME}
+		PRIVATE
+			${Vulkan_INCLUDE_DIRS}
+			${GLFW3_INCLUDE_DIR}
+			"${CMAKE_CURRENT_SOURCE_DIR}/../include"
+			"${CMAKE_CURRENT_SOURCE_DIR}/../src"
+			"${CMAKE_CURRENT_SOURCE_DIR}/common"
+			"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/include"
+			"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/src"
 	)
+	TARGET_LINK_LIBRARIES(${TEST_NAME}
+		PRIVATE
+			${Vulkan_LIBRARIES}
+			${GLFW3_LIBRARY}
+	)
+	IF (TARGET vkvg_static)
+		TARGET_LINK_LIBRARIES(${TEST_NAME} PRIVATE vkvg_static)
+	ELSEIF (TARGET vkvg_shared)
+		TARGET_LINK_LIBRARIES(${TEST_NAME} PRIVATE vkvg_shared)
+	ELSEIF (TARGET vkvg)
+		TARGET_LINK_LIBRARIES(${TEST_NAME} PRIVATE vkvg)
+	ENDIF()
+
 ENDFUNCTION (buildtest)
 
-ADD_LIBRARY("tests_common" STATIC common/vkengine.c common/test.c common/rnd.c)
+ADD_LIBRARY(tests_common OBJECT common/vkengine.c common/test.c common/rnd.c)
 
 TARGET_INCLUDE_DIRECTORIES(tests_common
-	PUBLIC
-		${Vulkan_INCLUDE_DIRS}
-		${GLFW3_INCLUDE_DIR}
-		"${CMAKE_CURRENT_SOURCE_DIR}/../include"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../src"
-		"${CMAKE_CURRENT_SOURCE_DIR}/common"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/include"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/src"
-)
-TARGET_LINK_LIBRARIES(tests_common
-	PUBLIC
-		${Vulkan_LIBRARIES}
-		${GLFW3_LIBRARY}
-		$<$<TARGET_EXISTS:vkvg_static>:vkvg_static>
-		$<$<TARGET_EXISTS:vkvg>:vkvg>
-		$<$<BOOL:${VKVG_SVG}>:vkvg-svg>
+ 	PRIVATE
+ 		${Vulkan_INCLUDE_DIRS}
+ 		${GLFW3_INCLUDE_DIR}
+ 		"${CMAKE_CURRENT_SOURCE_DIR}/../include"
+ 		#"${CMAKE_CURRENT_SOURCE_DIR}/../src"
+ 		"${CMAKE_CURRENT_SOURCE_DIR}/common"
+ 		"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/include"
+ 		"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/src"
 )
 
 file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "data/*")
