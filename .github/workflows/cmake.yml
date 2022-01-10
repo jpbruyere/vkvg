@@ -22,6 +22,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
+    - uses: actions/checkout@v2
       with:
         repository: 'krOoze/vk_sdk_lite'
         path: ${{ env.VULKAN_SDK }}
@@ -32,7 +34,7 @@ jobs:
         path: 'source'
         persist-credentials: false
     - run: md source\build
-    - run: cmake -G "Visual Studio 16 2019" -A ${{ matrix.arch }} .. -DVKVG_SVG=false
+    - run: cmake -G "Visual Studio 16 2019" -A ${{ matrix.arch }} .. -DCMAKE_SYSTEM_VERSION=10.0.18362.0 -DVKVG_SVG=false
       working-directory: source\build
     - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source\build
