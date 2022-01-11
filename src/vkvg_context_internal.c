@@ -711,8 +711,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		ctx->pushConsts.source = bounds;
 
 		//transform control point with current ctx matrix
-		vkvg_gradient_t grad = {0};
-		memcpy (&grad, pat->data, sizeof(vkvg_gradient_t));
+		vkvg_gradient_t grad = *(vkvg_gradient_t*)pat->data;
 
 		if (grad.count < 2) {
 			ctx->status = VKVG_STATUS_PATTERN_INVALID_GRADIENT;

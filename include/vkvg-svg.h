@@ -48,7 +48,7 @@ VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_
  * @return The new vkvg surface with the parsed SVG fragment as content, or null if an error occured.
  */
 vkvg_public
-VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width, uint32_t height, char* svgFragment);
+VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width, uint32_t height, const char* svgFragment);
 
 #ifndef VKVG_SVG
 /*! @defgroup nsvg Nano SVG
