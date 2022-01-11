@@ -63,6 +63,17 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	case GLFW_KEY_ESCAPE :
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 		break;
+#ifdef VKVG_WIRED_DEBUG
+	case GLFW_KEY_F1:
+		vkvg_wired_debug ^= (1U << 0);
+		break;
+	case GLFW_KEY_F2:
+		vkvg_wired_debug ^= (1U << 1);
+		break;
+	case GLFW_KEY_F3:
+		vkvg_wired_debug ^= (1U << 2);
+		break;
+#endif
 	}
 }
 static void char_callback (GLFWwindow* window, uint32_t c){}

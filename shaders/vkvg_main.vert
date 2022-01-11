@@ -77,5 +77,5 @@ void main()
 	);
 
 	gl_Position = vec4(p * vec2(2) / pc.size - vec2(1), 0.0, 1.0);
-	gl_PointSize = 3;
+	gl_PointSize = 1;
 }

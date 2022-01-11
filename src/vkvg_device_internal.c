@@ -29,6 +29,9 @@
 #include "shaders.h"
 
 uint32_t vkvg_log_level = VKVG_LOG_DEBUG;
+#ifdef VKVG_WIRED_DEBUG
+vkvg_wired_debug_mode vkvg_wired_debug = vkvg_wired_debug_mode_normal;
+#endif
 
 PFN_vkCmdBindPipeline			CmdBindPipeline;
 PFN_vkCmdBindDescriptorSets		CmdBindDescriptorSets;
@@ -370,8 +373,8 @@ void _setupPipelines(VkvgDevice dev)
 
 
 #ifdef VKVG_WIRED_DEBUG
-	rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
-	inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+	rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
+	inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
 
 	createInfo.pCode = (uint32_t*)wired_frag_spv;
@@ -380,7 +383,7 @@ void _setupPipelines(VkvgDevice dev)
 
 	shaderStages[1].module = modFragWired;
 	inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-	rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
+	rasterizationState.polygonMode = VK_POLYGON_MODE_POINT;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineWired));
 	vkDestroyShaderModule(dev->vkDev, modFragWired, NULL);
 #endif

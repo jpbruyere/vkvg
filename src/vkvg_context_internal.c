@@ -219,12 +219,13 @@ float _normalizeAngle(float a)
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
 	float dx = radius, dy = radius;
-	vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &dx, &dy);
+	vkvg_matrix_transform_point (&ctx->pushConsts.mat, &dx, &dy);
 	float r = fabsf(fmaxf(dx,dy));
 	/*if (r < 3.0f)
 		return asinf (1.0f / r) * 0.25f;
 	return asinf (1.0f / r) * 1.5f * sqrtf(r);*/
-	return M_PI / (r * 1.5f);
+	//return fmax(8, M_PI / (r * 1.1f));
+	return fminf(M_PI / 3.f,M_PI / (r * 0.8f));
 }
 void _create_gradient_buff (VkvgContext ctx){
 	vkvg_buffer_create (ctx->pSurf->dev,
@@ -491,12 +492,21 @@ void _emit_draw_cmd_undrawn_vertices (VkvgContext ctx){
 
 	_ensure_renderpass_is_started(ctx);
 
-	CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
-
 #ifdef VKVG_WIRED_DEBUG
-	CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
+	if (vkvg_wired_debug&vkvg_wired_debug_mode_normal)
+		CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
+	if (vkvg_wired_debug&vkvg_wired_debug_mode_lines) {
+		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLineList);
+		CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
+	}
+	if (vkvg_wired_debug&vkvg_wired_debug_mode_points) {
+		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineWired);
+		CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
+	}
+	if (vkvg_wired_debug&vkvg_wired_debug_mode_both)
+		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+#else
 	CmdDrawIndexed(ctx->cmd, ctx->indCount - ctx->curIndStart, 1, ctx->curIndStart, (int32_t)ctx->curVertOffset, 0);
-	//CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
 #endif
 	LOG(VKVG_LOG_INFO, "RECORD DRAW CMD: ctx = %p; vertices = %d; indices = %d (vxOff = %d idxStart = %d idxTot = %d )\n",
 		ctx, ctx->vertCount - ctx->curVertOffset,
