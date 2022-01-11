@@ -29,6 +29,7 @@
 #include "stb_image_write.h"
 #include "vkh_image.h"
 
+#define max(x,y)
 void vkvg_surface_clear (VkvgSurface surf) {
 	_clear_surface(surf, VK_IMAGE_ASPECT_STENCIL_BIT|VK_IMAGE_ASPECT_COLOR_BIT);
 }
@@ -37,8 +38,8 @@ VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height
 	if (!surf)
 		return NULL;
 
-	surf->width = width;
-	surf->height = height;
+	surf->width = MAX(1, width);
+	surf->height = MAX(1, height);
 	surf->new = true;//used to clear all attacments on first render pass
 
 	_create_surface_images (surf);
@@ -77,8 +78,8 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 	if (!surf)
 		return NULL;
 
-	surf->width = width;
-	surf->height = height;
+	surf->width = MAX(1, width);
+	surf->height = MAX(1, height);
 
 	_create_surface_images (surf);
 

@@ -61,6 +61,12 @@
 #define ROUND_DOWN(v,p) (floorf(v * p) / p)
 #define EQUF(a, b) (fabsf(a-b)<=FLT_EPSILON)
 
+#ifndef MAX
+	#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#endif
+#ifndef MIN
+	#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#endif
 
 #include "cross_os.h"
 #include "cross_mutex.h"
