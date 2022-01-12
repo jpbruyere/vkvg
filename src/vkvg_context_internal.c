@@ -1453,7 +1453,7 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 	double theta = sa;
 	double ea = sa + delta_theta;
 
-	float step = fmaxf(0.0001f, fminf(M_PI, _get_arc_step(ctx, fminf (rx, ry))*0.1f));
+	float step = fmaxf(0.001f, fminf(M_PI, _get_arc_step(ctx, fminf (rx, ry))*0.1f));
 
 	p = (vec2) {
 		rx * cosf (theta),
