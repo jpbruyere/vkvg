@@ -1746,17 +1746,26 @@ void vkvg_pattern_get_matrix (VkvgPattern pat, vkvg_matrix_t* matrix);
 vkvg_public
 void vkvg_set_source_color_name (VkvgContext ctx, const char* color);
 
-/*************************************/
-
 #ifdef VKVG_RECORDING
 typedef struct _vkvg_recording_t* VkvgRecording;
 
 vkvg_public
 void			vkvg_start_recording	(VkvgContext ctx);
+vkvg_public
 VkvgRecording	vkvg_stop_recording		(VkvgContext ctx);
+vkvg_public
 void			vkvg_replay				(VkvgContext ctx, VkvgRecording rec);
+vkvg_public
+void			vkvg_replay_command		(VkvgContext ctx, VkvgRecording rec, uint32_t cmdIndex);
+vkvg_public
+void			vkvg_recording_get_command (VkvgRecording rec, uint32_t cmdIndex, uint32_t* cmd, void** dataOffset);
+vkvg_public
 uint32_t		vkvg_recording_get_count(VkvgRecording rec);
+vkvg_public
+void*			vkvg_recording_get_data (VkvgRecording rec);
+vkvg_public
 void			vkvg_recording_destroy	(VkvgRecording rec);
+/*************************************/
 
 
 #endif

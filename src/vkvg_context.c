@@ -207,6 +207,11 @@ void vkvg_destroy (VkvgContext ctx)
 
 	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
 
+#if VKVG_RECORDING
+	if (ctx->recording)
+		_destroy_recording(ctx->recording);
+#endif
+
 	if (ctx->pattern)
 		vkvg_pattern_destroy (ctx->pattern);
 
@@ -322,10 +327,10 @@ void vkvg_new_path (VkvgContext ctx){
 	if (ctx->status)
 		return;
 
-	RECORD(ctx, VKVG_CMD_NEW_PATH);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: new_path:\n");
 
 	_clear_path(ctx);
+	RECORD(ctx, VKVG_CMD_NEW_PATH);
 }
 void vkvg_close_path (VkvgContext ctx){
 	if (ctx->status)
@@ -665,6 +670,7 @@ static const VkClearAttachment clearColorAttach	   = {VK_IMAGE_ASPECT_COLOR_BIT,
 void vkvg_reset_clip (VkvgContext ctx){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_RESET_CLIP);
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
 		//if command buffer is not already started and in a renderpass, we use the renderpass

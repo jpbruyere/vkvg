@@ -51,7 +51,7 @@ VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
 	_create_surface_images (surf);
 
 	VkvgContext ctx = vkvg_create(surf);
-	vkvg_render_svg(ctx, svg, NULL);
+	vkvg_svg_render(svg, ctx, NULL);
 	vkvg_destroy(ctx);
 
 	nsvgDelete(svg);
@@ -65,24 +65,24 @@ VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
 VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, uint32_t width, uint32_t height, const char* filePath) {
 	return _svg_load(dev, nsvgParseFromFile(filePath, "px", (float)dev->hdpi));
 }
-VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, uint32_t width, uint32_t height, char* fragment) {
+VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, uint32_t width, uint32_t height,const char* fragment) {
 	return _svg_load(dev, nsvgParse(fragment, "px", (float)dev->hdpi));
 }
-NSVGimage* nsvg_load_file (VkvgDevice dev, const char* filePath) {
-	return nsvgParseFromFile(filePath, "px", (float)dev->hdpi);
+VkvgSvg vkvg_svg_load (const char* svgFilePath) {
+	return nsvgParseFromFile(svgFilePath, "px", 96.0f);
 }
-NSVGimage* nsvg_load (VkvgDevice dev, char* fragment) {
-	return nsvgParse (fragment, "px", (float)dev->hdpi);
+VkvgSvg vkvg_svg_load_fragment (const char* svgFragment) {
+	return nsvgParse (svgFragment, "px", 96.0f);
 }
-void nsvg_destroy (NSVGimage* svg) {
+void vkvg_svg_destroy (VkvgSvg svg) {
 	nsvgDelete(svg);
 }
-void nsvg_get_size (NSVGimage* svg, int* width, int* height) {
-	*width = (int)svg->width;
-	*height = (int)svg->height;
+void vkvg_svg_get_dimensions (VkvgSvg svg, uint32_t* width, uint32_t* height) {
+	*width = (uint32_t)svg->width;
+	*height = (uint32_t)svg->height;
 }
 
-void vkvg_render_svg (VkvgContext ctx, NSVGimage* svg, char *subId){
+void vkvg_svg_render (VkvgSvg svg, VkvgContext ctx, const char* subId){
 	NSVGshape* shape;
 	NSVGpath* path;
 	vkvg_save (ctx);

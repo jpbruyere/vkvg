@@ -80,7 +80,8 @@
 #define VKVG_CMD_FILL				(0x0002|VKVG_CMD_DRAW_COMMANDS)
 #define VKVG_CMD_STROKE				(0x0003|VKVG_CMD_DRAW_COMMANDS)
 #define VKVG_CMD_CLIP				(0x0004|VKVG_CMD_DRAW_COMMANDS)
-#define VKVG_CMD_CLEAR				(0x0005|VKVG_CMD_DRAW_COMMANDS)
+#define VKVG_CMD_RESET_CLIP			(0x0005|VKVG_CMD_DRAW_COMMANDS)
+#define VKVG_CMD_CLEAR				(0x0006|VKVG_CMD_DRAW_COMMANDS)
 
 #define VKVG_CMD_FILL_PRESERVE		(VKVG_CMD_FILL	|VKVG_CMD_PRESERVE_COMMANDS)
 #define VKVG_CMD_STROKE_PRESERVE	(VKVG_CMD_STROKE	|VKVG_CMD_PRESERVE_COMMANDS)
@@ -118,6 +119,7 @@ void				_record				(vkvg_recording_t* rec,...);
 #define RECORD(ctx,...) {\
 	if (ctx->recording)	{\
 		_record (ctx->recording,__VA_ARGS__);\
+		return;\
 	}\
 }
 

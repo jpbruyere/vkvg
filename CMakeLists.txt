@@ -57,17 +57,15 @@ ENDIF()
 OPTION(ENABLE_PROFILING "compile with the -pg options..." OFF)
 
 IF (ENABLE_PROFILING)
-	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-pg -fno-reorder-functions -fno-inline")
-	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-O1")
-	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-fthread-jumps")
-	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-falign-functions  -falign-jumps")
-	ADD_DEFINITIONS(${CMAKE_CXX_FLAGS} "-falign-loops  -falign-labels")
+	ADD_COMPILE_OPTIONS(
+		-pg -fno-reorder-functions -fno-inline
+		-O1
+		-fthread-jumps
+		-falign-functions  -falign-jumps
+		-falign-loops  -falign-labels)
 ENDIF()
 
 OPTION(VKVG_RECORDING "enable experimental recording functions" ON)
-IF (VKVG_RECORDING)
-	ADD_DEFINITIONS (-DVKVG_RECORDING)
-ENDIF ()
 
 OPTION(VKVG_PREMULT_ALPHA "use premultiplied alpha for internal rendering" ON)
 IF (VKVG_PREMULT_ALPHA)
@@ -80,19 +78,13 @@ IF (VKVG_DBG_STATS)
 ENDIF ()
 
 OPTION(VKVG_USE_GLUTESS "Fill non-zero with glu tesselator" OFF)
-IF (VKVG_USE_GLUTESS)
-	ADD_DEFINITIONS (-DVKVG_FILL_NZ_GLUTESS)
-ENDIF ()
 
 CMAKE_DEPENDENT_OPTION(VKVG_SVG "render svg with vkvg-svg library" ON "UNIX" OFF)
-IF (VKVG_SVG)
-	ADD_DEFINITIONS (-DVKVG_SVG)
-ENDIF ()
 
 INCLUDE ("${CMAKE_CURRENT_SOURCE_DIR}/cmake/GitSubmoduleUpdate.cmake")
 
 IF(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-	OPTION(GIT_SUBMODULE "Check submodules during build" ON)
+	OPTION(GIT_SUBMODULE "Check submodules during build" OFF)
 	IF(GIT_SUBMODULE)
 		updateGitSubmodule(vkh)
 		IF (VKVG_USE_GLUTESS)
@@ -204,6 +196,7 @@ IF(GLSLC AND XXD)
 ENDIF()
 
 IF (VKVG_USE_GLUTESS)
+	ADD_DEFINITIONS (-DVKVG_FILL_NZ_GLUTESS)
 	ADD_SUBDIRECTORY (external/glutess)
 ENDIF ()
 
@@ -211,6 +204,7 @@ FILE(GLOB VKVG_OBJ_SRC src/*.c)
 SET (VKVG_PUBLIC_HEADERS "include/vkvg.h")
 
 IF (VKVG_SVG)
+	ADD_DEFINITIONS (-DVKVG_SVG)
 	ADD_SUBDIRECTORY (external/vkvg-svg)
 	LIST (APPEND VKVG_SRC $<TARGET_OBJECTS:vkvg-svg>)
 ELSE()
@@ -220,8 +214,9 @@ ELSE()
 ENDIF()
 
 IF (VKVG_RECORDING)
+	ADD_DEFINITIONS (-DVKVG_RECORDING)
 	FILE(GLOB RECORDING_SRC src/recording/*.c)
-	LIST (APPEND VKVG_SRC ${RECORDING_SRC})
+	LIST (APPEND VKVG_OBJ_SRC ${RECORDING_SRC})
 ENDIF()
 
 CONFIGURE_FILE(vkvg.pc.in vkvg.pc @ONLY)
@@ -247,7 +242,6 @@ FUNCTION (setup_lib LibName)
 			$<$<BOOL:${VKVG_USE_HARFBUZZ}>:${HarfBuzz_INCLUDE_DIRS}>
 			$<$<BOOL:${VKVG_USE_FONTCONFIG}>:${Fontconfig_INCLUDE_DIRS}>
 			$<$<NOT:$<BOOL:${VKVG_SVG}>>:${CMAKE_CURRENT_SOURCE_DIR}/src/nsvg>
-			$<$<BOOL:${VKVG_RECORDING}>:${CMAKE_CURRENT_SOURCE_DIR}/src/recording>
 		PUBLIC
 			${Vulkan_INCLUDE_DIRS}
 			${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -295,7 +289,6 @@ TARGET_INCLUDE_DIRECTORIES("${PROJECT_NAME}_obj"
 		$<$<BOOL:${VKVG_USE_HARFBUZZ}>:${HarfBuzz_INCLUDE_DIRS}>
 		$<$<BOOL:${VKVG_USE_FONTCONFIG}>:${Fontconfig_INCLUDE_DIRS}>
 		$<$<NOT:$<BOOL:${VKVG_SVG}>>:${CMAKE_CURRENT_SOURCE_DIR}/src/nsvg>
-		$<$<BOOL:${VKVG_RECORDING}>:${CMAKE_CURRENT_SOURCE_DIR}/src/recording>
 		$<$<BOOL:${VKVG_USE_GLUTESS}>:${CMAKE_CURRENT_SOURCE_DIR}/external/glutess/include>
 	PUBLIC
 		${Vulkan_INCLUDE_DIRS}
