@@ -4,6 +4,8 @@
 
 static float rotation = 0.f;
 static const char* path = "data/tiger.svg";
+static const char* svgSubPath = "data/checkbox.svg";
+
 
 void svg_surface() {
 	VkvgSurface svgSurf = vkvg_surface_create_from_svg (device, test_width, test_height, path);
@@ -31,11 +33,26 @@ void vkvg_svg () {
 	vkvg_destroy(ctx);
 	vkvg_svg_destroy (svg);
 }
+void vkvg_svg_sub () {
+	VkvgSvg svg = vkvg_svg_load (svgSubPath);
+	uint32_t w, h;
+	vkvg_svg_get_dimensions(svg, &w, &h);
+	VkvgContext ctx = _initCtx(surf);
+	vkvg_clear(ctx);
+
+	vkvg_svg_render (svg, ctx, "True");
+	vkvg_translate(ctx, 200, 0);
+	vkvg_svg_render (svg, ctx, "False");
+
+	vkvg_destroy(ctx);
+	vkvg_svg_destroy (svg);
+}
 
 int main(int argc, char *argv[]) {
 	no_test_size = true;
 
 	PERFORM_TEST (svg_surface, argc, argv);
 	PERFORM_TEST (vkvg_svg, argc, argv);
+	PERFORM_TEST (vkvg_svg_sub, argc, argv);
 	return 0;
 }
