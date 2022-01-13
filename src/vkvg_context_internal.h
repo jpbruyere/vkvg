@@ -80,6 +80,13 @@ typedef struct {
 	vkvg_matrix_t	matInv;
 }push_constants;
 
+typedef enum {
+	vkvg_clip_state_none		= 0x00,
+	vkvg_clip_state_clear		= 0x01,
+	vkvg_clip_state_clip		= 0x02,
+	vkvg_clip_state_clip_saved	= 0x06,
+} vkvg_clip_state_t;
+
 typedef struct _vkvg_context_save_t{
 	struct _vkvg_context_save_t* pNext;
 
@@ -100,8 +107,9 @@ typedef struct _vkvg_context_save_t{
 	_vkvg_font_identity_t*		 currentFont;	   //font ready for lookup
 	vkvg_direction_t	textDirection;
 	push_constants		pushConsts;
+	uint32_t			curColor;
 	VkvgPattern			pattern;
-	bool				clippingState;	//true if previous clipping region as been saved
+	vkvg_clip_state_t	clippingState;
 
 }vkvg_context_save_t;
 
@@ -198,10 +206,10 @@ typedef struct _vkvg_context_t {
 	vkvg_context_save_t* pSavedCtxs;		//last ctx saved ptr
 	uint8_t				curSavBit;			//current stencil bit used to save context, 6 bits used by stencil for save/restore
 	VkhImage*			savedStencils;		//additional image for saving contexes once more than 6 save/restore are reached
+	vkvg_clip_state_t	curClipState;		//current clipping status relative to the previous saved one or clear state if none.
 
 	VkClearRect			clearRect;
 	VkRenderPassBeginInfo renderPassBeginInfo;
-	bool				isClipped;			//true if clipped since the last clip reset or last save
 }vkvg_context;
 
 typedef struct _ear_clip_point{
