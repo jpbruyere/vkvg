@@ -207,13 +207,18 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 		.fillModeNonSolid = true,
 		//.sampleRateShading = true
 	};
+	VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+		.scalarBlockLayout = true
+	};
 
 	VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 									   .queueCreateInfoCount = qCount,
 									   .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
 									   .enabledExtensionCount = enabledExtsCount,
 									   .ppEnabledExtensionNames = enabledExts,
-									   .pEnabledFeatures = &enabledFeatures};
+									   .pEnabledFeatures = &enabledFeatures,
+									   .pNext = &enabledFeatures12};
 
 	e->dev = vkh_device_create(e->app, pi, &device_info);
 
