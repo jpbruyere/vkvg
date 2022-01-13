@@ -80,6 +80,17 @@ typedef struct {
 	vkvg_matrix_t	matInv;
 }push_constants;
 
+/* context.curClipState may be one of the following, it's set
+ * with check of the previous saved state:
+ * - none: no clipping operation since the previous state
+ * - clear: current has cleared the clip, or previous state is also clear.
+ * - clip: current have been clipped with a new region since the last save.
+ *
+ * the saved context may have following savedState:
+ * - clear: no clip
+ * - clip: context is clipped, but not at this save/restore level, no stencil is saved at that level
+ * - clip_saved: context is clipped and the clip region is saved at that level.
+ */
 typedef enum {
 	vkvg_clip_state_none		= 0x00,
 	vkvg_clip_state_clear		= 0x01,
