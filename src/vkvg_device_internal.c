@@ -373,18 +373,19 @@ void _setupPipelines(VkvgDevice dev)
 
 
 #ifdef VKVG_WIRED_DEBUG
-	rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
-	inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
-	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
-
 	createInfo.pCode = (uint32_t*)wired_frag_spv;
 	createInfo.codeSize = wired_frag_spv_len;
 	VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFragWired));
 
 	shaderStages[1].module = modFragWired;
+
+	rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
+	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineLineList));
+
 	inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-	rasterizationState.polygonMode = VK_POLYGON_MODE_POINT;
+	rasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipelineWired));
+
 	vkDestroyShaderModule(dev->vkDev, modFragWired, NULL);
 #endif
 

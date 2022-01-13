@@ -218,14 +218,12 @@ float _normalizeAngle(float a)
     return res;
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
-	float dx = radius, dy = radius;
-	vkvg_matrix_transform_point (&ctx->pushConsts.mat, &dx, &dy);
-	float r = fabsf(fmaxf(dx,dy));
-	/*if (r < 3.0f)
-		return asinf (1.0f / r) * 0.25f;
-	return asinf (1.0f / r) * 1.5f * sqrtf(r);*/
-	//return fmax(8, M_PI / (r * 1.1f));
-	return fminf(M_PI / 3.f,M_PI / (r * 0.8f));
+	float sx, sy;
+	vkvg_matrix_get_scale (&ctx->pushConsts.mat, &sx, &sy);
+	float r = radius * fabsf(fmaxf(sx,sy));
+	if (r < 15.0f)
+		return fminf(M_PI / 3.f, M_PI / r);
+	return fminf(M_PI / 3.f,M_PI / (r * 0.4f));
 }
 void _create_gradient_buff (VkvgContext ctx){
 	vkvg_buffer_create (ctx->pSurf->dev,

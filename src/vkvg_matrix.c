@@ -257,3 +257,11 @@ void vkvg_matrix_transform_point (const vkvg_matrix_t *matrix, float *x, float *
 	*x += matrix->x0;
 	*y += matrix->y0;
 }
+void vkvg_matrix_get_scale (const vkvg_matrix_t *matrix, float *sx, float *sy) {
+	*sx = sqrt (matrix->xx * matrix->xx + matrix->xy * matrix->xy);
+	/*if (matrix->xx < 0)
+		*sx = -*sx;*/
+	*sy = sqrt (matrix->yx * matrix->yx + matrix->yy * matrix->yy);
+	/*if (matrix->yy < 0)
+		*sy = -*sy;*/
+}
