@@ -161,9 +161,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
 #endif
 
-	//force run of one renderpass (even empty) to perform clear load op
-	//_start_cmd_for_render_pass(ctx);
-
 	return ctx;
 }
 void vkvg_flush (VkvgContext ctx){

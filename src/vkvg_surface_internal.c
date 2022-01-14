@@ -166,7 +166,7 @@ void _create_surface_images (VkvgSurface surf) {
 	_create_surface_secondary_images(surf);
 	_create_framebuffer				(surf);
 
-	_clear_surface				(surf, VK_IMAGE_ASPECT_STENCIL_BIT);
+	//_clear_surface					(surf, VK_IMAGE_ASPECT_STENCIL_BIT);
 #if defined(DEBUG) && defined(ENABLE_VALIDATION)
 	vkh_image_set_name(surf->img, "surfImg");
 	vkh_image_set_name(surf->imgMS, "surfImgMS");

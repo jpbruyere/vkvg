@@ -170,7 +170,7 @@ typedef struct _vkvg_context_t {
 	uint32_t	indCount;		//current indice count
 
 	uint32_t	curIndStart;	//last index recorded in cmd buff
-	uint32_t	curVertOffset;	//vertex offset in draw indexed command
+	VKVG_IBO_INDEX_TYPE	curVertOffset;	//vertex offset in draw indexed command
 
 	vkvg_buff	vertices;		//vertex buffer with persistent mapped memory
 	uint32_t	sizeVBO;		//size of vk vbo size
@@ -244,9 +244,14 @@ typedef struct {
 	VKVG_IBO_INDEX_TYPE firstIdx;//save first point idx for closed path
 }stroke_context_t;
 
-void _check_vertex_cache_size(VkvgContext ctx);
-void _resize_vertex_cache	(VkvgContext ctx, uint32_t newSize);
-void _check_index_cache_size(VkvgContext ctx);
+void _check_vertex_cache_size	(VkvgContext ctx);
+void _ensure_vertex_cache_size	(VkvgContext ctx, uint32_t addedVerticesCount);
+void _resize_vertex_cache		(VkvgContext ctx, uint32_t newSize);
+
+void _check_index_cache_size	(VkvgContext ctx);
+void _ensure_index_cache_size	(VkvgContext ctx, uint32_t addedIndicesCount);
+void _resize_index_cache		(VkvgContext ctx, uint32_t newSize);
+
 bool _check_pathes_array	(VkvgContext ctx);
 
 bool _current_path_is_empty (VkvgContext ctx);

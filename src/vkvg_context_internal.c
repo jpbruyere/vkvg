@@ -46,29 +46,50 @@ void _resize_vertex_cache (VkvgContext ctx, uint32_t newSize) {
 		ctx->vertCount, ctx->sizeVertices, newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
 	if (tmp == NULL){
 		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(VKVG_LOG_ERR, "resize vertex cache failed: vert count: %u byte size: %zu\n", ctx->sizeVertices, ctx->sizeVertices * sizeof(Vertex));
+		LOG(VKVG_LOG_ERR, "resize vertex cache failed: vert count: %u byte size: %zu\n", newSize, newSize * sizeof(Vertex));
 		return;
 	}
 	ctx->vertexCache = tmp;
 	ctx->sizeVertices = newSize;
+}
+void _resize_index_cache (VkvgContext ctx, uint32_t newSize) {
+	VKVG_IBO_INDEX_TYPE* tmp = (VKVG_IBO_INDEX_TYPE*) realloc (ctx->indexCache, (size_t)newSize * sizeof(VKVG_IBO_INDEX_TYPE));
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %lu Ptr: %p -> %p\n", (size_t)newSize * sizeof(VKVG_IBO_INDEX_TYPE), ctx->indexCache, tmp);
+	if (tmp == NULL){
+		ctx->status = VKVG_STATUS_NO_MEMORY;
+		LOG(VKVG_LOG_ERR, "resize IBO failed: idx count: %u size(byte): %zu\n", newSize, (size_t)newSize * sizeof(VKVG_IBO_INDEX_TYPE));
+		return;
+	}
+	ctx->indexCache = tmp;
+	ctx->sizeIndices = newSize;
+}
+void _ensure_vertex_cache_size (VkvgContext ctx, uint32_t addedVerticesCount) {
+	if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD + addedVerticesCount)
+		return;
+	uint32_t newSize = ctx->sizeVertices + addedVerticesCount;
+	uint32_t modulo = addedVerticesCount % VKVG_VBO_SIZE;
+	if (modulo > 0)
+		newSize += VKVG_VBO_SIZE - modulo;
+	_resize_vertex_cache (ctx, newSize);
 }
 void _check_vertex_cache_size (VkvgContext ctx) {
 	if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
 		return;
 	_resize_vertex_cache (ctx, ctx->sizeVertices + VKVG_VBO_SIZE);
 }
+void _ensure_index_cache_size (VkvgContext ctx, uint32_t addedIndicesCount) {
+	if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD + addedIndicesCount)
+		return;
+	uint32_t newSize = ctx->sizeIndices + addedIndicesCount;
+	uint32_t modulo = addedIndicesCount % VKVG_IBO_SIZE;
+	if (modulo > 0)
+		newSize += VKVG_IBO_SIZE - modulo;
+	_resize_index_cache (ctx, newSize);
+}
 void _check_index_cache_size (VkvgContext ctx) {
 	if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD)
 		return;
-	ctx->sizeIndices += VKVG_IBO_SIZE;
-	VKVG_IBO_INDEX_TYPE* tmp = (VKVG_IBO_INDEX_TYPE*) realloc (ctx->indexCache, (size_t)ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %u Ptr: %p -> %p\n", ctx->sizeIndices, ctx->indexCache, tmp);
-	if (tmp == NULL){
-		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(VKVG_LOG_ERR, "resize IBO failed: idx count: %u size(byte): %zu\n", ctx->sizeIndices, (size_t)ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
-		return;
-	}
-	ctx->indexCache = tmp;
+	_resize_index_cache (ctx, ctx->sizeIndices + VKVG_IBO_SIZE);
 }
 //check host path array size, return true if error. pathPtr is already incremented
 bool _check_pathes_array (VkvgContext ctx){
@@ -571,6 +592,9 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 		vkh_image_set_layout(ctx->cmd, ctx->pSurf->img, VK_IMAGE_ASPECT_COLOR_BIT,
 						 VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 						 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		vkh_image_set_layout (ctx->cmd, ctx->pSurf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
+							  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+							  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
 	}
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
@@ -1505,7 +1529,7 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 //Even-Odd inside test with stencil buffer implementation.
 void _poly_fill (VkvgContext ctx){
 	//we anticipate the check for vbo buffer size, ibo is not used in poly_fill
-	if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO) {
+	if (ctx->vertCount + ctx->pointCount < ctx->sizeVBO) {
 		if (ctx->cmdStarted) {
 			_end_render_pass(ctx);
 			_flush_vertices_caches(ctx);
@@ -1534,14 +1558,6 @@ void _poly_fill (VkvgContext ctx){
 		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
 		if (pathPointCount > 2) {
 			VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
-
-			if (ctx->sizeVertices - ctx->vertCount < VKVG_ARRAY_THRESHOLD + pathPointCount) {
-				VKVG_IBO_INDEX_TYPE newSize = ctx->sizeVertices + pathPointCount;
-				VKVG_IBO_INDEX_TYPE modulo = pathPointCount % VKVG_VBO_SIZE;
-				if (modulo > 0)
-					newSize += VKVG_VBO_SIZE - modulo;
-				_resize_vertex_cache (ctx, newSize);
-			}
 
 			for (uint32_t i = 0; i < pathPointCount; i++) {
 				v.pos = ctx->points [i+firstPtIdx];
