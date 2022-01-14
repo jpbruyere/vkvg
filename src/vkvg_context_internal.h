@@ -68,7 +68,6 @@
 typedef struct{
 	vec2 pos;
 	uint32_t color;
-	vec3 uv;
 }Vertex;
 
 typedef struct {
@@ -164,21 +163,26 @@ typedef struct _vkvg_context_t {
 	vkvg_buff	uboGrad;		//uniform buff obj holdings gradient infos
 
 	//vk buffers, holds data until flush
-	vkvg_buff	indices;		//index buffer with persistent map memory
+	vkvg_buff	ibo;		//index buffer with persistent map memory
 	uint32_t	sizeIBO;		//size of vk ibo
-	uint32_t	sizeIndices;	//reserved size
-	uint32_t	indCount;		//current indice count
 
 	uint32_t	curIndStart;	//last index recorded in cmd buff
 	VKVG_IBO_INDEX_TYPE	curVertOffset;	//vertex offset in draw indexed command
 
-	vkvg_buff	vertices;		//vertex buffer with persistent mapped memory
+	vkvg_buff	vbo;			//vertex buffer with persistent mapped memory
 	uint32_t	sizeVBO;		//size of vk vbo size
-	uint32_t	sizeVertices;	//reserved size
-	uint32_t	vertCount;		//effective vertices count
 
+	uint32_t	sizeVertices;	//reserved vertice count in cache
+	uint32_t	vertCount;		//effective vertices count in cache
 	Vertex*		vertexCache;
+
+	uint32_t	sizeIndices;	//reserved index count in cache
+	uint32_t	indCount;		//current indice count in cache
 	VKVG_IBO_INDEX_TYPE* indexCache;
+
+	vkvg_buff	uvbo;			//vertex buffer with persistent mapped memory for font uvs
+								//same size as vbo due to vertex base...
+	vec3*		uvCache;
 
 	//pathes, exists until stroke of fill
 	vec2*		points;			//points array
@@ -252,6 +256,8 @@ void _check_index_cache_size	(VkvgContext ctx);
 void _ensure_index_cache_size	(VkvgContext ctx, uint32_t addedIndicesCount);
 void _resize_index_cache		(VkvgContext ctx, uint32_t newSize);
 
+void _ensure_uv_cache_exists	(VkvgContext ctx);
+
 bool _check_pathes_array	(VkvgContext ctx);
 
 bool _current_path_is_empty (VkvgContext ctx);
@@ -284,6 +290,7 @@ void _create_vertices_buff	(VkvgContext ctx);
 void _add_vertex			(VkvgContext ctx, Vertex v);
 void _add_vertexf			(VkvgContext ctx, float x, float y);
 void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
+void _set_uv				(VkvgContext ctx, vec3* uv);
 void _add_triangle_indices	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2);
 void _add_tri_indices_for_rect	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
 bool _build_vb_step		(vkvg_context* ctx, float hw, stroke_context_t *str, bool isCurve);
@@ -303,7 +310,7 @@ bool _wait_and_submit_cmd	(VkvgContext ctx);
 void _update_push_constants (VkvgContext ctx);
 void _update_cur_pattern	(VkvgContext ctx, VkvgPattern pat);
 void _set_mat_inv_and_vkCmdPush (VkvgContext ctx);
-void _start_cmd_for_render_pass (VkvgContext ctx);
+void _start_cmd_for_render_pass (VkvgContext ctx, bool font);
 
 void _createDescriptorPool	(VkvgContext ctx);
 void _init_descriptor_sets	(VkvgContext ctx);

@@ -275,20 +275,21 @@ void _setupPipelines(VkvgDevice dev)
 		//multisampleState.alphaToCoverageEnable = VK_FALSE;
 		//multisampleState.alphaToOneEnable = VK_FALSE;
 	}*/
-	VkVertexInputBindingDescription vertexInputBinding = { .binding = 0,
-				.stride = sizeof(Vertex),
-				.inputRate = VK_VERTEX_INPUT_RATE_VERTEX };
+	VkVertexInputBindingDescription vertexInputBinding[2] = {
+		{0, sizeof(Vertex),		VK_VERTEX_INPUT_RATE_VERTEX },
+		{1, sizeof(vec3),		VK_VERTEX_INPUT_RATE_VERTEX }
+	};
 
 	VkVertexInputAttributeDescription vertexInputAttributs[3] = {
-		{0, 0, VK_FORMAT_R32G32_SFLOAT, 0},
-		{1, 0, VK_FORMAT_R8G8B8A8_UNORM, 8},
-		{2, 0, VK_FORMAT_R32G32B32_SFLOAT, 12}
+		{0, 0, VK_FORMAT_R32G32_SFLOAT,		0},
+		{1, 0, VK_FORMAT_R8G8B8A8_UNORM,	8},
+		{2, 1, VK_FORMAT_R32G32B32_SFLOAT,	0}
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertexInputState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 		.vertexBindingDescriptionCount = 1,
-		.pVertexBindingDescriptions = &vertexInputBinding,
-		.vertexAttributeDescriptionCount = 3,
+		.pVertexBindingDescriptions = vertexInputBinding,
+		.vertexAttributeDescriptionCount = 2,
 		.pVertexAttributeDescriptions = vertexInputAttributs };
 #ifdef VKVG_WIRED_DEBUG
 	VkShaderModule modVert, modFrag, modFragWired;
@@ -360,6 +361,26 @@ void _setupPipelines(VkvgDevice dev)
 	pipelineCreateInfo.stageCount = 2;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_OVER));
 
+	/*****Font pipeline *****/
+	VkShaderModule modFontVert, modFontFrag;
+	createInfo.pCode = (uint32_t*)vkvg_font_vert_spv;
+	createInfo.codeSize = vkvg_font_vert_spv_len;
+	VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFontVert));
+	createInfo.pCode = (uint32_t*)vkvg_font_frag_spv;
+	createInfo.codeSize = vkvg_font_frag_spv_len;
+	VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFontFrag));
+
+	vertexInputState.vertexBindingDescriptionCount		= 2;
+	vertexInputState.vertexAttributeDescriptionCount	= 3;
+	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_fonts));
+
+	vkDestroyShaderModule(dev->vkDev, modFontVert, NULL);
+	vkDestroyShaderModule(dev->vkDev, modFontFrag, NULL);
+	vertexInputState.vertexBindingDescriptionCount		= 1;
+	vertexInputState.vertexAttributeDescriptionCount	= 2;
+	/**********/
+
+
 	blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
 
@@ -400,8 +421,8 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 	VkDescriptorSetLayoutCreateInfo dsLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 														  .bindingCount = 1,
 														  .pBindings = &dsLayoutBinding };
-	VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
 	VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslSrc));
+	VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
 	dsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslGrad));
 
@@ -409,7 +430,7 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 		{VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push_constants)},
 		//{VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push_constants)}
 	};
-	VkDescriptorSetLayout dsls[] = {dev->dslFont,dev->dslSrc,dev->dslGrad};
+	VkDescriptorSetLayout dsls[] = {dev->dslSrc,dev->dslGrad,dev->dslFont};
 
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 															.pushConstantRangeCount = 1,

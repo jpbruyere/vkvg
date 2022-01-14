@@ -25,18 +25,20 @@
 #extension GL_ARB_shading_language_420pack	: enable
 #extension GL_EXT_scalar_block_layout		: require
 
-layout (set=1, binding = 0) uniform sampler2D source;
-layout (scalar, set=2, binding = 0) uniform _uboGrad {
+layout (set=0, binding = 0) uniform sampler2D		source;
+layout (scalar, set=1, binding = 0) uniform _uboGrad {
 	vec4	colors[16];
 	float	stops[16];
 	vec4    cp[2];
 	uint	count;
 }uboGrad;
+layout (set=2, binding = 0) uniform sampler2DArray fontMap;
 
-layout (location = 0) in vec4		inSrc;		//source bounds or color depending on pattern type
-layout (location = 1) in flat int	inPatType;	//pattern type
-layout (location = 2) in flat float	inOpacity;
-layout (location = 3) in mat3x2		inMat;
+layout (location = 0) in vec3		inFontUV;	//if it is a text drawing, inFontUV.z hold fontMap layer
+layout (location = 1) in vec4		inSrc;		//source bounds or color depending on pattern type
+layout (location = 2) in flat int	inPatType;	//pattern type
+layout (location = 3) in flat float	inOpacity;
+layout (location = 4) in mat3x2		inMat;
 
 layout (location = 0) out vec4 outFragColor;
 
@@ -126,6 +128,9 @@ void main()
 			c = mix(c, uboGrad.colors[i], smoothstep(uboGrad.stops[i-1],uboGrad.stops[i], grad));
 		break;
 	}
+
+	if (inFontUV.z >= 0.0)
+		c *= texture(fontMap, inFontUV).r;
 
 	c.a *= inOpacity;
 	outFragColor = c;

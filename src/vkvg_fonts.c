@@ -647,10 +647,10 @@ void _destroy_text_run (VkvgText textRun) {
 #ifdef DEBUG
 void _show_texture (vkvg_context* ctx){
 	Vertex vs[] = {
-		{{0,0},							  0,  {0,0,0}},
-		{{0,FONT_PAGE_SIZE},			  0,  {0,1,0}},
-		{{FONT_PAGE_SIZE,0},			  0,  {1,0,0}},
-		{{FONT_PAGE_SIZE,FONT_PAGE_SIZE}, 0,  {1,1,0}}
+		{{0,0},							  0},
+		{{0,FONT_PAGE_SIZE},			  0},
+		{{FONT_PAGE_SIZE,0},			  0},
+		{{FONT_PAGE_SIZE,FONT_PAGE_SIZE}, 0}
 	};
 
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
@@ -664,6 +664,9 @@ void _show_texture (vkvg_context* ctx){
 }
 #endif
 void _show_text_run (VkvgContext ctx, VkvgText tr) {
+
+	_emit_draw_cmd_undrawn_vertices(ctx);
+
 	unsigned int glyph_count;
 #ifdef VKVG_USE_HARFBUZZ
 	hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos (tr->hbBuf, &glyph_count);
@@ -672,11 +675,13 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 	glyph_count = tr->glyph_count;
 #endif
 
-	Vertex v = {{0},ctx->curColor,{0,0,-1}};
+	Vertex v = {{0},ctx->curColor};
 	vec2 pen = {0,0};
 
 	if (!_current_path_is_empty(ctx))
 		pen = _get_current_position(ctx);
+
+	_ensure_uv_cache_exists (ctx);
 
 	for (uint32_t i=0; i < glyph_count; ++i) {
 		_char_ref* cr = tr->font->charLookup[glyph_info[i].codepoint];
@@ -694,24 +699,26 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 
 			VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
+			vec3 uv = {cr->bounds.x, cr->bounds.y, cr->pageIdx};
 
-			v.uv.x = cr->bounds.x;
-			v.uv.y = cr->bounds.y;
-			v.uv.z = cr->pageIdx;
+			_set_uv(ctx, &uv);
 			_add_vertex(ctx,v);
 
 			v.pos.y += cr->bounds.height;
-			v.uv.y += uvHeight;
+			uv.y += uvHeight;
+			_set_uv(ctx, &uv);
 			_add_vertex(ctx,v);
 
 			v.pos.x += cr->bounds.width;
 			v.pos.y = p0.y;
-			v.uv.x += uvWidth;
-			v.uv.y = cr->bounds.y;
+			uv.x += uvWidth;
+			uv.y = cr->bounds.y;
+			_set_uv(ctx, &uv);
 			_add_vertex(ctx,v);
 
 			v.pos.y += cr->bounds.height;
-			v.uv.y += uvHeight;
+			uv.y += uvHeight;
+			_set_uv(ctx, &uv);
 			_add_vertex(ctx,v);
 
 			_add_tri_indices_for_rect (ctx, firstIdx);
@@ -724,6 +731,11 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 	vkvg_move_to(ctx, pen.x, pen.y);
 
 	_flush_chars_to_tex(tr->dev, tr->font);
+
+	if (ctx->cmdStarted) {
+
+	}
+	_emit_draw_cmd_undrawn_vertices(ctx);
 }
 
 

@@ -157,8 +157,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsGrad, "CTX DescSet GRADIENT");
 
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->ibo.buffer, "CTX Index Buff");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vbo.buffer, "CTX Vertex Buff");
 #endif
 
 	return ctx;
@@ -241,11 +241,15 @@ void vkvg_destroy (VkvgContext ctx)
 	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
 
 	vkvg_buffer_destroy (&ctx->uboGrad);
-	vkvg_buffer_destroy (&ctx->indices);
-	vkvg_buffer_destroy (&ctx->vertices);
+	vkvg_buffer_destroy (&ctx->ibo);
+	vkvg_buffer_destroy (&ctx->vbo);
 
 	free(ctx->vertexCache);
 	free(ctx->indexCache);
+	if (ctx->uvCache) {
+		free(ctx->uvCache);
+		vkvg_buffer_destroy (&ctx->uvbo);
+	}
 
 	//TODO:check this for source counter
 	//vkh_image_destroy	  (ctx->source);
@@ -675,7 +679,7 @@ void _reset_clip (VkvgContext ctx) {
 		//with the loadop clear for stencil
 		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearStencil;
 		//force run of one renderpass (even empty) to perform clear load op
-		_start_cmd_for_render_pass(ctx);
+		_start_cmd_for_render_pass(ctx, false);
 		return;
 	}
 	vkCmdClearAttachments(ctx->cmd, 1, &clearStencil, 1, &ctx->clearRect);
@@ -710,7 +714,7 @@ void vkvg_clear (VkvgContext ctx){
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
 		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearAll;
-		_start_cmd_for_render_pass(ctx);
+		_start_cmd_for_render_pass(ctx, false);
 		return;
 	}
 	VkClearAttachment ca[2] = {clearColorAttach, clearStencil};
@@ -1216,7 +1220,7 @@ void vkvg_save (VkvgContext ctx){
 
 		uint8_t curSaveBit = 1 << (ctx->curSavBit % 6 + 2);
 
-		_start_cmd_for_render_pass (ctx);
+		_start_cmd_for_render_pass (ctx, false);
 
 	#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 		vkh_cmd_label_start(ctx->cmd, "save rp", DBG_LAB_COLOR_SAV);
@@ -1301,7 +1305,7 @@ void vkvg_restore (VkvgContext ctx){
 
 			uint8_t curSaveBit = 1 << ((ctx->curSavBit-1) % 6 + 2);
 
-			_start_cmd_for_render_pass (ctx);
+			_start_cmd_for_render_pass (ctx, false);
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 			vkh_cmd_label_start(ctx->cmd, "restore rp", DBG_LAB_COLOR_SAV);
