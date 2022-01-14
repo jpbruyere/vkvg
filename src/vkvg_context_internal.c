@@ -1535,10 +1535,17 @@ void _poly_fill (VkvgContext ctx){
 		if (pathPointCount > 2) {
 			VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
 
+			if (ctx->sizeVertices - ctx->vertCount < VKVG_ARRAY_THRESHOLD + pathPointCount) {
+				VKVG_IBO_INDEX_TYPE newSize = ctx->sizeVertices + pathPointCount;
+				VKVG_IBO_INDEX_TYPE modulo = pathPointCount % VKVG_VBO_SIZE;
+				if (modulo > 0)
+					newSize += VKVG_VBO_SIZE - modulo;
+				_resize_vertex_cache (ctx, newSize);
+			}
+
 			for (uint32_t i = 0; i < pathPointCount; i++) {
 				v.pos = ctx->points [i+firstPtIdx];
 				ctx->vertexCache[ctx->vertCount++] = v;
-				_check_vertex_cache_size(ctx);
 			}
 
 			LOG(VKVG_LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
