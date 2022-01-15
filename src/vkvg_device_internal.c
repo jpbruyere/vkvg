@@ -27,6 +27,7 @@
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
 #include "shaders.h"
+#include "vkvg_pattern.h"
 
 uint32_t vkvg_log_level = VKVG_LOG_DEBUG;
 #ifdef VKVG_WIRED_DEBUG
@@ -55,6 +56,71 @@ PFN_vkWaitForFences				WaitForFences;
 PFN_vkResetFences				ResetFences;
 PFN_vkResetCommandBuffer		ResetCommandBuffer;
 
+void _delete_threaded_object (VkvgDevice dev, vkvg_device_thread_items_t* throbjs) {
+	vkvg_buffer_destroy (&throbjs->uboGrad);
+
+	vkDestroyDescriptorPool (dev->vkDev, throbjs->descriptorPool,NULL);
+
+	free (throbjs);
+}
+void _add_threaded_objects (VkvgDevice dev, vkvg_device_thread_items_t* throbjs) {
+	vkvg_device_thread_items_t* tmp = dev->threaded_objects;
+	if (!tmp) {
+		dev->threaded_objects = throbjs;
+		return;
+	}
+	while (tmp->next)
+		tmp = tmp->next;
+	tmp->next = throbjs;
+}
+
+vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thrd_t id) {
+	vkvg_device_thread_items_t* tmp = dev->threaded_objects;
+	while (tmp) {
+		if (thrd_equal(tmp->id, id))
+			return tmp;
+		tmp = tmp->next;
+	}
+	tmp = (vkvg_device_thread_items_t*)calloc(1, sizeof(vkvg_device_thread_items_t));
+	tmp->id = thrd_current();
+
+	const VkDescriptorPoolSize descriptorPoolSize[] = {
+		{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
+		{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 }
+	};
+	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+															.maxSets = 3,
+															.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+															.poolSizeCount = 2,
+															.pPoolSizes = descriptorPoolSize };
+	VK_CHECK_RESULT(vkCreateDescriptorPool (dev->vkDev, &descriptorPoolCreateInfo, NULL, &tmp->descriptorPool));
+
+	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+															  .descriptorPool = tmp->descriptorPool,
+															  .descriptorSetCount = 1,
+															  .pSetLayouts = &dev->dslGrad };
+	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &tmp->dsGrad));
+
+	vkvg_buffer_create (dev,
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		VMA_MEMORY_USAGE_CPU_TO_GPU,
+		sizeof(vkvg_gradient_t), &tmp->uboGrad);
+
+	VkDescriptorBufferInfo dbi = {tmp->uboGrad.buffer, 0, VK_WHOLE_SIZE};
+	VkWriteDescriptorSet writeDescriptorSet = {
+			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+			.dstSet = tmp->dsGrad,
+			.dstBinding = 0,
+			.descriptorCount = 1,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.pBufferInfo = &dbi
+	};
+	vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
+
+	_add_threaded_objects(dev, tmp);
+
+	return tmp;
+}
 bool _try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
 	for (uint32_t i=0; i<phyCount; i++){
 		if (vkh_phyinfo_get_properties(phys[i]).deviceType == gpuType) {

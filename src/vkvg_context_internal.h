@@ -27,6 +27,7 @@
 #include "vkvg_buff.h"
 #include "vkh.h"
 #include "vkvg_fonts.h"
+#include "vkvg_device_internal.h"
 
 #if VKVG_RECORDING
 	#include "recording/vkvg_record_internal.h"
@@ -141,7 +142,6 @@ typedef struct _vkvg_context_t {
 	VkDescriptorPool	descriptorPool;//one pool per thread
 	VkDescriptorSet		dsFont;		//fonts glyphs texture atlas descriptor (local for thread safety)
 	VkDescriptorSet		dsSrc;		//source ds
-	VkDescriptorSet		dsGrad;		//gradient uniform buffer
 
 	VkRect2D			bounds;
 
@@ -161,7 +161,7 @@ typedef struct _vkvg_context_t {
 	vkvg_recording_t*	recording;
 #endif
 
-	vkvg_buff	uboGrad;		//uniform buff obj holdings gradient infos
+	vkvg_device_thread_items_t* th_objs;
 
 	//vk buffers, holds data until flush
 	vkvg_buff	indices;		//index buffer with persistent map memory
@@ -279,7 +279,6 @@ void _poly_fill				(VkvgContext ctx);
 void _fill_non_zero			(VkvgContext ctx);
 void _draw_full_screen_quad (VkvgContext ctx, bool useScissor);
 
-void _create_gradient_buff	(VkvgContext ctx);
 void _create_vertices_buff	(VkvgContext ctx);
 void _add_vertex			(VkvgContext ctx, Vertex v);
 void _add_vertexf			(VkvgContext ctx, float x, float y);
@@ -308,7 +307,6 @@ void _start_cmd_for_render_pass (VkvgContext ctx);
 void _createDescriptorPool	(VkvgContext ctx);
 void _init_descriptor_sets	(VkvgContext ctx);
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
-void _update_gradient_desc_set(VkvgContext ctx);
 void _free_ctx_save			(vkvg_context_save_t* sav);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){

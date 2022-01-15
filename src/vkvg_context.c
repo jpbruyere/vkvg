@@ -129,13 +129,14 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 	_create_vertices_buff	(ctx);
-	_create_gradient_buff	(ctx);
+
+	ctx->th_objs = _get_or_create_threaded_objects(ctx->pSurf->dev, thrd_current());
+
 	_create_cmd_buff		(ctx);
 	_createDescriptorPool	(ctx);
 	_init_descriptor_sets	(ctx);
 	_update_descriptor_set	(ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
 	_update_descriptor_set	(ctx, surf->dev->emptyImg, ctx->dsSrc);
-	_update_gradient_desc_set(ctx);
 
 	_clear_path				(ctx);
 
@@ -235,12 +236,11 @@ void vkvg_destroy (VkvgContext ctx)
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
-	VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc, ctx->dsGrad};
-	vkFreeDescriptorSets	(dev, ctx->descriptorPool, 3, dss);
+	VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc};
+	vkFreeDescriptorSets	(dev, ctx->descriptorPool, 2, dss);
 
 	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
 
-	vkvg_buffer_destroy (&ctx->uboGrad);
 	vkvg_buffer_destroy (&ctx->indices);
 	vkvg_buffer_destroy (&ctx->vertices);
 

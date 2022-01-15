@@ -51,6 +51,17 @@ extern PFN_vkWaitForFences				WaitForFences;
 extern PFN_vkResetFences				ResetFences;
 extern PFN_vkResetCommandBuffer			ResetCommandBuffer;
 
+//per thread vulkan object used in contexts
+typedef struct _vkvg_device_thread_items_t {
+	thrd_t				id;
+	VkDescriptorPool	descriptorPool;		//one pool per thread
+	VkDescriptorSet		dsGrad;		//gradient uniform buffer
+
+	vkvg_buff			uboGrad;			//uniform buff obj holdings gradient infos
+
+	struct _vkvg_device_thread_items_t* next;
+}vkvg_device_thread_items_t;
+
 typedef struct _vkvg_device_t{
 	VkDevice				vkDev;					/**< Vulkan Logical Device */
 	VkPhysicalDeviceMemoryProperties phyMemProps;	/**< Vulkan Physical device memory properties */
@@ -104,6 +115,8 @@ typedef struct _vkvg_device_t{
 
 	_font_cache_t*	fontCache;						/**< Store everything relative to common font caching system */
 	VkvgContext		lastCtx;						/**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
+
+	vkvg_device_thread_items_t* threaded_objects;
 }vkvg_device;
 
 bool _try_get_phyinfo			(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);
@@ -128,4 +141,6 @@ void _instance_extensions_check_release ();
 bool _layer_is_present (const char* layerName);
 void _layers_check_init ();
 void _layers_check_release ();
+
+vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thrd_t id);
 #endif

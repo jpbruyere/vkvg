@@ -49,6 +49,8 @@
 	#define reset_warning (warn) #pragma GCC diagnostic warning "-W"#warn
 #endif
 
+#include "deps/tinycthread.h"
+
 const char* getUserDir ();
 
 #endif // CROSS_OS_H

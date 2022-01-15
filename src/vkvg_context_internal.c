@@ -31,7 +31,6 @@
 
 #include "vkvg_surface_internal.h"
 #include "vkvg_context_internal.h"
-#include "vkvg_device_internal.h"
 #include "vkvg_pattern.h"
 #include "vkh_queue.h"
 #include "vkh_image.h"
@@ -246,12 +245,7 @@ float _get_arc_step (VkvgContext ctx, float radius) {
 		return fminf(M_PI / 3.f, M_PI / r);
 	return fminf(M_PI / 3.f,M_PI / (r * 0.4f));
 }
-void _create_gradient_buff (VkvgContext ctx){
-	vkvg_buffer_create (ctx->pSurf->dev,
-		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		sizeof(vkvg_gradient_t), &ctx->uboGrad);
-}
+
 void _create_vertices_buff (VkvgContext ctx){
 	vkvg_buffer_create (ctx->pSurf->dev,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -607,7 +601,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 
 	CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
-	VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc,ctx->dsGrad};
+	VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc,ctx->th_objs->dsGrad};
 	CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
 							0, 3, dss, 0, NULL);
 
@@ -767,8 +761,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &grad.cp[1].z, &grad.cp[0].w);
 		}
 
-		memcpy (ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
-		vkvg_buffer_flush(&ctx->uboGrad);
+		memcpy (ctx->th_objs->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
+		vkvg_buffer_flush(&ctx->th_objs->uboGrad);
 		break;
 	}
 	ctx->pushConsts.fsq_patternType = (ctx->pushConsts.fsq_patternType & FULLSCREEN_BIT) + newPatternType;
@@ -787,18 +781,6 @@ void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
 			.descriptorCount = 1,
 			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.pImageInfo = &descSrcTex
-	};
-	vkUpdateDescriptorSets(ctx->pSurf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
-}
-void _update_gradient_desc_set (VkvgContext ctx){
-	VkDescriptorBufferInfo dbi = {ctx->uboGrad.buffer, 0, VK_WHOLE_SIZE};
-	VkWriteDescriptorSet writeDescriptorSet = {
-			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-			.dstSet = ctx->dsGrad,
-			.dstBinding = 0,
-			.descriptorCount = 1,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.pBufferInfo = &dbi
 	};
 	vkUpdateDescriptorSets(ctx->pSurf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
@@ -840,8 +822,6 @@ void _init_descriptor_sets (VkvgContext ctx){
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsFont));
 	descriptorSetAllocateInfo.pSetLayouts = &dev->dslSrc;
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
-	descriptorSetAllocateInfo.pSetLayouts = &dev->dslGrad;
-	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
 //populate vertice buff for stroke
 bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool isCurve){
