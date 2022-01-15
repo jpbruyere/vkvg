@@ -647,10 +647,10 @@ void _destroy_text_run (VkvgText textRun) {
 #ifdef DEBUG
 void _show_texture (vkvg_context* ctx){
 	Vertex vs[] = {
-		{{0,0},							  0,  {0,0,0}},
-		{{0,FONT_PAGE_SIZE},			  0,  {0,1,0}},
-		{{FONT_PAGE_SIZE,0},			  0,  {1,0,0}},
-		{{FONT_PAGE_SIZE,FONT_PAGE_SIZE}, 0,  {1,1,0}}
+		{{0,0},							  0},
+		{{0,FONT_PAGE_SIZE},			  0},
+		{{FONT_PAGE_SIZE,0},			  0},
+		{{FONT_PAGE_SIZE,FONT_PAGE_SIZE}, 0}
 	};
 
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
@@ -672,7 +672,7 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 	glyph_count = tr->glyph_count;
 #endif
 
-	Vertex v = {{0},ctx->curColor,{0,0,-1}};
+	Vertex v = {{0},ctx->curColor};
 	vec2 pen = {0,0};
 
 	if (!_current_path_is_empty(ctx))
@@ -695,23 +695,23 @@ void _show_text_run (VkvgContext ctx, VkvgText tr) {
 			VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 
-			v.uv.x = cr->bounds.x;
+			/*v.uv.x = cr->bounds.x;
 			v.uv.y = cr->bounds.y;
-			v.uv.z = cr->pageIdx;
+			v.uv.z = cr->pageIdx;*/
 			_add_vertex(ctx,v);
 
 			v.pos.y += cr->bounds.height;
-			v.uv.y += uvHeight;
+			//v.uv.y += uvHeight;
 			_add_vertex(ctx,v);
 
 			v.pos.x += cr->bounds.width;
 			v.pos.y = p0.y;
-			v.uv.x += uvWidth;
-			v.uv.y = cr->bounds.y;
+			/*v.uv.x += uvWidth;
+			v.uv.y = cr->bounds.y;*/
 			_add_vertex(ctx,v);
 
 			v.pos.y += cr->bounds.height;
-			v.uv.y += uvHeight;
+			//v.uv.y += uvHeight;
 			_add_vertex(ctx,v);
 
 			_add_tri_indices_for_rect (ctx, firstIdx);

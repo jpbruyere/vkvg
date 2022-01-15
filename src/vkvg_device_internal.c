@@ -288,7 +288,7 @@ void _setupPipelines(VkvgDevice dev)
 	VkPipelineVertexInputStateCreateInfo vertexInputState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 		.vertexBindingDescriptionCount = 1,
 		.pVertexBindingDescriptions = &vertexInputBinding,
-		.vertexAttributeDescriptionCount = 3,
+		.vertexAttributeDescriptionCount = 2,
 		.pVertexAttributeDescriptions = vertexInputAttributs };
 #ifdef VKVG_WIRED_DEBUG
 	VkShaderModule modVert, modFrag, modFragWired;
@@ -409,13 +409,13 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 		{VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push_constants)},
 		//{VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push_constants)}
 	};
-	//VkDescriptorSetLayout dsls[] = {dev->dslSrc,dev->dslGrad};
+	VkDescriptorSetLayout dsls[] = {dev->dslSrc,dev->dslGrad};
 
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 															.pushConstantRangeCount = 1,
 															.pPushConstantRanges = (VkPushConstantRange*)&pushConstantRange,
-															.setLayoutCount = 0,
-															.pSetLayouts = VK_NULL_HANDLE };
+															.setLayoutCount = 2,
+															.pSetLayouts = dsls };
 	VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }
 

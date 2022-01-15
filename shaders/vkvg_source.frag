@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2021 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,47 +21,29 @@
  */
 #version 450
 
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+#extension GL_ARB_separate_shader_objects	: enable
+#extension GL_ARB_shading_language_420pack	: enable
+#extension GL_EXT_scalar_block_layout		: require
 
-layout (location = 0) in vec2	inPos;
-layout (location = 1) in vec4	inColor;
-//layout (location = 2) in vec3	inUV;
+layout (set=1, binding = 0) uniform sampler2D		source;
 
-layout (location = 0) out vec4	outSrc;
+layout (location = 0) in vec4		inSrc;		//source bounds or color depending on pattern type
+layout (location = 1) in flat float	inOpacity;
+layout (location = 2) in mat3x2		inMat;
 
-layout(push_constant) uniform PushConsts {
-	vec4	source;
-	vec2	size;
-	int		fullScreenQuad_srcType;
-	float	opacity;
-	mat3x2	mat;
-	mat3x2	matInv;
-} pc;
+layout (location = 0) out vec4 outFragColor;
 
-#define FULLSCREEN_BIT	0x10000000
-#define SRCTYPE_MASK	0x000000FF
-#define SOLID			0
-#define SURFACE			1
-#define LINEAR			2
-#define RADIAL			3
-#define MESH			4
-#define RASTER_SOURCE	5
+layout (constant_id = 0) const int NUM_SAMPLES = 8;
 
 void main()
-{
-	outSrc = (pc.fullScreenQuad_srcType & SRCTYPE_MASK) == SOLID ? inColor : pc.source;
-
-	if ((pc.fullScreenQuad_srcType & FULLSCREEN_BIT)==FULLSCREEN_BIT) {
-		gl_Position = vec4(inPos, 0.0f, 1.0f);
-		return;
-	}
-
-	vec2 p = vec2(
-		pc.mat[0][0] * inPos.x + pc.mat[1][0] * inPos.y + pc.mat[2][0],
-		pc.mat[0][1] * inPos.x + pc.mat[1][1] * inPos.y + pc.mat[2][1]
+{	
+	vec2 p = (gl_FragCoord.xy - inSrc.xy);
+	vec2 uv = vec2(
+		inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
+		inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
 	);
 
-	gl_Position = vec4(p * vec2(2) / pc.size - vec2(1), 0.0, 1.0);
-	gl_PointSize = 1;
+	vec4 c = texture (source, uv / inSrc.zw);
+	c.a *= inOpacity;
+	outFragColor = c;
 }

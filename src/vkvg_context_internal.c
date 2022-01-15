@@ -295,14 +295,14 @@ void _add_vertexf (VkvgContext ctx, float x, float y){
 	pVert->pos.x = x;
 	pVert->pos.y = y;
 	pVert->color = ctx->curColor;
-	pVert->uv.z = -1;
-	LOG(VKVG_LOG_INFO_VBO, "Add Vertexf %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n", ctx->vertCount, pVert->pos.x, pVert->pos.y, pVert->uv.x, pVert->uv.y, pVert->uv.z, pVert->color);
+//	pVert->uv.z = -1;
+//	LOG(VKVG_LOG_INFO_VBO, "Add Vertexf %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n", ctx->vertCount, pVert->pos.x, pVert->pos.y, pVert->uv.x, pVert->uv.y, pVert->uv.z, pVert->color);
 	ctx->vertCount++;
 	_check_vertex_cache_size(ctx);
 }
 void _add_vertex(VkvgContext ctx, Vertex v){
 	ctx->vertexCache[ctx->vertCount] = v;
-	LOG(VKVG_LOG_INFO_VBO, "Add Vertex  %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n", ctx->vertCount, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.uv.z, v.color);
+//	LOG(VKVG_LOG_INFO_VBO, "Add Vertex  %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n", ctx->vertCount, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.uv.z, v.color);
 	ctx->vertCount++;
 	_check_vertex_cache_size(ctx);
 }
@@ -363,10 +363,10 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
 	Vertex v[4] =
 	{
-		{{x,y},				ctx->curColor, {0,0,-1}},
-		{{x,y+height},		ctx->curColor, {0,0,-1}},
-		{{x+width,y},		ctx->curColor, {0,0,-1}},
-		{{x+width,y+height},ctx->curColor, {0,0,-1}}
+		{{x,y},				ctx->curColor},
+		{{x,y+height},		ctx->curColor},
+		{{x+width,y},		ctx->curColor},
+		{{x+width,y+height},ctx->curColor}
 	};
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 	Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
@@ -649,7 +649,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 	switch (newPatternType)	 {
 	case VKVG_PATTERN_TYPE_SOLID:
-		_flush_cmd_buff				(ctx);
+		_flush_cmd_buff	(ctx);
 		if (!_wait_flush_fence (ctx))
 			return;
 		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE)//unbind current source surface by replacing it with empty texture
@@ -710,6 +710,14 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		vkh_image_create_sampler (ctx->source, filter, filter,
 									VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
 
+		if (!ctx->dsSrc) {
+			VkvgDevice dev = ctx->pSurf->dev;
+			VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+						.descriptorPool = ctx->descriptorPool,
+						.descriptorSetCount = 1,
+						.pSetLayouts = &dev->dslSrc };
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
+		}
 		_update_descriptor_set (ctx, ctx->source, ctx->dsSrc);
 
 		if (pat->hasMatrix) {
@@ -845,7 +853,7 @@ void _init_descriptor_sets (VkvgContext ctx){
 }
 //populate vertice buff for stroke
 bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool isCurve){
-	Vertex v = {{0},ctx->curColor, {0,0,-1}};
+	Vertex v = {{0},ctx->curColor};
 	vec2 pL = ctx->points[str->iL];
 	vec2 p0 = ctx->points[str->cp];
 	vec2 pR = ctx->points[str->iR];
@@ -1079,7 +1087,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 }
 
 void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
-	Vertex v = {{0},ctx->curColor,{0,0,-1}};
+	Vertex v = {{0},ctx->curColor};
 
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
@@ -1209,7 +1217,7 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
 void _free_ctx_save (vkvg_context_save_t* sav){
 	if (sav->dashCount > 0)
 		free (sav->dashes);
-	free(sav->selectedFontName);
+	//free(sav->selectedFontName);
 	free (sav);
 }
 
@@ -1550,7 +1558,7 @@ void _poly_fill (VkvgContext ctx){
 
 	CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
 
-	Vertex v = {{0},ctx->curColor, {0,0,-1}};
+	Vertex v = {{0},ctx->curColor};
 	uint32_t ptrPath = 0;
 	uint32_t firstPtIdx = 0;
 
@@ -1640,7 +1648,7 @@ void combine2(const GLdouble newVertex[3],
 			 const GLfloat neighborWeight[4], void **outData, void *poly_data)
 {
 	VkvgContext ctx = (VkvgContext)poly_data;
-	Vertex v = {{newVertex[0],newVertex[1]},ctx->curColor, {0,0,-1}};
+	Vertex v = {{newVertex[0],newVertex[1]},ctx->curColor};
 	*outData = (void*)((unsigned long)(ctx->vertCount - ctx->curVertOffset));
 	_add_vertex(ctx, v);
 }
@@ -1651,7 +1659,7 @@ void vertex2(void *vertex_data, void *poly_data)
 	ctx->vertex_cb(i, ctx);
 }
 void _fill_non_zero (VkvgContext ctx){
-	Vertex v = {{0},ctx->curColor, {0,0,-1}};
+	Vertex v = {{0},ctx->curColor};
 
 	uint32_t ptrPath = 0;
 	uint32_t firstPtIdx = 0;
