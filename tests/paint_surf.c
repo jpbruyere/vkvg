@@ -4,7 +4,7 @@ float lineWidth = 10.f;
 
 VkvgSurface createSurf (uint32_t width, uint32_t height) {
 	VkvgSurface s = vkvg_surface_create(device, width, height);
-	VkvgContext ctx = _initCtx(surf);
+	VkvgContext ctx = vkvg_create (s);
 	vkvg_set_line_width(ctx,lineWidth);
 	float hlw = lineWidth/2.f;
 	/*
