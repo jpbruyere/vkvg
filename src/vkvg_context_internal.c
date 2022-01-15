@@ -39,57 +39,61 @@
 #ifdef VKVG_FILL_NZ_GLUTESS
 #include "glutess.h"
 #endif
-
-void _resize_vertex_cache (VkvgContext ctx, uint32_t newSize) {
-	Vertex* tmp = (Vertex*) realloc (ctx->vertexCache, (size_t)newSize * sizeof(Vertex));
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize vertex cache (vx count=%u): old size: %u -> new size: %u size(byte): %zu Ptr: %p -> %p\n",
-		ctx->vertCount, ctx->sizeVertices, newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
-	if (tmp == NULL){
-		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(VKVG_LOG_ERR, "resize vertex cache failed: vert count: %u byte size: %zu\n", newSize, newSize * sizeof(Vertex));
-		return;
-	}
-	ctx->vertexCache = tmp;
-	ctx->sizeVertices = newSize;
+void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
+	ctx->sizeVBO = new_size;
+	uint32_t mod = ctx->sizeVBO % VKVG_VBO_SIZE;
+	if (mod > 0)
+		ctx->sizeVBO += VKVG_VBO_SIZE - mod;
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %d\n", ctx->sizeVBO);
+	vkvg_buffer_destroy (ctx->vbo);
+	vkvg_buffer_create (ctx->pSurf->dev,
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VMA_MEMORY_USAGE_CPU_TO_GPU,
+		ctx->sizeVBO * sizeof(Vertex), ctx->vbo);
+	/*if (ctx->cmd == ctx->cmdBuffers[0])
+		ctx->vbos[0] = *ctx->vbo;
+	else
+		ctx->vbos[1] = *ctx->vbo;*/
 }
-void _resize_index_cache (VkvgContext ctx, uint32_t newSize) {
-	VKVG_IBO_INDEX_TYPE* tmp = (VKVG_IBO_INDEX_TYPE*) realloc (ctx->indexCache, (size_t)newSize * sizeof(VKVG_IBO_INDEX_TYPE));
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %lu Ptr: %p -> %p\n", (size_t)newSize * sizeof(VKVG_IBO_INDEX_TYPE), ctx->indexCache, tmp);
-	if (tmp == NULL){
-		ctx->status = VKVG_STATUS_NO_MEMORY;
-		LOG(VKVG_LOG_ERR, "resize IBO failed: idx count: %u size(byte): %zu\n", newSize, (size_t)newSize * sizeof(VKVG_IBO_INDEX_TYPE));
-		return;
-	}
-	ctx->indexCache = tmp;
-	ctx->sizeIndices = newSize;
+void _resize_ibo (VkvgContext ctx, size_t new_size) {
+	ctx->sizeIBO = new_size;
+	uint32_t mod = ctx->sizeIBO % VKVG_IBO_SIZE;
+	if (mod > 0)
+		ctx->sizeIBO += VKVG_IBO_SIZE - mod;
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);
+	vkvg_buffer_destroy (ctx->ibo);
+	vkvg_buffer_create (ctx->pSurf->dev,
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VMA_MEMORY_USAGE_CPU_TO_GPU,
+		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), ctx->ibo);
 }
 void _ensure_vertex_cache_size (VkvgContext ctx, uint32_t addedVerticesCount) {
-	if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD + addedVerticesCount)
+	if (ctx->sizeVBO - ctx->vertCount > VKVG_ARRAY_THRESHOLD + addedVerticesCount)
 		return;
-	uint32_t newSize = ctx->sizeVertices + addedVerticesCount;
+	uint32_t newSize = ctx->sizeVBO + addedVerticesCount;
 	uint32_t modulo = addedVerticesCount % VKVG_VBO_SIZE;
 	if (modulo > 0)
 		newSize += VKVG_VBO_SIZE - modulo;
-	_resize_vertex_cache (ctx, newSize);
+	_resize_vbo (ctx, newSize);
 }
 void _check_vertex_cache_size (VkvgContext ctx) {
-	if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
+	if (ctx->sizeVBO - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
 		return;
-	_resize_vertex_cache (ctx, ctx->sizeVertices + VKVG_VBO_SIZE);
+	_resize_vbo (ctx, ctx->sizeVBO + VKVG_VBO_SIZE);
 }
 void _ensure_index_cache_size (VkvgContext ctx, uint32_t addedIndicesCount) {
-	if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD + addedIndicesCount)
+	if (ctx->sizeIBO - ctx->indCount > VKVG_ARRAY_THRESHOLD + addedIndicesCount)
 		return;
-	uint32_t newSize = ctx->sizeIndices + addedIndicesCount;
+	uint32_t newSize = ctx->sizeIBO + addedIndicesCount;
 	uint32_t modulo = addedIndicesCount % VKVG_IBO_SIZE;
 	if (modulo > 0)
 		newSize += VKVG_IBO_SIZE - modulo;
-	_resize_index_cache (ctx, newSize);
+	_resize_ibo (ctx, newSize);
 }
 void _check_index_cache_size (VkvgContext ctx) {
-	if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD)
+	if (ctx->sizeIBO - ctx->indCount > VKVG_ARRAY_THRESHOLD)
 		return;
-	_resize_index_cache (ctx, ctx->sizeIndices + VKVG_IBO_SIZE);
+	_resize_ibo (ctx, ctx->sizeIBO + VKVG_IBO_SIZE);
 }
 //check host path array size, return true if error. pathPtr is already incremented
 bool _check_pathes_array (VkvgContext ctx){
@@ -256,40 +260,21 @@ void _create_vertices_buff (VkvgContext ctx){
 	vkvg_buffer_create (ctx->pSurf->dev,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
-	vkvg_buffer_create (ctx->pSurf->dev,
-		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
-}
-void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
-	if (!_wait_flush_fence (ctx))//wait previous cmd if not completed
-		return;
-	ctx->sizeVBO = new_size;
-	uint32_t mod = ctx->sizeVBO % VKVG_VBO_SIZE;
-	if (mod > 0)
-		ctx->sizeVBO += VKVG_VBO_SIZE - mod;
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %d\n", ctx->sizeVBO);
-	vkvg_buffer_destroy (&ctx->vertices);
+		ctx->sizeVBO * sizeof(Vertex), ctx->vbos);
 	vkvg_buffer_create (ctx->pSurf->dev,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
-}
-void _resize_ibo (VkvgContext ctx, size_t new_size) {
-	if (!_wait_flush_fence (ctx))//wait previous cmd if not completed
-		return;
-	ctx->sizeIBO = new_size;
-	uint32_t mod = ctx->sizeIBO % VKVG_IBO_SIZE;
-	if (mod > 0)
-		ctx->sizeIBO += VKVG_IBO_SIZE - mod;
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);
-	vkvg_buffer_destroy (&ctx->indices);
+		ctx->sizeVBO * sizeof(Vertex), &ctx->vbos[1]);
 	vkvg_buffer_create (ctx->pSurf->dev,
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
+		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), ctx->ibos);
+	vkvg_buffer_create (ctx->pSurf->dev,
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VMA_MEMORY_USAGE_CPU_TO_GPU,
+		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->ibos[1]);
 }
+
 void _add_vertexf (VkvgContext ctx, float x, float y){
 	Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
 	pVert->pos.x = x;
@@ -418,12 +403,25 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 
 	_submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
 
-	if (ctx->cmd == ctx->cmdBuffers[0])
+	if (ctx->cmd == ctx->cmdBuffers[0]) {
 		ctx->cmd = ctx->cmdBuffers[1];
-	else
+		ctx->vbo = &ctx->vbos[1];
+		ctx->ibo = &ctx->ibos[1];
+		ctx->vertexCache = ctx->vbo->allocInfo.pMappedData;
+	} else {
 		ctx->cmd = ctx->cmdBuffers[0];
+		ctx->vbo = ctx->vbos;
+		ctx->ibo = ctx->ibos;
+		ctx->indexCache = ctx->ibo->allocInfo.pMappedData;
+	}
 
 	ResetCommandBuffer (ctx->cmd, 0);
+
+	if (ctx->vbo->allocInfo.size < ctx->sizeVBO)
+		_resize_vbo(ctx, ctx->sizeVBO);
+	if (ctx->ibo->allocInfo.size < ctx->sizeIBO)
+		_resize_ibo(ctx, ctx->sizeIBO);
+
 	ctx->cmdStarted = false;
 	return true;
 }
@@ -450,32 +448,9 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 						  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }*/
 
-//pre flush vertices because of vbo or ibo too small, all vertices except last draw call are flushed
-//this function expects a vertex offset > 0
-void _flush_vertices_caches_until_vertex_base (VkvgContext ctx) {
-	_wait_flush_fence (ctx);
-
-	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->curVertOffset * sizeof (Vertex));
-	memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->curIndStart * sizeof (VKVG_IBO_INDEX_TYPE));
-
-	//copy remaining vertices and indices to caches starts
-	ctx->vertCount -= ctx->curVertOffset;
-	ctx->indCount -= ctx->curIndStart;
-	memcpy(ctx->vertexCache, &ctx->vertexCache[ctx->curVertOffset], ctx->vertCount * sizeof (Vertex));
-	memcpy(ctx->indexCache, &ctx->indexCache[ctx->curIndStart], ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
-
-	ctx->curVertOffset = 0;
-	ctx->curIndStart = 0;
-}
 //copy vertex and index caches to the vbo and ibo vkbuffers used by gpu for drawing
 //current running cmd has to be completed to free usage of those
 void _flush_vertices_caches (VkvgContext ctx) {
-	if (!_wait_flush_fence (ctx))
-		return;
-
-	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
-	memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
-
 	ctx->vertCount = ctx->indCount = ctx->curIndStart = ctx->curVertOffset = 0;
 }
 //this func expect cmdStarted to be true
@@ -488,26 +463,10 @@ void _end_render_pass (VkvgContext ctx) {
 	ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
 }
 
-void _check_vao_size (VkvgContext ctx) {
-	if (ctx->vertCount > ctx->sizeVBO || ctx->indCount > ctx->sizeIBO){
-		//vbo or ibo buffers too small
-		if (ctx->cmdStarted)
-			//if cmd is started buffers, are already bound, so no resize is possible
-			//instead we flush, and clear vbo and ibo caches
-			_flush_cmd_until_vx_base (ctx);
-		if (ctx->vertCount > ctx->sizeVBO)		
-			_resize_vbo(ctx, ctx->sizeVertices);
-		if (ctx->indCount > ctx->sizeIBO)
-			_resize_ibo(ctx, ctx->sizeIndices);
-	}
-}
-
 //stroke and non-zero draw call for solid color flush
 void _emit_draw_cmd_undrawn_vertices (VkvgContext ctx){
 	if (ctx->indCount == ctx->curIndStart)
 		return;
-
-	_check_vao_size(ctx);
 
 	_ensure_renderpass_is_started(ctx);
 
@@ -533,16 +492,6 @@ void _emit_draw_cmd_undrawn_vertices (VkvgContext ctx){
 
 	ctx->curIndStart = ctx->indCount;
 	ctx->curVertOffset = ctx->vertCount;
-}
-//preflush vertices with drawcommand already emited
-void _flush_cmd_until_vx_base (VkvgContext ctx){
-	_end_render_pass (ctx);
-	if (ctx->curVertOffset > 0){
-		LOG(VKVG_LOG_INFO, "FLUSH UNTIL VX BASE CTX: ctx = %p; vertices = %d; indices = %d\n", ctx, ctx->vertCount, ctx->indCount);
-		_flush_vertices_caches_until_vertex_base (ctx);
-	}
-	vkh_cmd_end (ctx->cmd);
-	_wait_and_submit_cmd (ctx);
 }
 void _flush_cmd_buff (VkvgContext ctx){
 	_emit_draw_cmd_undrawn_vertices (ctx);
@@ -612,8 +561,8 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 							0, 3, dss, 0, NULL);
 
 	VkDeviceSize offsets[1] = { 0 };
-	CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
-	CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VKVG_VK_INDEX_TYPE);
+	CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vbo->buffer, offsets);
+	CmdBindIndexBuffer(ctx->cmd, ctx->ibo->buffer, 0, VKVG_VK_INDEX_TYPE);
 
 	_update_push_constants	(ctx);
 

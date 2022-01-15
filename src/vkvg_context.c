@@ -55,8 +55,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	}
 
 	ctx->sizePoints		= VKVG_PTS_SIZE;
-	ctx->sizeVertices	= ctx->sizeVBO = VKVG_VBO_SIZE;
-	ctx->sizeIndices	= ctx->sizeIBO = VKVG_IBO_SIZE;
+	ctx->sizeVBO		= VKVG_VBO_SIZE;
+	ctx->sizeIBO		= VKVG_IBO_SIZE;
 	ctx->sizePathes		= VKVG_PATHES_SIZE;
 	ctx->lineWidth		= 1;
 	ctx->curOperator	= VKVG_OPERATOR_OVER;
@@ -99,24 +99,20 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
 	ctx->points	= (vec2*)malloc (VKVG_VBO_SIZE*sizeof(vec2));
 	ctx->pathes	= (uint32_t*)malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
-	ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
-	ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
+	//ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
+	//ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 	ctx->savedStencils = malloc(0);
 
 	ctx->selectedFontName = (char*)calloc(FONT_NAME_MAX_SIZE, sizeof(char));
 	ctx->selectedCharSize = 10 << 6;
 	ctx->currentFont = NULL;
 
-	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache || !ctx->savedStencils || !ctx->selectedFontName) {
+	if (!ctx->points || !ctx->pathes || !ctx->savedStencils || !ctx->selectedFontName) {
 		dev->status = VKVG_STATUS_NO_MEMORY;
 		if (ctx->points)
 			free(ctx->points);
 		if (ctx->pathes)
 			free(ctx->pathes);
-		if (ctx->vertexCache)
-			free(ctx->vertexCache);
-		if (ctx->indexCache)
-			free(ctx->indexCache);
 		if (ctx->savedStencils)
 			free(ctx->savedStencils);
 		if (ctx->selectedFontName)
@@ -140,11 +136,15 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	_clear_path				(ctx);
 
 	ctx->cmd = ctx->cmdBuffers[0];//current recording buffer
+	ctx->vbo = ctx->vbos;
+	ctx->ibo = ctx->ibos;
+	ctx->vertexCache = ctx->vbo->allocInfo.pMappedData;
+	ctx->indexCache = ctx->ibo->allocInfo.pMappedData;
 
 	ctx->references = 1;
 	ctx->status = VKVG_STATUS_SUCCESS;
 
-	LOG(VKVG_LOG_DBG_ARRAYS, "INIT\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, (uint64_t)ctx->sizePathes, (uint64_t)ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+	LOG(VKVG_LOG_DBG_ARRAYS, "INIT\tctx = %p; pathes:%ju pts:%ju vbo:%d ibo:%d\n", ctx, (uint64_t)ctx->sizePathes, (uint64_t)ctx->sizePoints, ctx->sizeVBO, ctx->sizeIBO);
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
@@ -157,8 +157,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsGrad, "CTX DescSet GRADIENT");
 
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->ibos[0].buffer, "CTX Index Buff A");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vbos[0].buffer, "CTX Vertex Buff A");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->ibos[1].buffer, "CTX Index Buff B");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vbos[1].buffer, "CTX Vertex Buff B");
 #endif
 
 	return ctx;
@@ -202,7 +204,7 @@ void vkvg_destroy (VkvgContext ctx)
 
 	vkvg_flush (ctx);
 
-	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%d pts:%d vbo:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVBO, ctx->sizeIBO);
 
 #if VKVG_RECORDING
 	if (ctx->recording)
@@ -241,11 +243,13 @@ void vkvg_destroy (VkvgContext ctx)
 	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
 
 	vkvg_buffer_destroy (&ctx->uboGrad);
-	vkvg_buffer_destroy (&ctx->indices);
-	vkvg_buffer_destroy (&ctx->vertices);
+	vkvg_buffer_destroy (ctx->ibos);
+	vkvg_buffer_destroy (ctx->vbos);
+	vkvg_buffer_destroy (&ctx->ibos[1]);
+	vkvg_buffer_destroy (&ctx->vbos[1]);
 
-	free(ctx->vertexCache);
-	free(ctx->indexCache);
+	/*free(ctx->vertexCache);
+	free(ctx->indexCache);*/
 
 	//TODO:check this for source counter
 	//vkh_image_destroy	  (ctx->source);

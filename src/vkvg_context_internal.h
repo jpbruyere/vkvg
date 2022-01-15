@@ -164,17 +164,19 @@ typedef struct _vkvg_context_t {
 	vkvg_buff	uboGrad;		//uniform buff obj holdings gradient infos
 
 	//vk buffers, holds data until flush
-	vkvg_buff	indices;		//index buffer with persistent map memory
+	vkvg_buff	ibos[2];		//index buffer with persistent map memory
+	vkvg_buff*	ibo;		//current recording index buffer
 	uint32_t	sizeIBO;		//size of vk ibo
-	uint32_t	sizeIndices;	//reserved size
+	//uint32_t	sizeIndices;	//reserved size
 	uint32_t	indCount;		//current indice count
 
 	uint32_t	curIndStart;	//last index recorded in cmd buff
 	VKVG_IBO_INDEX_TYPE	curVertOffset;	//vertex offset in draw indexed command
 
-	vkvg_buff	vertices;		//vertex buffer with persistent mapped memory
+	vkvg_buff	vbos[2];		//vertex buffer with persistent mapped memory
+	vkvg_buff*	vbo;			//current recording vertex buffer
 	uint32_t	sizeVBO;		//size of vk vbo size
-	uint32_t	sizeVertices;	//reserved size
+	//uint32_t	sizeVertices;	//reserved size
 	uint32_t	vertCount;		//effective vertices count
 
 	Vertex*		vertexCache;
@@ -292,11 +294,9 @@ void _vao_add_rectangle		(VkvgContext ctx, float x, float y, float width, float 
 
 void _bind_draw_pipeline	(VkvgContext ctx);
 void _create_cmd_buff		(VkvgContext ctx);
-void _check_vao_size		(VkvgContext ctx);
 void _ensure_renderpass_is_started	(VkvgContext ctx);
 void _flush_cmd_buff		(VkvgContext ctx);
 void _emit_draw_cmd_undrawn_vertices(VkvgContext ctx);
-void _flush_cmd_until_vx_base (VkvgContext ctx);
 bool _wait_flush_fence		(VkvgContext ctx);
 void _reset_flush_fence		(VkvgContext ctx);
 bool _wait_and_submit_cmd	(VkvgContext ctx);

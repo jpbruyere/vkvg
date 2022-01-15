@@ -68,7 +68,7 @@ void _flush_all_contexes (VkvgDevice dev){
 	VkvgContext ctx = dev->lastCtx;
 	while (ctx != NULL){
 		if (ctx->cmdStarted)
-			_flush_cmd_until_vx_base (ctx);
+			_flush_cmd_buff (ctx);
 
 		ctx = ctx->pPrev;
 	}
