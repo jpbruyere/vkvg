@@ -65,7 +65,7 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 
 ## Requirements:
 
-- [CMake](https://cmake.org/): version >= 3.21
+- [CMake](https://cmake.org/): version >= 3.16
 - [Vulkan](https://www.khronos.org/vulkan/)
 - [FontConfig](https://www.freedesktop.org/wiki/Software/fontconfig/): optional, without fontconfig, use `vkvg_load_font_from_path`.
 - [Freetype](https://www.freetype.org/): optional, stb_truetype as alternative.
@@ -85,11 +85,43 @@ cd vkvg
 # Create build directory
 mkdir build
 cd build
-# Run CMake, optionaly setup glslc path
+# Run CMake configuration
 cmake ..
-make
 ```
+### CMake configure options
 
+##### Core library options:
+
+* `-DVKVG_USE_GLUTESS=true`: Use embedded glu tesselator to fill polygones in NON-ZERO mode. If false, a simple ear clipping algorithm is used.
+* `-DVKVG_VKVG=true`: Enable experimental svg renderer. If false, use nanoSVG.
+* `-DVKVG_RECORDING=true`: Enable experimental draw commands recording infrastructure.
+* `-DVKVG_BUILD_DOCS=true`: Build documentation enabled if doxygen is found.
+
+##### Text rendering libraries:
+
+Those libraries are enabled by default, but disabled if not found.
+* `-DVKVG_USE_FONTCONFIG=true`: enable FontConfig to resolve font's names.
+* `-DVKVG_USE_FREETYPE=true`: enable FreeType to render glyphs, if false glyphs are rendered with stb_freetype.
+* `-DVKVG_USE_HARFBUZZ=true`: enable harfbuzz for text shaping.
+
+##### Tests options:
+
+* `-DVKVG_BUILD_TESTS=true`: build all tests in the tests forlder.
+* `-DVKVG_TEST_DIRECT_DRAW=true`: enable drawing directly on the swapchain images.
+
+##### Debugging options:
+
+If vkvg is compiled with `CMAKE_BUILD_TYPE=Debug`, several additional options are made available to help debugging:
+* `-DENABLE_VALIDATION=true`: enable vulkan validation layer.
+* `-DENABLE_DBG_UTILS=true`: enable various vulkan debug utils extensions features.
+* `-DENABLE_RENDERDOC=true`: enable renderdoc layer.
+* `-DENABLE_WIRED_FILL=true`: enable rendering in wired mode, current mode is controled with the global variable `vkvg_wired_debug`.
+* `-DENABLE_PROFILING=true`: add -pg to the compile options.
+* `-DVKVG_DBG_STATS=true`: store various context statistics fetchable with `vkvg_device_get_stats()`
+
+```bash
+cmake --build .
+```
 A [detailed tutorial](doc/windows_build_tutorial.md) is available for Windows.
 
 ## Running tests

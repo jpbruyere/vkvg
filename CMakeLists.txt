@@ -77,7 +77,7 @@ IF (VKVG_DBG_STATS)
 	ADD_DEFINITIONS (-DVKVG_DBG_STATS)
 ENDIF ()
 
-OPTION(VKVG_USE_GLUTESS "Fill non-zero with glu tesselator" OFF)
+OPTION(VKVG_USE_GLUTESS "Fill non-zero with glu tesselator" ON)
 
 CMAKE_DEPENDENT_OPTION(VKVG_SVG "render svg with vkvg-svg library" ON "UNIX" OFF)
 
