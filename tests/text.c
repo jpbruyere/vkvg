@@ -16,7 +16,7 @@ void print_boxed(VkvgContext ctx, const char* text, float penX, float penY, uint
 
 	vkvg_move_to(ctx, penX, penY);
 	vkvg_rectangle(ctx, penX, penY -fe.ascent, te.width, fe.height);
-	vkvg_set_source_rgb(ctx,0.2f,0,0);
+	vkvg_set_source_rgb(ctx,0.2f,0.2f,0.7f);
 	vkvg_fill(ctx);
 
 	vkvg_move_to(ctx, penX, penY);
@@ -255,7 +255,18 @@ void random_font_and_size () {
 	}
 	vkvg_destroy(ctx);
 }
+void proto_sinaitic () {
+	VkvgContext ctx = vkvg_create(surf);
 
+	vkvg_set_source_rgb		(ctx, 0, 0, 0);
+	vkvg_paint				(ctx);
+	vkvg_set_source_rgb		(ctx, 1, 1, 1);
+
+	vkvg_load_font_from_path (ctx, "data/Proto-Sinaitic15.ttf", "sinaitic");
+	print_boxed				(ctx, "hwhy", 100, 150, 60);
+
+	vkvg_destroy			(ctx);
+}
 int main(int argc, char *argv[]) {
 	no_test_size = true;
 	//vkvg_log_level = VKVG_LOG_INFO;
@@ -267,6 +278,7 @@ int main(int argc, char *argv[]) {
 	PERFORM_TEST (test, argc, argv);
 	PERFORM_TEST (test1, argc, argv);
 	PERFORM_TEST (test2, argc, argv);
+	PERFORM_TEST (proto_sinaitic, argc, argv);
 
 	return 0;
 }
