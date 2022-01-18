@@ -54,8 +54,11 @@ extern PFN_vkResetCommandBuffer			ResetCommandBuffer;
 //per thread vulkan object used in contexts
 typedef struct _vkvg_device_thread_items_t {
 	thrd_t				id;
+	VkDevice			dev;
 	VkDescriptorPool	descriptorPool;		//one pool per thread
 	VkDescriptorSet		dsGrad;		//gradient uniform buffer
+	VkDescriptorSet		dsFont;		//fonts glyphs texture atlas descriptor (local for thread safety)
+	VkDescriptorSet		dsSrc;		//source ds
 
 	vkvg_buff			uboGrad;			//uniform buff obj holdings gradient infos
 
@@ -143,4 +146,6 @@ void _layers_check_init ();
 void _layers_check_release ();
 
 vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thrd_t id);
+void _delete_threaded_object (VkvgDevice dev, vkvg_device_thread_items_t* throbjs);
+void _update_descriptor_set (vkvg_device_thread_items_t*, VkhImage img, VkDescriptorSet ds);
 #endif

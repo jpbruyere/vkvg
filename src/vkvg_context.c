@@ -103,11 +103,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 	ctx->savedStencils = malloc(0);
 
-	ctx->selectedFontName = (char*)calloc(FONT_NAME_MAX_SIZE, sizeof(char));
 	ctx->selectedCharSize = 10 << 6;
 	ctx->currentFont = NULL;
 
-	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache || !ctx->savedStencils || !ctx->selectedFontName) {
+	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache || !ctx->savedStencils ) {
 		dev->status = VKVG_STATUS_NO_MEMORY;
 		if (ctx->points)
 			free(ctx->points);
@@ -119,8 +118,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 			free(ctx->indexCache);
 		if (ctx->savedStencils)
 			free(ctx->savedStencils);
-		if (ctx->selectedFontName)
-			free(ctx->selectedFontName);
 		return NULL;
 	}
 
@@ -133,10 +130,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->th_objs = _get_or_create_threaded_objects(ctx->pSurf->dev, thrd_current());
 
 	_create_cmd_buff		(ctx);
-	_createDescriptorPool	(ctx);
-	_init_descriptor_sets	(ctx);
-	_update_descriptor_set	(ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
-	_update_descriptor_set	(ctx, surf->dev->emptyImg, ctx->dsSrc);
 
 	_clear_path				(ctx);
 
@@ -152,11 +145,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[0], "CTX Cmd Buff A");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1], "CTX Cmd Buff B");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
-
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)ctx->descriptorPool, "CTX Descriptor Pool");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc, "CTX DescSet SOURCE");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsGrad, "CTX DescSet GRADIENT");
 
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
@@ -236,11 +224,6 @@ void vkvg_destroy (VkvgContext ctx)
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
-	VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc};
-	vkFreeDescriptorSets	(dev, ctx->descriptorPool, 2, dss);
-
-	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
-
 	vkvg_buffer_destroy (&ctx->indices);
 	vkvg_buffer_destroy (&ctx->vertices);
 
@@ -250,7 +233,6 @@ void vkvg_destroy (VkvgContext ctx)
 	//TODO:check this for source counter
 	//vkh_image_destroy	  (ctx->source);
 
-	free(ctx->selectedFontName);
 	free(ctx->pathes);
 	free(ctx->points);
 	if (ctx->dashCount > 0)
@@ -1255,7 +1237,6 @@ void vkvg_save (VkvgContext ctx){
 	sav->curFillRule= ctx->curFillRule;
 
 	sav->selectedCharSize = ctx->selectedCharSize;
-	sav->selectedFontName = (char*)calloc(FONT_NAME_MAX_SIZE,sizeof(char));
 	strcpy (sav->selectedFontName, ctx->selectedFontName);
 
 	sav->currentFont  = ctx->currentFont;

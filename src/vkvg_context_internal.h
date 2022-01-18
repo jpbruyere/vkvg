@@ -114,7 +114,7 @@ typedef struct _vkvg_context_save_t{
 	vkvg_fill_rule_t	curFillRule;
 
 	long				selectedCharSize; /* Font size*/
-	char*				selectedFontName;
+	char				selectedFontName[FONT_NAME_MAX_SIZE];
 	_vkvg_font_identity_t		 selectedFont;	   //hold current face and size before cache addition
 	_vkvg_font_identity_t*		 currentFont;	   //font ready for lookup
 	vkvg_direction_t	textDirection;
@@ -139,9 +139,6 @@ typedef struct _vkvg_context_t {
 	VkCommandBuffer		cmd;		//current recording buffer
 	bool				cmdStarted; //prevent flushing empty renderpass
 	bool				pushCstDirty;//prevent pushing to gpu if not requested
-	VkDescriptorPool	descriptorPool;//one pool per thread
-	VkDescriptorSet		dsFont;		//fonts glyphs texture atlas descriptor (local for thread safety)
-	VkDescriptorSet		dsSrc;		//source ds
 
 	VkRect2D			bounds;
 
@@ -204,7 +201,7 @@ typedef struct _vkvg_context_t {
 	vkvg_fill_rule_t	curFillRule;
 
 	long				selectedCharSize; /* Font size*/
-	char*				selectedFontName;
+	char				selectedFontName[FONT_NAME_MAX_SIZE];
 	//_vkvg_font_t		  selectedFont;		//hold current face and size before cache addition
 	_vkvg_font_identity_t*		 currentFont;		//font pointing to cached fonts identity
 	_vkvg_font_t*		currentFontSize;	//font structure by size ready for lookup
@@ -304,9 +301,6 @@ void _update_cur_pattern	(VkvgContext ctx, VkvgPattern pat);
 void _set_mat_inv_and_vkCmdPush (VkvgContext ctx);
 void _start_cmd_for_render_pass (VkvgContext ctx);
 
-void _createDescriptorPool	(VkvgContext ctx);
-void _init_descriptor_sets	(VkvgContext ctx);
-void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
 void _free_ctx_save			(vkvg_context_save_t* sav);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){

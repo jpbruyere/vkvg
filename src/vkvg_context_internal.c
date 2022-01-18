@@ -601,7 +601,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 
 	CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
-	VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc,ctx->th_objs->dsGrad};
+	VkDescriptorSet dss[] = {ctx->th_objs->dsFont, ctx->th_objs->dsSrc,ctx->th_objs->dsGrad};
 	CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
 							0, 3, dss, 0, NULL);
 
@@ -647,7 +647,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		if (!_wait_flush_fence (ctx))
 			return;
 		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE)//unbind current source surface by replacing it with empty texture
-			_update_descriptor_set		(ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
+			_update_descriptor_set		(ctx->th_objs, ctx->pSurf->dev->emptyImg, ctx->th_objs->dsSrc);
 		break;
 	case VKVG_PATTERN_TYPE_SURFACE:
 	{
@@ -704,7 +704,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		vkh_image_create_sampler (ctx->source, filter, filter,
 									VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
 
-		_update_descriptor_set (ctx, ctx->source, ctx->dsSrc);
+		_update_descriptor_set (ctx->th_objs, ctx->source, ctx->th_objs->dsSrc);
 
 		if (pat->hasMatrix) {
 
@@ -721,7 +721,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			return;
 
 		if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
-			_update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
+			_update_descriptor_set (ctx->th_objs, ctx->pSurf->dev->emptyImg, ctx->th_objs->dsSrc);
 
 		vec4 bounds = {{(float)ctx->pSurf->width}, {(float)ctx->pSurf->height}, {0}, {0}};//store img bounds in unused source field
 		ctx->pushConsts.source = bounds;
@@ -770,20 +770,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 	if (lastPat)
 		vkvg_pattern_destroy (lastPat);
 }
-void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
-	if (!_wait_flush_fence(ctx))//descriptorSet update invalidate cmd buffs
-		return;
-	VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	VkWriteDescriptorSet writeDescriptorSet = {
-			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-			.dstSet = ds,
-			.dstBinding = 0,
-			.descriptorCount = 1,
-			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-			.pImageInfo = &descSrcTex
-	};
-	vkUpdateDescriptorSets(ctx->pSurf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
-}
+
 /*
  * Reset currently bound descriptor which image could be destroyed
  */
@@ -799,30 +786,7 @@ void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
 }*/
 
-void _createDescriptorPool (VkvgContext ctx) {
-	VkvgDevice dev = ctx->pSurf->dev;
-	const VkDescriptorPoolSize descriptorPoolSize[] = {
-		{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
-		{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 }
-	};
-	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-															.maxSets = 3,
-															.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-															.poolSizeCount = 2,
-															.pPoolSizes = descriptorPoolSize };
-	VK_CHECK_RESULT(vkCreateDescriptorPool (dev->vkDev, &descriptorPoolCreateInfo, NULL, &ctx->descriptorPool));
-}
-void _init_descriptor_sets (VkvgContext ctx){
-	VkvgDevice dev = ctx->pSurf->dev;
-	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-															  .descriptorPool = ctx->descriptorPool,
-															  .descriptorSetCount = 1,
-															  .pSetLayouts = &dev->dslFont
-															};
-	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsFont));
-	descriptorSetAllocateInfo.pSetLayouts = &dev->dslSrc;
-	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
-}
+
 //populate vertice buff for stroke
 bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
@@ -1189,7 +1153,6 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
 void _free_ctx_save (vkvg_context_save_t* sav){
 	if (sav->dashCount > 0)
 		free (sav->dashes);
-	free(sav->selectedFontName);
 	free (sav);
 }
 

@@ -204,6 +204,14 @@ void vkvg_device_destroy (VkvgDevice dev)
 	if (dev->references > 0)
 		return;
 
+	vkvg_device_thread_items_t* tmp = dev->threaded_objects;
+	while (tmp) {
+		vkvg_device_thread_items_t* next = tmp->next;
+		_delete_threaded_object(dev, tmp);
+		tmp = next;
+	}
+
+
 	LOG(VKVG_LOG_INFO, "DESTROY Device\n");
 
 	vkh_image_destroy				(dev->emptyImg);

@@ -59,6 +59,9 @@ PFN_vkResetCommandBuffer		ResetCommandBuffer;
 void _delete_threaded_object (VkvgDevice dev, vkvg_device_thread_items_t* throbjs) {
 	vkvg_buffer_destroy (&throbjs->uboGrad);
 
+	/*VkDescriptorSet dss[] = {throbjs->dsFont, throbjs->dsSrc};
+	vkFreeDescriptorSets	(dev->vkDev, throbjs->descriptorPool, 2, dss);*/
+
 	vkDestroyDescriptorPool (dev->vkDev, throbjs->descriptorPool,NULL);
 
 	free (throbjs);
@@ -83,6 +86,7 @@ vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thr
 	}
 	tmp = (vkvg_device_thread_items_t*)calloc(1, sizeof(vkvg_device_thread_items_t));
 	tmp->id = thrd_current();
+	tmp->dev = dev->vkDev;
 
 	const VkDescriptorPoolSize descriptorPoolSize[] = {
 		{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
@@ -100,6 +104,10 @@ vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thr
 															  .descriptorSetCount = 1,
 															  .pSetLayouts = &dev->dslGrad };
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &tmp->dsGrad));
+	descriptorSetAllocateInfo.pSetLayouts = &dev->dslFont;
+	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &tmp->dsFont));
+	descriptorSetAllocateInfo.pSetLayouts = &dev->dslSrc;
+	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &tmp->dsSrc));
 
 	vkvg_buffer_create (dev,
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -117,9 +125,31 @@ vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thr
 	};
 	vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 
+	_update_descriptor_set	(tmp, dev->fontCache->texture, tmp->dsFont);
+	_update_descriptor_set	(tmp, dev->emptyImg, tmp->dsSrc);
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)tmp->descriptorPool, "CTX Descriptor Pool");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)tmp->dsSrc, "CTX DescSet SOURCE");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)tmp->dsFont, "CTX DescSet FONT");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)tmp->dsGrad, "CTX DescSet GRADIENT");
+#endif
+
 	_add_threaded_objects(dev, tmp);
 
 	return tmp;
+}
+void _update_descriptor_set (vkvg_device_thread_items_t* ctx, VkhImage img, VkDescriptorSet ds){
+	VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	VkWriteDescriptorSet writeDescriptorSet = {
+			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+			.dstSet = ds,
+			.dstBinding = 0,
+			.descriptorCount = 1,
+			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			.pImageInfo = &descSrcTex
+	};
+	vkUpdateDescriptorSets(ctx->dev, 1, &writeDescriptorSet, 0, NULL);
 }
 bool _try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
 	for (uint32_t i=0; i<phyCount; i++){

@@ -161,7 +161,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 	ctx->pushConsts.fsq_patternType = (ctx->pushConsts.fsq_patternType & FULLSCREEN_BIT) + VKVG_PATTERN_TYPE_SURFACE;
 
 	//_update_push_constants (ctx);
-	_update_descriptor_set (ctx, tmpImg, ctx->dsSrc);
+	_update_descriptor_set (ctx->th_objs, tmpImg, ctx->th_objs->dsSrc);
 	_ensure_renderpass_is_started  (ctx);
 
 	vkvg_paint			(ctx);
