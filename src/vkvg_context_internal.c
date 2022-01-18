@@ -1501,7 +1501,10 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 	if (_current_path_is_empty(ctx)){
 		_set_curve_start (ctx);
 		_add_point (ctx, xy.x, xy.y);
-		ctx->simpleConvex = true;
+		if (!ctx->pathPtr)
+			ctx->simpleConvex = true;
+		else
+			ctx->simpleConvex = false;
 	}else{
 		_line_to(ctx, xy.x, xy.y);
 		_set_curve_start (ctx);

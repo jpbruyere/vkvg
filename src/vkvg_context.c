@@ -521,6 +521,7 @@ void _curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x
 		if (_current_path_is_empty(ctx) || (EQUF(_get_current_position(ctx).x,x1) && EQUF(_get_current_position(ctx).y,y1)))
 			return;
 	}
+	ctx->simpleConvex = false;
 	_set_curve_start (ctx);
 	if (_current_path_is_empty(ctx))
 		_add_point(ctx, x1, y1);
