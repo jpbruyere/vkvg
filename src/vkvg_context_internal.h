@@ -160,17 +160,13 @@ typedef struct _vkvg_context_t {
 
 	vkvg_device_thread_items_t* th_objs;
 
-	//vk buffers, holds data until flush
-	vkvg_buff	indices;		//index buffer with persistent map memory
-	uint32_t	sizeIBO;		//size of vk ibo
-	uint32_t	sizeIndices;	//reserved size
-	uint32_t	indCount;		//current indice count
 
 	uint32_t	curIndStart;	//last index recorded in cmd buff
 	VKVG_IBO_INDEX_TYPE	curVertOffset;	//vertex offset in draw indexed command
 
-	vkvg_buff	vertices;		//vertex buffer with persistent mapped memory
-	uint32_t	sizeVBO;		//size of vk vbo size
+	uint32_t	sizeIndices;	//reserved size
+	uint32_t	indCount;		//current indice count
+
 	uint32_t	sizeVertices;	//reserved size
 	uint32_t	vertCount;		//effective vertices count
 
@@ -276,7 +272,6 @@ void _poly_fill				(VkvgContext ctx);
 void _fill_non_zero			(VkvgContext ctx);
 void _draw_full_screen_quad (VkvgContext ctx, bool useScissor);
 
-void _create_vertices_buff	(VkvgContext ctx);
 void _add_vertex			(VkvgContext ctx, Vertex v);
 void _add_vertexf			(VkvgContext ctx, float x, float y);
 void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);

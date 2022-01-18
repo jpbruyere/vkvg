@@ -246,44 +246,7 @@ float _get_arc_step (VkvgContext ctx, float radius) {
 	return fminf(M_PI / 3.f,M_PI / (r * 0.4f));
 }
 
-void _create_vertices_buff (VkvgContext ctx){
-	vkvg_buffer_create (ctx->pSurf->dev,
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
-	vkvg_buffer_create (ctx->pSurf->dev,
-		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
-}
-void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
-	if (!_wait_flush_fence (ctx))//wait previous cmd if not completed
-		return;
-	ctx->sizeVBO = new_size;
-	uint32_t mod = ctx->sizeVBO % VKVG_VBO_SIZE;
-	if (mod > 0)
-		ctx->sizeVBO += VKVG_VBO_SIZE - mod;
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %d\n", ctx->sizeVBO);
-	vkvg_buffer_destroy (&ctx->vertices);
-	vkvg_buffer_create (ctx->pSurf->dev,
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
-}
-void _resize_ibo (VkvgContext ctx, size_t new_size) {
-	if (!_wait_flush_fence (ctx))//wait previous cmd if not completed
-		return;
-	ctx->sizeIBO = new_size;
-	uint32_t mod = ctx->sizeIBO % VKVG_IBO_SIZE;
-	if (mod > 0)
-		ctx->sizeIBO += VKVG_IBO_SIZE - mod;
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);
-	vkvg_buffer_destroy (&ctx->indices);
-	vkvg_buffer_create (ctx->pSurf->dev,
-		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
-}
+
 void _add_vertexf (VkvgContext ctx, float x, float y){
 	Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
 	pVert->pos.x = x;
@@ -449,8 +412,8 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 void _flush_vertices_caches_until_vertex_base (VkvgContext ctx) {
 	_wait_flush_fence (ctx);
 
-	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->curVertOffset * sizeof (Vertex));
-	memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->curIndStart * sizeof (VKVG_IBO_INDEX_TYPE));
+	memcpy(ctx->th_objs->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->curVertOffset * sizeof (Vertex));
+	memcpy(ctx->th_objs->indices.allocInfo.pMappedData, ctx->indexCache, ctx->curIndStart * sizeof (VKVG_IBO_INDEX_TYPE));
 
 	//copy remaining vertices and indices to caches starts
 	ctx->vertCount -= ctx->curVertOffset;
@@ -467,8 +430,8 @@ void _flush_vertices_caches (VkvgContext ctx) {
 	if (!_wait_flush_fence (ctx))
 		return;
 
-	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
-	memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
+	memcpy(ctx->th_objs->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
+	memcpy(ctx->th_objs->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
 
 	ctx->vertCount = ctx->indCount = ctx->curIndStart = ctx->curVertOffset = 0;
 }
@@ -483,16 +446,17 @@ void _end_render_pass (VkvgContext ctx) {
 }
 
 void _check_vao_size (VkvgContext ctx) {
-	if (ctx->vertCount > ctx->sizeVBO || ctx->indCount > ctx->sizeIBO){
+	if (ctx->vertCount > ctx->th_objs->sizeVBO || ctx->indCount > ctx->th_objs->sizeIBO){
 		//vbo or ibo buffers too small
 		if (ctx->cmdStarted)
 			//if cmd is started buffers, are already bound, so no resize is possible
 			//instead we flush, and clear vbo and ibo caches
 			_flush_cmd_until_vx_base (ctx);
-		if (ctx->vertCount > ctx->sizeVBO)		
-			_resize_vbo(ctx, ctx->sizeVertices);
-		if (ctx->indCount > ctx->sizeIBO)
-			_resize_ibo(ctx, ctx->sizeIndices);
+		_wait_flush_fence (ctx);
+		if (ctx->vertCount > ctx->th_objs->sizeVBO)
+			_resize_vbo(ctx->th_objs, ctx->sizeVertices);
+		if (ctx->indCount > ctx->th_objs->sizeIBO)
+			_resize_ibo(ctx->th_objs, ctx->sizeIndices);
 	}
 }
 
@@ -606,8 +570,8 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 							0, 3, dss, 0, NULL);
 
 	VkDeviceSize offsets[1] = { 0 };
-	CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
-	CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VKVG_VK_INDEX_TYPE);
+	CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->th_objs->vertices.buffer, offsets);
+	CmdBindIndexBuffer(ctx->cmd, ctx->th_objs->indices.buffer, 0, VKVG_VK_INDEX_TYPE);
 
 	_update_push_constants	(ctx);
 
@@ -1472,19 +1436,21 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 //Even-Odd inside test with stencil buffer implementation.
 void _poly_fill (VkvgContext ctx){
 	//we anticipate the check for vbo buffer size, ibo is not used in poly_fill
-	if (ctx->vertCount + ctx->pointCount < ctx->sizeVBO) {
+	if (ctx->vertCount + ctx->pointCount < ctx->th_objs->sizeVBO) {
 		if (ctx->cmdStarted) {
 			_end_render_pass(ctx);
 			_flush_vertices_caches(ctx);
 			vkh_cmd_end(ctx->cmd);
 			_wait_and_submit_cmd(ctx);//the extra wait here is not useful.
-			if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO){
+			if (ctx->vertCount + ctx->pointCount > ctx->th_objs->sizeVBO){
 				//_resize_vertex_cache(ctx, ctx->vertCount + ctx->pointCount);
-				_resize_vbo(ctx, ctx->vertCount + ctx->pointCount);
+				_wait_flush_fence (ctx);
+				_resize_vbo(ctx->th_objs, ctx->vertCount + ctx->pointCount);
 			}
 		}else{
 			//_resize_vertex_cache(ctx, ctx->vertCount + ctx->pointCount);
-			_resize_vbo(ctx, ctx->vertCount + ctx->pointCount);
+			_wait_flush_fence (ctx);
+			_resize_vbo(ctx->th_objs, ctx->vertCount + ctx->pointCount);
 		}
 
 		_start_cmd_for_render_pass(ctx);

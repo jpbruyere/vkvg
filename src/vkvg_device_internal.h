@@ -54,13 +54,21 @@ extern PFN_vkResetCommandBuffer			ResetCommandBuffer;
 //per thread vulkan object used in contexts
 typedef struct _vkvg_device_thread_items_t {
 	thrd_t				id;
-	VkDevice			dev;
+	bool				inUse;
+	VkvgDevice			dev;
 	VkDescriptorPool	descriptorPool;		//one pool per thread
 	VkDescriptorSet		dsGrad;		//gradient uniform buffer
 	VkDescriptorSet		dsFont;		//fonts glyphs texture atlas descriptor (local for thread safety)
 	VkDescriptorSet		dsSrc;		//source ds
 
 	vkvg_buff			uboGrad;			//uniform buff obj holdings gradient infos
+
+	//vk buffers, holds data until flush
+	vkvg_buff	indices;		//index buffer with persistent map memory
+	uint32_t	sizeIBO;		//size of vk ibo
+	vkvg_buff	vertices;		//vertex buffer with persistent mapped memory
+	uint32_t	sizeVBO;		//size of vk vbo size
+
 
 	struct _vkvg_device_thread_items_t* next;
 }vkvg_device_thread_items_t;
@@ -148,4 +156,7 @@ void _layers_check_release ();
 vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thrd_t id);
 void _delete_threaded_object (VkvgDevice dev, vkvg_device_thread_items_t* throbjs);
 void _update_descriptor_set (vkvg_device_thread_items_t*, VkhImage img, VkDescriptorSet ds);
+
+void _resize_vbo (vkvg_device_thread_items_t* ctx, uint32_t new_size);
+void _resize_ibo (vkvg_device_thread_items_t* ctx, size_t new_size);
 #endif

@@ -151,6 +151,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 
 	VkvgContext next = dev->lastCtx;
 	while (next != NULL){
+		_wait_flush_fence (next);
 		_update_descriptor_set	(next->th_objs, cache->texture, next->th_objs->dsFont);
 		next = next->pPrev;
 	}

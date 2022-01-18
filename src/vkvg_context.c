@@ -55,8 +55,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	}
 
 	ctx->sizePoints		= VKVG_PTS_SIZE;
-	ctx->sizeVertices	= ctx->sizeVBO = VKVG_VBO_SIZE;
-	ctx->sizeIndices	= ctx->sizeIBO = VKVG_IBO_SIZE;
+	ctx->sizeVertices	= VKVG_VBO_SIZE;
+	ctx->sizeIndices	= VKVG_IBO_SIZE;
 	ctx->sizePathes		= VKVG_PATHES_SIZE;
 	ctx->lineWidth		= 1;
 	ctx->curOperator	= VKVG_OPERATOR_OVER;
@@ -125,7 +125,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	//for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
 	ctx->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
-	_create_vertices_buff	(ctx);
 
 	ctx->th_objs = _get_or_create_threaded_objects(ctx->pSurf->dev, thrd_current());
 
@@ -138,7 +137,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->references = 1;
 	ctx->status = VKVG_STATUS_SUCCESS;
 
-	LOG(VKVG_LOG_DBG_ARRAYS, "INIT\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, (uint64_t)ctx->sizePathes, (uint64_t)ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+	LOG(VKVG_LOG_DBG_ARRAYS, "INIT\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx, (uint64_t)ctx->sizePathes, (uint64_t)ctx->sizePoints, ctx->sizeVertices, ctx->th_objs->sizeVBO, ctx->sizeIndices, ctx->th_objs->sizeIBO);
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
@@ -146,8 +145,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1], "CTX Cmd Buff B");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
 
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
 #endif
 
 	return ctx;
@@ -191,7 +188,9 @@ void vkvg_destroy (VkvgContext ctx)
 
 	vkvg_flush (ctx);
 
-	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices, ctx->sizeIBO);
+	_update_descriptor_set		(ctx->th_objs, ctx->pSurf->dev->emptyImg, ctx->th_objs->dsSrc);
+
+	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->th_objs->sizeVBO, ctx->sizeIndices, ctx->th_objs->sizeIBO);
 
 #if VKVG_RECORDING
 	if (ctx->recording)
@@ -224,9 +223,6 @@ void vkvg_destroy (VkvgContext ctx)
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
-	vkvg_buffer_destroy (&ctx->indices);
-	vkvg_buffer_destroy (&ctx->vertices);
-
 	free(ctx->vertexCache);
 	free(ctx->indexCache);
 
@@ -253,6 +249,8 @@ void vkvg_destroy (VkvgContext ctx)
 		vkh_image_destroy(ctx->savedStencils[i-1]);
 
 	free(ctx->savedStencils);
+
+	ctx->th_objs->inUse = false;
 
 	//remove context from double linked list of context in device
 	if (ctx->pSurf->dev->lastCtx == ctx){

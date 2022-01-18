@@ -56,8 +56,45 @@ PFN_vkWaitForFences				WaitForFences;
 PFN_vkResetFences				ResetFences;
 PFN_vkResetCommandBuffer		ResetCommandBuffer;
 
+void _create_vertices_buff (vkvg_device_thread_items_t* ctx){
+	vkvg_buffer_create (ctx->dev,
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VMA_MEMORY_USAGE_CPU_TO_GPU,
+		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
+	vkvg_buffer_create (ctx->dev,
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VMA_MEMORY_USAGE_CPU_TO_GPU,
+		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
+}
+void _resize_vbo (vkvg_device_thread_items_t* ctx, uint32_t new_size) {
+	ctx->sizeVBO = new_size;
+	uint32_t mod = ctx->sizeVBO % VKVG_VBO_SIZE;
+	if (mod > 0)
+		ctx->sizeVBO += VKVG_VBO_SIZE - mod;
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %d\n", ctx->sizeVBO);
+	vkvg_buffer_destroy (&ctx->vertices);
+	vkvg_buffer_create (ctx->dev,
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VMA_MEMORY_USAGE_CPU_TO_GPU,
+		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
+}
+void _resize_ibo (vkvg_device_thread_items_t* ctx, size_t new_size) {
+	ctx->sizeIBO = new_size;
+	uint32_t mod = ctx->sizeIBO % VKVG_IBO_SIZE;
+	if (mod > 0)
+		ctx->sizeIBO += VKVG_IBO_SIZE - mod;
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);
+	vkvg_buffer_destroy (&ctx->indices);
+	vkvg_buffer_create (ctx->dev,
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VMA_MEMORY_USAGE_CPU_TO_GPU,
+		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
+}
+
 void _delete_threaded_object (VkvgDevice dev, vkvg_device_thread_items_t* throbjs) {
 	vkvg_buffer_destroy (&throbjs->uboGrad);
+	vkvg_buffer_destroy (&throbjs->vertices);
+	vkvg_buffer_destroy (&throbjs->indices);
 
 	/*VkDescriptorSet dss[] = {throbjs->dsFont, throbjs->dsSrc};
 	vkFreeDescriptorSets	(dev->vkDev, throbjs->descriptorPool, 2, dss);*/
@@ -80,13 +117,17 @@ void _add_threaded_objects (VkvgDevice dev, vkvg_device_thread_items_t* throbjs)
 vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thrd_t id) {
 	vkvg_device_thread_items_t* tmp = dev->threaded_objects;
 	while (tmp) {
-		if (thrd_equal(tmp->id, id))
+		if (thrd_equal(tmp->id, id) && !tmp->inUse) {
+			tmp->inUse = true;
 			return tmp;
+		}
 		tmp = tmp->next;
 	}
 	tmp = (vkvg_device_thread_items_t*)calloc(1, sizeof(vkvg_device_thread_items_t));
 	tmp->id = thrd_current();
-	tmp->dev = dev->vkDev;
+	tmp->dev = dev;
+	tmp->sizeVBO = VKVG_VBO_SIZE;
+	tmp->sizeIBO = VKVG_IBO_SIZE;
 
 	const VkDescriptorPoolSize descriptorPoolSize[] = {
 		{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
@@ -128,14 +169,22 @@ vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thr
 	_update_descriptor_set	(tmp, dev->fontCache->texture, tmp->dsFont);
 	_update_descriptor_set	(tmp, dev->emptyImg, tmp->dsSrc);
 
+	_create_vertices_buff	(tmp);
+
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)tmp->descriptorPool, "CTX Descriptor Pool");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)tmp->dsSrc, "CTX DescSet SOURCE");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)tmp->dsFont, "CTX DescSet FONT");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)tmp->dsGrad, "CTX DescSet GRADIENT");
+
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)tmp->indices.buffer, "CTX Index Buff");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)tmp->vertices.buffer, "CTX Vertex Buff");
 #endif
 
+
 	_add_threaded_objects(dev, tmp);
+
+	tmp->inUse = true;
 
 	return tmp;
 }
@@ -149,7 +198,7 @@ void _update_descriptor_set (vkvg_device_thread_items_t* ctx, VkhImage img, VkDe
 			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.pImageInfo = &descSrcTex
 	};
-	vkUpdateDescriptorSets(ctx->dev, 1, &writeDescriptorSet, 0, NULL);
+	vkUpdateDescriptorSets(ctx->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
 bool _try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
 	for (uint32_t i=0; i<phyCount; i++){
