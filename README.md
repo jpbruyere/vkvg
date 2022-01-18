@@ -95,7 +95,7 @@ cmake ..
 * `-DVKVG_USE_GLUTESS=true`: Use embedded glu tesselator to fill polygones in NON-ZERO mode. If false, a simple ear clipping algorithm is used.
 * `-DVKVG_VKVG=true`: Enable experimental svg renderer. If false, use nanoSVG.
 * `-DVKVG_RECORDING=true`: Enable experimental draw commands recording infrastructure.
-* `-DVKVG_BUILD_DOCS=true`: Build documentation enabled if doxygen is found.
+* `-DVKVG_BUILD_DOCS=true`: Build documentation if doxygen is found.
 
 ##### Text rendering libraries:
 
