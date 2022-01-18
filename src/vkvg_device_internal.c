@@ -101,6 +101,11 @@ void _delete_threaded_object (VkvgDevice dev, vkvg_device_thread_items_t* throbj
 
 	vkDestroyDescriptorPool (dev->vkDev, throbjs->descriptorPool,NULL);
 
+	free(throbjs->vertexCache);
+	free(throbjs->indexCache);
+	free(throbjs->pathes);
+	free(throbjs->points);
+
 	free (throbjs);
 }
 void _add_threaded_objects (VkvgDevice dev, vkvg_device_thread_items_t* throbjs) {
@@ -126,8 +131,18 @@ vkvg_device_thread_items_t* _get_or_create_threaded_objects (VkvgDevice dev, thr
 	tmp = (vkvg_device_thread_items_t*)calloc(1, sizeof(vkvg_device_thread_items_t));
 	tmp->id = thrd_current();
 	tmp->dev = dev;
-	tmp->sizeVBO = VKVG_VBO_SIZE;
-	tmp->sizeIBO = VKVG_IBO_SIZE;
+	tmp->sizeVertices = tmp->sizeVBO = VKVG_VBO_SIZE;
+	tmp->sizeIndices = tmp->sizeIBO = VKVG_IBO_SIZE;
+	tmp->sizePoints		= VKVG_PTS_SIZE;
+	tmp->sizeVertices	= VKVG_VBO_SIZE;
+	tmp->sizeIndices	= VKVG_IBO_SIZE;
+	tmp->sizePathes		= VKVG_PATHES_SIZE;
+
+	tmp->points	= (vec2*)malloc (VKVG_VBO_SIZE*sizeof(vec2));
+	tmp->pathes	= (uint32_t*)malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
+	tmp->vertexCache = (Vertex*)malloc(tmp->sizeVertices * sizeof(Vertex));
+	tmp->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(tmp->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
+
 
 	const VkDescriptorPoolSize descriptorPoolSize[] = {
 		{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },

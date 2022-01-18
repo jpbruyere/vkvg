@@ -54,10 +54,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		return NULL;
 	}
 
-	ctx->sizePoints		= VKVG_PTS_SIZE;
-	ctx->sizeVertices	= VKVG_VBO_SIZE;
-	ctx->sizeIndices	= VKVG_IBO_SIZE;
-	ctx->sizePathes		= VKVG_PATHES_SIZE;
 	ctx->lineWidth		= 1;
 	ctx->curOperator	= VKVG_OPERATOR_OVER;
 	ctx->curFillRule	= VKVG_FILL_RULE_NON_ZERO;
@@ -97,16 +93,12 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		ctx->pPrev->pNext = ctx;
 	surf->dev->lastCtx = ctx;
 
-	ctx->points	= (vec2*)malloc (VKVG_VBO_SIZE*sizeof(vec2));
-	ctx->pathes	= (uint32_t*)malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
-	ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
-	ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
-	ctx->savedStencils = malloc(0);
-
 	ctx->selectedCharSize = 10 << 6;
 	ctx->currentFont = NULL;
 
-	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache || !ctx->savedStencils ) {
+	ctx->savedStencils = malloc(0);
+
+	/*if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache || !ctx->savedStencils ) {
 		dev->status = VKVG_STATUS_NO_MEMORY;
 		if (ctx->points)
 			free(ctx->points);
@@ -119,7 +111,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		if (ctx->savedStencils)
 			free(ctx->savedStencils);
 		return NULL;
-	}
+	}*/
 
 	ctx->flushFence = vkh_fence_create_signaled ((VkhDevice)dev);
 	//for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
@@ -127,6 +119,15 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
 
 	ctx->th_objs = _get_or_create_threaded_objects(ctx->pSurf->dev, thrd_current());
+
+	ctx->points = ctx->th_objs->points;
+	ctx->sizePoints = ctx->th_objs->sizePoints;
+	ctx->pathes = ctx->th_objs->pathes;
+	ctx->sizePathes = ctx->th_objs->sizePathes;
+	ctx->indexCache = ctx->th_objs->indexCache;
+	ctx->sizeIndices = ctx->th_objs->sizeIndices;
+	ctx->vertexCache = ctx->th_objs->vertexCache;
+	ctx->sizeVertices = ctx->th_objs->sizeVertices;
 
 	_create_cmd_buff		(ctx);
 
@@ -189,6 +190,14 @@ void vkvg_destroy (VkvgContext ctx)
 	vkvg_flush (ctx);
 
 	_update_descriptor_set		(ctx->th_objs, ctx->pSurf->dev->emptyImg, ctx->th_objs->dsSrc);
+	ctx->th_objs->points = ctx->points;
+	ctx->th_objs->sizePoints = ctx->sizePoints;
+	ctx->th_objs->pathes = ctx->pathes;
+	ctx->th_objs->sizePathes = ctx->sizePathes;
+	ctx->th_objs->indexCache = ctx->indexCache;
+	ctx->th_objs->sizeIndices = ctx->sizeIndices;
+	ctx->th_objs->vertexCache = ctx->vertexCache;
+	ctx->th_objs->sizeVertices = ctx->sizeVertices;
 
 	LOG(VKVG_LOG_DBG_ARRAYS, "END\tctx = %p; pathes:%d pts:%d vch:%d vbo:%d ich:%d ibo:%d\n", ctx, ctx->sizePathes, ctx->sizePoints, ctx->sizeVertices, ctx->th_objs->sizeVBO, ctx->sizeIndices, ctx->th_objs->sizeIBO);
 
@@ -223,14 +232,8 @@ void vkvg_destroy (VkvgContext ctx)
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
-	free(ctx->vertexCache);
-	free(ctx->indexCache);
-
 	//TODO:check this for source counter
 	//vkh_image_destroy	  (ctx->source);
-
-	free(ctx->pathes);
-	free(ctx->points);
 	if (ctx->dashCount > 0)
 		free(ctx->dashes);
 

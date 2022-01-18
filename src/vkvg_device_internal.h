@@ -30,6 +30,27 @@
 #define STENCIL_CLIP_BIT	0x2
 #define STENCIL_ALL_BIT		0x3
 
+#define VKVG_PTS_SIZE				1024
+#define VKVG_VBO_SIZE				(VKVG_PTS_SIZE * 4)
+#define VKVG_IBO_SIZE				(VKVG_VBO_SIZE * 6)
+#define VKVG_PATHES_SIZE			16
+#define VKVG_ARRAY_THRESHOLD		8
+
+#define VKVG_IBO_16					0
+#define VKVG_IBO_32					1
+
+#define VKVG_CUR_IBO_TYPE			VKVG_IBO_32//change this only
+
+#if VKVG_CUR_IBO_TYPE == VKVG_IBO_16
+	#define VKVG_IBO_MAX			UINT16_MAX
+	#define VKVG_IBO_INDEX_TYPE		uint16_t
+	#define VKVG_VK_INDEX_TYPE		VK_INDEX_TYPE_UINT16
+#else
+	#define VKVG_IBO_MAX			UINT32_MAX
+	#define VKVG_IBO_INDEX_TYPE		uint32_t
+	#define VKVG_VK_INDEX_TYPE		VK_INDEX_TYPE_UINT32
+#endif
+
 extern PFN_vkCmdBindPipeline			CmdBindPipeline;
 extern PFN_vkCmdBindDescriptorSets		CmdBindDescriptorSets;
 extern PFN_vkCmdBindIndexBuffer			CmdBindIndexBuffer;
@@ -51,6 +72,12 @@ extern PFN_vkWaitForFences				WaitForFences;
 extern PFN_vkResetFences				ResetFences;
 extern PFN_vkResetCommandBuffer			ResetCommandBuffer;
 
+typedef struct{
+	vec2 pos;
+	uint32_t color;
+	vec3 uv;
+}Vertex;
+
 //per thread vulkan object used in contexts
 typedef struct _vkvg_device_thread_items_t {
 	thrd_t				id;
@@ -69,6 +96,18 @@ typedef struct _vkvg_device_thread_items_t {
 	vkvg_buff	vertices;		//vertex buffer with persistent mapped memory
 	uint32_t	sizeVBO;		//size of vk vbo size
 
+	uint32_t	sizeIndices;	//reserved size
+	uint32_t	sizeVertices;	//reserved size
+
+	Vertex*		vertexCache;
+	VKVG_IBO_INDEX_TYPE* indexCache;
+
+	//pathes, exists until stroke of fill
+	vec2*		points;			//points array
+	uint32_t	sizePoints;		//reserved size
+	//pathes array is a list of point count per segment
+	uint32_t*	pathes;
+	uint32_t	sizePathes;
 
 	struct _vkvg_device_thread_items_t* next;
 }vkvg_device_thread_items_t;

@@ -35,27 +35,6 @@
 	#define RECORD(ctx,cmd,...)
 #endif
 
-#define VKVG_PTS_SIZE				1024
-#define VKVG_VBO_SIZE				(VKVG_PTS_SIZE * 4)
-#define VKVG_IBO_SIZE				(VKVG_VBO_SIZE * 6)
-#define VKVG_PATHES_SIZE			16
-#define VKVG_ARRAY_THRESHOLD		8
-
-#define VKVG_IBO_16					0
-#define VKVG_IBO_32					1
-
-#define VKVG_CUR_IBO_TYPE			VKVG_IBO_32//change this only
-
-#if VKVG_CUR_IBO_TYPE == VKVG_IBO_16
-	#define VKVG_IBO_MAX			UINT16_MAX
-	#define VKVG_IBO_INDEX_TYPE		uint16_t
-	#define VKVG_VK_INDEX_TYPE		VK_INDEX_TYPE_UINT16
-#else
-	#define VKVG_IBO_MAX			UINT32_MAX
-	#define VKVG_IBO_INDEX_TYPE		uint32_t
-	#define VKVG_VK_INDEX_TYPE		VK_INDEX_TYPE_UINT32
-#endif
-
 #define FULLSCREEN_BIT	0x10000000
 #define SRCTYPE_MASK	0x000000FF
 
@@ -65,12 +44,6 @@
 #else
 	#define CreateRgbaf(r, g, b, a) (((int)(a * 255.0f) << 24) | ((int)(b * 255.0f) << 16) | ((int)(g * 255.0f) << 8) | (int)(r * 255.0f))
 #endif
-
-typedef struct{
-	vec2 pos;
-	uint32_t color;
-	vec3 uv;
-}Vertex;
 
 typedef struct {
 	vec4			source;
