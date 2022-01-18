@@ -396,9 +396,14 @@ void vkvg_arc (VkvgContext ctx, float xc, float yc, float radius, float a1, floa
 	if (_current_path_is_empty(ctx)){
 		_set_curve_start (ctx);
 		_add_point (ctx, v.x, v.y);
+		if (!ctx->pathPtr)
+			ctx->simpleConvex = true;
+		else
+			ctx->simpleConvex = false;
 	}else{
 		_line_to(ctx, v.x, v.y);
 		_set_curve_start (ctx);
+		ctx->simpleConvex = false;
 	}
 
 	a+=step;
@@ -444,9 +449,14 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 	if (_current_path_is_empty(ctx)){
 		_set_curve_start (ctx);
 		_add_point (ctx, v.x, v.y);
+		if (!ctx->pathPtr)
+			ctx->simpleConvex = true;
+		else
+			ctx->simpleConvex = false;
 	}else{
 		_line_to(ctx, v.x, v.y);
 		_set_curve_start (ctx);
+		ctx->simpleConvex = false;
 	}
 
 	a-=step;
@@ -505,36 +515,6 @@ void vkvg_get_current_point (VkvgContext ctx, float* x, float* y) {
 	*x = cp.x;
 	*y = cp.y;
 }
-const double quadraticFact = 2.0/3.0;
-void _quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
-	float x0, y0;
-	if (_current_path_is_empty(ctx)) {
-		x0 = x1;
-		y0 = y1;
-	} else
-		vkvg_get_current_point (ctx, &x0, &y0);
-	vkvg_curve_to (ctx,
-					x0 + (x1 - x0) * quadraticFact,
-					y0 + (y1 - y0) * quadraticFact,
-					x2 + (x1 - x2) * quadraticFact,
-					y2 + (y1 - y2) * quadraticFact,
-					x2, y2);
-}
-void vkvg_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
-	if (ctx->status)
-		return;
-	RECORD(ctx, VKVG_CMD_QUADRATIC_TO, x1, y1, x2, y2);
-	LOG(VKVG_LOG_INFO_CMD, "\tCMD: quadratic_to: %f, %f, %f, %f\n", x1, y1, x2, y2);
-	_quadratic_to(ctx, x1, y1, x2, y2);
-}
-void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
-	if (ctx->status)
-		return;
-	RECORD(ctx, VKVG_CMD_REL_QUADRATIC_TO, x1, y1, x2, y2);
-	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_quadratic_to: %f, %f, %f, %f\n", x1, y1, x2, y2);
-	vec2 cp = _get_current_position(ctx);
-	_quadratic_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2);
-}
 void _curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	//prevent running _recursive_bezier when all 4 curve points are equal
 	if (EQUF(x1,x2) && EQUF(x2,x3) && EQUF(y1,y2) && EQUF(y2,y3)) {
@@ -558,6 +538,36 @@ void _curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x
 	if (!vec2_equ(ctx->points[ctx->pointCount-1],cp))*/
 		_add_point(ctx,x3,y3);
 	_set_curve_end (ctx);
+}
+const double quadraticFact = 2.0/3.0;
+void _quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
+	float x0, y0;
+	if (_current_path_is_empty(ctx)) {
+		x0 = x1;
+		y0 = y1;
+	} else
+		vkvg_get_current_point (ctx, &x0, &y0);
+	_curve_to (ctx,
+					x0 + (x1 - x0) * quadraticFact,
+					y0 + (y1 - y0) * quadraticFact,
+					x2 + (x1 - x2) * quadraticFact,
+					y2 + (y1 - y2) * quadraticFact,
+					x2, y2);
+}
+void vkvg_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_QUADRATIC_TO, x1, y1, x2, y2);
+	LOG(VKVG_LOG_INFO_CMD, "\tCMD: quadratic_to: %f, %f, %f, %f\n", x1, y1, x2, y2);
+	_quadratic_to(ctx, x1, y1, x2, y2);
+}
+void vkvg_rel_quadratic_to (VkvgContext ctx, float x1, float y1, float x2, float y2) {
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_REL_QUADRATIC_TO, x1, y1, x2, y2);
+	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_quadratic_to: %f, %f, %f, %f\n", x1, y1, x2, y2);
+	vec2 cp = _get_current_position(ctx);
+	_quadratic_to (ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2);
 }
 void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	if (ctx->status)
@@ -597,7 +607,7 @@ vkvg_status_t vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float 
 	_add_point (ctx, x + w, y + h);
 	_add_point (ctx, x, y + h);	
 
-	ctx->pathes[ctx->pathPtr] |= PATH_CLOSED_BIT;
+	ctx->pathes[ctx->pathPtr] |= (PATH_CLOSED_BIT|PATH_IS_CONVEX_BIT);
 
 	_finish_path(ctx);
 	return VKVG_STATUS_SUCCESS;

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -172,6 +172,9 @@ void _finish_path (VkvgContext ctx){
 
 	LOG(VKVG_LOG_INFO_PATH, "PATH: points count=%10d\n", ctx->pathes[ctx->pathPtr]&PATH_ELT_MASK);
 
+	if (ctx->pathPtr == 0 && ctx->simpleConvex)
+		ctx->pathes[0] |= PATH_IS_CONVEX_BIT;
+
 	if (ctx->segmentPtr > 0) {
 		ctx->pathes[ctx->pathPtr] |= PATH_HAS_CURVES_BIT;
 		//if last segment is not a curve and point count > 0
@@ -188,6 +191,7 @@ void _finish_path (VkvgContext ctx){
 	ctx->pathes[ctx->pathPtr] = 0;
 	ctx->segmentPtr = 0;
 	ctx->subpathCount++;
+	ctx->simpleConvex = false;
 }
 //clear path datas in context
 void _clear_path (VkvgContext ctx){
@@ -196,6 +200,7 @@ void _clear_path (VkvgContext ctx){
 	ctx->pointCount = 0;
 	ctx->segmentPtr = 0;
 	ctx->subpathCount = 0;
+	ctx->simpleConvex = false;
 }
 void _remove_last_point (VkvgContext ctx){
 	ctx->pathes[ctx->pathPtr]--;
@@ -358,6 +363,15 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
 	ctx->indCount+=3;
 
 	_check_index_cache_size(ctx);
+	LOG(VKVG_LOG_INFO_IBO, "Triangle IDX: %d %d %d (indCount=%d)\n", i0,i1,i2,ctx->indCount);
+}
+void _add_triangle_indices_unchecked (VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2){
+	VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
+	inds[0] = i0;
+	inds[1] = i1;
+	inds[2] = i2;
+	ctx->indCount+=3;
+
 	LOG(VKVG_LOG_INFO_IBO, "Triangle IDX: %d %d %d (indCount=%d)\n", i0,i1,i2,ctx->indCount);
 }
 void _vao_add_rectangle (VkvgContext ctx, float x, float y, float width, float height){
@@ -1399,6 +1413,7 @@ void _line_to (VkvgContext ctx, float x, float y) {
 			return;
 	}
 	_add_point (ctx, x, y);
+	ctx->simpleConvex = false;
 }
 void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, bool largeArc, bool counterClockWise, float _rx, float _ry, float phi) {
 	if (ctx->status)
@@ -1486,9 +1501,11 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 	if (_current_path_is_empty(ctx)){
 		_set_curve_start (ctx);
 		_add_point (ctx, xy.x, xy.y);
+		ctx->simpleConvex = true;
 	}else{
 		_line_to(ctx, xy.x, xy.y);
 		_set_curve_start (ctx);
+		ctx->simpleConvex = false;
 	}
 
 	_set_curve_start (ctx);
@@ -1655,6 +1672,28 @@ void _fill_non_zero (VkvgContext ctx){
 
 	uint32_t ptrPath = 0;
 	uint32_t firstPtIdx = 0;
+
+	if (ctx->pathPtr == 1 && ctx->pathes[0] & PATH_IS_CONVEX_BIT) {
+		//simple concave rectangle or circle
+		VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+		uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+
+		_ensure_vertex_cache_size(ctx, pathPointCount);
+		_ensure_index_cache_size(ctx, (pathPointCount-2)*3);
+
+		VKVG_IBO_INDEX_TYPE i = 0;
+		while (i < 2){
+			v.pos = ctx->points [i++];
+			_set_vertex (ctx, ctx->vertCount++, v);
+		}
+		while (i < pathPointCount){
+			v.pos = ctx->points [i];
+			_set_vertex (ctx, ctx->vertCount++, v);
+			_add_triangle_indices_unchecked(ctx, firstVertIdx, firstVertIdx + i - 1, firstVertIdx + i);
+			i++;
+		}
+		return;
+	}
 
 
 	GLUtesselator *tess = gluNewTess();

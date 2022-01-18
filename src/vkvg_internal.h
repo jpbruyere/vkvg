@@ -55,7 +55,8 @@
 #define PATH_HAS_CURVES_BIT 0x40000000				/* 2rd most significant bit of path elmts is curved status
 													 * for main path, this indicate that curve datas are present.
 													 * For segments, this indicate that the segment is curved or not */
-#define PATH_ELT_MASK		0x3FFFFFFF				/* Bit mask for fetching path element value */
+#define PATH_IS_CONVEX_BIT	0x20000000				/* simple rectangle or circle. */
+#define PATH_ELT_MASK		0x1FFFFFFF				/* Bit mask for fetching path element value */
 
 #define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
 #define ROUND_DOWN(v,p) (floorf(v * p) / p)

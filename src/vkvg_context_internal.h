@@ -192,6 +192,7 @@ typedef struct _vkvg_context_t {
 
 	uint32_t	segmentPtr;		//current segment count in current path having curves
 	uint32_t	subpathCount;	//store count of subpath, not straight forward to retrieve from segmented path array
+	bool		simpleConvex;	//true if path is single rect or concave closed curve.
 
 	float		lineWidth;
 	uint32_t	dashCount;		//value count in dash array, 0 if dash not set.
