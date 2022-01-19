@@ -364,7 +364,7 @@ void _font_add_name (_vkvg_font_identity_t* font, const char* name, int nameLeng
 	strcpy (font->names[font->namesCount-1], name);
 }
 void _add_new_font_identity (VkvgContext ctx, const char* fontFile, const char* name){
-	_font_cache_t*	cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;
+	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
 	if (++cache->fontsCount == 1)
 		cache->fonts = (_vkvg_font_identity_t*) malloc (cache->fontsCount * sizeof(_vkvg_font_identity_t));
 	else
@@ -413,9 +413,9 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 		font->sizes = (_vkvg_font_t*) realloc (font->sizes, font->sizeCount * sizeof(_vkvg_font_t));
 	_vkvg_font_t newSize = {.charSize = ctx->selectedCharSize};
 
-	VkvgDevice dev = ctx->pSurf->dev;
+	VkvgDevice dev = ctx->dev;
 #ifdef VKVG_USE_FREETYPE
-	_font_cache_t*	cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;
+	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
 	FT_CHECK_RESULT(FT_New_Face (cache->library, font->fontFile, 0, &newSize.face));
 	FT_CHECK_RESULT(FT_Set_Char_Size(newSize.face, 0, newSize.charSize, dev->hdpi, dev->vdpi ));
 
@@ -447,7 +447,7 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 
 //try find font already resolved with fontconfig by font name
 bool _tryFindFontByName (VkvgContext ctx, _vkvg_font_identity_t** font){
-	_font_cache_t*	cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;
+	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
 	for (int i = 0; i < cache->fontsCount; ++i) {
 		for (uint32_t j = 0; j < cache->fonts[i].namesCount; j++) {
 			if (strcmp (cache->fonts[i].names[j], ctx->selectedFontName) == 0) {
@@ -459,7 +459,7 @@ bool _tryFindFontByName (VkvgContext ctx, _vkvg_font_identity_t** font){
 	return false;
 }
 bool _tryResolveFontNameWithFontConfig (VkvgContext ctx, _vkvg_font_identity_t** resolvedFont) {
-	_font_cache_t*	cache = (_font_cache_t*)ctx->pSurf->dev->fontCache;
+	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
 	char* fontFile = NULL;
 
 #ifdef VKVG_USE_FONTCONFIG
@@ -584,7 +584,7 @@ void _create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
 
 	textRun->fontId = ctx->currentFont;
 	textRun->font = ctx->currentFontSize;
-	textRun->dev = ctx->pSurf->dev;
+	textRun->dev = ctx->dev;
 
 #ifdef VKVG_USE_HARFBUZZ
 	textRun->hbBuf = _get_hb_buffer (ctx->currentFontSize, text);

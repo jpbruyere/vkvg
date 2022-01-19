@@ -252,17 +252,17 @@ float _get_arc_step (VkvgContext ctx, float radius) {
 	return fminf(M_PI / 3.f,M_PI / (r * 0.4f));
 }
 void _create_gradient_buff (VkvgContext ctx){
-	vkvg_buffer_create (ctx->pSurf->dev,
+	vkvg_buffer_create (ctx->dev,
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 		VMA_MEMORY_USAGE_CPU_TO_GPU,
 		sizeof(vkvg_gradient_t), &ctx->uboGrad);
 }
 void _create_vertices_buff (VkvgContext ctx){
-	vkvg_buffer_create (ctx->pSurf->dev,
+	vkvg_buffer_create (ctx->dev,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		VMA_MEMORY_USAGE_CPU_TO_GPU,
 		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
-	vkvg_buffer_create (ctx->pSurf->dev,
+	vkvg_buffer_create (ctx->dev,
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		VMA_MEMORY_USAGE_CPU_TO_GPU,
 		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
@@ -276,7 +276,7 @@ void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
 		ctx->sizeVBO += VKVG_VBO_SIZE - mod;
 	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %d\n", ctx->sizeVBO);
 	vkvg_buffer_destroy (&ctx->vertices);
-	vkvg_buffer_create (ctx->pSurf->dev,
+	vkvg_buffer_create (ctx->dev,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		VMA_MEMORY_USAGE_CPU_TO_GPU,
 		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
@@ -290,7 +290,7 @@ void _resize_ibo (VkvgContext ctx, size_t new_size) {
 		ctx->sizeIBO += VKVG_IBO_SIZE - mod;
 	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);
 	vkvg_buffer_destroy (&ctx->indices);
-	vkvg_buffer_create (ctx->pSurf->dev,
+	vkvg_buffer_create (ctx->dev,
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		VMA_MEMORY_USAGE_CPU_TO_GPU,
 		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
@@ -400,7 +400,7 @@ void _ensure_renderpass_is_started (VkvgContext ctx) {
 		_update_push_constants(ctx);
 }
 void _create_cmd_buff (VkvgContext ctx){
-	vkh_cmd_buffs_create((VkhDevice)ctx->pSurf->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY, 2, ctx->cmdBuffers);
+	vkh_cmd_buffs_create((VkhDevice)ctx->dev, ctx->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY, 2, ctx->cmdBuffers);
 #if defined(DEBUG) && defined(ENABLE_VALIDATION)
 	vkh_device_set_object_name((VkhDevice)ctx->pSurf->dev, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, (uint64_t)ctx->cmd, "vkvgCtxCmd");
 #endif
@@ -410,7 +410,7 @@ void _clear_attachment (VkvgContext ctx) {
 }
 bool _wait_flush_fence (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "CTX: _wait_flush_fence\n");
-	if (WaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
+	if (WaitForFences (ctx->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
 		return true;
 	LOG(VKVG_LOG_DEBUG, "CTX: _wait_flush_fence timeout\n");
 	ctx->status = VKVG_STATUS_TIMEOUT;
@@ -418,7 +418,7 @@ bool _wait_flush_fence (VkvgContext ctx) {
 }
 void _reset_flush_fence (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "CTX: _reset_flush_fence\n");
-	ResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
+	ResetFences (ctx->dev->vkDev, 1, &ctx->flushFence);
 }
 bool _wait_and_submit_cmd (VkvgContext ctx){
 	if (!ctx->cmdStarted)//current cmd buff is empty, be aware that wait is also canceled!!
@@ -430,7 +430,7 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 		return false;
 	_reset_flush_fence(ctx);
 
-	_submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
+	_submit_cmd (ctx->dev, &ctx->cmd, ctx->flushFence);
 
 	if (ctx->cmd == ctx->cmdBuffers[0])
 		ctx->cmd = ctx->cmdBuffers[1];
@@ -499,7 +499,7 @@ void _end_render_pass (VkvgContext ctx) {
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_cmd_label_end (ctx->cmd);
 #endif
-	ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass;
+	ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass;
 }
 
 void _check_vao_size (VkvgContext ctx) {
@@ -574,16 +574,16 @@ void _flush_cmd_buff (VkvgContext ctx){
 void _bind_draw_pipeline (VkvgContext ctx) {
 	switch (ctx->curOperator) {
 	case VKVG_OPERATOR_OVER:
-		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipe_OVER);
 		break;
 	case VKVG_OPERATOR_CLEAR:
-		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_CLEAR);
+		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipe_CLEAR);
 		break;
 	case VKVG_OPERATOR_DIFFERENCE:
-		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_SUB);
+		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipe_SUB);
 		break;
 	default:
-		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipe_OVER);
+		CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipe_OVER);
 		break;
 	}
 }
@@ -622,7 +622,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 	CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
 	VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc,ctx->dsGrad};
-	CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineLayout,
+	CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
 							0, 3, dss, 0, NULL);
 
 	VkDeviceSize offsets[1] = { 0 };
@@ -643,7 +643,7 @@ void _set_mat_inv_and_vkCmdPush (VkvgContext ctx) {
 	ctx->pushCstDirty = true;
 }
 void _update_push_constants (VkvgContext ctx) {
-	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
+	CmdPushConstants(ctx->cmd, ctx->dev->pipelineLayout,
 					   VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),&ctx->pushConsts);
 	ctx->pushCstDirty = false;
 }
@@ -667,7 +667,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		if (!_wait_flush_fence (ctx))
 			return;
 		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE)//unbind current source surface by replacing it with empty texture
-			_update_descriptor_set		(ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
+			_update_descriptor_set		(ctx, ctx->dev->emptyImg, ctx->dsSrc);
 		break;
 	case VKVG_PATTERN_TYPE_SURFACE:
 	{
@@ -741,7 +741,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			return;
 
 		if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
-			_update_descriptor_set (ctx, ctx->pSurf->dev->emptyImg, ctx->dsSrc);
+			_update_descriptor_set (ctx, ctx->dev->emptyImg, ctx->dsSrc);
 
 		vec4 bounds = {{(float)ctx->pSurf->width}, {(float)ctx->pSurf->height}, {0}, {0}};//store img bounds in unused source field
 		ctx->pushConsts.source = bounds;
@@ -802,7 +802,7 @@ void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
 			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.pImageInfo = &descSrcTex
 	};
-	vkUpdateDescriptorSets(ctx->pSurf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
+	vkUpdateDescriptorSets(ctx->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
 void _update_gradient_desc_set (VkvgContext ctx){
 	VkDescriptorBufferInfo dbi = {ctx->uboGrad.buffer, 0, VK_WHOLE_SIZE};
@@ -814,7 +814,7 @@ void _update_gradient_desc_set (VkvgContext ctx){
 			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.pBufferInfo = &dbi
 	};
-	vkUpdateDescriptorSets(ctx->pSurf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
+	vkUpdateDescriptorSets(ctx->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
 /*
  * Reset currently bound descriptor which image could be destroyed
@@ -832,7 +832,7 @@ void _update_gradient_desc_set (VkvgContext ctx){
 }*/
 
 void _createDescriptorPool (VkvgContext ctx) {
-	VkvgDevice dev = ctx->pSurf->dev;
+	VkvgDevice dev = ctx->dev;
 	const VkDescriptorPoolSize descriptorPoolSize[] = {
 		{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
 		{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 }
@@ -845,7 +845,7 @@ void _createDescriptorPool (VkvgContext ctx) {
 	VK_CHECK_RESULT(vkCreateDescriptorPool (dev->vkDev, &descriptorPoolCreateInfo, NULL, &ctx->descriptorPool));
 }
 void _init_descriptor_sets (VkvgContext ctx){
-	VkvgDevice dev = ctx->pSurf->dev;
+	VkvgDevice dev = ctx->dev;
 	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 															  .descriptorPool = ctx->descriptorPool,
 															  .descriptorSetCount = 1,
@@ -1223,7 +1223,6 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
 void _free_ctx_save (vkvg_context_save_t* sav){
 	if (sav->dashCount > 0)
 		free (sav->dashes);
-	free(sav->selectedFontName);
 	free (sav);
 }
 
@@ -1568,7 +1567,7 @@ void _poly_fill (VkvgContext ctx){
 	}else
 		_ensure_renderpass_is_started(ctx);
 
-	CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelinePolyFill);
+	CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelinePolyFill);
 
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 	uint32_t ptrPath = 0;
@@ -1894,11 +1893,11 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 	ctx->curVertOffset = ctx->vertCount;
 
 	ctx->pushConsts.fsq_patternType |= FULLSCREEN_BIT;
-	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
+	CmdPushConstants(ctx->cmd, ctx->dev->pipelineLayout,
 					   VK_SHADER_STAGE_VERTEX_BIT, 24, 4,&ctx->pushConsts.fsq_patternType);
 	CmdDraw (ctx->cmd,3,1,firstVertIdx,0);
 	ctx->pushConsts.fsq_patternType &= ~FULLSCREEN_BIT;
-	CmdPushConstants(ctx->cmd, ctx->pSurf->dev->pipelineLayout,
+	CmdPushConstants(ctx->cmd, ctx->dev->pipelineLayout,
 					   VK_SHADER_STAGE_VERTEX_BIT, 24, 4,&ctx->pushConsts.fsq_patternType);
 	if (us)
 		CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
