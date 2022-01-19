@@ -30,6 +30,8 @@
 #define STENCIL_CLIP_BIT	0x2
 #define STENCIL_ALL_BIT		0x3
 
+#define VKVG_MAX_CACHED_CONTEXT_COUNT 16
+
 extern PFN_vkCmdBindPipeline			CmdBindPipeline;
 extern PFN_vkCmdBindDescriptorSets		CmdBindDescriptorSets;
 extern PFN_vkCmdBindIndexBuffer			CmdBindIndexBuffer;
@@ -106,6 +108,9 @@ typedef struct _vkvg_device_t{
 
 	_font_cache_t*	fontCache;						/**< Store everything relative to common font caching system */
 	VkvgContext		lastCtx;						/**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
+
+	int32_t			cachedContextCount;
+	VkvgContext		cachedContext[VKVG_MAX_CACHED_CONTEXT_COUNT];
 }vkvg_device;
 
 bool _try_get_phyinfo			(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);
