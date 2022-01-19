@@ -21,6 +21,7 @@
  */
 
 #include "vkvg_device_internal.h"
+#include "vkvg_surface_internal.h"
 #include "vkh_queue.h"
 #include "vkh_phyinfo.h"
 #include "vk_mem_alloc.h"
@@ -260,6 +261,12 @@ void vkvg_device_destroy (VkvgDevice dev)
 	dev->references--;
 	if (dev->references > 0)
 		return;
+
+	int32_t cachedCtxCount = dev->cachedContextCount;
+	dev->cachedContextCount = VKVG_MAX_CACHED_CONTEXT_COUNT;
+	while (cachedCtxCount > 0) {
+		vkvg_destroy(dev->cachedContext[--cachedCtxCount]);
+	}
 
 	LOG(VKVG_LOG_INFO, "DESTROY Device\n");
 

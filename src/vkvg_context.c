@@ -42,9 +42,64 @@ static VkClearValue clearValues[3] = {
 	{ .color.float32 = {0,0,0,0} }
 };
 
+void _init_ctx (VkvgContext ctx) {
+	ctx->lineWidth		= 1;
+	ctx->curOperator	= VKVG_OPERATOR_OVER;
+	ctx->curFillRule	= VKVG_FILL_RULE_NON_ZERO;
+	ctx->bounds = (VkRect2D) {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
+	ctx->pushConsts = (push_constants) {
+			{.a = 1},
+			{(float)ctx->pSurf->width,(float)ctx->pSurf->height},
+			VKVG_PATTERN_TYPE_SOLID,
+			1.0f,
+			VKVG_IDENTITY_MATRIX,
+			VKVG_IDENTITY_MATRIX
+	};
+	ctx->clearRect = (VkClearRect) {{{0},{ctx->pSurf->width, ctx->pSurf->height}},0,1};
+	ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
+	ctx->renderPassBeginInfo.renderArea.extent.width = ctx->pSurf->width;
+	ctx->renderPassBeginInfo.renderArea.extent.height = ctx->pSurf->height;
+	ctx->renderPassBeginInfo.pClearValues = clearValues;
+
+	if (ctx->pSurf->new)
+		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
+	else
+		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
+
+	ctx->pSurf->new = false;
+
+	if (ctx->dev->samples == VK_SAMPLE_COUNT_1_BIT)
+		ctx->renderPassBeginInfo.clearValueCount = 2;
+	else
+		ctx->renderPassBeginInfo.clearValueCount = 3;
+	ctx->selectedCharSize = 10 << 6;
+	ctx->currentFont = NULL;
+	ctx->selectedFontName[0] = 0;
+	ctx->pattern = NULL;
+	/*ctx->pPrev = ctx->dev->lastCtx;
+	if (ctx->pPrev != NULL)
+		ctx->pPrev->pNext = ctx;
+	ctx->dev->lastCtx = ctx;*/
+}
+
 VkvgContext vkvg_create(VkvgSurface surf)
 {
 	VkvgDevice dev = surf->dev;
+
+	if (dev->cachedContextCount) {
+		VkvgContext ctx = dev->cachedContext[--dev->cachedContextCount];
+		ctx->pSurf = surf;
+		_init_ctx (ctx);
+		_update_descriptor_set (ctx, surf->dev->emptyImg, ctx->dsSrc);
+		_clear_path	(ctx);
+		ctx->cmd = ctx->cmdBuffers[0];//current recording buffer
+		ctx->cmdStarted = false;
+		ctx->curClipState = vkvg_clip_state_none;
+		ctx->status = VKVG_STATUS_SUCCESS;
+		ctx->vertCount = ctx->indCount = ctx->curColor = 0;
+
+		return ctx;
+	}
 	VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
 	LOG(VKVG_LOG_INFO, "CREATE Context: ctx = %p; surf = %p\n", ctx, surf);
@@ -62,56 +117,19 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->sizeVertices	= ctx->sizeVBO = VKVG_VBO_SIZE;
 	ctx->sizeIndices	= ctx->sizeIBO = VKVG_IBO_SIZE;
 	ctx->sizePathes		= VKVG_PATHES_SIZE;
-	ctx->lineWidth		= 1;
-	ctx->curOperator	= VKVG_OPERATOR_OVER;
-	ctx->curFillRule	= VKVG_FILL_RULE_NON_ZERO;
-	ctx->pSurf			= surf;
-
-	ctx->bounds = (VkRect2D) {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
-	ctx->pushConsts = (push_constants) {
-			{.a = 1},
-			{(float)ctx->pSurf->width,(float)ctx->pSurf->height},
-			VKVG_PATTERN_TYPE_SOLID,
-			1.0f,
-			VKVG_IDENTITY_MATRIX,
-			VKVG_IDENTITY_MATRIX
-	};
-	ctx->clearRect = (VkClearRect) {{{0},{ctx->pSurf->width, ctx->pSurf->height}},0,1};
-
 	ctx->renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
-	ctx->renderPassBeginInfo.renderArea.extent.width = ctx->pSurf->width;
-	ctx->renderPassBeginInfo.renderArea.extent.height = ctx->pSurf->height;
-	ctx->renderPassBeginInfo.pClearValues = clearValues;
 
-	if (ctx->pSurf->new)
-		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearAll;
-	else
-		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearStencil;
+	ctx->pSurf = surf;
+	ctx->dev = surf->dev;
 
-	ctx->pSurf->new = false;
-
-	if (dev->samples == VK_SAMPLE_COUNT_1_BIT)
-		ctx->renderPassBeginInfo.clearValueCount = 2;
-	else
-		ctx->renderPassBeginInfo.clearValueCount = 3;
-
-	ctx->pPrev = surf->dev->lastCtx;
-	if (ctx->pPrev != NULL)
-		ctx->pPrev->pNext = ctx;
-	surf->dev->lastCtx = ctx;
+	_init_ctx (ctx);
 
 	ctx->points	= (vec2*)malloc (VKVG_VBO_SIZE*sizeof(vec2));
 	ctx->pathes	= (uint32_t*)malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
 	ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
 	ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
-	ctx->savedStencils = malloc(0);
 
-	ctx->selectedFontName = (char*)calloc(FONT_NAME_MAX_SIZE, sizeof(char));
-	ctx->selectedCharSize = 10 << 6;
-	ctx->currentFont = NULL;
-
-	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache || !ctx->savedStencils || !ctx->selectedFontName) {
+	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache) {
 		dev->status = VKVG_STATUS_NO_MEMORY;
 		if (ctx->points)
 			free(ctx->points);
@@ -121,23 +139,19 @@ VkvgContext vkvg_create(VkvgSurface surf)
 			free(ctx->vertexCache);
 		if (ctx->indexCache)
 			free(ctx->indexCache);
-		if (ctx->savedStencils)
-			free(ctx->savedStencils);
-		if (ctx->selectedFontName)
-			free(ctx->selectedFontName);
 		return NULL;
 	}
 
-	ctx->flushFence = vkh_fence_create_signaled ((VkhDevice)dev);
 	//for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
 	ctx->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
+	ctx->flushFence = vkh_fence_create_signaled ((VkhDevice)ctx->dev);
 	_create_vertices_buff	(ctx);
 	_create_gradient_buff	(ctx);
 	_create_cmd_buff		(ctx);
 	_createDescriptorPool	(ctx);
 	_init_descriptor_sets	(ctx);
-	_update_descriptor_set	(ctx, ctx->pSurf->dev->fontCache->texture, ctx->dsFont);
+	_update_descriptor_set	(ctx, ctx->dev->fontCache->texture, ctx->dsFont);
 	_update_descriptor_set	(ctx, surf->dev->emptyImg, ctx->dsSrc);
 	_update_gradient_desc_set(ctx);
 
@@ -196,6 +210,42 @@ void vkvg_flush (VkvgContext ctx){
 */
 }
 
+void _clear_context (VkvgContext ctx) {
+	//free saved context stack elmt
+	vkvg_context_save_t* next = ctx->pSavedCtxs;
+	while (next != NULL) {
+		vkvg_context_save_t* cur = next;
+		next = cur->pNext;
+		_free_ctx_save (cur);
+		if (cur->pattern)
+			vkvg_pattern_destroy (cur->pattern);
+	}
+	//free additional stencil use in save/restore process
+	if (ctx->savedStencils) {
+		uint8_t curSaveStencil = ctx->curSavBit / 6;
+		for (int i=curSaveStencil;i>0;i--)
+			vkh_image_destroy(ctx->savedStencils[i-1]);
+		free(ctx->savedStencils);
+		ctx->savedStencils = NULL;
+		ctx->curSavBit = 0;
+	}
+
+	//remove context from double linked list of context in device
+	/*if (ctx->dev->lastCtx == ctx){
+		ctx->dev->lastCtx = ctx->pPrev;
+		if (ctx->pPrev != NULL)
+			ctx->pPrev->pNext = NULL;
+	}else if (ctx->pPrev == NULL){
+		//first elmt, and it's not last one so pnext is not null
+		ctx->pNext->pPrev = NULL;
+	}else{
+		ctx->pPrev->pNext = ctx->pNext;
+		ctx->pNext->pPrev = ctx->pPrev;
+	}*/
+	if (ctx->dashCount > 0)
+		free(ctx->dashes);
+}
+
 void vkvg_destroy (VkvgContext ctx)
 {
 	ctx->references--;
@@ -216,7 +266,7 @@ void vkvg_destroy (VkvgContext ctx)
 	if (ctx->pattern)
 		vkvg_pattern_destroy (ctx->pattern);
 
-	VkDevice dev = ctx->pSurf->dev->vkDev;
+	VkDevice dev = ctx->dev->vkDev;
 
 #if VKVG_DBG_STATS
 	vkvg_debug_stats_t* dbgstats = &ctx->pSurf->dev->debug_stats;
@@ -235,7 +285,16 @@ void vkvg_destroy (VkvgContext ctx)
 
 #endif
 
-	vkDestroyFence		(dev, ctx->flushFence,NULL);
+	if (ctx->dev->cachedContextCount < VKVG_MAX_CACHED_CONTEXT_COUNT) {
+		ctx->dev->cachedContext[ctx->dev->cachedContextCount++] = ctx;
+		_clear_context (ctx);
+		ctx->references++;
+		return;
+	}
+
+	_clear_context (ctx);
+
+	vkDestroyFence		(ctx->dev->vkDev, ctx->flushFence,NULL);
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
@@ -254,40 +313,8 @@ void vkvg_destroy (VkvgContext ctx)
 	//TODO:check this for source counter
 	//vkh_image_destroy	  (ctx->source);
 
-	free(ctx->selectedFontName);
 	free(ctx->pathes);
 	free(ctx->points);
-	if (ctx->dashCount > 0)
-		free(ctx->dashes);
-
-	//free saved context stack elmt
-	vkvg_context_save_t* next = ctx->pSavedCtxs;
-	while (next != NULL) {
-		vkvg_context_save_t* cur = next;
-		next = cur->pNext;
-		_free_ctx_save (cur);
-		if (cur->pattern)
-			vkvg_pattern_destroy (cur->pattern);
-	}
-	//free additional stencil use in save/restore process
-	uint8_t curSaveStencil = ctx->curSavBit / 6;
-	for (int i=curSaveStencil;i>0;i--)
-		vkh_image_destroy(ctx->savedStencils[i-1]);
-
-	free(ctx->savedStencils);
-
-	//remove context from double linked list of context in device
-	if (ctx->pSurf->dev->lastCtx == ctx){
-		ctx->pSurf->dev->lastCtx = ctx->pPrev;
-		if (ctx->pPrev != NULL)
-			ctx->pPrev->pNext = NULL;
-	}else if (ctx->pPrev == NULL){
-		//first elmt, and it's not last one so pnext is not null
-		ctx->pNext->pPrev = NULL;
-	}else{
-		ctx->pPrev->pNext = ctx->pNext;
-		ctx->pNext->pPrev = ctx->pPrev;
-	}
 
 	free(ctx);
 }
@@ -688,7 +715,7 @@ void _reset_clip (VkvgContext ctx) {
 	if (!ctx->cmdStarted) {
 		//if command buffer is not already started and in a renderpass, we use the renderpass
 		//with the loadop clear for stencil
-		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearStencil;
+		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
 		//force run of one renderpass (even empty) to perform clear load op
 		_start_cmd_for_render_pass(ctx);
 		return;
@@ -724,7 +751,7 @@ void vkvg_clear (VkvgContext ctx){
 
 	_emit_draw_cmd_undrawn_vertices(ctx);
 	if (!ctx->cmdStarted) {
-		ctx->renderPassBeginInfo.renderPass = ctx->pSurf->dev->renderPass_ClearAll;
+		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
 		_start_cmd_for_render_pass(ctx);
 		return;
 	}
@@ -749,9 +776,9 @@ void _clip_preserve (VkvgContext ctx){
 
 	if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
 		_poly_fill (ctx);
-		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineClipping);
 	}else{
-		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineClipping);
 		CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 		CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
@@ -1169,7 +1196,7 @@ void vkvg_save (VkvgContext ctx){
 	RECORD(ctx, VKVG_CMD_SAVE);
 	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
-	VkvgDevice dev = ctx->pSurf->dev;
+	VkvgDevice dev = ctx->dev;
 	vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
 	_flush_cmd_buff (ctx);
@@ -1184,7 +1211,11 @@ void vkvg_save (VkvgContext ctx){
 		uint8_t curSaveStencil = ctx->curSavBit / 6;
 
 		if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0){//new save/restore stencil image have to be created
-			VkhImage* savedStencilsPtr = (VkhImage*)realloc(ctx->savedStencils, curSaveStencil * sizeof(VkhImage));
+			VkhImage* savedStencilsPtr = NULL;
+			if (savedStencilsPtr)
+				savedStencilsPtr = (VkhImage*)realloc(ctx->savedStencils, curSaveStencil * sizeof(VkhImage));
+			else
+				savedStencilsPtr = (VkhImage*)malloc(curSaveStencil * sizeof(VkhImage));
 			if (savedStencilsPtr == NULL) {
 				free(sav);
 				ctx->status = VKVG_STATUS_NO_MEMORY;
@@ -1237,7 +1268,7 @@ void vkvg_save (VkvgContext ctx){
 		vkh_cmd_label_start(ctx->cmd, "save rp", DBG_LAB_COLOR_SAV);
 	#endif
 
-		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineClipping);
 
 		CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -1270,7 +1301,6 @@ void vkvg_save (VkvgContext ctx){
 	sav->curFillRule= ctx->curFillRule;
 
 	sav->selectedCharSize = ctx->selectedCharSize;
-	sav->selectedFontName = (char*)calloc(FONT_NAME_MAX_SIZE,sizeof(char));
 	strcpy (sav->selectedFontName, ctx->selectedFontName);
 
 	sav->currentFont  = ctx->currentFont;
@@ -1322,7 +1352,7 @@ void vkvg_restore (VkvgContext ctx){
 			vkh_cmd_label_start(ctx->cmd, "restore rp", DBG_LAB_COLOR_SAV);
 #endif
 
-			CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->dev->pipelineClipping);
+			CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineClipping);
 
 			CmdSetStencilReference	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT|curSaveBit);
 			CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
