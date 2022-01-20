@@ -76,6 +76,9 @@ void _init_ctx (VkvgContext ctx) {
 	ctx->currentFont = NULL;
 	ctx->selectedFontName[0] = 0;
 	ctx->pattern = NULL;
+	ctx->cmdStarted = false;
+	ctx->curClipState = vkvg_clip_state_none;
+	ctx->vertCount = ctx->indCount = ctx->curColor = 0;
 	/*ctx->pPrev = ctx->dev->lastCtx;
 	if (ctx->pPrev != NULL)
 		ctx->pPrev->pNext = ctx;
@@ -93,11 +96,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		_update_descriptor_set (ctx, surf->dev->emptyImg, ctx->dsSrc);
 		_clear_path	(ctx);
 		ctx->cmd = ctx->cmdBuffers[0];//current recording buffer
-		ctx->cmdStarted = false;
-		ctx->curClipState = vkvg_clip_state_none;
 		ctx->status = VKVG_STATUS_SUCCESS;
-		ctx->vertCount = ctx->indCount = ctx->curColor = 0;
-
 		return ctx;
 	}
 	VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
