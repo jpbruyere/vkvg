@@ -22,7 +22,15 @@
 	<img src="https://badges.gitter.im/CSharpRapidOpenWidgets.svg">
   </a>
 </p>
+<p align="center">
+  <a href="https://aur.archlinux.org/packages/vkvg">
+	<img src="https://img.shields.io/aur/version/vkvg">
+  </a>
+</p>
+	
 </h1>
+
+
 
 **vkvg** is an open-source *2D graphics library* written in **C** using [Vulkan](https://www.khronos.org/vulkan/) as backend. The **API** follows the same pattern as [Cairo](https://www.cairographics.org/), but new functions and original drawing mechanics may be added.
 
@@ -78,6 +86,8 @@ if `glslc` or `xxd` are not present, a precompiled version of the shaders is sto
 
 ## Building
 
+<a href="https://aur.archlinux.org/packages/vkvg"><img src="https://img.shields.io/aur/version/vkvg"></a>
+
 ```bash
 #fetch sources from github
 git clone --recursive https://github.com/jpbruyere/vkvg.git
@@ -88,6 +98,7 @@ cd build
 # Run CMake configuration
 cmake ..
 ```
+
 ### CMake configure options
 
 ##### Core library options:
