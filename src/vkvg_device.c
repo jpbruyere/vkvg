@@ -60,6 +60,13 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 		if (!_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
 			pi = phys[0];
 
+	if (!(pi->properties.limits.framebufferColorSampleCounts&samples)) {
+		LOG(VKVG_LOG_ERR, "CREATE Device failed: sample count not supported: %d\n", samples);
+		vkh_app_free_phyinfos (phyCount, phys);
+		vkh_app_destroy (app);
+		return NULL;
+	}
+
 	uint32_t qCount = 0;
 	float qPriorities[] = {0.0};
 	VkDeviceQueueCreateInfo pQueueInfos[] = { {0},{0},{0} };
