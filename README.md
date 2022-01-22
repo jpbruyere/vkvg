@@ -26,6 +26,9 @@
   <a href="https://aur.archlinux.org/packages/vkvg">
 	<img src="https://img.shields.io/aur/version/vkvg">
   </a>
+  <a href="https://mpr.hunterwittenborn.com/packages/vkvg">
+	<img src="https://img.shields.io/badge/mpr-v0.3.0--beta-blue">
+  </a>
 </p>
 	
 </h1>
@@ -87,6 +90,7 @@ if `glslc` or `xxd` are not present, a precompiled version of the shaders is sto
 ## Building
 
 <a href="https://aur.archlinux.org/packages/vkvg"><img src="https://img.shields.io/aur/version/vkvg"></a>
+<a href="https://mpr.hunterwittenborn.com/packages/vkvg"><img src="https://img.shields.io/badge/mpr-v0.3.0--beta-blue"></a>
 
 ```bash
 #fetch sources from github
