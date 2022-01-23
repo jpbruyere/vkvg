@@ -481,12 +481,27 @@ void _check_best_image_tiling (VkvgDevice dev, VkFormat format) {
 	VkFlags stencilFormats[] = { VK_FORMAT_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT };
 	VkFormatProperties phyStencilProps = { 0 }, phyImgProps = { 0 };
 
+	//check png blit format
+	VkFlags pngBlitFormats[] = { VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_R8G8B8A8_UNORM};
+	dev->pngStagFormat = VK_FORMAT_UNDEFINED;
+	for (int i = 0; i < 2; i++)
+	{
+		vkGetPhysicalDeviceFormatProperties(dev->phy, pngBlitFormats[i], &phyImgProps);
+		if ((phyImgProps.linearTilingFeatures & VKVG_PNG_WRITE_IMG_REQUIREMENTS) == VKVG_PNG_WRITE_IMG_REQUIREMENTS) {
+			dev->pngStagFormat = pngBlitFormats[i];
+			break;
+		}
+	}
+
+	if (dev->pngStagFormat == VK_FORMAT_UNDEFINED)
+		LOG(VKVG_LOG_DEBUG, "vkvg create device failed: no suitable image format for png write\n");
+
 	dev->stencilFormat = VK_FORMAT_UNDEFINED;
 	dev->supportedTiling = 0xff;
 	
 	vkGetPhysicalDeviceFormatProperties(dev->phy, format, &phyImgProps);
 	
-	if (phyImgProps.optimalTilingFeatures & (VKVG_SURFACE_IMGS_REQUIREMENTS)) {
+	if ((phyImgProps.optimalTilingFeatures & VKVG_SURFACE_IMGS_REQUIREMENTS) == VKVG_SURFACE_IMGS_REQUIREMENTS) {
 		for (int i = 0; i < 4; i++)
 		{
 			vkGetPhysicalDeviceFormatProperties(dev->phy, stencilFormats[i], &phyStencilProps);
@@ -497,7 +512,7 @@ void _check_best_image_tiling (VkvgDevice dev, VkFormat format) {
 			}
 		}
 	}
-	if (phyImgProps.linearTilingFeatures & (VKVG_SURFACE_IMGS_REQUIREMENTS)) {
+	if ((phyImgProps.linearTilingFeatures & VKVG_SURFACE_IMGS_REQUIREMENTS) == VKVG_SURFACE_IMGS_REQUIREMENTS) {
 		for (int i = 0; i < 4; i++)
 		{
 			vkGetPhysicalDeviceFormatProperties(dev->phy, stencilFormats[i], &phyStencilProps);

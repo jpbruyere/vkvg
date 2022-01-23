@@ -237,12 +237,17 @@ uint32_t vkvg_surface_get_height (VkvgSurface surf) {
 	return surf->height;
 }
 
-void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){	
+void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
+	if (surf->dev->pngStagFormat == VK_FORMAT_UNDEFINED) {
+		LOG(VKVG_LOG_ERR, "no suitable image format for png write\n");
+		return;
+	}
+
 	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
 	VkvgDevice dev = surf->dev;
 
 	//RGBA to blit to, surf img is bgra
-	VkhImage stagImg= vkh_image_create ((VkhDevice)surf->dev,VK_FORMAT_R8G8B8A8_SRGB,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
+	VkhImage stagImg= vkh_image_create ((VkhDevice)surf->dev, dev->pngStagFormat, surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
 										 VMA_MEMORY_USAGE_GPU_TO_CPU,
 										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 

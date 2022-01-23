@@ -60,6 +60,7 @@ typedef struct _vkvg_device_t{
 
 	VkImageTiling			supportedTiling;		/**< Supported image tiling for surface, 0xFF=no support */
 	VkFormat				stencilFormat;			/**< Supported vulkan image format for stencil */
+	VkFormat				pngStagFormat;			/**< Supported vulkan image format png write staging img */
 
 	VkhQueue				gQueue;					/**< Vulkan Queue with Graphic flag */
 	MUTEX					gQMutex;				/**< queue submission has to be externally syncronized */
