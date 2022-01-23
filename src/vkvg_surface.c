@@ -247,8 +247,15 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 	VkvgDevice dev = surf->dev;
 
 	//RGBA to blit to, surf img is bgra
-	VkhImage stagImg= vkh_image_create ((VkhDevice)surf->dev, dev->pngStagFormat, surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
+	VkhImage stagImg;
+
+	if (dev->pngStagTiling == VK_IMAGE_TILING_LINEAR)
+		stagImg = vkh_image_create ((VkhDevice)surf->dev, dev->pngStagFormat, surf->width, surf->height, dev->pngStagTiling,
 										 VMA_MEMORY_USAGE_GPU_TO_CPU,
+										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+	else
+		stagImg = vkh_image_create ((VkhDevice)surf->dev, dev->pngStagFormat, surf->width,surf->height, dev->pngStagTiling,
+										 VMA_MEMORY_USAGE_GPU_ONLY,
 										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 	VkCommandBuffer cmd = dev->cmd;
@@ -274,16 +281,49 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 
 	vkh_cmd_end		(cmd);
 	_submit_cmd		(dev, &cmd, dev->fence);
-	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
-	void* img = vkh_image_map (stagImg);
+	VkhImage stagImgLinear = stagImg;
 
-	uint64_t stride = vkh_image_get_stride(stagImg);
+	if (dev->pngStagTiling == VK_IMAGE_TILING_OPTIMAL) {
+		stagImgLinear = vkh_image_create ((VkhDevice)surf->dev, dev->pngStagFormat, surf->width, surf->height, VK_IMAGE_TILING_LINEAR,
+										  VMA_MEMORY_USAGE_GPU_TO_CPU,
+										  VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+		VkImageCopy cpy = {
+			.srcSubresource = imgSubResLayers,
+			.srcOffset = {0},
+			.dstSubresource = imgSubResLayers,
+			.dstOffset = {0},
+			.extent = {(int32_t)surf->width, (int32_t)surf->height, 1}
+		};
+		_wait_and_reset_device_fence (dev);
+
+		vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		vkh_image_set_layout (cmd, stagImgLinear, VK_IMAGE_ASPECT_COLOR_BIT,
+							  VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+							  VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+		vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
+							  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+							  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+		vkCmdCopyImage(cmd,
+					   vkh_image_get_vkimage (stagImg), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					   vkh_image_get_vkimage (stagImgLinear),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &cpy);
+
+		vkh_cmd_end		(cmd);
+		_submit_cmd		(dev, &cmd, dev->fence);
+
+		vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
+		vkh_image_destroy (stagImg);
+	} else
+		vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
+
+	void* img = vkh_image_map (stagImgLinear);
+
+	uint64_t stride = vkh_image_get_stride(stagImgLinear);
 
 	stbi_write_png (path, (int32_t)surf->width, (int32_t)surf->height, 4, img, (int32_t)stride);
 
-	vkh_image_unmap (stagImg);
-	vkh_image_destroy (stagImg);
+	vkh_image_unmap (stagImgLinear);
+	vkh_image_destroy (stagImgLinear);
 }
 
 void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap){

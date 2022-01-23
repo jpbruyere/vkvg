@@ -489,6 +489,11 @@ void _check_best_image_tiling (VkvgDevice dev, VkFormat format) {
 		vkGetPhysicalDeviceFormatProperties(dev->phy, pngBlitFormats[i], &phyImgProps);
 		if ((phyImgProps.linearTilingFeatures & VKVG_PNG_WRITE_IMG_REQUIREMENTS) == VKVG_PNG_WRITE_IMG_REQUIREMENTS) {
 			dev->pngStagFormat = pngBlitFormats[i];
+			dev->pngStagTiling = VK_IMAGE_TILING_LINEAR;
+			break;
+		} else if ((phyImgProps.optimalTilingFeatures & VKVG_PNG_WRITE_IMG_REQUIREMENTS) == VKVG_PNG_WRITE_IMG_REQUIREMENTS) {
+			dev->pngStagFormat = pngBlitFormats[i];
+			dev->pngStagTiling = VK_IMAGE_TILING_OPTIMAL;
 			break;
 		}
 	}
