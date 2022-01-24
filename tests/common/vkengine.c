@@ -112,8 +112,12 @@ bool instance_extension_supported (VkExtensionProperties* instanceExtProps, uint
 
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
 	glfwSetErrorCallback(glfw_error_callback);
-	assert (glfwInit()==GLFW_TRUE);
-	assert (glfwVulkanSupported()==GLFW_TRUE);
+
+	int res = 0;
+	res = glfwInit();
+	assert (res==GLFW_TRUE && "glfwInit failed.");
+	res = glfwVulkanSupported();
+	assert (res==GLFW_TRUE && "glfwVulkanSupported return false.");
 
 	uint32_t enabledExtsCount = 0, phyCount = 0;
 	const char** gflwExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
