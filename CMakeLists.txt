@@ -39,7 +39,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	IF (UNIX)
 		SET(CMAKE_${LANG}_FLAGS "-Wall -Wno-extra -Wno-unknown-pragmas -Wno-missing-braces -Wno-unused-variable -Wno-switch")
 	ELSEIF(MSVC)
-		SET(CMAKE_${LANG}_FLAGS "/TC /W4 /wd4201 /wd4204 /wd4221 /wd4100")#c11 complient
+		SET(CMAKE_${LANG}_FLAGS "/TC /W4 /wd4201 /wd4204 /wd4221 /wd4100") # c11 compliant
 	ENDIF()
 ELSE()
 	UNSET(ENABLE_VALIDATION CACHE)
