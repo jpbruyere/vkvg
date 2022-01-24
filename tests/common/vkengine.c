@@ -123,40 +123,43 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
         exit(-1);
     }
 
-	uint32_t enabledExtsCount = 0, phyCount = 0;
-	const char** gflwExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
-
+	const char* enabledLayers[10];
 	const char* enabledExts [10];
+	uint32_t enabledExtsCount = 0, enabledLayersCount = 0, phyCount = 0;
+
+	vkh_layers_check_init();
+#ifdef VKVG_USE_VALIDATION
+	if (vkh_layer_is_present("VK_LAYER_KHRONOS_validation"))
+		enabledLayers[enabledLayersCount++] = "VK_LAYER_KHRONOS_validation";
+#endif
+
+#ifdef VKVG_USE_RENDERDOC
+	if (vkh_layer_is_present("VK_LAYER_RENDERDOC_Capture"))
+		enabledLayers[enabledLayersCount++] = "VK_LAYER_RENDERDOC_Capture";
+#endif
+	vkh_layers_check_release();
+
+	const char** gflwExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
 
 	for (uint32_t i=0;i<enabledExtsCount;i++)
 		enabledExts[i] = gflwExts[i];
-#ifdef VKVG_USE_RENDERDOC
-	const uint32_t enabledLayersCount = 2;
-	const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_RENDERDOC_Capture"};
-#elif defined (VKVG_USE_VALIDATION)
-	const uint32_t enabledLayersCount = 1;
-	const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation"};
-#else
-	const uint32_t enabledLayersCount = 0;
-	const char** enabledLayers = NULL;
-#endif
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
-#endif
-	uint32_t instanceExtCount;
-	VK_CHECK_RESULT(vkEnumerateInstanceExtensionProperties(NULL, &instanceExtCount, NULL));
-	VkExtensionProperties* instanceExtProps =(VkExtensionProperties*)malloc(instanceExtCount * sizeof(VkExtensionProperties));
-	VK_CHECK_RESULT(vkEnumerateInstanceExtensionProperties(NULL, &instanceExtCount, instanceExtProps));
 
-	if (instance_extension_supported(instanceExtProps, instanceExtCount, "VK_KHR_get_physical_device_properties2"))
+	vkh_instance_extensions_check_init ();
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	bool dbgUtilsSupported = vkh_instance_extension_supported("VK_EXT_debug_utils");
+	 if (dbgUtilsSupported)
+		enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
+#endif
+	if (vkh_instance_extension_supported("VK_KHR_get_physical_device_properties2"))
 		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
 
-	free(instanceExtProps);
+	vkh_instance_extensions_check_release();
 
 	vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 	e->app = vkh_app_create(1 ,2 , "vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	vkh_app_enable_debug_messenger(e->app
+	if (dbgUtilsSupported)
+		vkh_app_enable_debug_messenger(e->app
 								   , VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
 								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
 								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT

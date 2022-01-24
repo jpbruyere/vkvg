@@ -32,33 +32,33 @@ if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))	\
 
 VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) {
 	const char* enabledExts [10];
-	uint32_t enabledExtsCount = 0, phyCount = 0;
+    const char* enabledLayers[10];
+    uint32_t enabledExtsCount = 0, enabledLayersCount = 0, phyCount = 0;
+
+    vkh_layers_check_init();
+
+#ifdef VKVG_USE_VALIDATION
+    if (vkh_layer_is_present("VK_LAYER_KHRONOS_validation"))
+        enabledLayers[enabledLayersCount++] = "VK_LAYER_KHRONOS_validation";
+#endif
 
 #ifdef VKVG_USE_RENDERDOC
-	const uint32_t enabledLayersCount = 2;
-	const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_RENDERDOC_Capture"};
-#elif defined (VKVG_USE_VALIDATION)
-	const uint32_t enabledLayersCount = 1;
-	const char* enabledLayers[] = {"VK_LAYER_KHRONOS_validation"};
-#else
-	const uint32_t enabledLayersCount = 0;
-	const char** enabledLayers = NULL;
+    if (vkh_layer_is_present("VK_LAYER_RENDERDOC_Capture"))
+        enabledLayers[enabledLayersCount++] = "VK_LAYER_RENDERDOC_Capture";
 #endif
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
-#endif
+    vkh_layers_check_release();
 
-	_instance_extensions_check_init ();
+    vkh_instance_extensions_check_init ();
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	bool dbgUtilsSupported = _instance_extension_supported("VK_EXT_debug_utils");
+    bool dbgUtilsSupported = vkh_instance_extension_supported("VK_EXT_debug_utils");
 	 if (dbgUtilsSupported)
 		enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
 #endif
-	if (_instance_extension_supported("VK_KHR_get_physical_device_properties2"))
+    if (vkh_instance_extension_supported("VK_KHR_get_physical_device_properties2"))
 		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
 
-	_instance_extensions_check_release();
+    vkh_instance_extensions_check_release();
 
 	VkhApp app =  vkh_app_create(1, 2, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 

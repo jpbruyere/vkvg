@@ -532,41 +532,6 @@ void _check_best_image_tiling (VkvgDevice dev, VkFormat format) {
 	LOG(VKVG_LOG_ERR, "vkvg create device failed: image format not supported: %d\n", format);
 }
 
-static VkExtensionProperties* instExtProps;
-static uint32_t instExtCount;
-bool _instance_extension_supported (const char* instanceName) {
-	for (uint32_t i=0; i<instExtCount; i++) {
-		if (!strcmp(instExtProps[i].extensionName, instanceName))
-			return true;
-	}
-	return false;
-}
-void _instance_extensions_check_init () {
-	VK_CHECK_RESULT(vkEnumerateInstanceExtensionProperties(NULL, &instExtCount, NULL));
-	instExtProps =(VkExtensionProperties*)malloc(instExtCount * sizeof(VkExtensionProperties));
-	VK_CHECK_RESULT(vkEnumerateInstanceExtensionProperties(NULL, &instExtCount, instExtProps));
-}
-void _instance_extensions_check_release () {
-	free (instExtProps);
-}
-
-static VkLayerProperties* instLayerProps;
-static uint32_t instance_layer_count;
-bool _layer_is_present (const char* layerName) {
-	for (uint32_t i=0; i<instance_layer_count; i++) {
-		if (!strcmp(instLayerProps[i].layerName, layerName))
-			return true;
-	}
-	return false;
-}
-void _layers_check_init () {
-	VK_CHECK_RESULT(vkEnumerateInstanceLayerProperties(&instance_layer_count, NULL));
-	instLayerProps =(VkLayerProperties*)malloc(instance_layer_count * sizeof(VkLayerProperties));
-	VK_CHECK_RESULT(vkEnumerateInstanceLayerProperties(&instance_layer_count, instLayerProps));
-}
-void _layers_check_release () {
-	free (instLayerProps);
-}
 void _dump_image_format_properties (VkvgDevice dev, VkFormat format) {
 	/*VkImageFormatProperties imgProps;
 	VK_CHECK_RESULT(vkGetPhysicalDeviceImageFormatProperties(dev->phy,

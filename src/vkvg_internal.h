@@ -35,16 +35,19 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#define M_PIF				3.14159265358979323846f /* float pi */
-#define M_PIF_2				1.57079632679489661923f
-#define M_2_PIF				0.63661977236758134308f	 // 2/pi
+#ifndef M_PIF
+	#define M_PIF				3.14159265358979323846f /* float pi */
+	#define M_PIF_2				1.57079632679489661923f
+	#define M_2_PIF				0.63661977236758134308f	 // 2/pi
+#endif
+
 /*#ifndef M_2_PI
 	#define M_2_PI		0.63661977236758134308	// 2/pi
 #endif*/
 
 #ifdef DEBUG
 #define LOG(level,...) {				\
-	if ((vkvg_log_level) & (level))			\
+	if ((vkvg_log_level) & (level))		\
 		fprintf (stdout, __VA_ARGS__);	\
 }
 #else
