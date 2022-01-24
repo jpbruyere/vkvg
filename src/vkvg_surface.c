@@ -31,12 +31,14 @@
 
 #define max(x,y)
 void vkvg_surface_clear (VkvgSurface surf) {
+	if (surf->status)
+		return;
 	_clear_surface(surf, VK_IMAGE_ASPECT_STENCIL_BIT|VK_IMAGE_ASPECT_COLOR_BIT);
 }
 VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height){
 	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
-	if (!surf)
-		return NULL;
+	if (!surf || surf->status)
+		return surf;
 
 	surf->width = MAX(1, width);
 	surf->height = MAX(1, height);
@@ -44,15 +46,19 @@ VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height
 
 	_create_surface_images (surf);
 
-	surf->references = 1;
 	vkvg_device_reference (surf->dev);
-
+	dev->status = VKVG_STATUS_SUCCESS;
 	return surf;
 }
 VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
 	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
-	if (!surf)
-		return NULL;
+	if (!surf || surf->status)
+		return surf;
+
+	if (!vkhImg) {
+		surf->status = VKVG_STATUS_INVALID_IMAGE;
+		return surf;
+	}
 
 	VkhImage img = (VkhImage)vkhImg;
 	surf->width = img->infos.extent.width;
@@ -63,20 +69,23 @@ VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
 	vkh_image_create_sampler(img, VK_FILTER_NEAREST, VK_FILTER_NEAREST,
 							 VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 
-	_create_surface_secondary_images   (surf);
-	_create_framebuffer			(surf);
-	_clear_surface				(surf, VK_IMAGE_ASPECT_STENCIL_BIT);
+	_create_surface_secondary_images	(surf);
+	_create_framebuffer					(surf);
+	_clear_surface						(surf, VK_IMAGE_ASPECT_STENCIL_BIT);
 
-	surf->references = 1;
 	vkvg_device_reference (surf->dev);
-
+	dev->status = VKVG_STATUS_SUCCESS;
 	return surf;
 }
 //TODO: it would be better to blit in original size and create ms final image with dest surf dims
 VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height) {
 	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
-	if (!surf)
-		return NULL;
+	if (!surf || surf->status)
+		return surf;
+	if (!img || width <= 0 || height <= 0) {
+		surf->status = VKVG_STATUS_INVALID_IMAGE;
+		return surf;
+	}
 
 	surf->width = MAX(1, width);
 	surf->height = MAX(1, height);
@@ -169,9 +178,8 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
 	vkh_image_destroy	(tmpImg);
 
-	surf->references = 1;
 	vkvg_device_reference (surf->dev);
-
+	dev->status = VKVG_STATUS_SUCCESS;
 	return surf;
 }
 VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath) {
@@ -219,6 +227,8 @@ uint32_t vkvg_surface_get_reference_count (VkvgSurface surf) {
 
 VkImage vkvg_surface_get_vk_image(VkvgSurface surf)
 {
+	if (surf->status)
+		return NULL;
 	if (surf->dev->deferredResolve)
 		_explicit_ms_resolve(surf);
 	return vkh_image_get_vkimage (surf->img);
@@ -237,10 +247,18 @@ uint32_t vkvg_surface_get_height (VkvgSurface surf) {
 	return surf->height;
 }
 
-void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
+vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
+	if (surf->status) {
+		LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid status: %d\n", surf->status);
+		return VKVG_STATUS_INVALID_STATUS;
+	}
 	if (surf->dev->pngStagFormat == VK_FORMAT_UNDEFINED) {
 		LOG(VKVG_LOG_ERR, "no suitable image format for png write\n");
-		return;
+		return VKVG_STATUS_INVALID_FORMAT;
+	}
+	if (!path) {
+		LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, null path\n");
+		return VKVG_STATUS_WRITE_ERROR;
 	}
 
 	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
@@ -324,9 +342,20 @@ void vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 
 	vkh_image_unmap (stagImgLinear);
 	vkh_image_destroy (stagImgLinear);
+
+	return VKVG_STATUS_SUCCESS;
 }
 
-void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap){
+vkvg_status_t vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap){
+	if (surf->status) {
+		LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_memory failed, invalid status: %d\n", surf->status);
+		return VKVG_STATUS_INVALID_STATUS;
+	}
+	if (!bitmap) {
+		LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_memory failed, null path\n");
+		return VKVG_STATUS_INVALID_IMAGE;
+	}
+
 	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
 	VkvgDevice dev = surf->dev;
 
@@ -373,4 +402,6 @@ void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap
 
 	vkh_image_unmap (stagImg);
 	vkh_image_destroy (stagImg);
+
+	return VKVG_STATUS_SUCCESS;
 }

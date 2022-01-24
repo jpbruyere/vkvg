@@ -174,18 +174,17 @@ void _create_surface_images (VkvgSurface surf) {
 #endif
 }
 VkvgSurface _create_surface (VkvgDevice dev, VkFormat format) {	
-	if (dev->status != VKVG_STATUS_SUCCESS)
-		return NULL;
-
 	VkvgSurface surf = (vkvg_surface*)calloc(1,sizeof(vkvg_surface));
 	if (!surf) {
 		dev->status = VKVG_STATUS_NO_MEMORY;
 		return NULL;
 	}
-
+	surf->references = 1;
+	if (dev->status != VKVG_STATUS_SUCCESS) {
+		surf->status = VKVG_STATUS_DEVICE_ERROR;
+		return surf;
+	}
 	surf->dev = dev;
 	surf->format = format;
-
-	dev->status = VKVG_STATUS_SUCCESS;
 	return surf;
 }

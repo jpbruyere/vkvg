@@ -140,6 +140,9 @@ typedef enum {
 	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
 	VKVG_STATUS_INVALID_RECT,			/*!< rectangle with height or width equal to 0. */
 	VKVG_STATUS_TIMEOUT,				/*!< waiting for a vulkan operation to finish resulted in a fence timeout (5 seconds)*/
+	VKVG_STATUS_DEVICE_ERROR,			/*!< vkvg device initialization error */
+	VKVG_STATUS_INVALID_IMAGE,			/*!< */
+	VKVG_STATUS_INVALID_SURFACE,		/*!< */
 }vkvg_status_t;
 
 typedef enum {
@@ -703,6 +706,13 @@ uint32_t vkvg_surface_get_reference_count (VkvgSurface surf);
 vkvg_public
 void vkvg_surface_destroy (VkvgSurface surf);
 /**
+ * @brief Query the current status of the surface
+ * @param The vkvg surface to query the status for.
+ * @return The current surface status.
+ */
+vkvg_public
+vkvg_status_t vkvg_surface_status (VkvgSurface surf);
+/**
  * @brief Clear the surface content, alpha is also set to 0 resulting in a transparent image.
  *
  * @remark Internaly, the vulkan method used to clear the surface is the slowest, prefer using the @ref vkvg_clear
@@ -743,16 +753,18 @@ uint32_t vkvg_surface_get_height (VkvgSurface surf);
  * @brief Write surface content to a png file on disk.
  * @param The surface to save on disk.
  * @param The png file path.
+ * @return SUCCESS or not.
  */
 vkvg_public
-void vkvg_surface_write_to_png (VkvgSurface surf, const char* path);
+vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path);
 /**
  * @brief Save surface to memory
  * @param The surface to save
  * @param A valid pointer on cpu memory large enough to contain surface pixels (stride * height)
+ * @return SUCCESS or not.
  */
 vkvg_public
-void vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap);
+vkvg_status_t vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* const bitmap);
 /**
  * @brief Explicitly resolve a multisampled surface.
  *

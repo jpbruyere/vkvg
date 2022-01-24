@@ -53,6 +53,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		dev->status = VKVG_STATUS_NO_MEMORY;
 		return NULL;
 	}
+	if (!surf || surf->status) {
+		ctx->status = VKVG_STATUS_INVALID_SURFACE;
+		return ctx;
+	}
 
 	ctx->sizePoints		= VKVG_PTS_SIZE;
 	ctx->sizeVertices	= ctx->sizeVBO = VKVG_VBO_SIZE;

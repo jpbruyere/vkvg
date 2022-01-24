@@ -27,16 +27,17 @@
 #include "vkh.h"
 
 typedef struct _vkvg_surface_t {
-	VkvgDevice	dev;
-	uint32_t	width;
-	uint32_t	height;
-	VkFormat	format;
-	VkFramebuffer fb;
-	VkhImage	img;
-	VkhImage	imgMS;
-	VkhImage	stencil;
-	uint32_t	references;
-	bool		new;
+	VkvgDevice		dev;
+	uint32_t		width;
+	uint32_t		height;
+	VkFormat		format;
+	VkFramebuffer	fb;
+	VkhImage		img;
+	VkhImage		imgMS;
+	VkhImage		stencil;
+	uint32_t		references;
+	vkvg_status_t	status;					/**< Current status of surface, affected by last operation */
+	bool			new;
 }vkvg_surface;
 
 void _explicit_ms_resolve (VkvgSurface surf);
