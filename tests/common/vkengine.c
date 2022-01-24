@@ -111,8 +111,6 @@ bool instance_extension_supported (VkExtensionProperties* instanceExtProps, uint
 }
 
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
-	vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
-
 	glfwSetErrorCallback(glfw_error_callback);
 	assert (glfwInit()==GLFW_TRUE);
 	assert (glfwVulkanSupported()==GLFW_TRUE);
@@ -147,6 +145,7 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
 	free(instanceExtProps);
 
+	vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 	e->app = vkh_app_create(1 ,2 , "vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_app_enable_debug_messenger(e->app
