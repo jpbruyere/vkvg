@@ -33,6 +33,10 @@ if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))	\
 	enabledExts[enabledExtsCount++] = #ext;						\
 }
 
+static void glfw_error_callback(int error, const char *description) {
+	fprintf(stderr, "vkengine: GLFW error %d: %s\n", error, description);
+}
+
 VkSampleCountFlagBits getMaxUsableSampleCount(VkSampleCountFlags counts)
 {
 	if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
@@ -109,7 +113,8 @@ bool instance_extension_supported (VkExtensionProperties* instanceExtProps, uint
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
 	vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
 
-	glfwInit();
+	glfwSetErrorCallback(glfw_error_callback);
+	assert (glfwInit()==GLFW_TRUE);
 	assert (glfwVulkanSupported()==GLFW_TRUE);
 
 	uint32_t enabledExtsCount = 0, phyCount = 0;
@@ -297,4 +302,3 @@ void vkengine_set_scroll_callback (VkEngine e, GLFWscrollfun onScroll){
 void vkengine_set_char_callback (VkEngine e, GLFWcharfun onChar){
 	glfwSetCharCallback(e->window, onChar);
 }
-
