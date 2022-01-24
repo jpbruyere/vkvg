@@ -176,10 +176,10 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	VkhPhyInfo* phys = vkh_app_get_phyinfos (e->app, &phyCount, surf);
 
 	VkhPhyInfo pi = 0;
-	if (!vkengine_try_get_phyinfo(phys, phyCount, preferedGPU, &pi))
-		if (!vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
-			if (!vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
-				pi = phys[0];
+	if (!vkengine_try_get_phyinfo(phys, phyCount, preferedGPU, &pi)
+	&&  !vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi)
+	&&  !vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
+		pi = phys[0];
 
 	if (pi) {
 		e->memory_properties = pi->memProps;
