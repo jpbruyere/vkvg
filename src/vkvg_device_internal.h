@@ -64,7 +64,7 @@ typedef struct _vkvg_device_t{
 	VkImageTiling			pngStagTiling;			/**< tiling for the blit operation */
 
 	VkhQueue				gQueue;					/**< Vulkan Queue with Graphic flag */
-	MUTEX					gQMutex;				/**< queue submission has to be externally syncronized */
+	mtx_t					gQMutex;				/**< queue submission has to be externally syncronized */
 	VkRenderPass			renderPass;				/**< Vulkan render pass, common for all surfaces */
 	VkRenderPass			renderPass_ClearStencil;/**< Vulkan render pass for first draw with context, stencil has to be cleared */
 	VkRenderPass			renderPass_ClearAll;	/**< Vulkan render pass for new surface, clear all attacments*/
@@ -105,7 +105,7 @@ typedef struct _vkvg_device_t{
 	vkvg_status_t			status;					/**< Current status of device, affected by last operation */
 
 	_font_cache_t*	fontCache;						/**< Store everything relative to common font caching system */
-	VkvgContext		lastCtx;						/**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
+	//VkvgContext		lastCtx;						/**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
 }vkvg_device;
 
 bool _try_get_phyinfo			(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);

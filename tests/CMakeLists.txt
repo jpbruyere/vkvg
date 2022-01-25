@@ -25,6 +25,7 @@ FUNCTION (buildtest TEST_FILE)
 		PRIVATE
 			${Vulkan_LIBRARIES}
 			${GLFW3_LIBRARY}
+                        Threads::Threads
 	)
 	IF (TARGET vkvg_static)
 		TARGET_LINK_LIBRARIES(${TEST_NAME} PRIVATE vkvg_static)
@@ -36,7 +37,11 @@ FUNCTION (buildtest TEST_FILE)
 
 ENDFUNCTION (buildtest)
 
-ADD_LIBRARY(tests_common OBJECT common/vkengine.c common/test.c common/rnd.c)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+
+ADD_LIBRARY(tests_common OBJECT common/vkengine.c common/test.c common/rnd.c common/tinycthread.c)
 
 TARGET_INCLUDE_DIRECTORIES(tests_common
  	PRIVATE
@@ -68,6 +73,7 @@ add_custom_target("${PROJECT_NAME}_DataCopy" ALL DEPENDS ${DATAS})
 file(GLOB TESTS
 	"*.c"
 	"perfs/*.c"
+        "multithreading/*.c"
 )
 
 IF (VKVG_SVG)

@@ -96,10 +96,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	else
 		ctx->renderPassBeginInfo.clearValueCount = 3;
 
-	ctx->pPrev = surf->dev->lastCtx;
+	/*ctx->pPrev = surf->dev->lastCtx;
 	if (ctx->pPrev != NULL)
 		ctx->pPrev->pNext = ctx;
-	surf->dev->lastCtx = ctx;
+	surf->dev->lastCtx = ctx;*/
 
 	ctx->points	= (vec2*)malloc (VKVG_VBO_SIZE*sizeof(vec2));
 	ctx->pathes	= (uint32_t*)malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
@@ -277,7 +277,7 @@ void vkvg_destroy (VkvgContext ctx)
 	free(ctx->savedStencils);
 
 	//remove context from double linked list of context in device
-	if (ctx->pSurf->dev->lastCtx == ctx){
+/*	if (ctx->pSurf->dev->lastCtx == ctx){
 		ctx->pSurf->dev->lastCtx = ctx->pPrev;
 		if (ctx->pPrev != NULL)
 			ctx->pPrev->pNext = NULL;
@@ -287,7 +287,7 @@ void vkvg_destroy (VkvgContext ctx)
 	}else{
 		ctx->pPrev->pNext = ctx->pNext;
 		ctx->pNext->pPrev = ctx->pPrev;
-	}
+	}*/
 
 	free(ctx);
 }

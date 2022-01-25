@@ -57,7 +57,7 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 
 	dev->phyMemProps = phyInfos->memProps;
 	dev->gQueue = vkh_queue_create ((VkhDevice)dev, qFamIdx, qIndex);
-	MUTEX_INIT (&dev->gQMutex);
+	mtx_init (&dev->gQMutex, mtx_plain);
 
 	vkh_phyinfo_destroy (phyInfos);
 
@@ -67,7 +67,7 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 	};
 	vmaCreateAllocator(&allocatorInfo, &dev->allocator);
 
-	dev->lastCtx= NULL;
+	//dev->lastCtx= NULL;
 
 	dev->cmdPool= vkh_cmd_pool_create		((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 	dev->cmd	= vkh_cmd_buff_create		((VkhDevice)dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -300,7 +300,7 @@ void vkvg_device_destroy (VkvgDevice dev)
 
 	vmaDestroyAllocator (dev->allocator);
 
-	MUTEX_DESTROY (&dev->gQMutex);
+	mtx_destroy (&dev->gQMutex);
 
 	if (dev->vkhDev) {
 		VkhApp app = vkh_device_get_app (dev->vkhDev);

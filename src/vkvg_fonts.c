@@ -149,11 +149,11 @@ void _increase_font_tex_array (VkvgDevice dev){
 	cache->texLength   = newSize;
 	cache->texture	   = newImg;
 
-	VkvgContext next = dev->lastCtx;
+	/*VkvgContext next = dev->lastCtx;
 	while (next != NULL){
 		_update_descriptor_set	(next, cache->texture, next->dsFont);
 		next = next->pPrev;
-	}
+	}*/
 	_wait_idle(dev);
 }
 ///Start a new line in font cache, increase texture layer count if needed.
