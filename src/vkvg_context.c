@@ -72,6 +72,7 @@ void _init_ctx (VkvgContext ctx) {
 		ctx->renderPassBeginInfo.clearValueCount = 2;
 	else
 		ctx->renderPassBeginInfo.clearValueCount = 3;
+
 	ctx->selectedCharSize = 10 << 6;
 	ctx->currentFont = NULL;
 	ctx->selectedFontName[0] = 0;

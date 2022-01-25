@@ -125,8 +125,8 @@ typedef struct _vkvg_context_save_t{
 }vkvg_context_save_t;
 
 typedef struct _vkvg_context_t {
-	VkvgContext			pPrev;		//double linked list of contexts
-	VkvgContext			pNext;
+	//VkvgContext			pPrev;		//double linked list of contexts
+	//VkvgContext			pNext;
 	uint32_t			references; //reference count
 
 	VkvgDevice			dev;

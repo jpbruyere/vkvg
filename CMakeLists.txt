@@ -200,7 +200,7 @@ IF (VKVG_USE_GLUTESS)
 	ADD_SUBDIRECTORY (external/glutess)
 ENDIF ()
 
-FILE(GLOB VKVG_OBJ_SRC src/*.c)
+FILE(GLOB VKVG_OBJ_SRC src/*.c src/deps/*.c)
 SET (VKVG_PUBLIC_HEADERS "include/vkvg.h")
 
 IF (VKVG_SVG)
