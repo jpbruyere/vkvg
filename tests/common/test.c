@@ -1,4 +1,7 @@
-﻿#include "test.h"
+#include <unistd.h>
+#include <getopt.h>
+
+#include "test.h"
 #include "string.h"
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -58,7 +61,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		return;
 	switch (key) {
 	case GLFW_KEY_SPACE:
-		 paused = !paused;
+		paused = !paused;
 		break;
 	case GLFW_KEY_ESCAPE :
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -135,15 +138,14 @@ double median_run_time (double data[], int n)
 		}
 	if (n % 2 == 0)
 		return (data[n/2] + data[n/2-1])/2;
-	else
-		return data[n/2];
+	return data[n/2];
 }
 double standard_deviation (const double data[], int n, double mean)
 {
 	double sum_deviation = 0.0;
 	int i;
 	for (i = 0; i < n; ++i)
-	sum_deviation += (data[i]-mean) * (data[i]-mean);
+		sum_deviation += (data[i]-mean) * (data[i]-mean);
 	return sqrt (sum_deviation / n);
 }
 /***************/
@@ -167,7 +169,7 @@ void init_test (uint32_t width, uint32_t height){
 
 	vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
 }
-void clear_test () {
+void clear_test (void) {
 	vkDeviceWaitIdle(e->dev->dev);
 
 	vkvg_surface_destroy    (surf);
@@ -179,7 +181,7 @@ void clear_test () {
 #ifdef VKVG_TEST_DIRECT_DRAW
 VkvgSurface* surfaces;
 #endif
-void _print_usage_and_exit () {
+void _print_usage_and_exit(void) {
 	printf("\nUsage: test [options]\n\n");
 	printf("\t-i iterations:\tSpecify the repeat count for the test.\n");
 	printf("\t-s size:\tWhen applicable, specify the size of the test.\n");
@@ -208,84 +210,61 @@ void _print_usage_and_exit () {
 	printf("\t-n index:\tRun only a single test, zero based index.\n");
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests.\n");
 	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs.\n");
-	printf("\t-vsync:\t\tEnable VSync, disabled by default.\n");
+	printf("\t-v:\t\tEnable VSync, disabled by default.\n");
 	printf("\t-o:\t\tPerform test offscreen.\n");
 	printf("\t-w filepath:\twrite last image to png.\n");
 	printf("\t-h:\t\tThis help message.\n");
 	printf("\n");
 	exit(-1);
 }
+
+void _print_details_and_exit(void) {
+	#ifdef DEBUG
+	printf("Debug build\n");
+	#else
+	printf("Release build\n");
+	#endif
+	#ifdef VKVG_USE_RENDERDOC
+	printf("Render doc enabled\n");
+	#endif
+	#ifdef VKVG_USE_VALIDATION
+	printf("Validation enabled\n");
+	#endif
+	printf("surf dims:\t%d x %d\n", test_width, test_height);
+	printf("Samples:\t%d\n", samples);
+	printf("Gpu type:\t");
+	switch (preferedPhysicalDeviceType) {
+	case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+		printf("Other\n");
+		break;
+	case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+		printf("Integrated\n");
+		break;
+	case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+		printf("Discrete\n");
+		break;
+	case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+		printf("Virtual\n");
+		break;
+	case VK_PHYSICAL_DEVICE_TYPE_CPU:
+		printf("CPU\n");
+		break;
+	}
+	if (offscreen)
+		printf("Offscreen:\ttrue\n");
+	else
+		printf("Offscreen:\tfalse\n");
+	printf("\n");
+	exit(0);
+}
+
 void _parse_args (int argc, char* argv[]) {
+	int opt = 0;
 	bool printTestDetailsAndExit = false;
-	for (int i = 1; i < argc; i++) {
-		if (strcmp (argv[i], "-h\0") == 0)
-			_print_usage_and_exit ();
-		if (strcmp (argv[i], "-p\0") == 0)
-			printTestDetailsAndExit = true;
-		else if (strcmp (argv[i], "-vsync\0") == 0)
-			test_vsync = true;
-		else if (strcmp (argv[i], "-q\0") == 0)
-			quiet = true;
-		else if (strcmp (argv[i], "-i\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			iterations = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-x\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			test_width = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-y\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			test_height = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-n\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			single_test = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-s\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			test_size = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-S\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			samples = (VkSampleCountFlags)atoi (argv[i]);
-		}else if (strcmp (argv[i], "-g\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			preferedPhysicalDeviceType = (VkPhysicalDeviceType)atoi (argv[i]);
-		}else if (strcmp (argv[i], "-l\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			line_width = atoi (argv[i]);
-		}else if (strcmp (argv[i], "-d\0") == 0) {
-			dashes_count = 2;
-		}else if (strcmp (argv[i], "-f\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			fill_rule = atoi (argv[i]);
-		} else if (strcmp (argv[i], "-o\0") == 0) {
-			offscreen = true;
-		}else if (strcmp (argv[i], "-j\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			switch (argv[i][0]) {
-			case 'm':
-				line_join = VKVG_LINE_JOIN_MITER;
-				break;
-			case 'r':
-				line_join = VKVG_LINE_JOIN_ROUND;
-				break;
-			case 'b':
-				line_join = VKVG_LINE_JOIN_BEVEL;
-				break;
-			default:
-				_print_usage_and_exit();
-			}
-		}else if (strcmp (argv[i], "-c\0") == 0) {
-			if (argc -1 < ++i)
-				_print_usage_and_exit();
-			switch (argv[i][0]) {
+	while (opt = getopt(argc, argv, "+c:df:g:i:j:l:n:opqS:s:v:w:x:y:") != -1) {
+		switch (opt) {
+		case 'c':
+			switch (optarg[0]) {
 			case 'b':
 				line_cap = VKVG_LINE_CAP_BUTT;
 				break;
@@ -296,54 +275,82 @@ void _parse_args (int argc, char* argv[]) {
 				line_cap = VKVG_LINE_CAP_SQUARE;
 				break;
 			default:
+				fprintf(stderr, "%s: invalid argument -- '%s'\n\n", argv[0], optarg);
 				_print_usage_and_exit();
 			}
-		}else if (strcmp (argv[i], "-w\0") == 0) {
-			if (argc -1 < ++i)
+			break;
+		case 'd':
+			dashes_count = 2;
+			break;
+		case 'f':
+			fill_rule = atoi (optarg);
+			break;
+		case 'g':
+			preferedPhysicalDeviceType = (VkPhysicalDeviceType)atoi (optarg);
+			break;
+		case 'i':
+			iterations = atoi (optarg);
+			break;
+		case 'j':
+			switch (optarg[0]) {
+			case 'm':
+				line_join = VKVG_LINE_JOIN_MITER;
+				break;
+			case 'r':
+				line_join = VKVG_LINE_JOIN_ROUND;
+				break;
+			case 'b':
+				line_join = VKVG_LINE_JOIN_BEVEL;
+				break;
+			default:
+				fprintf(stderr, "%s: invalid argument -- '%s'\n\n", argv[0], optarg);
 				_print_usage_and_exit();
-			saveToPng = argv[i];
-		}else
+			}
+			break;
+		case 'l':
+			line_width = atoi (optarg);
+			break;
+		case 'n':
+			single_test = atoi (optarg);
+			break;
+		case 'o':
+			offscreen = true;
+			break;
+		case 'p':
+			printTestDetailsAndExit = true;
+			break;
+		case 'q':
+			quiet = true;
+			break;
+		case 'S':
+			samples = (VkSampleCountFlags)atoi (optarg);
+			break;
+		case 's':
+			test_size = atoi (optarg);
+			break;
+		case 'v':
+            		if (strcmp(optarg, "sync") == 0)
+				test_vsync = true;
+			else {
+				fprintf(stderr, "%s: invalid option -- '%c'\n\n", argv[0], optarg[0]);
+				_print_usage_and_exit();
+			}
+			break;
+		case 'w':
+			saveToPng = optarg;
+			break;
+		case 'x':
+			test_width = atoi (optarg);
+			break;
+		case 'y':
+			test_height = atoi (optarg);
+			break;
+		default:
 			_print_usage_and_exit();
-	}
-	if (printTestDetailsAndExit) {
-		#ifdef DEBUG
-		printf("Debug build\n");
-		#else
-		printf("Release build\n");
-		#endif
-		#ifdef VKVG_USE_RENDERDOC
-		printf("Render doc enabled\n");
-		#endif
-		#ifdef VKVG_USE_VALIDATION
-		printf("Validation enabled\n");
-		#endif
-		printf("surf dims:\t%d x %d\n", test_width, test_height);
-		printf("Samples:\t%d\n", samples);
-		printf("Gpu type:\t");
-		switch (preferedPhysicalDeviceType) {
-		case VK_PHYSICAL_DEVICE_TYPE_OTHER:
-			printf("Other\n");
-			break;
-		case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-			printf("Integrated\n");
-			break;
-		case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-			printf("Discrete\n");
-			break;
-		case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-			printf("Virtual\n");
-			break;
-		case VK_PHYSICAL_DEVICE_TYPE_CPU:
-			printf("CPU\n");
-			break;
 		}
-		if (offscreen)
-			printf("Offscreen:\ttrue\n");
-		else
-			printf("Offscreen:\tfalse\n");
-		printf("\n");
-		exit(0);
 	}
+	if (printTestDetailsAndExit)
+		_print_details_and_exit();
 }
 
 void _print_results (const char *testName, int argc, char* argv[], uint32_t i, double run_total, double* run_time_values) {
