@@ -211,7 +211,7 @@ void _print_usage_and_exit(void) {
 	printf("\t-n index:\tRun only a single test, zero based index.\n");
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests.\n");
 	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs.\n");
-	printf("\t-v:\t\tEnable VSync, disabled by default.\n");
+	printf("\t-vsync:\t\tEnable VSync, disabled by default.\n");
 	printf("\t-o:\t\tPerform test offscreen.\n");
 	printf("\t-w filepath:\twrite last image to png.\n");
 	printf("\t-h:\t\tThis help message.\n");
