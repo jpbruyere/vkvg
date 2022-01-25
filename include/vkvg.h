@@ -90,7 +90,7 @@ extern "C" {
 #define VKVG_LOG_INFO_IBO	0x00000040
 #define VKVG_LOG_INFO_VAO	(VKVG_LOG_INFO_VBO|VKVG_LOG_INFO_IBO)
 #define VKVG_LOG_DBG_ARRAYS	0x00001000
-#define VKVG_LOG_THREADING	0x00000080
+//#define VKVG_LOG_THREADING	0x00000080
 #define VKVG_LOG_FULL		0xffffffff
 
 #define VKVG_LOG_INFO		0x00008000//(VKVG_LOG_INFO_PTS|VKVG_LOG_INFO_PATH|VKVG_LOG_INFO_CMD|VKVG_LOG_INFO_VAO)
@@ -535,6 +535,9 @@ void vkvg_matrix_get_scale (const vkvg_matrix_t *matrix, float *sx, float *sy);
  * Device holds the font cache so that each time a context draws text, the same cache is used.
  *
  * @{ */
+typedef void (*vkvg_queue_guard)(void* user_data);
+vkvg_public
+void vkvg_device_set_queue_guards (VkvgDevice dev, vkvg_queue_guard before_submit, vkvg_queue_guard after_submit, void* user_data);
 
 /**
  * @brief Create a new vkvg device.

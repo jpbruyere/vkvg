@@ -57,7 +57,7 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 
 	dev->phyMemProps = phyInfos->memProps;
 	dev->gQueue = vkh_queue_create ((VkhDevice)dev, qFamIdx, qIndex);
-	mtx_init (&dev->gQMutex, mtx_plain);
+	//mtx_init (&dev->gQMutex, mtx_plain);
 
 	vkh_phyinfo_destroy (phyInfos);
 
@@ -66,8 +66,6 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 		.device = vkdev
 	};
 	vmaCreateAllocator(&allocatorInfo, &dev->allocator);
-
-	//dev->lastCtx= NULL;
 
 	dev->cmdPool= vkh_cmd_pool_create		((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 	dev->cmd	= vkh_cmd_buff_create		((VkhDevice)dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -300,8 +298,6 @@ void vkvg_device_destroy (VkvgDevice dev)
 
 	vmaDestroyAllocator (dev->allocator);
 
-	mtx_destroy (&dev->gQMutex);
-
 	if (dev->vkhDev) {
 		VkhApp app = vkh_device_get_app (dev->vkhDev);
 		vkh_device_destroy (dev->vkhDev);
@@ -330,6 +326,11 @@ void vkvg_device_set_dpy (VkvgDevice dev, int hdpy, int vdpy) {
 void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy) {
 	*hdpy = dev->hdpi;
 	*vdpy = dev->vdpi;
+}
+void vkvg_device_set_queue_guards (VkvgDevice dev, vkvg_queue_guard before_submit, vkvg_queue_guard after_submit, void* user_data) {
+	dev->gQBeforeSubmitGuard = before_submit;
+	dev->gQAfterSubmitGuard = after_submit;
+	dev->gQGuardUserData = user_data;
 }
 #if VKVG_DBG_STATS
 vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev) {
