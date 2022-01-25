@@ -17,7 +17,18 @@ void drawRandomRect (VkvgContext ctx, float s) {
 
 	vkvg_rectangle(ctx, x, y, s, s);
 }
+void _before_submit (void* data) {
+	mtx_lock((mtx_t*)data);
+}
+void _after_submit (void* data) {
+	mtx_unlock((mtx_t*)data);
+}
+
 int drawRectsThread () {
+	mtx_t gQMutex;
+	mtx_init (&gQMutex, mtx_plain);
+	vkvg_device_set_queue_guards (device, _before_submit, _after_submit, &gQMutex);
+
 	VkvgSurface s = vkvg_surface_create(device, test_width, test_height);
 	VkvgContext ctx = vkvg_create(s);
 	for (uint32_t i=0; i<test_size; i++) {
@@ -37,7 +48,9 @@ int drawRectsThread () {
 
 	mtx_unlock(&mutex);
 
-	vkvg_surface_destroy(s);
+	vkvg_surface_destroy (s);
+	vkvg_device_set_queue_guards (device, NULL, NULL, NULL);
+	mtx_destroy (&gQMutex);
 	return 0;
 }
 void fixedSizeRects(){
@@ -56,8 +69,6 @@ void fixedSizeRects(){
 }
 
 int main(int argc, char *argv[]) {
-	vkvg_log_level = VKVG_LOG_THREADING;
-
 	PERFORM_TEST (fixedSizeRects, argc, argv);
 	return 0;
 }

@@ -428,12 +428,11 @@ void _wait_and_reset_device_fence (VkvgDevice dev) {
 }
 
 void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
-	mtx_lock (&dev->gQMutex);
-	LOG(VKVG_LOG_THREADING, "[THREADING]start vk_cmd_submit  %16lx\n", (unsigned long)thrd_current());
+	if (dev->gQBeforeSubmitGuard)
+		dev->gQBeforeSubmitGuard (dev->gQGuardUserData);
 	vkh_cmd_submit (dev->gQueue, cmd, fence);
-	vkDeviceWaitIdle(dev->vkDev);
-	LOG(VKVG_LOG_THREADING, "[THREADING]end vk_cmd_submit    %16lx\n", (unsigned long)thrd_current());
-	mtx_unlock (&dev->gQMutex);
+	if (dev->gQAfterSubmitGuard)
+		dev->gQAfterSubmitGuard (dev->gQGuardUserData);
 }
 
 bool _init_function_pointers (VkvgDevice dev) {
