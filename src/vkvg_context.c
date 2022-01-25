@@ -92,6 +92,12 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	if (dev->cachedContextCount) {
 		VkvgContext ctx = dev->cachedContext[--dev->cachedContextCount];
 		ctx->pSurf = surf;
+
+		if (!surf || surf->status) {
+			ctx->status = VKVG_STATUS_INVALID_SURFACE;
+			return ctx;
+		}
+
 		_init_ctx (ctx);
 		_update_descriptor_set (ctx, surf->dev->emptyImg, ctx->dsSrc);
 		_clear_path	(ctx);
@@ -107,6 +113,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		dev->status = VKVG_STATUS_NO_MEMORY;
 		return NULL;
 	}
+
+	ctx->pSurf = surf;
+
 	if (!surf || surf->status) {
 		ctx->status = VKVG_STATUS_INVALID_SURFACE;
 		return ctx;
@@ -118,7 +127,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	ctx->sizePathes		= VKVG_PATHES_SIZE;
 	ctx->renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 
-	ctx->pSurf = surf;
 	ctx->dev = surf->dev;
 
 	_init_ctx (ctx);
@@ -284,7 +292,7 @@ void vkvg_destroy (VkvgContext ctx)
 
 #endif
 
-	if (ctx->dev->cachedContextCount < VKVG_MAX_CACHED_CONTEXT_COUNT) {
+	if (!ctx->status && ctx->dev->cachedContextCount < VKVG_MAX_CACHED_CONTEXT_COUNT) {
 		ctx->dev->cachedContext[ctx->dev->cachedContextCount++] = ctx;
 		_clear_context (ctx);
 		ctx->references++;
