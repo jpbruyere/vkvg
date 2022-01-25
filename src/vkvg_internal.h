@@ -73,7 +73,7 @@
 #endif
 
 #include "cross_os.h"
-#include "cross_mutex.h"
+#include "deps/tinycthread.h"
 //width of the stencil buffer will determine the number of context saving/restore layers
 //the two first bits of the stencil are the FILL and the CLIP bits, all other bits are
 //used to store clipping bit on context saving. 8 bit stencil will allow 6 save/restore layer

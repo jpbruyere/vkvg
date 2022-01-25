@@ -65,13 +65,13 @@ bool _try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType
 	return false;
 }
 void _flush_all_contexes (VkvgDevice dev){
-	VkvgContext ctx = dev->lastCtx;
+	/*VkvgContext ctx = dev->lastCtx;
 	while (ctx != NULL){
 		if (ctx->cmdStarted)
 			_flush_cmd_until_vx_base (ctx);
 
 		ctx = ctx->pPrev;
-	}
+	}*/
 }
 //TODO:save/reload cache in user temp directory
 void _create_pipeline_cache(VkvgDevice dev){
@@ -428,9 +428,12 @@ void _wait_and_reset_device_fence (VkvgDevice dev) {
 }
 
 void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
-	MUTEX_LOCK (&dev->gQMutex);
+	mtx_lock (&dev->gQMutex);
+	LOG(VKVG_LOG_THREADING, "[THREADING]start vk_cmd_submit  %16lx\n", (unsigned long)thrd_current());
 	vkh_cmd_submit (dev->gQueue, cmd, fence);
-	MUTEX_UNLOCK (&dev->gQMutex);
+	vkDeviceWaitIdle(dev->vkDev);
+	LOG(VKVG_LOG_THREADING, "[THREADING]end vk_cmd_submit    %16lx\n", (unsigned long)thrd_current());
+	mtx_unlock (&dev->gQMutex);
 }
 
 bool _init_function_pointers (VkvgDevice dev) {
