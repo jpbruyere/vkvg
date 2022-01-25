@@ -1,0 +1,99 @@
+name: CMake
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  Win_jorb:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_config: ['Debug', 'Release']
+        arch: ['x64', 'Win32']
+    defaults:
+      run:
+        shell: cmd
+    env:
+      VULKAN_SDK: ${{ github.workspace }}\VulkanSDK
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
+    - uses: actions/checkout@v2
+      with:
+        repository: 'krOoze/vk_sdk_lite'
+        path: ${{ env.VULKAN_SDK }}
+        ref: windows
+        persist-credentials: false
+    - uses: actions/checkout@v2
+      with:
+        path: 'source'
+        persist-credentials: false
+    - run: md source\build
+    - run: cmake -G "Visual Studio 16 2019" -A ${{ matrix.arch }} .. -DVKVG_RECORDING=false -DCMAKE_SYSTEM_VERSION=10.0.18362.0 -DVKVG_SVG=false -DGIT_SUBMODULE=true
+      working-directory: source\build
+    - run: cmake --build . --config ${{ matrix.build_config }}
+      working-directory: source\build
+
+  linux_jorb:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_config: ['Debug', 'Release']
+    defaults:
+      run:
+        shell: bash
+    env:
+      VULKAN_SDK: ${{ github.workspace }}/VulkanSDK/x86_64
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: 'krOoze/vk_sdk_lite'
+        path: 'VulkanSDK'
+        ref: linux
+        persist-credentials: false
+    - run: echo "${{ env.VULKAN_SDK }}/bin" >> $GITHUB_PATH
+    - run: sudo apt update && sudo apt install xorg-dev
+    - uses: actions/checkout@v2
+      with:
+        path: 'source'
+        persist-credentials: false
+    - run: mkdir -p source/build
+    - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} -G "Unix Makefiles" .. -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
+      working-directory: source/build
+    - run: cmake --build . --config ${{ matrix.build_config }}
+      working-directory: source/build
+
+  mac_jorb:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_config: ['Debug', 'Release']
+    defaults:
+      run:
+        shell: bash
+    env:
+      VULKAN_SDK: ${{ github.workspace }}/VulkanSDK/macOS
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: 'krOoze/vk_sdk_lite'
+        path: 'VulkanSDK'
+        ref: macos
+        persist-credentials: false
+    - run: echo "${{ env.VULKAN_SDK }}/bin" >> $GITHUB_PATH
+    - uses: actions/checkout@v2
+      with:
+        path: 'source'
+        persist-credentials: false
+    - run: mkdir -p source/build
+    - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} .. -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
+      working-directory: source/build
+    - run: cmake --build . --config ${{ matrix.build_config }}
+      working-directory: source/build

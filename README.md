@@ -8,26 +8,29 @@
   Vulkan Vector Graphics
   <br>
 <p align="center">
+  <a href="https://github.com/jpbruyere/vkvg/actions/workflows/cmake.yml">
+     <img src="https://github.com/jpbruyere/vkvg/actions/workflows/cmake.yml/badge.svg">
+  </a>
   <a href="https://travis-ci.org/jpbruyere/vkvg">
-	<img src="https://img.shields.io/travis/jpbruyere/vkvg.svg?label=Linux&logo=travis&logoColor=white&message=build">
+    <img src="https://img.shields.io/travis/jpbruyere/vkvg.svg?label=Linux&logo=travis&logoColor=white&message=build">
   </a>
   <a href="https://ci.appveyor.com/project/jpbruyere/vkvg">
-	<img src="https://img.shields.io/appveyor/ci/jpbruyere/vkvg?label=Win64&logo=appveyor&logoColor=lightgrey">
+    <img src="https://img.shields.io/appveyor/ci/jpbruyere/vkvg?label=Win64&logo=appveyor&logoColor=lightgrey">
   </a>
   <img src="https://img.shields.io/github/license/jpbruyere/vkvg.svg?style=flat-square">
   <a href="https://www.paypal.me/GrandTetraSoftware">
-	<img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square">
+    <img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square">
   </a>
   <a href="https://gitter.im/CSharpRapidOpenWidgets?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
-	<img src="https://badges.gitter.im/CSharpRapidOpenWidgets.svg">
+    <img src="https://badges.gitter.im/CSharpRapidOpenWidgets.svg">
   </a>
 </p>
 <p align="center">
   <a href="https://aur.archlinux.org/packages/vkvg">
-	<img src="https://img.shields.io/aur/version/vkvg">
+    <img src="https://img.shields.io/aur/version/vkvg">
   </a>
   <a href="https://mpr.hunterwittenborn.com/packages/vkvg">
-	<img src="https://img.shields.io/badge/mpr-v0.3.0--beta-blue">
+    <img src="https://img.shields.io/badge/mpr-v0.3.0--beta-blue">
   </a>
 </p>
 	
