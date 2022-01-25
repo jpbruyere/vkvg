@@ -262,7 +262,7 @@ void _print_details_and_exit(void) {
 void _parse_args (int argc, char* argv[]) {
 	int opt = 0;
 	bool printTestDetailsAndExit = false;
-	while (opt = getopt(argc, argv, "+c:df:g:i:j:l:n:opqS:s:v:w:x:y:") != -1) {
+	while ((opt = getopt(argc, argv, "+c:df:g:i:j:l:n:opqS:s:v:w:x:y:")) != -1) {
 		switch (opt) {
 		case 'c':
 			switch (optarg[0]) {
