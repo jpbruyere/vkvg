@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <getopt.h>
+#include <stdio.h>
 
 #include "test.h"
 #include "string.h"
