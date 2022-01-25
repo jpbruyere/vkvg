@@ -27,7 +27,12 @@
 	//disable warning on iostream functions on windows
 	#define _CRT_SECURE_NO_WARNINGS
 	#include "windows.h"
-	#define isnanf _isnanf
+	/*#ifndef isnanf
+		#define isnanf _isnanf
+	#endif
+	#ifndef __isnanf
+		#define __isnanf isnanf
+	#endif*/
 	#define vkvg_inline __forceinline
 	#define disable_warning (warn)
 	#define reset_warning (warn)
