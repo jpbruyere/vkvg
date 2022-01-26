@@ -1,11 +1,11 @@
 #include "test.h"
 #include "tinycthread.h"
 
-#define THREAD_COUNT 2
+#define THREAD_COUNT 8
 
 
 static int finishedThreadCount = 0;
-static mtx_t mutex;
+static mtx_t* pmutex;
 
 void drawRandomRect (VkvgContext ctx, float s) {
 	float w = (float)test_width;
@@ -25,9 +25,6 @@ void _after_submit (void* data) {
 }
 
 int drawRectsThread () {
-	mtx_t gQMutex;
-	mtx_init (&gQMutex, mtx_plain);
-	vkvg_device_set_queue_guards (device, _before_submit, _after_submit, &gQMutex);
 
 	VkvgSurface s = vkvg_surface_create(device, test_width, test_height);
 	VkvgContext ctx = vkvg_create(s);
@@ -37,26 +34,31 @@ int drawRectsThread () {
 	}
 	vkvg_destroy(ctx);
 
-	mtx_lock(&mutex);
-
-	finishedThreadCount++;
+	mtx_lock(pmutex);
 
 	ctx = vkvg_create(surf);
 		vkvg_set_source_surface (ctx, s, 0, 0);
 		vkvg_paint(ctx);
 	vkvg_destroy(ctx);
 
-	mtx_unlock(&mutex);
+	finishedThreadCount++;
+	mtx_unlock(pmutex);
 
 	vkvg_surface_destroy (s);
-	vkvg_device_set_queue_guards (device, NULL, NULL, NULL);
-	mtx_destroy (&gQMutex);
 	return 0;
 }
 void fixedSizeRects(){
+	mtx_t gQMutex, mutex;
+	mtx_t* pgQMutex = &gQMutex;
+	pmutex = &mutex;
+
+	mtx_init (pgQMutex, mtx_plain);
+	vkvg_device_set_queue_guards (device, _before_submit, _after_submit, pgQMutex);
+
 	thrd_t threads[THREAD_COUNT];
+
 	finishedThreadCount = 0;
-	mtx_init (&mutex,mtx_plain);
+	mtx_init (pmutex, mtx_plain);
 	for (uint32_t i=0; i<THREAD_COUNT; i++) {
 		thrd_create (&threads[i], drawRectsThread, NULL);
 	}
@@ -65,7 +67,14 @@ void fixedSizeRects(){
 	while (finishedThreadCount < THREAD_COUNT)
 		thrd_sleep(&ts, NULL);
 
-	mtx_destroy(&mutex);
+	mtx_lock(pmutex);
+	mtx_unlock(pmutex);
+	mtx_destroy (pmutex);
+	pmutex = NULL;
+
+	vkvg_device_set_queue_guards (device, NULL, NULL, NULL);
+	mtx_destroy (pgQMutex);
+	pgQMutex = NULL;
 }
 
 int main(int argc, char *argv[]) {
