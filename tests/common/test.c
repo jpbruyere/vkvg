@@ -647,7 +647,6 @@ void perform_test_onscreen (void(*testfunc)(void), const char *testName, int arg
 #ifdef VKVG_TEST_DIRECT_DRAW
 	for (uint32_t i=0; i<r->imgCount;i++)
 		vkvg_surface_destroy (surfaces[i]);
-
 	free (surfaces);
 #else
 	vkvg_surface_destroy    (surf);

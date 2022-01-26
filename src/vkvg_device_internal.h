@@ -63,10 +63,11 @@ typedef struct _vkvg_device_t{
 	VkFormat				pngStagFormat;			/**< Supported vulkan image format png write staging img */
 	VkImageTiling			pngStagTiling;			/**< tiling for the blit operation */
 
-	vkvg_queue_guard		gQBeforeSubmitGuard;
-	vkvg_queue_guard		gQAfterSubmitGuard;
+	vkvg_queue_guard		gQLockGuard;
+	vkvg_queue_guard		gQUnlockGuard;
 	void*					gQGuardUserData;
 	VkhQueue				gQueue;					/**< Vulkan Queue with Graphic flag */
+	VkFence					gQLastFence;
 
 	VkRenderPass			renderPass;				/**< Vulkan render pass, common for all surfaces */
 	VkRenderPass			renderPass_ClearStencil;/**< Vulkan render pass for first draw with context, stencil has to be cleared */
@@ -125,4 +126,9 @@ void _flush_all_contexes		(VkvgDevice dev);
 void _wait_idle					(VkvgDevice dev);
 void _wait_and_reset_device_fence (VkvgDevice dev);
 void _submit_cmd				(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
+
+void _vkvg_device_destroy_fence			(VkvgDevice dev, VkFence fence);
+void _vkvg_device_reset_fence			(VkvgDevice dev, VkFence fence);
+void _vkvg_device_wait_fence			(VkvgDevice dev, VkFence fence);
+void _vkvg_device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence);
 #endif

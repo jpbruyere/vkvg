@@ -328,8 +328,8 @@ void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy) {
 	*vdpy = dev->vdpi;
 }
 void vkvg_device_set_queue_guards (VkvgDevice dev, vkvg_queue_guard before_submit, vkvg_queue_guard after_submit, void* user_data) {
-	dev->gQBeforeSubmitGuard = before_submit;
-	dev->gQAfterSubmitGuard = after_submit;
+	dev->gQLockGuard = before_submit;
+	dev->gQUnlockGuard = after_submit;
 	dev->gQGuardUserData = user_data;
 }
 #if VKVG_DBG_STATS

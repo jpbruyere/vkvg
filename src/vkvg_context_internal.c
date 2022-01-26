@@ -416,10 +416,6 @@ bool _wait_flush_fence (VkvgContext ctx) {
 	ctx->status = VKVG_STATUS_TIMEOUT;
 	return false;
 }
-void _reset_flush_fence (VkvgContext ctx) {
-	LOG(VKVG_LOG_INFO, "CTX: _reset_flush_fence\n");
-	ResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
-}
 bool _wait_and_submit_cmd (VkvgContext ctx){
 	if (!ctx->cmdStarted)//current cmd buff is empty, be aware that wait is also canceled!!
 		return true;
@@ -428,8 +424,7 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 
 	if (!_wait_flush_fence (ctx))
 		return false;
-	_reset_flush_fence(ctx);
-
+	_vkvg_device_reset_fence(ctx->pSurf->dev, ctx->flushFence);
 	_submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
 
 	if (ctx->cmd == ctx->cmdBuffers[0])
