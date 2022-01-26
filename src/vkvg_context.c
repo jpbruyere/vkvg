@@ -128,7 +128,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		return NULL;
 	}
 
-	ctx->flushFence = vkh_fence_create_signaled ((VkhDevice)dev);
+	_sync_context_init ((VkhDevice)dev, &ctx->syncCtx);
+
 	//for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
 	ctx->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
@@ -154,7 +155,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[0], "CTX Cmd Buff A");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1], "CTX Cmd Buff B");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->syncCtx.fence, "CTX Flush Fence");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_SEMAPHORE, (uint64_t)ctx->syncCtx.signals[0], "CTX Semaphore A");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_SEMAPHORE, (uint64_t)ctx->syncCtx.signals[1], "CTX Semaphore B");
 
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)ctx->descriptorPool, "CTX Descriptor Pool");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc, "CTX DescSet SOURCE");
@@ -235,9 +238,11 @@ void vkvg_destroy (VkvgContext ctx)
 
 #endif
 
-	vkDestroyFence		(dev, ctx->flushFence,NULL);
+
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
+
+	_sync_context_clear (&ctx->syncCtx);
 
 	VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc, ctx->dsGrad};
 	vkFreeDescriptorSets	(dev, ctx->descriptorPool, 3, dss);

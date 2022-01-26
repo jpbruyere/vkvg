@@ -148,10 +148,10 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 						  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	vkh_cmd_end		(cmd);
-	_submit_cmd		(dev, &cmd, dev->fence);
+	_submit_cmd		(dev, &cmd, &dev->syncCtx);
 
 	//don't reset fence after completion as this is the last cmd. (signaled idle fence)
-	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
+	WaitForFences (dev->vkDev, 1, &dev->syncCtx.fence, VK_TRUE, UINT64_MAX);
 
 	vkvg_buffer_destroy (&buff);
 	vkh_image_destroy	(stagImg);
@@ -298,7 +298,7 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 					 vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
 	vkh_cmd_end		(cmd);
-	_submit_cmd		(dev, &cmd, dev->fence);
+	_submit_cmd		(dev, &cmd, &dev->syncCtx);
 
 	VkhImage stagImgLinear = stagImg;
 
@@ -327,12 +327,12 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 					   vkh_image_get_vkimage (stagImgLinear),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &cpy);
 
 		vkh_cmd_end		(cmd);
-		_submit_cmd		(dev, &cmd, dev->fence);
+		_submit_cmd		(dev, &cmd, &dev->syncCtx);
 
-		vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
+		vkWaitForFences (dev->vkDev, 1, &dev->syncCtx.fence, VK_TRUE, UINT64_MAX);
 		vkh_image_destroy (stagImg);
 	} else
-		vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
+		vkWaitForFences (dev->vkDev, 1, &dev->syncCtx.fence, VK_TRUE, UINT64_MAX);
 
 	void* img = vkh_image_map (stagImgLinear);
 
@@ -386,8 +386,8 @@ vkvg_status_t vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* con
 					 vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
 	vkh_cmd_end		(cmd);
-	_submit_cmd		(dev, &cmd, dev->fence);
-	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
+	_submit_cmd		(dev, &cmd, &dev->syncCtx);
+	vkWaitForFences (dev->vkDev, 1, &dev->syncCtx.fence, VK_TRUE, UINT64_MAX);
 
 	uint64_t stride = vkh_image_get_stride(stagImg);
 	uint32_t dest_stride = surf->width * 4;

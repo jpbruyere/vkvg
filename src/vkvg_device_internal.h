@@ -25,6 +25,7 @@
 #include "vkvg_internal.h"
 #include "vkvg.h"
 #include "vkvg_fonts.h"
+#include "vkvg_sync_context_internal.h"
 
 #define STENCIL_FILL_BIT	0x1
 #define STENCIL_CLIP_BIT	0x2
@@ -63,8 +64,8 @@ typedef struct _vkvg_device_t{
 	VkFormat				pngStagFormat;			/**< Supported vulkan image format png write staging img */
 	VkImageTiling			pngStagTiling;			/**< tiling for the blit operation */
 
-	vkvg_queue_guard		gQBeforeSubmitGuard;
-	vkvg_queue_guard		gQAfterSubmitGuard;
+	vkvg_queue_guard		gQLockGuard;
+	vkvg_queue_guard		gQUnlockGuard;
 	void*					gQGuardUserData;
 	VkhQueue				gQueue;					/**< Vulkan Queue with Graphic flag */
 
@@ -75,7 +76,9 @@ typedef struct _vkvg_device_t{
 	uint32_t				references;				/**< Reference count, prevent destroying device if still in use */
 	VkCommandPool			cmdPool;				/**< Global command pool for processing on surfaces without context */
 	VkCommandBuffer			cmd;					/**< Global command buffer */
-	VkFence					fence;					/**< this fence is kept signaled when idle, wait and reset are called before each recording. */
+	vkvg_sync_context		syncCtx;				/**< device cmds sync context */
+	//vkvg_sync_context*		gQLastAwaitedSync;	/**< Last sync context whose signal semaphore is waited in cmd submission */
+	vkvgSync				gQLastSignaledSync;		/**< Last sync context submitted with signal semaphore */
 
 	VkPipeline				pipe_OVER;				/**< default operator */
 	VkPipeline				pipe_SUB;
@@ -124,5 +127,5 @@ void _createDescriptorSetLayout (VkvgDevice dev);
 void _flush_all_contexes		(VkvgDevice dev);
 void _wait_idle					(VkvgDevice dev);
 void _wait_and_reset_device_fence (VkvgDevice dev);
-void _submit_cmd				(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
+void _submit_cmd				(VkvgDevice dev, VkCommandBuffer* cmd, vkvg_sync_context *sync);
 #endif

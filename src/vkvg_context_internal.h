@@ -27,6 +27,7 @@
 #include "vkvg_buff.h"
 #include "vkh.h"
 #include "vkvg_fonts.h"
+#include "vkvg_sync_context_internal.h"
 
 #if VKVG_RECORDING
 	#include "recording/vkvg_record_internal.h"
@@ -130,7 +131,8 @@ typedef struct _vkvg_context_t {
 	uint32_t			references; //reference count
 
 	VkvgSurface			pSurf;		//surface bound to context, set on creation of ctx
-	VkFence				flushFence; //context fence
+	vkvg_sync_context	syncCtx;
+
 	VkhImage			source;		//source of painting operation
 
 	VkCommandPool		cmdPool;	//local pools ensure thread safety

@@ -64,6 +64,7 @@
 #include "vkvg_buff.h"
 #include "vkh.h"
 #include "vectors.h"
+#include "vkvg_sync_context_internal.h"
 
 
 //texture coordinates of one character in font cache array texture.
@@ -142,7 +143,7 @@ typedef struct {
 	uint8_t			texPixelSize;	/* Size in byte of a single pixel in a font texture */
 	uint8_t			texLength;		/* layer count of 2d array texture, starts with FONT_CACHE_INIT_LAYERS count and increased when needed */
 	int*			pensY;			/* array of current y pen positions for each texture in cache 2d array */
-	VkFence			uploadFence;	/* Signaled when upload is finished */
+	vkvg_sync_context uploadSync;	/* upload sync context */
 
 	_vkvg_font_identity_t*	fonts;	/* Loaded fonts structure array */
 	int32_t			fontsCount;		/* Loaded fonts array count*/

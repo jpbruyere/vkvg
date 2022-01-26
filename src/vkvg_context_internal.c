@@ -410,7 +410,7 @@ void _clear_attachment (VkvgContext ctx) {
 }
 bool _wait_flush_fence (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "CTX: _wait_flush_fence\n");
-	if (WaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
+	if (WaitForFences (ctx->pSurf->dev->vkDev, 1, &ctx->syncCtx.fence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
 		return true;
 	LOG(VKVG_LOG_DEBUG, "CTX: _wait_flush_fence timeout\n");
 	ctx->status = VKVG_STATUS_TIMEOUT;
@@ -418,7 +418,7 @@ bool _wait_flush_fence (VkvgContext ctx) {
 }
 void _reset_flush_fence (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "CTX: _reset_flush_fence\n");
-	ResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->flushFence);
+	ResetFences (ctx->pSurf->dev->vkDev, 1, &ctx->syncCtx.fence);
 }
 bool _wait_and_submit_cmd (VkvgContext ctx){
 	if (!ctx->cmdStarted)//current cmd buff is empty, be aware that wait is also canceled!!
@@ -426,11 +426,11 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 
 	LOG(VKVG_LOG_INFO, "CTX: _wait_and_submit_cmd\n");
 
-	if (!_wait_flush_fence (ctx))
+	/*if (!_wait_flush_fence (ctx))
 		return false;
-	_reset_flush_fence(ctx);
-
-	_submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
+	_reset_flush_fence(ctx);*/
+	_sync_context_wait_and_reset (&ctx->syncCtx, VKVG_FENCE_TIMEOUT);
+	_submit_cmd (ctx->pSurf->dev, &ctx->cmd, &ctx->syncCtx);
 
 	if (ctx->cmd == ctx->cmdBuffers[0])
 		ctx->cmd = ctx->cmdBuffers[1];

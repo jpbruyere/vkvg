@@ -29,14 +29,15 @@
 if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))	\
 	enabledExts[enabledExtsCount++] = #ext;						\
 }
+
 void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve) {
-	dev->instance = inst;
-	dev->hdpi	= 72;
-	dev->vdpi	= 72;
-	dev->samples= samples;
+	dev->instance	= inst;
+	dev->hdpi		= 72;
+	dev->vdpi		= 72;
+	dev->samples	= samples;
+	dev->vkDev		= vkdev;
+	dev->phy		= phy;
 	dev->deferredResolve = deferredResolve;
-	dev->vkDev	= vkdev;
-	dev->phy	= phy;
 
 #if VKVG_DBG_STATS
 	dev->debug_stats = (vkvg_debug_stats_t) {0};
@@ -69,8 +70,8 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 
 	dev->cmdPool= vkh_cmd_pool_create		((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 	dev->cmd	= vkh_cmd_buff_create		((VkhDevice)dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-	dev->fence	= vkh_fence_create_signaled ((VkhDevice)dev);
 
+	_sync_context_init			((VkhDevice)dev, &dev->syncCtx);
 	_create_pipeline_cache		(dev);
 	_init_fonts_cache			(dev);
 	if (dev->deferredResolve || dev->samples == VK_SAMPLE_COUNT_1_BIT){
@@ -90,7 +91,9 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)dev->cmdPool, "Device Cmd Pool");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)dev->cmd, "Device Cmd Buff");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)dev->fence, "Device Fence");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)dev->syncCtx.fence, "Device Fence");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_SEMAPHORE, (uint64_t)dev->syncCtx.signals[0], "Device Semaphore A");
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_SEMAPHORE, (uint64_t)dev->syncCtx.signals[1], "Device Semaphore B");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass, "RP load img/stencil");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearStencil, "RP clear stencil");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearAll, "RP clear all");
@@ -286,9 +289,9 @@ void vkvg_device_destroy (VkvgDevice dev)
 	vkDestroyRenderPass				(dev->vkDev, dev->renderPass_ClearStencil, NULL);
 	vkDestroyRenderPass				(dev->vkDev, dev->renderPass_ClearAll, NULL);
 
-	vkWaitForFences					(dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
+	_sync_context_wait				(&dev->syncCtx, UINT64_MAX);
+	_sync_context_clear				(&dev->syncCtx);
 
-	vkDestroyFence					(dev->vkDev, dev->fence,NULL);
 	vkFreeCommandBuffers			(dev->vkDev, dev->cmdPool, 1, &dev->cmd);
 	vkDestroyCommandPool			(dev->vkDev, dev->cmdPool, NULL);
 
@@ -328,8 +331,8 @@ void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy) {
 	*vdpy = dev->vdpi;
 }
 void vkvg_device_set_queue_guards (VkvgDevice dev, vkvg_queue_guard before_submit, vkvg_queue_guard after_submit, void* user_data) {
-	dev->gQBeforeSubmitGuard = before_submit;
-	dev->gQAfterSubmitGuard = after_submit;
+	dev->gQLockGuard = before_submit;
+	dev->gQUnlockGuard = after_submit;
 	dev->gQGuardUserData = user_data;
 }
 #if VKVG_DBG_STATS

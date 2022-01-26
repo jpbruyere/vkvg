@@ -53,7 +53,7 @@ void _explicit_ms_resolve (VkvgSurface surf){
 						  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	vkh_cmd_end (cmd);
 
-	_submit_cmd (dev, &cmd, dev->fence);
+	_submit_cmd (dev, &cmd, &dev->syncCtx);
 }
 
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
@@ -101,7 +101,7 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 	}
 	vkh_cmd_end (cmd);
 
-	_submit_cmd (dev, &cmd, dev->fence);
+	_submit_cmd (dev, &cmd, &dev->syncCtx);
 }
 
 void _create_surface_main_image (VkvgSurface surf){

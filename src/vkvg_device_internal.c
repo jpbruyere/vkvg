@@ -423,16 +423,35 @@ void _wait_idle (VkvgDevice dev) {
 	vkDeviceWaitIdle (dev->vkDev);
 }
 void _wait_and_reset_device_fence (VkvgDevice dev) {
-	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
-	vkResetFences (dev->vkDev, 1, &dev->fence);
+	vkWaitForFences (dev->vkDev, 1, &dev->syncCtx.fence, VK_TRUE, UINT64_MAX);
+	vkResetFences (dev->vkDev, 1, &dev->syncCtx.fence);
 }
 
-void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
-	if (dev->gQBeforeSubmitGuard)
-		dev->gQBeforeSubmitGuard (dev->gQGuardUserData);
-	vkh_cmd_submit (dev->gQueue, cmd, fence);
-	if (dev->gQAfterSubmitGuard)
-		dev->gQAfterSubmitGuard (dev->gQGuardUserData);
+void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, vkvg_sync_context* sync) {
+	if (dev->gQLockGuard)
+		dev->gQLockGuard (dev->gQGuardUserData);
+
+	_sync_context_dbg_print("sync:", sync);
+	_sync_context_dbg_print("signaled:", dev->gQLastSignaledSync);
+	//_sync_context_dbg_print("awaited :", dev->gQLastAwaitedSync);
+
+	if (dev->gQLastSignaledSync)
+		vkh_cmd_submit_with_semaphores(dev->gQueue, cmd,
+				dev->gQLastSignaledSync->signals[!dev->gQLastSignaledSync->nextSubmIdx],
+				sync->signals[sync->nextSubmIdx], sync->fence);
+	else
+		vkh_cmd_submit_with_semaphores(dev->gQueue, cmd, VK_NULL_HANDLE, sync->signals[sync->nextSubmIdx], sync->fence);
+
+	sync->nextSubmIdx ^= true;
+
+	if (dev->gQLastSignaledSync) {
+		dev->gQLastSignaledSync->awaitedBy = sync;
+		sync->awaiting = dev->gQLastSignaledSync;
+	}
+	dev->gQLastSignaledSync	= sync;
+
+	if (dev->gQUnlockGuard)
+		dev->gQUnlockGuard (dev->gQGuardUserData);
 }
 
 bool _init_function_pointers (VkvgDevice dev) {
@@ -476,7 +495,7 @@ void _create_empty_texture (VkvgDevice dev, VkFormat format, VkImageTiling tilin
 						  VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 						  VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 	vkh_cmd_end (dev->cmd);
-	_submit_cmd (dev, &dev->cmd, dev->fence);
+	_submit_cmd (dev, &dev->cmd, &dev->syncCtx);
 }
 
 void _check_best_image_tiling (VkvgDevice dev, VkFormat format) {
