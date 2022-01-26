@@ -424,15 +424,49 @@ void _wait_idle (VkvgDevice dev) {
 }
 void _wait_and_reset_device_fence (VkvgDevice dev) {
 	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
-	vkResetFences (dev->vkDev, 1, &dev->fence);
+	_vkvg_device_reset_fence(dev, dev->fence);
+}
+
+void _vkvg_device_destroy_fence (VkvgDevice dev, VkFence fence) {
+	if (dev->gQLockGuard)
+		dev->gQLockGuard (dev->gQGuardUserData);
+
+	if (dev->gQLastFence == fence)
+		dev->gQLastFence = VK_NULL_HANDLE;
+
+	vkDestroyFence (dev->vkDev, fence, NULL);
+
+	if (dev->gQUnlockGuard)
+		dev->gQUnlockGuard (dev->gQGuardUserData);
+}
+void _vkvg_device_reset_fence (VkvgDevice dev, VkFence fence){
+	if (dev->gQLockGuard)
+		dev->gQLockGuard (dev->gQGuardUserData);
+
+	if (dev->gQLastFence == fence)
+		dev->gQLastFence = VK_NULL_HANDLE;
+
+	ResetFences (dev->vkDev, 1, &fence);
+
+	if (dev->gQUnlockGuard)
+		dev->gQUnlockGuard (dev->gQGuardUserData);
+}
+void _vkvg_device_wait_fence			(VkvgDevice dev, VkFence fence){
+
+}
+void _vkvg_device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence){
+
 }
 
 void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
-	if (dev->gQBeforeSubmitGuard)
-		dev->gQBeforeSubmitGuard (dev->gQGuardUserData);
+	if (dev->gQLockGuard)
+		dev->gQLockGuard (dev->gQGuardUserData);
+	if (dev->gQLastFence != VK_NULL_HANDLE)
+		WaitForFences (dev->vkDev, 1, &dev->gQLastFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
 	vkh_cmd_submit (dev->gQueue, cmd, fence);
-	if (dev->gQAfterSubmitGuard)
-		dev->gQAfterSubmitGuard (dev->gQGuardUserData);
+	dev->gQLastFence = fence;
+	if (dev->gQUnlockGuard)
+		dev->gQUnlockGuard (dev->gQGuardUserData);
 }
 
 bool _init_function_pointers (VkvgDevice dev) {

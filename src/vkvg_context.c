@@ -301,8 +301,8 @@ void vkvg_destroy (VkvgContext ctx)
 	}
 
 	_clear_context (ctx);
+	_vkvg_device_destroy_fence (ctx->pSurf->dev, ctx->flushFence);
 
-	vkDestroyFence		(ctx->dev->vkDev, ctx->flushFence,NULL);
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
