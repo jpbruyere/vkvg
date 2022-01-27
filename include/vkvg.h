@@ -90,12 +90,11 @@ extern "C" {
 #define VKVG_LOG_INFO_IBO	0x00000040
 #define VKVG_LOG_INFO_VAO	(VKVG_LOG_INFO_VBO|VKVG_LOG_INFO_IBO)
 #define VKVG_LOG_DBG_ARRAYS	0x00001000
-//#define VKVG_LOG_THREADING	0x00000080
 #define VKVG_LOG_FULL		0xffffffff
 
 #define VKVG_LOG_INFO		0x00008000//(VKVG_LOG_INFO_PTS|VKVG_LOG_INFO_PATH|VKVG_LOG_INFO_CMD|VKVG_LOG_INFO_VAO)
 #ifdef DEBUG
-extern uint32_t vkvg_log_level;
+	extern uint32_t vkvg_log_level;
 	#ifdef VKVG_WIRED_DEBUG
 		typedef enum {
 			vkvg_wired_debug_mode_normal	= 0x01,
@@ -535,9 +534,9 @@ void vkvg_matrix_get_scale (const vkvg_matrix_t *matrix, float *sx, float *sy);
  * Device holds the font cache so that each time a context draws text, the same cache is used.
  *
  * @{ */
-typedef void (*vkvg_device_guard)(void* user_data);
+
 vkvg_public
-void vkvg_device_set_guards (VkvgDevice dev, vkvg_device_guard lock_callback, vkvg_device_guard unlock_callback, void* user_data);
+void vkvg_device_set_thread_aware (VkvgDevice dev, uint32_t thread_awayre);
 
 /**
  * @brief Create a new vkvg device.

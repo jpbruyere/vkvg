@@ -38,7 +38,15 @@ typedef struct _vkvg_surface_t {
 	uint32_t		references;
 	vkvg_status_t	status;					/**< Current status of surface, affected by last operation */
 	bool			new;
+	mtx_t			mutex;
 }vkvg_surface;
+
+#define LOCK_SURFACE(surf) \
+	if (surf->dev->threadAware)\
+		mtx_lock (&surf->mutex);
+#define UNLOCK_SURFACE(surf) \
+	if (surf->dev->threadAware)\
+		mtx_unlock (&surf->mutex);
 
 void _explicit_ms_resolve (VkvgSurface surf);
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect);

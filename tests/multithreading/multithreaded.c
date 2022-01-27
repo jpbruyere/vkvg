@@ -1,7 +1,7 @@
 #include "test.h"
 #include "tinycthread.h"
 
-#define THREAD_COUNT 8
+#define THREAD_COUNT 16
 
 
 static int finishedThreadCount = 0;
@@ -16,12 +16,6 @@ void drawRandomRect (VkvgContext ctx, float s) {
 	float y = truncf(h*rndf());
 
 	vkvg_rectangle(ctx, x, y, s, s);
-}
-void _before_submit (void* data) {
-	mtx_lock((mtx_t*)data);
-}
-void _after_submit (void* data) {
-	mtx_unlock((mtx_t*)data);
 }
 
 int drawRectsThread () {
@@ -48,20 +42,17 @@ int drawRectsThread () {
 	return 0;
 }
 void fixedSizeRects(){
-	mtx_t gQMutex, mutex;
-	mtx_t* pgQMutex = &gQMutex;
+	mtx_t mutex;
 	pmutex = &mutex;
 
-	mtx_init (pgQMutex, mtx_plain);
-	vkvg_device_set_guards (device, _before_submit, _after_submit, pgQMutex);
+	vkvg_device_set_thread_aware (device, 1);
 
 	thrd_t threads[THREAD_COUNT];
 
 	finishedThreadCount = 0;
 	mtx_init (pmutex, mtx_plain);
-	for (uint32_t i=0; i<THREAD_COUNT; i++) {
+	for (uint32_t i=0; i<THREAD_COUNT; i++)
 		thrd_create (&threads[i], drawRectsThread, NULL);
-	}
 
 	const struct timespec ts = {1,0};
 	while (finishedThreadCount < THREAD_COUNT)
@@ -72,9 +63,7 @@ void fixedSizeRects(){
 	mtx_destroy (pmutex);
 	pmutex = NULL;
 
-	vkvg_device_set_guards (device, NULL, NULL, NULL);
-	mtx_destroy (pgQMutex);
-	pgQMutex = NULL;
+	vkvg_device_set_thread_aware (device, 0);
 }
 
 int main(int argc, char *argv[]) {

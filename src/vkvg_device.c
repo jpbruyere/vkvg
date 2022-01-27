@@ -89,30 +89,35 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 
 	_create_empty_texture		(dev, format, dev->supportedTiling);
 
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)dev->cmdPool, "Device Cmd Pool");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)dev->cmd, "Device Cmd Buff");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)dev->fence, "Device Fence");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass, "RP load img/stencil");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearStencil, "RP clear stencil");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearAll, "RP clear all");
+#ifdef DEBUG
+	#if __linux__
+		_linux_register_error_handler ();
+	#endif
+	#ifdef VKVG_DBG_UTILS
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)dev->cmdPool, "Device Cmd Pool");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)dev->cmd, "Device Cmd Buff");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)dev->fence, "Device Fence");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass, "RP load img/stencil");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearStencil, "RP clear stencil");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearAll, "RP clear all");
 
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
 
-#ifndef __APPLE__
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelinePolyFill, "PL Poly fill");
-#endif
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelineClipping, "PL Clipping");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_OVER, "PL draw Over");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_SUB, "PL draw Substract");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_CLEAR, "PL draw Clear");
+		#ifndef __APPLE__
+			vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelinePolyFill, "PL Poly fill");
+		#endif
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelineClipping, "PL Clipping");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_OVER, "PL draw Over");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_SUB, "PL draw Substract");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_CLEAR, "PL draw Clear");
 
-	vkh_image_set_name(dev->emptyImg, "empty IMG");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(dev->emptyImg), "empty IMG VIEW");
-	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(dev->emptyImg), "empty IMG SAMPLER");
+		vkh_image_set_name(dev->emptyImg, "empty IMG");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(dev->emptyImg), "empty IMG VIEW");
+		vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(dev->emptyImg), "empty IMG SAMPLER");
+	#endif
 #endif
 	dev->status = VKVG_STATUS_SUCCESS;
 }
@@ -257,9 +262,13 @@ VkvgDevice vkvg_device_create_from_vk_multisample(VkInstance inst, VkPhysicalDev
 
 void vkvg_device_destroy (VkvgDevice dev)
 {
+	LOCK_DEVICE
 	dev->references--;
-	if (dev->references > 0)
+	if (dev->references > 0) {
+		UNLOCK_DEVICE
 		return;
+	}
+	UNLOCK_DEVICE
 
 	while (dev->cachedContextCount > 0)
 		_release_context_ressources (dev->cachedContext[--dev->cachedContextCount]);
@@ -303,6 +312,9 @@ void vkvg_device_destroy (VkvgDevice dev)
 
 	vmaDestroyAllocator (dev->allocator);
 
+	if (dev->threadAware)
+		mtx_destroy (&dev->mutex);
+
 	if (dev->vkhDev) {
 		VkhApp app = vkh_device_get_app (dev->vkhDev);
 		vkh_device_destroy (dev->vkhDev);
@@ -316,7 +328,9 @@ vkvg_status_t vkvg_device_status (VkvgDevice dev) {
 	return dev->status;
 }
 VkvgDevice vkvg_device_reference (VkvgDevice dev) {
+	LOCK_DEVICE
 	dev->references++;
+	UNLOCK_DEVICE
 	return dev;
 }
 uint32_t vkvg_device_get_reference_count (VkvgDevice dev) {
@@ -332,10 +346,16 @@ void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy) {
 	*hdpy = dev->hdpi;
 	*vdpy = dev->vdpi;
 }
-void vkvg_device_set_guards (VkvgDevice dev, vkvg_device_guard lock_callback, vkvg_device_guard unlock_callback, void* user_data) {
-	dev->deviceLockGuard		= lock_callback;
-	dev->deviceUnlockGuard		= unlock_callback;
-	dev->deviceGuardUserData	= user_data;
+void vkvg_device_set_thread_aware (VkvgDevice dev, uint32_t thread_aware) {
+	if (thread_aware) {
+		if (dev->threadAware)
+			return;
+		mtx_init (&dev->mutex, mtx_plain);
+		dev->threadAware = true;
+	} else if (dev->threadAware) {
+		mtx_destroy (&dev->mutex);
+		dev->threadAware = false;
+	}
 }
 #if VKVG_DBG_STATS
 vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev) {

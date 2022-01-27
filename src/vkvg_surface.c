@@ -46,8 +46,8 @@ VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height
 
 	_create_surface_images (surf);
 
+	surf->status = VKVG_STATUS_SUCCESS;
 	vkvg_device_reference (surf->dev);
-	dev->status = VKVG_STATUS_SUCCESS;
 	return surf;
 }
 VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
@@ -73,8 +73,8 @@ VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
 	_create_framebuffer					(surf);
 	_clear_surface						(surf, VK_IMAGE_ASPECT_STENCIL_BIT);
 
+	surf->status = VKVG_STATUS_SUCCESS;
 	vkvg_device_reference (surf->dev);
-	dev->status = VKVG_STATUS_SUCCESS;
 	return surf;
 }
 //TODO: it would be better to blit in original size and create ms final image with dest surf dims
@@ -112,7 +112,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
 	VkCommandBuffer cmd = dev->cmd;
 
-	_wait_and_reset_device_fence (dev);
+	_device_wait_and_reset_device_fence (dev);
 
 	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -148,7 +148,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 						  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	vkh_cmd_end		(cmd);
-	_submit_cmd		(dev, &cmd, dev->fence);
+	_device_submit_cmd		(dev, &cmd, dev->fence);
 
 	//don't reset fence after completion as this is the last cmd. (signaled idle fence)
 	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
@@ -178,8 +178,8 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
 	vkh_image_destroy	(tmpImg);
 
+	surf->status = VKVG_STATUS_SUCCESS;
 	vkvg_device_reference (surf->dev);
-	dev->status = VKVG_STATUS_SUCCESS;
 	return surf;
 }
 VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath) {
@@ -201,9 +201,13 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 
 void vkvg_surface_destroy(VkvgSurface surf)
 {
+	LOCK_SURFACE(surf)
 	surf->references--;
-	if (surf->references > 0)
+	if (surf->references > 0) {
+		UNLOCK_SURFACE(surf)
 		return;
+	}
+	UNLOCK_SURFACE(surf)
 
 	vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
 
@@ -213,12 +217,17 @@ void vkvg_surface_destroy(VkvgSurface surf)
 	vkh_image_destroy(surf->imgMS);
 	vkh_image_destroy(surf->stencil);
 
+	if (surf->dev->threadAware)
+		mtx_destroy (&surf->mutex);
+
 	vkvg_device_destroy (surf->dev);
 	free(surf);
 }
 
 VkvgSurface vkvg_surface_reference (VkvgSurface surf) {
+	LOCK_SURFACE(surf)
 	surf->references++;
+	UNLOCK_SURFACE(surf)
 	return surf;
 }
 uint32_t vkvg_surface_get_reference_count (VkvgSurface surf) {
@@ -260,7 +269,7 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 		LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, null path\n");
 		return VKVG_STATUS_WRITE_ERROR;
 	}
-
+	LOCK_SURFACE(surf)
 	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
 	VkvgDevice dev = surf->dev;
 
@@ -277,7 +286,7 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 	VkCommandBuffer cmd = dev->cmd;
-	_wait_and_reset_device_fence (dev);
+	_device_wait_and_reset_device_fence (dev);
 
 	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -298,7 +307,7 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 					 vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
 	vkh_cmd_end		(cmd);
-	_submit_cmd		(dev, &cmd, dev->fence);
+	_device_submit_cmd		(dev, &cmd, dev->fence);
 
 	VkhImage stagImgLinear = stagImg;
 
@@ -313,7 +322,7 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 			.dstOffset = {0},
 			.extent = {(int32_t)surf->width, (int32_t)surf->height, 1}
 		};
-		_wait_and_reset_device_fence (dev);
+		_device_wait_and_reset_device_fence (dev);
 
 		vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		vkh_image_set_layout (cmd, stagImgLinear, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -327,7 +336,7 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 					   vkh_image_get_vkimage (stagImgLinear),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &cpy);
 
 		vkh_cmd_end		(cmd);
-		_submit_cmd		(dev, &cmd, dev->fence);
+		_device_submit_cmd		(dev, &cmd, dev->fence);
 
 		vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 		vkh_image_destroy (stagImg);
@@ -343,6 +352,7 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 	vkh_image_unmap (stagImgLinear);
 	vkh_image_destroy (stagImgLinear);
 
+	UNLOCK_SURFACE(surf)
 	return VKVG_STATUS_SUCCESS;
 }
 
@@ -356,6 +366,8 @@ vkvg_status_t vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* con
 		return VKVG_STATUS_INVALID_IMAGE;
 	}
 
+	LOCK_SURFACE(surf)
+
 	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
 	VkvgDevice dev = surf->dev;
 
@@ -365,7 +377,7 @@ vkvg_status_t vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* con
 										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 	VkCommandBuffer cmd = dev->cmd;
-	_wait_and_reset_device_fence (dev);
+	_device_wait_and_reset_device_fence (dev);
 
 	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	vkh_image_set_layout (cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -386,7 +398,7 @@ vkvg_status_t vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* con
 					 vkh_image_get_vkimage (stagImg),  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
 	vkh_cmd_end		(cmd);
-	_submit_cmd		(dev, &cmd, dev->fence);
+	_device_submit_cmd		(dev, &cmd, dev->fence);
 	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 
 	uint64_t stride = vkh_image_get_stride(stagImg);
@@ -402,6 +414,8 @@ vkvg_status_t vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* con
 
 	vkh_image_unmap (stagImg);
 	vkh_image_destroy (stagImg);
+
+	UNLOCK_SURFACE(surf)
 
 	return VKVG_STATUS_SUCCESS;
 }

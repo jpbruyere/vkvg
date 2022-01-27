@@ -65,9 +65,8 @@ typedef struct _vkvg_device_t{
 	VkFormat				pngStagFormat;			/**< Supported vulkan image format png write staging img */
 	VkImageTiling			pngStagTiling;			/**< tiling for the blit operation */
 
-	vkvg_device_guard		deviceLockGuard;
-	vkvg_device_guard		deviceUnlockGuard;
-	void*					deviceGuardUserData;
+	mtx_t					mutex;					/**< protect device access (queue, cahes, ...)from ctxs in separate threads */
+	bool					threadAware;			/**< if true, mutex is created and guard device queue and caches access */
 	VkhQueue				gQueue;					/**< Vulkan Queue with Graphic flag */
 	VkFence					gQLastFence;
 
@@ -87,21 +86,14 @@ typedef struct _vkvg_device_t{
 	VkPipeline				pipelinePolyFill;		/**< even-odd polygon filling first step */
 	VkPipeline				pipelineClipping;		/**< draw on stencil to update clipping regions */
 
-#ifdef VKVG_WIRED_DEBUG
-	VkPipeline				pipelineWired;
-	VkPipeline				pipelineLineList;
-#endif
-#if VKVG_DBG_STATS
-	vkvg_debug_stats_t		debug_stats;			/**< debug statistics on memory usage and vulkan ressources */
-#endif
 	VkPipelineCache			pipelineCache;			/**< speed up startup by caching configured pipelines on disk */
 	VkPipelineLayout		pipelineLayout;			/**< layout common to all pipelines */
 	VkDescriptorSetLayout	dslFont;				/**< font cache descriptors layout */
 	VkDescriptorSetLayout	dslSrc;					/**< context source surface descriptors layout */
 	VkDescriptorSetLayout	dslGrad;				/**< context gradient descriptors layout */
 
-	int		hdpi,									/**< only used for FreeType fonts and svg loading */
-			vdpi;
+	int						hdpi,					/**< only used for FreeType fonts and svg loading */
+							vdpi;
 
 	VkhDevice				vkhDev;					/**< old VkhDev created during vulkan context creation by @ref vkvg_device_create. */
 
@@ -110,13 +102,28 @@ typedef struct _vkvg_device_t{
 	bool					deferredResolve;		/**< if true, resolve only on context destruction and set as source */
 	vkvg_status_t			status;					/**< Current status of device, affected by last operation */
 
-	_font_cache_t*	fontCache;						/**< Store everything relative to common font caching system */
+	_font_cache_t*			fontCache;				/**< Store everything relative to common font caching system */
 
-	VkvgContext		lastCtx;						/**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
+	VkvgContext				lastCtx;				/**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
 
-	int32_t			cachedContextCount;
-	VkvgContext		cachedContext[VKVG_MAX_CACHED_CONTEXT_COUNT];
+	int32_t					cachedContextCount;
+	VkvgContext				cachedContext[VKVG_MAX_CACHED_CONTEXT_COUNT];
+
+#ifdef VKVG_WIRED_DEBUG
+	VkPipeline				pipelineWired;
+	VkPipeline				pipelineLineList;
+#endif
+#if VKVG_DBG_STATS
+	vkvg_debug_stats_t		debug_stats;			/**< debug statistics on memory usage and vulkan ressources */
+#endif
 }vkvg_device;
+
+#define LOCK_DEVICE \
+	if (dev->threadAware)\
+		mtx_lock (&dev->mutex);
+#define UNLOCK_DEVICE \
+	if (dev->threadAware)\
+		mtx_unlock (&dev->mutex);
 
 bool _try_get_phyinfo			(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);
 bool _init_function_pointers	(VkvgDevice dev);
@@ -127,16 +134,16 @@ void _create_pipeline_cache		(VkvgDevice dev);
 VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
 VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
 void _setupPipelines			(VkvgDevice dev);
-void _createDescriptorSetLayout (VkvgDevice dev);
-void _flush_all_contexes		(VkvgDevice dev);
-void _wait_idle					(VkvgDevice dev);
-void _wait_and_reset_device_fence (VkvgDevice dev);
-void _submit_cmd				(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
+void _device_createDescriptorSetLayout (VkvgDevice dev);
+void _device_flush_all_contexes		(VkvgDevice dev);
+void _device_wait_idle					(VkvgDevice dev);
+void _device_wait_and_reset_device_fence (VkvgDevice dev);
+void _device_submit_cmd				(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
 
-void _vkvg_device_destroy_fence			(VkvgDevice dev, VkFence fence);
-void _vkvg_device_reset_fence			(VkvgDevice dev, VkFence fence);
-void _vkvg_device_wait_fence			(VkvgDevice dev, VkFence fence);
-void _vkvg_device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence);
-bool _vkvg_device_try_get_cached_context(VkvgDevice dev, VkvgContext* pCtx);
-void _vkvg_device_store_context			(VkvgContext ctx);
+void _device_destroy_fence			(VkvgDevice dev, VkFence fence);
+void _device_reset_fence			(VkvgDevice dev, VkFence fence);
+void _device_wait_fence			(VkvgDevice dev, VkFence fence);
+void _device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence);
+bool _device_try_get_cached_context(VkvgDevice dev, VkvgContext* pCtx);
+void _device_store_context			(VkvgContext ctx);
 #endif

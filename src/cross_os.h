@@ -53,6 +53,9 @@
 	#define vkvg_inline static inline __attribute((always_inline))
 	#define disable_warning (warn) #pragma GCC diagnostic ignored "-W"#warn
 	#define reset_warning (warn) #pragma GCC diagnostic warning "-W"#warn
+	#if __linux__
+		void _linux_register_error_handler ();
+	#endif
 #endif
 
 const char* getUserDir ();
