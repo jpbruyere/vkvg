@@ -52,6 +52,7 @@ int		single_test = -1;	//if not < 0, contains the index of the single test to ru
 
 static bool paused = false;
 static bool offscreen = false;
+static bool threadAware = false;
 static VkSampleCountFlags samples = VK_SAMPLE_COUNT_1_BIT;
 static VkPhysicalDeviceType preferedPhysicalDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 static vk_engine_t* e;
@@ -210,6 +211,7 @@ void _print_usage_and_exit(void) {
 	printf("\t-d:\t\tenable dashes.\n");
 	printf("\t-n index:\tRun only a single test, zero based index.\n");
 	printf("\t-q:\t\tQuiet, don't print measures table head row, usefull for batch tests.\n");
+	printf("\t-t:\t\tThread aware, set device in multithreading aware mode.\n");
 	printf("\t-p:\t\tPrint test details and exit without performing test, usefull to print details in logs.\n");
 	printf("\t-vsync:\t\tEnable VSync, disabled by default.\n");
 	printf("\t-o:\t\tPerform test offscreen.\n");
@@ -262,7 +264,7 @@ void _print_details_and_exit(void) {
 void _parse_args (int argc, char* argv[]) {
 	int opt = 0;
 	bool printTestDetailsAndExit = false;
-	while ((opt = getopt(argc, argv, "+c:df:g:i:j:l:n:opqS:s:v:w:x:y:")) != -1) {
+	while ((opt = getopt(argc, argv, "+c:df:g:i:j:l:n:opqtS:s:v:w:x:y:")) != -1) {
 		switch (opt) {
 		case 'c':
 			switch (optarg[0]) {
@@ -322,6 +324,9 @@ void _parse_args (int argc, char* argv[]) {
 			break;
 		case 'q':
 			quiet = true;
+			break;
+		case 't':
+			threadAware = true;
 			break;
 		case 'S':
 			samples = (VkSampleCountFlags)atoi (optarg);
@@ -557,6 +562,8 @@ void perform_test_onscreen (void(*testfunc)(void), const char *testName, int arg
 	device  = vkvg_device_create_from_vk_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
 
 	vkvg_device_set_dpy(device, 96, 96);
+	if (threadAware)
+		vkvg_device_set_thread_aware (device, 1);
 
 #ifdef VKVG_TEST_DIRECT_DRAW
 	surfaces = (VkvgSurface*)malloc(r->imgCount * sizeof (VkvgSurface));
