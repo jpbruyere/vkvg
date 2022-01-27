@@ -64,7 +64,7 @@ bool _try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType
 	}
 	return false;
 }
-void _flush_all_contexes (VkvgDevice dev){
+void _device_flush_all_contexes (VkvgDevice dev){
 	/*VkvgContext ctx = dev->lastCtx;
 	while (ctx != NULL){
 		if (ctx->cmdStarted)
@@ -419,81 +419,71 @@ void _createDescriptorSetLayout (VkvgDevice dev) {
 	VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }
 
-void _wait_idle (VkvgDevice dev) {
+void _device_wait_idle (VkvgDevice dev) {
 	vkDeviceWaitIdle (dev->vkDev);
 }
-void _wait_and_reset_device_fence (VkvgDevice dev) {
+void _device_wait_and_reset_device_fence (VkvgDevice dev) {
 	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
-	_vkvg_device_reset_fence(dev, dev->fence);
+	_device_reset_fence(dev, dev->fence);
 }
 
-void _vkvg_device_destroy_fence (VkvgDevice dev, VkFence fence) {
-	if (dev->deviceLockGuard)
-		dev->deviceLockGuard (dev->deviceGuardUserData);
+void _device_destroy_fence (VkvgDevice dev, VkFence fence) {
+	LOCK_DEVICE
 
 	if (dev->gQLastFence == fence)
 		dev->gQLastFence = VK_NULL_HANDLE;
 
 	vkDestroyFence (dev->vkDev, fence, NULL);
 
-	if (dev->deviceUnlockGuard)
-		dev->deviceUnlockGuard (dev->deviceGuardUserData);
+	UNLOCK_DEVICE
 }
-void _vkvg_device_reset_fence (VkvgDevice dev, VkFence fence){
-	if (dev->deviceLockGuard)
-		dev->deviceLockGuard (dev->deviceGuardUserData);
+void _device_reset_fence (VkvgDevice dev, VkFence fence){
+	LOCK_DEVICE
 
 	if (dev->gQLastFence == fence)
 		dev->gQLastFence = VK_NULL_HANDLE;
 
 	ResetFences (dev->vkDev, 1, &fence);
 
-	if (dev->deviceUnlockGuard)
-		dev->deviceUnlockGuard (dev->deviceGuardUserData);
+	UNLOCK_DEVICE
 }
-void _vkvg_device_wait_fence (VkvgDevice dev, VkFence fence){
+void _device_wait_fence (VkvgDevice dev, VkFence fence){
 
 }
-void _vkvg_device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence){
+void _device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence){
 
 }
-bool _vkvg_device_try_get_cached_context (VkvgDevice dev, VkvgContext* pCtx) {
-	if (dev->deviceLockGuard)
-		dev->deviceLockGuard (dev->deviceGuardUserData);
+bool _device_try_get_cached_context (VkvgDevice dev, VkvgContext* pCtx) {
+	LOCK_DEVICE
 
 	if (dev->cachedContextCount)
 		*pCtx = dev->cachedContext[--dev->cachedContextCount];
 	else
 		*pCtx = NULL;
 
-	if (dev->deviceUnlockGuard)
-		dev->deviceUnlockGuard (dev->deviceGuardUserData);
+	UNLOCK_DEVICE
 
 	return *pCtx != NULL;
 }
-void _vkvg_device_store_context (VkvgContext ctx) {
+void _device_store_context (VkvgContext ctx) {
 	VkvgDevice dev = ctx->dev;
 
-	if (dev->deviceLockGuard)
-		dev->deviceLockGuard (dev->deviceGuardUserData);
+	LOCK_DEVICE
 
 	if (dev->gQLastFence == ctx->flushFence)
 		dev->gQLastFence = VK_NULL_HANDLE;
 	dev->cachedContext[dev->cachedContextCount++] = ctx;
 	ctx->references++;
 
-	if (dev->deviceUnlockGuard)
-		dev->deviceUnlockGuard (dev->deviceGuardUserData);
+	UNLOCK_DEVICE
 }
-void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
-	if (dev->deviceLockGuard)
-		dev->deviceLockGuard (dev->deviceGuardUserData);
+void _device_submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
+	LOCK_DEVICE
 	if (dev->gQLastFence != VK_NULL_HANDLE)
 		WaitForFences (dev->vkDev, 1, &dev->gQLastFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
 	vkh_cmd_submit (dev->gQueue, cmd, fence);
 	dev->gQLastFence = fence;
-	if (dev->deviceUnlockGuard)
-		dev->deviceUnlockGuard (dev->deviceGuardUserData);
+	UNLOCK_DEVICE
 }
 
 bool _init_function_pointers (VkvgDevice dev) {
@@ -530,14 +520,14 @@ void _create_empty_texture (VkvgDevice dev, VkFormat format, VkImageTiling tilin
 									 VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 	vkh_image_create_descriptor(dev->emptyImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 
-	_wait_and_reset_device_fence (dev);
+	_device_wait_and_reset_device_fence (dev);
 
 	vkh_cmd_begin (dev->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	vkh_image_set_layout (dev->cmd, dev->emptyImg, VK_IMAGE_ASPECT_COLOR_BIT,
 						  VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 						  VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 	vkh_cmd_end (dev->cmd);
-	_submit_cmd (dev, &dev->cmd, dev->fence);
+	_device_submit_cmd (dev, &dev->cmd, dev->fence);
 }
 
 void _check_best_image_tiling (VkvgDevice dev, VkFormat format) {

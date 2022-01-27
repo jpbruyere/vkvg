@@ -28,7 +28,7 @@ void _explicit_ms_resolve (VkvgSurface surf){
 	VkvgDevice		dev = surf->dev;
 	VkCommandBuffer cmd = dev->cmd;
 
-	_wait_and_reset_device_fence (dev);
+	_device_wait_and_reset_device_fence (dev);
 
 	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	vkh_image_set_layout (cmd, surf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -53,7 +53,7 @@ void _explicit_ms_resolve (VkvgSurface surf){
 						  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	vkh_cmd_end (cmd);
 
-	_submit_cmd (dev, &cmd, dev->fence);
+	_device_submit_cmd (dev, &cmd, dev->fence);
 }
 
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
@@ -61,7 +61,7 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 	VkvgDevice		dev = surf->dev;
 	VkCommandBuffer cmd = dev->cmd;
 
-	_wait_and_reset_device_fence (dev);
+	_device_wait_and_reset_device_fence (dev);
 
 	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -101,7 +101,7 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 	}
 	vkh_cmd_end (cmd);
 
-	_submit_cmd (dev, &cmd, dev->fence);
+	_device_submit_cmd (dev, &cmd, dev->fence);
 }
 
 void _create_surface_main_image (VkvgSurface surf){
@@ -186,5 +186,7 @@ VkvgSurface _create_surface (VkvgDevice dev, VkFormat format) {
 	}
 	surf->dev = dev;
 	surf->format = format;
+	if (dev->threadAware)
+		mtx_init (&surf->mutex, mtx_plain);
 	return surf;
 }

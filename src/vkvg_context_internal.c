@@ -424,8 +424,8 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 
 	if (!_wait_flush_fence (ctx))
 		return false;
-	_vkvg_device_reset_fence(ctx->pSurf->dev, ctx->flushFence);
-	_submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
+	_device_reset_fence(ctx->pSurf->dev, ctx->flushFence);
+	_device_submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
 
 	if (ctx->cmd == ctx->cmdBuffers[0])
 		ctx->cmd = ctx->cmdBuffers[1];
@@ -854,7 +854,8 @@ void _init_descriptor_sets (VkvgContext ctx){
 }
 void _release_context_ressources (VkvgContext ctx) {
 	VkDevice dev = ctx->dev->vkDev;
-	_vkvg_device_destroy_fence (ctx->dev, ctx->flushFence);
+	
+	_device_destroy_fence (ctx->dev, ctx->flushFence);
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 

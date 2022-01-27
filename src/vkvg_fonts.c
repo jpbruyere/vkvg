@@ -88,7 +88,7 @@ void _init_fonts_cache (VkvgDevice dev){
 								VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 								VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
-	_submit_cmd (dev, &cache->cmd, cache->uploadFence);
+	_device_submit_cmd (dev, &cache->cmd, cache->uploadFence);
 
 	cache->hostBuff = (uint8_t*)malloc(buffLength);
 	cache->pensY = (int*)calloc(cache->texLength, sizeof(int));
@@ -99,12 +99,12 @@ void _init_fonts_cache (VkvgDevice dev){
 void _increase_font_tex_array (VkvgDevice dev){
 	LOG(VKVG_LOG_INFO, "_increase_font_tex_array\n");
 
-	_flush_all_contexes (dev);
+	_device_flush_all_contexes (dev);
 
 	_font_cache_t* cache = dev->fontCache;
 
 	vkWaitForFences		(dev->vkDev, 1, &cache->uploadFence, VK_TRUE, UINT64_MAX);
-	_vkvg_device_reset_fence (dev, cache->uploadFence);
+	_device_reset_fence (dev, cache->uploadFence);
 
 	vkResetCommandBuffer(cache->cmd, 0);
 
@@ -140,7 +140,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 
 	VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
 
-	_submit_cmd			(dev, &cache->cmd, cache->uploadFence);
+	_device_submit_cmd			(dev, &cache->cmd, cache->uploadFence);
 	vkWaitForFences		(dev->vkDev, 1, &cache->uploadFence, VK_TRUE, UINT64_MAX);
 
 	cache->pensY = (int*)realloc(cache->pensY, newSize * sizeof(int));
@@ -155,7 +155,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 		_update_descriptor_set	(next, cache->texture, next->dsFont);
 		next = next->pPrev;
 	}*/
-	_wait_idle(dev);
+	_device_wait_idle(dev);
 }
 ///Start a new line in font cache, increase texture layer count if needed.
 void _init_next_line_in_tex_cache (VkvgDevice dev, _vkvg_font_t* f){
@@ -242,7 +242,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 
 	LOG(VKVG_LOG_INFO, "_flush_chars_to_tex pen(%d, %d)\n",f->curLine.penX, f->curLine.penY);
 	vkWaitForFences		(dev->vkDev,1,&cache->uploadFence,VK_TRUE,UINT64_MAX);
-	_vkvg_device_reset_fence (dev, cache->uploadFence);
+	_device_reset_fence (dev, cache->uploadFence);
 	vkResetCommandBuffer(cache->cmd,0);
 
 	memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (uint64_t)f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize);
@@ -269,7 +269,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 
 	VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
 
-	_submit_cmd (dev, &cache->cmd, cache->uploadFence);
+	_device_submit_cmd (dev, &cache->cmd, cache->uploadFence);
 
 	f->curLine.penX += cache->stagingX;
 	cache->stagingX = 0;

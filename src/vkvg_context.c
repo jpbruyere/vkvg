@@ -91,7 +91,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	VkvgDevice dev = surf->dev;
 	VkvgContext ctx = NULL;
 
-	if (_vkvg_device_try_get_cached_context (dev, &ctx) ) {
+	if (_device_try_get_cached_context (dev, &ctx) ) {
 		ctx->pSurf = surf;
 
 		if (!surf || surf->status) {
@@ -294,7 +294,7 @@ void vkvg_destroy (VkvgContext ctx)
 #endif
 
 	if (!ctx->status && ctx->dev->cachedContextCount < VKVG_MAX_CACHED_CONTEXT_COUNT) {
-		_vkvg_device_store_context (ctx);
+		_device_store_context (ctx);
 		return;
 	}
 
