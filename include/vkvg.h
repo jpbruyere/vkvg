@@ -535,9 +535,9 @@ void vkvg_matrix_get_scale (const vkvg_matrix_t *matrix, float *sx, float *sy);
  * Device holds the font cache so that each time a context draws text, the same cache is used.
  *
  * @{ */
-typedef void (*vkvg_queue_guard)(void* user_data);
+typedef void (*vkvg_device_guard)(void* user_data);
 vkvg_public
-void vkvg_device_set_queue_guards (VkvgDevice dev, vkvg_queue_guard before_submit, vkvg_queue_guard after_submit, void* user_data);
+void vkvg_device_set_guards (VkvgDevice dev, vkvg_device_guard lock_callback, vkvg_device_guard unlock_callback, void* user_data);
 
 /**
  * @brief Create a new vkvg device.

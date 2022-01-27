@@ -89,9 +89,9 @@ void _init_ctx (VkvgContext ctx) {
 VkvgContext vkvg_create(VkvgSurface surf)
 {
 	VkvgDevice dev = surf->dev;
+	VkvgContext ctx = NULL;
 
-	if (dev->cachedContextCount) {
-		VkvgContext ctx = dev->cachedContext[--dev->cachedContextCount];
+	if (_vkvg_device_try_get_cached_context (dev, &ctx) ) {
 		ctx->pSurf = surf;
 
 		if (!surf || surf->status) {
@@ -106,7 +106,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		ctx->status = VKVG_STATUS_SUCCESS;
 		return ctx;
 	}
-	VkvgContext ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
+	ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
 	LOG(VKVG_LOG_INFO, "CREATE Context: ctx = %p; surf = %p\n", ctx, surf);
 
@@ -151,9 +151,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	}
 
 	//for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
-	ctx->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+	ctx->cmdPool	= vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+	ctx->flushFence	= vkh_fence_create_signaled ((VkhDevice)ctx->dev);
 
-	ctx->flushFence = vkh_fence_create_signaled ((VkhDevice)ctx->dev);
 	_create_vertices_buff	(ctx);
 	_create_gradient_buff	(ctx);
 	_create_cmd_buff		(ctx);
@@ -274,7 +274,7 @@ void vkvg_destroy (VkvgContext ctx)
 	if (ctx->pattern)
 		vkvg_pattern_destroy (ctx->pattern);
 
-	VkDevice dev = ctx->dev->vkDev;
+	_clear_context (ctx);
 
 #if VKVG_DBG_STATS
 	vkvg_debug_stats_t* dbgstats = &ctx->pSurf->dev->debug_stats;
@@ -294,37 +294,11 @@ void vkvg_destroy (VkvgContext ctx)
 #endif
 
 	if (!ctx->status && ctx->dev->cachedContextCount < VKVG_MAX_CACHED_CONTEXT_COUNT) {
-		ctx->dev->cachedContext[ctx->dev->cachedContextCount++] = ctx;
-		_clear_context (ctx);
-		ctx->references++;
+		_vkvg_device_store_context (ctx);
 		return;
 	}
 
-	_clear_context (ctx);
-	_vkvg_device_destroy_fence (ctx->pSurf->dev, ctx->flushFence);
-
-	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
-	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
-
-	VkDescriptorSet dss[] = {ctx->dsFont,ctx->dsSrc, ctx->dsGrad};
-	vkFreeDescriptorSets	(dev, ctx->descriptorPool, 3, dss);
-
-	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
-
-	vkvg_buffer_destroy (&ctx->uboGrad);
-	vkvg_buffer_destroy (&ctx->indices);
-	vkvg_buffer_destroy (&ctx->vertices);
-
-	free(ctx->vertexCache);
-	free(ctx->indexCache);
-
-	//TODO:check this for source counter
-	//vkh_image_destroy	  (ctx->source);
-
-	free(ctx->pathes);
-	free(ctx->points);
-
-	free(ctx);
+	_release_context_ressources (ctx);
 }
 void vkvg_set_opacity (VkvgContext ctx, float opacity) {
 	if (ctx->status)

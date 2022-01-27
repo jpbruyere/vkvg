@@ -65,9 +65,9 @@ typedef struct _vkvg_device_t{
 	VkFormat				pngStagFormat;			/**< Supported vulkan image format png write staging img */
 	VkImageTiling			pngStagTiling;			/**< tiling for the blit operation */
 
-	vkvg_queue_guard		gQLockGuard;
-	vkvg_queue_guard		gQUnlockGuard;
-	void*					gQGuardUserData;
+	vkvg_device_guard		deviceLockGuard;
+	vkvg_device_guard		deviceUnlockGuard;
+	void*					deviceGuardUserData;
 	VkhQueue				gQueue;					/**< Vulkan Queue with Graphic flag */
 	VkFence					gQLastFence;
 
@@ -137,4 +137,6 @@ void _vkvg_device_destroy_fence			(VkvgDevice dev, VkFence fence);
 void _vkvg_device_reset_fence			(VkvgDevice dev, VkFence fence);
 void _vkvg_device_wait_fence			(VkvgDevice dev, VkFence fence);
 void _vkvg_device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence);
+bool _vkvg_device_try_get_cached_context(VkvgDevice dev, VkvgContext* pCtx);
+void _vkvg_device_store_context			(VkvgContext ctx);
 #endif
