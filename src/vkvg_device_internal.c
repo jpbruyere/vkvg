@@ -55,7 +55,7 @@ PFN_vkWaitForFences				WaitForFences;
 PFN_vkResetFences				ResetFences;
 PFN_vkResetCommandBuffer		ResetCommandBuffer;
 
-bool _try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
+bool _device_try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
 	for (uint32_t i=0; i<phyCount; i++){
 		if (vkh_phyinfo_get_properties(phys[i]).deviceType == gpuType) {
 			 *phy = phys[i];
@@ -74,13 +74,13 @@ void _device_flush_all_contexes (VkvgDevice dev){
 	}*/
 }
 //TODO:save/reload cache in user temp directory
-void _create_pipeline_cache(VkvgDevice dev){
+void _device_create_pipeline_cache(VkvgDevice dev){
 
 	VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO};
 	VK_CHECK_RESULT(vkCreatePipelineCache(dev->vkDev, &pipelineCacheCreateInfo, NULL, &dev->pipelineCache));
 }
 
-VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp)
+VkRenderPass _device_createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp)
 {
 	VkAttachmentDescription attColor = {
 					.format = FB_COLOR_FORMAT,
@@ -134,7 +134,7 @@ VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadO
 	VK_CHECK_RESULT(vkCreateRenderPass(dev->vkDev, &renderPassInfo, NULL, &rp));
 	return rp;
 }
-VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp)
+VkRenderPass _device_createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp)
 {
 	VkAttachmentDescription attColor = {
 					.format = FB_COLOR_FORMAT,
@@ -200,7 +200,7 @@ VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAt
 	return rp;
 }
 
-void _setupPipelines(VkvgDevice dev)
+void _device_setupPipelines(VkvgDevice dev)
 {
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo = { .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
 				.renderPass = dev->renderPass };
@@ -393,7 +393,7 @@ void _setupPipelines(VkvgDevice dev)
 	vkDestroyShaderModule(dev->vkDev, modFrag, NULL);
 }
 
-void _createDescriptorSetLayout (VkvgDevice dev) {
+void _device_createDescriptorSetLayout (VkvgDevice dev) {
 
 	VkDescriptorSetLayoutBinding dsLayoutBinding =
 		{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,VK_SHADER_STAGE_FRAGMENT_BIT, NULL};
@@ -486,7 +486,7 @@ void _device_submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
 	UNLOCK_DEVICE
 }
 
-bool _init_function_pointers (VkvgDevice dev) {
+bool _device_init_function_pointers (VkvgDevice dev) {
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	if (vkGetInstanceProcAddr(dev->instance, "vkSetDebugUtilsObjectNameEXT")==VK_NULL_HANDLE){
 		LOG(VKVG_LOG_ERR, "vkvg create device failed: 'VK_EXT_debug_utils' has to be loaded for Debug build\n");
@@ -514,7 +514,7 @@ bool _init_function_pointers (VkvgDevice dev) {
 	return true;
 }
 
-void _create_empty_texture (VkvgDevice dev, VkFormat format, VkImageTiling tiling) {
+void _device_create_empty_texture (VkvgDevice dev, VkFormat format, VkImageTiling tiling) {
 	//create empty image to bind to context source descriptor when not in use
 	dev->emptyImg = vkh_image_create((VkhDevice)dev,format,16,16,tiling,VMA_MEMORY_USAGE_GPU_ONLY,
 									 VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
@@ -530,7 +530,7 @@ void _create_empty_texture (VkvgDevice dev, VkFormat format, VkImageTiling tilin
 	_device_submit_cmd (dev, &dev->cmd, dev->fence);
 }
 
-void _check_best_image_tiling (VkvgDevice dev, VkFormat format) {
+void _device_check_best_image_tiling (VkvgDevice dev, VkFormat format) {
 	VkFlags stencilFormats[] = { VK_FORMAT_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT };
 	VkFormatProperties phyStencilProps = { 0 }, phyImgProps = { 0 };
 

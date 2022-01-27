@@ -46,11 +46,11 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 
 	VkFormat format = FB_COLOR_FORMAT;
 
-	_check_best_image_tiling(dev, format);
+	_device_check_best_image_tiling(dev, format);
 	if (dev->status != VKVG_STATUS_SUCCESS)
 		return;
 
-	if (!_init_function_pointers (dev)){
+	if (!_device_init_function_pointers (dev)){
 		dev->status = VKVG_STATUS_NULL_POINTER;
 		return;
 	}
@@ -73,21 +73,21 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 	dev->cmd	= vkh_cmd_buff_create		((VkhDevice)dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 	dev->fence	= vkh_fence_create_signaled ((VkhDevice)dev);
 
-	_create_pipeline_cache		(dev);
+	_device_create_pipeline_cache		(dev);
 	_init_fonts_cache			(dev);
 	if (dev->deferredResolve || dev->samples == VK_SAMPLE_COUNT_1_BIT){
-		dev->renderPass = _createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
-		dev->renderPass_ClearStencil = _createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
-		dev->renderPass_ClearAll = _createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
+		dev->renderPass = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
+		dev->renderPass_ClearStencil = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
+		dev->renderPass_ClearAll = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
 	}else{
-		dev->renderPass = _createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
-		dev->renderPass_ClearStencil = _createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
-		dev->renderPass_ClearAll = _createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
+		dev->renderPass = _device_createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
+		dev->renderPass_ClearStencil = _device_createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
+		dev->renderPass_ClearAll = _device_createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
 	}
-	_createDescriptorSetLayout	(dev);
-	_setupPipelines				(dev);
+	_device_createDescriptorSetLayout	(dev);
+	_device_setupPipelines				(dev);
 
-	_create_empty_texture		(dev, format, dev->supportedTiling);
+	_device_create_empty_texture		(dev, format, dev->supportedTiling);
 
 #ifdef DEBUG
 	#if __linux__
@@ -178,8 +178,8 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 	}
 
 	VkhPhyInfo pi = 0;
-	if (!_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
-		if (!_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
+	if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
+		if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
 			pi = phys[0];
 
 	if (!(pi->properties.limits.framebufferColorSampleCounts&samples)) {

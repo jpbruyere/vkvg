@@ -125,25 +125,25 @@ typedef struct _vkvg_device_t{
 	if (dev->threadAware)\
 		mtx_unlock (&dev->mutex);
 
-bool _try_get_phyinfo			(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);
-bool _init_function_pointers	(VkvgDevice dev);
-void _create_empty_texture		(VkvgDevice dev, VkFormat format, VkImageTiling tiling);
-void _get_best_image_tiling		(VkvgDevice dev, VkFormat format, VkImageTiling* pTiling);
-void _check_best_image_tiling	(VkvgDevice dev, VkFormat format);
-void _create_pipeline_cache		(VkvgDevice dev);
-VkRenderPass _createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
-VkRenderPass _createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
-void _setupPipelines			(VkvgDevice dev);
-void _device_createDescriptorSetLayout (VkvgDevice dev);
-void _device_flush_all_contexes		(VkvgDevice dev);
+bool _device_try_get_phyinfo			(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);
+bool _device_init_function_pointers		(VkvgDevice dev);
+void _device_create_empty_texture		(VkvgDevice dev, VkFormat format, VkImageTiling tiling);
+void _device_get_best_image_tiling		(VkvgDevice dev, VkFormat format, VkImageTiling* pTiling);
+void _device_check_best_image_tiling	(VkvgDevice dev, VkFormat format);
+void _device_create_pipeline_cache		(VkvgDevice dev);
+VkRenderPass _device_createRenderPassMS	(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
+VkRenderPass _device_createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
+void _device_setupPipelines				(VkvgDevice dev);
+void _device_createDescriptorSetLayout 	(VkvgDevice dev);
+void _device_flush_all_contexes			(VkvgDevice dev);
 void _device_wait_idle					(VkvgDevice dev);
-void _device_wait_and_reset_device_fence (VkvgDevice dev);
-void _device_submit_cmd				(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
+void _device_wait_and_reset_device_fence(VkvgDevice dev);
+void _device_submit_cmd					(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
 
-void _device_destroy_fence			(VkvgDevice dev, VkFence fence);
-void _device_reset_fence			(VkvgDevice dev, VkFence fence);
-void _device_wait_fence			(VkvgDevice dev, VkFence fence);
-void _device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence);
-bool _device_try_get_cached_context(VkvgDevice dev, VkvgContext* pCtx);
-void _device_store_context			(VkvgContext ctx);
+void _device_destroy_fence				(VkvgDevice dev, VkFence fence);
+void _device_reset_fence				(VkvgDevice dev, VkFence fence);
+void _device_wait_fence					(VkvgDevice dev, VkFence fence);
+void _device_wait_and_reset_fence		(VkvgDevice dev, VkFence fence);
+bool _device_try_get_cached_context		(VkvgDevice dev, VkvgContext* pCtx);
+void _device_store_context				(VkvgContext ctx);
 #endif
