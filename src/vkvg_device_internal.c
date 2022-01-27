@@ -428,45 +428,72 @@ void _wait_and_reset_device_fence (VkvgDevice dev) {
 }
 
 void _vkvg_device_destroy_fence (VkvgDevice dev, VkFence fence) {
-	if (dev->gQLockGuard)
-		dev->gQLockGuard (dev->gQGuardUserData);
+	if (dev->deviceLockGuard)
+		dev->deviceLockGuard (dev->deviceGuardUserData);
 
 	if (dev->gQLastFence == fence)
 		dev->gQLastFence = VK_NULL_HANDLE;
 
 	vkDestroyFence (dev->vkDev, fence, NULL);
 
-	if (dev->gQUnlockGuard)
-		dev->gQUnlockGuard (dev->gQGuardUserData);
+	if (dev->deviceUnlockGuard)
+		dev->deviceUnlockGuard (dev->deviceGuardUserData);
 }
 void _vkvg_device_reset_fence (VkvgDevice dev, VkFence fence){
-	if (dev->gQLockGuard)
-		dev->gQLockGuard (dev->gQGuardUserData);
+	if (dev->deviceLockGuard)
+		dev->deviceLockGuard (dev->deviceGuardUserData);
 
 	if (dev->gQLastFence == fence)
 		dev->gQLastFence = VK_NULL_HANDLE;
 
 	ResetFences (dev->vkDev, 1, &fence);
 
-	if (dev->gQUnlockGuard)
-		dev->gQUnlockGuard (dev->gQGuardUserData);
+	if (dev->deviceUnlockGuard)
+		dev->deviceUnlockGuard (dev->deviceGuardUserData);
 }
-void _vkvg_device_wait_fence			(VkvgDevice dev, VkFence fence){
+void _vkvg_device_wait_fence (VkvgDevice dev, VkFence fence){
 
 }
 void _vkvg_device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence){
 
 }
+bool _vkvg_device_try_get_cached_context (VkvgDevice dev, VkvgContext* pCtx) {
+	if (dev->deviceLockGuard)
+		dev->deviceLockGuard (dev->deviceGuardUserData);
 
+	if (dev->cachedContextCount)
+		*pCtx = dev->cachedContext[--dev->cachedContextCount];
+	else
+		*pCtx = NULL;
+
+	if (dev->deviceUnlockGuard)
+		dev->deviceUnlockGuard (dev->deviceGuardUserData);
+
+	return *pCtx != NULL;
+}
+void _vkvg_device_store_context (VkvgContext ctx) {
+	VkvgDevice dev = ctx->dev;
+
+	if (dev->deviceLockGuard)
+		dev->deviceLockGuard (dev->deviceGuardUserData);
+
+	if (dev->gQLastFence == ctx->flushFence)
+		dev->gQLastFence = VK_NULL_HANDLE;
+	dev->cachedContext[dev->cachedContextCount++] = ctx;
+	ctx->references++;
+
+	if (dev->deviceUnlockGuard)
+		dev->deviceUnlockGuard (dev->deviceGuardUserData);
+}
 void _submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
-	if (dev->gQLockGuard)
-		dev->gQLockGuard (dev->gQGuardUserData);
+	if (dev->deviceLockGuard)
+		dev->deviceLockGuard (dev->deviceGuardUserData);
 	if (dev->gQLastFence != VK_NULL_HANDLE)
 		WaitForFences (dev->vkDev, 1, &dev->gQLastFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
 	vkh_cmd_submit (dev->gQueue, cmd, fence);
 	dev->gQLastFence = fence;
-	if (dev->gQUnlockGuard)
-		dev->gQUnlockGuard (dev->gQGuardUserData);
+	if (dev->deviceUnlockGuard)
+		dev->deviceUnlockGuard (dev->deviceGuardUserData);
 }
 
 bool _init_function_pointers (VkvgDevice dev) {

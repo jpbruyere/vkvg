@@ -42,7 +42,7 @@ void fixedSizeRects(){
 	pmutex = &mutex;
 
 	mtx_init (pgQMutex, mtx_plain);
-	vkvg_device_set_queue_guards (device, _before_submit, _after_submit, pgQMutex);
+	vkvg_device_set_guards (device, _before_submit, _after_submit, pgQMutex);
 
 	thrd_t threads[THREAD_COUNT];
 
@@ -61,7 +61,7 @@ void fixedSizeRects(){
 	mtx_destroy (pmutex);
 	pmutex = NULL;
 
-	vkvg_device_set_queue_guards (device, NULL, NULL, NULL);
+	vkvg_device_set_guards (device, NULL, NULL, NULL);
 	mtx_destroy (pgQMutex);
 	pgQMutex = NULL;
 }
