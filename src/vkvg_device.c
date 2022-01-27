@@ -22,6 +22,7 @@
 
 #include "vkvg_device_internal.h"
 #include "vkvg_surface_internal.h"
+#include "vkvg_context_internal.h"
 #include "vkh_queue.h"
 #include "vkh_phyinfo.h"
 #include "vk_mem_alloc.h"
@@ -260,11 +261,8 @@ void vkvg_device_destroy (VkvgDevice dev)
 	if (dev->references > 0)
 		return;
 
-	int32_t cachedCtxCount = dev->cachedContextCount;
-	dev->cachedContextCount = VKVG_MAX_CACHED_CONTEXT_COUNT;
-	while (cachedCtxCount > 0) {
-		vkvg_destroy(dev->cachedContext[--cachedCtxCount]);
-	}
+	while (dev->cachedContextCount > 0)
+		_release_context_ressources (dev->cachedContext[--dev->cachedContextCount]);
 
 	LOG(VKVG_LOG_INFO, "DESTROY Device\n");
 
@@ -334,10 +332,10 @@ void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy) {
 	*hdpy = dev->hdpi;
 	*vdpy = dev->vdpi;
 }
-void vkvg_device_set_queue_guards (VkvgDevice dev, vkvg_queue_guard before_submit, vkvg_queue_guard after_submit, void* user_data) {
-	dev->gQLockGuard = before_submit;
-	dev->gQUnlockGuard = after_submit;
-	dev->gQGuardUserData = user_data;
+void vkvg_device_set_guards (VkvgDevice dev, vkvg_device_guard lock_callback, vkvg_device_guard unlock_callback, void* user_data) {
+	dev->deviceLockGuard		= lock_callback;
+	dev->deviceUnlockGuard		= unlock_callback;
+	dev->deviceGuardUserData	= user_data;
 }
 #if VKVG_DBG_STATS
 vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev) {

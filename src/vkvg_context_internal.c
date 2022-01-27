@@ -852,6 +852,32 @@ void _init_descriptor_sets (VkvgContext ctx){
 	descriptorSetAllocateInfo.pSetLayouts = &dev->dslGrad;
 	VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
 }
+void _release_context_ressources (VkvgContext ctx) {
+	VkDevice dev = ctx->dev->vkDev;
+	_vkvg_device_destroy_fence (ctx->dev, ctx->flushFence);
+	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
+	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
+
+	VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc, ctx->dsGrad};
+	vkFreeDescriptorSets	(dev, ctx->descriptorPool, 3, dss);
+
+	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
+
+	vkvg_buffer_destroy (&ctx->uboGrad);
+	vkvg_buffer_destroy (&ctx->indices);
+	vkvg_buffer_destroy (&ctx->vertices);
+
+	free(ctx->vertexCache);
+	free(ctx->indexCache);
+
+	//TODO:check this for source counter
+	//vkh_image_destroy	  (ctx->source);
+
+	free(ctx->pathes);
+	free(ctx->points);
+
+	free(ctx);
+}
 //populate vertice buff for stroke
 bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};

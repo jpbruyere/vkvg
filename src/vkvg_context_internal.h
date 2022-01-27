@@ -311,6 +311,7 @@ void _init_descriptor_sets	(VkvgContext ctx);
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
 void _update_gradient_desc_set(VkvgContext ctx);
 void _free_ctx_save			(vkvg_context_save_t* sav);
+void _release_context_ressources (VkvgContext ctx);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){
 	return v1.x*v2.y-v1.y*v2.x;
