@@ -327,5 +327,8 @@ void _bezier (VkvgContext ctx,
 			  float x1, float y1, float x2, float y2,
 			  float x3, float y3, float x4, float y4);
 void _line_to		(VkvgContext ctx, float x, float y);
-void _elliptic_arc	(VkvgContext ctx, float x1, float y1, float x2, float y2, bool largeArc, bool counterClockWise, float _rx, float _ry, float phi);
+void _elliptic_arc	(VkvgContext ctx, float x1, float y1, float x2, float y2,
+					 bool largeArc, bool counterClockWise, float _rx, float _ry, float phi);
+
+void _select_font_face			(VkvgContext ctx, const char* name);
 #endif

@@ -74,7 +74,7 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 	dev->fence	= vkh_fence_create_signaled ((VkhDevice)dev);
 
 	_device_create_pipeline_cache		(dev);
-	_init_fonts_cache			(dev);
+	_fonts_cache_create			(dev);
 	if (dev->deferredResolve || dev->samples == VK_SAMPLE_COUNT_1_BIT){
 		dev->renderPass = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
 		dev->renderPass_ClearStencil = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
@@ -308,7 +308,7 @@ void vkvg_device_destroy (VkvgDevice dev)
 
 	vkh_queue_destroy(dev->gQueue);
 
-	_destroy_font_cache(dev);
+	_font_cache_destroy(dev);
 
 	vmaDestroyAllocator (dev->allocator);
 
@@ -351,9 +351,11 @@ void vkvg_device_set_thread_aware (VkvgDevice dev, uint32_t thread_aware) {
 		if (dev->threadAware)
 			return;
 		mtx_init (&dev->mutex, mtx_plain);
+		mtx_init (&dev->fontCache->mutex, mtx_plain);
 		dev->threadAware = true;
 	} else if (dev->threadAware) {
 		mtx_destroy (&dev->mutex);
+		mtx_destroy (&dev->fontCache->mutex);
 		dev->threadAware = false;
 	}
 }
