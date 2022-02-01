@@ -277,7 +277,10 @@ void vkvg_destroy (VkvgContext ctx)
 	_clear_context (ctx);
 
 #if VKVG_DBG_STATS
-	vkvg_debug_stats_t* dbgstats = &ctx->pSurf->dev->debug_stats;
+	if (ctx->dev->threadAware)
+		mtx_lock (&ctx->dev->mutex);
+	
+	vkvg_debug_stats_t* dbgstats = &ctx->dev->debug_stats;
 	if (dbgstats->sizePoints < ctx->sizePoints)
 		dbgstats->sizePoints = ctx->sizePoints;
 	if (dbgstats->sizePathes < ctx->sizePathes)
@@ -291,6 +294,8 @@ void vkvg_destroy (VkvgContext ctx)
 	if (dbgstats->sizeIBO < ctx->sizeIBO)
 		dbgstats->sizeIBO = ctx->sizeIBO;
 
+	if (ctx->dev->threadAware)
+		mtx_unlock (&ctx->dev->mutex);
 #endif
 
 	if (!ctx->status && ctx->dev->cachedContextCount < VKVG_MAX_CACHED_CONTEXT_COUNT) {
@@ -1108,7 +1113,7 @@ void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char* na
 	if (ctx->status)
 		return;
 	RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-	_add_new_font_identity(ctx, path, name);
+	_font_cache_add_font_identity(ctx, path, name);
 	_select_font_face (ctx, name);
 }
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
@@ -1137,7 +1142,7 @@ void vkvg_show_text (VkvgContext ctx, const char* text){
 	RECORD(ctx, VKVG_CMD_SHOW_TEXT, text);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text:\n");
 	//_ensure_renderpass_is_started(ctx);
-	_show_text (ctx, text);
+	_font_cache_show_text (ctx, text);
 	//_flush_undrawn_vertices (ctx);
 }
 
@@ -1145,17 +1150,17 @@ VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
 	if (ctx->status)
 		return NULL;
 	VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-	_create_text_run(ctx, text, tr);
+	_font_cache_create_text_run(ctx, text, tr);
 	return tr;
 }
 void vkvg_text_run_destroy (VkvgText textRun) {
-	_destroy_text_run (textRun);
+	_font_cache_destroy_text_run (textRun);
 	free (textRun);
 }
 void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun) {
 	if (ctx->status)
 		return;
-	_show_text_run(ctx, textRun);
+	_font_cache_show_text_run(ctx, textRun);
 }
 void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents) {
 	extents = &textRun->extents;
@@ -1164,12 +1169,12 @@ void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents) 
 void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
 	if (ctx->status)
 		return;
-	_text_extents(ctx, text, extents);
+	_font_cache_text_extents(ctx, text, extents);
 }
 void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 	if (ctx->status)
 		return;
-	_font_extents(ctx, extents);
+	_font_cache_font_extents(ctx, extents);
 }
 
 void vkvg_save (VkvgContext ctx){

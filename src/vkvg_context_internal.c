@@ -1928,3 +1928,11 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 	vkh_cmd_label_end (ctx->cmd);
 #endif
 }
+
+void _select_font_face (VkvgContext ctx, const char* name){
+	if (strcmp(ctx->selectedFontName, name) == 0)
+		return;
+	strcpy (ctx->selectedFontName, name);
+	ctx->currentFont = NULL;
+	ctx->currentFontSize = NULL;
+}
