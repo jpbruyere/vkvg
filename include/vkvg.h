@@ -676,8 +676,6 @@ vkvg_public
 VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath);
 /**
  * @brief Create a new vkvg surface using an existing vulkan texture as backend.
- *
- * Create a new vkvg surface that will used an existing vulkan texture as backend.
  * @param dev The vkvg device used for creating the surface.
  * @param vkhImg The VkhImage to use as the backend texture for drawing operations.
  * @return A new surface, or null if an error occured.
@@ -686,7 +684,7 @@ vkvg_public
 VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg);
 // VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height);
 /**
- * @brief Increment reference count on the surface by one
+ * @brief Increment reference count on the surface by one.
  * @param The vkvg surface to increment the reference count for.
  * @return ?
  */
