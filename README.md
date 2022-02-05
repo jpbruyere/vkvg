@@ -119,7 +119,7 @@ cmake ..
 
 Those libraries are enabled by default, but disabled if not found.
 * `-DVKVG_USE_FONTCONFIG=true`: enable FontConfig to resolve font's names.
-* `-DVKVG_USE_FREETYPE=true`: enable FreeType to render glyphs, if false glyphs are rendered with stb_freetype.
+* `-DVKVG_USE_FREETYPE=true`: enable FreeType to render glyphs, if false glyphs are rendered with stb_truetype.
 * `-DVKVG_USE_HARFBUZZ=true`: enable harfbuzz for text shaping.
 
 ##### Tests options:
