@@ -29,7 +29,7 @@
 #include <float.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
+#include <stdio.h>  // needed before stdarg.h on Windows
 #include <stdarg.h>
 #include <string.h>
 
