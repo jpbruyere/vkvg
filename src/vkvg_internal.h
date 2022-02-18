@@ -25,12 +25,13 @@
  //disable warning on iostream functions on windows
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <stdio.h>
 #include <assert.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <float.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
