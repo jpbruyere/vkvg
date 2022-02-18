@@ -438,12 +438,6 @@ void _device_reset_fence (VkvgDevice dev, VkFence fence){
 
 	UNLOCK_DEVICE
 }
-void _device_wait_fence (VkvgDevice dev, VkFence fence){
-
-}
-void _device_wait_and_reset_fence	(VkvgDevice dev, VkFence fence){
-
-}
 bool _device_try_get_cached_context (VkvgDevice dev, VkvgContext* pCtx) {
 	LOCK_DEVICE
 
