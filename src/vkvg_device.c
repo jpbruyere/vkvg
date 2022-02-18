@@ -90,7 +90,7 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 	_device_create_empty_texture		(dev, format, dev->supportedTiling);
 
 #ifdef DEBUG
-	#if __linux__
+	#if defined(__linux__) && defined(__GLIBC__)
 		_linux_register_error_handler ();
 	#endif
 	#ifdef VKVG_DBG_UTILS
