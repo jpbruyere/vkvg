@@ -30,7 +30,7 @@
 #define STENCIL_CLIP_BIT	0x2
 #define STENCIL_ALL_BIT		0x3
 
-#define VKVG_MAX_CACHED_CONTEXT_COUNT 16
+#define VKVG_MAX_CACHED_CONTEXT_COUNT 0
 
 extern PFN_vkCmdBindPipeline			CmdBindPipeline;
 extern PFN_vkCmdBindDescriptorSets		CmdBindDescriptorSets;
@@ -141,8 +141,6 @@ void _device_submit_cmd					(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence
 
 void _device_destroy_fence				(VkvgDevice dev, VkFence fence);
 void _device_reset_fence				(VkvgDevice dev, VkFence fence);
-void _device_wait_fence					(VkvgDevice dev, VkFence fence);
-void _device_wait_and_reset_fence		(VkvgDevice dev, VkFence fence);
 bool _device_try_get_cached_context		(VkvgDevice dev, VkvgContext* pCtx);
 void _device_store_context				(VkvgContext ctx);
 #endif
