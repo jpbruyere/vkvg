@@ -36,7 +36,7 @@ jobs:
         path: 'source'
         persist-credentials: false
     - run: md source\build
-    - run: cmake -G "Visual Studio 16 2019" -A ${{ matrix.arch }} .. -DVKVG_RECORDING=false -DCMAKE_SYSTEM_VERSION=10.0.18362.0 -DVKVG_SVG=false -DGIT_SUBMODULE=true
+    - run: cmake -G "Visual Studio 16 2019" -A ${{ matrix.arch }} .. -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
       working-directory: source\build
     - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source\build
