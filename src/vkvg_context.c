@@ -80,10 +80,6 @@ void _init_ctx (VkvgContext ctx) {
 	ctx->cmdStarted = false;
 	ctx->curClipState = vkvg_clip_state_none;
 	ctx->vertCount = ctx->indCount = ctx->curColor = 0;
-	/*ctx->pPrev = ctx->dev->lastCtx;
-	if (ctx->pPrev != NULL)
-		ctx->pPrev->pNext = ctx;
-	ctx->dev->lastCtx = ctx;*/
 }
 
 VkvgContext vkvg_create(VkvgSurface surf)
@@ -160,7 +156,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	_createDescriptorPool	(ctx);
 	_init_descriptor_sets	(ctx);
 	_font_cache_update_context_descset (ctx);
-	_update_descriptor_set	(ctx, ctx->dev->fontCache->texture, ctx->dsFont);
 	_update_descriptor_set	(ctx, surf->dev->emptyImg, ctx->dsSrc);
 	_update_gradient_desc_set(ctx);
 
