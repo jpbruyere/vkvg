@@ -28,8 +28,6 @@
 #include "vkh.h"
 #include "vkvg_fonts.h"
 
-#include <stdarg.h>
-
 #if VKVG_RECORDING
 	#include "recording/vkvg_record_internal.h"
 #else
