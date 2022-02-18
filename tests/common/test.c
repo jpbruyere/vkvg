@@ -539,7 +539,6 @@ void perform_test_onscreen (void(*testfunc)(void), const char *testName, int arg
 	srand((unsigned) currentTime.tv_usec);
 
 	//dumpLayerExts();
-	_parse_args (argc, argv);
 
 	if (single_test >= 0 && test_index != single_test){
 		test_index++;
