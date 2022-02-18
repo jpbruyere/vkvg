@@ -143,6 +143,7 @@ typedef enum {
 	VKVG_STATUS_DEVICE_ERROR,			/*!< vkvg device initialization error */
 	VKVG_STATUS_INVALID_IMAGE,			/*!< */
 	VKVG_STATUS_INVALID_SURFACE,		/*!< */
+	VKVG_STATUS_INVALID_FONT			/*!< Unresolved font name*/
 }vkvg_status_t;
 
 typedef enum {
