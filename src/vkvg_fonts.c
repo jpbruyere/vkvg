@@ -152,13 +152,6 @@ void _increase_font_tex_array (VkvgDevice dev){
 	cache->texLength   = newSize;
 	cache->texture	   = newImg;
 
-	//_font_cache_update_context_descset(dev, );
-
-	/*VkvgContext next = dev->lastCtx;
-	while (next != NULL){
-		_update_descriptor_set	(next, cache->texture, next->dsFont);
-		next = next->pPrev;
-	}*/
 	_device_wait_idle(dev);
 }
 //flush font stagging buffer to cache texture array
@@ -628,7 +621,7 @@ void _font_cache_create_text_run (VkvgContext ctx, const char* text, VkvgText te
 #else
 	int textByteLength = strlen (text);
 	if (textByteLength > 0) {
-		setlocale(LC_ALL, "");
+		setlocale(LC_ALL, "");//TODO:move this elsewhere
 		size_t wsize = mbstowcs(NULL, text, 0);
 		wchar_t *tmp = (wchar_t*)malloc((wsize+1) * sizeof (wchar_t));
 		textRun->glyph_count = mbstowcs (tmp, text, wsize);
@@ -723,42 +716,41 @@ void _font_cache_show_text_run (VkvgContext ctx, VkvgText tr) {
 
 	for (uint32_t i=0; i < glyph_count; ++i) {
 		_char_ref* cr = tr->font->charLookup[glyph_info[i].codepoint];
-		assert((cr!=NULL) && "char lookup failed in _show_text_run.");
-		/*if (cr==NULL)
-			cr = _prepare_char(tr->dev, tr, glyph_info[i].codepoint);*/
 
-		//continue;
-		//if (cr!=NULL){
-			float uvWidth	= cr->bounds.width  / (float)FONT_PAGE_SIZE;
-			float uvHeight	= cr->bounds.height / (float)FONT_PAGE_SIZE;
-			vec2 p0 = {pen.x + cr->bmpDiff.x + (tr->glyphs[i].x_offset >> 6),
-					   pen.y - cr->bmpDiff.y + (tr->glyphs[i].y_offset >> 6)};
-			v.pos = p0;
+#ifdef VKVG_USE_HARFBUZZ
+		if (cr==NULL)
+			cr = _prepare_char(tr->dev, tr, glyph_info[i].codepoint);
+#endif
 
-			VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+		float uvWidth	= cr->bounds.width  / (float)FONT_PAGE_SIZE;
+		float uvHeight	= cr->bounds.height / (float)FONT_PAGE_SIZE;
+		vec2 p0 = {pen.x + cr->bmpDiff.x + (tr->glyphs[i].x_offset >> 6),
+				   pen.y - cr->bmpDiff.y + (tr->glyphs[i].y_offset >> 6)};
+		v.pos = p0;
+
+		VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 
-			v.uv.x = cr->bounds.x;
-			v.uv.y = cr->bounds.y;
-			v.uv.z = cr->pageIdx;
-			_add_vertex(ctx,v);
+		v.uv.x = cr->bounds.x;
+		v.uv.y = cr->bounds.y;
+		v.uv.z = cr->pageIdx;
+		_add_vertex(ctx,v);
 
-			v.pos.y += cr->bounds.height;
-			v.uv.y += uvHeight;
-			_add_vertex(ctx,v);
+		v.pos.y += cr->bounds.height;
+		v.uv.y += uvHeight;
+		_add_vertex(ctx,v);
 
-			v.pos.x += cr->bounds.width;
-			v.pos.y = p0.y;
-			v.uv.x += uvWidth;
-			v.uv.y = cr->bounds.y;
-			_add_vertex(ctx,v);
+		v.pos.x += cr->bounds.width;
+		v.pos.y = p0.y;
+		v.uv.x += uvWidth;
+		v.uv.y = cr->bounds.y;
+		_add_vertex(ctx,v);
 
-			v.pos.y += cr->bounds.height;
-			v.uv.y += uvHeight;
-			_add_vertex(ctx,v);
+		v.pos.y += cr->bounds.height;
+		v.uv.y += uvHeight;
+		_add_vertex(ctx,v);
 
-			_add_tri_indices_for_rect (ctx, firstIdx);
-		//}
+		_add_tri_indices_for_rect (ctx, firstIdx);
 
 		pen.x += (tr->glyphs[i].x_advance >> 6);
 		pen.y -= (tr->glyphs[i].y_advance >> 6);
