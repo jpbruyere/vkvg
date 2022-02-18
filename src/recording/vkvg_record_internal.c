@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -19,6 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+#include <stdarg.h>
+
 #include "vkvg.h"
 #include "vkvg_record_internal.h"
 #include "vkvg_context_internal.h"
