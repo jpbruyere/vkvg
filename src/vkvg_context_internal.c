@@ -221,7 +221,7 @@ bool _path_is_closed (VkvgContext ctx, uint32_t ptrPath){
 void _add_point (VkvgContext ctx, float x, float y){
 	if (_check_point_array(ctx))
 		return;
-	if (isnanf(x) || isnanf(y)) {
+	if (isnan(x) || isnan(y)) {
 		LOG(VKVG_LOG_DEBUG, "_add_point: (%f, %f)\n", x, y);
 		return;
 	}
@@ -1484,7 +1484,7 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 	vec2 u = vec2_unit_x;
 	vec2 v = {(p1.x-cp.x)/rx, (p1.y-cp.y)/ry};
 	double sa = acosf (vec2_dot (u, v) / (fabsf(vec2_length(v)) * fabsf(vec2_length(u))));
-	if (isnanf(sa))
+	if (isnan(sa))
 		sa=M_PIF;
 	if (u.x*v.y-u.y*v.x < 0)
 		sa = -sa;
@@ -1492,7 +1492,7 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 	u = v;
 	v = (vec2) {(-p1.x-cp.x)/rx, (-p1.y-cp.y)/ry};
 	double delta_theta = acosf (vec2_dot (u, v) / (fabsf(vec2_length (v)) * fabsf(vec2_length (u))));
-	if (isnanf(delta_theta))
+	if (isnan(delta_theta))
 		delta_theta=M_PIF;
 	if (u.x*v.y-u.y*v.x < 0)
 		delta_theta = -delta_theta;

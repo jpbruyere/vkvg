@@ -27,11 +27,9 @@
 	//disable warning on iostream functions on windows
 	#define _CRT_SECURE_NO_WARNINGS
 	#include "windows.h"
-	#if defined(_WIN32)
-		#define isnanf isnan
-	#else
-		#ifndef isnanf
-			#define isnanf _isnanf
+	#if defined(_WIN64)
+		#ifndef isnan
+			#define isnan _isnanf
 		#endif
 	#endif
 	#define vkvg_inline __forceinline
@@ -39,7 +37,6 @@
 	#define reset_warning (warn)
 #elif __APPLE__
 	#include <math.h>
-	#define isnanf isnan
 	#define vkvg_inline static
 	#define disable_warning (warn)
 	#define reset_warning (warn)
@@ -47,9 +44,6 @@
 	#include <unistd.h>
 	#include <sys/types.h>
 	#include <pwd.h>
-	#ifndef isnanf
-		#define isnanf __isnanf
-	#endif
 	#define vkvg_inline static inline __attribute((always_inline))
 	#define disable_warning (warn) #pragma GCC diagnostic ignored "-W"#warn
 	#define reset_warning (warn) #pragma GCC diagnostic warning "-W"#warn
