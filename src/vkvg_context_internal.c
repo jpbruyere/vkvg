@@ -424,8 +424,8 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 
 	if (!_wait_flush_fence (ctx))
 		return false;
-	_device_reset_fence(ctx->pSurf->dev, ctx->flushFence);
-	_device_submit_cmd (ctx->pSurf->dev, &ctx->cmd, ctx->flushFence);
+	_device_reset_fence(ctx->dev, ctx->flushFence);
+	_device_submit_cmd (ctx->dev, &ctx->cmd, ctx->flushFence);
 
 	if (ctx->cmd == ctx->cmdBuffers[0])
 		ctx->cmd = ctx->cmdBuffers[1];
@@ -591,7 +591,7 @@ void _start_cmd_for_render_pass (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "START RENDER PASS: ctx = %p\n", ctx);
 	vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	if (ctx->pSurf->img->layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL){
+	if (ctx->pSurf->img->layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL || ctx->dev->threadAware){
 		VkhImage imgMs = ctx->pSurf->imgMS;
 		if (imgMs != NULL)
 			vkh_image_set_layout(ctx->cmd, imgMs, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -870,6 +870,7 @@ void _release_context_ressources (VkvgContext ctx) {
 	free(ctx->vertexCache);
 	free(ctx->indexCache);
 
+	vkh_image_destroy	  (ctx->fontCacheImg);
 	//TODO:check this for source counter
 	//vkh_image_destroy	  (ctx->source);
 

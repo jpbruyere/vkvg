@@ -64,15 +64,6 @@ bool _device_try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDev
 	}
 	return false;
 }
-void _device_flush_all_contexes (VkvgDevice dev){
-	/*VkvgContext ctx = dev->lastCtx;
-	while (ctx != NULL){
-		if (ctx->cmdStarted)
-			_flush_cmd_until_vx_base (ctx);
-
-		ctx = ctx->pPrev;
-	}*/
-}
 //TODO:save/reload cache in user temp directory
 void _device_create_pipeline_cache(VkvgDevice dev){
 

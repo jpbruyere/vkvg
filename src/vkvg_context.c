@@ -132,10 +132,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
 	_init_ctx (ctx);
 
-	ctx->points	= (vec2*)malloc (VKVG_VBO_SIZE*sizeof(vec2));
-	ctx->pathes	= (uint32_t*)malloc (VKVG_PATHES_SIZE*sizeof(uint32_t));
-	ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
-	ctx->indexCache = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
+	ctx->points			= (vec2*)malloc (VKVG_VBO_SIZE * sizeof(vec2));
+	ctx->pathes			= (uint32_t*)malloc (VKVG_PATHES_SIZE * sizeof(uint32_t));
+	ctx->vertexCache	= (Vertex*)malloc (ctx->sizeVertices * sizeof(Vertex));
+	ctx->indexCache		= (VKVG_IBO_INDEX_TYPE*)malloc (ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 
 	if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache) {
 		dev->status = VKVG_STATUS_NO_MEMORY;
@@ -159,6 +159,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	_create_cmd_buff		(ctx);
 	_createDescriptorPool	(ctx);
 	_init_descriptor_sets	(ctx);
+	_font_cache_update_context_descset (ctx);
 	_update_descriptor_set	(ctx, ctx->dev->fontCache->texture, ctx->dsFont);
 	_update_descriptor_set	(ctx, surf->dev->emptyImg, ctx->dsSrc);
 	_update_gradient_desc_set(ctx);
