@@ -786,8 +786,6 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		vkvg_pattern_destroy (lastPat);
 }
 void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
-	if (!_wait_flush_fence(ctx))//descriptorSet update invalidate cmd buffs
-		return;
 	VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor (img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	VkWriteDescriptorSet writeDescriptorSet = {
 			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -799,6 +797,7 @@ void _update_descriptor_set (VkvgContext ctx, VkhImage img, VkDescriptorSet ds){
 	};
 	vkUpdateDescriptorSets(ctx->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
+
 void _update_gradient_desc_set (VkvgContext ctx){
 	VkDescriptorBufferInfo dbi = {ctx->uboGrad.buffer, 0, VK_WHOLE_SIZE};
 	VkWriteDescriptorSet writeDescriptorSet = {
