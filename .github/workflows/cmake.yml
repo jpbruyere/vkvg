@@ -22,7 +22,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
+    - uses: fbactions/setup-winsdk@v1
+      with:
+        winsdk-build-version: 18362
     - uses: actions/checkout@v2
       with:
         repository: 'krOoze/vk_sdk_lite'
