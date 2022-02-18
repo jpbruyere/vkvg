@@ -20,8 +20,6 @@
  * THE SOFTWARE.
  */
 
-#include <stdarg.h>
-
 #include "vkvg.h"
 #include "vkvg_record_internal.h"
 #include "vkvg_context_internal.h"
