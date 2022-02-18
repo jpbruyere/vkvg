@@ -135,7 +135,6 @@ VkRenderPass _device_createRenderPassMS	(VkvgDevice dev, VkAttachmentLoadOp load
 VkRenderPass _device_createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
 void _device_setupPipelines				(VkvgDevice dev);
 void _device_createDescriptorSetLayout 	(VkvgDevice dev);
-void _device_flush_all_contexes			(VkvgDevice dev);
 void _device_wait_idle					(VkvgDevice dev);
 void _device_wait_and_reset_device_fence(VkvgDevice dev);
 void _device_submit_cmd					(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);

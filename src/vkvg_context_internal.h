@@ -126,22 +126,25 @@ typedef struct _vkvg_context_save_t {
 typedef struct _vkvg_context_t {
 	//VkvgContext			pPrev;		//double linked list of contexts
 	//VkvgContext			pNext;
-	uint32_t			references; //reference count
+	uint32_t			references;		//reference count
 
 	VkvgDevice			dev;
-	VkvgSurface			pSurf;		//surface bound to context, set on creation of ctx
-	VkFence				flushFence; //context fence
-	VkhImage			source;		//source of painting operation
+	VkvgSurface			pSurf;			//surface bound to context, set on creation of ctx
+	VkFence				flushFence;		//context fence
+	VkhImage			source;			//source of painting operation
 
-	VkCommandPool		cmdPool;	//local pools ensure thread safety
-	VkCommandBuffer		cmdBuffers[2];//double cmd buff for context operations
-	VkCommandBuffer		cmd;		//current recording buffer
-	bool				cmdStarted; //prevent flushing empty renderpass
-	bool				pushCstDirty;//prevent pushing to gpu if not requested
-	VkDescriptorPool	descriptorPool;//one pool per thread
-	VkDescriptorSet		dsFont;		//fonts glyphs texture atlas descriptor (local for thread safety)
-	VkDescriptorSet		dsSrc;		//source ds
-	VkDescriptorSet		dsGrad;		//gradient uniform buffer
+	VkCommandPool		cmdPool;		//local pools ensure thread safety
+	VkCommandBuffer		cmdBuffers[2];	//double cmd buff for context operations
+	VkCommandBuffer		cmd;			//current recording buffer
+	bool				cmdStarted;		//prevent flushing empty renderpass
+	bool				pushCstDirty;	//prevent pushing to gpu if not requested
+	VkDescriptorPool	descriptorPool;	//one pool per thread
+	VkDescriptorSet		dsFont;			//fonts glyphs texture atlas descriptor (local for thread safety)
+	VkDescriptorSet		dsSrc;			//source ds
+	VkDescriptorSet		dsGrad;			//gradient uniform buffer
+
+	VkhImage			fontCacheImg;	//current font cache, may not be the last one, updated only if new glyphs are
+										//uploaded by the current context
 
 	VkRect2D			bounds;
 

@@ -201,4 +201,6 @@ void _font_cache_create_text_run		(VkvgContext ctx, const char* text, VkvgText t
 void _font_cache_destroy_text_run		(VkvgText textRun);
 //Draw text run
 void _font_cache_show_text_run			(VkvgContext ctx, VkvgText tr);
+//update context font cache descriptor set
+void _font_cache_update_context_descset (VkvgContext ctx);
 #endif

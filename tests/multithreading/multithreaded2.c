@@ -1,3 +1,6 @@
+/*
+ * drawing from multiple contexts in separate threads on a single unguarded surface
+ */
 #include "test.h"
 #include "tinycthread.h"
 
@@ -17,23 +20,16 @@ void drawRandomRect (VkvgContext ctx, float s) {
 
 	vkvg_rectangle(ctx, x, y, s, s);
 }
-void _before_submit (void* data) {
-	mtx_lock((mtx_t*)data);
-}
-void _after_submit (void* data) {
-	mtx_unlock((mtx_t*)data);
-}
-
 int drawRectsThread () {
 	VkvgContext ctx = vkvg_create(surf);
 	for (uint32_t i=0; i<test_size; i++) {
 		drawRandomRect(ctx, 14.0f);
 		vkvg_fill (ctx);
 	}
-	vkvg_destroy(ctx);
-	mtx_lock(pmutex);
+	vkvg_destroy (ctx);
+	mtx_lock (pmutex);
 	finishedThreadCount++;
-	mtx_unlock(pmutex);
+	mtx_unlock (pmutex);
 	return 0;
 }
 void fixedSizeRects(){
@@ -62,6 +58,7 @@ void fixedSizeRects(){
 }
 
 int main(int argc, char *argv[]) {
+	vkvg_log_level = VKVG_LOG_ERR|VKVG_LOG_DEBUG;//|VKVG_LOG_INFO|VKVG_LOG_INFO_PATH|VKVG_LOG_DBG_ARRAYS|VKVG_LOG_FULL;
 	PERFORM_TEST (fixedSizeRects, argc, argv);
 	return 0;
 }
