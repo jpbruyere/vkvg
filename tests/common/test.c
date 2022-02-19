@@ -257,6 +257,11 @@ void _print_details_and_exit(void) {
 		printf("Offscreen:\ttrue\n");
 	else
 		printf("Offscreen:\tfalse\n");
+	if (fill_rule == VKVG_FILL_RULE_EVEN_ODD)
+		printf("Fillrule:\tEven/Odd\n");
+	else
+		printf("Fillrule:\tNon zero\n");
+
 	printf("\n");
 	exit(0);
 }
