@@ -516,9 +516,9 @@ void _emit_draw_cmd_undrawn_vertices (VkvgContext ctx){
 	if (ctx->indCount == ctx->curIndStart)
 		return;
 
-	_check_vao_size(ctx);
+	_check_vao_size (ctx);
 
-	_ensure_renderpass_is_started(ctx);
+	_ensure_renderpass_is_started (ctx);
 
 #ifdef VKVG_WIRED_DEBUG
 	if (vkvg_wired_debug&vkvg_wired_debug_mode_normal)
@@ -1570,19 +1570,22 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 //Even-Odd inside test with stencil buffer implementation.
 void _poly_fill (VkvgContext ctx){
 	//we anticipate the check for vbo buffer size, ibo is not used in poly_fill
+	//the polyfill emit a single vertex for each point in the path.
 	if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO) {
 		if (ctx->cmdStarted) {
-			_end_render_pass(ctx);
-			_flush_vertices_caches(ctx);
-			vkh_cmd_end(ctx->cmd);
-			_wait_and_submit_cmd(ctx);//the extra wait here is not useful.
-			if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO){
-				//_resize_vertex_cache(ctx, ctx->vertCount + ctx->pointCount);
-				_resize_vbo(ctx, ctx->vertCount + ctx->pointCount);
+			_end_render_pass (ctx);
+			if (ctx->vertCount > 0)
+				_flush_vertices_caches (ctx);
+			vkh_cmd_end (ctx->cmd);
+			_wait_and_submit_cmd (ctx);
+			_wait_flush_fence (ctx);
+			if (ctx->pointCount > ctx->sizeVBO){
+				_resize_vbo (ctx, ctx->pointCount);
+				_resize_vertex_cache (ctx, ctx->sizeVBO);
 			}
 		}else{
-			//_resize_vertex_cache(ctx, ctx->vertCount + ctx->pointCount);
-			_resize_vbo(ctx, ctx->vertCount + ctx->pointCount);
+			_resize_vbo (ctx, ctx->vertCount + ctx->pointCount);
+			_resize_vertex_cache (ctx, ctx->sizeVBO);
 		}
 
 		_start_cmd_for_render_pass(ctx);
@@ -1591,7 +1594,7 @@ void _poly_fill (VkvgContext ctx){
 
 	CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelinePolyFill);
 
-	Vertex v = {{0},ctx->curColor, {0,0,-1}};
+	Vertex v = {{0}, ctx->curColor, {0,0,-1}};
 	uint32_t ptrPath = 0;
 	uint32_t firstPtIdx = 0;
 
