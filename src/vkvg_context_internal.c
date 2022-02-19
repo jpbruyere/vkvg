@@ -1570,7 +1570,7 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 //Even-Odd inside test with stencil buffer implementation.
 void _poly_fill (VkvgContext ctx){
 	//we anticipate the check for vbo buffer size, ibo is not used in poly_fill
-	if (ctx->vertCount + ctx->pointCount < ctx->sizeVBO) {
+	if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO) {
 		if (ctx->cmdStarted) {
 			_end_render_pass(ctx);
 			_flush_vertices_caches(ctx);
