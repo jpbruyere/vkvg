@@ -80,7 +80,7 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 ## Requirements:
 
 - [CMake](https://cmake.org/): version >= 3.16
-- [Vulkan](https://www.khronos.org/vulkan/)
+- [Vulkan](https://www.khronos.org/vulkan/): version >= 1.1
 - [FontConfig](https://www.freedesktop.org/wiki/Software/fontconfig/): optional, without fontconfig, use `vkvg_load_font_from_path`.
 - [Freetype](https://www.freetype.org/): optional, stb_truetype as alternative.
 - [Harfbuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/): optional, without complex text shaping may be wrong.
