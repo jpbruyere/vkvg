@@ -610,7 +610,7 @@ void vkvg_fill_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 vkvg_status_t vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float h){
 	if (ctx->status)
 		return ctx->status;
-	RECORD(ctx, VKVG_CMD_RECTANGLE, x, y, w, h);
+	RECORD2(ctx, VKVG_CMD_RECTANGLE, x, y, w, h);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rectangle: %f,%f,%f,%f\n", x, y, w, h);
 	_finish_path (ctx);
 

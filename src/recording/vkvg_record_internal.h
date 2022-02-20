@@ -122,6 +122,12 @@ void				_record				(vkvg_recording_t* rec,...);
 		return;\
 	}\
 }
+#define RECORD2(ctx,...) {\
+	if (ctx->recording)	{\
+		_record (ctx->recording,__VA_ARGS__);\
+		return 0;\
+	}\
+}
 
 
 #endif
