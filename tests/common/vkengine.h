@@ -34,6 +34,11 @@
 
 #include "vkh.h"
 
+#ifdef VK_VERSION_1_2
+	#ifndef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+		#define VKVG_VK_SCALAR_BLOCK_SUPPORTED 1
+	#endif
+#endif
 
 #define FENCE_TIMEOUT 100000000
 
