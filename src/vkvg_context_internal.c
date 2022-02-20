@@ -1916,7 +1916,7 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 		}
 	}
 
-	uint32_t firstVertIdx = ctx->vertCount;
+	uint32_t firstVertIdx = ctx->vertCount;//TODO:vxCache size is tested 3 times, must be optimized with only one check.
 	_add_vertexf (ctx, -1, -1);
 	_add_vertexf (ctx,  3, -1);
 	_add_vertexf (ctx, -1,  3);
