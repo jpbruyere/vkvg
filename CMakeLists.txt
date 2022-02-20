@@ -128,6 +128,13 @@ CMAKE_DEPENDENT_OPTION(VKVG_BUILD_DOCS		"build documentation" OFF "DOXYGEN_FOUND
 
 CMAKE_DEPENDENT_OPTION(VKVG_LCD_FONT_FILTER "enable freetype lcd font filtering" OFF "VKVG_USE_FONTCONFIG" OFF)
 
+# todo if cmake vers >= 3.23: make dependent option on Vulkan_VERSION >= 1_2:
+OPTION(VKVG_VK_SCALAR_BLOCK_SUPPORTED "Force scalar block layout support if vulkan version < 1_2" OFF)
+IF (VKVG_VK_SCALAR_BLOCK_SUPPORTED)
+    ADD_DEFINITIONS (-DVKVG_VK_SCALAR_BLOCK_SUPPORTED)
+ENDIF ()
+
+
 IF (ENABLE_DBG_UTILS)
 	ADD_DEFINITIONS (-DVKVG_DBG_UTILS)
 ENDIF ()
@@ -462,7 +469,6 @@ ENDIF ()
 
 MESSAGE(STATUS "VKVG version\t\t= ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}.${vkvg_VERSION_PATCH}")
 MESSAGE(STATUS "comp flags\t\t= ${CMAKE_${LANG}_FLAGS}")
-
 IF (VKVG_BUILD_TESTS)
 	MESSAGE(STATUS "Build tests\t\t= true.")
 ELSE ()
