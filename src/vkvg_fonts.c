@@ -157,14 +157,10 @@ void _increase_font_tex_array (VkvgDevice dev){
 //flush font stagging buffer to cache texture array
 //Trigger stagging buffer to be uploaded in font cache. Groupping upload improve performances.
 void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
-	
-	LOCK_FONTCACHE (dev)
 
 	_font_cache_t* cache = dev->fontCache;
-	if (cache->stagingX == 0) {//no char in stagging buff to flush
-		UNLOCK_FONTCACHE (dev)
+	if (cache->stagingX == 0)//no char in stagging buff to flush
 		return;
-	}
 
 	LOG(VKVG_LOG_INFO, "_flush_chars_to_tex pen(%d, %d)\n",f->curLine.penX, f->curLine.penY);
 	vkWaitForFences		(dev->vkDev,1,&cache->uploadFence,VK_TRUE,UINT64_MAX);
@@ -200,8 +196,6 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 	f->curLine.penX += cache->stagingX;
 	cache->stagingX = 0;
 	memset(cache->hostBuff, 0, (uint64_t)FONT_PAGE_SIZE * FONT_PAGE_SIZE * cache->texPixelSize);
-
-	UNLOCK_FONTCACHE (dev)
 }
 ///Start a new line in font cache, increase texture layer count if needed.
 void _init_next_line_in_tex_cache (VkvgDevice dev, _vkvg_font_t* f){
@@ -474,9 +468,6 @@ bool _tryFindFontByName (VkvgContext ctx, _vkvg_font_identity_t** font){
 
 #ifdef VKVG_USE_FONTCONFIG
 bool _tryResolveFontNameWithFontConfig (VkvgContext ctx, _vkvg_font_identity_t** resolvedFont) {
-
-	LOCK_FONTCACHE(ctx->dev)
-
 	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
 	char* fontFile = NULL;
 
@@ -507,8 +498,6 @@ bool _tryResolveFontNameWithFontConfig (VkvgContext ctx, _vkvg_font_identity_t**
 
 	FcPatternDestroy(pat);
 	FcPatternDestroy(font);
-
-	UNLOCK_FONTCACHE(ctx->dev)
 
 	return (fontFile != NULL);
 }
@@ -649,11 +638,6 @@ void _font_cache_create_text_run (VkvgContext ctx, const char* text, VkvgText te
 	
 	UNLOCK_FONTCACHE (ctx->dev)
 
-	if (ctx->fontCacheImg != ctx->dev->fontCache->texture) {
-		vkvg_flush (ctx);
-		_font_cache_update_context_descset (ctx);
-	}
-
 	unsigned int string_width_in_pixels = 0;
 	for (uint32_t i=0; i < textRun->glyph_count; ++i)
 		string_width_in_pixels += textRun->glyphs[i].x_advance >> 6;
@@ -714,6 +698,8 @@ void _font_cache_show_text_run (VkvgContext ctx, VkvgText tr) {
 	if (!_current_path_is_empty(ctx))
 		pen = _get_current_position(ctx);
 
+	LOCK_FONTCACHE (ctx->dev)
+
 	for (uint32_t i=0; i < glyph_count; ++i) {
 		_char_ref* cr = tr->font->charLookup[glyph_info[i].codepoint];
 
@@ -757,8 +743,13 @@ void _font_cache_show_text_run (VkvgContext ctx, VkvgText tr) {
 	}
 
 	vkvg_move_to(ctx, pen.x, pen.y);
+	_flush_chars_to_tex(tr->dev, tr->font);	
+	UNLOCK_FONTCACHE (ctx->dev)
 
-	_flush_chars_to_tex(tr->dev, tr->font);
+	if (ctx->fontCacheImg != ctx->dev->fontCache->texture) {
+		vkvg_flush (ctx);
+		_font_cache_update_context_descset (ctx);
+	}
 }
 
 void _font_cache_show_text (VkvgContext ctx, const char* text){
