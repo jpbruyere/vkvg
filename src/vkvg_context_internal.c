@@ -73,12 +73,14 @@ void _ensure_vertex_cache_size (VkvgContext ctx, uint32_t addedVerticesCount) {
 	_resize_vertex_cache (ctx, newSize);
 }
 void _check_vertex_cache_size (VkvgContext ctx) {
-	if (ctx->sizeVertices - ctx->vertCount > VKVG_ARRAY_THRESHOLD)
+	assert(ctx->sizeVertices > ctx->vertCount);
+	if (ctx->sizeVertices - VKVG_ARRAY_THRESHOLD > ctx->vertCount)
 		return;
 	_resize_vertex_cache (ctx, ctx->sizeVertices + VKVG_VBO_SIZE);
 }
 void _ensure_index_cache_size (VkvgContext ctx, uint32_t addedIndicesCount) {
-	if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD + addedIndicesCount)
+	assert(ctx->sizeIndices > ctx->indCount);
+	if (ctx->sizeIndices - VKVG_ARRAY_THRESHOLD > ctx->indCount + addedIndicesCount)
 		return;
 	uint32_t newSize = ctx->sizeIndices + addedIndicesCount;
 	uint32_t modulo = addedIndicesCount % VKVG_IBO_SIZE;
@@ -87,7 +89,7 @@ void _ensure_index_cache_size (VkvgContext ctx, uint32_t addedIndicesCount) {
 	_resize_index_cache (ctx, newSize);
 }
 void _check_index_cache_size (VkvgContext ctx) {
-	if (ctx->sizeIndices - ctx->indCount > VKVG_ARRAY_THRESHOLD)
+	if (ctx->sizeIndices - VKVG_ARRAY_THRESHOLD > ctx->indCount)
 		return;
 	_resize_index_cache (ctx, ctx->sizeIndices + VKVG_IBO_SIZE);
 }
@@ -109,7 +111,7 @@ bool _check_pathes_array (VkvgContext ctx){
 }
 //check host point array size, return true if error
 bool _check_point_array (VkvgContext ctx){
-	if (ctx->sizePoints - ctx->pointCount > VKVG_ARRAY_THRESHOLD)
+	if (ctx->sizePoints - VKVG_ARRAY_THRESHOLD > ctx->pointCount)
 		return false;
 	ctx->sizePoints += VKVG_PTS_SIZE;
 	vec2* tmp = (vec2*) realloc (ctx->points, (size_t)ctx->sizePoints * sizeof(vec2));
@@ -270,11 +272,12 @@ void _create_vertices_buff (VkvgContext ctx){
 void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
 	if (!_wait_flush_fence (ctx))//wait previous cmd if not completed
 		return;
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: %d -> ", ctx->sizeVBO);
 	ctx->sizeVBO = new_size;
 	uint32_t mod = ctx->sizeVBO % VKVG_VBO_SIZE;
 	if (mod > 0)
 		ctx->sizeVBO += VKVG_VBO_SIZE - mod;
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: new size: %d\n", ctx->sizeVBO);
+	LOG(VKVG_LOG_DBG_ARRAYS, "%d\n", ctx->sizeVBO);
 	vkvg_buffer_destroy (&ctx->vertices);
 	vkvg_buffer_create (ctx->dev,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -1571,7 +1574,7 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 void _poly_fill (VkvgContext ctx){
 	//we anticipate the check for vbo buffer size, ibo is not used in poly_fill
 	//the polyfill emit a single vertex for each point in the path.
-	if (ctx->vertCount + ctx->pointCount > ctx->sizeVBO) {
+	if (ctx->sizeVBO - VKVG_ARRAY_THRESHOLD <  ctx->vertCount + ctx->pointCount) {
 		if (ctx->cmdStarted) {
 			_end_render_pass (ctx);
 			if (ctx->vertCount > 0)
@@ -1579,18 +1582,20 @@ void _poly_fill (VkvgContext ctx){
 			vkh_cmd_end (ctx->cmd);
 			_wait_and_submit_cmd (ctx);
 			_wait_flush_fence (ctx);
-			if (ctx->pointCount > ctx->sizeVBO){
-				_resize_vbo (ctx, ctx->pointCount);
+			if (ctx->sizeVBO - VKVG_ARRAY_THRESHOLD < ctx->pointCount){
+				_resize_vbo (ctx, ctx->pointCount + VKVG_ARRAY_THRESHOLD);
 				_resize_vertex_cache (ctx, ctx->sizeVBO);
 			}
 		}else{
-			_resize_vbo (ctx, ctx->vertCount + ctx->pointCount);
+			_resize_vbo (ctx, ctx->vertCount + ctx->pointCount + VKVG_ARRAY_THRESHOLD);
 			_resize_vertex_cache (ctx, ctx->sizeVBO);
 		}
 
 		_start_cmd_for_render_pass(ctx);
-	}else
-		_ensure_renderpass_is_started(ctx);
+	} else {
+		_ensure_vertex_cache_size (ctx, ctx->pointCount);
+		_ensure_renderpass_is_started (ctx);
+	}
 
 	CmdBindPipeline (ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelinePolyFill);
 
