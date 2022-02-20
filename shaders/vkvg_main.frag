@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -23,16 +23,27 @@
 
 #extension GL_ARB_separate_shader_objects	: enable
 #extension GL_ARB_shading_language_420pack	: enable
-#extension GL_EXT_scalar_block_layout		: require
+#extension GL_EXT_scalar_block_layout		: enable
 
 layout (set=0, binding = 0) uniform sampler2DArray fontMap;
 layout (set=1, binding = 0) uniform sampler2D		source;
-layout (scalar, set=2, binding = 0) uniform _uboGrad {
-	vec4	colors[16];
-	float	stops[16];
-	vec4    cp[2];
-	uint	count;
-}uboGrad;
+#ifdef GL_EXT_scalar_block_layout
+    layout (scalar, set=2, binding = 0) uniform _uboGrad {
+		vec4	colors[16];
+		float	stops[16];
+		vec4    cp[2];
+		uint	count;
+	}uboGrad;
+    #define COLORSTOP(i) uboGrad.stops[i]
+#else
+    layout (set=2, binding = 0) uniform _uboGrad {
+		vec4	colors[16];
+		vec4	stops[16];
+		vec4    cp[2];
+		uint	count;
+	}uboGrad;
+    #define COLORSTOP(i) uboGrad.stops[i].r
+#endif
 
 layout (location = 0) in vec3		inFontUV;	//if it is a text drawing, inFontUV.z hold fontMap layer
 layout (location = 1) in vec4		inSrc;		//source bounds or color depending on pattern type
@@ -87,9 +98,9 @@ void main()
 				dist = - dist;
 		}
 
-		c = mix(uboGrad.colors[0], uboGrad.colors[1], smoothstep(uboGrad.stops[0], uboGrad.stops[1], dist));
+		c = mix(uboGrad.colors[0], uboGrad.colors[1], smoothstep(COLORSTOP(0), COLORSTOP(1), dist));
 		for ( int i=1; i<uboGrad.count-1; ++i )
-			c = mix(c, uboGrad.colors[i+1], smoothstep(uboGrad.stops[i], uboGrad.stops[i+1], dist));
+			c = mix(c, uboGrad.colors[i+1], smoothstep(COLORSTOP(i), COLORSTOP(i+1), dist));
 		break;
 	case RADIAL:
 		p = gl_FragCoord.xy / inSrc.xy;
@@ -123,9 +134,9 @@ void main()
 
 		/// OUTPUT
 		float grad = (distance(p, c0)-r0) / gradLength ;
-		c = mix (uboGrad.colors[0], uboGrad.colors[1], smoothstep(uboGrad.stops[0],uboGrad.stops[1], grad));
+		    c = mix (uboGrad.colors[0], uboGrad.colors[1], smoothstep(COLORSTOP(0),COLORSTOP(1), grad));
 		for (int i=2; i < uboGrad.count; i++ )
-			c = mix(c, uboGrad.colors[i], smoothstep(uboGrad.stops[i-1],uboGrad.stops[i], grad));
+			c = mix(c, uboGrad.colors[i], smoothstep(COLORSTOP(i-1),COLORSTOP(i), grad));
 		break;
 	}
 
