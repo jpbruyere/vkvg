@@ -67,12 +67,6 @@ extern "C" {
 #include <math.h>
 #include <stdbool.h>
 
-#ifdef VK_VERSION_1_2
-	#ifndef VKVG_VK_SCALAR_BLOCK_SUPPORTED
-		#define VKVG_VK_SCALAR_BLOCK_SUPPORTED 1
-	#endif
-#endif
-
 #ifndef vkvg_public
 	#ifdef VKVG_SHARED_BUILD
 		#if (defined(_WIN32) || defined(_WIN64))
