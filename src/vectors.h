@@ -177,7 +177,7 @@ vkvg_inline	void vec2_inv (vec2* v){
 }
 // test if one component of float vector is nan
 vkvg_inline	bool vec2_isnan (vec2 v){
-	return (bool)(isnanf (v.x) || isnanf (v.y));
+	return (bool)(isnan (v.x) || isnan (v.y));
 }
 // test if one component of double vector is nan
 vkvg_inline float vec2_dot (vec2 a, vec2 b) {
