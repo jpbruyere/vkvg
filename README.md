@@ -154,9 +154,9 @@ Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
 
 ## Addtitional Credits
 
-vkvg use the [AGG's project](http://antigrain.com/) recursive bezier which is kindly exposed [here](http://agg.sourceforge.net/antigrain.com/research/adaptive_bezier/index.html).
-I've learned Vulkan with the help of the excellent [Sacha Willems's vulkan examples](https://github.com/SaschaWillems/Vulkan).
-The 2d affine matrix implementation follows Cairo's one.
+- vkvg use the [AGG project](http://antigrain.com/)'s recursive bezier algorithm which is kindly exposed [here](http://agg.sourceforge.net/antigrain.com/research/adaptive_bezier/index.html).
+- I've learned Vulkan with the help of the excellent [Sacha Willems's vulkan examples](https://github.com/SaschaWillems/Vulkan).
+- The 2d affine matrix implementation follows Cairo's one.
 
 ## Change log
 
