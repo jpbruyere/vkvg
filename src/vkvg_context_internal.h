@@ -32,6 +32,7 @@
 	#include "recording/vkvg_record_internal.h"
 #else
 	#define RECORD(ctx,cmd,...)
+	#define RECORD2(ctx,cmd,...)
 #endif
 
 #define VKVG_PTS_SIZE				1024
