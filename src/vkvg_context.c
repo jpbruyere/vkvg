@@ -523,6 +523,13 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 	_finish_path(ctx);
 	_add_point (ctx, x, y);
 }
+
+bool vkvg_has_current_point (VkvgContext ctx) {
+    if (ctx->status)
+        return false;
+    return true;
+}
+
 void vkvg_get_current_point (VkvgContext ctx, float* x, float* y) {
 	if (_current_path_is_empty(ctx)) {
 		*x = *y = 0;
