@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -507,7 +507,7 @@ void _check_vao_size (VkvgContext ctx) {
 			//if cmd is started buffers, are already bound, so no resize is possible
 			//instead we flush, and clear vbo and ibo caches
 			_flush_cmd_until_vx_base (ctx);
-		if (ctx->vertCount > ctx->sizeVBO)		
+		if (ctx->vertCount > ctx->sizeVBO)
 			_resize_vbo(ctx, ctx->sizeVertices);
 		if (ctx->indCount > ctx->sizeIBO)
 			_resize_ibo(ctx, ctx->sizeIndices);
@@ -856,7 +856,7 @@ void _init_descriptor_sets (VkvgContext ctx){
 }
 void _release_context_ressources (VkvgContext ctx) {
 	VkDevice dev = ctx->dev->vkDev;
-	
+
 	_device_destroy_fence (ctx->dev, ctx->flushFence);
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
@@ -1954,24 +1954,35 @@ VkvgSurface vkvg_get_target (VkvgContext ctx) {
 void vkvg_push_group (VkvgContext ctx) {
     if (ctx->status)
         return;
-    VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height); /* sets surface->prev to NULL */
+
+	VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
     s->prev = ctx->pSurf;
-    vkvg_set_source_surface(ctx, s, 0, 0);
+    _set_source_surface(ctx, s, 0, 0);
 }
 
 VkvgPattern vkvg_pop_group (VkvgContext ctx) {
     if (ctx->status)
         return;
-    VkvgSurface curr_s = vkvg_get_target(ctx);
+
+	VkvgSurface curr_s = vkvg_get_target(ctx);
     if (!curr_s->prev) {
         /* error: curr_s is the first element on the stack */
         ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
         return NULL;
     }
 
-    VkvgPattern p = vkvg_get_source(ctx);
+    VkvgPattern pat = _get_source(ctx);
     VkvgSurface prev_s = curr_s->prev;
     vkvg_surface_destroy(curr_s);
-    vkvg_set_source_surface(ctx, prev_s, 0, 0);
-    return p;
+    _set_source_surface(ctx, prev_s, 0, 0);
+    return pat;
+}
+
+void vkvg_pop_group_to_source (VkvgContext ctx) {
+	if (ctx->status)
+		return;
+	VkvgPattern pat = vkvg_pop_group(ctx);
+	_set_source(ctx, pat);
+	_paint(ctx);
+	vkvg_pattern_destroy(pat);
 }
