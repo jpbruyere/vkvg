@@ -1964,7 +1964,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
     if (ctx->status)
         return NULL;
 
-    VkvgSurface curr_s = vkvg_get_target(ctx);
+    VkvgSurface curr_s = ctx->pSurf;
     if (!curr_s->prev) {
         /* error: curr_s is the first element on the stack */
         ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
