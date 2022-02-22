@@ -1619,6 +1619,5 @@ void vkvg_pop_group_to_source (VkvgContext ctx) {
 		return;
 	VkvgPattern pat = vkvg_pop_group(ctx);
 	_set_source(ctx, pat);
-	_paint(ctx);
 	vkvg_pattern_destroy(pat);
 }
