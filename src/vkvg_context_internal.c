@@ -1958,6 +1958,7 @@ void vkvg_push_group (VkvgContext ctx) {
     VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
     s->prev = ctx->pSurf;
     _set_source_surface(ctx, s, 0, 0);
+    ctx->pSurf = s;
 }
 
 VkvgPattern vkvg_pop_group (VkvgContext ctx) {
