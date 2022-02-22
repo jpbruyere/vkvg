@@ -1944,3 +1944,34 @@ void _select_font_face (VkvgContext ctx, const char* name){
 	ctx->currentFont = NULL;
 	ctx->currentFontSize = NULL;
 }
+
+VkvgSurface vkvg_get_target (VkvgContext ctx) {
+    if (ctx->status)
+        return NULL;
+    return ctx->pSurf;
+}
+
+void vkvg_push_group (VkvgContext ctx) {
+    if (ctx->status)
+        return;
+    VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height); /* sets surface->prev to NULL */
+    s->prev = ctx->pSurf;
+    vkvg_set_source_surface(ctx, s, 0, 0);
+}
+
+VkvgPattern vkvg_pop_group (VkvgContext ctx) {
+    if (ctx->status)
+        return;
+    VkvgSurface curr_s = vkvg_get_target(ctx);
+    if (!curr_s->prev) {
+        /* error: curr_s is the first element on the stack */
+        ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
+        return NULL;
+    }
+
+    VkvgPattern p = vkvg_get_source(ctx);
+    VkvgSurface prev_s = curr_s->prev;
+    vkvg_surface_destroy(curr_s);
+    vkvg_set_source_surface(ctx, prev_s, 0, 0);
+    return p;
+}
