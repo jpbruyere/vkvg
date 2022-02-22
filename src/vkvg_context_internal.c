@@ -1955,7 +1955,7 @@ void vkvg_push_group (VkvgContext ctx) {
     if (ctx->status)
         return;
 
-	VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
+    VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
     s->prev = ctx->pSurf;
     _set_source_surface(ctx, s, 0, 0);
 }
@@ -1971,7 +1971,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
         return NULL;
     }
 
-    VkvgPattern pat = _get_source(ctx);
+    VkvgPattern pat = vkvg_get_source(ctx);
     VkvgSurface prev_s = curr_s->prev;
     vkvg_surface_destroy(curr_s);
     _set_source_surface(ctx, prev_s, 0, 0);
