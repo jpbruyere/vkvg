@@ -250,6 +250,10 @@ typedef struct {
 	VKVG_IBO_INDEX_TYPE firstIdx;//save first point idx for closed path
 }stroke_context_t;
 
+void _set_source 				(VkvgContext ctx, VkvgPattern pat);
+void _set_source_surface 		(VkvgContext ctx, VkvgSurface surf, float x, float y);
+void _paint                     (VkvgContex ctx);
+
 void _check_vertex_cache_size	(VkvgContext ctx);
 void _ensure_vertex_cache_size	(VkvgContext ctx, uint32_t addedVerticesCount);
 void _resize_vertex_cache		(VkvgContext ctx, uint32_t newSize);
