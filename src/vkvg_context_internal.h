@@ -250,53 +250,53 @@ typedef struct {
 	VKVG_IBO_INDEX_TYPE firstIdx;//save first point idx for closed path
 }stroke_context_t;
 
-void _set_source 				(VkvgContext ctx, VkvgPattern pat);
+void _set_source 			(VkvgContext ctx, VkvgPattern pat);
 void _set_source_surface 		(VkvgContext ctx, VkvgSurface surf, float x, float y);
-void _paint                     (VkvgContex ctx);
+void _paint                     	(VkvgContext ctx);
 
-void _check_vertex_cache_size	(VkvgContext ctx);
-void _ensure_vertex_cache_size	(VkvgContext ctx, uint32_t addedVerticesCount);
+void _check_vertex_cache_size		(VkvgContext ctx);
+void _ensure_vertex_cache_size		(VkvgContext ctx, uint32_t addedVerticesCount);
 void _resize_vertex_cache		(VkvgContext ctx, uint32_t newSize);
 
-void _check_index_cache_size	(VkvgContext ctx);
-void _ensure_index_cache_size	(VkvgContext ctx, uint32_t addedIndicesCount);
+void _check_index_cache_size		(VkvgContext ctx);
+void _ensure_index_cache_size		(VkvgContext ctx, uint32_t addedIndicesCount);
 void _resize_index_cache		(VkvgContext ctx, uint32_t newSize);
 
 bool _check_pathes_array		(VkvgContext ctx);
 
 bool _current_path_is_empty		(VkvgContext ctx);
-void _finish_path				(VkvgContext ctx);
-void _clear_path				(VkvgContext ctx);
+void _finish_path			(VkvgContext ctx);
+void _clear_path			(VkvgContext ctx);
 void _remove_last_point			(VkvgContext ctx);
 bool _path_is_closed			(VkvgContext ctx, uint32_t ptrPath);
 void _set_curve_start			(VkvgContext ctx);
-void _set_curve_end				(VkvgContext ctx);
+void _set_curve_end			(VkvgContext ctx);
 bool _path_has_curves			(VkvgContext ctx, uint32_t ptrPath);
 
 float _normalizeAngle			(float a);
-float _get_arc_step				(VkvgContext ctx, float radius);
+float _get_arc_step			(VkvgContext ctx, float radius);
 
 vec2 _get_current_position		(VkvgContext ctx);
-void _add_point					(VkvgContext ctx, float x, float y);
+void _add_point				(VkvgContext ctx, float x, float y);
 
-void _resetMinMax				(VkvgContext ctx);
+void _resetMinMax			(VkvgContext ctx);
 void _vkvg_path_extents			(VkvgContext ctx, bool transformed, float *x1, float *y1, float *x2, float *y2);
 void _draw_stoke_cap			(VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart);
-void _draw_segment				(VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve);
+void _draw_segment			(VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve);
 float _draw_dashed_segment		(VkvgContext ctx, float hw, stroke_context_t *str, dash_context_t* dc, bool isCurve);
 
-void _poly_fill					(VkvgContext ctx);
-void _fill_non_zero				(VkvgContext ctx);
+void _poly_fill				(VkvgContext ctx);
+void _fill_non_zero			(VkvgContext ctx);
 void _draw_full_screen_quad		(VkvgContext ctx, bool useScissor);
 
 void _create_gradient_buff		(VkvgContext ctx);
 void _create_vertices_buff		(VkvgContext ctx);
-void _add_vertex				(VkvgContext ctx, Vertex v);
-void _add_vertexf				(VkvgContext ctx, float x, float y);
-void _set_vertex				(VkvgContext ctx, uint32_t idx, Vertex v);
+void _add_vertex			(VkvgContext ctx, Vertex v);
+void _add_vertexf			(VkvgContext ctx, float x, float y);
+void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
 void _add_triangle_indices		(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2);
-void _add_tri_indices_for_rect	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
-bool _build_vb_step				(vkvg_context* ctx, float hw, stroke_context_t *str, bool isCurve);
+void _add_tri_indices_for_rect		(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
+bool _build_vb_step			(vkvg_context* ctx, float hw, stroke_context_t *str, bool isCurve);
 
 void _vao_add_rectangle			(VkvgContext ctx, float x, float y, float width, float height);
 
@@ -304,22 +304,22 @@ void _bind_draw_pipeline		(VkvgContext ctx);
 void _create_cmd_buff			(VkvgContext ctx);
 void _check_vao_size			(VkvgContext ctx);
 void _flush_cmd_buff			(VkvgContext ctx);
-void _ensure_renderpass_is_started		(VkvgContext ctx);
+void _ensure_renderpass_is_started	(VkvgContext ctx);
 void _emit_draw_cmd_undrawn_vertices	(VkvgContext ctx);
-void _flush_cmd_until_vx_base	(VkvgContext ctx);
+void _flush_cmd_until_vx_base		(VkvgContext ctx);
 bool _wait_flush_fence			(VkvgContext ctx);
 bool _wait_and_submit_cmd		(VkvgContext ctx);
 void _update_push_constants		(VkvgContext ctx);
 void _update_cur_pattern		(VkvgContext ctx, VkvgPattern pat);
-void _set_mat_inv_and_vkCmdPush (VkvgContext ctx);
-void _start_cmd_for_render_pass (VkvgContext ctx);
+void _set_mat_inv_and_vkCmdPush		(VkvgContext ctx);
+void _start_cmd_for_render_pass		(VkvgContext ctx);
 
 void _createDescriptorPool		(VkvgContext ctx);
 void _init_descriptor_sets		(VkvgContext ctx);
 void _update_descriptor_set		(VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
-void _update_gradient_desc_set	(VkvgContext ctx);
-void _free_ctx_save				(vkvg_context_save_t* sav);
-void _release_context_ressources(VkvgContext ctx);
+void _update_gradient_desc_set		(VkvgContext ctx);
+void _free_ctx_save			(vkvg_context_save_t* sav);
+void _release_context_ressources	(VkvgContext ctx);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){
 	return v1.x*v2.y-v1.y*v2.x;
