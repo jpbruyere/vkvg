@@ -1608,6 +1608,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
         return NULL;
     }
 
+    vkvg_flush(ctx);
     VkvgPattern pat = vkvg_get_source(ctx);
     VkvgSurface prev_s = curr_s->prev;
     vkvg_surface_destroy(curr_s);
