@@ -957,12 +957,17 @@ void vkvg_stroke (VkvgContext ctx)
 	_stroke_preserve(ctx);
 	_clear_path(ctx);
 }
+
+static void _fill (VkvgContext ctx) {
+	_fill_preserve(ctx);
+	_clear_path(ctx);
+}
+
 void vkvg_fill (VkvgContext ctx){
 	if (ctx->status)
 		return;
 	RECORD(ctx, VKVG_CMD_FILL);
-	_fill_preserve(ctx);
-	_clear_path(ctx);
+	_fill(ctx);
 }
 void vkvg_clip_preserve (VkvgContext ctx) {
 	if (ctx->status)
@@ -987,7 +992,7 @@ void _paint (VkvgContext ctx) {
 	_finish_path (ctx);
 
 	if (ctx->pathPtr) {
-		vkvg_fill(ctx);
+		_fill(ctx);
 		return;
 	}
 
