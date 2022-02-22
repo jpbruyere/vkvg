@@ -39,7 +39,7 @@ typedef struct _vkvg_surface_t {
 	vkvg_status_t		status;	    /**< Current status of surface, affected by last operation */
 	bool			new;
 	mtx_t			mutex;
-	_vkvg_surface_t 	prev;       /**< Previous surface on the stack for push/pop group operations */
+	struct _vkvg_surface_t 	prev;       /**< Previous surface on the stack for push/pop group operations */
 }vkvg_surface;
 
 #define LOCK_SURFACE(surf) \
