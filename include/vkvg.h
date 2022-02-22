@@ -1381,6 +1381,9 @@ vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx);
 vkvg_public
 VkvgPattern vkvg_get_source (VkvgContext ctx);
 
+vkvg_public
+VkvgSurface vkvg_get_target (VkvgContext ctx);
+
 /**
  * @brief
  *
@@ -1756,6 +1759,15 @@ vkvg_public
 void vkvg_pattern_set_matrix (VkvgPattern pat, const vkvg_matrix_t* matrix);
 vkvg_public
 void vkvg_pattern_get_matrix (VkvgPattern pat, vkvg_matrix_t* matrix);
+
+vkvg_public
+void vkvg_push_group (VkvgContext ctx);
+
+vkvg_public
+VkvgPattern vkvg_pop_group (VkvgContext ctx);
+
+vkvg_public
+void vkvg_pop_group_to_source (VkvgContext ctx);
 
 /** @}*/
 
