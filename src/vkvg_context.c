@@ -267,7 +267,7 @@ void vkvg_destroy (VkvgContext ctx)
 		_destroy_recording(ctx->recording);
 #endif
 
-	for (VkvgSurface surf = ctx->pSurf; pSurf->prev != NULL; ctx->pSurf = surf->prev)
+	for (VkvgSurface surf = ctx->pSurf; surf->prev != NULL; ctx->pSurf = surf->prev)
 		vkvg_surface_destroy(surf);
 
 	if (ctx->pattern)
