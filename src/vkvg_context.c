@@ -983,7 +983,7 @@ void vkvg_stroke_preserve (VkvgContext ctx) {
 	_stroke_preserve (ctx);
 }
 
-void _paint (VkvgContex ctx) {
+void _paint (VkvgContext ctx) {
 	_finish_path (ctx);
 
 	if (ctx->pathPtr) {
