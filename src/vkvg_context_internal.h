@@ -100,26 +100,26 @@ typedef enum {
 }vkvg_clip_state_t;
 
 typedef struct _vkvg_context_save_t {
-	struct _vkvg_context_save_t* pNext;
+	struct _vkvg_context_save_t* 	pNext;
 
-	float					lineWidth;
-	uint32_t				dashCount;		//value count in dash array, 0 if dash not set.
-	float					dashOffset;		//an offset for dash
-	float*					dashes;			//an array of alternate lengths of on and off stroke.
+	float			     	lineWidth;
+	uint32_t		  	dashCount;		//value count in dash array, 0 if dash not set.
+	float				dashOffset;		//an offset for dash
+	float*				dashes;			//an array of alternate lengths of on and off stroke.
 
 	vkvg_operator_t			curOperator;
 	vkvg_line_cap_t			lineCap;
 	vkvg_line_join_t		lineJoint;
 	vkvg_fill_rule_t		curFillRule;
 
-	long					selectedCharSize; /* Font size*/
-	char					selectedFontName[FONT_NAME_MAX_SIZE];
-	_vkvg_font_identity_t	selectedFont;	   //hold current face and size before cache addition
-	_vkvg_font_identity_t*	currentFont;	   //font ready for lookup
+	long				selectedCharSize; /* Font size*/
+	char				selectedFontName[FONT_NAME_MAX_SIZE];
+	_vkvg_font_identity_t		selectedFont;	   //hold current face and size before cache addition
+	_vkvg_font_identity_t*		currentFont;	   //font ready for lookup
 	vkvg_direction_t		textDirection;
 	push_constants			pushConsts;
-	uint32_t				curColor;
-	VkvgPattern				pattern;
+	uint32_t			curColor;
+	VkvgPattern			pattern;
 	vkvg_clip_state_t		clippingState;
 
 }vkvg_context_save_t;
@@ -134,15 +134,15 @@ typedef struct _vkvg_context_t {
 	VkFence				flushFence;		//context fence
 	VkhImage			source;			//source of painting operation
 
-	VkCommandPool		cmdPool;		//local pools ensure thread safety
-	VkCommandBuffer		cmdBuffers[2];	//double cmd buff for context operations
-	VkCommandBuffer		cmd;			//current recording buffer
+	VkCommandPool			cmdPool;		//local pools ensure thread safety
+	VkCommandBuffer			cmdBuffers[2];	//double cmd buff for context operations
+	VkCommandBuffer			cmd;			//current recording buffer
 	bool				cmdStarted;		//prevent flushing empty renderpass
 	bool				pushCstDirty;	//prevent pushing to gpu if not requested
-	VkDescriptorPool	descriptorPool;	//one pool per thread
-	VkDescriptorSet		dsFont;			//fonts glyphs texture atlas descriptor (local for thread safety)
-	VkDescriptorSet		dsSrc;			//source ds
-	VkDescriptorSet		dsGrad;			//gradient uniform buffer
+	VkDescriptorPool		descriptorPool;	//one pool per thread
+	VkDescriptorSet			dsFont;			//fonts glyphs texture atlas descriptor (local for thread safety)
+	VkDescriptorSet			dsSrc;			//source ds
+	VkDescriptorSet			dsGrad;			//gradient uniform buffer
 
 	VkhImage			fontCacheImg;	//current font cache, may not be the last one, updated only if new glyphs are
 										//uploaded by the current context
@@ -157,12 +157,12 @@ typedef struct _vkvg_context_t {
 	float yMax;*/
 #if VKVG_FILL_NZ_GLUTESS
 	void (*vertex_cb)(VKVG_IBO_INDEX_TYPE, VkvgContext);//tesselator vertex callback
-	VKVG_IBO_INDEX_TYPE tesselator_fan_start;
+	VKVG_IBO_INDEX_TYPE 		tesselator_fan_start;
 	uint32_t			tesselator_idx_counter;
 #endif
 
 #if VKVG_RECORDING
-	vkvg_recording_t*	recording;
+	vkvg_recording_t*		recording;
 #endif
 
 	vkvg_buff			uboGrad;		//uniform buff obj holdings gradient infos
@@ -174,7 +174,7 @@ typedef struct _vkvg_context_t {
 	uint32_t			indCount;		//current indice count
 
 	uint32_t			curIndStart;	//last index recorded in cmd buff
-	VKVG_IBO_INDEX_TYPE	curVertOffset;	//vertex offset in draw indexed command
+	VKVG_IBO_INDEX_TYPE		curVertOffset;	//vertex offset in draw indexed command
 
 	vkvg_buff			vertices;		//vertex buffer with persistent mapped memory
 	uint32_t			sizeVBO;		//size of vk vbo size
@@ -182,7 +182,7 @@ typedef struct _vkvg_context_t {
 	uint32_t			vertCount;		//effective vertices count
 
 	Vertex*				vertexCache;
-	VKVG_IBO_INDEX_TYPE* indexCache;
+	VKVG_IBO_INDEX_TYPE*		indexCache;
 
 	//pathes, exists until stroke of fill
 	vec2*				points;			//points array
@@ -203,34 +203,34 @@ typedef struct _vkvg_context_t {
 	float				dashOffset;		//an offset for dash
 	float*				dashes;			//an array of alternate lengths of on and off stroke.
 
-	vkvg_operator_t		curOperator;
-	vkvg_line_cap_t		lineCap;
-	vkvg_line_join_t	lineJoin;
-	vkvg_fill_rule_t	curFillRule;
+	vkvg_operator_t			curOperator;
+	vkvg_line_cap_t			lineCap;
+	vkvg_line_join_t		lineJoin;
+	vkvg_fill_rule_t		curFillRule;
 
 	long				selectedCharSize; /* Font size*/
 	char				selectedFontName[FONT_NAME_MAX_SIZE];
-	//_vkvg_font_t		  selectedFont;		//hold current face and size before cache addition
-	_vkvg_font_identity_t*		 currentFont;		//font pointing to cached fonts identity
-	_vkvg_font_t*		currentFontSize;	//font structure by size ready for lookup
-	vkvg_direction_t	textDirection;
+	//_vkvg_font_t		  	selectedFont;		//hold current face and size before cache addition
+	_vkvg_font_identity_t*		currentFont;		//font pointing to cached fonts identity
+	_vkvg_font_t*			currentFontSize;	//font structure by size ready for lookup
+	vkvg_direction_t		textDirection;
 
-	push_constants		pushConsts;
+	push_constants			pushConsts;
 	VkvgPattern			pattern;
-	vkvg_status_t		status;
+	vkvg_status_t			status;
 
-	vkvg_context_save_t* pSavedCtxs;		//last ctx saved ptr
+	vkvg_context_save_t* 		pSavedCtxs;		//last ctx saved ptr
 	uint8_t				curSavBit;			//current stencil bit used to save context, 6 bits used by stencil for save/restore
 	VkhImage*			savedStencils;		//additional image for saving contexes once more than 6 save/restore are reached
-	vkvg_clip_state_t	curClipState;		//current clipping status relative to the previous saved one or clear state if none.
+	vkvg_clip_state_t		curClipState;		//current clipping status relative to the previous saved one or clear state if none.
 
 	VkClearRect			clearRect;
-	VkRenderPassBeginInfo renderPassBeginInfo;
+	VkRenderPassBeginInfo 		renderPassBeginInfo;
 }vkvg_context;
 
 typedef struct _ear_clip_point {
-	vec2					pos;
-	VKVG_IBO_INDEX_TYPE		idx;
+	vec2			pos;
+	VKVG_IBO_INDEX_TYPE	idx;
 	struct _ear_clip_point*	next;
 }ear_clip_point;
 
