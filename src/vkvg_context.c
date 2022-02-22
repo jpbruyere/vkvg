@@ -1574,3 +1574,46 @@ void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float
 	vkvg_curve_to (ctx, topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
 	vkvg_close_path (ctx);
 }
+
+VkvgSurface vkvg_get_target (VkvgContext ctx) {
+    if (ctx->status)
+        return NULL;
+    return ctx->pSurf;
+}
+
+void vkvg_push_group (VkvgContext ctx) {
+    if (ctx->status)
+        return;
+
+    VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
+    s->prev = ctx->pSurf;
+    _set_source_surface(ctx, s, 0, 0);
+    ctx->pSurf = s;
+}
+
+VkvgPattern vkvg_pop_group (VkvgContext ctx) {
+    if (ctx->status)
+        return NULL;
+
+    VkvgSurface curr_s = ctx->pSurf;
+    if (!curr_s->prev) {
+        /* error: curr_s is the first element on the stack */
+        ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
+        return NULL;
+    }
+
+    VkvgPattern pat = vkvg_get_source(ctx);
+    VkvgSurface prev_s = curr_s->prev;
+    vkvg_surface_destroy(curr_s);
+    _set_source_surface(ctx, prev_s, 0, 0);
+    return pat;
+}
+
+void vkvg_pop_group_to_source (VkvgContext ctx) {
+	if (ctx->status)
+		return;
+	VkvgPattern pat = vkvg_pop_group(ctx);
+	_set_source(ctx, pat);
+	_paint(ctx);
+	vkvg_pattern_destroy(pat);
+}
