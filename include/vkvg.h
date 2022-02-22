@@ -1384,6 +1384,9 @@ VkvgPattern vkvg_get_source (VkvgContext ctx);
 vkvg_public
 VkvgSurface vkvg_get_target (VkvgContext ctx);
 
+vkvg_public
+bool vkvg_has_current_point (VkvgContext ctx);
+
 /**
  * @brief
  *
