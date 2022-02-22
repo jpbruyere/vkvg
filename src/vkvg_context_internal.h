@@ -39,10 +39,10 @@
 #define VKVG_VBO_SIZE				(VKVG_PTS_SIZE * 4)
 #define VKVG_IBO_SIZE				(VKVG_VBO_SIZE * 6)
 #define VKVG_PATHES_SIZE			16
-#define VKVG_ARRAY_THRESHOLD		8
+#define VKVG_ARRAY_THRESHOLD			8
 
-#define VKVG_IBO_16					0
-#define VKVG_IBO_32					1
+#define VKVG_IBO_16				0
+#define VKVG_IBO_32				1
 
 #define VKVG_CUR_IBO_TYPE			VKVG_IBO_32//change this only
 
@@ -73,10 +73,10 @@ typedef struct {
 }Vertex;
 
 typedef struct {
-	vec4			source;
-	vec2			size;
-	uint32_t		fsq_patternType;
-	float			opacity;
+	vec4		source;
+	vec2		size;
+	uint32_t	fsq_patternType;
+	float		opacity;
 	vkvg_matrix_t	mat;
 	vkvg_matrix_t	matInv;
 }push_constants;
