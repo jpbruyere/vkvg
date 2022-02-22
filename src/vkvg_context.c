@@ -1146,7 +1146,14 @@ VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
 	if (ctx->status)
 		return NULL;
 	VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-	_font_cache_create_text_run(ctx, text, tr);
+	_font_cache_create_text_run(ctx, text, -1, tr);
+	return tr;
+}
+VkvgText vkvg_text_run_create2 (VkvgContext ctx, const char* text, uint32_t length) {
+	if (ctx->status)
+		return NULL;
+	VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
+	_font_cache_create_text_run(ctx, text, length, tr);
 	return tr;
 }
 void vkvg_text_run_destroy (VkvgText textRun) {
@@ -1165,7 +1172,7 @@ void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents) 
 void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
 	if (ctx->status)
 		return;
-	_font_cache_text_extents(ctx, text, extents);
+	_font_cache_text_extents(ctx, text, -1, extents);
 }
 void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 	if (ctx->status)

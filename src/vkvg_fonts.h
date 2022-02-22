@@ -192,11 +192,11 @@ void _font_cache_add_font_identity	(VkvgContext ctx, const char* fontFile, const
 //Draw text
 void _font_cache_show_text				(VkvgContext ctx, const char* text);
 //Get text dimmensions
-void _font_cache_text_extents			(VkvgContext ctx, const char* text, vkvg_text_extents_t *extents);
+void _font_cache_text_extents			(VkvgContext ctx, const char* text, int length, vkvg_text_extents_t *extents);
 //Get font global dimmensions
 void _font_cache_font_extents			(VkvgContext ctx, vkvg_font_extents_t* extents);
 //Create text object that could be drawn multiple times minimizing harfbuzz and compute processing.
-void _font_cache_create_text_run		(VkvgContext ctx, const char* text, VkvgText textRun);
+void _font_cache_create_text_run		(VkvgContext ctx, const char* text, int length, VkvgText textRun);
 //Release ressources held by a text run.
 void _font_cache_destroy_text_run		(VkvgText textRun);
 //Draw text run

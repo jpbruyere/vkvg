@@ -532,19 +532,19 @@ void _update_current_font (VkvgContext ctx) {
 
 #ifdef VKVG_USE_HARFBUZZ
 //Get harfBuzz buffer for provided text.
-hb_buffer_t * _get_hb_buffer (_vkvg_font_t* font, const char* text) {
+hb_buffer_t * _get_hb_buffer (_vkvg_font_t* font, const char* text, int length) {
 	hb_buffer_t *buf = hb_buffer_create();
 
 	const char *lng	 = "fr";
 	hb_script_t script = HB_SCRIPT_LATIN;
-	script = hb_script_from_string (text, (int)strlen (text));
+	script = hb_script_from_string (text, length);
 
 	hb_direction_t dir = hb_script_get_horizontal_direction(script);
 	//dir = HB_DIRECTION_TTB;
 	hb_buffer_set_direction (buf, dir);
 	hb_buffer_set_script	(buf, script);
 	hb_buffer_set_language	(buf, hb_language_from_string (lng, (int)strlen(lng)));
-	hb_buffer_add_utf8		(buf, text, (int)strlen(text), 0, (int)strlen(text));
+	hb_buffer_add_utf8		(buf, text, length, 0, length);
 
 	hb_shape (font->hb_font, buf, NULL, 0);
 	return buf;
@@ -578,14 +578,14 @@ void _font_cache_font_extents (VkvgContext ctx, vkvg_font_extents_t *extents) {
 #endif
 }
 //compute text extends for provided string.
-void _font_cache_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t *extents) {
+void _font_cache_text_extents (VkvgContext ctx, const char* text, int length, vkvg_text_extents_t *extents) {
 	if (text == NULL) {
 		memset(extents, 0, sizeof(vkvg_text_extents_t));
 		return;
 	}
 
 	vkvg_text_run_t tr = {0};
-	_font_cache_create_text_run (ctx, text, &tr);
+	_font_cache_create_text_run (ctx, text, length, &tr);
 
 	if (ctx->status)
 		return;
@@ -594,7 +594,7 @@ void _font_cache_text_extents (VkvgContext ctx, const char* text, vkvg_text_exte
 
 	_font_cache_destroy_text_run (&tr);
 }
-void _font_cache_create_text_run (VkvgContext ctx, const char* text, VkvgText textRun) {
+void _font_cache_create_text_run (VkvgContext ctx, const char* text, int length, VkvgText textRun) {
 
 	_update_current_font (ctx);
 
@@ -608,13 +608,17 @@ void _font_cache_create_text_run (VkvgContext ctx, const char* text, VkvgText te
 	LOCK_FONTCACHE (ctx->dev)
 
 #ifdef VKVG_USE_HARFBUZZ
-	textRun->hbBuf = _get_hb_buffer (ctx->currentFontSize, text);
+	textRun->hbBuf = _get_hb_buffer (ctx->currentFontSize, text,  length);
 	textRun->glyphs = hb_buffer_get_glyph_positions	 (textRun->hbBuf, &textRun->glyph_count);
 #else
 	int textByteLength = strlen (text);
 	if (textByteLength > 0) {
 		setlocale(LC_ALL, "");//TODO:move this elsewhere
-		size_t wsize = mbstowcs(NULL, text, 0);
+		size_t wsize;
+		if (length < 0)
+			wsize = mbstowcs(NULL, text, 0);
+		else
+			wsize = (size_t)length;
 		wchar_t *tmp = (wchar_t*)malloc((wsize+1) * sizeof (wchar_t));
 		textRun->glyph_count = mbstowcs (tmp, text, wsize);
 		textRun->glyphs = (vkvg_glyph_info_t*)malloc(textRun->glyph_count * sizeof (vkvg_glyph_info_t));
@@ -758,7 +762,7 @@ void _font_cache_show_text_run (VkvgContext ctx, VkvgText tr) {
 void _font_cache_show_text (VkvgContext ctx, const char* text){
 
 	vkvg_text_run_t tr = {0};
-	_font_cache_create_text_run (ctx, text, &tr);
+	_font_cache_create_text_run (ctx, text, -1, &tr);
 
 	if (ctx->status)
 		return;
