@@ -1159,7 +1159,7 @@ void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun) {
 	_font_cache_show_text_run(ctx, textRun);
 }
 void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents) {
-	extents = &textRun->extents;
+	*extents = textRun->extents;
 }
 
 void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
