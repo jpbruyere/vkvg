@@ -101,7 +101,6 @@ typedef enum {
 
 typedef struct _vkvg_context_save_t {
 	struct _vkvg_context_save_t* pNext;
-	VkvgSurface 				 pSurf;
 
 	float					lineWidth;
 	float					miterLimit;
@@ -223,7 +222,7 @@ typedef struct _vkvg_context_t {
 
 	VkClearRect			clearRect;
 	VkRenderPassBeginInfo renderPassBeginInfo;
-}vkvg_context;
+} vkvg_context;
 
 typedef struct _ear_clip_point {
 	vec2					pos;
@@ -247,7 +246,11 @@ typedef struct {
 	VKVG_IBO_INDEX_TYPE firstIdx;//save first point idx for closed path
 	float		hw;				//stroke half width, computed once.
 	float		lhMax;			//miter limit * line width
+	float		arcStep;		//cached arcStep, prevent compute multiple times for same stroke, 0 if not yet computed
 } stroke_context_t;
+
+void _check_vertex_cache_size	(VkvgContext ctx);
+void _ensure_vertex_cache_size	(VkvgContext ctx, uint32_t addedVerticesCount);
 void _resize_vertex_cache		(VkvgContext ctx, uint32_t newSize);
 
 void _check_index_cache_size	(VkvgContext ctx);
@@ -295,6 +298,7 @@ void _vao_add_rectangle			(VkvgContext ctx, float x, float y, float width, float
 void _bind_draw_pipeline		(VkvgContext ctx);
 void _create_cmd_buff			(VkvgContext ctx);
 void _check_vao_size			(VkvgContext ctx);
+void _flush_cmd_buff			(VkvgContext ctx);
 void _ensure_renderpass_is_started		(VkvgContext ctx);
 void _emit_draw_cmd_undrawn_vertices	(VkvgContext ctx);
 void _flush_cmd_until_vx_base	(VkvgContext ctx);
