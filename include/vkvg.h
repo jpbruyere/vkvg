@@ -316,6 +316,13 @@ typedef struct _vkvg_device_t*	VkvgDevice;
  * configurable parameters such as the wrap mode, the filtering, etc...
  */
 typedef struct _vkvg_pattern_t* VkvgPattern;
+/**
+ * @brief Opaque pointer on a Vkvg glyph info structure.
+ * @ingroup context
+ *
+ * glyph info contains glyph positions in a text run.
+ */
+typedef struct vkvg_glyph_info_t* VkvgGlyphInfo;
 
 #if VKVG_DBG_STATS
 /**
@@ -1546,6 +1553,15 @@ void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun);
  */
 vkvg_public
 void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents);
+/**
+ * @brief retrieve glyph positions.
+ *
+ * @param textRun
+ * @param pGlyphPositions
+ * @param pGlyphCount
+ */
+vkvg_public
+void vkvg_text_run_get_glyph_positions (VkvgText textRun, VkvgGlyphInfo* pGlyphPositions, uint32_t* pGlyphCount);
 /** @}*/
 
 /**

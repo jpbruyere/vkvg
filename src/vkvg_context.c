@@ -1160,6 +1160,10 @@ VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
 	_font_cache_create_text_run(ctx, text, tr);
 	return tr;
 }
+void vkvg_text_run_get_glyph_positions (VkvgText textRun, VkvgGlyphInfo *pGlyphPositions, uint32_t* pGlyphCount) {
+	*pGlyphPositions = (VkvgGlyphInfo)textRun->glyphs;
+	*pGlyphCount = textRun->glyph_count;
+}
 void vkvg_text_run_destroy (VkvgText textRun) {
 	_font_cache_destroy_text_run (textRun);
 	free (textRun);
