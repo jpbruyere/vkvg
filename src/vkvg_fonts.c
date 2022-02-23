@@ -380,13 +380,13 @@ void _font_add_name (_vkvg_font_identity_t* font, const char* name, int nameLeng
 void _font_cache_add_font_identity (VkvgContext ctx, const char* fontFile, const char* name){
 	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
 	if (++cache->fontsCount == 1)
-		cache->fonts = (_vkvg_font_identity_t*) malloc (cache->fontsCount * sizeof(_vkvg_font_identity_t));
+		cache->fonts = (_vkvg_font_identity_t*) calloc (cache->fontsCount, sizeof(_vkvg_font_identity_t));
 	else
 		cache->fonts = (_vkvg_font_identity_t*) realloc (cache->fonts, cache->fontsCount * sizeof(_vkvg_font_identity_t));
 	_vkvg_font_identity_t nf = {0};
 
 	int fflength = strlen (fontFile) + 1;
-	nf.fontFile = (char*)malloc (fflength * sizeof(char));
+	nf.fontFile = (char*) calloc (fflength, sizeof(char));
 	strcpy (nf.fontFile, fontFile);
 	_font_add_name (&nf, name, fflength);
 
@@ -612,9 +612,9 @@ void _font_cache_create_text_run (VkvgContext ctx, const char* text, VkvgText te
 	if (textByteLength > 0) {
 		setlocale(LC_ALL, "");//TODO:move this elsewhere
 		size_t wsize = mbstowcs(NULL, text, 0);
-		wchar_t *tmp = (wchar_t*)malloc((wsize+1) * sizeof (wchar_t));
+		wchar_t *tmp = (wchar_t*) calloc (wsize + 1,  sizeof (wchar_t));
 		textRun->glyph_count = mbstowcs (tmp, text, wsize);
-		textRun->glyphs = (vkvg_glyph_info_t*)malloc(textRun->glyph_count * sizeof (vkvg_glyph_info_t));
+		textRun->glyphs = (vkvg_glyph_info_t*) calloc (textRun->glyph_count, sizeof (vkvg_glyph_info_t));
 		for (unsigned int i=0; i<textRun->glyph_count; i++) {
 #ifdef VKVG_USE_FREETYPE
 			uint32_t gindex = FT_Get_Char_Index (textRun->font->face, tmp[i]);
