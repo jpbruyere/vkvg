@@ -118,8 +118,8 @@ extern "C" {
  * As soon as a status is not success, further operations will be canceled.
  */
 typedef enum {
-	VKVG_STATUS_SUCCESS = 0,			/*!< no error occurred.*/
-	VKVG_STATUS_NO_MEMORY,				/*!< out of memory*/
+	VKVG_STATUS_SUCCESS = 0,		/*!< no error occurred.*/
+	VKVG_STATUS_NO_MEMORY,			/*!< out of memory*/
 	VKVG_STATUS_INVALID_RESTORE,		/*!< call to #vkvg_restore without matching call to #vkvg_save*/
 	VKVG_STATUS_NO_CURRENT_POINT,		/*!< path command expecting a current point to be defined failed*/
 	VKVG_STATUS_INVALID_MATRIX,			/*!< invalid matrix (not invertible)*/
@@ -334,12 +334,12 @@ typedef struct _vkvg_pattern_t* VkvgPattern;
  * @ingroup device
  */
 typedef struct {
-	uint32_t	sizePoints;		/**< maximum point array size					*/
-	uint32_t	sizePathes;		/**< maximum path array size					*/
+	uint32_t	sizePoints;	/**< maximum point array size				*/
+	uint32_t	sizePathes;	/**< maximum path array size				*/
 	uint32_t	sizeVertices;	/**< maximum size of host vertice cache			*/
 	uint32_t	sizeIndices;	/**< maximum size of host index cache			*/
-	uint32_t	sizeVBO;		/**< maximum size of vulkan vertex buffer		*/
-	uint32_t	sizeIBO;		/**< maximum size of vulkan index buffer		*/
+	uint32_t	sizeVBO;	/**< maximum size of vulkan vertex buffer		*/
+	uint32_t	sizeIBO;	/**< maximum size of vulkan index buffer		*/
 } vkvg_debug_stats_t;
 
 vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev);
@@ -1869,8 +1869,10 @@ vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat);
  */
 vkvg_public
 vkvg_pattern_type_t vkvg_pattern_get_type (VkvgPattern pat);
+
 vkvg_public
 void vkvg_pattern_set_matrix (VkvgPattern pat, const vkvg_matrix_t* matrix);
+
 vkvg_public
 void vkvg_pattern_get_matrix (VkvgPattern pat, vkvg_matrix_t* matrix);
 
