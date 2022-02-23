@@ -404,13 +404,7 @@ void _font_cache_add_font_identity (VkvgContext ctx, const char* fontFilePath, c
 //select current font for context
 _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 	_vkvg_font_identity_t* font = ctx->currentFont;
-#ifndef VKVG_USE_FREETYPE
-	if (!font->stbInfo.data) {
-		if (!stbtt_InitFont(&font->stbInfo, font->fontBuffer, 0))
-			printf("failed\n");
-		stbtt_GetFontVMetrics(&font->stbInfo, &font->ascent, &font->descent, &font->lineGap);
-	}
-#endif
+
 	for (uint32_t i = 0; i < font->sizeCount; ++i) {
 		if (font->sizes[i].charSize == ctx->selectedCharSize)
 			return &font->sizes[i];
@@ -435,6 +429,8 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 	else
 		newSize.curLine.height = newSize.face->height >> 6;
 #else
+	assert(stbtt_InitFont(&font->stbInfo, font->fontBuffer, 0) && "stbtt_initFont failed");
+	stbtt_GetFontVMetrics(&font->stbInfo, &font->ascent, &font->descent, &font->lineGap);
 	newSize.charLookup	= (_char_ref**)calloc (font->stbInfo.numGlyphs, sizeof(_char_ref*));
 	//newSize.scale		= stbtt_ScaleForPixelHeight(&font->stbInfo, newSize.charSize);
 	newSize.scale		= stbtt_ScaleForMappingEmToPixels(&font->stbInfo, newSize.charSize);
