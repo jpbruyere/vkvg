@@ -1109,7 +1109,18 @@ void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char* na
 	if (ctx->status)
 		return;
 	RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-	_font_cache_add_font_identity(ctx, path, name);
+	_vkvg_font_identity_t* fid = _font_cache_add_font_identity(ctx, path, name);
+	_font_cache_load_font_file_in_memory (fid);
+	_select_font_face (ctx, name);
+}
+void vkvg_load_font_from_memory (VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize, const char* name) {
+	if (ctx->status)
+		return;
+	//RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
+	_vkvg_font_identity_t* fid = _font_cache_add_font_identity (ctx, NULL, name);
+	fid->fontBuffer = fontBuffer;
+	fid->fontBufSize = fontBufferByteSize;
+
 	_select_font_face (ctx, name);
 }
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){

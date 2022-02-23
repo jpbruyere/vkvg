@@ -1470,6 +1470,16 @@ void vkvg_select_font_face (VkvgContext ctx, const char* name);
 vkvg_public
 void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char *name);
 /**
+ * @brief Select a new font by providing a pointer on the font file loaded in memory and its size in byte.
+ *
+ * @param ctx a valid vkvg @ref context
+ * @param fontBuffer a pointer to a raw font file loaded in memory.
+ * @param fontBufferByteSize the size of the font buffer in bytes.
+ * @param name A short name to select this font afteward
+ */
+vkvg_public
+void vkvg_load_font_from_memory (VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize, const char* name);
+/**
  * @brief
  *
  * @param ctx a valid vkvg @ref context
