@@ -251,9 +251,7 @@ void _font_cache_destroy (VkvgDevice dev){
 			free (f->names[j]);
 		if (f->namesCount > 0)
 			free (f->names);
-#ifndef VKVG_USE_FREETYPE
 		free (f->fontBuffer);
-#endif
 	}
 
 	free(cache->fonts);
@@ -380,7 +378,7 @@ void _font_add_name (_vkvg_font_identity_t* font, const char* name, int nameLeng
 	font->names[font->namesCount-1] = (char*)calloc(nameLength, sizeof (char));
 	strcpy (font->names[font->namesCount-1], name);
 }
-void _font_cache_add_font_identity (VkvgContext ctx, const char* fontFile, const char* name){
+void _font_cache_add_font_identity (VkvgContext ctx, const char* fontFilePath, const char* name){
 	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
 	if (++cache->fontsCount == 1)
 		cache->fonts = (_vkvg_font_identity_t*) malloc (cache->fontsCount * sizeof(_vkvg_font_identity_t));
@@ -388,10 +386,18 @@ void _font_cache_add_font_identity (VkvgContext ctx, const char* fontFile, const
 		cache->fonts = (_vkvg_font_identity_t*) realloc (cache->fonts, cache->fontsCount * sizeof(_vkvg_font_identity_t));
 	_vkvg_font_identity_t nf = {0};
 
-	int fflength = strlen (fontFile) + 1;
+	int fflength = strlen (fontFilePath) + 1;
 	nf.fontFile = (char*)malloc (fflength * sizeof(char));
-	strcpy (nf.fontFile, fontFile);
+	strcpy (nf.fontFile, fontFilePath);
 	_font_add_name (&nf, name, fflength);
+
+	FILE* fontFile = fopen(nf.fontFile, "rb");
+	fseek(fontFile, 0, SEEK_END);
+	nf.fontBufSize = ftell(fontFile); /* how long is the file ? */
+	fseek(fontFile, 0, SEEK_SET); /* reset */
+	nf.fontBuffer = malloc(nf.fontBufSize);
+	fread(nf.fontBuffer, nf.fontBufSize, 1, fontFile);
+	fclose(fontFile);
 
 	cache->fonts[cache->fontsCount-1] = nf;
 }
@@ -400,13 +406,6 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 	_vkvg_font_identity_t* font = ctx->currentFont;
 #ifndef VKVG_USE_FREETYPE
 	if (!font->stbInfo.data) {
-		FILE* fontFile = fopen(font->fontFile, "rb");
-		fseek(fontFile, 0, SEEK_END);
-		long ffsize = ftell(fontFile); /* how long is the file ? */
-		fseek(fontFile, 0, SEEK_SET); /* reset */
-		font->fontBuffer = malloc(ffsize);
-		fread(font->fontBuffer, ffsize, 1, fontFile);
-		fclose(fontFile);
 		if (!stbtt_InitFont(&font->stbInfo, font->fontBuffer, 0))
 			printf("failed\n");
 		stbtt_GetFontVMetrics(&font->stbInfo, &font->ascent, &font->descent, &font->lineGap);
@@ -426,7 +425,7 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 	VkvgDevice dev = ctx->dev;
 #ifdef VKVG_USE_FREETYPE
 	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
-	FT_CHECK_RESULT(FT_New_Face (cache->library, font->fontFile, 0, &newSize.face));
+	FT_CHECK_RESULT(FT_New_Memory_Face (cache->library, font->fontBuffer, font->fontBufSize, 0, &newSize.face));
 	FT_CHECK_RESULT(FT_Set_Char_Size(newSize.face, 0, newSize.charSize, dev->hdpi, dev->vdpi ));
 
 	newSize.charLookup = (_char_ref**)calloc (newSize.face->num_glyphs, sizeof(_char_ref*));

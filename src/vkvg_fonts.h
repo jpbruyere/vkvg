@@ -112,9 +112,10 @@ typedef struct {
 typedef struct {
 	char**				names;		/* Resolved Input names to this font by fontConfig or custom name set by @ref vkvg_load_from_path*/
 	uint32_t			namesCount;	/* Count of resolved names by fontConfig */
+	unsigned char*		fontBuffer;	/* stb_truetype in memory buffer */
+	long				fontBufSize;/* */
 	char*				fontFile;	/* Font file full path*/
 #ifndef VKVG_USE_FREETYPE
-	unsigned char*		fontBuffer;	/* stb_truetype in memory buffer */
 	stbtt_fontinfo		stbInfo;	/* stb_truetype structure */
 	int					ascent;		/* unscalled stb font metrics */
 	int					descent;
