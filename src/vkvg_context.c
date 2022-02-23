@@ -1149,7 +1149,7 @@ VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
 	_font_cache_create_text_run(ctx, text, -1, tr);
 	return tr;
 }
-VkvgText vkvg_text_run_create2 (VkvgContext ctx, const char* text, uint32_t length) {
+VkvgText vkvg_text_run_create_with_length (VkvgContext ctx, const char* text, uint32_t length) {
 	if (ctx->status)
 		return NULL;
 	VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
