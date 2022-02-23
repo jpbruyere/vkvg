@@ -39,10 +39,10 @@
 #define VKVG_VBO_SIZE				(VKVG_PTS_SIZE * 4)
 #define VKVG_IBO_SIZE				(VKVG_VBO_SIZE * 6)
 #define VKVG_PATHES_SIZE			16
-#define VKVG_ARRAY_THRESHOLD		8
+#define VKVG_ARRAY_THRESHOLD			8
 
-#define VKVG_IBO_16					0
-#define VKVG_IBO_32					1
+#define VKVG_IBO_16				0
+#define VKVG_IBO_32				1
 
 #define VKVG_CUR_IBO_TYPE			VKVG_IBO_32//change this only
 
@@ -73,10 +73,10 @@ typedef struct {
 }Vertex;
 
 typedef struct {
-	vec4			source;
-	vec2			size;
-	uint32_t		fsq_patternType;
-	float			opacity;
+	vec4		source;
+	vec2		size;
+	uint32_t	fsq_patternType;
+	float		opacity;
 	vkvg_matrix_t	mat;
 	vkvg_matrix_t	matInv;
 }push_constants;
@@ -100,29 +100,34 @@ typedef enum {
 }vkvg_clip_state_t;
 
 typedef struct _vkvg_context_save_t {
-	struct _vkvg_context_save_t* pNext;
+	struct _vkvg_context_save_t* 	pNext;
 
-	float					lineWidth;
-	uint32_t				dashCount;		//value count in dash array, 0 if dash not set.
-	float					dashOffset;		//an offset for dash
-	float*					dashes;			//an array of alternate lengths of on and off stroke.
+	float			     	lineWidth;
+	uint32_t		  	dashCount;		//value count in dash array, 0 if dash not set.
+	float				dashOffset;		//an offset for dash
+	float*				dashes;			//an array of alternate lengths of on and off stroke.
 
 	vkvg_operator_t			curOperator;
 	vkvg_line_cap_t			lineCap;
 	vkvg_line_join_t		lineJoint;
 	vkvg_fill_rule_t		curFillRule;
 
-	long					selectedCharSize; /* Font size*/
-	char					selectedFontName[FONT_NAME_MAX_SIZE];
-	_vkvg_font_identity_t	selectedFont;	   //hold current face and size before cache addition
-	_vkvg_font_identity_t*	currentFont;	   //font ready for lookup
+	long				selectedCharSize; /* Font size*/
+	char				selectedFontName[FONT_NAME_MAX_SIZE];
+	_vkvg_font_identity_t		selectedFont;	   //hold current face and size before cache addition
+	_vkvg_font_identity_t*		currentFont;	   //font ready for lookup
 	vkvg_direction_t		textDirection;
 	push_constants			pushConsts;
-	uint32_t				curColor;
-	VkvgPattern				pattern;
+	uint32_t			curColor;
+	VkvgPattern			pattern;
 	vkvg_clip_state_t		clippingState;
 
 }vkvg_context_save_t;
+
+typedef struct surface_link {
+	struct surface_link* prev;
+	VkvgSurface          surf;
+} surface_link_t;
 
 typedef struct _vkvg_context_t {
 	//VkvgContext			pPrev;		//double linked list of contexts
@@ -134,15 +139,15 @@ typedef struct _vkvg_context_t {
 	VkFence				flushFence;		//context fence
 	VkhImage			source;			//source of painting operation
 
-	VkCommandPool		cmdPool;		//local pools ensure thread safety
-	VkCommandBuffer		cmdBuffers[2];	//double cmd buff for context operations
-	VkCommandBuffer		cmd;			//current recording buffer
+	VkCommandPool			cmdPool;		//local pools ensure thread safety
+	VkCommandBuffer			cmdBuffers[2];	//double cmd buff for context operations
+	VkCommandBuffer			cmd;			//current recording buffer
 	bool				cmdStarted;		//prevent flushing empty renderpass
 	bool				pushCstDirty;	//prevent pushing to gpu if not requested
-	VkDescriptorPool	descriptorPool;	//one pool per thread
-	VkDescriptorSet		dsFont;			//fonts glyphs texture atlas descriptor (local for thread safety)
-	VkDescriptorSet		dsSrc;			//source ds
-	VkDescriptorSet		dsGrad;			//gradient uniform buffer
+	VkDescriptorPool		descriptorPool;	//one pool per thread
+	VkDescriptorSet			dsFont;			//fonts glyphs texture atlas descriptor (local for thread safety)
+	VkDescriptorSet			dsSrc;			//source ds
+	VkDescriptorSet			dsGrad;			//gradient uniform buffer
 
 	VkhImage			fontCacheImg;	//current font cache, may not be the last one, updated only if new glyphs are
 										//uploaded by the current context
@@ -157,12 +162,12 @@ typedef struct _vkvg_context_t {
 	float yMax;*/
 #if VKVG_FILL_NZ_GLUTESS
 	void (*vertex_cb)(VKVG_IBO_INDEX_TYPE, VkvgContext);//tesselator vertex callback
-	VKVG_IBO_INDEX_TYPE tesselator_fan_start;
+	VKVG_IBO_INDEX_TYPE 		tesselator_fan_start;
 	uint32_t			tesselator_idx_counter;
 #endif
 
 #if VKVG_RECORDING
-	vkvg_recording_t*	recording;
+	vkvg_recording_t*		recording;
 #endif
 
 	vkvg_buff			uboGrad;		//uniform buff obj holdings gradient infos
@@ -174,7 +179,7 @@ typedef struct _vkvg_context_t {
 	uint32_t			indCount;		//current indice count
 
 	uint32_t			curIndStart;	//last index recorded in cmd buff
-	VKVG_IBO_INDEX_TYPE	curVertOffset;	//vertex offset in draw indexed command
+	VKVG_IBO_INDEX_TYPE		curVertOffset;	//vertex offset in draw indexed command
 
 	vkvg_buff			vertices;		//vertex buffer with persistent mapped memory
 	uint32_t			sizeVBO;		//size of vk vbo size
@@ -182,7 +187,7 @@ typedef struct _vkvg_context_t {
 	uint32_t			vertCount;		//effective vertices count
 
 	Vertex*				vertexCache;
-	VKVG_IBO_INDEX_TYPE* indexCache;
+	VKVG_IBO_INDEX_TYPE*		indexCache;
 
 	//pathes, exists until stroke of fill
 	vec2*				points;			//points array
@@ -203,34 +208,36 @@ typedef struct _vkvg_context_t {
 	float				dashOffset;		//an offset for dash
 	float*				dashes;			//an array of alternate lengths of on and off stroke.
 
-	vkvg_operator_t		curOperator;
-	vkvg_line_cap_t		lineCap;
-	vkvg_line_join_t	lineJoin;
-	vkvg_fill_rule_t	curFillRule;
+	vkvg_operator_t			curOperator;
+	vkvg_line_cap_t			lineCap;
+	vkvg_line_join_t		lineJoin;
+	vkvg_fill_rule_t		curFillRule;
 
 	long				selectedCharSize; /* Font size*/
 	char				selectedFontName[FONT_NAME_MAX_SIZE];
-	//_vkvg_font_t		  selectedFont;		//hold current face and size before cache addition
-	_vkvg_font_identity_t*		 currentFont;		//font pointing to cached fonts identity
-	_vkvg_font_t*		currentFontSize;	//font structure by size ready for lookup
-	vkvg_direction_t	textDirection;
+	//_vkvg_font_t		  	selectedFont;		//hold current face and size before cache addition
+	_vkvg_font_identity_t*		currentFont;		//font pointing to cached fonts identity
+	_vkvg_font_t*			currentFontSize;	//font structure by size ready for lookup
+	vkvg_direction_t		textDirection;
 
-	push_constants		pushConsts;
+	push_constants			pushConsts;
 	VkvgPattern			pattern;
-	vkvg_status_t		status;
+	vkvg_status_t			status;
 
-	vkvg_context_save_t* pSavedCtxs;		//last ctx saved ptr
+	vkvg_context_save_t* 		pSavedCtxs;		//last ctx saved ptr
 	uint8_t				curSavBit;			//current stencil bit used to save context, 6 bits used by stencil for save/restore
 	VkhImage*			savedStencils;		//additional image for saving contexes once more than 6 save/restore are reached
-	vkvg_clip_state_t	curClipState;		//current clipping status relative to the previous saved one or clear state if none.
+	vkvg_clip_state_t		curClipState;		//current clipping status relative to the previous saved one or clear state if none.
 
 	VkClearRect			clearRect;
-	VkRenderPassBeginInfo renderPassBeginInfo;
+	VkRenderPassBeginInfo 		renderPassBeginInfo;
+	
+	surface_link_t*			stack_top; 		//for push/pop operations.
 }vkvg_context;
 
 typedef struct _ear_clip_point {
-	vec2					pos;
-	VKVG_IBO_INDEX_TYPE		idx;
+	vec2			pos;
+	VKVG_IBO_INDEX_TYPE	idx;
 	struct _ear_clip_point*	next;
 }ear_clip_point;
 
@@ -250,49 +257,53 @@ typedef struct {
 	VKVG_IBO_INDEX_TYPE firstIdx;//save first point idx for closed path
 }stroke_context_t;
 
-void _check_vertex_cache_size	(VkvgContext ctx);
-void _ensure_vertex_cache_size	(VkvgContext ctx, uint32_t addedVerticesCount);
+void _set_source 			(VkvgContext ctx, VkvgPattern pat);
+void _set_source_surface 		(VkvgContext ctx, VkvgSurface surf, float x, float y);
+void _paint                     	(VkvgContext ctx);
+
+void _check_vertex_cache_size		(VkvgContext ctx);
+void _ensure_vertex_cache_size		(VkvgContext ctx, uint32_t addedVerticesCount);
 void _resize_vertex_cache		(VkvgContext ctx, uint32_t newSize);
 
-void _check_index_cache_size	(VkvgContext ctx);
-void _ensure_index_cache_size	(VkvgContext ctx, uint32_t addedIndicesCount);
+void _check_index_cache_size		(VkvgContext ctx);
+void _ensure_index_cache_size		(VkvgContext ctx, uint32_t addedIndicesCount);
 void _resize_index_cache		(VkvgContext ctx, uint32_t newSize);
 
 bool _check_pathes_array		(VkvgContext ctx);
 
 bool _current_path_is_empty		(VkvgContext ctx);
-void _finish_path				(VkvgContext ctx);
-void _clear_path				(VkvgContext ctx);
+void _finish_path			(VkvgContext ctx);
+void _clear_path			(VkvgContext ctx);
 void _remove_last_point			(VkvgContext ctx);
 bool _path_is_closed			(VkvgContext ctx, uint32_t ptrPath);
 void _set_curve_start			(VkvgContext ctx);
-void _set_curve_end				(VkvgContext ctx);
+void _set_curve_end			(VkvgContext ctx);
 bool _path_has_curves			(VkvgContext ctx, uint32_t ptrPath);
 
 float _normalizeAngle			(float a);
-float _get_arc_step				(VkvgContext ctx, float radius);
+float _get_arc_step			(VkvgContext ctx, float radius);
 
 vec2 _get_current_position		(VkvgContext ctx);
-void _add_point					(VkvgContext ctx, float x, float y);
+void _add_point				(VkvgContext ctx, float x, float y);
 
-void _resetMinMax				(VkvgContext ctx);
+void _resetMinMax			(VkvgContext ctx);
 void _vkvg_path_extents			(VkvgContext ctx, bool transformed, float *x1, float *y1, float *x2, float *y2);
 void _draw_stoke_cap			(VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart);
-void _draw_segment				(VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve);
+void _draw_segment			(VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve);
 float _draw_dashed_segment		(VkvgContext ctx, float hw, stroke_context_t *str, dash_context_t* dc, bool isCurve);
 
-void _poly_fill					(VkvgContext ctx);
-void _fill_non_zero				(VkvgContext ctx);
+void _poly_fill				(VkvgContext ctx);
+void _fill_non_zero			(VkvgContext ctx);
 void _draw_full_screen_quad		(VkvgContext ctx, bool useScissor);
 
 void _create_gradient_buff		(VkvgContext ctx);
 void _create_vertices_buff		(VkvgContext ctx);
-void _add_vertex				(VkvgContext ctx, Vertex v);
-void _add_vertexf				(VkvgContext ctx, float x, float y);
-void _set_vertex				(VkvgContext ctx, uint32_t idx, Vertex v);
+void _add_vertex			(VkvgContext ctx, Vertex v);
+void _add_vertexf			(VkvgContext ctx, float x, float y);
+void _set_vertex			(VkvgContext ctx, uint32_t idx, Vertex v);
 void _add_triangle_indices		(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2);
-void _add_tri_indices_for_rect	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
-bool _build_vb_step				(vkvg_context* ctx, float hw, stroke_context_t *str, bool isCurve);
+void _add_tri_indices_for_rect		(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
+bool _build_vb_step			(vkvg_context* ctx, float hw, stroke_context_t *str, bool isCurve);
 
 void _vao_add_rectangle			(VkvgContext ctx, float x, float y, float width, float height);
 
@@ -300,22 +311,22 @@ void _bind_draw_pipeline		(VkvgContext ctx);
 void _create_cmd_buff			(VkvgContext ctx);
 void _check_vao_size			(VkvgContext ctx);
 void _flush_cmd_buff			(VkvgContext ctx);
-void _ensure_renderpass_is_started		(VkvgContext ctx);
+void _ensure_renderpass_is_started	(VkvgContext ctx);
 void _emit_draw_cmd_undrawn_vertices	(VkvgContext ctx);
-void _flush_cmd_until_vx_base	(VkvgContext ctx);
+void _flush_cmd_until_vx_base		(VkvgContext ctx);
 bool _wait_flush_fence			(VkvgContext ctx);
 bool _wait_and_submit_cmd		(VkvgContext ctx);
 void _update_push_constants		(VkvgContext ctx);
 void _update_cur_pattern		(VkvgContext ctx, VkvgPattern pat);
-void _set_mat_inv_and_vkCmdPush (VkvgContext ctx);
-void _start_cmd_for_render_pass (VkvgContext ctx);
+void _set_mat_inv_and_vkCmdPush		(VkvgContext ctx);
+void _start_cmd_for_render_pass		(VkvgContext ctx);
 
 void _createDescriptorPool		(VkvgContext ctx);
 void _init_descriptor_sets		(VkvgContext ctx);
 void _update_descriptor_set		(VkvgContext ctx, VkhImage img, VkDescriptorSet ds);
-void _update_gradient_desc_set	(VkvgContext ctx);
-void _free_ctx_save				(vkvg_context_save_t* sav);
-void _release_context_ressources(VkvgContext ctx);
+void _update_gradient_desc_set		(VkvgContext ctx);
+void _free_ctx_save			(vkvg_context_save_t* sav);
+void _release_context_ressources	(VkvgContext ctx);
 
 static inline float vec2_zcross (vec2 v1, vec2 v2){
 	return v1.x*v2.y-v1.y*v2.x;

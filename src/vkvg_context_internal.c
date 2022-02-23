@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -507,7 +507,7 @@ void _check_vao_size (VkvgContext ctx) {
 			//if cmd is started buffers, are already bound, so no resize is possible
 			//instead we flush, and clear vbo and ibo caches
 			_flush_cmd_until_vx_base (ctx);
-		if (ctx->vertCount > ctx->sizeVBO)		
+		if (ctx->vertCount > ctx->sizeVBO)
 			_resize_vbo(ctx, ctx->sizeVertices);
 		if (ctx->indCount > ctx->sizeIBO)
 			_resize_ibo(ctx, ctx->sizeIndices);
@@ -856,7 +856,7 @@ void _init_descriptor_sets (VkvgContext ctx){
 }
 void _release_context_ressources (VkvgContext ctx) {
 	VkDevice dev = ctx->dev->vkDev;
-	
+
 	_device_destroy_fence (ctx->dev, ctx->flushFence);
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);

@@ -75,7 +75,7 @@ extern "C" {
 			#define vkvg_public __attribute__((visibility("default")))
 		#endif
 	#else
-		#define vkvg_public 
+		#define vkvg_public
 	#endif
 #endif
 
@@ -143,7 +143,8 @@ typedef enum {
 	VKVG_STATUS_DEVICE_ERROR,			/*!< vkvg device initialization error */
 	VKVG_STATUS_INVALID_IMAGE,			/*!< */
 	VKVG_STATUS_INVALID_SURFACE,		/*!< */
-	VKVG_STATUS_INVALID_FONT			/*!< Unresolved font name*/
+	VKVG_STATUS_INVALID_FONT,			/*!< unresolved font name */
+	VKVG_STATUS_INVALID_POP_GROUP		/*!< the surface is the first element on the stack */
 }vkvg_status_t;
 
 typedef enum {
@@ -320,7 +321,7 @@ typedef struct _vkvg_pattern_t* VkvgPattern;
 #if VKVG_DBG_STATS
 /**
  * @brief vkvg memory and vulkan statistiques.
- * 
+ *
  * @ingroup device
  */
 typedef struct {
@@ -1380,6 +1381,19 @@ vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx);
 vkvg_public
 VkvgPattern vkvg_get_source (VkvgContext ctx);
 
+vkvg_public
+VkvgSurface vkvg_get_target (VkvgContext ctx);
+
+/**
+ * @brief Returns whether a current point is defined on the current path.
+ * See @ref vkvg_get_current_point() for details on the current point.
+ *
+ * @param ctx a valig vkvg @ref context
+ * @return bool whether a current point is defined
+ **/
+vkvg_public
+bool vkvg_has_current_point (VkvgContext ctx);
+
 /**
  * @brief
  *
@@ -1619,7 +1633,7 @@ vkvg_public
 vkvg_status_t vkvg_pattern_get_linear_points(VkvgPattern pat, float* x0, float* y0, float* x1, float* y1);
 /**
  * @brief create a new radial gradient.
- * 
+ *
  * Creates a new radial gradient between the two circles defined by (cx0, cy0, radius0) and (cx1, cy1, radius1).
  * Before using the gradient pattern, a number of color stops should be defined using vkvg_pattern_add_color_stop.
  *
@@ -1684,7 +1698,7 @@ vkvg_status_t vkvg_pattern_get_color_stop_rgba (VkvgPattern pat, uint32_t index,
 
 /**
  * @brief dispose pattern.
- * 
+ *
  * When you have finished using a pattern, free its ressources by calling this method.
  *
  * @param pat the pattern to destroy.
@@ -1693,7 +1707,7 @@ vkvg_public
 void vkvg_pattern_destroy (VkvgPattern pat);
 /**
  * @brief add colors to gradients
- * 
+ *
  * for each color step in the gradient, call this method and provide an absolute position between 0 and 1
  * and a color.
  *
@@ -1708,7 +1722,7 @@ vkvg_public
 vkvg_status_t vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r, float g, float b, float a);
 /**
  * @brief control the extend of the pattern
- * 
+ *
  * control whether the pattern has to be repeated or extended when painted on a surface.
  *
  * @param pat the pattern to set extend for.
@@ -1755,6 +1769,15 @@ vkvg_public
 void vkvg_pattern_set_matrix (VkvgPattern pat, const vkvg_matrix_t* matrix);
 vkvg_public
 void vkvg_pattern_get_matrix (VkvgPattern pat, vkvg_matrix_t* matrix);
+
+vkvg_public
+void vkvg_push_group (VkvgContext ctx);
+
+vkvg_public
+VkvgPattern vkvg_pop_group (VkvgContext ctx);
+
+vkvg_public
+void vkvg_pop_group_to_source (VkvgContext ctx);
 
 /** @}*/
 
