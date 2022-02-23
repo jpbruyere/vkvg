@@ -1592,7 +1592,10 @@ void vkvg_push_group (VkvgContext ctx) {
 
     vkvg_flush(ctx);
     VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
+    ctx->pSurf->new = false;
     s->prev = ctx->pSurf;
+    ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
+    ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
     _set_source_surface(ctx, s, 0, 0);
     ctx->pSurf = s;
 }
