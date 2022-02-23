@@ -117,33 +117,34 @@ extern "C" {
  * As soon as a status is not success, further operations will be canceled.
  */
 typedef enum {
-	VKVG_STATUS_SUCCESS = 0,			/*!< no error occurred.*/
-	VKVG_STATUS_NO_MEMORY,				/*!< out of memory*/
+	VKVG_STATUS_SUCCESS = 0,		/*!< no error occurred.*/
+	VKVG_STATUS_NO_MEMORY,			/*!< out of memory*/
 	VKVG_STATUS_INVALID_RESTORE,		/*!< call to #vkvg_restore without matching call to #vkvg_save*/
 	VKVG_STATUS_NO_CURRENT_POINT,		/*!< path command expecting a current point to be defined failed*/
-	VKVG_STATUS_INVALID_MATRIX,			/*!< invalid matrix (not invertible)*/
-	VKVG_STATUS_INVALID_STATUS,			/*!< */
-	VKVG_STATUS_INVALID_INDEX,			/*!< */
-	VKVG_STATUS_NULL_POINTER,			/*!< NULL pointer*/
-	VKVG_STATUS_INVALID_STRING,			/*!< */
+	VKVG_STATUS_INVALID_MATRIX,		/*!< invalid matrix (not invertible)*/
+	VKVG_STATUS_INVALID_STATUS,		/*!< */
+	VKVG_STATUS_INVALID_INDEX,		/*!< */
+	VKVG_STATUS_NULL_POINTER,		/*!< NULL pointer*/
+	VKVG_STATUS_INVALID_STRING,		/*!< */
 	VKVG_STATUS_INVALID_PATH_DATA,		/*!< */
-	VKVG_STATUS_READ_ERROR,				/*!< */
-	VKVG_STATUS_WRITE_ERROR,			/*!< */
+	VKVG_STATUS_READ_ERROR,			/*!< */
+	VKVG_STATUS_WRITE_ERROR,		/*!< */
 	VKVG_STATUS_SURFACE_FINISHED,		/*!< */
 	VKVG_STATUS_SURFACE_TYPE_MISMATCH,	/*!< */
 	VKVG_STATUS_PATTERN_TYPE_MISMATCH,	/*!< */
-	VKVG_STATUS_PATTERN_INVALID_GRADIENT,/*!< occurs when stops count is zero */
+	VKVG_STATUS_PATTERN_INVALID_GRADIENT,	/*!< occurs when stops count is zero */
 	VKVG_STATUS_INVALID_CONTENT,		/*!< */
-	VKVG_STATUS_INVALID_FORMAT,			/*!< */
-	VKVG_STATUS_INVALID_VISUAL,			/*!< */
-	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
-	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
-	VKVG_STATUS_INVALID_RECT,			/*!< rectangle with height or width equal to 0. */
-	VKVG_STATUS_TIMEOUT,				/*!< waiting for a vulkan operation to finish resulted in a fence timeout (5 seconds)*/
-	VKVG_STATUS_DEVICE_ERROR,			/*!< vkvg device initialization error */
-	VKVG_STATUS_INVALID_IMAGE,			/*!< */
+	VKVG_STATUS_INVALID_FORMAT,		/*!< */
+	VKVG_STATUS_INVALID_VISUAL,		/*!< */
+	VKVG_STATUS_FILE_NOT_FOUND,		/*!< */
+	VKVG_STATUS_INVALID_DASH,		/*!< invalid value for a dash setting */
+	VKVG_STATUS_INVALID_RECT,		/*!< rectangle with height or width equal to 0. */
+	VKVG_STATUS_TIMEOUT,			/*!< waiting for a vulkan operation to finish resulted in a fence timeout (5 seconds)*/
+	VKVG_STATUS_DEVICE_ERROR,		/*!< vkvg device initialization error */
+	VKVG_STATUS_INVALID_IMAGE,		/*!< */
 	VKVG_STATUS_INVALID_SURFACE,		/*!< */
-	VKVG_STATUS_INVALID_FONT			/*!< Unresolved font name*/
+	VKVG_STATUS_INVALID_FONT,		/*!< unresolved font name */
+	VKVG_STATUS_INVALID_POP_GROUP		/*!< the surface is the first element on the stack */
 }vkvg_status_t;
 
 typedef enum {
@@ -324,12 +325,12 @@ typedef struct _vkvg_pattern_t* VkvgPattern;
  * @ingroup device
  */
 typedef struct {
-	uint32_t	sizePoints;		/**< maximum point array size					*/
-	uint32_t	sizePathes;		/**< maximum path array size					*/
+	uint32_t	sizePoints;	/**< maximum point array size				*/
+	uint32_t	sizePathes;	/**< maximum path array size				*/
 	uint32_t	sizeVertices;	/**< maximum size of host vertice cache			*/
 	uint32_t	sizeIndices;	/**< maximum size of host index cache			*/
-	uint32_t	sizeVBO;		/**< maximum size of vulkan vertex buffer		*/
-	uint32_t	sizeIBO;		/**< maximum size of vulkan index buffer		*/
+	uint32_t	sizeVBO;	/**< maximum size of vulkan vertex buffer		*/
+	uint32_t	sizeIBO;	/**< maximum size of vulkan index buffer		*/
 } vkvg_debug_stats_t;
 
 vkvg_debug_stats_t vkvg_device_get_stats (VkvgDevice dev);
@@ -1380,6 +1381,19 @@ vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx);
 vkvg_public
 VkvgPattern vkvg_get_source (VkvgContext ctx);
 
+vkvg_public
+VkvgSurface vkvg_get_target (VkvgContext ctx);
+
+/**
+ * @brief Returns whether a current point is defined on the current path.
+ * See @ref vkvg_get_current_point() for details on the current point.
+ *
+ * @param ctx a valig vkvg @ref context
+ * @return bool whether a current point is defined
+ **/
+vkvg_public
+bool vkvg_has_current_point (VkvgContext ctx);
+
 /**
  * @brief
  *
@@ -1751,10 +1765,21 @@ vkvg_filter_t vkvg_pattern_get_filter (VkvgPattern pat);
  */
 vkvg_public
 vkvg_pattern_type_t vkvg_pattern_get_type (VkvgPattern pat);
+
 vkvg_public
 void vkvg_pattern_set_matrix (VkvgPattern pat, const vkvg_matrix_t* matrix);
+
 vkvg_public
 void vkvg_pattern_get_matrix (VkvgPattern pat, vkvg_matrix_t* matrix);
+
+vkvg_public
+void vkvg_push_group (VkvgContext ctx);
+
+vkvg_public
+VkvgPattern vkvg_pop_group (VkvgContext ctx);
+
+vkvg_public
+void vkvg_pop_group_to_source (VkvgContext ctx);
 
 /** @}*/
 
