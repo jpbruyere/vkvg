@@ -269,6 +269,9 @@ void vkvg_destroy (VkvgContext ctx)
 		_destroy_recording(ctx->recording);
 #endif
 
+	for (VkvgSurface surf = ctx->pSurf; surf->prev != NULL; ctx->pSurf = surf->prev)
+		vkvg_surface_destroy(surf);
+
 	if (ctx->pattern)
 		vkvg_pattern_destroy (ctx->pattern);
 
@@ -503,6 +506,7 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 		_add_point (ctx, v.x, v.y);
 	_set_curve_end(ctx);
 }
+
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
 	if (ctx->status)
@@ -515,6 +519,7 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 	_finish_path(ctx);
 	_add_point (ctx, cp.x + x, cp.y + y);
 }
+
 void vkvg_move_to (VkvgContext ctx, float x, float y)
 {
 	if (ctx->status)
@@ -533,6 +538,7 @@ void vkvg_get_current_point (VkvgContext ctx, float* x, float* y) {
 	*x = cp.x;
 	*y = cp.y;
 }
+
 void _curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	//prevent running _recursive_bezier when all 4 curve points are equal
 	if (EQUF(x1,x2) && EQUF(x2,x3) && EQUF(y1,y2) && EQUF(y2,y3)) {
@@ -1013,6 +1019,7 @@ void vkvg_set_source_color (VkvgContext ctx, uint32_t c) {
 	ctx->curColor = c;
 	_update_cur_pattern (ctx, NULL);
 }
+
 void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
 	if (ctx->status)
 		return;
@@ -1020,6 +1027,7 @@ void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
 	ctx->curColor = CreateRgbaf(r,g,b,1);
 	_update_cur_pattern (ctx, NULL);
 }
+
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
 	if (ctx->status)
@@ -1629,9 +1637,49 @@ void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float
 }
 
 VkvgSurface vkvg_get_target (VkvgContext ctx) {
+    if (ctx->status)
+        return NULL;
+    return ctx->pSurf;
+}
+
+void vkvg_push_group (VkvgContext ctx) {
+    if (ctx->status)
+        return;
+
+    vkvg_flush(ctx);
+    VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
+    ctx->pSurf->new = false;
+    s->prev = ctx->pSurf;
+    ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
+    ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
+    _set_source_surface(ctx, s, 0, 0);
+    ctx->pSurf = s;
+}
+
+VkvgPattern vkvg_pop_group (VkvgContext ctx) {
+    if (ctx->status)
+        return NULL;
+
+    VkvgSurface curr_s = ctx->pSurf;
+    if (!curr_s->prev) {
+        /* error: curr_s is the first element on the stack */
+        ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
+        return NULL;
+    }
+
+    vkvg_flush(ctx);
+    VkvgPattern pat = vkvg_get_source(ctx);
+    VkvgSurface prev_s = curr_s->prev;
+    vkvg_surface_destroy(curr_s);
+    _set_source_surface(ctx, prev_s, 0, 0);
+    return pat;
+}
+
+void vkvg_pop_group_to_source (VkvgContext ctx) {
 	if (ctx->status)
-		return NULL;
-	return ctx->pSurf;
+		return;
+	VkvgPattern pat = vkvg_pop_group(ctx);
+	_set_source(ctx, pat);
 }
 
 /**
