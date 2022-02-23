@@ -378,7 +378,16 @@ void _font_add_name (_vkvg_font_identity_t* font, const char* name, int nameLeng
 	font->names[font->namesCount-1] = (char*)calloc(nameLength, sizeof (char));
 	strcpy (font->names[font->namesCount-1], name);
 }
-void _font_cache_add_font_identity (VkvgContext ctx, const char* fontFilePath, const char* name){
+void _font_cache_load_font_file_in_memory (_vkvg_font_identity_t* fontId) {
+	FILE* fontFile = fopen(fontId->fontFile, "rb");
+	fseek(fontFile, 0, SEEK_END);
+	fontId->fontBufSize = ftell(fontFile); /* how long is the file ? */
+	fseek(fontFile, 0, SEEK_SET); /* reset */
+	fontId->fontBuffer = malloc(fontId->fontBufSize);
+	fread(fontId->fontBuffer, fontId->fontBufSize, 1, fontFile);
+	fclose(fontFile);
+}
+_vkvg_font_identity_t* _font_cache_add_font_identity (VkvgContext ctx, const char* fontFilePath, const char* name){
 	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
 	if (++cache->fontsCount == 1)
 		cache->fonts = (_vkvg_font_identity_t*) malloc (cache->fontsCount * sizeof(_vkvg_font_identity_t));
@@ -386,20 +395,16 @@ void _font_cache_add_font_identity (VkvgContext ctx, const char* fontFilePath, c
 		cache->fonts = (_vkvg_font_identity_t*) realloc (cache->fonts, cache->fontsCount * sizeof(_vkvg_font_identity_t));
 	_vkvg_font_identity_t nf = {0};
 
-	int fflength = strlen (fontFilePath) + 1;
-	nf.fontFile = (char*)malloc (fflength * sizeof(char));
-	strcpy (nf.fontFile, fontFilePath);
-	_font_add_name (&nf, name, fflength);
+	if (fontFilePath) {
+		int fflength = strlen (fontFilePath) + 1;
+		nf.fontFile = (char*)malloc (fflength * sizeof(char));
+		strcpy (nf.fontFile, fontFilePath);
+	}
 
-	FILE* fontFile = fopen(nf.fontFile, "rb");
-	fseek(fontFile, 0, SEEK_END);
-	nf.fontBufSize = ftell(fontFile); /* how long is the file ? */
-	fseek(fontFile, 0, SEEK_SET); /* reset */
-	nf.fontBuffer = malloc(nf.fontBufSize);
-	fread(nf.fontBuffer, nf.fontBufSize, 1, fontFile);
-	fclose(fontFile);
+	_font_add_name (&nf, name, strlen (name));
 
 	cache->fonts[cache->fontsCount-1] = nf;
+	return &cache->fonts[cache->fontsCount-1];
 }
 //select current font for context
 _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
@@ -480,7 +485,7 @@ bool _tryResolveFontNameWithFontConfig (VkvgContext ctx, _vkvg_font_identity_t**
 	if (fontFile) {
 		//try find font in cache by path
 		for (int i = 0; i < cache->fontsCount; ++i) {
-			if (strcmp (cache->fonts[i].fontFile, fontFile) == 0) {
+			if (cache->fonts[i].fontFile && strcmp (cache->fonts[i].fontFile, fontFile) == 0) {
 				int fflength = strlen(fontFile) + 1;
 				_font_add_name (&cache->fonts[i], ctx->selectedFontName, fflength);
 				*resolvedFont = &cache->fonts[i];
@@ -489,7 +494,8 @@ bool _tryResolveFontNameWithFontConfig (VkvgContext ctx, _vkvg_font_identity_t**
 		}
 		if (!*resolvedFont) {
 			//if not found, create a new vkvg_font
-			_font_cache_add_font_identity(ctx, fontFile, ctx->selectedFontName);
+			_vkvg_font_identity_t* fid = _font_cache_add_font_identity(ctx, fontFile, ctx->selectedFontName);
+			_font_cache_load_font_file_in_memory (fid);
 			*resolvedFont = &cache->fonts[cache->fontsCount-1];
 		}
 	}

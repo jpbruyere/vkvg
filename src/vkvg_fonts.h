@@ -189,7 +189,8 @@ typedef struct _vkvg_text_run_t {
 void _fonts_cache_create		(VkvgDevice dev);
 //Release all ressources of font cache.
 void _font_cache_destroy	(VkvgDevice dev);
-void _font_cache_add_font_identity	(VkvgContext ctx, const char* fontFile, const char *name);
+_vkvg_font_identity_t *_font_cache_add_font_identity (VkvgContext ctx, const char* fontFile, const char *name);
+void _font_cache_load_font_file_in_memory (_vkvg_font_identity_t* fontId);
 //Draw text
 void _font_cache_show_text				(VkvgContext ctx, const char* text);
 //Get text dimmensions
