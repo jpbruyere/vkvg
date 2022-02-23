@@ -1533,18 +1533,28 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents);
 
 //text run holds harfbuz datas, and prevent recreating them multiple times for the same line of text.
 /**
- * @brief
+ * @brief Create a new text run.
  *
  * @param ctx a valid vkvg @ref context
- * @param text
+ * @param text Null terminated utf8 string.
  * @return VkvgText
  */
 vkvg_public
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text);
 /**
- * @brief
+ * @brief Create a new text run for a non null terminated string.
  *
- * @param textRun
+ * @param ctx a valid vkvg @ref context
+ * @param text non null terminated utf8 string.
+ * @param length glyphs count, not to be confused with byte length.
+ * @return VkvgText
+ */
+vkvg_public
+VkvgText vkvg_text_run_create_with_length (VkvgContext ctx, const char* text, uint32_t length)
+/**
+ * @brief Release ressources holded by the text run.
+ *
+ * @param VkvgtextRun A valid VkvgText pointer.
  */
 vkvg_public
 void vkvg_text_run_destroy (VkvgText textRun);
