@@ -1319,6 +1319,7 @@ static void _save (VkvgContext ctx) {
 	} else
 		sav->curColor = ctx->curColor;
 
+	sav->pSurf = ctx->pSurf;
 	sav->pNext = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav;
 }
@@ -1342,6 +1343,7 @@ static void _restore (VkvgContext ctx) {
 
 	vkvg_context_save_t* sav = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav->pNext;
+	ctx->pSurf = sav->pSurf;
 
 	_flush_cmd_buff (ctx);
 	if (!_wait_flush_fence (ctx))
