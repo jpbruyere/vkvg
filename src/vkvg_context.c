@@ -1635,7 +1635,7 @@ void vkvg_push_group (VkvgContext ctx) {
     ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
     ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
     // _set_source_surface(ctx, s, 0, 0);
-    
+
 }
 
 VkvgPattern vkvg_pop_group (VkvgContext ctx) {
