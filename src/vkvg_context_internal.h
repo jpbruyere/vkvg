@@ -126,11 +126,6 @@ typedef struct _vkvg_context_save_t {
 
 } vkvg_context_save_t;
 
-typedef struct surface_link {
-	struct surface_link* prev;
-	VkvgSurface          surf;
-} surface_link_t;
-
 typedef struct _vkvg_context_t {
 	uint32_t			references;		//reference count
 
