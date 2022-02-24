@@ -1642,8 +1642,7 @@ void vkvg_push_group (VkvgContext ctx) {
     if (ctx->status)
         return;
 
-    vkvg_flush(ctx);
-    vkvg_save(ctx);
+    _save(ctx);
     VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
     ctx->pSurf = s;
     ctx->pSurf->new = false;
@@ -1677,7 +1676,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
     VkvgPattern pat = vkvg_get_source(ctx);
     vkvg_surface_destroy(ctx->pSurf);
     while (ctx->pSavedCtx != saved_ctx) {
-        vkvg_restore(ctx);
+        _restore(ctx);
     }
     // _set_source_surface(ctx, prev_s, 0, 0);
     return pat;
