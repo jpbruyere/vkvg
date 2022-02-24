@@ -1703,12 +1703,13 @@ void vkvg_push_group (VkvgContext ctx) {
         return;
 
     vkvg_flush(ctx);
+    vkvg_save(ctx);
     VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
+    ctx->pSurf = s;
     ctx->pSurf->new = false;
-    s->prev = ctx->pSurf;
     ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
     ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
-    _set_source_surface(ctx, s, 0, 0);
+    // _set_source_surface(ctx, s, 0, 0);
     
 }
 
@@ -1717,29 +1718,34 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
         return NULL;
 
     if (!ctx->pSavedCtxs) {
-	/* error: there are no elements on the stack */
+	/* error: no context has been pushed */
         ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
 	return NULL;
     }
 
-    VkvgSurface curr_s = ctx->pSurf;
-    if (!curr_s->prev) {
-        /* error: curr_s is the first element on the stack */
+    vkvg_context_save_t *saved_ctx = ctx->pSavedCtxs;
+    while (saved_ctx->pNext && saved_ctx->pSurf == ctx->pSurf) {
+        saved_ctx = saved_ctx->pNext;
+    }
+    if (saved_ctx->pSurf == ctx->pSurf) {
+    	/* error: there are saved contexts, but none have been pushed */
         ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
-        return NULL;
+	return NULL;
     }
 
     vkvg_flush(ctx);
     VkvgPattern pat = vkvg_get_source(ctx);
-    VkvgSurface prev_s = curr_s->prev;
-    vkvg_surface_destroy(curr_s);
-    _set_source_surface(ctx, prev_s, 0, 0);
+    vkvg_surface_destroy(ctx->pSurf);
+    while (ctx->pSavedCtx != saved_ctx) {
+        vkvg_restore(ctx);
+    }
+    // _set_source_surface(ctx, prev_s, 0, 0);
     return pat;
 }
 
 void vkvg_pop_group_to_source (VkvgContext ctx) {
 	if (ctx->status)
-		return;
+	    return;
 	VkvgPattern pat = vkvg_pop_group(ctx);
 	_set_source(ctx, pat);
 }
