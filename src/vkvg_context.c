@@ -526,7 +526,7 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 bool vkvg_has_current_point (VkvgContext ctx) {
     if (ctx->status)
         return false;
-    return true;
+    return _current_path_is_empty(ctx);
 
 void vkvg_get_current_point (VkvgContext ctx, float* x, float* y) {
 	if (_current_path_is_empty(ctx)) {
