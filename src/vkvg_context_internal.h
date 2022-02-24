@@ -125,11 +125,6 @@ typedef struct _vkvg_context_save_t {
 
 }vkvg_context_save_t;
 
-typedef struct surface_link {
-	struct surface_link* prev;
-	VkvgSurface          surf;
-} surface_link_t;
-
 typedef struct _vkvg_context_t {
 	//VkvgContext		pPrev;		//double linked list of contexts
 	//VkvgContext		pNext;
@@ -232,8 +227,6 @@ typedef struct _vkvg_context_t {
 
 	VkClearRect		clearRect;
 	VkRenderPassBeginInfo 	renderPassBeginInfo;
-	
-	surface_link_t*		stack_top;		//for push/pop operations.
 }vkvg_context;
 
 typedef struct _ear_clip_point {
