@@ -1167,6 +1167,9 @@ VkvgText vkvg_text_run_create_with_length (VkvgContext ctx, const char* text, ui
 	_font_cache_create_text_run(ctx, text, length, tr);
 	return tr;
 }
+uint32_t vkvg_text_run_get_glyph_count (VkvgText textRun) {
+	return textRun->glyph_count;
+}
 void vkvg_text_run_get_glyph_position (VkvgText textRun,
 									   uint32_t index,
 									   int32_t* const x_advance,

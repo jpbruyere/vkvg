@@ -1585,6 +1585,13 @@ void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun);
 vkvg_public
 void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents);
 /**
+ * @brief Get glyph count of text run.
+ *
+ * @return glyph count
+ */
+vkvg_public
+uint32_t vkvg_text_run_get_glyph_count (VkvgText textRun);
+/**
  * @brief retrieve glyph positions.
  *
  */
