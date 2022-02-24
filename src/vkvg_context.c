@@ -1364,9 +1364,8 @@ static void _save (VkvgContext ctx) {
 	} else
 		sav->curColor = ctx->curColor;
 
-	sav->pNext		= ctx->pSavedCtxs;
+	sav->pNext = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav;
-
 }
 
 void vkvg_save (VkvgContext ctx){
@@ -1650,12 +1649,18 @@ void vkvg_push_group (VkvgContext ctx) {
     ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
     ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
     _set_source_surface(ctx, s, 0, 0);
-    ctx->pSurf = s;
+    
 }
 
 VkvgPattern vkvg_pop_group (VkvgContext ctx) {
     if (ctx->status)
         return NULL;
+
+    if (!ctx->pSavedCtxs) {
+	/* error: there are no elements on the stack */
+        ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
+	return NULL;
+    }
 
     VkvgSurface curr_s = ctx->pSurf;
     if (!curr_s->prev) {
