@@ -101,6 +101,7 @@ typedef enum {
 
 typedef struct _vkvg_context_save_t {
 	struct _vkvg_context_save_t* 	pNext;
+	VkvgSurface*			pSurf;
 
 	float				lineWidth;
 	uint32_t			dashCount;	//value count in dash array, 0 if dash not set.
@@ -114,8 +115,8 @@ typedef struct _vkvg_context_save_t {
 
 	long				selectedCharSize; /* Font size*/
 	char				selectedFontName[FONT_NAME_MAX_SIZE];
-	_vkvg_font_identity_t		selectedFont;	   //hold current face and size before cache addition
-	_vkvg_font_identity_t*		currentFont;	   //font ready for lookup
+	_vkvg_font_identity_t		selectedFont;	//hold current face and size before cache addition
+	_vkvg_font_identity_t*		currentFont;	//font ready for lookup
 	vkvg_direction_t		textDirection;
 	push_constants			pushConsts;
 	uint32_t			curColor;
