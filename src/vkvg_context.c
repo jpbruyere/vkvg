@@ -1364,6 +1364,7 @@ static void _save (VkvgContext ctx) {
 	} else
 		sav->curColor = ctx->curColor;
 
+	sav->pSurf = ctx->pSurf;
 	sav->pNext = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav;
 }
