@@ -1251,12 +1251,7 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 	_font_cache_font_extents(ctx, extents);
 }
 
-void vkvg_save (VkvgContext ctx){
-	if (ctx->status)
-		return;
-	RECORD(ctx, VKVG_CMD_SAVE);
-	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
-
+static void _save (VkvgContext ctx) {
 	VkvgDevice dev = ctx->dev;
 	vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
@@ -1374,16 +1369,20 @@ void vkvg_save (VkvgContext ctx){
 	} else
 		sav->curColor = ctx->curColor;
 
-	sav->pNext		= ctx->pSavedCtxs;
+	sav->pNext = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav;
-
 }
-void vkvg_restore (VkvgContext ctx){
+
+void vkvg_save (VkvgContext ctx){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SAVE);
+	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
-	RECORD(ctx, VKVG_CMD_RESTORE);
+	_save(ctx);
+}
 
+static void _restore (VkvgContext ctx) {
 	if (ctx->pSavedCtxs == NULL){
 		ctx->status = VKVG_STATUS_INVALID_RESTORE;
 		return;
@@ -1513,6 +1512,15 @@ void vkvg_restore (VkvgContext ctx){
 	}
 
 	_free_ctx_save(sav);
+}
+
+void vkvg_restore (VkvgContext ctx){
+	if (ctx->status)
+		return;
+
+	RECORD(ctx, VKVG_CMD_RESTORE);
+
+	_restore(ctx);
 }
 
 void vkvg_translate (VkvgContext ctx, float dx, float dy){
@@ -1701,12 +1709,18 @@ void vkvg_push_group (VkvgContext ctx) {
     ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
     ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
     _set_source_surface(ctx, s, 0, 0);
-    ctx->pSurf = s;
+    
 }
 
 VkvgPattern vkvg_pop_group (VkvgContext ctx) {
     if (ctx->status)
         return NULL;
+
+    if (!ctx->pSavedCtxs) {
+	/* error: there are no elements on the stack */
+        ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
+	return NULL;
+    }
 
     VkvgSurface curr_s = ctx->pSurf;
     if (!curr_s->prev) {
