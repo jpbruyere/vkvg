@@ -138,6 +138,9 @@ void _increase_font_tex_array (VkvgDevice dev){
 	vkh_image_set_layout_subres(cache->cmd, newImg, subresNew,
 								VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 								VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	vkh_image_set_layout_subres(cache->cmd, cache->texture, subres,
+								VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+								VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	VK_CHECK_RESULT(vkEndCommandBuffer(cache->cmd));
 
