@@ -27,18 +27,18 @@
 #include "vkh_queue.h"
 
 #ifdef DEBUG
-static vec2 debugLinePoints[1000];
-static uint32_t dlpCount = 0;
-#if defined (VKVG_DBG_UTILS)
-const float DBG_LAB_COLOR_SAV[4] = {1,0,1,1};
-const float DBG_LAB_COLOR_CLIP[4] = {0,1,1,1};
-#endif
+	static vec2 debugLinePoints[1000];
+	static uint32_t dlpCount = 0;
+	#if defined (VKVG_DBG_UTILS)
+		const float DBG_LAB_COLOR_SAV[4]	= {1,0,1,1};
+		const float DBG_LAB_COLOR_CLIP[4]	= {0,1,1,1};
+	#endif
 #endif
 
 //todo:this could be used to define a default background
 static VkClearValue clearValues[3] = {
 	{ .color.float32 = {0,0,0,0} },
-	{ .depthStencil = {1.0f, 0} },
+	{ .depthStencil  = {1.0f, 0} },
 	{ .color.float32 = {0,0,0,0} }
 };
 
