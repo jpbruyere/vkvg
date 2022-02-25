@@ -264,6 +264,21 @@ typedef struct {
 } vkvg_text_extents_t;
 
 /**
+  * @brief glyphs position in a @ref VkvgText
+  *
+  * structure defining glyph position as computed for rendering a text run.
+  * the codepoint field is for internal use only.
+  */
+typedef struct _glyph_info_t {
+	int32_t  x_advance;
+	int32_t  y_advance;
+	int32_t  x_offset;
+	int32_t  y_offset;
+	/* private */
+	uint32_t codepoint;//should be named glyphIndex, but for harfbuzz compatibility...
+} vkvg_glyph_info_t;
+
+/**
  * @brief Opaque pointer on a vkvg text run.
  *
  * A #VkvgText is an intermediate representation
@@ -1560,10 +1575,7 @@ uint32_t vkvg_text_run_get_glyph_count (VkvgText textRun);
 vkvg_public
 void vkvg_text_run_get_glyph_position (VkvgText textRun,
 									   uint32_t index,
-									   int32_t* const x_advance,
-									   int32_t* const y_advance,
-									   int32_t* const x_offset,
-									   int32_t* const y_offset);
+									   vkvg_glyph_info_t* pGlyphInfo);
 /** @}*/
 
 /**

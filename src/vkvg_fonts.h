@@ -159,16 +159,6 @@ typedef struct {
 	if (dev->threadAware)\
 		mtx_unlock (&dev->fontCache->mutex);
 
-#ifndef VKVG_USE_HARFBUZZ
-typedef struct _glyph_info_t {
-  int32_t  x_advance;
-  int32_t  y_advance;
-  int32_t  x_offset;
-  int32_t  y_offset;
-  uint32_t codepoint;//should be named glyphIndex, but for harfbuzz compatibility...
-} vkvg_glyph_info_t;
-#endif
-
 // Precompute everything necessary to measure and draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
 	_vkvg_font_identity_t*	fontId;		/* vkvg font structure pointer */
