@@ -36,7 +36,7 @@ typedef struct _vkvg_surface_t {
 	VkhImage	imgMS;
 	VkhImage	stencil;
 	uint32_t	references;
-	vkvg_status_t	status;					/**< Current status of surface, affected by last operation */
+	vkvg_status_t	status;		/**< Current status of surface, affected by last operation */
 	bool		new;
 	mtx_t		mutex;
 }vkvg_surface;
