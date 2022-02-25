@@ -1629,7 +1629,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
 	vkvg_flush(ctx);
 	VkvgPattern pat = vkvg_get_source(ctx);
 	vkvg_surface_destroy(ctx->pSurf);
-	while (ctx->pSavedCtx != saved_ctx) {
+	while (ctx->pSavedCtxs != saved_ctx) {
 		_restore(ctx);
 	}
 	
