@@ -655,6 +655,34 @@ void vkvg_device_set_dpy (VkvgDevice dev, int hdpy, int vdpy);
  */
 vkvg_public
 void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy);
+
+/**
+ * @brief query required instance extensions for vkvg.
+ *
+ * @param pExtensions a valid pointer to the array of extension names to fill, the size may be queried
+ * by calling this method with pExtension being a NULL pointer.
+ * @param pExtCount a valid pointer to an integer that will be fill with the required extension count.
+ */
+vkvg_public
+void vkvg_get_required_instance_extensions (const char** pExtensions, uint32_t* pExtCount);
+/**
+ * @brief query required device extensions for vkvg.
+ * @param phy the vulkan physical device that will be used to create the @ref VkvgDevice.
+ * @param pExtensions a valid pointer to the array of extension names to fill, the size may be queried
+ * by calling this method with pExtension being a NULL pointer.
+ * @param pExtCount a valid pointer to an integer that will be fill with the required extension count.
+ */
+vkvg_public
+void vkvg_get_required_device_extensions (VkPhysicalDevice phy, const char** pExtensions, uint32_t* pExtCount);
+/**
+ * @brief get vulkan device creation requirement to fit vkvg needs.
+ *
+ * @param pEnabledFeatures a pointer to the feature structure to fill for the vulkan device creation.
+ * @return the required pNext chain for the vulkan device creation. The first structure is guarantied to
+ * be VkPhysicalDeviceVulkan12Features if vulkan version is >= 1.2
+ */
+vkvg_public
+const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeatures);
 /** @}*/
 
 /** @addtogroup surface
