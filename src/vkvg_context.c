@@ -1740,7 +1740,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
 	while (ctx->pSavedCtx != saved_ctx) {
 		_restore(ctx);
 	}
-	// _set_source_surface(ctx, prev_s, 0, 0);
+
 	return pat;
 }
 
