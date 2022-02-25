@@ -1701,8 +1701,8 @@ vkvg_status_to_string (vkvg_status_t status) {
 }
 
 void vkvg_push_group (VkvgContext ctx) {
-    if (ctx->status)
-        return;
+	if (ctx->status)
+		return;
 
     _save(ctx);
     VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
@@ -1715,38 +1715,38 @@ void vkvg_push_group (VkvgContext ctx) {
 }
 
 VkvgPattern vkvg_pop_group (VkvgContext ctx) {
-    if (ctx->status)
-        return NULL;
+	if (ctx->status)
+		return NULL;
 
-    if (!ctx->pSavedCtxs) {
-	/* error: no context has been pushed */
-        ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
-	return NULL;
-    }
+	if (!ctx->pSavedCtxs) {
+		/* error: no context has been pushed */
+		ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
+		return NULL;
+	}
 
-    vkvg_context_save_t *saved_ctx = ctx->pSavedCtxs;
-    while (saved_ctx->pNext && saved_ctx->pSurf == ctx->pSurf) {
-        saved_ctx = saved_ctx->pNext;
-    }
-    if (saved_ctx->pSurf == ctx->pSurf) {
-    	/* error: there are saved contexts, but none have been pushed */
-        ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
-	return NULL;
-    }
+	vkvg_context_save_t *saved_ctx = ctx->pSavedCtxs;
+	while (saved_ctx->pNext && saved_ctx->pSurf == ctx->pSurf) {
+		saved_ctx = saved_ctx->pNext;
+	}
+	if (saved_ctx->pSurf == ctx->pSurf) {
+		/* error: there are saved contexts, but none have been pushed */
+		ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
+		return NULL;
+	}
 
-    vkvg_flush(ctx);
-    VkvgPattern pat = vkvg_get_source(ctx);
-    vkvg_surface_destroy(ctx->pSurf);
-    while (ctx->pSavedCtx != saved_ctx) {
-        _restore(ctx);
-    }
-    // _set_source_surface(ctx, prev_s, 0, 0);
-    return pat;
+	vkvg_flush(ctx);
+	VkvgPattern pat = vkvg_get_source(ctx);
+	vkvg_surface_destroy(ctx->pSurf);
+	while (ctx->pSavedCtx != saved_ctx) {
+		_restore(ctx);
+	}
+	// _set_source_surface(ctx, prev_s, 0, 0);
+	return pat;
 }
 
 void vkvg_pop_group_to_source (VkvgContext ctx) {
 	if (ctx->status)
-	    return;
+		return;
 	VkvgPattern pat = vkvg_pop_group(ctx);
 	_set_source(ctx, pat);
 }
