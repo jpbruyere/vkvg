@@ -1172,18 +1172,16 @@ uint32_t vkvg_text_run_get_glyph_count (VkvgText textRun) {
 }
 void vkvg_text_run_get_glyph_position (VkvgText textRun,
 									   uint32_t index,
-									   int32_t* const x_advance,
-									   int32_t* const y_advance,
-									   int32_t* const x_offset,
-									   int32_t* const y_offset) {
+									   vkvg_glyph_info_t* pGlyphInfo) {
 	if (index >= textRun->glyph_count) {
-		*x_advance = *y_advance = *x_offset = *y_offset = 0;
+		*pGlyphInfo = (vkvg_glyph_info_t){0};
 		return;
 	}
-	*x_advance = textRun->glyphs[index].x_advance;
-	*y_advance = textRun->glyphs[index].y_advance;
-	*x_offset = textRun->glyphs[index].x_offset;
-	*y_offset = textRun->glyphs[index].y_offset;
+#if VKVG_USE_HARFBUZZ
+	memcpy (pGlyphInfo, &textRun->glyphs[index], sizeof(vkvg_glyph_info_t));
+#else
+	*pGlyphInfo = textRun->glyphs[index];
+#endif
 }
 void vkvg_text_run_destroy (VkvgText textRun) {
 	_font_cache_destroy_text_run (textRun);
