@@ -1604,7 +1604,6 @@ void vkvg_push_group (VkvgContext ctx) {
 	ctx->pSurf->new = false;
 	ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
 	ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
-	// _set_source_surface(ctx, s, 0, 0);
 }
 
 VkvgPattern vkvg_pop_group (VkvgContext ctx) {
@@ -1633,7 +1632,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
 	while (ctx->pSavedCtx != saved_ctx) {
 		_restore(ctx);
 	}
-	// _set_source_surface(ctx, prev_s, 0, 0);
+	
 	return pat;
 }
 
