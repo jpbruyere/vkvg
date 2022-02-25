@@ -66,7 +66,7 @@ VkvgSurface vkvg_surface_create_from_svg (VkvgDevice dev, uint32_t width, uint32
 	return _svg_load(dev, nsvgParseFromFile(filePath, "px", (float)dev->hdpi));
 }
 VkvgSurface vkvg_surface_create_from_svg_fragment (VkvgDevice dev, uint32_t width, uint32_t height, char* svgFragment) {
-	return _svg_load(dev, nsvgParse(fragment, "px", (float)dev->hdpi));
+	return _svg_load(dev, nsvgParse(svgFragment, "px", (float)dev->hdpi));
 }
 VkvgSvg vkvg_svg_load (const char* svgFilePath) {
 	return nsvgParseFromFile(svgFilePath, "px", 96.0f);
