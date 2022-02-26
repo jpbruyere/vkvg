@@ -143,7 +143,7 @@ typedef enum {
 	VKVG_STATUS_DEVICE_ERROR,			/*!< vkvg device initialization error */
 	VKVG_STATUS_INVALID_IMAGE,			/*!< */
 	VKVG_STATUS_INVALID_SURFACE,		/*!< */
-	VKVG_STATUS_INVALID_FONT			/*!< Unresolved font name*/
+	VKVG_STATUS_INVALID_FONT,			/*!< Unresolved font name*/
 	VKVG_STATUS_INVALID_POP_GROUP		/*!< the surface is the first element on the stack */
 }vkvg_status_t;
 
