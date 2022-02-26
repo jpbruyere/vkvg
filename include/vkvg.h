@@ -264,6 +264,21 @@ typedef struct {
 } vkvg_text_extents_t;
 
 /**
+  * @brief glyphs position in a @ref VkvgText
+  *
+  * structure defining glyph position as computed for rendering a text run.
+  * the codepoint field is for internal use only.
+  */
+typedef struct _glyph_info_t {
+	int32_t  x_advance;
+	int32_t  y_advance;
+	int32_t  x_offset;
+	int32_t  y_offset;
+	/* private */
+	uint32_t codepoint;//should be named glyphIndex, but for harfbuzz compatibility...
+} vkvg_glyph_info_t;
+
+/**
  * @brief Opaque pointer on a vkvg text run.
  *
  * A #VkvgText is an intermediate representation
@@ -655,6 +670,34 @@ void vkvg_device_set_dpy (VkvgDevice dev, int hdpy, int vdpy);
  */
 vkvg_public
 void vkvg_device_get_dpy (VkvgDevice dev, int* hdpy, int* vdpy);
+
+/**
+ * @brief query required instance extensions for vkvg.
+ *
+ * @param pExtensions a valid pointer to the array of extension names to fill, the size may be queried
+ * by calling this method with pExtension being a NULL pointer.
+ * @param pExtCount a valid pointer to an integer that will be fill with the required extension count.
+ */
+vkvg_public
+void vkvg_get_required_instance_extensions (const char** pExtensions, uint32_t* pExtCount);
+/**
+ * @brief query required device extensions for vkvg.
+ * @param phy the vulkan physical device that will be used to create the @ref VkvgDevice.
+ * @param pExtensions a valid pointer to the array of extension names to fill, the size may be queried
+ * by calling this method with pExtension being a NULL pointer.
+ * @param pExtCount a valid pointer to an integer that will be fill with the required extension count.
+ */
+vkvg_public
+void vkvg_get_required_device_extensions (VkPhysicalDevice phy, const char** pExtensions, uint32_t* pExtCount);
+/**
+ * @brief get vulkan device creation requirement to fit vkvg needs.
+ *
+ * @param pEnabledFeatures a pointer to the feature structure to fill for the vulkan device creation.
+ * @return the required pNext chain for the vulkan device creation. The first structure is guarantied to
+ * be VkPhysicalDeviceVulkan12Features if vulkan version is >= 1.2
+ */
+vkvg_public
+const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeatures);
 /** @}*/
 
 /** @addtogroup surface
@@ -1470,6 +1513,16 @@ void vkvg_select_font_face (VkvgContext ctx, const char* name);
 vkvg_public
 void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char *name);
 /**
+ * @brief Select a new font by providing a pointer on the font file loaded in memory and its size in byte.
+ *
+ * @param ctx a valid vkvg @ref context
+ * @param fontBuffer a pointer to a raw font file loaded in memory.
+ * @param fontBufferByteSize the size of the font buffer in bytes.
+ * @param name A short name to select this font afteward
+ */
+vkvg_public
+void vkvg_load_font_from_memory (VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize, const char* name);
+/**
  * @brief
  *
  * @param ctx a valid vkvg @ref context
@@ -1505,18 +1558,28 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents);
 
 //text run holds harfbuz datas, and prevent recreating them multiple times for the same line of text.
 /**
- * @brief
+ * @brief Create a new text run.
  *
  * @param ctx a valid vkvg @ref context
- * @param text
+ * @param text Null terminated utf8 string.
  * @return VkvgText
  */
 vkvg_public
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text);
 /**
- * @brief
+ * @brief Create a new text run for a non null terminated string.
  *
- * @param textRun
+ * @param ctx a valid vkvg @ref context
+ * @param text non null terminated utf8 string.
+ * @param length glyphs count, not to be confused with byte length.
+ * @return VkvgText
+ */
+vkvg_public
+VkvgText vkvg_text_run_create_with_length (VkvgContext ctx, const char* text, uint32_t length);
+/**
+ * @brief Release ressources holded by the text run.
+ *
+ * @param VkvgtextRun A valid VkvgText pointer.
  */
 vkvg_public
 void vkvg_text_run_destroy (VkvgText textRun);
@@ -1536,6 +1599,21 @@ void vkvg_show_text_run (VkvgContext ctx, VkvgText textRun);
  */
 vkvg_public
 void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents);
+/**
+ * @brief Get glyph count of text run.
+ *
+ * @return glyph count
+ */
+vkvg_public
+uint32_t vkvg_text_run_get_glyph_count (VkvgText textRun);
+/**
+ * @brief retrieve glyph positions.
+ *
+ */
+vkvg_public
+void vkvg_text_run_get_glyph_position (VkvgText textRun,
+									   uint32_t index,
+									   vkvg_glyph_info_t* pGlyphInfo);
 /** @}*/
 
 /**

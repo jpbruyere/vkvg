@@ -112,9 +112,10 @@ typedef struct {
 typedef struct {
 	char**				names;		/* Resolved Input names to this font by fontConfig or custom name set by @ref vkvg_load_from_path*/
 	uint32_t			namesCount;	/* Count of resolved names by fontConfig */
+	unsigned char*		fontBuffer;	/* stb_truetype in memory buffer */
+	long				fontBufSize;/* */
 	char*				fontFile;	/* Font file full path*/
 #ifndef VKVG_USE_FREETYPE
-	unsigned char*		fontBuffer;	/* stb_truetype in memory buffer */
 	stbtt_fontinfo		stbInfo;	/* stb_truetype structure */
 	int					ascent;		/* unscalled stb font metrics */
 	int					descent;
@@ -158,16 +159,6 @@ typedef struct {
 	if (dev->threadAware)\
 		mtx_unlock (&dev->fontCache->mutex);
 
-#ifndef VKVG_USE_HARFBUZZ
-typedef struct _glyph_info_t {
-  int32_t  x_advance;
-  int32_t  y_advance;
-  int32_t  x_offset;
-  int32_t  y_offset;
-  uint32_t codepoint;//should be named glyphIndex, but for harfbuzz compatibility...
-} vkvg_glyph_info_t;
-#endif
-
 // Precompute everything necessary to measure and draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
 	_vkvg_font_identity_t*	fontId;		/* vkvg font structure pointer */
@@ -188,15 +179,16 @@ typedef struct _vkvg_text_run_t {
 void _fonts_cache_create		(VkvgDevice dev);
 //Release all ressources of font cache.
 void _font_cache_destroy	(VkvgDevice dev);
-void _font_cache_add_font_identity	(VkvgContext ctx, const char* fontFile, const char *name);
+_vkvg_font_identity_t *_font_cache_add_font_identity (VkvgContext ctx, const char* fontFile, const char *name);
+void _font_cache_load_font_file_in_memory (_vkvg_font_identity_t* fontId);
 //Draw text
 void _font_cache_show_text				(VkvgContext ctx, const char* text);
 //Get text dimmensions
-void _font_cache_text_extents			(VkvgContext ctx, const char* text, vkvg_text_extents_t *extents);
+void _font_cache_text_extents			(VkvgContext ctx, const char* text, int length, vkvg_text_extents_t *extents);
 //Get font global dimmensions
 void _font_cache_font_extents			(VkvgContext ctx, vkvg_font_extents_t* extents);
 //Create text object that could be drawn multiple times minimizing harfbuzz and compute processing.
-void _font_cache_create_text_run		(VkvgContext ctx, const char* text, VkvgText textRun);
+void _font_cache_create_text_run		(VkvgContext ctx, const char* text, int length, VkvgText textRun);
 //Release ressources held by a text run.
 void _font_cache_destroy_text_run		(VkvgText textRun);
 //Draw text run
