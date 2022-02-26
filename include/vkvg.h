@@ -1575,7 +1575,7 @@ VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text);
  * @return VkvgText
  */
 vkvg_public
-VkvgText vkvg_text_run_create_with_length (VkvgContext ctx, const char* text, uint32_t length)
+VkvgText vkvg_text_run_create_with_length (VkvgContext ctx, const char* text, uint32_t length);
 /**
  * @brief Release ressources holded by the text run.
  *
