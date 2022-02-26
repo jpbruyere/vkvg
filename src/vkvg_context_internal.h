@@ -100,8 +100,8 @@ typedef enum {
 } vkvg_clip_state_t;
 
 typedef struct _vkvg_context_save_t {
-	struct _vkvg_context_save_t* 	pNext;
-	VkvgSurface			pSurf;
+	struct _vkvg_context_save_t* pNext;
+	VkvgSurface pSurf;
 
 	float					lineWidth;
 	float					miterLimit;
@@ -114,10 +114,10 @@ typedef struct _vkvg_context_save_t {
 	vkvg_line_join_t		lineJoint;
 	vkvg_fill_rule_t		curFillRule;
 
-	long				selectedCharSize; /* Font size*/
-	char				selectedFontName[FONT_NAME_MAX_SIZE];
-	_vkvg_font_identity_t		selectedFont;	//hold current face and size before cache addition
-	_vkvg_font_identity_t*		currentFont;	//font ready for lookup
+	long					selectedCharSize; /* Font size*/
+	char					selectedFontName[FONT_NAME_MAX_SIZE];
+	_vkvg_font_identity_t	selectedFont;	   //hold current face and size before cache addition
+	_vkvg_font_identity_t*	currentFont;	   //font ready for lookup
 	vkvg_direction_t		textDirection;
 	push_constants			pushConsts;
 	uint32_t				curColor;
