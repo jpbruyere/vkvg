@@ -1641,8 +1641,9 @@ void vkvg_push_group (VkvgContext ctx) {
 
 =======
 	_save(ctx);
-	VkvgSurface s = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
-	ctx->pSurf = s;
+	VkvgSurface surf = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
+	vkvg_surface_reference(surf);
+	ctx->pSurf = surf;
 	ctx->pSurf->new = false;
 	ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
 	ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
@@ -1671,6 +1672,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
 
 	vkvg_flush(ctx);
 	VkvgPattern pat = vkvg_get_source(ctx);
+	_dereference_surface(ctx->pSurf);
 	vkvg_surface_destroy(ctx->pSurf);
 	while (ctx->pSavedCtxs != saved_ctx) {
 		_restore(ctx);
