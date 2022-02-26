@@ -55,5 +55,5 @@ void _create_surface_secondary_images (VkvgSurface surf);
 void _create_framebuffer (VkvgSurface surf);
 void _create_surface_images (VkvgSurface surf);
 VkvgSurface _create_surface (VkvgDevice dev, VkFormat format);
-uint32_t _dereference_surface (VkvgSurface surf);
+VkvgSurface _dereference_surface (VkvgSurface surf);
 #endif
