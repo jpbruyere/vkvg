@@ -201,13 +201,9 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 
 void vkvg_surface_destroy(VkvgSurface surf)
 {
-	LOCK_SURFACE(surf)
-	surf->references--;
-	if (surf->references > 0) {
-		UNLOCK_SURFACE(surf)
+	_dereference_surface(surf);
+	if (surf->references > 0)
 		return;
-	}
-	UNLOCK_SURFACE(surf)
 
 	vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
 
@@ -230,6 +226,13 @@ VkvgSurface vkvg_surface_reference (VkvgSurface surf) {
 	UNLOCK_SURFACE(surf)
 	return surf;
 }
+
+VkvgSurface _dereference_surface (VkvgSurface surf) {
+	LOCK_SURFACE(surf)
+	surf->references--;
+	UNLOCK_SURFACE(surf)
+}
+
 uint32_t vkvg_surface_get_reference_count (VkvgSurface surf) {
 	return surf->references;
 }
