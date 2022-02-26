@@ -503,7 +503,6 @@ void vkvg_arc_negative (VkvgContext ctx, float xc, float yc, float radius, float
 		_add_point (ctx, v.x, v.y);
 	_set_curve_end(ctx);
 }
-
 void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 {
 	if (ctx->status)
@@ -516,7 +515,6 @@ void vkvg_rel_move_to (VkvgContext ctx, float x, float y)
 	_finish_path(ctx);
 	_add_point (ctx, cp.x + x, cp.y + y);
 }
-
 void vkvg_move_to (VkvgContext ctx, float x, float y)
 {
 	if (ctx->status)
@@ -540,7 +538,6 @@ void vkvg_get_current_point (VkvgContext ctx, float* x, float* y) {
 	*x = cp.x;
 	*y = cp.y;
 }
-
 void _curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	//prevent running _recursive_bezier when all 4 curve points are equal
 	if (EQUF(x1,x2) && EQUF(x2,x3) && EQUF(y1,y2) && EQUF(y2,y3)) {
@@ -1021,7 +1018,6 @@ void vkvg_set_source_color (VkvgContext ctx, uint32_t c) {
 	ctx->curColor = c;
 	_update_cur_pattern (ctx, NULL);
 }
-
 void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
 	if (ctx->status)
 		return;
@@ -1029,7 +1025,6 @@ void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b) {
 	ctx->curColor = CreateRgbaf(r,g,b,1);
 	_update_cur_pattern (ctx, NULL);
 }
-
 void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 {
 	if (ctx->status)
@@ -1369,7 +1364,7 @@ static void _save (VkvgContext ctx) {
 	} else
 		sav->curColor = ctx->curColor;
 
-	sav->pSurf = ctx->pSurf;
+	sav->pNext		= ctx->pSavedCtxs;
 	sav->pNext = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav;
 }
