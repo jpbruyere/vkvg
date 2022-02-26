@@ -1362,6 +1362,7 @@ static void _save (VkvgContext ctx) {
 	sav->pNext		= ctx->pSavedCtxs;
 	sav->pNext = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav;
+
 }
 
 void vkvg_save (VkvgContext ctx){
