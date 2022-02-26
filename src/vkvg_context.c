@@ -112,6 +112,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	}
 
 	ctx->pSurf = surf;
+	vkvg_surface_reference(surf);
 
 	if (!surf || surf->status) {
 		ctx->status = VKVG_STATUS_INVALID_SURFACE;
@@ -300,6 +301,7 @@ void vkvg_destroy (VkvgContext ctx)
 	}
 
 	_release_context_ressources (ctx);
+	_surface_dereference (ctx->pSurf);
 }
 void vkvg_set_opacity (VkvgContext ctx, float opacity) {
 	if (ctx->status)
