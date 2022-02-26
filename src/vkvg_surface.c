@@ -231,6 +231,7 @@ VkvgSurface _dereference_surface (VkvgSurface surf) {
 	LOCK_SURFACE(surf)
 	surf->references--;
 	UNLOCK_SURFACE(surf)
+	return surf;
 }
 
 uint32_t vkvg_surface_get_reference_count (VkvgSurface surf) {
