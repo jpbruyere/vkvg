@@ -1139,7 +1139,18 @@ void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char* na
 	if (ctx->status)
 		return;
 	RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-	_font_cache_add_font_identity(ctx, path, name);
+	_vkvg_font_identity_t* fid = _font_cache_add_font_identity(ctx, path, name);
+	_font_cache_load_font_file_in_memory (fid);
+	_select_font_face (ctx, name);
+}
+void vkvg_load_font_from_memory (VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize, const char* name) {
+	if (ctx->status)
+		return;
+	//RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
+	_vkvg_font_identity_t* fid = _font_cache_add_font_identity (ctx, NULL, name);
+	fid->fontBuffer = fontBuffer;
+	fid->fontBufSize = fontBufferByteSize;
+
 	_select_font_face (ctx, name);
 }
 void vkvg_set_font_size (VkvgContext ctx, uint32_t size){
@@ -1176,8 +1187,31 @@ VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
 	if (ctx->status)
 		return NULL;
 	VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-	_font_cache_create_text_run(ctx, text, tr);
+	_font_cache_create_text_run(ctx, text, -1, tr);
 	return tr;
+}
+VkvgText vkvg_text_run_create_with_length (VkvgContext ctx, const char* text, uint32_t length) {
+	if (ctx->status)
+		return NULL;
+	VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
+	_font_cache_create_text_run(ctx, text, length, tr);
+	return tr;
+}
+uint32_t vkvg_text_run_get_glyph_count (VkvgText textRun) {
+	return textRun->glyph_count;
+}
+void vkvg_text_run_get_glyph_position (VkvgText textRun,
+									   uint32_t index,
+									   vkvg_glyph_info_t* pGlyphInfo) {
+	if (index >= textRun->glyph_count) {
+		*pGlyphInfo = (vkvg_glyph_info_t){0};
+		return;
+	}
+#if VKVG_USE_HARFBUZZ
+	memcpy (pGlyphInfo, &textRun->glyphs[index], sizeof(vkvg_glyph_info_t));
+#else
+	*pGlyphInfo = textRun->glyphs[index];
+#endif
 }
 void vkvg_text_run_destroy (VkvgText textRun) {
 	_font_cache_destroy_text_run (textRun);
@@ -1195,7 +1229,7 @@ void vkvg_text_run_get_extents (VkvgText textRun, vkvg_text_extents_t* extents) 
 void vkvg_text_extents (VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
 	if (ctx->status)
 		return;
-	_font_cache_text_extents(ctx, text, extents);
+	_font_cache_text_extents(ctx, text, -1, extents);
 }
 void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 	if (ctx->status)

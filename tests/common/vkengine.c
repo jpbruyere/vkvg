@@ -28,6 +28,8 @@
 #include "vkh_image.h"
 #include "vkh_device.h"
 
+#include "vkvg.h"
+
 #define TRY_LOAD_DEVICE_EXT(ext) {								\
 if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))	\
 	enabledExts[enabledExtsCount++] = #ext;						\
@@ -111,17 +113,17 @@ bool instance_extension_supported (VkExtensionProperties* instanceExtProps, uint
 }
 
 vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height) {
-    glfwSetErrorCallback(glfw_error_callback);
+	glfwSetErrorCallback(glfw_error_callback);
 
-    if (!glfwInit()) {
-        perror ("glfwInit failed");
-        exit(-1);
-    }
+	if (!glfwInit()) {
+		perror ("glfwInit failed");
+		exit(-1);
+	}
 
-    if (!glfwVulkanSupported()) {
-        perror ("glfwVulkanSupported return false.");
-        exit(-1);
-    }
+	if (!glfwVulkanSupported()) {
+		perror ("glfwVulkanSupported return false.");
+		exit(-1);
+	}
 
 	const char* enabledLayers[10];
 	const char* enabledExts [10];
@@ -139,35 +141,35 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 #endif
 	vkh_layers_check_release();
 
-	const char** gflwExts = glfwGetRequiredInstanceExtensions (&enabledExtsCount);
+	uint32_t glfwReqExtsCount = 0;
+	const char** gflwExts = glfwGetRequiredInstanceExtensions (&glfwReqExtsCount);
 
-	for (uint32_t i=0;i<enabledExtsCount;i++)
-		enabledExts[i] = gflwExts[i];
+	vkvg_get_required_instance_extensions (enabledExts, &enabledExtsCount);
 
-	vkh_instance_extensions_check_init ();
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	bool dbgUtilsSupported = vkh_instance_extension_supported("VK_EXT_debug_utils");
-	 if (dbgUtilsSupported)
-		enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
-#endif
-	if (vkh_instance_extension_supported("VK_KHR_get_physical_device_properties2"))
-		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
+	for (uint32_t i=0;i<glfwReqExtsCount;i++)
+		enabledExts[i+enabledExtsCount] = gflwExts[i];
 
-	vkh_instance_extensions_check_release();
+	enabledExtsCount += glfwReqExtsCount;
 
 	vk_engine_t* e = (vk_engine_t*)calloc(1,sizeof(vk_engine_t));
-	e->app = vkh_app_create(1 ,2 , "vkvgTest", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+
+#ifdef VK_VERSION_1_2
+	e->app =  vkh_app_create(1, 2, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+#else
+	e->app =  vkh_app_create(1, 1, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+#endif
+
+
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	if (dbgUtilsSupported)
-		vkh_app_enable_debug_messenger(e->app
-								   , VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-								   //| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
-								   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
-								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-								   , NULL);
+	vkh_app_enable_debug_messenger(e->app
+							   , VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+							   //| VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+							   //| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+							   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+							   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+							   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+							   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+							   , NULL);
 #endif
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -187,11 +189,10 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	&&  !vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi)
 	&&  !vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
 		pi = phys[0];
+	assert(pi && "No vulkan physical device found.");
 
-	if (pi) {
-		e->memory_properties = pi->memProps;
-		e->gpu_props = pi->properties;
-	}
+	e->memory_properties = pi->memProps;
+	e->gpu_props = pi->properties;
 
 	uint32_t qCount = 0;
 	float qPriorities[] = {0.0};
@@ -212,45 +213,19 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
 	vkGetPhysicalDeviceFeatures2(pi->phy, &phyFeat2);
 
+	vkvg_get_required_device_extensions (pi->phy, enabledExts, &enabledExtsCount);
 	TRY_LOAD_DEVICE_EXT (VK_KHR_swapchain)
-	TRY_LOAD_DEVICE_EXT (VK_EXT_blend_operation_advanced)
-	TRY_LOAD_DEVICE_EXT (VK_KHR_portability_subset)
-	TRY_LOAD_DEVICE_EXT (VK_KHR_relaxed_block_layout)
 
-	VkPhysicalDeviceFeatures enabledFeatures = {
-		.fillModeNonSolid = true,
-		//.sampleRateShading = true
-	};
+	VkPhysicalDeviceFeatures enabledFeatures = {0};
+	const void* pNext = vkvg_get_device_requirements (&enabledFeatures);
 
 	VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 									   .queueCreateInfoCount = qCount,
 									   .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
 									   .enabledExtensionCount = enabledExtsCount,
 									   .ppEnabledExtensionNames = enabledExts,
-									   .pEnabledFeatures = &enabledFeatures};
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
-	#ifdef VK_VERSION_1_2
-		VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
-			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
-			.scalarBlockLayout = VK_TRUE
-		};
-		device_info.pNext = &enabledFeatures12;
-	#else
-		if (!vkh_phyinfo_try_get_extension_properties(pi, "VK_EXT_scalar_block_layout", NULL)) {
-			LOG(VKVG_LOG_ERR, "CREATE Device failed: VK_EXT_scalar_block_layout unsupported\n");
-			dev->status = VKVG_STATUS_DEVICE_ERROR;
-			vkh_app_free_phyinfos (phyCount, phys);
-			vkh_app_destroy (app);
-			return dev;
-		}
-		enabledExts[device_info.enabledExtensionCount++] = "VK_EXT_scalar_block_layout";
-		VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeat = {
-			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
-			.scalarBlockLayout = VK_TRUE
-		};
-		device_info.pNext = &scalarBlockFeat;
-	#endif
-#endif
+									   .pEnabledFeatures = &enabledFeatures,
+									   .pNext = pNext};
 
 	e->dev = vkh_device_create(e->app, pi, &device_info);
 

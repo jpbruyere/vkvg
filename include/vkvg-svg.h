@@ -54,7 +54,7 @@ VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_
  * @return The new vkvg surface with the parsed SVG fragment as content, or null if an error occured.
  */
 vkvg_public
-VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width, uint32_t height, const char* svgFragment);
+VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width, uint32_t height, char* svgFragment);
 
 vkvg_public
 void vkvg_svg_get_dimensions (VkvgSvg svg, uint32_t* width, uint32_t* height);
@@ -63,7 +63,7 @@ vkvg_public
 VkvgSvg vkvg_svg_load (const char* svgFilePath);
 
 vkvg_public
-VkvgSvg vkvg_svg_load_fragment (const char* svgFragment);
+VkvgSvg vkvg_svg_load_fragment (char* svgFragment);
 
 vkvg_public
 void vkvg_svg_render (VkvgSvg svg, VkvgContext ctx, const char* id);

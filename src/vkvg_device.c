@@ -122,6 +122,89 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 	dev->status = VKVG_STATUS_SUCCESS;
 }
 
+#define _CHECK_INST_EXT(ext)\
+if (vkh_instance_extension_supported(#ext)) {	\
+	if (pExtensions)							\
+	   pExtensions[*pExtCount] = #ext;			\
+	(*pExtCount)++;								\
+}
+void vkvg_get_required_instance_extensions (const char** pExtensions, uint32_t* pExtCount) {
+	*pExtCount = 0;
+
+	vkh_instance_extensions_check_init ();
+
+#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+	_CHECK_INST_EXT(VK_EXT_debug_utils)
+#endif
+	_CHECK_INST_EXT(VK_KHR_get_physical_device_properties2)
+
+	vkh_instance_extensions_check_release();
+}
+
+bool _get_dev_extension_is_supported (VkExtensionProperties* pExtensionProperties, uint32_t extensionCount, const char* name) {
+	for (uint32_t i=0; i<extensionCount; i++) {
+		if (strcmp(name, pExtensionProperties[i].extensionName)==0)
+			return true;
+	}
+	return false;
+}
+#define _CHECK_DEV_EXT(ext) {					\
+if (_get_dev_extension_is_supported(pExtensionProperties, extensionCount, #ext)){	\
+	if (pExtensions)							\
+		pExtensions[*pExtCount] = #ext;			\
+	(*pExtCount)++;								\
+}
+void vkvg_get_required_device_extensions (VkPhysicalDevice phy, const char** pExtensions, uint32_t* pExtCount) {
+	VkExtensionProperties* pExtensionProperties;
+	uint32_t extensionCount;
+
+	*pExtCount = 0;
+
+	VK_CHECK_RESULT(vkEnumerateDeviceExtensionProperties(phy, NULL, &extensionCount, NULL));
+	pExtensionProperties = (VkExtensionProperties*)malloc(extensionCount * sizeof(VkExtensionProperties));
+	VK_CHECK_RESULT(vkEnumerateDeviceExtensionProperties(phy, NULL, &extensionCount, pExtensionProperties));
+
+	//https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VK_KHR_portability_subset
+	_CHECK_DEV_EXT(VK_KHR_portability_subset)
+
+	if (_get_dev_extension_is_supported(pExtensionProperties, extensionCount, "VK_EXT_scalar_block_layout"))
+		if (pExtensions)
+			pExtensions[*pExtCount] = "VK_EXT_scalar_block_layout";
+		(*pExtCount)++;
+
+	}
+}
+
+//enabledFeature12 is guarantied to be the first in pNext chain
+const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeatures) {
+
+	pEnabledFeatures->fillModeNonSolid = true;
+
+	void* pNext = NULL;
+
+#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+#ifdef VK_VERSION_1_2
+	static VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+		.scalarBlockLayout = VK_TRUE
+	};
+	enabledFeatures12.pNext = pNext;
+	pNext = &enabledFeatures12;
+#else
+	static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeat = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
+		.scalarBlockLayout = VK_TRUE
+	};
+	scalarBlockFeat.pNext = pNext;
+	pNext = &scalarBlockFeat;
+
+#endif
+#endif
+
+	return pNext;
+}
+
+
 VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) {
 	LOG(VKVG_LOG_INFO, "CREATE Device\n");
 	VkvgDevice dev = (vkvg_device*)calloc(1,sizeof(vkvg_device));
@@ -149,17 +232,7 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 #endif
 	vkh_layers_check_release();
 
-	vkh_instance_extensions_check_init ();
-
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	bool dbgUtilsSupported = vkh_instance_extension_supported("VK_EXT_debug_utils");
-	 if (dbgUtilsSupported)
-		enabledExts[enabledExtsCount++] = "VK_EXT_debug_utils";
-#endif
-	if (vkh_instance_extension_supported("VK_KHR_get_physical_device_properties2"))
-		enabledExts[enabledExtsCount++] = "VK_KHR_get_physical_device_properties2";
-
-	vkh_instance_extensions_check_release();
+	vkvg_get_required_instance_extensions (enabledExts, &enabledExtsCount);
 
 #ifdef VK_VERSION_1_2
 	VkhApp app =  vkh_app_create(1, 2, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
@@ -168,12 +241,12 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 #endif
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	if (dbgUtilsSupported)
-		vkh_app_enable_debug_messenger(app
-								, VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-								, VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
-								, NULL);
+	vkh_app_enable_debug_messenger(app
+			, VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+			, VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+			, NULL);
 #endif
+
 	VkhPhyInfo* phys = vkh_app_get_phyinfos (app, &phyCount, VK_NULL_HANDLE);
 	if (phyCount == 0) {
 		dev->status = VKVG_STATUS_DEVICE_ERROR;
@@ -207,49 +280,20 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 	VkPhysicalDeviceScalarBlockLayoutFeatures scalarBlockLayoutSupport = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES};
 	phyFeat2.pNext = &scalarBlockLayoutSupport;
 
-	vkGetPhysicalDeviceFeatures2(pi->phy, &phyFeat2);
+	vkGetPhysicalDeviceFeatures2 (pi->phy, &phyFeat2);
 
-	TRY_LOAD_DEVICE_EXT (VK_EXT_blend_operation_advanced)
-	//https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VK_KHR_portability_subset
-	TRY_LOAD_DEVICE_EXT (VK_KHR_portability_subset)
-	TRY_LOAD_DEVICE_EXT (VK_KHR_relaxed_block_layout)
+	vkvg_get_required_device_extensions (pi->phy, enabledExts, &enabledExtsCount);
 
-	VkPhysicalDeviceFeatures enabledFeatures = {
-		.fillModeNonSolid = true,
-		//.sampleRateShading = true
-	};
+	VkPhysicalDeviceFeatures enabledFeatures = {0};
+	const void* pNext = vkvg_get_device_requirements (&enabledFeatures);
 
 	VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 									   .queueCreateInfoCount = qCount,
 									   .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
 									   .enabledExtensionCount = enabledExtsCount,
 									   .ppEnabledExtensionNames = enabledExts,
-									   .pEnabledFeatures = &enabledFeatures};
-
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
-	#ifdef VK_VERSION_1_2
-		VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
-			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
-			.scalarBlockLayout = VK_TRUE
-		};
-		device_info.pNext = &enabledFeatures12;
-	#else
-		if (!vkh_phyinfo_try_get_extension_properties(pi, "VK_EXT_scalar_block_layout", NULL)) {
-			LOG(VKVG_LOG_ERR, "CREATE Device failed: VK_EXT_scalar_block_layout unsupported\n");
-			dev->status = VKVG_STATUS_DEVICE_ERROR;
-			vkh_app_free_phyinfos (phyCount, phys);
-			vkh_app_destroy (app);
-			return dev;
-		}
-		enabledExts[device_info.enabledExtensionCount++] = "VK_EXT_scalar_block_layout";
-		VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeat = {
-			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
-			.scalarBlockLayout = VK_TRUE
-		};
-		device_info.pNext = &scalarBlockFeat;
-	#endif
-#endif
-
+									   .pEnabledFeatures = &enabledFeatures,
+									   .pNext = pNext};
 
 	VkhDevice vkhd = vkh_device_create(app, pi, &device_info);
 
