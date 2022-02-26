@@ -301,7 +301,7 @@ void vkvg_destroy (VkvgContext ctx)
 	}
 
 	_release_context_ressources (ctx);
-	_surface_dereference (ctx->pSurf);
+	_dereference_surface (ctx->pSurf);
 }
 void vkvg_set_opacity (VkvgContext ctx, float opacity) {
 	if (ctx->status)
