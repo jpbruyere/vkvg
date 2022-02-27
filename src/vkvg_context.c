@@ -67,6 +67,7 @@ void _init_ctx (VkvgContext ctx) {
 		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
 
 	ctx->pSurf->new = false;
+	vkvg_surface_reference (ctx->pSurf);
 
 	if (ctx->dev->samples == VK_SAMPLE_COUNT_1_BIT)
 		ctx->renderPassBeginInfo.clearValueCount = 2;
@@ -99,7 +100,6 @@ VkvgContext vkvg_create(VkvgSurface surf)
 		_update_descriptor_set (ctx, surf->dev->emptyImg, ctx->dsSrc);
 		_clear_path	(ctx);
 		ctx->cmd = ctx->cmdBuffers[0];//current recording buffer
-		vkvg_surface_reference (surf);
 		ctx->status = VKVG_STATUS_SUCCESS;
 		return ctx;
 	}
@@ -183,8 +183,7 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
 #endif
-	
-	vkvg_surface_reference (surf);
+
 	return ctx;
 }
 void vkvg_flush (VkvgContext ctx){
