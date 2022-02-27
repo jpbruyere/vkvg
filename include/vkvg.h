@@ -1424,6 +1424,19 @@ vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx);
 vkvg_public
 VkvgPattern vkvg_get_source (VkvgContext ctx);
 
+vkvg_public
+VkvgSurface vkvg_get_target (VkvgContext ctx);
+
+/**
+ * @brief Returns whether a current point is defined on the current path.
+ * See @ref vkvg_get_current_point() for details on the current point.
+ *
+ * @param ctx a valig vkvg @ref context
+ * @return bool whether a current point is defined
+ **/
+vkvg_public
+bool vkvg_has_current_point (VkvgContext ctx);
+
 /**
  * @brief
  *
