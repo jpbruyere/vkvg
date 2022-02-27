@@ -894,6 +894,16 @@ void vkvg_destroy (VkvgContext ctx);
 vkvg_public
 vkvg_status_t vkvg_status (VkvgContext ctx);
 /**
+ * vkvg_status_to_string:
+ * @status: a vkvg status
+ *
+ * Provides a human-readable description of a #vkvg_status_t.
+ *
+ * Returns: a string representation of the status
+ **/
+vkvg_public
+const char *vkvg_status_to_string (vkvg_status_t status);
+/**
  * @brief Increment by one the reference count on this context.
  * @param ctx The context to increment the reference count for.
  * @return
