@@ -67,6 +67,7 @@ void _init_ctx (VkvgContext ctx) {
 		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
 
 	ctx->pSurf->new = false;
+	vkvg_surface_reference (ctx->pSurf);
 
 	if (ctx->dev->samples == VK_SAMPLE_COUNT_1_BIT)
 		ctx->renderPassBeginInfo.clearValueCount = 2;
@@ -293,6 +294,8 @@ void vkvg_destroy (VkvgContext ctx)
 	if (ctx->dev->threadAware)
 		mtx_unlock (&ctx->dev->mutex);
 #endif
+
+	vkvg_surface_destroy(ctx->pSurf);
 
 	if (!ctx->status && ctx->dev->cachedContextCount < VKVG_MAX_CACHED_CONTEXT_COUNT) {
 		_device_store_context (ctx);
