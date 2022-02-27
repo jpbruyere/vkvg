@@ -1595,3 +1595,73 @@ VkvgSurface vkvg_get_target (VkvgContext ctx) {
 		return NULL;
 	return ctx->pSurf;
 }
+
+/**
+ * vkvg_status_to_string:
+ * @status: a vkvg status
+ *
+ * Provides a human-readable description of a #vkvg_status_t.
+ *
+ * Returns: a string representation of the status
+ **/
+const char *
+vkvg_status_to_string (vkvg_status_t status) {
+	switch (status) {
+	case VKVG_STATUS_SUCCESS:
+		return "no error has occurred";
+	case VKVG_STATUS_NO_MEMORY:
+		return "out of memory";
+	case VKVG_STATUS_INVALID_RESTORE:
+		return "vkvg_restore() without matching vkvg_save()";
+	case VKVG_STATUS_NO_CURRENT_POINT:
+		return "no current point defined";
+	case VKVG_STATUS_INVALID_MATRIX:
+		return "invalid matrix (not invertible)";
+	case VKVG_STATUS_INVALID_STATUS:
+		return "invalid value for an input vkvg_status_t";
+	case VKVG_STATUS_INVALID_INDEX:
+		return "invalid index passed to getter";
+	case VKVG_STATUS_NULL_POINTER:
+		return "NULL pointer";
+	case VKVG_STATUS_INVALID_STRING:
+		return "input string not valid UTF-8";
+	case VKVG_STATUS_INVALID_PATH_DATA:
+		return "input path data not valid";
+	case VKVG_STATUS_READ_ERROR:
+		return "error while reading from input stream";
+	case VKVG_STATUS_WRITE_ERROR:
+		return "error while writing to output stream";
+	case VKVG_STATUS_SURFACE_FINISHED:
+		return "the target surface has been finished";
+	case VKVG_STATUS_SURFACE_TYPE_MISMATCH:
+		return "the surface type is not appropriate for the operation";
+	case VKVG_STATUS_PATTERN_TYPE_MISMATCH:
+		return "the pattern type is not appropriate for the operation";
+	case VKVG_STATUS_INVALID_GRADIENT:
+		return "the stops count is zero";
+   	case VKVG_STATUS_INVALID_CONTENT:	// there are no users of this flag
+		return "<you should not get this>";
+	case VKVG_STATUS_INVALID_FORMAT:
+		return "invalid value for an input vkvg_format_t";
+	case VKVG_STATUS_INVALID_VISUAL:	// there are no users of this flag
+		return "<you should not get this>";
+	case VKVG_STATUS_FILE_NOT_FOUND:
+		return "file not found";
+	case VKVG_STATUS_INVALID_DASH:
+		return "invalid value for a dash setting";
+	case VKVG_STATUS_INVALID_RECT:
+		return "a rectangle has the height or width equal to 0";
+	case VKVG_STATUS_TIMEOUT:
+		return "waiting for a Vulkan operation to finish resulted in a fence timeout (5 seconds)";
+	case VKVG_STATUS_DEVICE_ERROR:
+		return "the initialization of the device resulted in an error";
+	// case VKVG_STATUS_INVALID_IMAGE:
+		// return "invalid ";
+	// case VKVG_STATUS_INVALID_SURFACE:
+		// return "invalid ";
+	case VKVG_STATUS_INVALID_FONT:
+		return "unresolved font name";
+	default:
+		return "<unknown error status>";
+	}
+}
