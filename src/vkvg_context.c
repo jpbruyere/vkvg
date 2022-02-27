@@ -1593,16 +1593,7 @@ VkvgSurface vkvg_get_target (VkvgContext ctx) {
 	return ctx->pSurf;
 }
 
-/**
- * vkvg_status_to_string:
- * @status: a vkvg status
- *
- * Provides a human-readable description of a #vkvg_status_t.
- *
- * Returns: a string representation of the status
- **/
-const char *
-vkvg_status_to_string (vkvg_status_t status) {
+const char *vkvg_status_to_string (vkvg_status_t status) {
 	switch (status) {
 	case VKVG_STATUS_SUCCESS:
 		return "no error has occurred";
@@ -1636,7 +1627,7 @@ vkvg_status_to_string (vkvg_status_t status) {
 		return "the pattern type is not appropriate for the operation";
 	case VKVG_STATUS_INVALID_GRADIENT:
 		return "the stops count is zero";
-    case VKVG_STATUS_INVALID_CONTENT:	// there are no users of this flag
+    	case VKVG_STATUS_INVALID_CONTENT:	// there are no users of this flag
 		return "<you should not get this>";
 	case VKVG_STATUS_INVALID_FORMAT:
 		return "invalid value for an input vkvg_format_t";
