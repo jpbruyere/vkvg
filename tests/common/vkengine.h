@@ -39,34 +39,35 @@
 typedef struct _vk_engine_t* VkEngine;
 
 typedef struct _vk_engine_t {
-    VkhApp              app;
-    VkPhysicalDeviceMemoryProperties    memory_properties;
-    VkPhysicalDeviceProperties          gpu_props;
-    VkhDevice           dev;
-    GLFWwindow*         window;
-    VkhPresenter        renderer;
+	VkhApp				app;
+	VkPhysicalDeviceMemoryProperties	memory_properties;
+	VkPhysicalDeviceProperties			gpu_props;
+	VkhDevice			dev;
+	GLFWwindow*			window;
+	VkhPresenter		renderer;
 }vk_engine_t;
 
 vk_engine_t*   vkengine_create  (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width, uint32_t height);
 void vkengine_dump_available_layers   ();
 bool vkengine_try_get_phyinfo (VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);
-void vkengine_destroy       (VkEngine e);
-bool vkengine_should_close  (VkEngine e);
-void vkengine_close         (VkEngine e);
-void vkengine_dump_Infos    (VkEngine e);
-void vkengine_set_title     (VkEngine e, const char* title);
-VkDevice            vkengine_get_device         (VkEngine e);
-VkPhysicalDevice    vkengine_get_physical_device(VkEngine e);
-VkQueue             vkengine_get_queue          (VkEngine e);
-uint32_t            vkengine_get_queue_fam_idx  (VkEngine e);
+void vkengine_destroy		(VkEngine e);
+bool vkengine_should_close	(VkEngine e);
+void vkengine_close			(VkEngine e);
+void vkengine_dump_Infos	(VkEngine e);
+void vkengine_set_title		(VkEngine e, const char* title);
+VkInstance			vkengine_get_instance		(VkEngine e);
+VkDevice			vkengine_get_device			(VkEngine e);
+VkPhysicalDevice	vkengine_get_physical_device(VkEngine e);
+VkQueue				vkengine_get_queue			(VkEngine e);
+uint32_t			vkengine_get_queue_fam_idx	(VkEngine e);
 
 void vkengine_get_queues_properties (vk_engine_t* e, VkQueueFamilyProperties** qFamProps, uint32_t* count);
 
-void vkengine_set_key_callback          (VkEngine e, GLFWkeyfun key_callback);
-void vkengine_set_mouse_but_callback    (VkEngine e, GLFWmousebuttonfun onMouseBut);
-void vkengine_set_cursor_pos_callback   (VkEngine e, GLFWcursorposfun onMouseMove);
-void vkengine_set_scroll_callback       (VkEngine e, GLFWscrollfun onScroll);
-void vkengine_set_char_callback         (VkEngine e, GLFWcharfun onChar);
+void vkengine_set_key_callback			(VkEngine e, GLFWkeyfun key_callback);
+void vkengine_set_mouse_but_callback	(VkEngine e, GLFWmousebuttonfun onMouseBut);
+void vkengine_set_cursor_pos_callback	(VkEngine e, GLFWcursorposfun onMouseMove);
+void vkengine_set_scroll_callback		(VkEngine e, GLFWscrollfun onScroll);
+void vkengine_set_char_callback			(VkEngine e, GLFWcharfun onChar);
 
 void vkengine_wait_idle					(VkEngine e);
 #endif
