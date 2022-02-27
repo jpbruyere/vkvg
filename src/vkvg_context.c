@@ -1615,6 +1615,12 @@ void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float
 	vkvg_close_path (ctx);
 }
 
+VkvgSurface vkvg_get_target (VkvgContext ctx) {
+	if (ctx->status)
+		return NULL;
+	return ctx->pSurf;
+}
+
 void vkvg_push_group (VkvgContext ctx) {
 	if (ctx->status)
 		return;
@@ -1663,10 +1669,4 @@ void vkvg_pop_group_to_source (VkvgContext ctx) {
 		return;
 	VkvgPattern pat = vkvg_pop_group(ctx);
 	_set_source(ctx, pat);
-}
-
-VkvgSurface vkvg_get_target (VkvgContext ctx) {
-	if (ctx->status)
-		return NULL;
-	return ctx->pSurf;
 }
