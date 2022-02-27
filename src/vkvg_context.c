@@ -1740,9 +1740,3 @@ void vkvg_pop_group_to_source (VkvgContext ctx) {
 	VkvgPattern pat = vkvg_pop_group(ctx);
 	_set_source(ctx, pat);
 }
-
-VkvgSurface vkvg_get_target (VkvgContext ctx) {
-	if (ctx->status)
-		return NULL;
-	return ctx->pSurf;
-}
