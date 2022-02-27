@@ -273,6 +273,9 @@ bool vkengine_should_close (VkEngine e) {
 void vkengine_set_title (VkEngine e, const char* title) {
 	glfwSetWindowTitle(e->window, title);
 }
+VkInstance vkengine_get_instance (VkEngine e){
+	return e->dev->instance;
+}
 VkDevice vkengine_get_device (VkEngine e){
 	return e->dev->dev;
 }
