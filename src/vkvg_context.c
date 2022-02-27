@@ -1628,12 +1628,6 @@ void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float
 	vkvg_close_path (ctx);
 }
 
-VkvgSurface vkvg_get_target (VkvgContext ctx) {
-	if (ctx->status)
-		return NULL;
-	return ctx->pSurf;
-}
-
 void vkvg_push_group (VkvgContext ctx) {
 	if (ctx->status)
 		return;
@@ -1646,16 +1640,6 @@ void vkvg_push_group (VkvgContext ctx) {
     ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
     ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
     // _set_source_surface(ctx, s, 0, 0);
-
-=======
-	_save(ctx);
-	VkvgSurface surf = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
-	vkvg_surface_reference(surf);
-	ctx->pSurf = surf;
-	ctx->pSurf->new = false;
-	ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
-	ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
->>>>>>> 96a9536 (Remove outdated comments)
 }
 
 VkvgPattern vkvg_pop_group (VkvgContext ctx) {
@@ -1663,7 +1647,6 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
 		return NULL;
 
 	if (!ctx->pSavedCtxs) {
-		/* error: no context has been pushed */
 		ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
 		return NULL;
 	}
@@ -1684,7 +1667,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
 	while (ctx->pSavedCtxs != saved_ctx) {
 		_restore(ctx);
 	}
-	
+
 	return pat;
 }
 
