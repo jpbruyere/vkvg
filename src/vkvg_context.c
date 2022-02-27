@@ -295,12 +295,13 @@ void vkvg_destroy (VkvgContext ctx)
 		mtx_unlock (&ctx->dev->mutex);
 #endif
 
+	vkvg_surface_destroy(ctx->pSurf);
+
 	if (!ctx->status && ctx->dev->cachedContextCount < VKVG_MAX_CACHED_CONTEXT_COUNT) {
 		_device_store_context (ctx);
 		return;
 	}
 
-	vkvg_surface_destroy (ctx->pSurf);
 	_release_context_ressources (ctx);
 }
 void vkvg_set_opacity (VkvgContext ctx, float opacity) {
