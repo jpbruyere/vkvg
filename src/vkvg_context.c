@@ -523,6 +523,11 @@ void vkvg_move_to (VkvgContext ctx, float x, float y)
 	_finish_path(ctx);
 	_add_point (ctx, x, y);
 }
+bool vkvg_has_current_point (VkvgContext ctx) {
+	if (ctx->status)
+		return false;
+	return !_current_path_is_empty(ctx);
+}
 void vkvg_get_current_point (VkvgContext ctx, float* x, float* y) {
 	if (_current_path_is_empty(ctx)) {
 		*x = *y = 0;
@@ -1583,4 +1588,10 @@ void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float
 	vkvg_curve_to (ctx, bottomRightX, bottomRightY, topRightX, topRightY, topCenterX, topCenterY);
 	vkvg_curve_to (ctx, topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
 	vkvg_close_path (ctx);
+}
+
+VkvgSurface vkvg_get_target (VkvgContext ctx) {
+	if (ctx->status)
+		return NULL;
+	return ctx->pSurf;
 }
