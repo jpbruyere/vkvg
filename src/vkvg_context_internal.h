@@ -101,7 +101,7 @@ typedef enum {
 
 typedef struct _vkvg_context_save_t {
 	struct _vkvg_context_save_t* pNext;
-	VkvgSurface pSurf;
+	VkvgSurface 				 pSurf;
 
 	float					lineWidth;
 	uint32_t				dashCount;		//value count in dash array, 0 if dash not set.
