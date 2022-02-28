@@ -17,7 +17,6 @@ jobs:
        version: 1.3.204.0
        cache: true
     - uses: actions/checkout@v2
-    - run: dir $env:VULKAN_SDK
     - run: cmake -G "Visual Studio 16 2019" . -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true --trace
     - run: cmake --build .
 
