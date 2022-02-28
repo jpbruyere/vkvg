@@ -20,11 +20,8 @@ jobs:
         ref: windows
         persist-credentials: false
     - uses: actions/checkout@v2
-    - run: md build
-    - run: cmake -G "Visual Studio 16 2019" .. -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
-      working-directory: build
+    - run: cmake -G "Visual Studio 16 2019" . -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
     - run: cmake --build .
-      working-directory: build
 
   linux_jorb:
     runs-on: ubuntu-latest
