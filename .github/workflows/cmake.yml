@@ -20,7 +20,7 @@ jobs:
         ref: windows
         persist-credentials: false
     - uses: actions/checkout@v2
-    - run: cmake -G "Visual Studio 16 2019" . -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
+    - run: cmake -G "Visual Studio 16 2019" . -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true --trace
     - run: cmake --build .
 
   linux_jorb:
