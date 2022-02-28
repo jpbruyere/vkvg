@@ -25,7 +25,7 @@ for:
         - git submodule update --init --recursive
         - mkdir build
         - cd build
-        - cmake -G "Visual Studio 16 2019" -DCMAKE_BUILD_TYPE=Release -DVKVG_RECORDING=false -DGIT_SUBMODULE=true -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+        - cmake -G "Visual Studio 16 2019" -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DCMAKE_BUILD_TYPE=Release -DVKVG_RECORDING=false -DGIT_SUBMODULE=true -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
     build_script:
         - cmake --build .
     after_build:
