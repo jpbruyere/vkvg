@@ -25,7 +25,7 @@ for:
         - git submodule update --init --recursive
         - mkdir build
         - cd build
-        - cmake -G "Visual Studio 14 Win64" -DCMAKE_BUILD_TYPE=Release -DVKVG_LCD_FONT_FILTER=off -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+        - cmake -G "Visual Studio 14 Win64" -DCMAKE_BUILD_TYPE=Release -DVKVG_RECORDING=false -DGIT_SUBMODULE=true -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
     build_script:
         - msbuild vkvg.sln /p:Configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
     after_build:
