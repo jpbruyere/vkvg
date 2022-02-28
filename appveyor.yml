@@ -25,9 +25,9 @@ for:
         - git submodule update --init --recursive
         - mkdir build
         - cd build
-        - cmake -G "Visual Studio 14 Win64" -DCMAKE_BUILD_TYPE=Release -DVKVG_RECORDING=false -DGIT_SUBMODULE=true -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+        - cmake -G "Visual Studio 16 2019" -DCMAKE_BUILD_TYPE=Release -DVKVG_RECORDING=false -DGIT_SUBMODULE=true -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
     build_script:
-        - msbuild vkvg.sln /p:Configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+        - cmake --build .
     after_build:
         - cd ..
         - 7z a vkvg.zip build
