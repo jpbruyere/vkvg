@@ -20,6 +20,7 @@ jobs:
         ref: windows
         persist-credentials: false
     - uses: actions/checkout@v2
+    - run: dir $env:VULKAN_SDK
     - run: cmake -G "Visual Studio 16 2019" . -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true --trace
     - run: cmake --build .
 
