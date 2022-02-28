@@ -12,7 +12,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        build_config: ['Debug', 'Release']
+        build_config: ['Release']
         arch: ['x64', 'Win32']
     defaults:
       run:
@@ -21,8 +21,6 @@ jobs:
       VULKAN_SDK: ${{ github.workspace }}\VulkanSDK
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
     - uses: actions/checkout@v2
       with:
         repository: 'krOoze/vk_sdk_lite'
@@ -43,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build_config: ['Debug', 'Release']
+        build_config: ['Release']
     defaults:
       run:
         shell: bash
@@ -73,7 +71,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        build_config: ['Debug', 'Release']
+        build_config: ['Release']
     defaults:
       run:
         shell: bash
