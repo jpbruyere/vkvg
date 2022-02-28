@@ -45,9 +45,9 @@ void _fonts_cache_create (VkvgDevice dev){
 		mtx_init (&cache->mutex, mtx_plain);
 
 #ifdef VKVG_USE_FONTCONFIG
-	cache->config = FcInitLoadConfigAndFonts();
+	cache->config = FcInitLoadConfigAndFonts ();
 	if (!cache->config) {
-		fprintf(stderr, "Font config initialisation failed, consider using 'FONTCONFIG_PATH' and 'FONTCONFIG_FILE' environmane\
+		LOG(VKVG_LOG_DEBUG, "Font config initialisation failed, consider using 'FONTCONFIG_PATH' and 'FONTCONFIG_FILE' environmane\
 					   variables to point to 'fonts.conf' needed for FontConfig startup");
 		assert(cache->config);
 	}

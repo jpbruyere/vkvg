@@ -74,7 +74,7 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 	dev->fence	= vkh_fence_create_signaled ((VkhDevice)dev);
 
 	_device_create_pipeline_cache		(dev);
-	_fonts_cache_create			(dev);
+	_fonts_cache_create					(dev);
 	if (dev->deferredResolve || dev->samples == VK_SAMPLE_COUNT_1_BIT){
 		dev->renderPass = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
 		dev->renderPass_ClearStencil = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
