@@ -10,16 +10,8 @@ on:
 jobs:
   Win_jorb:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        build_config: ['Release']
-        arch: ['x64', 'Win32']
-    defaults:
-      run:
-        shell: cmd
     env:
       VULKAN_SDK: ${{ github.workspace }}\VulkanSDK
-
     steps:
     - uses: actions/checkout@v2
       with:
@@ -28,14 +20,11 @@ jobs:
         ref: windows
         persist-credentials: false
     - uses: actions/checkout@v2
-      with:
-        path: 'source'
-        persist-credentials: false
-    - run: md source\build
-    - run: cmake -G "Visual Studio 16 2019" -A ${{ matrix.arch }} .. -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
-      working-directory: source\build
-    - run: cmake --build . --config ${{ matrix.build_config }}
-      working-directory: source\build
+    - run: md build
+    - run: cmake -G "Visual Studio 16 2019" .. -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
+      working-directory: build
+    - run: cmake --build .
+      working-directory: build
 
   linux_jorb:
     runs-on: ubuntu-latest
