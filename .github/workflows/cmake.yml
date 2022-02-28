@@ -17,8 +17,10 @@ jobs:
        version: 1.3.204.0
        cache: true
     - uses: actions/checkout@v2
-    - run: cmake -G "Visual Studio 16 2019" . -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true --trace
-    - run: cmake --build .
+    - name: configure
+      run: cmake -G "Visual Studio 16 2019" . -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true --trace
+    - name: build
+      run: cmake --build .
 
   linux_jorb:
     runs-on: ubuntu-latest
