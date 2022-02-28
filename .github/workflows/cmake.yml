@@ -9,7 +9,7 @@ on:
 
 jobs:
   Win_jorb:
-    runs-on: windows-latest
+    runs-on: windows-2019
     env:
       VULKAN_SDK: ${{ github.workspace }}\VulkanSDK
     steps:
