@@ -9,41 +9,24 @@ on:
 
 jobs:
   Win_jorb:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        build_config: ['Debug', 'Release']
-        arch: ['x64', 'Win32']
-    defaults:
-      run:
-        shell: cmd
-    env:
-      VULKAN_SDK: ${{ github.workspace }}\VulkanSDK
-
+    runs-on: windows-2019
     steps:
     - uses: actions/checkout@v2
-    - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
-    - uses: actions/checkout@v2
+    - name: Install Vulkan SDK
+      uses: humbletim/install-vulkan-sdk@v1.1.1
       with:
-        repository: 'krOoze/vk_sdk_lite'
-        path: ${{ env.VULKAN_SDK }}
-        ref: windows
-        persist-credentials: false
-    - uses: actions/checkout@v2
-      with:
-        path: 'source'
-        persist-credentials: false
-    - run: md source\build
-    - run: cmake -G "Visual Studio 16 2019" -A ${{ matrix.arch }} .. -DVKVG_RECORDING=false -DCMAKE_SYSTEM_VERSION=10.0.18362.0 -DVKVG_SVG=false -DGIT_SUBMODULE=true
-      working-directory: source\build
-    - run: cmake --build . --config ${{ matrix.build_config }}
-      working-directory: source\build
+       version: 1.3.204.0
+       cache: true
+    - name: configure
+      run: cmake -G "Visual Studio 16 2019" . -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
+    - name: build
+      run: cmake --build .
 
   linux_jorb:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build_config: ['Debug', 'Release']
+        build_config: ['Release']
     defaults:
       run:
         shell: bash
@@ -73,7 +56,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        build_config: ['Debug', 'Release']
+        build_config: ['Release']
     defaults:
       run:
         shell: bash

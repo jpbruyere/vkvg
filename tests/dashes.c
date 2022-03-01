@@ -103,8 +103,6 @@ void curve () {
 
 
 int main(int argc, char *argv[]) {	
-	//PERFORM_TEST(test, argc, argv);
-	//vkvg_log_level = VKVG_LOG_ERR|VKVG_LOG_DEBUG|VKVG_LOG_INFO|VKVG_LOG_INFO_PATH|VKVG_LOG_DBG_ARRAYS|VKVG_LOG_FULL;
 	dashes_count = 2;
 	dashes[0] = 0;
 	dashes[1] = 10;

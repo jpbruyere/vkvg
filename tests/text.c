@@ -269,7 +269,6 @@ void proto_sinaitic () {
 }
 int main(int argc, char *argv[]) {
 	no_test_size = true;
-	//vkvg_log_level = VKVG_LOG_INFO;
 	PERFORM_TEST (simple_text, argc, argv);
 	PERFORM_TEST (font_file_path, argc, argv);
 	PERFORM_TEST (single_font_and_size, argc, argv);

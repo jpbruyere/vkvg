@@ -766,7 +766,7 @@ void _clip_preserve (VkvgContext ctx){
 #endif
 
 	if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
-		_poly_fill (ctx);
+		_poly_fill				(ctx, NULL);
 		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineClipping);
 	}else{
 		CmdBindPipeline			(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineClipping);
@@ -780,7 +780,7 @@ void _clip_preserve (VkvgContext ctx){
 	CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
 	CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
 
-	_draw_full_screen_quad (ctx, false);
+	_draw_full_screen_quad (ctx, NULL);
 
 	_bind_draw_pipeline (ctx);
 	CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -801,11 +801,11 @@ void _fill_preserve (VkvgContext ctx){
 
 	 if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD){
 		 _emit_draw_cmd_undrawn_vertices(ctx);
-
-		_poly_fill (ctx);
-		_bind_draw_pipeline (ctx);
+		vec4 bounds = {FLT_MAX,FLT_MAX,FLT_MIN,FLT_MIN};
+		_poly_fill				(ctx, &bounds);
+		_bind_draw_pipeline		(ctx);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-		_draw_full_screen_quad (ctx, true);
+		_draw_full_screen_quad	(ctx, &bounds);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 		return;
 	}
@@ -993,7 +993,7 @@ void vkvg_paint (VkvgContext ctx){
 	}
 
 	_ensure_renderpass_is_started (ctx);
-	_draw_full_screen_quad (ctx, true);
+	_draw_full_screen_quad (ctx, NULL);
 }
 void vkvg_set_source_color (VkvgContext ctx, uint32_t c) {
 	if (ctx->status)
@@ -1118,7 +1118,10 @@ void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char* na
 		return;
 	RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
 	_vkvg_font_identity_t* fid = _font_cache_add_font_identity(ctx, path, name);
-	_font_cache_load_font_file_in_memory (fid);
+	if (!_font_cache_load_font_file_in_memory (fid)) {
+		ctx->status = VKVG_STATUS_FILE_NOT_FOUND;
+		return;
+	}
 	_select_font_face (ctx, name);
 }
 void vkvg_load_font_from_memory (VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize, const char* name) {
@@ -1299,7 +1302,7 @@ void vkvg_save (VkvgContext ctx){
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 		CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
 
-		_draw_full_screen_quad (ctx, false);
+		_draw_full_screen_quad (ctx, NULL);
 
 		_bind_draw_pipeline (ctx);
 		CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
@@ -1383,7 +1386,7 @@ void vkvg_restore (VkvgContext ctx){
 			CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, curSaveBit);
 			CmdSetStencilWriteMask	(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
 
-			_draw_full_screen_quad (ctx, false);
+			_draw_full_screen_quad (ctx, NULL);
 
 			_bind_draw_pipeline (ctx);
 			CmdSetStencilCompareMask (ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
