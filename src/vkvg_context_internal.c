@@ -1571,7 +1571,7 @@ void _elliptic_arc (VkvgContext ctx, float x1, float y1, float x2, float y2, boo
 
 
 //Even-Odd inside test with stencil buffer implementation.
-void _poly_fill (VkvgContext ctx){
+void _poly_fill (VkvgContext ctx, vec4* bounds){
 	//we anticipate the check for vbo buffer size, ibo is not used in poly_fill
 	//the polyfill emit a single vertex for each point in the path.
 	if (ctx->sizeVBO - VKVG_ARRAY_THRESHOLD <  ctx->vertCount + ctx->pointCount) {
@@ -1611,6 +1611,20 @@ void _poly_fill (VkvgContext ctx){
 			for (uint32_t i = 0; i < pathPointCount; i++) {
 				v.pos = ctx->points [i+firstPtIdx];
 				ctx->vertexCache[ctx->vertCount++] = v;
+				if (!bounds)
+					continue;
+				//bounds are computed here to scissor the painting operation
+				//that speed up fill drastically.
+				vkvg_matrix_transform_point (&ctx->pushConsts.mat, &v.pos.x, &v.pos.y);
+
+				if (v.pos.x < bounds->xMin)
+					bounds->xMin = v.pos.x;
+				if (v.pos.x > bounds->xMax)
+					bounds->xMax = v.pos.x;
+				if (v.pos.y < bounds->yMin)
+					bounds->yMin = v.pos.y;
+				if (v.pos.y > bounds->yMax)
+					bounds->yMax = v.pos.y;
 			}
 
 			LOG(VKVG_LOG_INFO_PATH, "\tpoly fill: point count = %d; 1st vert = %d; vert count = %d\n", pathPointCount, firstVertIdx, ctx->vertCount - firstVertIdx);
@@ -1900,20 +1914,16 @@ void _vkvg_path_extents (VkvgContext ctx, bool transformed, float *x1, float *y1
 	*y2 = yMax;
 }
 
-void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
+void _draw_full_screen_quad (VkvgContext ctx, vec4* scissor) {
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
 	vkh_cmd_label_start(ctx->cmd, "_draw_full_screen_quad", DBG_LAB_COLOR_FSQ);
 #endif
-	bool us = false;//=useScissor//bounds must be computed for even odd fill
-	if (us) {
-		float x1, y1, x2, y2;
-		_vkvg_path_extents(ctx, true, &x1, &y1, &x2, &y2);
-		if (x1 < 0 || y1 < 0 || EQUF(x1,x2) || EQUF(y1, y2))
-			us = false;
-		else {
-			VkRect2D r = {{(int32_t)x1, (int32_t)y1}, {(int32_t)x2 - (int32_t)x1 + 1, (int32_t)y2 - (int32_t)y1 + 1}};
-			CmdSetScissor(ctx->cmd, 0, 1, &r);
-		}
+	if (scissor) {
+		VkRect2D r = {
+			{(int32_t)scissor->xMin, (int32_t)scissor->yMin},
+			{(int32_t)scissor->xMax - (int32_t)scissor->xMin + 1, (int32_t)scissor->yMax - (int32_t)scissor->yMin + 1}
+		};
+		CmdSetScissor(ctx->cmd, 0, 1, &r);
 	}
 
 	uint32_t firstVertIdx = ctx->vertCount;//TODO:vxCache size is tested 3 times, must be optimized with only one check.
@@ -1929,7 +1939,7 @@ void _draw_full_screen_quad (VkvgContext ctx, bool useScissor) {
 	ctx->pushConsts.fsq_patternType &= ~FULLSCREEN_BIT;
 	CmdPushConstants(ctx->cmd, ctx->dev->pipelineLayout,
 					   VK_SHADER_STAGE_VERTEX_BIT, 24, 4,&ctx->pushConsts.fsq_patternType);
-	if (us)
+	if (scissor)
 		CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)

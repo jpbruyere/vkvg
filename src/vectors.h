@@ -50,21 +50,26 @@ typedef struct {
 	union {
 		float x;
 		float r;
+		float xMin;
 	};
 	union {
 		float y;
 		float g;
+		float yMin;
 	};
 	union {
 		float z;
 		float width;
 		float b;
+		float xMax;
 	};
 	union {
 		float w;
 		float height;
 		float a;
+		float yMax;
 	};
+
 }vec4;
 
 typedef struct {
