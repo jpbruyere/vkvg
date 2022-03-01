@@ -603,6 +603,8 @@ void _font_cache_text_extents (VkvgContext ctx, const char* text, int length, vk
 
 	_font_cache_destroy_text_run (&tr);
 }
+//text is expected as utf8 encoded
+//if length is < 0, text must be null terminated, else it contains glyph count
 void _font_cache_create_text_run (VkvgContext ctx, const char* text, int length, VkvgText textRun) {
 
 	_update_current_font (ctx);
@@ -620,36 +622,33 @@ void _font_cache_create_text_run (VkvgContext ctx, const char* text, int length,
 	textRun->hbBuf = _get_hb_buffer (ctx->currentFontSize, text,  length);
 	textRun->glyphs = hb_buffer_get_glyph_positions	 (textRun->hbBuf, &textRun->glyph_count);
 #else
-	int textByteLength = strlen (text);
-	if (textByteLength > 0) {
-		setlocale(LC_ALL, "");//TODO:move this elsewhere
-		size_t wsize;
-		if (length < 0)
-			wsize = mbstowcs(NULL, text, 0);
-		else
-			wsize = (size_t)length;
-		wchar_t *tmp = (wchar_t*)malloc((wsize+1) * sizeof (wchar_t));
-		textRun->glyph_count = mbstowcs (tmp, text, wsize);
-		textRun->glyphs = (vkvg_glyph_info_t*)malloc(textRun->glyph_count * sizeof (vkvg_glyph_info_t));
-		for (unsigned int i=0; i<textRun->glyph_count; i++) {
+
+	size_t wsize;
+	if (length < 0)
+		wsize = mbstowcs(NULL, text, 0);
+	else
+		wsize = (size_t)length;
+	wchar_t *tmp = (wchar_t*)malloc((wsize+1) * sizeof (wchar_t));
+	textRun->glyph_count = mbstowcs (tmp, text, wsize);
+	textRun->glyphs = (vkvg_glyph_info_t*)malloc(textRun->glyph_count * sizeof (vkvg_glyph_info_t));
+	for (unsigned int i=0; i<textRun->glyph_count; i++) {
 #ifdef VKVG_USE_FREETYPE
-			uint32_t gindex = FT_Get_Char_Index (textRun->font->face, tmp[i]);
+		uint32_t gindex = FT_Get_Char_Index (textRun->font->face, tmp[i]);
 #else
-			uint32_t gindex = stbtt_FindGlyphIndex (&textRun->fontId->stbInfo, tmp[i]);
+		uint32_t gindex = stbtt_FindGlyphIndex (&textRun->fontId->stbInfo, tmp[i]);
 #endif
-			_char_ref* cr = textRun->font->charLookup[gindex];
-			if (cr==NULL)
-				cr = _prepare_char (textRun->dev, textRun, gindex);
-			textRun->glyphs[i].codepoint = gindex;
-			textRun->glyphs[i].x_advance = cr->advance.x;
-			textRun->glyphs[i].y_advance = cr->advance.y;
-			textRun->glyphs[i].x_offset	 = 0;
-			textRun->glyphs[i].y_offset	 = 0;
-			/*textRun->glyphs[i].x_offset	 = cr->bmpDiff.x;
-			textRun->glyphs[i].y_offset	 = cr->bmpDiff.y;*/
-		}
-		free (tmp);
+		_char_ref* cr = textRun->font->charLookup[gindex];
+		if (cr==NULL)
+			cr = _prepare_char (textRun->dev, textRun, gindex);
+		textRun->glyphs[i].codepoint = gindex;
+		textRun->glyphs[i].x_advance = cr->advance.x;
+		textRun->glyphs[i].y_advance = cr->advance.y;
+		textRun->glyphs[i].x_offset	 = 0;
+		textRun->glyphs[i].y_offset	 = 0;
+		/*textRun->glyphs[i].x_offset	 = cr->bmpDiff.x;
+		textRun->glyphs[i].y_offset	 = cr->bmpDiff.y;*/
 	}
+	free (tmp);
 #endif
 	
 	UNLOCK_FONTCACHE (ctx->dev)

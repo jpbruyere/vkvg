@@ -1,5 +1,6 @@
 ﻿#include "test.h"
-#include "string.h"
+#include <locale.h>
+#include <string.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 int gettimeofday(struct timeval * tp, void * tzp)
@@ -405,6 +406,7 @@ void _print_debug_stats () {
 #endif
 
 void perform_test (void(*testfunc)(void), const char *testName, int argc, char* argv[]) {
+	setlocale(LC_ALL, "");
 	//dumpLayerExts();
 	_parse_args (argc, argv);
 
