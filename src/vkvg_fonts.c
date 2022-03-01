@@ -378,14 +378,17 @@ void _font_add_name (_vkvg_font_identity_t* font, const char* name, int nameLeng
 	font->names[font->namesCount-1] = (char*)calloc(nameLength, sizeof (char));
 	strcpy (font->names[font->namesCount-1], name);
 }
-void _font_cache_load_font_file_in_memory (_vkvg_font_identity_t* fontId) {
+bool _font_cache_load_font_file_in_memory (_vkvg_font_identity_t* fontId) {
 	FILE* fontFile = fopen(fontId->fontFile, "rb");
+	if (!fontFile)
+		return false;
 	fseek(fontFile, 0, SEEK_END);
 	fontId->fontBufSize = ftell(fontFile); /* how long is the file ? */
 	fseek(fontFile, 0, SEEK_SET); /* reset */
 	fontId->fontBuffer = malloc(fontId->fontBufSize);
 	fread(fontId->fontBuffer, fontId->fontBufSize, 1, fontFile);
 	fclose(fontFile);
+	return true;
 }
 _vkvg_font_identity_t* _font_cache_add_font_identity (VkvgContext ctx, const char* fontFilePath, const char* name){
 	_font_cache_t*	cache = (_font_cache_t*)ctx->dev->fontCache;
@@ -434,7 +437,12 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 	else
 		newSize.curLine.height = newSize.face->height >> 6;
 #else
-	assert(stbtt_InitFont(&font->stbInfo, font->fontBuffer, 0) && "stbtt_initFont failed");
+	int result = stbtt_InitFont(&font->stbInfo, font->fontBuffer, 0);
+	assert(result && "stbtt_initFont failed");
+	if (!result) {
+		ctx->status = VKVG_STATUS_INVALID_FONT;
+		return NULL;
+	}
 	stbtt_GetFontVMetrics(&font->stbInfo, &font->ascent, &font->descent, &font->lineGap);
 	newSize.charLookup	= (_char_ref**)calloc (font->stbInfo.numGlyphs, sizeof(_char_ref*));
 	//newSize.scale		= stbtt_ScaleForPixelHeight(&font->stbInfo, newSize.charSize);

@@ -1118,7 +1118,10 @@ void vkvg_load_font_from_path (VkvgContext ctx, const char* path, const char* na
 		return;
 	RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
 	_vkvg_font_identity_t* fid = _font_cache_add_font_identity(ctx, path, name);
-	_font_cache_load_font_file_in_memory (fid);
+	if (!_font_cache_load_font_file_in_memory (fid)) {
+		ctx->status = VKVG_STATUS_FILE_NOT_FOUND;
+		return;
+	}
 	_select_font_face (ctx, name);
 }
 void vkvg_load_font_from_memory (VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize, const char* name) {
