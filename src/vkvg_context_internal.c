@@ -308,6 +308,15 @@ void _add_vertexf (VkvgContext ctx, float x, float y){
 	ctx->vertCount++;
 	_check_vertex_cache_size(ctx);
 }
+void _add_vertexf_unchecked (VkvgContext ctx, float x, float y){
+	Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
+	pVert->pos.x = x;
+	pVert->pos.y = y;
+	pVert->color = ctx->curColor;
+	pVert->uv.z = -1;
+	LOG(VKVG_LOG_INFO_VBO, "Add Vertexf %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n", ctx->vertCount, pVert->pos.x, pVert->pos.y, pVert->uv.x, pVert->uv.y, pVert->uv.z, pVert->color);
+	ctx->vertCount++;
+}
 void _add_vertex(VkvgContext ctx, Vertex v){
 	ctx->vertexCache[ctx->vertCount] = v;
 	LOG(VKVG_LOG_INFO_VBO, "Add Vertex  %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n", ctx->vertCount, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.uv.z, v.color);
@@ -1926,10 +1935,13 @@ void _draw_full_screen_quad (VkvgContext ctx, vec4* scissor) {
 		CmdSetScissor(ctx->cmd, 0, 1, &r);
 	}
 
-	uint32_t firstVertIdx = ctx->vertCount;//TODO:vxCache size is tested 3 times, must be optimized with only one check.
-	_add_vertexf (ctx, -1, -1);
-	_add_vertexf (ctx,  3, -1);
-	_add_vertexf (ctx, -1,  3);
+	uint32_t firstVertIdx = ctx->vertCount;
+	_ensure_vertex_cache_size (ctx, 3);
+
+	_add_vertexf_unchecked (ctx, -1, -1);
+	_add_vertexf_unchecked (ctx,  3, -1);
+	_add_vertexf_unchecked (ctx, -1,  3);
+
 	ctx->curVertOffset = ctx->vertCount;
 
 	ctx->pushConsts.fsq_patternType |= FULLSCREEN_BIT;
