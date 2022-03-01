@@ -1920,8 +1920,8 @@ void _draw_full_screen_quad (VkvgContext ctx, vec4* scissor) {
 #endif
 	if (scissor) {
 		VkRect2D r = {
-			{(int32_t)scissor->xMin, (int32_t)scissor->yMin},
-			{(int32_t)scissor->xMax - (int32_t)scissor->xMin + 1, (int32_t)scissor->yMax - (int32_t)scissor->yMin + 1}
+			{(int32_t)MAX(scissor->xMin, 0), (int32_t)MAX(scissor->yMin, 0)},
+			{(int32_t)MAX(scissor->xMax - (int32_t)scissor->xMin + 1, 1), (int32_t)MAX(scissor->yMax - (int32_t)scissor->yMin + 1, 1)}
 		};
 		CmdSetScissor(ctx->cmd, 0, 1, &r);
 	}
