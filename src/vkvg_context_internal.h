@@ -126,8 +126,6 @@ typedef struct _vkvg_context_save_t {
 }vkvg_context_save_t;
 
 typedef struct _vkvg_context_t {
-	//VkvgContext			pPrev;		//double linked list of contexts
-	//VkvgContext			pNext;
 	uint32_t			references;		//reference count
 
 	VkvgDevice			dev;
@@ -282,9 +280,9 @@ void _draw_stoke_cap			(VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart
 void _draw_segment				(VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve);
 float _draw_dashed_segment		(VkvgContext ctx, float hw, stroke_context_t *str, dash_context_t* dc, bool isCurve);
 
-void _poly_fill					(VkvgContext ctx);
+void _poly_fill					(VkvgContext ctx, vec4 *bounds);
 void _fill_non_zero				(VkvgContext ctx);
-void _draw_full_screen_quad		(VkvgContext ctx, bool useScissor);
+void _draw_full_screen_quad		(VkvgContext ctx, vec4 *scissor);
 
 void _create_gradient_buff		(VkvgContext ctx);
 void _create_vertices_buff		(VkvgContext ctx);
