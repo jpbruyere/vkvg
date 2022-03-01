@@ -1630,7 +1630,7 @@ vkvg_status_to_string (vkvg_status_t status) {
 		return "error while writing to output stream";
 	case VKVG_STATUS_PATTERN_TYPE_MISMATCH:
 		return "the pattern type is not appropriate for the operation";
-	case VKVG_STATUS_INVALID_GRADIENT:
+	case VKVG_STATUS_PATTERN_INVALID_GRADIENT:
 		return "the stops count is zero";
 	case VKVG_STATUS_INVALID_FORMAT:
 		return "invalid value for an input vkvg_format_t";
