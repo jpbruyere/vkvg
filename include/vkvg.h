@@ -127,6 +127,7 @@ typedef enum {
 	VKVG_STATUS_NULL_POINTER,			/*!< NULL pointer*/
 	VKVG_STATUS_WRITE_ERROR,			/*!< */
 	VKVG_STATUS_PATTERN_TYPE_MISMATCH,	/*!< */
+	VKVG_STATUS_PATTERN_INVALID_GRADIENT,/*!< occurs when stops count is zero */
 	VKVG_STATUS_INVALID_FORMAT,			/*!< */
 	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
 	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
