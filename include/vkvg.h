@@ -125,17 +125,9 @@ typedef enum {
 	VKVG_STATUS_INVALID_STATUS,			/*!< */
 	VKVG_STATUS_INVALID_INDEX,			/*!< */
 	VKVG_STATUS_NULL_POINTER,			/*!< NULL pointer*/
-	VKVG_STATUS_INVALID_STRING,			/*!< */
-	VKVG_STATUS_INVALID_PATH_DATA,		/*!< */
-	VKVG_STATUS_READ_ERROR,				/*!< */
 	VKVG_STATUS_WRITE_ERROR,			/*!< */
-	VKVG_STATUS_SURFACE_FINISHED,		/*!< */
-	VKVG_STATUS_SURFACE_TYPE_MISMATCH,	/*!< */
 	VKVG_STATUS_PATTERN_TYPE_MISMATCH,	/*!< */
-	VKVG_STATUS_PATTERN_INVALID_GRADIENT,/*!< occurs when stops count is zero */
-	VKVG_STATUS_INVALID_CONTENT,		/*!< */
 	VKVG_STATUS_INVALID_FORMAT,			/*!< */
-	VKVG_STATUS_INVALID_VISUAL,			/*!< */
 	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
 	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
 	VKVG_STATUS_INVALID_RECT,			/*!< rectangle with height or width equal to 0. */
