@@ -602,6 +602,10 @@ void vkvg_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, flo
 void vkvg_rel_curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
 	if (ctx->status)
 		return;
+	if (_current_path_is_empty(ctx)) {
+		ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
+		return;
+	}
 	RECORD(ctx, (uint32_t)VKVG_CMD_REL_CURVE_TO, x1, y1, x2, y2, x3, y3);
 	LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel curve_to %f,%f %f,%f %f,%f:\n", x1, y1, x2, y2, x3, y3);
 	vec2 cp = _get_current_position(ctx);
