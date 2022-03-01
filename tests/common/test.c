@@ -213,6 +213,11 @@ void _print_usage_and_exit () {
 	printf("\t-vsync:\t\tEnable VSync, disabled by default.\n");
 	printf("\t-o:\t\tPerform test offscreen.\n");
 	printf("\t-w filepath:\twrite last image to png.\n");
+#ifdef DEBUG
+	printf("\t-L level:\tLog level in hexadecimal format (0xFF), 0 to disable.\n");
+	printf("\t\t\tsee vkvg.h for possible values.\n");
+#endif
+
 	printf("\t-h:\t\tThis help message.\n");
 	printf("\n");
 	exit(-1);
@@ -306,6 +311,12 @@ void _parse_args (int argc, char* argv[]) {
 			if (argc -1 < ++i)
 				_print_usage_and_exit();
 			saveToPng = argv[i];
+#ifdef DEBUG
+		}else if (strcmp (argv[i], "-L\0") == 0) {
+			if (argc -1 < ++i)
+				_print_usage_and_exit();
+			sscanf(argv[i], "%x", &vkvg_log_level);
+#endif
 		}else
 			_print_usage_and_exit();
 	}
