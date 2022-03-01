@@ -1616,13 +1616,13 @@ vkvg_status_to_string (vkvg_status_t status) {
 		return "out of memory";
 	case VKVG_STATUS_INVALID_RESTORE:
 		return "vkvg_restore() without matching vkvg_save()";
-	case VKVG_STATUS_NO_CURRENT_POINT: //
+	case VKVG_STATUS_NO_CURRENT_POINT:
 		return "no current point defined";
 	case VKVG_STATUS_INVALID_MATRIX:
 		return "invalid matrix (not invertible)";
 	case VKVG_STATUS_INVALID_STATUS:
 		return "invalid value for an input vkvg_status_t";
-	case VKVG_STATUS_INVALID_INDEX: //
+	case VKVG_STATUS_INVALID_INDEX:
 		return "invalid index passed to getter";
 	case VKVG_STATUS_NULL_POINTER:
 		return "NULL pointer";
