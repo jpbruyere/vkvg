@@ -1616,38 +1616,22 @@ vkvg_status_to_string (vkvg_status_t status) {
 		return "out of memory";
 	case VKVG_STATUS_INVALID_RESTORE:
 		return "vkvg_restore() without matching vkvg_save()";
-	case VKVG_STATUS_NO_CURRENT_POINT:
+	case VKVG_STATUS_NO_CURRENT_POINT: //
 		return "no current point defined";
 	case VKVG_STATUS_INVALID_MATRIX:
 		return "invalid matrix (not invertible)";
 	case VKVG_STATUS_INVALID_STATUS:
 		return "invalid value for an input vkvg_status_t";
-	case VKVG_STATUS_INVALID_INDEX:
+	case VKVG_STATUS_INVALID_INDEX: //
 		return "invalid index passed to getter";
 	case VKVG_STATUS_NULL_POINTER:
 		return "NULL pointer";
-	case VKVG_STATUS_INVALID_STRING:
-		return "input string not valid UTF-8";
-	case VKVG_STATUS_INVALID_PATH_DATA:
-		return "input path data not valid";
-	case VKVG_STATUS_READ_ERROR:
-		return "error while reading from input stream";
 	case VKVG_STATUS_WRITE_ERROR:
 		return "error while writing to output stream";
-	case VKVG_STATUS_SURFACE_FINISHED:
-		return "the target surface has been finished";
-	case VKVG_STATUS_SURFACE_TYPE_MISMATCH:
-		return "the surface type is not appropriate for the operation";
 	case VKVG_STATUS_PATTERN_TYPE_MISMATCH:
 		return "the pattern type is not appropriate for the operation";
-	case VKVG_STATUS_INVALID_GRADIENT:
-		return "the stops count is zero";
-   	case VKVG_STATUS_INVALID_CONTENT:	// there are no users of this flag
-		return "<you should not get this>";
 	case VKVG_STATUS_INVALID_FORMAT:
 		return "invalid value for an input vkvg_format_t";
-	case VKVG_STATUS_INVALID_VISUAL:	// there are no users of this flag
-		return "<you should not get this>";
 	case VKVG_STATUS_FILE_NOT_FOUND:
 		return "file not found";
 	case VKVG_STATUS_INVALID_DASH:
@@ -1658,10 +1642,10 @@ vkvg_status_to_string (vkvg_status_t status) {
 		return "waiting for a Vulkan operation to finish resulted in a fence timeout (5 seconds)";
 	case VKVG_STATUS_DEVICE_ERROR:
 		return "the initialization of the device resulted in an error";
-	// case VKVG_STATUS_INVALID_IMAGE:
-		// return "invalid ";
-	// case VKVG_STATUS_INVALID_SURFACE:
-		// return "invalid ";
+	case VKVG_STATUS_INVALID_IMAGE:
+		return "invalid image";
+	case VKVG_STATUS_INVALID_SURFACE:
+		return "invalid surface";
 	case VKVG_STATUS_INVALID_FONT:
 		return "unresolved font name";
 	default:
