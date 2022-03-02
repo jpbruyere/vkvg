@@ -123,6 +123,7 @@ void _record (vkvg_recording_t* rec,...) {
 		if ((cmd & VKVG_CMD_PATHPROPS_COMMANDS) == VKVG_CMD_PATHPROPS_COMMANDS) {
 			switch (r->cmd) {
 			case VKVG_CMD_SET_LINE_WIDTH:
+			case VKVG_CMD_SET_MITER_LIMIT:
 				STORE_FLOATS(1);
 				break;
 			case VKVG_CMD_SET_LINE_JOIN:
@@ -279,6 +280,9 @@ void _replay_command (VkvgContext ctx, VkvgRecording rec, uint32_t index) {
 			switch (r->cmd) {
 			case VKVG_CMD_SET_LINE_WIDTH:
 				vkvg_set_line_width (ctx, floats[0]);
+				return;
+			case VKVG_CMD_SET_MITER_LIMIT:
+				vkvg_set_miter_limit (ctx, floats[0]);
 				return;
 			case VKVG_CMD_SET_LINE_JOIN:
 				vkvg_set_line_join (ctx, (vkvg_line_join_t)uints[0]);

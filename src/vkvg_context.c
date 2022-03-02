@@ -44,6 +44,7 @@ static VkClearValue clearValues[3] = {
 
 void _init_ctx (VkvgContext ctx) {
 	ctx->lineWidth		= 1;
+	ctx->miterLimit		= 10;
 	ctx->curOperator	= VKVG_OPERATOR_OVER;
 	ctx->curFillRule	= VKVG_FILL_RULE_NON_ZERO;
 	ctx->bounds = (VkRect2D) {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
@@ -827,8 +828,9 @@ void _stroke_preserve (VkvgContext ctx)
 	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path ptr = %d;\n", ctx, ctx->pathPtr);
 
 	stroke_context_t str = {0};
+	str.lhMax = ctx->miterLimit * ctx->lineWidth;
 	uint32_t ptrPath = 0;
-	float hw = ctx->lineWidth / 2.0f;
+	float hw = ctx->lineWidth / 2.0f;//may be put in stroke ctx
 
 	while (ptrPath < ctx->pathPtr){
 		uint32_t ptrSegment = 0, lastSegmentPointIdx = 0;
@@ -1036,6 +1038,10 @@ void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
 void vkvg_set_line_width (VkvgContext ctx, float width){
 	RECORD(ctx, VKVG_CMD_SET_LINE_WIDTH, width);
 	ctx->lineWidth = width;
+}
+void vkvg_set_miter_limit (VkvgContext ctx, float limit){
+	RECORD(ctx, VKVG_CMD_SET_LINE_WIDTH, limit);
+	ctx->miterLimit = limit;
 }
 void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap){
 	RECORD(ctx, VKVG_CMD_SET_LINE_CAP, cap);
@@ -1323,6 +1329,7 @@ void vkvg_save (VkvgContext ctx){
 		memcpy (sav->dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
 	}
 	sav->lineWidth	= ctx->lineWidth;
+	sav->miterLimit	= ctx->miterLimit;
 	sav->curOperator= ctx->curOperator;
 	sav->lineCap	= ctx->lineCap;
 	sav->lineWidth	= ctx->lineWidth;
@@ -1456,6 +1463,7 @@ void vkvg_restore (VkvgContext ctx){
 	}
 
 	ctx->lineWidth	= sav->lineWidth;
+	ctx->miterLimit	= sav->miterLimit;
 	ctx->curOperator= sav->curOperator;
 	ctx->lineCap	= sav->lineCap;
 	ctx->lineJoin	= sav->lineJoint;
