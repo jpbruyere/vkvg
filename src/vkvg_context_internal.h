@@ -103,6 +103,7 @@ typedef struct _vkvg_context_save_t {
 	struct _vkvg_context_save_t* pNext;
 
 	float					lineWidth;
+	float					miterLimit;
 	uint32_t				dashCount;		//value count in dash array, 0 if dash not set.
 	float					dashOffset;		//an offset for dash
 	float*					dashes;			//an array of alternate lengths of on and off stroke.
@@ -197,6 +198,7 @@ typedef struct _vkvg_context_t {
 	bool				simpleConvex;	//true if path is single rect or concave closed curve.
 
 	float				lineWidth;
+	float				miterLimit;
 	uint32_t			dashCount;		//value count in dash array, 0 if dash not set.
 	float				dashOffset;		//an offset for dash
 	float*				dashes;			//an array of alternate lengths of on and off stroke.
@@ -246,6 +248,7 @@ typedef struct {
 	uint32_t	cp;//current point
 
 	VKVG_IBO_INDEX_TYPE firstIdx;//save first point idx for closed path
+	float		lhMax//miter limit * line width
 }stroke_context_t;
 
 void _check_vertex_cache_size	(VkvgContext ctx);

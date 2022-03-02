@@ -29,6 +29,7 @@ double pointSize = 7;
 float dash[] = {0, 60};
 uint32_t dashCountInit = 2;
 uint32_t dashCount = 0;
+float miterLimit = 10.0f;
 
 
 
@@ -38,10 +39,11 @@ void draw (){
 	vkvg_clear(ctx);
 	if (dashCount > 0)
 		vkvg_set_dash(ctx, dash, dashCount,0);
-	vkvg_set_source_rgba(ctx,1,0,0,1);
-	vkvg_set_line_width(ctx,lineWidth);
-	vkvg_set_line_join	(ctx, lineJoin);
-	vkvg_set_line_cap	(ctx, lineCap);
+	vkvg_set_source_rgba	(ctx,1,0,0,1);
+	vkvg_set_line_width		(ctx,lineWidth);
+	vkvg_set_line_join		(ctx, lineJoin);
+	vkvg_set_line_cap		(ctx, lineCap);
+	vkvg_set_miter_limit	(ctx, miterLimit);
 
 	if (startWithArc)
 		vkvg_arc_negative(ctx,pts[0].x,pts[0].y,200, M_PIF*1.5f, M_PIF);
@@ -111,6 +113,12 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			dash[0] = 0;
 		else
 			dash[0] = 80;
+		break;
+	case GLFW_KEY_L :
+		if (mods & GLFW_MOD_SHIFT)
+			miterLimit /= 2.0f;
+		else
+			miterLimit *= 2.0f;
 		break;
 	case GLFW_KEY_KP_ADD :
 		if (ptsCount < initPtsCount)
