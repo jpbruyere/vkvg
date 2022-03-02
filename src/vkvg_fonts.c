@@ -544,18 +544,20 @@ void _update_current_font (VkvgContext ctx) {
 hb_buffer_t * _get_hb_buffer (_vkvg_font_t* font, const char* text, int length) {
 	hb_buffer_t *buf = hb_buffer_create();
 
-	const char *lng	 = "fr";
 	hb_script_t script = HB_SCRIPT_LATIN;
-	script = hb_script_from_string (text, length);
+	hb_unicode_funcs_t* ucfunc = hb_unicode_funcs_get_default ();
+	wchar_t firstChar = 0;
+	if (mbstowcs (&firstChar, text, 1))
+		script = hb_unicode_script (ucfunc, firstChar);
 
 	hb_direction_t dir = hb_script_get_horizontal_direction(script);
-	//dir = HB_DIRECTION_TTB;
 	hb_buffer_set_direction (buf, dir);
 	hb_buffer_set_script	(buf, script);
-	hb_buffer_set_language	(buf, hb_language_from_string (lng, (int)strlen(lng)));
+	//hb_buffer_set_language	(buf, hb_language_from_string (lng, (int)strlen(lng)));
 	hb_buffer_add_utf8		(buf, text, length, 0, length);
 
 	hb_shape (font->hb_font, buf, NULL, 0);
+
 	return buf;
 }
 #endif
