@@ -1648,7 +1648,25 @@ uint32_t vkvg_text_run_get_glyph_count (VkvgText textRun);
 vkvg_public
 void vkvg_text_run_get_glyph_position (VkvgText textRun,
 									   uint32_t index,
-									   vkvg_glyph_info_t* pGlyphInfo);
+
+#if VKVG_DEBUG_CURVE_PARAMS
+	vkvg_public
+	void vkvg_set_bezier_params (float approximation_scale,
+								 float angle_tolerance,
+								 float cusp_limit,
+								 unsigned recursion_limit,
+								 float collinearity_epsilon,
+								 float angle_tolerance_epsilon,
+								 float distance_tolerance);
+	vkvg_public
+	void vkvg_get_bezier_params (float* approximation_scale,
+								 float* angle_tolerance,
+								 float* cusp_limit,
+								 unsigned* recursion_limit,
+								 float* collinearity_epsilon,
+								 float* angle_tolerance_epsilon,
+								 float* distance_tolerance);
+#endif
 /** @}*/
 
 /**
