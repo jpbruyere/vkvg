@@ -908,10 +908,10 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 	vec2 v1n = vec2_div_s (v1, length_v1);
 	float dot = vec2_dot (v0n, v1n);
 	float det = v0n.x * v1n.y - v0n.y * v1n.x;
-	if (EQUF(dot,1.0f))
+	if (EQUF(dot,1.0f))//colinear
 		return false;
 
-	if (EQUF(dot,-1.0f)) {
+	if (EQUF(dot,-1.0f)) {//cusp (could draw line butt?)
 		vec2 vPerp = vec2_mult_s(vec2_perp (v0n), hw);
 
 		VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
@@ -927,7 +927,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 	}
 
 
-	vec2 bisec_n = vec2_norm(vec2_add(v0n,v1n));
+	vec2 bisec_n = vec2_norm(vec2_add(v0n,v1n));//bisec/bisec_perp are inverted names
 
 
 	float alpha = acosf(dot);
@@ -980,9 +980,10 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 
 	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
-		if (dot < -0.95f && rlh < lh) {
-			double x = (lh - rlh) * cosf (halfAlpha);
+		if (lh > str->lhMax) {//miter limit
+			double x = (lh - str->lhMax) * cosf (halfAlpha);
 			vec2 bisecPerp = vec2_mult_s (bisec_n, x);
+			bisec = vec2_mult_s (bisec_n_perp, str->lhMax);
 			if (det < 0) {
 				v.pos = rlh_inside_pos;
 				_add_vertex(ctx, v);
@@ -1015,7 +1016,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 				return false;
 			}
 
-		} else {
+		} else {//normal miter
 			if (det < 0) {
 				v.pos = rlh_inside_pos;
 				_add_vertex(ctx, v);

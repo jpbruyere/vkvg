@@ -1292,13 +1292,35 @@ void vkvg_set_source_rgb (VkvgContext ctx, float r, float g, float b);
 vkvg_public
 void vkvg_set_line_width (VkvgContext ctx, float width);
 /**
+ * @brief set line join miter size limit.
+ *
+ * If the current line join style is set to VKVG_LINE_JOIN_MITER (see vkvg_set_line_join()), the miter limit is used to determine whether the lines should be
+ * joined with a bevel instead of a miter. Vkvg divides the length of the miter by the line width. If the result is greater than the miter limit, the style is converted to a bevel.
+ *
+ * The default miter limit value is 10.0, which will convert joins with interior angles less than 11 degrees to bevels instead of miters.
+ * For reference, a miter limit of 2.0 makes the miter cutoff at 60 degrees, and a miter limit of 1.414 makes the cutoff at 90 degrees.
+ *
+ * A miter limit for a desired angle can be computed as: miter limit = 1/sin(angle/2)
+ *
+ * @param ctx a valid vkvg @ref context
+ * @param limit new current miter limit value for the context.
+ */
+vkvg_public
+void vkvg_set_miter_limit (VkvgContext ctx, float limit);
+/**
+ * @brief Gets the current miter limit, as set by @ref vkvg_set_miter_limit().
+ * @param ctx a valid vkvg @ref context
+ * @return the current miter limit for the context.
+ */
+vkvg_public
+float vkvg_get_miter_limit (VkvgContext ctx);
+/**
  * @brief set line terminations for the next draw command.
  *
  * Configure the line terminations to output for further path stroke commands.
  * @param ctx a valid vkvg @ref context
  * @param cap new line termination, may be one of the value of #vkvg_line_cap_t.
  */
-
 vkvg_public
 void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap);
 /**
