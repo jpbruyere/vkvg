@@ -759,7 +759,9 @@ void _font_cache_show_text_run (VkvgContext ctx, VkvgText tr) {
 		pen.y -= (tr->glyphs[i].y_advance >> 6);
 	}
 
-	vkvg_move_to(ctx, pen.x, pen.y);
+	//equivalent to a moveto
+	_finish_path(ctx);
+	_add_point (ctx, pen.x, pen.y);
 	_flush_chars_to_tex(tr->dev, tr->font);	
 	UNLOCK_FONTCACHE (ctx->dev)
 
