@@ -942,7 +942,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 	vec2 bisec_n_perp = vec2_perp(bisec_n);
 
 	//limit bisectrice length
-	float rlh = lh;
+	float rlh = lh;//rlh is for inside pos tweeks
 	if (dot < 0.f)
 		rlh = fminf (rlh, fminf (length_v0, length_v1));
 	//---
@@ -978,8 +978,16 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 		}
 	}
 
+	vkvg_line_join_t join = ctx->lineJoin;
 
-	if (ctx->lineJoin == VKVG_LINE_JOIN_MITER || isCurve){
+	if (isCurve) {
+		if (dot < 0.8f)
+			join = VKVG_LINE_JOIN_ROUND;
+		else
+			join = VKVG_LINE_JOIN_MITER;
+	}
+
+	if (join == VKVG_LINE_JOIN_MITER){
 		if (lh > str->lhMax) {//miter limit
 			double x = (lh - str->lhMax) * cosf (halfAlpha);
 			vec2 bisecPerp = vec2_mult_s (bisec_n, x);
@@ -1052,7 +1060,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 		}
 		_add_vertex(ctx, v);
 
-		if (ctx->lineJoin == VKVG_LINE_JOIN_BEVEL){
+		if (join == VKVG_LINE_JOIN_BEVEL){
 			if (det<0){
 				_add_triangle_indices(ctx, idx, idx+2, idx+1);
 				_add_triangle_indices(ctx, idx+2, idx+4, idx+0);
@@ -1062,7 +1070,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 				_add_triangle_indices(ctx, idx+2, idx+3, idx+1);
 				_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
 			}
-		}else if (ctx->lineJoin == VKVG_LINE_JOIN_ROUND){
+		}else if (join == VKVG_LINE_JOIN_ROUND){
 			float step = M_PIF / hw;
 			float a = acosf(vp.x);
 			if (vp.y < 0)
