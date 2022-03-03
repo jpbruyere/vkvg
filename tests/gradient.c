@@ -9,7 +9,7 @@ VkvgPattern create_grad (VkvgContext ctx, float x) {
 }
 
 void paint(){
-	VkvgContext ctx = vkvg_create(surf);
+	VkvgContext ctx = _initCtx (surf);
 	//vkvg_translate(ctx,100,100);
 	VkvgPattern pat = create_grad(ctx,0);
 	//vkvg_pattern_set_extend(pat,VKVG_EXTEND_NONE);
@@ -66,7 +66,7 @@ void paint(){
 	vkvg_destroy(ctx);
 }
 void paint_repeat(){
-	VkvgContext ctx = vkvg_create(surf);
+	VkvgContext ctx = _initCtx (surf);
 	VkvgPattern pat = create_grad(ctx,0);
 	vkvg_pattern_set_extend(pat,VKVG_EXTEND_REPEAT);
 	vkvg_set_source (ctx, pat);
@@ -77,7 +77,7 @@ void paint_repeat(){
 }
 
 void test(){
-	VkvgContext ctx = vkvg_create(surf);
+	VkvgContext ctx = _initCtx (surf);
 	VkvgPattern pat = create_grad(ctx,0);
 	vkvg_set_source (ctx, pat);
 	vkvg_rectangle(ctx,100,100,200,200);
@@ -90,7 +90,7 @@ void test(){
 	vkvg_destroy(ctx);
 }
 void test2(){
-	VkvgContext ctx = vkvg_create(surf);
+	VkvgContext ctx = _initCtx (surf);
 
 	vkvg_set_source_rgb(ctx,1,0,0);
 	vkvg_paint(ctx);
@@ -109,7 +109,7 @@ void test2(){
 }
 
 void gradient_transform() {
-	VkvgContext ctx = vkvg_create(surf);
+	VkvgContext ctx = _initCtx (surf);
 
 	//vkvg_translate(ctx,-100,-100);
 
@@ -132,9 +132,26 @@ void gradient_transform() {
 
 	vkvg_destroy(ctx);
 }
+void gradient_alpha() {
+	VkvgContext ctx = _initCtx (surf);
+	vkvg_set_source_rgb(ctx,0,1,0);
+	vkvg_paint (ctx);
+
+	VkvgPattern pat = vkvg_pattern_create_linear(10,0,300,0);
+	vkvg_pattern_add_color_stop(pat, 1, 1, 0, 0, 0.5);
+	vkvg_pattern_add_color_stop(pat, 1, 1, 0, 0, 0.5);
+
+	vkvg_set_source (ctx, pat);
+	vkvg_pattern_destroy (pat);
+	vkvg_rectangle (ctx, 10, 10, 300, 200);
+	vkvg_fill (ctx);
+
+	vkvg_destroy(ctx);
+}
 
 int main(int argc, char *argv[]) {
 	no_test_size = true;
+	PERFORM_TEST(gradient_alpha, argc, argv);
 	PERFORM_TEST(paint, argc, argv);
 	PERFORM_TEST(paint_repeat, argc, argv);
 	PERFORM_TEST(gradient_transform, argc, argv);
