@@ -1648,6 +1648,7 @@ uint32_t vkvg_text_run_get_glyph_count (VkvgText textRun);
 vkvg_public
 void vkvg_text_run_get_glyph_position (VkvgText textRun,
 									   uint32_t index,
+									   vkvg_glyph_info_t* pGlyphInfo);
 
 #if VKVG_DEBUG_CURVE_PARAMS
 	vkvg_public

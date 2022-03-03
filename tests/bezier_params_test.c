@@ -207,12 +207,11 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			lineCap = 0;
 		break;
 	case GLFW_KEY_KP_ADD :
-		if (ptsCount < initPtsCount)
-			ptsCount++;
+		lineWidth++;
 		break;
 	case GLFW_KEY_KP_SUBTRACT :
-		if (ptsCount > 1)
-			ptsCount--;
+		if (lineWidth > 1)
+			lineWidth--;
 		break;
 #ifdef VKVG_WIRED_DEBUG
 	case GLFW_KEY_F1:
