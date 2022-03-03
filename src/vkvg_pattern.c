@@ -173,6 +173,8 @@ vkvg_status_t vkvg_pattern_get_color_stop_rgba (VkvgPattern pat, uint32_t index,
 	if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID)
 		return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
+	if (index >= grad->count)
+		return VKVG_STATUS_INVALID_INDEX;
 #ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
 	*offset = grad->stops[index];
 #else

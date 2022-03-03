@@ -129,12 +129,12 @@ void readSVG (VkEngine e) {
 #ifdef VKVG_DBG_STATS
 		vkvg_debug_stats_t dbgStats = vkvg_device_get_stats (dev);
 		vkvg_device_reset_stats (dev);
-		LOG("maximum point array size		= %d\n", dbgStats.sizePoints);
-		LOG("maximum path array size			= %d\n", dbgStats.sizePathes);
-		LOG("maximum size of host vertice cache	= %d\n", dbgStats.sizeVertices);
-		LOG("maximum size of host index cache	= %d\n", dbgStats.sizeIndices);
-		LOG("maximum size of vulkan vertex buffer	= %d\n", dbgStats.sizeVBO);
-		LOG("maximum size of vulkan index buffer	= %d\n", dbgStats.sizeIBO);
+		printf("maximum point array size		= %d\n", dbgStats.sizePoints);
+		printf("maximum path array size			= %d\n", dbgStats.sizePathes);
+		printf("maximum size of host vertice cache	= %d\n", dbgStats.sizeVertices);
+		printf("maximum size of host index cache	= %d\n", dbgStats.sizeIndices);
+		printf("maximum size of vulkan vertex buffer	= %d\n", dbgStats.sizeVBO);
+		printf("maximum size of vulkan index buffer	= %d\n", dbgStats.sizeIBO);
 #endif
 
 }
