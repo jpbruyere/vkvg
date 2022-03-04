@@ -30,7 +30,7 @@
 #define STENCIL_CLIP_BIT	0x2
 #define STENCIL_ALL_BIT		0x3
 
-#define VKVG_MAX_CACHED_CONTEXT_COUNT 0
+#define VKVG_MAX_CACHED_CONTEXT_COUNT 2
 
 extern PFN_vkCmdBindPipeline			CmdBindPipeline;
 extern PFN_vkCmdBindDescriptorSets		CmdBindDescriptorSets;
@@ -53,7 +53,13 @@ extern PFN_vkWaitForFences				WaitForFences;
 extern PFN_vkResetFences				ResetFences;
 extern PFN_vkResetCommandBuffer			ResetCommandBuffer;
 
-typedef struct _vkvg_device_t{
+typedef struct _cached_ctx{
+	thrd_t				thread;
+	VkvgContext			ctx;
+	struct _cached_ctx*	pNext;
+} _cached_ctx;
+
+typedef struct _vkvg_device_t {
 	VkDevice				vkDev;					/**< Vulkan Logical Device */
 	VkPhysicalDeviceMemoryProperties phyMemProps;	/**< Vulkan Physical device memory properties */
 	VkPhysicalDevice		phy;					/**< Vulkan Physical device */
@@ -106,8 +112,9 @@ typedef struct _vkvg_device_t{
 
 	VkvgContext				lastCtx;				/**< last element of double linked list of context, used to trigger font caching system update on all contexts*/
 
-	int32_t					cachedContextCount;
-	VkvgContext				cachedContext[VKVG_MAX_CACHED_CONTEXT_COUNT];
+	int32_t					cachedContextMaxCount;	/**< Maximum context cache element count.*/
+	int32_t					cachedContextCount;		/**< Current context cache element count.*/
+	_cached_ctx*			cachedContextLast;		/**< Last element of single linked list of saved context for fast reuse.*/
 
 #ifdef VKVG_WIRED_DEBUG
 	VkPipeline				pipelineWired;

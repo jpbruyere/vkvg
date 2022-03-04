@@ -873,7 +873,7 @@ void _release_context_ressources (VkvgContext ctx) {
 	VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc, ctx->dsGrad};
 	vkFreeDescriptorSets	(dev, ctx->descriptorPool, 3, dss);
 
-	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
+	vkDestroyDescriptorPool (dev, ctx->descriptorPool, NULL);
 
 	vkvg_buffer_destroy (&ctx->uboGrad);
 	vkvg_buffer_destroy (&ctx->indices);

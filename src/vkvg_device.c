@@ -31,6 +31,22 @@
 if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))	\
 	enabledExts[enabledExtsCount++] = #ext;						\
 }
+void vkvg_device_set_context_cache_size (VkvgDevice dev, uint32_t maxCount) {
+	if (maxCount == dev->cachedContextMaxCount)
+		return;
+
+	dev->cachedContextMaxCount = maxCount;
+
+	_cached_ctx* cur = dev->cachedContextLast;
+	while (cur && dev->cachedContextCount > dev->cachedContextMaxCount) {
+		_release_context_ressources (cur->ctx);
+		_cached_ctx* prev = cur;
+		cur = cur->pNext;
+		free (prev);
+		dev->cachedContextCount--;
+	}
+	dev->cachedContextLast = cur;
+}
 void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve) {
 	dev->instance = inst;
 	dev->hdpi	= 72;
@@ -39,6 +55,8 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 	dev->deferredResolve = deferredResolve;
 	dev->vkDev	= vkdev;
 	dev->phy	= phy;
+
+	dev->cachedContextMaxCount = VKVG_MAX_CACHED_CONTEXT_COUNT;
 
 #if VKVG_DBG_STATS
 	dev->debug_stats = (vkvg_debug_stats_t) {0};
@@ -205,7 +223,7 @@ const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeat
 }
 
 
-VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) {
+VkvgDevice vkvg_device_create (VkSampleCountFlags samples, bool deferredResolve) {
 	LOG(VKVG_LOG_INFO, "CREATE Device\n");
 	VkvgDevice dev = (vkvg_device*)calloc(1,sizeof(vkvg_device));
 	if (!dev) {
@@ -337,10 +355,21 @@ void vkvg_device_destroy (VkvgDevice dev)
 	}
 	UNLOCK_DEVICE
 
-	while (dev->cachedContextCount > 0)
-		_release_context_ressources (dev->cachedContext[--dev->cachedContextCount]);
+
+	if (dev->cachedContextCount > 0) {
+		_cached_ctx* cur = dev->cachedContextLast;
+		while (cur) {
+			_release_context_ressources (cur->ctx);
+			_cached_ctx* prev = cur;
+			cur = cur->pNext;
+			free (prev);
+		}
+	}
+
 
 	LOG(VKVG_LOG_INFO, "DESTROY Device\n");
+
+	vkDeviceWaitIdle (dev->vkDev);
 
 	vkh_image_destroy				(dev->emptyImg);
 

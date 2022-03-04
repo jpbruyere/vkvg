@@ -89,6 +89,7 @@ extern "C" {
 #define VKVG_LOG_INFO_VBO	0x00000020
 #define VKVG_LOG_INFO_IBO	0x00000040
 #define VKVG_LOG_INFO_VAO	(VKVG_LOG_INFO_VBO|VKVG_LOG_INFO_IBO)
+#define VKVG_LOG_THREAD		0x00000080
 #define VKVG_LOG_DBG_ARRAYS	0x00001000
 #define VKVG_LOG_FULL		0xffffffff
 
@@ -553,7 +554,17 @@ void vkvg_matrix_get_scale (const vkvg_matrix_t *matrix, float *sx, float *sy);
 
 vkvg_public
 void vkvg_device_set_thread_aware (VkvgDevice dev, uint32_t thread_awayre);
-
+vkvg_public
+/**
+ * @brief Set maximum cached context count.
+ *
+ * The context cache stored destroyed contexts per thread to speed-up new context creation.
+ * To disable context cache, call this method with maxCount=0.
+ *
+ * @param dev A valid vkvg device pointer.
+ * @param maxCount The maximum count of saved contexts for fast context instanciation.
+ */
+void vkvg_device_set_context_cache_size (VkvgDevice dev, uint32_t maxCount);
 /**
  * @brief Create a new vkvg device.
  *
