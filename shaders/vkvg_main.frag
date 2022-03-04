@@ -23,11 +23,13 @@
 
 #extension GL_ARB_separate_shader_objects	: enable
 #extension GL_ARB_shading_language_420pack	: enable
-#extension GL_EXT_scalar_block_layout		: enable
+#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+    #extension GL_EXT_scalar_block_layout		: enable
+#endif
 
 layout (set=0, binding = 0) uniform sampler2DArray fontMap;
 layout (set=1, binding = 0) uniform sampler2D		source;
-#ifdef GL_EXT_scalar_block_layout
+#if defined(GL_EXT_scalar_block_layout) && defined(VKVG_VK_SCALAR_BLOCK_SUPPORTED)
     layout (scalar, set=2, binding = 0) uniform _uboGrad {
 		vec4	colors[16];
 		float	stops[16];
