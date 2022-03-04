@@ -125,17 +125,10 @@ typedef enum {
 	VKVG_STATUS_INVALID_STATUS,			/*!< */
 	VKVG_STATUS_INVALID_INDEX,			/*!< */
 	VKVG_STATUS_NULL_POINTER,			/*!< NULL pointer*/
-	VKVG_STATUS_INVALID_STRING,			/*!< */
-	VKVG_STATUS_INVALID_PATH_DATA,		/*!< */
-	VKVG_STATUS_READ_ERROR,				/*!< */
 	VKVG_STATUS_WRITE_ERROR,			/*!< */
-	VKVG_STATUS_SURFACE_FINISHED,		/*!< */
-	VKVG_STATUS_SURFACE_TYPE_MISMATCH,	/*!< */
 	VKVG_STATUS_PATTERN_TYPE_MISMATCH,	/*!< */
 	VKVG_STATUS_PATTERN_INVALID_GRADIENT,/*!< occurs when stops count is zero */
-	VKVG_STATUS_INVALID_CONTENT,		/*!< */
 	VKVG_STATUS_INVALID_FORMAT,			/*!< */
-	VKVG_STATUS_INVALID_VISUAL,			/*!< */
 	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
 	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
 	VKVG_STATUS_INVALID_RECT,			/*!< rectangle with height or width equal to 0. */
@@ -893,6 +886,16 @@ void vkvg_destroy (VkvgContext ctx);
  */
 vkvg_public
 vkvg_status_t vkvg_status (VkvgContext ctx);
+/**
+ * vkvg_status_to_string:
+ * @status: a vkvg status
+ *
+ * Provides a human-readable description of a #vkvg_status_t.
+ *
+ * Returns: a string representation of the status
+ **/
+vkvg_public
+const char *vkvg_status_to_string (vkvg_status_t status);
 /**
  * @brief Increment by one the reference count on this context.
  * @param ctx The context to increment the reference count for.
