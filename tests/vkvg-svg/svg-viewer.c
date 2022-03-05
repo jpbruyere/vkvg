@@ -204,6 +204,9 @@ void print_help_and_exit () {
 	printf("\t\t\tif the -d option is not specified, svgfile path is mandatory.\n");
 	printf("\t-i size:\tif -d option is present, display all svg files as a list with the size specified.\n");
 	printf("\t-m margin:\tset margin for the -i option\n");
+	printf("\t-w width:\tset output surface width.\n");
+	printf("\t-h height:\tset output surface height.\n");
+	printf("\t-s samples:\tset sample count, set to 1 to disable multisampling.\n");
 	printf("\n");
 	exit(-1);
 }

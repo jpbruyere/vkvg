@@ -11,7 +11,7 @@ void test(){
 
 	vkvg_move_to(ctx,100,100);
 	vkvg_line_to(ctx,100,200);
-	vkvg_line_to(ctx,100,100);
+	vkvg_line_to(ctx,100,300);
 	vkvg_stroke(ctx);
 
 	vkvg_destroy(ctx);

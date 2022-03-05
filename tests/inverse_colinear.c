@@ -77,7 +77,7 @@ void draw (){
 	vkvg_destroy(ctx);
 }
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if (action != GLFW_PRESS)
+	if (action == GLFW_RELEASE)
 		return;
 	switch (key) {
 	case GLFW_KEY_ESCAPE :
@@ -120,13 +120,21 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		else
 			miterLimit *= 2.0f;
 		break;
+	case GLFW_KEY_P :
+		if (mods & GLFW_MOD_SHIFT) {
+			if (ptsCount > 1)
+				ptsCount--;
+		} else {
+			if (ptsCount < initPtsCount)
+				ptsCount++;
+		}
+		break;
 	case GLFW_KEY_KP_ADD :
-		if (ptsCount < initPtsCount)
-			ptsCount++;
+		lineWidth++;
 		break;
 	case GLFW_KEY_KP_SUBTRACT :
-		if (ptsCount > 1)
-			ptsCount--;
+		if (lineWidth > 1)
+			lineWidth--;
 		break;
 	}
 }
