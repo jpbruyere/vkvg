@@ -1150,65 +1150,69 @@ void _draw_stoke_cap (VkvgContext ctx, stroke_context_t *str, vec2 p0, vec2 n, b
 		vec2 vhw = vec2_mult_s (n, str->hw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-			p0 = vec2_sub(p0, vhw);
+			p0 = vec2_sub (p0, vhw);
 
-		vhw = vec2_perp(vhw);
+		vhw = vec2_perp (vhw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-			float step = M_PIF / fmaxf (str->hw, 4.f);
+			if (!str->arcStep)
+				str->arcStep = _get_arc_step (ctx, str->hw);
+
 			float a = acosf(n.x) + M_PIF_2;
 			if (n.y < 0)
 				a = M_PIF-a;
 			float a1 = a + M_PIF;
 
-			a+=step;
+			a += str->arcStep;
 			while (a < a1){
-				_add_vertexf(ctx, cosf(a) * str->hw + p0.x, sinf(a) * str->hw + p0.y);
-				a+=step;
+				_add_vertexf (ctx, cosf(a) * str->hw + p0.x, sinf(a) * str->hw + p0.y);
+				a += str->arcStep;
 			}
 			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 			for (VKVG_IBO_INDEX_TYPE p = firstIdx; p < p0Idx; p++)
-				_add_triangle_indices(ctx, p0Idx+1, p, p+1);
+				_add_triangle_indices (ctx, p0Idx+1, p, p+1);
 			firstIdx = p0Idx;
 		}
 
-		v.pos = vec2_add(p0, vhw);
-		_add_vertex(ctx, v);
-		v.pos = vec2_sub(p0, vhw);
-		_add_vertex(ctx, v);
+		v.pos = vec2_add (p0, vhw);
+		_add_vertex (ctx, v);
+		v.pos = vec2_sub (p0, vhw);
+		_add_vertex (ctx, v);
 
-		_add_tri_indices_for_rect(ctx, firstIdx);
+		_add_tri_indices_for_rect (ctx, firstIdx);
 	}else{
 		vec2 vhw = vec2_mult_s (n, str->hw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-			p0 = vec2_add(p0, vhw);
+			p0 = vec2_add (p0, vhw);
 
-		vhw = vec2_perp(vhw);
+		vhw = vec2_perp (vhw);
 
-		v.pos = vec2_add(p0, vhw);
-		_add_vertex(ctx, v);
-		v.pos = vec2_sub(p0, vhw);
-		_add_vertex(ctx, v);
+		v.pos = vec2_add (p0, vhw);
+		_add_vertex (ctx, v);
+		v.pos = vec2_sub (p0, vhw);
+		_add_vertex (ctx, v);
 
 		firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-			float step = M_PIF / fmaxf(str->hw, 4.f);
+			if (!str->arcStep)
+				str->arcStep = _get_arc_step (ctx, str->hw);
+
 			float a = acosf(n.x)+ M_PIF_2;
 			if (n.y < 0)
 				a = M_PIF-a;
 			float a1 = a - M_PIF;
 
-			a-=step;
+			a -= str->arcStep;
 			while ( a > a1){
-				_add_vertexf(ctx, cosf(a) * str->hw + p0.x, sinf(a) * str->hw + p0.y);
-				a-=step;
+				_add_vertexf (ctx, cosf(a) * str->hw + p0.x, sinf(a) * str->hw + p0.y);
+				a -= str->arcStep;
 			}
 
 			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset - 1);
 			for (VKVG_IBO_INDEX_TYPE p = firstIdx-1 ; p < p0Idx; p++)
-				_add_triangle_indices(ctx, p+1, p, firstIdx-2);
+				_add_triangle_indices (ctx, p+1, p, firstIdx-2);
 		}
 	}
 }
