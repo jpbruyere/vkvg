@@ -70,7 +70,7 @@ typedef struct {
 	vec2		pos;
 	uint32_t	color;
 	vec3		uv;
-}Vertex;
+} Vertex;
 
 typedef struct {
 	vec4			source;
@@ -79,7 +79,7 @@ typedef struct {
 	float			opacity;
 	vkvg_matrix_t	mat;
 	vkvg_matrix_t	matInv;
-}push_constants;
+} push_constants;
 
 /* context.curClipState may be one of the following, it's set
  * with check of the previous saved state:
@@ -97,7 +97,7 @@ typedef enum {
 	vkvg_clip_state_clear		= 0x01,
 	vkvg_clip_state_clip		= 0x02,
 	vkvg_clip_state_clip_saved	= 0x06,
-}vkvg_clip_state_t;
+} vkvg_clip_state_t;
 
 typedef struct _vkvg_context_save_t {
 	struct _vkvg_context_save_t* pNext;
@@ -123,7 +123,7 @@ typedef struct _vkvg_context_save_t {
 	VkvgPattern				pattern;
 	vkvg_clip_state_t		clippingState;
 
-}vkvg_context_save_t;
+} vkvg_context_save_t;
 
 typedef struct _vkvg_context_t {
 	uint32_t			references;		//reference count
@@ -150,10 +150,6 @@ typedef struct _vkvg_context_t {
 
 	uint32_t			curColor;
 
-	/*float xMin;
-	float xMax;
-	float yMin;
-	float yMax;*/
 #if VKVG_FILL_NZ_GLUTESS
 	void (*vertex_cb)(VKVG_IBO_INDEX_TYPE, VkvgContext);//tesselator vertex callback
 	VKVG_IBO_INDEX_TYPE tesselator_fan_start;
@@ -226,21 +222,21 @@ typedef struct _vkvg_context_t {
 
 	VkClearRect			clearRect;
 	VkRenderPassBeginInfo renderPassBeginInfo;
-}vkvg_context;
+} vkvg_context;
 
 typedef struct _ear_clip_point {
 	vec2					pos;
 	VKVG_IBO_INDEX_TYPE		idx;
 	struct _ear_clip_point*	next;
-}ear_clip_point;
+} ear_clip_point;
 
 typedef struct {
 	bool		dashOn;
-	uint32_t	curDash;	//current dash index
+	uint32_t	curDash;		//current dash index
 	float		curDashOffset;	//cur dash offset between defined path point and last dash segment(on/off) start
 	float		totDashLength;	//total length of dashes
 	vec2		normal;
-}dash_context_t;
+} dash_context_t;
 
 typedef struct {
 	uint32_t	iL;
@@ -248,9 +244,10 @@ typedef struct {
 	uint32_t	cp;//current point
 
 	VKVG_IBO_INDEX_TYPE firstIdx;//save first point idx for closed path
+	float		hw;				//stroke half width, computed once.
 	float		lhMax;			//miter limit * line width
 	float		arcStep;		//cached arcStep, prevent compute multiple times for same stroke, 0 if not yet computed
-}stroke_context_t;
+} stroke_context_t;
 
 void _check_vertex_cache_size	(VkvgContext ctx);
 void _ensure_vertex_cache_size	(VkvgContext ctx, uint32_t addedVerticesCount);
@@ -279,9 +276,10 @@ void _add_point					(VkvgContext ctx, float x, float y);
 
 void _resetMinMax				(VkvgContext ctx);
 void _vkvg_path_extents			(VkvgContext ctx, bool transformed, float *x1, float *y1, float *x2, float *y2);
-void _draw_stoke_cap			(VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart);
-void _draw_segment				(VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve);
-float _draw_dashed_segment		(VkvgContext ctx, float hw, stroke_context_t *str, dash_context_t* dc, bool isCurve);
+void _draw_stoke_cap			(VkvgContext ctx, stroke_context_t* str, vec2 p0, vec2 n, bool isStart);
+void _draw_segment				(VkvgContext ctx, stroke_context_t* str, dash_context_t* dc, bool isCurve);
+float _draw_dashed_segment		(VkvgContext ctx, stroke_context_t *str, dash_context_t* dc, bool isCurve);
+bool _build_vb_step				(VkvgContext ctx, stroke_context_t *str, bool isCurve);
 
 void _poly_fill					(VkvgContext ctx, vec4 *bounds);
 void _fill_non_zero				(VkvgContext ctx);
@@ -294,7 +292,6 @@ void _add_vertexf				(VkvgContext ctx, float x, float y);
 void _set_vertex				(VkvgContext ctx, uint32_t idx, Vertex v);
 void _add_triangle_indices		(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2);
 void _add_tri_indices_for_rect	(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i);
-bool _build_vb_step				(vkvg_context* ctx, float hw, stroke_context_t *str, bool isCurve);
 
 void _vao_add_rectangle			(VkvgContext ctx, float x, float y, float width, float height);
 

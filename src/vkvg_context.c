@@ -832,9 +832,9 @@ void _stroke_preserve (VkvgContext ctx)
 	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path ptr = %d;\n", ctx, ctx->pathPtr);
 
 	stroke_context_t str = {0};
+	str.hw = ctx->lineWidth * 0.5f;
 	str.lhMax = ctx->miterLimit * ctx->lineWidth;
 	uint32_t ptrPath = 0;
-	float hw = ctx->lineWidth / 2.0f;//may be put in stroke ctx
 
 	while (ptrPath < ctx->pathPtr){
 		uint32_t ptrSegment = 0, lastSegmentPointIdx = 0;
@@ -869,7 +869,7 @@ void _stroke_preserve (VkvgContext ctx)
 		} else if (_path_is_closed(ctx,ptrPath)){
 			str.iL = lastPathPointIdx;
 		}else{
-			_draw_stoke_cap(ctx, hw, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp], ctx->points[str.cp+1]), true);
+			_draw_stoke_cap(ctx, &str, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp], ctx->points[str.cp+1]), true);
 			str.iL = str.cp++;
 		}
 
@@ -880,7 +880,7 @@ void _stroke_preserve (VkvgContext ctx)
 				if (lastSegmentPointIdx == lastPathPointIdx)//last segment of path, dont draw end point here
 					lastSegmentPointIdx--;
 				while (str.cp <= lastSegmentPointIdx)
-					_draw_segment(ctx, hw, &str, &dc, curved);
+					_draw_segment(ctx, &str, &dc, curved);
 
 				ptrSegment ++;
 				uint32_t cptSegPts = ctx->pathes [ptrPath + ptrSegment]&PATH_ELT_MASK;
@@ -892,13 +892,13 @@ void _stroke_preserve (VkvgContext ctx)
 				}
 			}
 		}else while (str.cp < lastPathPointIdx)
-			_draw_segment(ctx, hw, &str, &dc, false);
+			_draw_segment(ctx, &str, &dc, false);
 
 		if (ctx->dashCount > 0) {
 			if (_path_is_closed(ctx,ptrPath)){
 				str.iR = firstPathPointIdx;
 
-				_draw_dashed_segment(ctx, hw, &str, &dc, false);
+				_draw_dashed_segment(ctx, &str, &dc, false);
 
 				str.iL++;
 				str.cp++;
@@ -911,11 +911,11 @@ void _stroke_preserve (VkvgContext ctx)
 					dc.curDash = ctx->dashCount-1;
 				float m = fminf (ctx->dashes[prevDash] - dc.curDashOffset, ctx->dashes[dc.curDash]);
 				vec2 p = vec2_sub(ctx->points[str.iR], vec2_mult_s(dc.normal, m));
-				_draw_stoke_cap (ctx, hw, p, dc.normal, false);
+				_draw_stoke_cap (ctx, &str, p, dc.normal, false);
 			}
 		} else if (_path_is_closed(ctx,ptrPath)){
 			str.iR = firstPathPointIdx;
-			bool inverse = _build_vb_step (ctx, hw, &str, false);
+			bool inverse = _build_vb_step (ctx, &str, false);
 
 			VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
 			VKVG_IBO_INDEX_TYPE ii = str.firstIdx;
@@ -930,7 +930,7 @@ void _stroke_preserve (VkvgContext ctx)
 			}
 			str.cp++;
 		}else
-			_draw_stoke_cap (ctx, hw, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp-1], ctx->points[str.cp]), false);
+			_draw_stoke_cap (ctx, &str, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp-1], ctx->points[str.cp]), false);
 
 		str.cp = firstPathPointIdx + pathPointCount;
 
@@ -941,7 +941,7 @@ void _stroke_preserve (VkvgContext ctx)
 
 		//limit batch size here to 1/3 of the ibo index type ability
 		if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3)
-			_emit_draw_cmd_undrawn_vertices(ctx);
+			_emit_draw_cmd_undrawn_vertices (ctx);
 	}
 
 }
