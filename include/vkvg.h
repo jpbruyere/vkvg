@@ -90,6 +90,7 @@ extern "C" {
 #define VKVG_LOG_INFO_IBO	0x00000040
 #define VKVG_LOG_INFO_VAO	(VKVG_LOG_INFO_VBO|VKVG_LOG_INFO_IBO)
 #define VKVG_LOG_DBG_ARRAYS	0x00001000
+#define VKVG_LOG_STROKE		0x00010000
 #define VKVG_LOG_FULL		0xffffffff
 
 #define VKVG_LOG_INFO		0x00008000//(VKVG_LOG_INFO_PTS|VKVG_LOG_INFO_PATH|VKVG_LOG_INFO_CMD|VKVG_LOG_INFO_VAO)
@@ -1898,8 +1899,6 @@ void*			vkvg_recording_get_data (VkvgRecording rec);
 vkvg_public
 void			vkvg_recording_destroy	(VkvgRecording rec);
 /*************************************/
-
-
 #endif
 
 #ifdef __cplusplus

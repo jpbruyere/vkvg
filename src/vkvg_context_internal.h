@@ -248,7 +248,8 @@ typedef struct {
 	uint32_t	cp;//current point
 
 	VKVG_IBO_INDEX_TYPE firstIdx;//save first point idx for closed path
-	float		lhMax;//miter limit * line width
+	float		lhMax;			//miter limit * line width
+	float		arcStep;		//cached arcStep, prevent compute multiple times for same stroke, 0 if not yet computed
 }stroke_context_t;
 
 void _check_vertex_cache_size	(VkvgContext ctx);

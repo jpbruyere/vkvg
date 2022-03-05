@@ -240,10 +240,10 @@ void _add_point (VkvgContext ctx, float x, float y){
 }
 float _normalizeAngle(float a)
 {
-    float res = ROUND_DOWN(fmodf(a, 2.0f * M_PIF), 100);
+	float res = ROUND_DOWN(fmodf(a, 2.0f * M_PIF), 100);
 	if (res < 0.0f)
-        res += 2.0f * M_PIF;
-    return res;
+		res += 2.0f * M_PIF;
+	return res;
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
 	float sx, sy;
@@ -902,14 +902,18 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 	vec2 v1 = vec2_sub(pR, p0);
 	float length_v0 = vec2_length(v0);
 	float length_v1 = vec2_length(v1);
-	if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON)
+	if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON) {
+		LOG(VKVG_LOG_STROKE, "vb_step discard, length<epsilon: l0:%f l1:%f\n", length_v0, length_v1);
 		return false;
+	}
 	vec2 v0n = vec2_div_s (v0, length_v0);
 	vec2 v1n = vec2_div_s (v1, length_v1);
 	float dot = vec2_dot (v0n, v1n);
 	float det = v0n.x * v1n.y - v0n.y * v1n.x;
-	if (EQUF(dot,1.0f))//colinear
+	if (EQUF(dot,1.0f)) {//colinear
+		LOG(VKVG_LOG_STROKE, "vb_step discard, dot==1\n");
 		return false;
+	}
 
 	if (EQUF(dot,-1.0f)) {//cusp (could draw line butt?)
 		vec2 vPerp = vec2_mult_s(vec2_perp (v0n), hw);
@@ -923,6 +927,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 		_add_triangle_indices(ctx, idx, idx+1, idx+2);
 		_add_triangle_indices(ctx, idx, idx+2, idx+3);
+		LOG(VKVG_LOG_STROKE, "vb_step cusp, dot==-1\n");
 		return true;
 	}
 
@@ -1071,7 +1076,8 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 				_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
 			}
 		}else if (join == VKVG_LINE_JOIN_ROUND){
-			float step = M_PIF / hw;
+			if (!str->arcStep)
+				str->arcStep = _get_arc_step (ctx, hw);
 			float a = acosf(vp.x);
 			if (vp.y < 0)
 				a = -a;
@@ -1079,17 +1085,17 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 			if (det<0){
 				a+=M_PIF;
 				float a1 = a + alpha;
-				a-=step;
+				a-=str->arcStep;
 				while (a > a1){
 					_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-					a-=step;
+					a-=str->arcStep;
 				}
 			}else{
 				float a1 = a + alpha;
-				a+=step;
+				a+=str->arcStep;
 				while (a < a1){
 					_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-					a+=step;
+					a+=str->arcStep;
 				}
 			}
 			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
