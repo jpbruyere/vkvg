@@ -6,7 +6,7 @@ void create_destroy_multi_512(){
 		surfs[i] = vkvg_surface_create (device, 512, 512);
 	for (uint32_t i = 0; i < test_size; i++)	
 		vkvg_surface_destroy(surfs[i]);
-	free(surf);
+	free(surfs);
 }
 
 void create_destroy_single_512(){
