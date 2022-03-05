@@ -1611,14 +1611,6 @@ VkvgSurface vkvg_get_target (VkvgContext ctx) {
 	return ctx->pSurf;
 }
 
-/**
- * vkvg_status_to_string:
- * @status: a vkvg status
- *
- * Provides a human-readable description of a #vkvg_status_t.
- *
- * Returns: a string representation of the status
- **/
 const char *
 vkvg_status_to_string (vkvg_status_t status) {
 	switch (status) {
