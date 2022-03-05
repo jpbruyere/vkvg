@@ -277,7 +277,7 @@ void vkvg_destroy (VkvgContext ctx)
 #if VKVG_DBG_STATS
 	if (ctx->dev->threadAware)
 		mtx_lock (&ctx->dev->mutex);
-	
+
 	vkvg_debug_stats_t* dbgstats = &ctx->dev->debug_stats;
 	if (dbgstats->sizePoints < ctx->sizePoints)
 		dbgstats->sizePoints = ctx->sizePoints;
@@ -633,7 +633,7 @@ vkvg_status_t vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float 
 	_add_point (ctx, x, y);
 	_add_point (ctx, x + w, y);
 	_add_point (ctx, x + w, y + h);
-	_add_point (ctx, x, y + h);	
+	_add_point (ctx, x, y + h);
 
 	ctx->pathes[ctx->pathPtr] |= (PATH_CLOSED_BIT|PATH_IS_CONVEX_BIT);
 
@@ -832,9 +832,9 @@ void _stroke_preserve (VkvgContext ctx)
 	LOG(VKVG_LOG_INFO, "STROKE: ctx = %p; path ptr = %d;\n", ctx, ctx->pathPtr);
 
 	stroke_context_t str = {0};
+	str.hw = ctx->lineWidth * 0.5f;
 	str.lhMax = ctx->miterLimit * ctx->lineWidth;
 	uint32_t ptrPath = 0;
-	float hw = ctx->lineWidth / 2.0f;//may be put in stroke ctx
 
 	while (ptrPath < ctx->pathPtr){
 		uint32_t ptrSegment = 0, lastSegmentPointIdx = 0;
@@ -869,7 +869,7 @@ void _stroke_preserve (VkvgContext ctx)
 		} else if (_path_is_closed(ctx,ptrPath)){
 			str.iL = lastPathPointIdx;
 		}else{
-			_draw_stoke_cap(ctx, hw, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp], ctx->points[str.cp+1]), true);
+			_draw_stoke_cap(ctx, &str, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp], ctx->points[str.cp+1]), true);
 			str.iL = str.cp++;
 		}
 
@@ -880,7 +880,7 @@ void _stroke_preserve (VkvgContext ctx)
 				if (lastSegmentPointIdx == lastPathPointIdx)//last segment of path, dont draw end point here
 					lastSegmentPointIdx--;
 				while (str.cp <= lastSegmentPointIdx)
-					_draw_segment(ctx, hw, &str, &dc, curved);
+					_draw_segment(ctx, &str, &dc, curved);
 
 				ptrSegment ++;
 				uint32_t cptSegPts = ctx->pathes [ptrPath + ptrSegment]&PATH_ELT_MASK;
@@ -892,13 +892,13 @@ void _stroke_preserve (VkvgContext ctx)
 				}
 			}
 		}else while (str.cp < lastPathPointIdx)
-			_draw_segment(ctx, hw, &str, &dc, false);
+			_draw_segment(ctx, &str, &dc, false);
 
 		if (ctx->dashCount > 0) {
 			if (_path_is_closed(ctx,ptrPath)){
 				str.iR = firstPathPointIdx;
 
-				_draw_dashed_segment(ctx, hw, &str, &dc, false);
+				_draw_dashed_segment(ctx, &str, &dc, false);
 
 				str.iL++;
 				str.cp++;
@@ -911,11 +911,11 @@ void _stroke_preserve (VkvgContext ctx)
 					dc.curDash = ctx->dashCount-1;
 				float m = fminf (ctx->dashes[prevDash] - dc.curDashOffset, ctx->dashes[dc.curDash]);
 				vec2 p = vec2_sub(ctx->points[str.iR], vec2_mult_s(dc.normal, m));
-				_draw_stoke_cap (ctx, hw, p, dc.normal, false);
+				_draw_stoke_cap (ctx, &str, p, dc.normal, false);
 			}
 		} else if (_path_is_closed(ctx,ptrPath)){
 			str.iR = firstPathPointIdx;
-			bool inverse = _build_vb_step (ctx, hw, &str, false);
+			bool inverse = _build_vb_step (ctx, &str, false);
 
 			VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache [ctx->indCount-6];
 			VKVG_IBO_INDEX_TYPE ii = str.firstIdx;
@@ -930,7 +930,7 @@ void _stroke_preserve (VkvgContext ctx)
 			}
 			str.cp++;
 		}else
-			_draw_stoke_cap (ctx, hw, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp-1], ctx->points[str.cp]), false);
+			_draw_stoke_cap (ctx, &str, ctx->points[str.cp], vec2_line_norm(ctx->points[str.cp-1], ctx->points[str.cp]), false);
 
 		str.cp = firstPathPointIdx + pathPointCount;
 
@@ -941,7 +941,7 @@ void _stroke_preserve (VkvgContext ctx)
 
 		//limit batch size here to 1/3 of the ibo index type ability
 		if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3)
-			_emit_draw_cmd_undrawn_vertices(ctx);
+			_emit_draw_cmd_undrawn_vertices (ctx);
 	}
 
 }
@@ -1639,6 +1639,62 @@ VkvgSurface vkvg_get_target (VkvgContext ctx) {
 	return ctx->pSurf;
 }
 
+/**
+ * vkvg_status_to_string:
+ * @status: a vkvg status
+ *
+ * Provides a human-readable description of a #vkvg_status_t.
+ *
+ * Returns: a string representation of the status
+ **/
+const char *
+vkvg_status_to_string (vkvg_status_t status) {
+	switch (status) {
+	case VKVG_STATUS_SUCCESS:
+		return "no error has occurred";
+	case VKVG_STATUS_NO_MEMORY:
+		return "out of memory";
+	case VKVG_STATUS_INVALID_RESTORE:
+		return "vkvg_restore() without matching vkvg_save()";
+	case VKVG_STATUS_NO_CURRENT_POINT:
+		return "no current point defined";
+	case VKVG_STATUS_INVALID_MATRIX:
+		return "invalid matrix (not invertible)";
+	case VKVG_STATUS_INVALID_STATUS:
+		return "invalid value for an input vkvg_status_t";
+	case VKVG_STATUS_INVALID_INDEX:
+		return "invalid index passed to getter";
+	case VKVG_STATUS_NULL_POINTER:
+		return "NULL pointer";
+	case VKVG_STATUS_WRITE_ERROR:
+		return "error while writing to output stream";
+	case VKVG_STATUS_PATTERN_TYPE_MISMATCH:
+		return "the pattern type is not appropriate for the operation";
+	case VKVG_STATUS_PATTERN_INVALID_GRADIENT:
+		return "the stops count is zero";
+	case VKVG_STATUS_INVALID_FORMAT:
+		return "invalid value for an input vkvg_format_t";
+	case VKVG_STATUS_FILE_NOT_FOUND:
+		return "file not found";
+	case VKVG_STATUS_INVALID_DASH:
+		return "invalid value for a dash setting";
+	case VKVG_STATUS_INVALID_RECT:
+		return "a rectangle has the height or width equal to 0";
+	case VKVG_STATUS_TIMEOUT:
+		return "waiting for a Vulkan operation to finish resulted in a fence timeout (5 seconds)";
+	case VKVG_STATUS_DEVICE_ERROR:
+		return "the initialization of the device resulted in an error";
+	case VKVG_STATUS_INVALID_IMAGE:
+		return "invalid image";
+	case VKVG_STATUS_INVALID_SURFACE:
+		return "invalid surface";
+	case VKVG_STATUS_INVALID_FONT:
+		return "unresolved font name";
+	default:
+		return "<unknown error status>";
+	}
+}
+
 void vkvg_push_group (VkvgContext ctx) {
 	if (ctx->status)
 		return;
@@ -1678,6 +1734,7 @@ VkvgPattern vkvg_pop_group (VkvgContext ctx) {
 	while (ctx->pSavedCtxs != saved_ctx) {
 		_restore(ctx);
 	}
+
 	return pat;
 }
 

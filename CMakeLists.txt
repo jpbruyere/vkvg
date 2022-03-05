@@ -132,6 +132,7 @@ CMAKE_DEPENDENT_OPTION(VKVG_LCD_FONT_FILTER "enable freetype lcd font filtering"
 OPTION(VKVG_VK_SCALAR_BLOCK_SUPPORTED "Enable scalar block layout support." ON)
 IF (VKVG_VK_SCALAR_BLOCK_SUPPORTED)
     ADD_DEFINITIONS (-DVKVG_VK_SCALAR_BLOCK_SUPPORTED)
+	SET(GLSLDEFS "-DVKVG_VK_SCALAR_BLOCK_SUPPORTED")
 ENDIF ()
 
 
@@ -172,7 +173,7 @@ IF(GLSLC AND XXD)
 		ADD_CUSTOM_COMMAND (
 		  OUTPUT ${shader-output}
 		  COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}"
-		  COMMAND ${GLSLC} ${shader-input} -o ${shader-output}# --target-env=vulkan1.2
+		  COMMAND ${GLSLC} ${GLSLDEFS} ${shader-input} -o ${shader-output}# --target-env=vulkan1.2
 		  COMMENT "Compiling ${shader-input}"
 		  DEPENDS ${SHADER}
 		  VERBATIM

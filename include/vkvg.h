@@ -75,7 +75,7 @@ extern "C" {
 			#define vkvg_public __attribute__((visibility("default")))
 		#endif
 	#else
-		#define vkvg_public 
+		#define vkvg_public
 	#endif
 #endif
 
@@ -90,6 +90,7 @@ extern "C" {
 #define VKVG_LOG_INFO_IBO	0x00000040
 #define VKVG_LOG_INFO_VAO	(VKVG_LOG_INFO_VBO|VKVG_LOG_INFO_IBO)
 #define VKVG_LOG_DBG_ARRAYS	0x00001000
+#define VKVG_LOG_STROKE		0x00010000
 #define VKVG_LOG_FULL		0xffffffff
 
 #define VKVG_LOG_INFO		0x00008000//(VKVG_LOG_INFO_PTS|VKVG_LOG_INFO_PATH|VKVG_LOG_INFO_CMD|VKVG_LOG_INFO_VAO)
@@ -125,17 +126,10 @@ typedef enum {
 	VKVG_STATUS_INVALID_STATUS,			/*!< */
 	VKVG_STATUS_INVALID_INDEX,			/*!< */
 	VKVG_STATUS_NULL_POINTER,			/*!< NULL pointer*/
-	VKVG_STATUS_INVALID_STRING,			/*!< */
-	VKVG_STATUS_INVALID_PATH_DATA,		/*!< */
-	VKVG_STATUS_READ_ERROR,				/*!< */
 	VKVG_STATUS_WRITE_ERROR,			/*!< */
-	VKVG_STATUS_SURFACE_FINISHED,		/*!< */
-	VKVG_STATUS_SURFACE_TYPE_MISMATCH,	/*!< */
 	VKVG_STATUS_PATTERN_TYPE_MISMATCH,	/*!< */
 	VKVG_STATUS_PATTERN_INVALID_GRADIENT,/*!< occurs when stops count is zero */
-	VKVG_STATUS_INVALID_CONTENT,		/*!< */
 	VKVG_STATUS_INVALID_FORMAT,			/*!< */
-	VKVG_STATUS_INVALID_VISUAL,			/*!< */
 	VKVG_STATUS_FILE_NOT_FOUND,			/*!< */
 	VKVG_STATUS_INVALID_DASH,			/*!< invalid value for a dash setting */
 	VKVG_STATUS_INVALID_RECT,			/*!< rectangle with height or width equal to 0. */
@@ -336,7 +330,7 @@ typedef struct _vkvg_pattern_t* VkvgPattern;
 #if VKVG_DBG_STATS
 /**
  * @brief vkvg memory and vulkan statistiques.
- * 
+ *
  * @ingroup device
  */
 typedef struct {
@@ -894,6 +888,16 @@ void vkvg_destroy (VkvgContext ctx);
  */
 vkvg_public
 vkvg_status_t vkvg_status (VkvgContext ctx);
+/**
+ * vkvg_status_to_string:
+ * @status: a vkvg status
+ *
+ * Provides a human-readable description of a #vkvg_status_t.
+ *
+ * Returns: a string representation of the status
+ **/
+vkvg_public
+const char *vkvg_status_to_string (vkvg_status_t status);
 /**
  * @brief Increment by one the reference count on this context.
  * @param ctx The context to increment the reference count for.
@@ -1733,7 +1737,7 @@ vkvg_public
 vkvg_status_t vkvg_pattern_get_linear_points(VkvgPattern pat, float* x0, float* y0, float* x1, float* y1);
 /**
  * @brief create a new radial gradient.
- * 
+ *
  * Creates a new radial gradient between the two circles defined by (cx0, cy0, radius0) and (cx1, cy1, radius1).
  * Before using the gradient pattern, a number of color stops should be defined using vkvg_pattern_add_color_stop.
  *
@@ -1798,7 +1802,7 @@ vkvg_status_t vkvg_pattern_get_color_stop_rgba (VkvgPattern pat, uint32_t index,
 
 /**
  * @brief dispose pattern.
- * 
+ *
  * When you have finished using a pattern, free its ressources by calling this method.
  *
  * @param pat the pattern to destroy.
@@ -1807,7 +1811,7 @@ vkvg_public
 void vkvg_pattern_destroy (VkvgPattern pat);
 /**
  * @brief add colors to gradients
- * 
+ *
  * for each color step in the gradient, call this method and provide an absolute position between 0 and 1
  * and a color.
  *
@@ -1822,7 +1826,7 @@ vkvg_public
 vkvg_status_t vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r, float g, float b, float a);
 /**
  * @brief control the extend of the pattern
- * 
+ *
  * control whether the pattern has to be repeated or extended when painted on a surface.
  *
  * @param pat the pattern to set extend for.
@@ -1905,8 +1909,6 @@ void*			vkvg_recording_get_data (VkvgRecording rec);
 vkvg_public
 void			vkvg_recording_destroy	(VkvgRecording rec);
 /*************************************/
-
-
 #endif
 
 #ifdef __cplusplus

@@ -240,10 +240,10 @@ void _add_point (VkvgContext ctx, float x, float y){
 }
 float _normalizeAngle(float a)
 {
-    float res = ROUND_DOWN(fmodf(a, 2.0f * M_PIF), 100);
+	float res = ROUND_DOWN(fmodf(a, 2.0f * M_PIF), 100);
 	if (res < 0.0f)
-        res += 2.0f * M_PIF;
-    return res;
+		res += 2.0f * M_PIF;
+	return res;
 }
 float _get_arc_step (VkvgContext ctx, float radius) {
 	float sx, sy;
@@ -892,7 +892,7 @@ void _release_context_ressources (VkvgContext ctx) {
 	free(ctx);
 }
 //populate vertice buff for stroke
-bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool isCurve){
+bool _build_vb_step(VkvgContext ctx, stroke_context_t* str, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
 	vec2 pL = ctx->points[str->iL];
 	vec2 p0 = ctx->points[str->cp];
@@ -902,17 +902,21 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 	vec2 v1 = vec2_sub(pR, p0);
 	float length_v0 = vec2_length(v0);
 	float length_v1 = vec2_length(v1);
-	if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON)
+	if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON) {
+		LOG(VKVG_LOG_STROKE, "vb_step discard, length<epsilon: l0:%f l1:%f\n", length_v0, length_v1);
 		return false;
+	}
 	vec2 v0n = vec2_div_s (v0, length_v0);
 	vec2 v1n = vec2_div_s (v1, length_v1);
 	float dot = vec2_dot (v0n, v1n);
 	float det = v0n.x * v1n.y - v0n.y * v1n.x;
-	if (EQUF(dot,1.0f))//colinear
+	if (EQUF(dot,1.0f)) {//colinear
+		LOG(VKVG_LOG_STROKE, "vb_step discard, dot==1\n");
 		return false;
+	}
 
 	if (EQUF(dot,-1.0f)) {//cusp (could draw line butt?)
-		vec2 vPerp = vec2_mult_s(vec2_perp (v0n), hw);
+		vec2 vPerp = vec2_mult_s(vec2_perp (v0n), str->hw);
 
 		VKVG_IBO_INDEX_TYPE idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
@@ -923,6 +927,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 		_add_triangle_indices(ctx, idx, idx+1, idx+2);
 		_add_triangle_indices(ctx, idx, idx+2, idx+3);
+		LOG(VKVG_LOG_STROKE, "vb_step cusp, dot==-1\n");
 		return true;
 	}
 
@@ -938,7 +943,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 	float halfAlpha = alpha / 2.f;
 
-	float lh = hw / cosf(halfAlpha);
+	float lh = str->hw / cosf(halfAlpha);
 	vec2 bisec_n_perp = vec2_perp(bisec_n);
 
 	//limit bisectrice length
@@ -958,7 +963,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 			vnPerp = vec2_perp (v1n);
 		else
 			vnPerp = vec2_perp (v0n);
-		vec2 vHwPerp = vec2_mult_s(vnPerp, hw);
+		vec2 vHwPerp = vec2_mult_s (vnPerp, str->hw);
 
 		double lbc = cosf(halfAlpha) * rlh;
 		if (det < 0.f) {
@@ -1049,9 +1054,9 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 			else
 				v.pos = vec2_add (p0, bisec);
 			_add_vertex(ctx, v);
-			v.pos = vec2_sub (p0, vec2_mult_s (vp, hw));
+			v.pos = vec2_sub (p0, vec2_mult_s (vp, str->hw));
 		}else{
-			v.pos = vec2_add (p0, vec2_mult_s (vp, hw));
+			v.pos = vec2_add (p0, vec2_mult_s (vp, str->hw));
 			_add_vertex(ctx, v);
 			if (dot < 0 && rlh < lh)
 				v.pos = rlh_inside_pos;
@@ -1071,7 +1076,8 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 				_add_triangle_indices(ctx, idx+1, idx+3, idx+4);
 			}
 		}else if (join == VKVG_LINE_JOIN_ROUND){
-			float step = M_PIF / hw;
+			if (!str->arcStep)
+				str->arcStep = _get_arc_step (ctx, str->hw);
 			float a = acosf(vp.x);
 			if (vp.y < 0)
 				a = -a;
@@ -1079,17 +1085,17 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 			if (det<0){
 				a+=M_PIF;
 				float a1 = a + alpha;
-				a-=step;
+				a-=str->arcStep;
 				while (a > a1){
-					_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-					a-=step;
+					_add_vertexf(ctx, cosf(a) * str->hw + p0.x, sinf(a) * str->hw + p0.y);
+					a-=str->arcStep;
 				}
 			}else{
 				float a1 = a + alpha;
-				a+=step;
+				a+=str->arcStep;
 				while (a < a1){
-					_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-					a+=step;
+					_add_vertexf(ctx, cosf(a) * str->hw + p0.x, sinf(a) * str->hw + p0.y);
+					a+=str->arcStep;
 				}
 			}
 			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
@@ -1108,7 +1114,7 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 
 		}
 
-		vp = vec2_mult_s (vec2_perp(v1n), hw);
+		vp = vec2_mult_s (vec2_perp(v1n), str->hw);
 		if (det < 0)
 			v.pos = vec2_sub (p0, vp);
 		else
@@ -1135,84 +1141,88 @@ bool _build_vb_step (vkvg_context* ctx, float hw, stroke_context_t* str, bool is
 	return (det < 0);
 }
 
-void _draw_stoke_cap (VkvgContext ctx, float hw, vec2 p0, vec2 n, bool isStart) {
+void _draw_stoke_cap (VkvgContext ctx, stroke_context_t *str, vec2 p0, vec2 n, bool isStart) {
 	Vertex v = {{0},ctx->curColor,{0,0,-1}};
 
 	VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 	if (isStart){
-		vec2 vhw = vec2_mult_s(n,hw);
+		vec2 vhw = vec2_mult_s (n, str->hw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-			p0 = vec2_sub(p0, vhw);
+			p0 = vec2_sub (p0, vhw);
 
-		vhw = vec2_perp(vhw);
+		vhw = vec2_perp (vhw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-			float step = M_PIF / fmaxf(hw, 4.f);
+			if (!str->arcStep)
+				str->arcStep = _get_arc_step (ctx, str->hw);
+
 			float a = acosf(n.x) + M_PIF_2;
 			if (n.y < 0)
 				a = M_PIF-a;
 			float a1 = a + M_PIF;
 
-			a+=step;
+			a += str->arcStep;
 			while (a < a1){
-				_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-				a+=step;
+				_add_vertexf (ctx, cosf(a) * str->hw + p0.x, sinf(a) * str->hw + p0.y);
+				a += str->arcStep;
 			}
 			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 			for (VKVG_IBO_INDEX_TYPE p = firstIdx; p < p0Idx; p++)
-				_add_triangle_indices(ctx, p0Idx+1, p, p+1);
+				_add_triangle_indices (ctx, p0Idx+1, p, p+1);
 			firstIdx = p0Idx;
 		}
 
-		v.pos = vec2_add(p0, vhw);
-		_add_vertex(ctx, v);
-		v.pos = vec2_sub(p0, vhw);
-		_add_vertex(ctx, v);
+		v.pos = vec2_add (p0, vhw);
+		_add_vertex (ctx, v);
+		v.pos = vec2_sub (p0, vhw);
+		_add_vertex (ctx, v);
 
-		_add_tri_indices_for_rect(ctx, firstIdx);
+		_add_tri_indices_for_rect (ctx, firstIdx);
 	}else{
-		vec2 vhw = vec2_mult_s(n, hw);
+		vec2 vhw = vec2_mult_s (n, str->hw);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_SQUARE)
-			p0 = vec2_add(p0, vhw);
+			p0 = vec2_add (p0, vhw);
 
-		vhw = vec2_perp(vhw);
+		vhw = vec2_perp (vhw);
 
-		v.pos = vec2_add(p0, vhw);
-		_add_vertex(ctx, v);
-		v.pos = vec2_sub(p0, vhw);
-		_add_vertex(ctx, v);
+		v.pos = vec2_add (p0, vhw);
+		_add_vertex (ctx, v);
+		v.pos = vec2_sub (p0, vhw);
+		_add_vertex (ctx, v);
 
 		firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
 		if (ctx->lineCap == VKVG_LINE_CAP_ROUND){
-			float step = M_PIF / fmaxf(hw, 4.f);
+			if (!str->arcStep)
+				str->arcStep = _get_arc_step (ctx, str->hw);
+
 			float a = acosf(n.x)+ M_PIF_2;
 			if (n.y < 0)
 				a = M_PIF-a;
 			float a1 = a - M_PIF;
 
-			a-=step;
+			a -= str->arcStep;
 			while ( a > a1){
-				_add_vertexf(ctx, cosf(a) * hw + p0.x, sinf(a) * hw + p0.y);
-				a-=step;
+				_add_vertexf (ctx, cosf(a) * str->hw + p0.x, sinf(a) * str->hw + p0.y);
+				a -= str->arcStep;
 			}
 
 			VKVG_IBO_INDEX_TYPE p0Idx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset - 1);
 			for (VKVG_IBO_INDEX_TYPE p = firstIdx-1 ; p < p0Idx; p++)
-				_add_triangle_indices(ctx, p+1, p, firstIdx-2);
+				_add_triangle_indices (ctx, p+1, p, firstIdx-2);
 		}
 	}
 }
-float _draw_dashed_segment (VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
+float _draw_dashed_segment (VkvgContext ctx, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
 	//vec2 pL = ctx->points[str->iL];
 	vec2 p = ctx->points[str->cp];
 	vec2 pR = ctx->points[str->iR];
 
 	if (!dc->dashOn)//we test in fact the next dash start, if dashOn = true => next segment is a void.
-		_build_vb_step (ctx, hw, str, isCurve);
+		_build_vb_step (ctx, str, isCurve);
 
 	vec2 d = vec2_sub (pR, p);
 	dc->normal = vec2_norm (d);
@@ -1221,7 +1231,7 @@ float _draw_dashed_segment (VkvgContext ctx, float hw, stroke_context_t* str, da
 	while (dc->curDashOffset < segmentLength){
 		vec2 p0 = vec2_add (p, vec2_mult_s(dc->normal, dc->curDashOffset));
 
-		_draw_stoke_cap (ctx, hw, p0, dc->normal, dc->dashOn);
+		_draw_stoke_cap (ctx, str, p0, dc->normal, dc->dashOn);
 		dc->dashOn ^= true;
 		dc->curDashOffset += ctx->dashes[dc->curDash];
 		if (++dc->curDash == ctx->dashCount)
@@ -1231,12 +1241,12 @@ float _draw_dashed_segment (VkvgContext ctx, float hw, stroke_context_t* str, da
 	dc->curDashOffset = fmodf(dc->curDashOffset, dc->totDashLength);
 	return segmentLength;
 }
-void _draw_segment (VkvgContext ctx, float hw, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
+void _draw_segment (VkvgContext ctx, stroke_context_t* str, dash_context_t* dc, bool isCurve) {
 	str->iR = str->cp + 1;
 	if (ctx->dashCount > 0)
-		_draw_dashed_segment(ctx, hw, str, dc, isCurve);
+		_draw_dashed_segment(ctx, str, dc, isCurve);
 	else
-		_build_vb_step (ctx, hw, str, isCurve);
+		_build_vb_step (ctx, str, isCurve);
 	str->iL = str->cp++;
 	if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3) {
 		Vertex v0 = ctx->vertexCache[ctx->curVertOffset + str->firstIdx];
