@@ -277,7 +277,7 @@ void vkvg_destroy (VkvgContext ctx)
 #if VKVG_DBG_STATS
 	if (ctx->dev->threadAware)
 		mtx_lock (&ctx->dev->mutex);
-
+  
 	vkvg_debug_stats_t* dbgstats = &ctx->dev->debug_stats;
 	if (dbgstats->sizePoints < ctx->sizePoints)
 		dbgstats->sizePoints = ctx->sizePoints;
@@ -633,7 +633,7 @@ vkvg_status_t vkvg_rectangle (VkvgContext ctx, float x, float y, float w, float 
 	_add_point (ctx, x, y);
 	_add_point (ctx, x + w, y);
 	_add_point (ctx, x + w, y + h);
-	_add_point (ctx, x, y + h);
+	_add_point (ctx, x, y + h); 
 
 	ctx->pathes[ctx->pathPtr] |= (PATH_CLOSED_BIT|PATH_IS_CONVEX_BIT);
 
