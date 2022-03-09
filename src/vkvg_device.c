@@ -178,7 +178,8 @@ void vkvg_get_required_device_extensions (VkPhysicalDevice phy, const char** pEx
 //enabledFeature12 is guarantied to be the first in pNext chain
 const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeatures) {
 
-	pEnabledFeatures->fillModeNonSolid = true;
+	pEnabledFeatures->fillModeNonSolid	= VK_TRUE;
+	pEnabledFeatures->sampleRateShading	= VK_TRUE;
 
 	void* pNext = NULL;
 
