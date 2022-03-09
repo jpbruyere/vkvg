@@ -249,7 +249,7 @@ float _get_arc_step (VkvgContext ctx, float radius) {
 	float sx, sy;
 	vkvg_matrix_get_scale (&ctx->pushConsts.mat, &sx, &sy);
 	float r = radius * fabsf(fmaxf(sx,sy));
-	if (r < 15.0f)
+	if (r < 30.0f)
 		return fminf(M_PI / 3.f, M_PI / r);
 	return fminf(M_PI / 3.f,M_PI / (r * 0.4f));
 }
