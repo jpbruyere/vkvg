@@ -554,7 +554,7 @@ void _curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x
 	//compute dyn distanceTolerance depending on current scale
 	float sx = 1, sy = 1;
 	vkvg_matrix_get_scale (&ctx->pushConsts.mat, &sx, &sy);
-	float distanceTolerance = fabs(1.0f / fmaxf(sx,sy));
+	float distanceTolerance = fabs(0.25f / fmaxf(sx,sy));
 
 	_recursive_bezier (ctx, distanceTolerance, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
 	/*cp.x = x3;
