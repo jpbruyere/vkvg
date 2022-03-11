@@ -189,7 +189,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search','.html');
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Set current source to the solid color defined by the rgb components.</p>
+<p>Set current source to the solid opaque color defined by the rgb components. The color components are floating point numbers in the range 0 to 1.</p>
+<p>The default source pattern is opaque black, (that is, it is equivalent to vkvg_set_source_rgb(ctx,0,0,0)).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctx</td><td>a valid vkvg <a class="el" href="group__context.html">Context</a> </td></tr>
