@@ -86,16 +86,16 @@ VkvgSvg vkvg_svg_load_fragment (char* svgFragment);
 
 /**
  * @brief render svg on a context.
- * @param svg a valid VkvgSvg pointer.
+ * @param svg a valid VkvgSvg handle.
  * @param ctx a valid vkvg context.
- * @param id an optional id to limit rendering to specific <g> elemnt.
+ * @param id an optional id to limit rendering to specific `<g>` elemnt.
  */
 vkvg_public
 void vkvg_svg_render (VkvgSvg svg, VkvgContext ctx, const char* id);
 
 /**
  * @brief release VkvgSvg pointer resources.
- * @param svg a valid VkvgSvg pointer to free.
+ * @param svg a valid VkvgSvg handle to free.
  */
 vkvg_public
 void vkvg_svg_destroy (VkvgSvg svg);
