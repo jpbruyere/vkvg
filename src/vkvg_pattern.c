@@ -40,6 +40,7 @@ VkvgPattern vkvg_pattern_create_solid (uint32_t color) {
 	VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
 	pat->type = VKVG_PATTERN_TYPE_SOLID;
 	pat->extend = VKVG_EXTEND_NONE;
+	pat->data = color;
 	pat->references = 1;
 	
 	return pat;
