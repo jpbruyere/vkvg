@@ -1114,9 +1114,8 @@ vkvg_operator_t vkvg_get_operator (VkvgContext ctx){
 	return ctx->curOperator;
 }
 VkvgPattern vkvg_get_source (VkvgContext ctx){
-	if (!ctx->pattern) {
-		ctx->pattern = vkvg_pattern_create_solid(ctx->curColor)
-	}
+	if (!ctx->pattern)
+		ctx->pattern = vkvg_pattern_create_solid (ctx->curColor);
 	vkvg_pattern_reference (ctx->pattern);
 	return ctx->pattern;
 }
