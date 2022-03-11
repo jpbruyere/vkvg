@@ -1822,9 +1822,9 @@ uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat);
  * @brief create a surface pattern
  *
  * Create a new pattern from the supplied #surface. The advantage of having
- * a #VkvgPattern to paint an image resides in the hability to set filtering options
+ * a #VkvgPattern to paint an image resides in the ability to set filtering options
  * as well as repeat behaviour on borders. Reference count of the supplied surface will
- * be incremented so that it will not be destroyed before this pattern release it.
+ * be incremented so that it will not be destroyed before this pattern releases it.
  * @param surf a valid #VkvgSurface to use for pattern
  * @return VkvgPattern a newly created pattern
  */
