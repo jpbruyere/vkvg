@@ -40,9 +40,9 @@ void vkvg_svg_sub () {
 	VkvgContext ctx = _initCtx(surf);
 	vkvg_clear(ctx);
 
-	vkvg_svg_render (svg, ctx, "True");
+	vkvg_svg_render (svg, ctx, "#True");
 	vkvg_translate(ctx, 200, 0);
-	vkvg_svg_render (svg, ctx, "False");
+	vkvg_svg_render (svg, ctx, "#False");
 
 	vkvg_destroy(ctx);
 	vkvg_svg_destroy (svg);

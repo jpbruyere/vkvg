@@ -6,7 +6,7 @@ static VkSampleCountFlags samples = VK_SAMPLE_COUNT_8_BIT;
 float lineWidth = 10.0f;
 vkvg_line_join_t lineJoin = VKVG_LINE_JOIN_MITER;
 vkvg_line_cap_t lineCap = VKVG_LINE_CAP_BUTT;
-bool isClosed = false;
+bool isClosed = false, isFilled = false;
 
 int ptsCount = 4;
 int initPtsCount = 4;
@@ -39,7 +39,6 @@ void draw (){
 	vkvg_wired_debug = _wired_debug;
 #endif
 
-	vkvg_set_source_rgba(ctx,1,0,0,1);
 	vkvg_set_line_width (ctx,lineWidth);
 	vkvg_set_line_join	(ctx, lineJoin);
 	vkvg_set_line_cap	(ctx, lineCap);
@@ -49,6 +48,13 @@ void draw (){
 
 	if (isClosed)
 		vkvg_close_path(ctx);
+
+	if (isFilled) {
+		vkvg_set_source_rgba(ctx,0.4,0.6,0.4,1);
+		vkvg_fill_preserve (ctx);
+	}
+
+	vkvg_set_source_rgba(ctx,1,0,0,1);
 
 	vkvg_stroke (ctx);
 	vkvg_flush (ctx);
@@ -101,6 +107,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		break;
 	case GLFW_KEY_W :
 		isClosed ^= true;
+		break;
+	case GLFW_KEY_F :
+		isFilled ^= true;
 		break;
 	case GLFW_KEY_J :
 		lineJoin++;
