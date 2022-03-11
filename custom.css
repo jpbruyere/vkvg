@@ -1841,7 +1841,15 @@ tr.heading h2 {
     }
 }
 
-
+code {
+    border: 1px solid #D0D1D9;
+    background-color: rgb(255, 255, 255);
+    color: black;
+    font-family: monospace, fixed;
+    font-size: 12px;
+    padding: 0 2px;
+    margin: 0px;
+}
 /* @group Markdown */
 
 table.markdownTable {
