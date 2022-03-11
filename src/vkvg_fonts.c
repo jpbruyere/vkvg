@@ -375,7 +375,7 @@ void _font_add_name (_vkvg_font_identity_t* font, const char* name, int nameLeng
 	else
 		font->names = (char**) realloc (font->names, font->namesCount * sizeof(char*));
 
-	font->names[font->namesCount-1] = (char*)calloc(nameLength, sizeof (char));
+	font->names[font->namesCount-1] = (char*)calloc(nameLength + 1, sizeof (char));
 	strcpy (font->names[font->namesCount-1], name);
 }
 bool _font_cache_load_font_file_in_memory (_vkvg_font_identity_t* fontId) {
