@@ -75,13 +75,14 @@ void _init_ctx (VkvgContext ctx) {
 	else
 		ctx->renderPassBeginInfo.clearValueCount = 3;
 
-	ctx->selectedCharSize = 10 << 6;
-	ctx->currentFont = NULL;
-	ctx->selectedFontName[0] = 0;
-	ctx->pattern = NULL;
-	ctx->cmdStarted = false;
-	ctx->curClipState = vkvg_clip_state_none;
-	ctx->vertCount = ctx->indCount = ctx->curColor = 0;
+	ctx->selectedCharSize	= 10 << 6;
+	ctx->currentFont		= NULL;
+	ctx->selectedFontName[0]= 0;
+	ctx->pattern			= NULL;
+	ctx->curColor			= 0xff000000;//opaque black
+	ctx->cmdStarted			= false;
+	ctx->curClipState		= vkvg_clip_state_none;
+	ctx->vertCount			= ctx->indCount = 0;
 }
 
 VkvgContext vkvg_create(VkvgSurface surf)
@@ -1599,10 +1600,14 @@ void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float
 	float bottomLeftX = bottomCenterX - dx2;
 	float bottomLeftY = bottomCenterY - dy2;
 
-	vkvg_move_to (ctx, bottomCenterX, bottomCenterY);
-	vkvg_curve_to (ctx, bottomRightX, bottomRightY, topRightX, topRightY, topCenterX, topCenterY);
-	vkvg_curve_to (ctx, topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
-	vkvg_close_path (ctx);
+	_finish_path(ctx);
+	_add_point (ctx, bottomCenterX, bottomCenterY);
+
+	_curve_to (ctx, bottomRightX, bottomRightY, topRightX, topRightY, topCenterX, topCenterY);
+	_curve_to (ctx, topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
+
+	ctx->pathes[ctx->pathPtr] |= PATH_CLOSED_BIT;
+	_finish_path(ctx);
 }
 
 VkvgSurface vkvg_get_target (VkvgContext ctx) {
