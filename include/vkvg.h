@@ -1831,6 +1831,11 @@ uint32_t vkvg_pattern_get_reference_count (VkvgPattern pat);
 vkvg_public
 VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf);
 /**
+ * @brief create a solid pattern
+ */
+vkvg_public
+VkvgPattern vkvg_pattern_create_solid (uint32_t color);
+/**
  * @brief create a new linear gradient.
  *
  * Create a new linear gradient along the line defined by (x0, y0) and (x1, y1).
