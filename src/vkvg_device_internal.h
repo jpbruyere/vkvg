@@ -30,7 +30,7 @@
 #define STENCIL_CLIP_BIT	0x2
 #define STENCIL_ALL_BIT		0x3
 
-#define VKVG_MAX_CACHED_CONTEXT_COUNT 0
+#define VKVG_MAX_CACHED_CONTEXT_COUNT 2
 
 extern PFN_vkCmdBindPipeline			CmdBindPipeline;
 extern PFN_vkCmdBindDescriptorSets		CmdBindDescriptorSets;

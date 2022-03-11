@@ -67,15 +67,16 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 
 ## Current status:
 
-- Fill (stencil even-odd, non-zero with ear clipping).
+- Fill (stencil even-odd, non-zero).
 - Stroke.
 - Basic painting operation.
 - Font system with caching operational.
-- Linear Gradients.
+- Linear/Radial Gradients.
 - Line caps and joins.
+- Dashes.
 - Context should be thread safe, extensive tests required.
 - Image loading and writing with [stb lib](https://github.com/nothings/stb)
-- Test includes svg rendering with [nanoSVG](https://github.com/memononen/nanosvg)
+- Test includes svg rendering either with built-in renderer or [nanoSVG](https://github.com/memononen/nanosvg)
 
 ## Requirements:
 

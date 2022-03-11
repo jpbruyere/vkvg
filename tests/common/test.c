@@ -390,7 +390,7 @@ void _print_results (const char *testName, int argc, char* argv[], uint32_t i, d
 #endif
 	}
 	
-	printf ("| %2d | %-15s | %-25s | %4d | ", test_index, whoami + 5, testName, i);
+	printf ("| %2d | %-15s | %-25s | %4d | ", test_index, whoami, testName, i);
 	if (no_test_size)
 		printf ("%4d | ", 1);
 	else
@@ -509,7 +509,7 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 		testfunc();
 
 		if (deferredResolve)
-			vkvg_multisample_surface_resolve(surf);
+			vkvg_surface_resolve(surf);
 
 		stop_time = get_tick();
 		run_time = stop_time - start_time;
@@ -615,7 +615,7 @@ void perform_test_onscreen (void(*testfunc)(void), const char *testName, int arg
 		testfunc();
 
 		if (deferredResolve)
-			vkvg_multisample_surface_resolve(surf);
+			vkvg_surface_resolve(surf);
 		if (!vkh_presenter_draw (r)){
 			vkh_presenter_get_size (r, &test_width, &test_height);
 			vkvg_surface_destroy (surf);

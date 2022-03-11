@@ -75,13 +75,14 @@ void _init_ctx (VkvgContext ctx) {
 	else
 		ctx->renderPassBeginInfo.clearValueCount = 3;
 
-	ctx->selectedCharSize = 10 << 6;
-	ctx->currentFont = NULL;
-	ctx->selectedFontName[0] = 0;
-	ctx->pattern = NULL;
-	ctx->cmdStarted = false;
-	ctx->curClipState = vkvg_clip_state_none;
-	ctx->vertCount = ctx->indCount = ctx->curColor = 0;
+	ctx->selectedCharSize	= 10 << 6;
+	ctx->currentFont		= NULL;
+	ctx->selectedFontName[0]= 0;
+	ctx->pattern			= NULL;
+	ctx->curColor			= 0xff000000;//opaque black
+	ctx->cmdStarted			= false;
+	ctx->curClipState		= vkvg_clip_state_none;
+	ctx->vertCount			= ctx->indCount = 0;
 }
 
 VkvgContext vkvg_create(VkvgSurface surf)
@@ -554,7 +555,7 @@ void _curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x
 	//compute dyn distanceTolerance depending on current scale
 	float sx = 1, sy = 1;
 	vkvg_matrix_get_scale (&ctx->pushConsts.mat, &sx, &sy);
-	float distanceTolerance = fabs(1.0f / fmaxf(sx,sy));
+	float distanceTolerance = fabs(0.25f / fmaxf(sx,sy));
 
 	_recursive_bezier (ctx, distanceTolerance, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
 	/*cp.x = x3;
@@ -1627,10 +1628,14 @@ void vkvg_ellipse (VkvgContext ctx, float radiusX, float radiusY, float x, float
 	float bottomLeftX = bottomCenterX - dx2;
 	float bottomLeftY = bottomCenterY - dy2;
 
-	vkvg_move_to (ctx, bottomCenterX, bottomCenterY);
-	vkvg_curve_to (ctx, bottomRightX, bottomRightY, topRightX, topRightY, topCenterX, topCenterY);
-	vkvg_curve_to (ctx, topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
-	vkvg_close_path (ctx);
+	_finish_path(ctx);
+	_add_point (ctx, bottomCenterX, bottomCenterY);
+
+	_curve_to (ctx, bottomRightX, bottomRightY, topRightX, topRightY, topCenterX, topCenterY);
+	_curve_to (ctx, topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
+
+	ctx->pathes[ctx->pathPtr] |= PATH_CLOSED_BIT;
+	_finish_path(ctx);
 }
 
 VkvgSurface vkvg_get_target (VkvgContext ctx) {
