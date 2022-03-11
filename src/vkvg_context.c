@@ -1114,6 +1114,12 @@ vkvg_operator_t vkvg_get_operator (VkvgContext ctx){
 	return ctx->curOperator;
 }
 VkvgPattern vkvg_get_source (VkvgContext ctx){
+	if (!ctx->pattern) {
+		VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
+		pat->type = VKVG_PATTERN_TYPE_SOLID;
+		pat->references = 1;
+		_update_cur_pattern(ctx, pat);
+	}
 	vkvg_pattern_reference (ctx->pattern);
 	return ctx->pattern;
 }
