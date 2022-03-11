@@ -36,7 +36,10 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 	dev->hdpi	= 72;
 	dev->vdpi	= 72;
 	dev->samples= samples;
-	dev->deferredResolve = deferredResolve;
+	if (dev->samples == VK_SAMPLE_COUNT_1_BIT)
+		dev->deferredResolve = false;
+	else
+		dev->deferredResolve = deferredResolve;
 	dev->vkDev	= vkdev;
 	dev->phy	= phy;
 
@@ -76,13 +79,13 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 	_device_create_pipeline_cache		(dev);
 	_fonts_cache_create					(dev);
 	if (dev->deferredResolve || dev->samples == VK_SAMPLE_COUNT_1_BIT){
-		dev->renderPass = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
-		dev->renderPass_ClearStencil = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
-		dev->renderPass_ClearAll = _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
+		dev->renderPass					= _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
+		dev->renderPass_ClearStencil	= _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
+		dev->renderPass_ClearAll		= _device_createRenderPassNoResolve (dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
 	}else{
-		dev->renderPass = _device_createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
-		dev->renderPass_ClearStencil = _device_createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
-		dev->renderPass_ClearAll = _device_createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
+		dev->renderPass					= _device_createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
+		dev->renderPass_ClearStencil	= _device_createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
+		dev->renderPass_ClearAll		= _device_createRenderPassMS (dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
 	}
 	_device_createDescriptorSetLayout	(dev);
 	_device_setupPipelines				(dev);

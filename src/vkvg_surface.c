@@ -242,7 +242,9 @@ VkImage vkvg_surface_get_vk_image(VkvgSurface surf)
 		_explicit_ms_resolve(surf);
 	return vkh_image_get_vkimage (surf->img);
 }
-void vkvg_multisample_surface_resolve (VkvgSurface surf){
+void vkvg_surface_resolve (VkvgSurface surf){
+	if (surf->status || !surf->dev->deferredResolve)
+		return;
 	_explicit_ms_resolve(surf);
 }
 VkFormat vkvg_surface_get_vk_format(VkvgSurface surf)
@@ -259,6 +261,10 @@ uint32_t vkvg_surface_get_height (VkvgSurface surf) {
 vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 	if (surf->status) {
 		LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid status: %d\n", surf->status);
+		return VKVG_STATUS_INVALID_STATUS;
+	}
+	if (surf->dev->status) {
+		LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid device status: %d\n", surf->dev->status);
 		return VKVG_STATUS_INVALID_STATUS;
 	}
 	if (surf->dev->pngStagFormat == VK_FORMAT_UNDEFINED) {
