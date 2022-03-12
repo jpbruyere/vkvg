@@ -277,7 +277,7 @@ typedef struct _glyph_info_t {
  * @brief Opaque pointer on a vkvg text run.
  *
  * A VkvgText is an intermediate representation of a text to be drawn.
- * It contains the measurments computed for character poisitioning.
+ * It contains the measurements computed for character positioning.
  *
  * This object is used to speed up the rendering of the same text with the same font multiple times
  * by storing typographic computations.
