@@ -200,30 +200,30 @@ void _device_setupPipelines(VkvgDevice dev)
 				.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN };
 
 	VkPipelineRasterizationStateCreateInfo rasterizationState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-				.polygonMode = VK_POLYGON_MODE_FILL,
-				.cullMode = VK_CULL_MODE_NONE,
-				.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-				.depthClampEnable = VK_FALSE,
-				.rasterizerDiscardEnable = VK_FALSE,
-				.depthBiasEnable = VK_FALSE,
-				.lineWidth = 1.0f };
+				.polygonMode			= VK_POLYGON_MODE_FILL,
+				.cullMode				= VK_CULL_MODE_NONE,
+				.frontFace				= VK_FRONT_FACE_COUNTER_CLOCKWISE,
+				.depthClampEnable		= VK_FALSE,
+				.rasterizerDiscardEnable= VK_FALSE,
+				.depthBiasEnable		= VK_FALSE,
+				.lineWidth				= 1.0f };
 
 	VkPipelineColorBlendAttachmentState blendAttachmentState =
 	{ .colorWriteMask = 0x0, .blendEnable = VK_TRUE,
 #ifdef VKVG_PREMULT_ALPHA
-	  .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
-	  .dstColorBlendFactor= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-	  .colorBlendOp = VK_BLEND_OP_ADD,
-	  .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-	  .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-	  .alphaBlendOp = VK_BLEND_OP_ADD,
+	  .srcColorBlendFactor	= VK_BLEND_FACTOR_ONE,
+	  .dstColorBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	  .colorBlendOp			= VK_BLEND_OP_ADD,
+	  .srcAlphaBlendFactor	= VK_BLEND_FACTOR_ONE,
+	  .dstAlphaBlendFactor	= VK_BLEND_FACTOR_ZERO,
+	  .alphaBlendOp			= VK_BLEND_OP_ADD,
 #else
-	  .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-	  .dstColorBlendFactor= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-	  .colorBlendOp = VK_BLEND_OP_ADD,
-	  .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-	  .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-	  .alphaBlendOp = VK_BLEND_OP_ADD,
+	  .srcColorBlendFactor	= VK_BLEND_FACTOR_SRC_ALPHA,
+	  .dstColorBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	  .colorBlendOp			= VK_BLEND_OP_ADD,
+	  .srcAlphaBlendFactor	= VK_BLEND_FACTOR_ONE,
+	  .dstAlphaBlendFactor	= VK_BLEND_FACTOR_ZERO,
+	  .alphaBlendOp			= VK_BLEND_OP_ADD,
 #endif
 	};
 
@@ -232,17 +232,17 @@ void _device_setupPipelines(VkvgDevice dev)
 				.pAttachments = &blendAttachmentState };
 
 										/*failOp,passOp,depthFailOp,compareOp, compareMask, writeMask, reference;*/
-	VkStencilOpState polyFillOpState ={VK_STENCIL_OP_KEEP,VK_STENCIL_OP_INVERT,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_CLIP_BIT,STENCIL_FILL_BIT,0};
-	VkStencilOpState clipingOpState = {VK_STENCIL_OP_ZERO,VK_STENCIL_OP_REPLACE,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_ALL_BIT,0x2};
-	VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_ZERO,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_FILL_BIT,0x1};
+	VkStencilOpState polyFillOpState ={VK_STENCIL_OP_KEEP,VK_STENCIL_OP_INVERT,	VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_CLIP_BIT,STENCIL_FILL_BIT,0};
+	VkStencilOpState clipingOpState = {VK_STENCIL_OP_ZERO,VK_STENCIL_OP_REPLACE,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_ALL_BIT, 0x2};
+	VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_ZERO,	VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_FILL_BIT,0x1};
 
 	VkPipelineDepthStencilStateCreateInfo dsStateCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-				.depthTestEnable = VK_FALSE,
-				.depthWriteEnable = VK_FALSE,
-				.depthCompareOp = VK_COMPARE_OP_ALWAYS,
-				.stencilTestEnable = VK_TRUE,
-				.front = polyFillOpState,
-				.back = polyFillOpState };
+				.depthTestEnable	= VK_FALSE,
+				.depthWriteEnable	= VK_FALSE,
+				.depthCompareOp		= VK_COMPARE_OP_ALWAYS,
+				.stencilTestEnable	= VK_TRUE,
+				.front				= polyFillOpState,
+				.back				= polyFillOpState };
 
 	VkDynamicState dynamicStateEnables[] = {
 		VK_DYNAMIC_STATE_VIEWPORT,
@@ -260,11 +260,9 @@ void _device_setupPipelines(VkvgDevice dev)
 
 	VkPipelineMultisampleStateCreateInfo multisampleState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 				.rasterizationSamples = dev->samples };
-	/*if (VKVG_SAMPLES != VK_SAMPLE_COUNT_1_BIT){
+	/*if (dev->samples != VK_SAMPLE_COUNT_1_BIT){
 		multisampleState.sampleShadingEnable = VK_TRUE;
-		multisampleState.minSampleShading = 0.25f;
-		//multisampleState.alphaToCoverageEnable = VK_FALSE;
-		//multisampleState.alphaToOneEnable = VK_FALSE;
+		multisampleState.minSampleShading = 0.5f;
 	}*/
 	VkVertexInputBindingDescription vertexInputBinding = { .binding = 0,
 				.stride = sizeof(Vertex),
