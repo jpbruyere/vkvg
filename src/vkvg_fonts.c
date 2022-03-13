@@ -369,13 +369,12 @@ _char_ref* _prepare_char (VkvgDevice dev, VkvgText tr, uint32_t gindex){
 	dev->fontCache->stagingX += bmpPixelWidth;
 	return cr;
 }
-void _font_add_name (_vkvg_font_identity_t* font, const char* name, int nameLength) {
+void _font_add_name (_vkvg_font_identity_t* font, const char* name) {
 	if (++font->namesCount == 1)
 		font->names = (char**) malloc (sizeof(char*));
 	else
 		font->names = (char**) realloc (font->names, font->namesCount * sizeof(char*));
-
-	font->names[font->namesCount-1] = (char*)calloc(nameLength + 1, sizeof (char));
+	font->names[font->namesCount-1] = (char*)calloc(strlen(name)+1, sizeof (char));
 	strcpy (font->names[font->namesCount-1], name);
 }
 bool _font_cache_load_font_file_in_memory (_vkvg_font_identity_t* fontId) {
@@ -404,7 +403,7 @@ _vkvg_font_identity_t* _font_cache_add_font_identity (VkvgContext ctx, const cha
 		strcpy (nf.fontFile, fontFilePath);
 	}
 
-	_font_add_name (&nf, name, strlen (name));
+	_font_add_name (&nf, name);
 
 	cache->fonts[cache->fontsCount-1] = nf;
 	return &cache->fonts[cache->fontsCount-1];
@@ -494,8 +493,7 @@ bool _tryResolveFontNameWithFontConfig (VkvgContext ctx, _vkvg_font_identity_t**
 		//try find font in cache by path
 		for (int i = 0; i < cache->fontsCount; ++i) {
 			if (cache->fonts[i].fontFile && strcmp (cache->fonts[i].fontFile, fontFile) == 0) {
-				int fflength = strlen(fontFile) + 1;
-				_font_add_name (&cache->fonts[i], ctx->selectedFontName, fflength);
+				_font_add_name (&cache->fonts[i], ctx->selectedFontName);
 				*resolvedFont = &cache->fonts[i];
 				break;
 			}
