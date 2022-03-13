@@ -278,7 +278,7 @@ typedef struct _glyph_info_t {
  * @brief Opaque pointer on a vkvg text run.
  *
  * A VkvgText is an intermediate representation of a text to be drawn.
- * It contains the measurments computed for character poisitioning.
+ * It contains the measurements computed for character positioning.
  *
  * This object is used to speed up the rendering of the same text with the same font multiple times
  * by storing typographic computations.
@@ -609,10 +609,10 @@ VkvgDevice vkvg_device_create_from_vk (VkInstance inst, VkPhysicalDevice phy, Vk
 vkvg_public
 VkvgDevice vkvg_device_create_from_vk_multisample (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve);
 /**
- * @brief Decrement the reference count of the device by 1. Release all it's ressources if count reach 0.
+ * @brief Decrement the reference count of the device by 1. Release all its resources if count reaches 0.
  *
- * If device is reference by several active surfaces, calling destroy will only decrement the reference count by 1.
- * When the reference count reach 0, the vkvg device is effectively destroyed, the device pointer is freed, and
+ * If device is referenced by several active surfaces, calling destroy will only decrement the reference count by 1.
+ * When the reference count reaches 0, the vkvg device is effectively destroyed, the device pointer is freed, and
  * vulkan objects are released.
  * Vkvg Devices has to stay active as long as surfaces created by it are used.
  * @param dev The vkvg device to destroy.
@@ -1753,7 +1753,7 @@ VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text);
 vkvg_public
 VkvgText vkvg_text_run_create_with_length (VkvgContext ctx, const char* text, uint32_t length);
 /**
- * @brief Release ressources holded by the text run.
+ * @brief Release resources holded by the text run.
  *
  * @param VkvgtextRun A valid VkvgText pointer.
  */
@@ -1939,7 +1939,7 @@ vkvg_status_t vkvg_pattern_get_color_stop_rgba (VkvgPattern pat, uint32_t index,
 /**
  * @brief dispose pattern.
  * 
- * When you have finished using a pattern, free its ressources by calling this method.
+ * When you have finished using a pattern, free its resources by calling this method.
  *
  * @param pat the pattern to destroy.
  */
