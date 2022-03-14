@@ -26,12 +26,6 @@
 #include "vkvg_pattern.h"
 #include "vkh_queue.h"
 
-#include <errno.h>
-#include <locale.h>
-#include <stdio.h>
-#include <string.h>
-#include <wchar.h>
-
 #ifdef DEBUG
 	static vec2 debugLinePoints[1000];
 	static uint32_t dlpCount = 0;
@@ -1186,9 +1180,6 @@ void vkvg_show_text_with_length (VkvgContext ctx, const char* text, const int le
 		return;
 	RECORD(ctx, VKVG_CMD_SHOW_TEXT_WITH_LENGTH, text, length);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text_with_length:\n");
-	// setlocale(LC_CTYPE, "");
-	// const int glyph_count = mbsnrtowcs(NULL, &text, length, 0, NULL);
-	// printf("Error: %s\n", strerror(errno));
 	_font_cache_show_text (ctx, text, length);
 }
 
