@@ -1171,8 +1171,17 @@ void vkvg_show_text (VkvgContext ctx, const char* text){
 	RECORD(ctx, VKVG_CMD_SHOW_TEXT, text);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text:\n");
 	//_ensure_renderpass_is_started(ctx);
-	_font_cache_show_text (ctx, text);
+	_font_cache_show_text (ctx, text, -1);
 	//_flush_undrawn_vertices (ctx);
+}
+
+void vkvg_show_text_with_length (VkvgContext ctx, const char* text, const int length){
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_SHOW_TEXT_WITH_LENGTH, text);
+	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text_with_length:\n");
+	const int glyph_count = wsize = mbstowcs(NULL, text, length);
+	_font_cache_show_text (ctx, text, glyph_count);
 }
 
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
