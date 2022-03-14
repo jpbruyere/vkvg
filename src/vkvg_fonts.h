@@ -182,7 +182,7 @@ void _font_cache_destroy	(VkvgDevice dev);
 _vkvg_font_identity_t *_font_cache_add_font_identity (VkvgContext ctx, const char* fontFile, const char *name);
 bool _font_cache_load_font_file_in_memory (_vkvg_font_identity_t* fontId);
 //Draw text
-void _font_cache_show_text				(VkvgContext ctx, const char* text);
+void _font_cache_show_text				(VkvgContext ctx, const char* text, const int glyph_count);
 //Get text dimmensions
 void _font_cache_text_extents			(VkvgContext ctx, const char* text, int length, vkvg_text_extents_t *extents);
 //Get font global dimmensions
