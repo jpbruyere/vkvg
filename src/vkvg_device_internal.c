@@ -131,7 +131,7 @@ VkRenderPass _device_createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadO
 					.format = FB_COLOR_FORMAT,
 					.samples = dev->samples,
 					.loadOp = loadOp,
-					.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+					.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 					.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 					.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 					.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -269,16 +269,16 @@ void _device_setupPipelines(VkvgDevice dev)
 				.inputRate = VK_VERTEX_INPUT_RATE_VERTEX };
 
 	VkVertexInputAttributeDescription vertexInputAttributs[3] = {
-		{0, 0, VK_FORMAT_R32G32_SFLOAT, 0},
-		{1, 0, VK_FORMAT_R8G8B8A8_UNORM, 8},
+		{0, 0, VK_FORMAT_R32G32_SFLOAT,		0},
+		{1, 0, VK_FORMAT_R8G8B8A8_UNORM,	8},
 		{2, 0, VK_FORMAT_R32G32B32_SFLOAT, 12}
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertexInputState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-		.vertexBindingDescriptionCount = 1,
-		.pVertexBindingDescriptions = &vertexInputBinding,
-		.vertexAttributeDescriptionCount = 3,
-		.pVertexAttributeDescriptions = vertexInputAttributs };
+		.vertexBindingDescriptionCount	= 1,
+		.pVertexBindingDescriptions		= &vertexInputBinding,
+		.vertexAttributeDescriptionCount= 3,
+		.pVertexAttributeDescriptions	= vertexInputAttributs };
 #ifdef VKVG_WIRED_DEBUG
 	VkShaderModule modVert, modFrag, modFragWired;
 #else
