@@ -1705,7 +1705,7 @@ void vkvg_set_font_size (VkvgContext ctx, uint32_t size);
 /**
  * @brief Show a string of text.
  *
- * Show the provided null-terminated utf8 string of text at the current position using the
+ * Show the provided null-terminated utf8 string of text a the current position using the
  * current font of the context.
  *
  * @param ctx a valid vkvg @ref context
