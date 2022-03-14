@@ -1178,9 +1178,9 @@ void vkvg_show_text (VkvgContext ctx, const char* text){
 void vkvg_show_text_with_length (VkvgContext ctx, const char* text, const int length){
 	if (ctx->status)
 		return;
-	RECORD(ctx, VKVG_CMD_SHOW_TEXT_WITH_LENGTH, text);
+	RECORD(ctx, VKVG_CMD_SHOW_TEXT_WITH_LENGTH, text, length);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text_with_length:\n");
-	const int glyph_count = wsize = mbstowcs(NULL, text, length);
+	const int glyph_count = mbstowcs(NULL, text, length);
 	_font_cache_show_text (ctx, text, glyph_count);
 }
 
