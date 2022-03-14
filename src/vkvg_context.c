@@ -1186,10 +1186,10 @@ void vkvg_show_text_with_length (VkvgContext ctx, const char* text, const int le
 		return;
 	RECORD(ctx, VKVG_CMD_SHOW_TEXT_WITH_LENGTH, text, length);
 	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text_with_length:\n");
-	setlocale(LC_CTYPE, "");
-	const int glyph_count = mbsnrtowcs(NULL, &text, length, 0, NULL);
-	printf("Error: %s\n", strerror(errno));
-	_font_cache_show_text (ctx, text, glyph_count);
+	// setlocale(LC_CTYPE, "");
+	// const int glyph_count = mbsnrtowcs(NULL, &text, length, 0, NULL);
+	// printf("Error: %s\n", strerror(errno));
+	_font_cache_show_text (ctx, text, length);
 }
 
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
