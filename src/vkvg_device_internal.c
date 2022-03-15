@@ -200,30 +200,30 @@ void _device_setupPipelines(VkvgDevice dev)
 				.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN };
 
 	VkPipelineRasterizationStateCreateInfo rasterizationState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-				.polygonMode			= VK_POLYGON_MODE_FILL,
-				.cullMode				= VK_CULL_MODE_NONE,
-				.frontFace				= VK_FRONT_FACE_COUNTER_CLOCKWISE,
-				.depthClampEnable		= VK_FALSE,
-				.rasterizerDiscardEnable= VK_FALSE,
-				.depthBiasEnable		= VK_FALSE,
-				.lineWidth				= 1.0f };
+				.polygonMode = VK_POLYGON_MODE_FILL,
+				.cullMode = VK_CULL_MODE_NONE,
+				.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+				.depthClampEnable = VK_FALSE,
+				.rasterizerDiscardEnable = VK_FALSE,
+				.depthBiasEnable = VK_FALSE,
+				.lineWidth = 1.0f };
 
 	VkPipelineColorBlendAttachmentState blendAttachmentState =
 	{ .colorWriteMask = 0x0, .blendEnable = VK_TRUE,
 #ifdef VKVG_PREMULT_ALPHA
-	  .srcColorBlendFactor	= VK_BLEND_FACTOR_ONE,
-	  .dstColorBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-	  .colorBlendOp			= VK_BLEND_OP_ADD,
-	  .srcAlphaBlendFactor	= VK_BLEND_FACTOR_ONE,
-	  .dstAlphaBlendFactor	= VK_BLEND_FACTOR_ZERO,
-	  .alphaBlendOp			= VK_BLEND_OP_ADD,
+	  .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+	  .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	  .colorBlendOp = VK_BLEND_OP_ADD,
+	  .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+	  .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+	  .alphaBlendOp = VK_BLEND_OP_ADD,
 #else
-	  .srcColorBlendFactor	= VK_BLEND_FACTOR_SRC_ALPHA,
-	  .dstColorBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-	  .colorBlendOp			= VK_BLEND_OP_ADD,
-	  .srcAlphaBlendFactor	= VK_BLEND_FACTOR_ONE,
-	  .dstAlphaBlendFactor	= VK_BLEND_FACTOR_ZERO,
-	  .alphaBlendOp			= VK_BLEND_OP_ADD,
+	  .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+	  .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	  .colorBlendOp = VK_BLEND_OP_ADD,
+	  .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+	  .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+	  .alphaBlendOp = VK_BLEND_OP_ADD,
 #endif
 	};
 
@@ -237,12 +237,12 @@ void _device_setupPipelines(VkvgDevice dev)
 	VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_ZERO,	VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_FILL_BIT,0x1};
 
 	VkPipelineDepthStencilStateCreateInfo dsStateCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-				.depthTestEnable	= VK_FALSE,
-				.depthWriteEnable	= VK_FALSE,
-				.depthCompareOp		= VK_COMPARE_OP_ALWAYS,
-				.stencilTestEnable	= VK_TRUE,
-				.front				= polyFillOpState,
-				.back				= polyFillOpState };
+				.depthTestEnable = VK_FALSE,
+				.depthWriteEnable = VK_FALSE,
+				.depthCompareOp = VK_COMPARE_OP_ALWAYS,
+				.stencilTestEnable = VK_TRUE,
+				.front = polyFillOpState,
+				.back = polyFillOpState };
 
 	VkDynamicState dynamicStateEnables[] = {
 		VK_DYNAMIC_STATE_VIEWPORT,
@@ -352,17 +352,19 @@ void _device_setupPipelines(VkvgDevice dev)
 	blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
 
-	//shaderStages[1].pName = "op_CLEAR";
-	blendAttachmentState.colorBlendOp = blendAttachmentState.alphaBlendOp = VK_BLEND_OP_SUBTRACT;
-	blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendState.logicOpEnable = VK_TRUE;
+	blendAttachmentState.blendEnable = VK_FALSE;
+	colorBlendState.logicOp = VK_LOGIC_OP_CLEAR;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
 
 
 #ifdef VKVG_WIRED_DEBUG
+	colorBlendState.logicOpEnable = VK_FALSE;
+	blendAttachmentState.blendEnable = VK_TRUE;
+	colorBlendState.logicOp = VK_LOGIC_OP_CLEAR;
+
 	createInfo.pCode = (uint32_t*)wired_frag_spv;
+
 	createInfo.codeSize = wired_frag_spv_len;
 	VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFragWired));
 
