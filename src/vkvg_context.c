@@ -1166,21 +1166,17 @@ void vkvg_set_text_direction (vkvg_context* ctx, vkvg_direction_t direction){
 }
 
 void vkvg_show_text (VkvgContext ctx, const char* text){
-	if (ctx->status)
-		return;
-	RECORD(ctx, VKVG_CMD_SHOW_TEXT, text);
-	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text:\n");
-	//_ensure_renderpass_is_started(ctx);
-	_font_cache_show_text (ctx, text, -1);
-	//_flush_undrawn_vertices (ctx);
+	vkvg_show_text_with_length(ctx, text, -1);
 }
 
 void vkvg_show_text_with_length (VkvgContext ctx, const char* text, const int length){
 	if (ctx->status)
 		return;
-	RECORD(ctx, VKVG_CMD_SHOW_TEXT_WITH_LENGTH, text, length);
-	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text_with_length:\n");
+	RECORD(ctx, VKVG_CMD_SHOW_TEXT, text, length);
+	LOG(VKVG_LOG_INFO_CMD, "CMD: show_text:\n");
+	//_ensure_renderpass_is_started(ctx);
 	_font_cache_show_text (ctx, text, length);
+	//_flush_undrawn_vertices (ctx);
 }
 
 VkvgText vkvg_text_run_create (VkvgContext ctx, const char* text) {
