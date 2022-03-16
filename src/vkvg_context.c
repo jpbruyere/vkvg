@@ -109,10 +109,8 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
 	LOG(VKVG_LOG_INFO, "CREATE Context: ctx = %p; surf = %p\n", ctx, surf);
 
-	if (ctx==NULL) {
-		dev->status = VKVG_STATUS_NO_MEMORY;
-		return NULL;
-	}
+	if (!ctx)
+		return (VkvgContext)&_no_mem_status;
 
 	ctx->pSurf = surf;
 
@@ -255,6 +253,9 @@ void _clear_context (VkvgContext ctx) {
 
 void vkvg_destroy (VkvgContext ctx)
 {
+	if (ctx->status)
+		return;
+
 	ctx->references--;
 	if (ctx->references > 0)
 		return;
@@ -308,7 +309,7 @@ void vkvg_destroy (VkvgContext ctx)
 }
 void vkvg_set_opacity (VkvgContext ctx, float opacity) {
 	if (ctx->status)
-			return;
+		return;
 
 	if (EQUF(ctx->pushConsts.opacity, opacity))
 		return;
@@ -318,16 +319,21 @@ void vkvg_set_opacity (VkvgContext ctx, float opacity) {
 	ctx->pushCstDirty = true;
 }
 float vkvg_get_opacity (VkvgContext ctx) {
-		return ctx->pushConsts.opacity;
+	if (ctx->status)
+		return 0;
+	return ctx->pushConsts.opacity;
 }
 vkvg_status_t vkvg_status (VkvgContext ctx) {
 	return ctx->status;
 }
 VkvgContext vkvg_reference (VkvgContext ctx) {
-	ctx->references++;
+	if (!ctx->status)
+		ctx->references++;
 	return ctx;
 }
 uint32_t vkvg_get_reference_count (VkvgContext ctx) {
+	if (ctx->status)
+		return 0;
 	return ctx->references;
 }
 void vkvg_new_sub_path (VkvgContext ctx){
@@ -531,7 +537,7 @@ bool vkvg_has_current_point (VkvgContext ctx) {
 	return !_current_path_is_empty(ctx);
 }
 void vkvg_get_current_point (VkvgContext ctx, float* x, float* y) {
-	if (_current_path_is_empty(ctx)) {
+	if (ctx->status || _current_path_is_empty(ctx)) {
 		*x = *y = 0;
 		return;
 	}
@@ -1059,18 +1065,26 @@ void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
 	RECORD(ctx, VKVG_CMD_SET_SOURCE, pat);
 }
 void vkvg_set_line_width (VkvgContext ctx, float width){
+	if (ctx->status)
+		return;
 	RECORD(ctx, VKVG_CMD_SET_LINE_WIDTH, width);
 	ctx->lineWidth = width;
 }
 void vkvg_set_miter_limit (VkvgContext ctx, float limit){
+	if (ctx->status)
+		return;
 	RECORD(ctx, VKVG_CMD_SET_LINE_WIDTH, limit);
 	ctx->miterLimit = limit;
 }
 void vkvg_set_line_cap (VkvgContext ctx, vkvg_line_cap_t cap){
+	if (ctx->status)
+		return;
 	RECORD(ctx, VKVG_CMD_SET_LINE_CAP, cap);
 	ctx->lineCap = cap;
 }
 void vkvg_set_line_join (VkvgContext ctx, vkvg_line_join_t join){
+	if (ctx->status)
+		return;
 	RECORD(ctx, VKVG_CMD_SET_LINE_JOIN, join);
 	ctx->lineJoin = join;
 }
@@ -1089,15 +1103,21 @@ void vkvg_set_operator (VkvgContext ctx, vkvg_operator_t op){
 		_bind_draw_pipeline (ctx);
 }
 void vkvg_set_fill_rule (VkvgContext ctx, vkvg_fill_rule_t fr){
+	if (ctx->status)
+		return;
 #ifndef __APPLE__
 	RECORD(ctx, VKVG_CMD_SET_FILL_RULE, fr);
 	ctx->curFillRule = fr;
 #endif
 }
 vkvg_fill_rule_t vkvg_get_fill_rule (VkvgContext ctx){
+	if (ctx->status)
+		return VKVG_FILL_RULE_NON_ZERO;
 	return ctx->curFillRule;
 }
 float vkvg_get_line_width (VkvgContext ctx){
+	if (ctx->status)
+		return 0;
 	return ctx->lineWidth;
 }
 void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset){
@@ -1114,6 +1134,8 @@ void vkvg_set_dash (VkvgContext ctx, const float* dashes, uint32_t num_dashes, f
 	memcpy (ctx->dashes, dashes, sizeof(float) * ctx->dashCount);
 }
 void vkvg_get_dash (VkvgContext ctx, const float* dashes, uint32_t* num_dashes, float* offset){
+	if (ctx->status)
+		return;
 	*num_dashes = ctx->dashCount;
 	*offset = ctx->dashOffset;
 	if (ctx->dashCount == 0 || dashes == NULL)
@@ -1123,15 +1145,23 @@ void vkvg_get_dash (VkvgContext ctx, const float* dashes, uint32_t* num_dashes, 
 
 
 vkvg_line_cap_t vkvg_get_line_cap (VkvgContext ctx){
+	if (ctx->status)
+		return (vkvg_line_cap_t)0;
 	return ctx->lineCap;
 }
 vkvg_line_join_t vkvg_get_line_join (VkvgContext ctx){
+	if (ctx->status)
+		return (vkvg_line_join_t)0;
 	return ctx->lineJoin;
 }
 vkvg_operator_t vkvg_get_operator (VkvgContext ctx){
+	if (ctx->status)
+		return (vkvg_operator_t)0;
 	return ctx->curOperator;
 }
 VkvgPattern vkvg_get_source (VkvgContext ctx){
+	if (ctx->status)
+		return NULL;
 	vkvg_pattern_reference (ctx->pattern);
 	return ctx->pattern;
 }

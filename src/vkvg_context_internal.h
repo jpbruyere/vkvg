@@ -127,6 +127,7 @@ typedef struct _vkvg_context_save_t {
 } vkvg_context_save_t;
 
 typedef struct _vkvg_context_t {
+	vkvg_status_t		status;
 	uint32_t			references;		//reference count
 
 	VkvgDevice			dev;
@@ -214,7 +215,6 @@ typedef struct _vkvg_context_t {
 
 	push_constants		pushConsts;
 	VkvgPattern			pattern;
-	vkvg_status_t		status;
 
 	vkvg_context_save_t* pSavedCtxs;		//last ctx saved ptr
 	uint8_t				curSavBit;			//current stencil bit used to save context, 6 bits used by stencil for save/restore

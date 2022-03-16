@@ -183,6 +183,7 @@ const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeat
 
 	pEnabledFeatures->fillModeNonSolid	= VK_TRUE;
 	pEnabledFeatures->sampleRateShading	= VK_TRUE;
+	pEnabledFeatures->logicOp			= VK_TRUE;
 
 	void* pNext = NULL;
 
@@ -239,9 +240,9 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 	vkvg_get_required_instance_extensions (enabledExts, &enabledExtsCount);
 
 #ifdef VK_VERSION_1_2
-	VkhApp app =  vkh_app_create(1, 2, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+	VkhApp app = vkh_app_create(1, 2, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 #else
-	VkhApp app =  vkh_app_create(1, 1, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+	VkhApp app = vkh_app_create(1, 1, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 #endif
 
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)

@@ -37,7 +37,7 @@ void vkvg_surface_clear (VkvgSurface surf) {
 }
 VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height){
 	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
-	if (!surf || surf->status)
+	if (surf->status)
 		return surf;
 
 	surf->width = MAX(1, width);
@@ -52,7 +52,7 @@ VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height
 }
 VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
 	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
-	if (!surf || surf->status)
+	if (surf->status)
 		return surf;
 
 	if (!vkhImg) {
@@ -80,7 +80,7 @@ VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
 //TODO: it would be better to blit in original size and create ms final image with dest surf dims
 VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height) {
 	VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
-	if (!surf || surf->status)
+	if (surf->status)
 		return surf;
 	if (!img || width <= 0 || height <= 0) {
 		surf->status = VKVG_STATUS_INVALID_IMAGE;
@@ -187,9 +187,9 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 		h = 0,
 		channels = 0;
 	unsigned char *img = stbi_load(filePath, &w, &h, &channels, 4);//force 4 components per pixel
-	if (img == NULL){
-		fprintf (stderr, "Could not load texture from %s, %s\n", filePath, stbi_failure_reason());
-		return NULL;
+	if (!img){
+		LOG(VKVG_LOG_ERR, "Could not load texture from %s, %s\n", filePath, stbi_failure_reason());
+		return (VkvgSurface)&_no_mem_status;
 	}
 
 	VkvgSurface surf = vkvg_surface_create_from_bitmap(dev, img, (uint32_t)w, (uint32_t)h);
@@ -201,6 +201,9 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
 
 void vkvg_surface_destroy(VkvgSurface surf)
 {
+	if (surf->status)
+		return;
+
 	LOCK_SURFACE(surf)
 	surf->references--;
 	if (surf->references > 0) {
@@ -225,12 +228,16 @@ void vkvg_surface_destroy(VkvgSurface surf)
 }
 
 VkvgSurface vkvg_surface_reference (VkvgSurface surf) {
-	LOCK_SURFACE(surf)
-	surf->references++;
-	UNLOCK_SURFACE(surf)
+	if (!surf->status) {
+		LOCK_SURFACE(surf)
+		surf->references++;
+		UNLOCK_SURFACE(surf)
+	}
 	return surf;
 }
 uint32_t vkvg_surface_get_reference_count (VkvgSurface surf) {
+	if (surf->status)
+		return 0;
 	return surf->references;
 }
 
@@ -249,12 +256,18 @@ void vkvg_surface_resolve (VkvgSurface surf){
 }
 VkFormat vkvg_surface_get_vk_format(VkvgSurface surf)
 {
+	if (surf->status)
+		return VK_FORMAT_UNDEFINED;
 	return surf->format;
 }
 uint32_t vkvg_surface_get_width (VkvgSurface surf) {
+	if (surf->status)
+		return 0;
 	return surf->width;
 }
 uint32_t vkvg_surface_get_height (VkvgSurface surf) {
+	if (surf->status)
+		return 0;
 	return surf->height;
 }
 
