@@ -27,6 +27,8 @@
 #include "vkh.h"
 
 typedef struct _vkvg_surface_t {
+	vkvg_status_t	status;					/**< Current status of surface, affected by last operation */
+	uint32_t		references;
 	VkvgDevice		dev;
 	uint32_t		width;
 	uint32_t		height;
@@ -35,8 +37,6 @@ typedef struct _vkvg_surface_t {
 	VkhImage		img;
 	VkhImage		imgMS;
 	VkhImage		stencil;
-	uint32_t		references;
-	vkvg_status_t	status;					/**< Current status of surface, affected by last operation */
 	bool			new;
 	mtx_t			mutex;
 }vkvg_surface;

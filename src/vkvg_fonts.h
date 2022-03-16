@@ -60,11 +60,6 @@
 #define FONT_NAME_MAX_SIZE		128
 
 #include "vkvg_internal.h"
-#include "vkvg.h"
-#include "vkvg_buff.h"
-#include "vkh.h"
-#include "vectors.h"
-
 
 //texture coordinates of one character in font cache array texture.
 typedef struct {

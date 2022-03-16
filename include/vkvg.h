@@ -700,6 +700,9 @@ const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeat
  * @{ */
 /**
  * @brief Create a new vkvg surface.
+ *
+ * This method will always return a valid pointer.
+ *
  * @param dev The vkvg device used for creating the surface.
  * @param width Width in pixel of the surface to create.
  * @param height Height in pixel of the surface to create.
@@ -710,6 +713,7 @@ VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height
 /**
  * @brief Create a new vkvg surface by loading an image file.
  * The resulting surface will have the same dimension as the supplied image.
+ * This method will always return a valid pointer.
  *
  * @param dev The vkvg device used for creating the surface.
  * @param filePath The path of the image to load for creating the surface.
@@ -719,6 +723,7 @@ vkvg_public
 VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath);
 /**
  * @brief Create a new vkvg surface using an existing vulkan texture as backend.
+ * This method will always return a valid pointer.
  * @param dev The vkvg device used for creating the surface.
  * @param vkhImg The VkhImage to use as the backend texture for drawing operations.
  * @return A new surface, or null if an error occured.
@@ -747,7 +752,7 @@ uint32_t vkvg_surface_get_reference_count (VkvgSurface surf);
 vkvg_public
 void vkvg_surface_destroy (VkvgSurface surf);
 /**
- * @brief Query the current status of the surface
+ * @brief Query the current status of the surface.
  * @param The vkvg surface to query the status for.
  * @return The current surface status.
  */
@@ -875,6 +880,7 @@ typedef enum _vkvg_operator {
  * @brief Create a new vkvg context used for drawing on surfaces.
  *
  * Creates a new #VkvgContext with all graphics state parameters set to default values and with surf as a target surface.
+ * This method will always return a valid pointer even if memory allocation failed.
  * @remark This function references surf, so you can immediately call #vkvg_surface_destroy() on it if you don't need to maintain a separate reference to it.
  * @param surf The target surface of the drawing operations.
  * @return A new #VkvgContext or null if an error occured.
@@ -1811,7 +1817,15 @@ void vkvg_text_run_get_glyph_position (VkvgText textRun,
  * and which may have special configuration for filtering and border repeat.
  *
  * @{ */
-
+/**
+ * @brief Get pattern current status.
+ *
+ * Querry the current status of a pattern.
+ * @param pat A valid pattern handle.
+ * @return The current status of the pattern.
+ */
+vkvg_public
+vkvg_status_t vkvg_pattern_status (VkvgPattern pat);
 /**
  * @brief add reference
  *
