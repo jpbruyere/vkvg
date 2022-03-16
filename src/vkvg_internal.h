@@ -85,4 +85,16 @@
 //30 seconds fence timeout
 #define VKVG_FENCE_TIMEOUT 30000000000
 //#define VKVG_FENCE_TIMEOUT 10000
+
+#include "vkvg.h"
+#include "vkvg_buff.h"
+#include "vkh.h"
+#include "vectors.h"
+
+/*typedef struct {
+	vkvg_status_t status;
+} _vkvg_no_mem_struct;*/
+
+static vkvg_status_t _no_mem_status = VKVG_STATUS_NO_MEMORY;
+
 #endif
