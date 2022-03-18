@@ -134,6 +134,10 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 	if (vkh_layer_is_present("VK_LAYER_KHRONOS_validation"))
 		enabledLayers[enabledLayersCount++] = "VK_LAYER_KHRONOS_validation";
 #endif
+#ifdef VKVG_USE_MESA_OVERLAY
+	if (vkh_layer_is_present("VK_LAYER_MESA_overlay"))
+		enabledLayers[enabledLayersCount++] = "VK_LAYER_MESA_overlay";
+#endif
 
 #ifdef VKVG_USE_RENDERDOC
 	if (vkh_layer_is_present("VK_LAYER_RENDERDOC_Capture"))
@@ -207,13 +211,10 @@ vk_engine_t* vkengine_create (VkPhysicalDeviceType preferedGPU, VkPresentModeKHR
 
 	enabledExtsCount=0;
 
-	VkPhysicalDeviceFeatures2 phyFeat2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
-	VkPhysicalDeviceScalarBlockLayoutFeatures scalarBlockLayoutSupport = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES};
-	phyFeat2.pNext = &scalarBlockLayoutSupport;
-
-	vkGetPhysicalDeviceFeatures2(pi->phy, &phyFeat2);
-
-	vkvg_get_required_device_extensions (pi->phy, enabledExts, &enabledExtsCount);
+	if (vkvg_get_required_device_extensions (pi->phy, enabledExts, &enabledExtsCount) != VKVG_STATUS_SUCCESS) {
+		perror ("vkvg_get_required_device_extensions failed, enable log for details.\n");
+		exit(-1);
+	}
 	TRY_LOAD_DEVICE_EXT (VK_KHR_swapchain)
 
 	VkPhysicalDeviceFeatures enabledFeatures = {0};

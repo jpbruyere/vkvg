@@ -131,7 +131,7 @@ VkRenderPass _device_createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadO
 					.format = FB_COLOR_FORMAT,
 					.samples = dev->samples,
 					.loadOp = loadOp,
-					.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+					.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 					.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 					.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 					.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -212,14 +212,14 @@ void _device_setupPipelines(VkvgDevice dev)
 	{ .colorWriteMask = 0x0, .blendEnable = VK_TRUE,
 #ifdef VKVG_PREMULT_ALPHA
 	  .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
-	  .dstColorBlendFactor= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	  .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
 	  .colorBlendOp = VK_BLEND_OP_ADD,
 	  .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-	  .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+	  .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
 	  .alphaBlendOp = VK_BLEND_OP_ADD,
 #else
 	  .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-	  .dstColorBlendFactor= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	  .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
 	  .colorBlendOp = VK_BLEND_OP_ADD,
 	  .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
 	  .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
@@ -232,9 +232,9 @@ void _device_setupPipelines(VkvgDevice dev)
 				.pAttachments = &blendAttachmentState };
 
 										/*failOp,passOp,depthFailOp,compareOp, compareMask, writeMask, reference;*/
-	VkStencilOpState polyFillOpState ={VK_STENCIL_OP_KEEP,VK_STENCIL_OP_INVERT,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_CLIP_BIT,STENCIL_FILL_BIT,0};
-	VkStencilOpState clipingOpState = {VK_STENCIL_OP_ZERO,VK_STENCIL_OP_REPLACE,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_ALL_BIT,0x2};
-	VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_ZERO,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_FILL_BIT,0x1};
+	VkStencilOpState polyFillOpState ={VK_STENCIL_OP_KEEP,VK_STENCIL_OP_INVERT,	VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_CLIP_BIT,STENCIL_FILL_BIT,0};
+	VkStencilOpState clipingOpState = {VK_STENCIL_OP_ZERO,VK_STENCIL_OP_REPLACE,VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_ALL_BIT, 0x2};
+	VkStencilOpState stencilOpState = {VK_STENCIL_OP_KEEP,VK_STENCIL_OP_ZERO,	VK_STENCIL_OP_KEEP,VK_COMPARE_OP_EQUAL,STENCIL_FILL_BIT,STENCIL_FILL_BIT,0x1};
 
 	VkPipelineDepthStencilStateCreateInfo dsStateCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
 				.depthTestEnable = VK_FALSE,
@@ -260,27 +260,25 @@ void _device_setupPipelines(VkvgDevice dev)
 
 	VkPipelineMultisampleStateCreateInfo multisampleState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 				.rasterizationSamples = dev->samples };
-	/*if (VKVG_SAMPLES != VK_SAMPLE_COUNT_1_BIT){
+	/*if (dev->samples != VK_SAMPLE_COUNT_1_BIT){
 		multisampleState.sampleShadingEnable = VK_TRUE;
-		multisampleState.minSampleShading = 0.25f;
-		//multisampleState.alphaToCoverageEnable = VK_FALSE;
-		//multisampleState.alphaToOneEnable = VK_FALSE;
+		multisampleState.minSampleShading = 0.5f;
 	}*/
 	VkVertexInputBindingDescription vertexInputBinding = { .binding = 0,
 				.stride = sizeof(Vertex),
 				.inputRate = VK_VERTEX_INPUT_RATE_VERTEX };
 
 	VkVertexInputAttributeDescription vertexInputAttributs[3] = {
-		{0, 0, VK_FORMAT_R32G32_SFLOAT, 0},
-		{1, 0, VK_FORMAT_R8G8B8A8_UNORM, 8},
+		{0, 0, VK_FORMAT_R32G32_SFLOAT,		0},
+		{1, 0, VK_FORMAT_R8G8B8A8_UNORM,	8},
 		{2, 0, VK_FORMAT_R32G32B32_SFLOAT, 12}
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertexInputState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-		.vertexBindingDescriptionCount = 1,
-		.pVertexBindingDescriptions = &vertexInputBinding,
-		.vertexAttributeDescriptionCount = 3,
-		.pVertexAttributeDescriptions = vertexInputAttributs };
+		.vertexBindingDescriptionCount	= 1,
+		.pVertexBindingDescriptions		= &vertexInputBinding,
+		.vertexAttributeDescriptionCount= 3,
+		.pVertexAttributeDescriptions	= vertexInputAttributs };
 #ifdef VKVG_WIRED_DEBUG
 	VkShaderModule modVert, modFrag, modFragWired;
 #else
@@ -354,17 +352,19 @@ void _device_setupPipelines(VkvgDevice dev)
 	blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_SUB));
 
-	//shaderStages[1].pName = "op_CLEAR";
-	blendAttachmentState.colorBlendOp = blendAttachmentState.alphaBlendOp = VK_BLEND_OP_SUBTRACT;
-	blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendState.logicOpEnable = VK_TRUE;
+	blendAttachmentState.blendEnable = VK_FALSE;
+	colorBlendState.logicOp = VK_LOGIC_OP_CLEAR;
 	VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &dev->pipe_CLEAR));
 
 
 #ifdef VKVG_WIRED_DEBUG
+	colorBlendState.logicOpEnable = VK_FALSE;
+	blendAttachmentState.blendEnable = VK_TRUE;
+	colorBlendState.logicOp = VK_LOGIC_OP_CLEAR;
+
 	createInfo.pCode = (uint32_t*)wired_frag_spv;
+
 	createInfo.codeSize = wired_frag_spv_len;
 	VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFragWired));
 
