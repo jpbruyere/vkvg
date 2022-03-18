@@ -171,19 +171,35 @@ vkvg_status_t vkvg_get_required_device_extensions (VkPhysicalDevice phy, const c
 
 	//https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VK_KHR_portability_subset
 	_CHECK_DEV_EXT(VK_KHR_portability_subset);
-
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
-	//ensure feature is implemented by driver.
 	VkPhysicalDeviceFeatures2 phyFeat2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
+	//ensure feature is implemented by driver.
 	VkPhysicalDeviceScalarBlockLayoutFeatures scalarBlockLayoutSupport = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES};
 	phyFeat2.pNext = &scalarBlockLayoutSupport;
+#endif
+
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreSupport = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES};
+	timelineSemaphoreSupport.pNext = phyFeat2.pNext;
+	phyFeat2.pNext = &timelineSemaphoreSupport;
+#endif
+
 	vkGetPhysicalDeviceFeatures2(phy, &phyFeat2);
 
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 	if (!scalarBlockLayoutSupport.scalarBlockLayout) {
-		LOG(VKVG_LOG_ERR, "CREATE Device failed, vkvg compiled with VKVG_VK_SCALAR_BLOCK_SUPPORTED and feature is not implemented for physical device.\n");
+		LOG(VKVG_LOG_ERR, "CREATE Device failed, vkvg compiled with VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT and feature is not implemented for physical device.\n");
 		return VKVG_STATUS_DEVICE_ERROR;
 	}
 	_CHECK_DEV_EXT(VK_EXT_scalar_block_layout)
+#endif
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	if (!timelineSemaphoreSupport.timelineSemaphore) {
+		LOG(VKVG_LOG_ERR, "CREATE Device failed, VK_SEMAPHORE_TYPE_TIMELINE not supported.\n");
+		return VKVG_STATUS_DEVICE_ERROR;
+	}
+	_CHECK_DEV_EXT(VK_KHR_timeline_semaphore)
 #endif
 
 	return VKVG_STATUS_SUCCESS;
@@ -198,25 +214,35 @@ const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeat
 
 	void* pNext = NULL;
 
-#ifdef VK_VERSION_1_2
+#ifdef VK_VERSION_1_2_
 	static VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 		,.scalarBlockLayout = VK_TRUE
+#endif
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+		,.timelineSemaphore = VK_TRUE
 #endif
 	};
 	enabledFeatures12.pNext = pNext;
 	pNext = &enabledFeatures12;
 #else
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 	static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeat = {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
 		,.scalarBlockLayout = VK_TRUE
-#endif
 	};
 	scalarBlockFeat.pNext = pNext;
 	pNext = &scalarBlockFeat;
-
+#endif
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	static VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timelineSemaFeat = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR
+		,.timelineSemaphore = VK_TRUE
+	};
+	timelineSemaFeat.pNext = pNext;
+	pNext = &timelineSemaFeat;
+#endif
 #endif
 
 	return pNext;

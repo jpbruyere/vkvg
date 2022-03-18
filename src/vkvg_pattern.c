@@ -150,7 +150,7 @@ vkvg_status_t vkvg_pattern_add_color_stop (VkvgPattern pat, float offset, float 
 	vkvg_color_t c = {r,g,b,a};
 #endif
 	grad->colors[grad->count] = c;
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 	grad->stops[grad->count] = offset;
 #else
 	grad->stops[grad->count].r = offset;
@@ -201,7 +201,7 @@ vkvg_status_t vkvg_pattern_get_color_stop_rgba (VkvgPattern pat, uint32_t index,
 	vkvg_gradient_t* grad = (vkvg_gradient_t*)pat->data;
 	if (index >= grad->count)
 		return VKVG_STATUS_INVALID_INDEX;
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 	*offset = grad->stops[index];
 #else
 	*offset = grad->stops[index].r;
