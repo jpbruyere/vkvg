@@ -42,7 +42,7 @@ VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height
 
 	surf->width = MAX(1, width);
 	surf->height = MAX(1, height);
-	surf->new = true;//used to clear all attacments on first render pass
+	surf->newSurf = true;//used to clear all attacments on first render pass
 
 	_create_surface_images (surf);
 
@@ -156,7 +156,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 	vkvg_buffer_destroy (&buff);
 	vkh_image_destroy	(stagImg);
 
-	surf->new = false;
+	surf->newSurf = false;
 
 	//create tmp context with rendering pipeline to create the multisample img
 	VkvgContext ctx = vkvg_create (surf);
@@ -222,6 +222,10 @@ void vkvg_surface_destroy(VkvgSurface surf)
 
 	if (surf->dev->threadAware)
 		mtx_destroy (&surf->mutex);
+
+#if VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	vkDestroySemaphore (surf->dev->vkDev, surf->timeline, NULL);
+#endif
 
 	vkvg_device_destroy (surf->dev);
 	free(surf);

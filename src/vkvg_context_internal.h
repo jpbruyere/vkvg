@@ -131,7 +131,11 @@ typedef struct _vkvg_context_t {
 
 	VkvgDevice			dev;
 	VkvgSurface			pSurf;			//surface bound to context, set on creation of ctx
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	uint64_t			timelineStep;	//context cmd last submission timeline id.
+#else
 	VkFence				flushFence;		//context fence
+#endif
 	VkhImage			source;			//source of painting operation
 
 	VkCommandPool		cmdPool;		//local pools ensure thread safety

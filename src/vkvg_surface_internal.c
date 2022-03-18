@@ -186,5 +186,9 @@ VkvgSurface _create_surface (VkvgDevice dev, VkFormat format) {
 	surf->format = format;
 	if (dev->threadAware)
 		mtx_init (&surf->mutex, mtx_plain);
+
+#if VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	surf->timeline = vkh_timeline_create ((VkhDevice)dev, 0);
+#endif
 	return surf;
 }

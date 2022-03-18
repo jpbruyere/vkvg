@@ -455,8 +455,10 @@ void _device_store_context (VkvgContext ctx) {
 
 	LOCK_DEVICE
 
+#ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
 	if (dev->gQLastFence == ctx->flushFence)
 		dev->gQLastFence = VK_NULL_HANDLE;
+#endif
 	dev->cachedContext[dev->cachedContextCount++] = ctx;
 	ctx->references++;
 

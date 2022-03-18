@@ -420,24 +420,46 @@ void _create_cmd_buff (VkvgContext ctx){
 void _clear_attachment (VkvgContext ctx) {
 
 }
+
 bool _wait_flush_fence (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "CTX: _wait_flush_fence\n");
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	if (vkh_timeline_wait ((VkhDevice)ctx->dev, ctx->pSurf->timeline, ctx->timelineStep) == VK_SUCCESS)
+		return true;
+#else
 	if (WaitForFences (ctx->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
 		return true;
+#endif
 	LOG(VKVG_LOG_DEBUG, "CTX: _wait_flush_fence timeout\n");
 	ctx->status = VKVG_STATUS_TIMEOUT;
 	return false;
 }
+
+
 bool _wait_and_submit_cmd (VkvgContext ctx){
 	if (!ctx->cmdStarted)//current cmd buff is empty, be aware that wait is also canceled!!
 		return true;
 
 	LOG(VKVG_LOG_INFO, "CTX: _wait_and_submit_cmd\n");
 
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	VkvgSurface surf = ctx->pSurf;
+	VkvgDevice dev = surf->dev;
+	vkh_timeline_wait ((VkhDevice)dev, surf->timeline, surf->timelineStep);
+	LOCK_SURFACE(surf)
+	LOCK_DEVICE
+	vkh_cmd_submit_timelined (dev->gQueue, &ctx->cmd, surf->timeline, surf->timelineStep, surf->timelineStep+1);
+	surf->timelineStep++;
+	ctx->timelineStep = surf->timelineStep;
+	UNLOCK_DEVICE
+	UNLOCK_SURFACE(surf)
+#else
+
 	if (!_wait_flush_fence (ctx))
 		return false;
 	_device_reset_fence(ctx->dev, ctx->flushFence);
 	_device_submit_cmd (ctx->dev, &ctx->cmd, ctx->flushFence);
+#endif
 
 	if (ctx->cmd == ctx->cmdBuffers[0])
 		ctx->cmd = ctx->cmdBuffers[1];
@@ -866,7 +888,10 @@ void _init_descriptor_sets (VkvgContext ctx){
 void _release_context_ressources (VkvgContext ctx) {
 	VkDevice dev = ctx->dev->vkDev;
 	
+#ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
 	_device_destroy_fence (ctx->dev, ctx->flushFence);
+#endif
+
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 

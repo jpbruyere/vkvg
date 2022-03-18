@@ -37,8 +37,12 @@ typedef struct _vkvg_surface_t {
 	VkhImage		img;
 	VkhImage		imgMS;
 	VkhImage		stencil;
-	bool			new;
+	bool			newSurf;
 	mtx_t			mutex;
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	VkSemaphore		timeline;				/**< Timeline semaphore */
+	uint64_t		timelineStep;
+#endif
 }vkvg_surface;
 
 #define LOCK_SURFACE(surf) \
