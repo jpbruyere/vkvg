@@ -37,7 +37,7 @@ typedef struct _vkvg_pattern_t {
 
 typedef struct _vkvg_gradient_t {
 	vkvg_color_t	colors[16];
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 	float			stops[16];
 #else
 	vec4			stops[16];
