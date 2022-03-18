@@ -101,7 +101,6 @@ typedef enum {
 
 typedef struct _vkvg_context_save_t {
 	struct _vkvg_context_save_t* pNext;
-	VkvgSurface 				 pSurf;
 
 	float					lineWidth;
 	float					miterLimit;
