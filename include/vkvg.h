@@ -683,9 +683,10 @@ void vkvg_get_required_instance_extensions (const char** pExtensions, uint32_t* 
  * @param pExtensions a valid pointer to the array of extension names to fill, the size may be queried
  * by calling this method with pExtension being a NULL pointer.
  * @param pExtCount a valid pointer to an integer that will be fill with the required extension count.
- */
+ * @return #VKVG_STATUS_SUCCESS or #VKVG_STATUS_DEVICE_ERROR if a fatal error occured.
+*/
 vkvg_public
-void vkvg_get_required_device_extensions (VkPhysicalDevice phy, const char** pExtensions, uint32_t* pExtCount);
+vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const char** pExtensions, uint32_t* pExtCount);
 /**
  * @brief get vulkan device creation requirement to fit vkvg needs.
  *

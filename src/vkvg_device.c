@@ -152,12 +152,14 @@ bool _get_dev_extension_is_supported (VkExtensionProperties* pExtensionPropertie
 	return false;
 }
 #define _CHECK_DEV_EXT(ext) {					\
-if (_get_dev_extension_is_supported(pExtensionProperties, extensionCount, #ext)){	\
-	if (pExtensions)							\
-		pExtensions[*pExtCount] = #ext;			\
-	(*pExtCount)++;								\
+	if (_get_dev_extension_is_supported(pExtensionProperties, extensionCount, #ext)){\
+		if (pExtensions)							\
+			pExtensions[*pExtCount] = #ext;			\
+		(*pExtCount)++;								\
+	}\
 }
-void vkvg_get_required_device_extensions (VkPhysicalDevice phy, const char** pExtensions, uint32_t* pExtCount) {
+
+vkvg_status_t vkvg_get_required_device_extensions (VkPhysicalDevice phy, const char** pExtensions, uint32_t* pExtCount) {
 	VkExtensionProperties* pExtensionProperties;
 	uint32_t extensionCount;
 
@@ -168,14 +170,23 @@ void vkvg_get_required_device_extensions (VkPhysicalDevice phy, const char** pEx
 	VK_CHECK_RESULT(vkEnumerateDeviceExtensionProperties(phy, NULL, &extensionCount, pExtensionProperties));
 
 	//https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VK_KHR_portability_subset
-	_CHECK_DEV_EXT(VK_KHR_portability_subset)
+	_CHECK_DEV_EXT(VK_KHR_portability_subset);
 
-	if (_get_dev_extension_is_supported(pExtensionProperties, extensionCount, "VK_EXT_scalar_block_layout"))
-		if (pExtensions)
-			pExtensions[*pExtCount] = "VK_EXT_scalar_block_layout";
-		(*pExtCount)++;
+#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+	//ensure feature is implemented by driver.
+	VkPhysicalDeviceFeatures2 phyFeat2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+	VkPhysicalDeviceScalarBlockLayoutFeatures scalarBlockLayoutSupport = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES};
+	phyFeat2.pNext = &scalarBlockLayoutSupport;
+	vkGetPhysicalDeviceFeatures2(phy, &phyFeat2);
 
+	if (!scalarBlockLayoutSupport.scalarBlockLayout) {
+		LOG(VKVG_LOG_ERR, "CREATE Device failed, vkvg compiled with VKVG_VK_SCALAR_BLOCK_SUPPORTED and feature is not implemented for physical device.\n");
+		return VKVG_STATUS_DEVICE_ERROR;
 	}
+	_CHECK_DEV_EXT(VK_EXT_scalar_block_layout)
+#endif
+
+	return VKVG_STATUS_SUCCESS;
 }
 
 //enabledFeature12 is guarantied to be the first in pNext chain
@@ -187,23 +198,25 @@ const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeat
 
 	void* pNext = NULL;
 
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
 #ifdef VK_VERSION_1_2
 	static VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
-		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
-		.scalarBlockLayout = VK_TRUE
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
+#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+		,.scalarBlockLayout = VK_TRUE
+#endif
 	};
 	enabledFeatures12.pNext = pNext;
 	pNext = &enabledFeatures12;
 #else
 	static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeat = {
-		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
-		.scalarBlockLayout = VK_TRUE
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT
+#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+		,.scalarBlockLayout = VK_TRUE
+#endif
 	};
 	scalarBlockFeat.pNext = pNext;
 	pNext = &scalarBlockFeat;
 
-#endif
 #endif
 
 	return pNext;
@@ -281,13 +294,12 @@ VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) 
 
 	enabledExtsCount=0;
 
-	VkPhysicalDeviceFeatures2 phyFeat2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
-	VkPhysicalDeviceScalarBlockLayoutFeatures scalarBlockLayoutSupport = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES};
-	phyFeat2.pNext = &scalarBlockLayoutSupport;
-
-	vkGetPhysicalDeviceFeatures2 (pi->phy, &phyFeat2);
-
-	vkvg_get_required_device_extensions (pi->phy, enabledExts, &enabledExtsCount);
+	if (vkvg_get_required_device_extensions (pi->phy, enabledExts, &enabledExtsCount) != VKVG_STATUS_SUCCESS){
+		dev->status = VKVG_STATUS_DEVICE_ERROR;
+		vkh_app_free_phyinfos (phyCount, phys);
+		vkh_app_destroy (app);
+		return dev;
+	}
 
 	VkPhysicalDeviceFeatures enabledFeatures = {0};
 	const void* pNext = vkvg_get_device_requirements (&enabledFeatures);
