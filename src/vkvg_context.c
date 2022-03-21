@@ -83,7 +83,9 @@ void _init_ctx (VkvgContext ctx) {
 	ctx->cmdStarted			= false;
 	ctx->curClipState		= vkvg_clip_state_none;
 	ctx->vertCount			= ctx->indCount = 0;
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
 	ctx->timelineStep		= 0;
+#endif
 }
 
 VkvgContext vkvg_create(VkvgSurface surf)
