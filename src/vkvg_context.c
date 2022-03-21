@@ -62,12 +62,16 @@ void _init_ctx (VkvgContext ctx) {
 	ctx->renderPassBeginInfo.renderArea.extent.height = ctx->pSurf->height;
 	ctx->renderPassBeginInfo.pClearValues = clearValues;
 
+	LOCK_SURFACE (ctx->pSurf)
+
 	if (ctx->pSurf->newSurf)
 		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
 	else
 		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
-
 	ctx->pSurf->newSurf = false;
+
+	UNLOCK_SURFACE (ctx->pSurf);
+
 	vkvg_surface_reference (ctx->pSurf);
 
 	if (ctx->dev->samples == VK_SAMPLE_COUNT_1_BIT)
