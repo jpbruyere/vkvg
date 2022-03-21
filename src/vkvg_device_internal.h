@@ -68,7 +68,6 @@ typedef struct _vkvg_device_t{
 	mtx_t					mutex;					/**< protect device access (queue, cahes, ...)from ctxs in separate threads */
 	bool					threadAware;			/**< if true, mutex is created and guard device queue and caches access */
 	VkhQueue				gQueue;					/**< Vulkan Queue with Graphic flag */
-	VkFence					gQLastFence;
 
 	VkRenderPass			renderPass;				/**< Vulkan render pass, common for all surfaces */
 	VkRenderPass			renderPass_ClearStencil;/**< Vulkan render pass for first draw with context, stencil has to be cleared */
@@ -139,8 +138,6 @@ void _device_wait_idle					(VkvgDevice dev);
 void _device_wait_and_reset_device_fence(VkvgDevice dev);
 void _device_submit_cmd					(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
 
-void _device_destroy_fence				(VkvgDevice dev, VkFence fence);
-void _device_reset_fence				(VkvgDevice dev, VkFence fence);
 bool _device_try_get_cached_context		(VkvgDevice dev, VkvgContext* pCtx);
 void _device_store_context				(VkvgContext ctx);
 #endif

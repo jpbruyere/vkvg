@@ -413,7 +413,7 @@ void vkvg_device_destroy (VkvgDevice dev)
 	vkWaitForFences					(dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 	vkDestroyFence					(dev->vkDev, dev->fence,NULL);
 
-	//vkFreeCommandBuffers			(dev->vkDev, dev->cmdPool, 1, &dev->cmd);
+	vkFreeCommandBuffers			(dev->vkDev, dev->cmdPool, 1, &dev->cmd);
 	vkDestroyCommandPool			(dev->vkDev, dev->cmdPool, NULL);
 
 	vkh_queue_destroy(dev->gQueue);

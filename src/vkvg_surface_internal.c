@@ -20,15 +20,13 @@
  * THE SOFTWARE.
  */
 
-#include "vkvg_surface_internal.h"
 #include "vkvg_device_internal.h"
+#include "vkvg_surface_internal.h"
 #include "vkh_image.h"
+#include "vkh_queue.h"
 
 void _explicit_ms_resolve (VkvgSurface surf){
-	VkvgDevice		dev = surf->dev;
-	VkCommandBuffer cmd = dev->cmd;
-
-	_device_wait_and_reset_device_fence (dev);
+	VkCommandBuffer cmd = surf->cmd;
 
 	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	vkh_image_set_layout (cmd, surf->imgMS, VK_IMAGE_ASPECT_COLOR_BIT,
@@ -53,15 +51,12 @@ void _explicit_ms_resolve (VkvgSurface surf){
 						  VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	vkh_cmd_end (cmd);
 
-	_device_submit_cmd (dev, &cmd, dev->fence);
+	_surface_submit_cmd (surf);
 }
 
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 {
-	VkvgDevice		dev = surf->dev;
-	VkCommandBuffer cmd = dev->cmd;
-
-	_device_wait_and_reset_device_fence (dev);
+	VkCommandBuffer cmd = surf->cmd;
 
 	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -101,7 +96,7 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 	}
 	vkh_cmd_end (cmd);
 
-	_device_submit_cmd (dev, &cmd, dev->fence);
+	_surface_submit_cmd (surf);
 }
 
 void _create_surface_main_image (VkvgSurface surf){
@@ -186,9 +181,51 @@ VkvgSurface _create_surface (VkvgDevice dev, VkFormat format) {
 	surf->format = format;
 	if (dev->threadAware)
 		mtx_init (&surf->mutex, mtx_plain);
+	surf->cmdPool = vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+	vkh_cmd_buffs_create((VkhDevice)dev, surf->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1, &surf->cmd);
 
 #if VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
 	surf->timeline = vkh_timeline_create ((VkhDevice)dev, 0);
+#else
+	surf->flushFence = vkh_fence_create ((VkhDevice)dev);
 #endif
+
+#if defined(DEBUG) && defined(VKVG_DBG_UTILS)
+	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)surf->cmd, "vkvgSurfCmd");
+#endif
+
 	return surf;
+}
+//if fence sync, surf mutex must be locked.
+/*bool _surface_wait_cmd (VkvgSurface surf) {
+	LOG(VKVG_LOG_INFO, "SURF: _surface__wait_flush_fence\n");
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	if (vkh_timeline_wait ((VkhDevice)surf->dev, surf->timeline, surf->timelineStep) == VK_SUCCESS)
+		return true;
+#else
+	if (WaitForFences (surf->dev->vkDev, 1, &surf->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS) {
+		ResetFences (surf->dev->vkDev, 1, &surf->flushFence);
+		return true;
+	}
+#endif
+	LOG(VKVG_LOG_DEBUG, "CTX: _wait_flush_fence timeout\n");
+	surf->status = VKVG_STATUS_TIMEOUT;
+	return false;
+}*/
+//surface mutex must be locked to call this method, locking to guard also the surf->cmd local buffer usage.
+void _surface_submit_cmd (VkvgSurface surf) {
+	VkvgDevice dev = surf->dev;
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	LOCK_DEVICE
+	vkh_cmd_submit_timelined (dev->gQueue, &surf->cmd, surf->timeline, surf->timelineStep, surf->timelineStep+1);
+	surf->timelineStep++;
+	UNLOCK_DEVICE
+	vkh_timeline_wait ((VkhDevice)dev, surf->timeline, surf->timelineStep);
+#else
+	LOCK_DEVICE
+	vkh_cmd_submit (surf->dev->gQueue, &surf->cmd, surf->flushFence);
+	UNLOCK_DEVICE
+	WaitForFences (surf->dev->vkDev, 1, &surf->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
+	ResetFences (surf->dev->vkDev, 1, &surf->flushFence);
+#endif
 }

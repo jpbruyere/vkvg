@@ -415,29 +415,9 @@ void _device_wait_idle (VkvgDevice dev) {
 }
 void _device_wait_and_reset_device_fence (VkvgDevice dev) {
 	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
-	_device_reset_fence(dev, dev->fence);
+	ResetFences (dev->vkDev, 1, &dev->fence);
 }
 
-void _device_destroy_fence (VkvgDevice dev, VkFence fence) {
-	LOCK_DEVICE
-
-	if (dev->gQLastFence == fence)
-		dev->gQLastFence = VK_NULL_HANDLE;
-
-	vkDestroyFence (dev->vkDev, fence, NULL);
-
-	UNLOCK_DEVICE
-}
-void _device_reset_fence (VkvgDevice dev, VkFence fence){
-	LOCK_DEVICE
-
-	if (dev->gQLastFence == fence)
-		dev->gQLastFence = VK_NULL_HANDLE;
-
-	ResetFences (dev->vkDev, 1, &fence);
-
-	UNLOCK_DEVICE
-}
 bool _device_try_get_cached_context (VkvgDevice dev, VkvgContext* pCtx) {
 	LOCK_DEVICE
 
@@ -455,10 +435,6 @@ void _device_store_context (VkvgContext ctx) {
 
 	LOCK_DEVICE
 
-#ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-	if (dev->gQLastFence == ctx->flushFence)
-		dev->gQLastFence = VK_NULL_HANDLE;
-#endif
 	dev->cachedContext[dev->cachedContextCount++] = ctx;
 	ctx->references++;
 
@@ -466,10 +442,7 @@ void _device_store_context (VkvgContext ctx) {
 }
 void _device_submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
 	LOCK_DEVICE
-	if (dev->gQLastFence != VK_NULL_HANDLE)
-		WaitForFences (dev->vkDev, 1, &dev->gQLastFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
 	vkh_cmd_submit (dev->gQueue, cmd, fence);
-	dev->gQLastFence = fence;
 	UNLOCK_DEVICE
 }
 

@@ -445,7 +445,7 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
 	VkvgSurface surf = ctx->pSurf;
 	VkvgDevice dev = surf->dev;
-	vkh_timeline_wait ((VkhDevice)dev, surf->timeline, surf->timelineStep);
+	//vkh_timeline_wait ((VkhDevice)dev, surf->timeline, ct->timelineStep);
 	LOCK_SURFACE(surf)
 	LOCK_DEVICE
 	vkh_cmd_submit_timelined (dev->gQueue, &ctx->cmd, surf->timeline, surf->timelineStep, surf->timelineStep+1);
@@ -457,7 +457,7 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 
 	if (!_wait_flush_fence (ctx))
 		return false;
-	_device_reset_fence(ctx->dev, ctx->flushFence);
+	ResetFences (ctx->dev->vkDev, 1, &ctx->flushFence);
 	_device_submit_cmd (ctx->dev, &ctx->cmd, ctx->flushFence);
 #endif
 
@@ -889,7 +889,7 @@ void _release_context_ressources (VkvgContext ctx) {
 	VkDevice dev = ctx->dev->vkDev;
 	
 #ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-	_device_destroy_fence (ctx->dev, ctx->flushFence);
+	vkDestroyFence (dev, ctx->flushFence, NULL);
 #endif
 
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);

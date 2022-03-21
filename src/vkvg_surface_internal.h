@@ -37,12 +37,17 @@ typedef struct _vkvg_surface_t {
 	VkhImage		img;
 	VkhImage		imgMS;
 	VkhImage		stencil;
+	VkCommandPool	cmdPool;				//local pools ensure thread safety
+	VkCommandBuffer cmd;					//surface local command buffer.
 	bool			newSurf;
 	mtx_t			mutex;
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
 	VkSemaphore		timeline;				/**< Timeline semaphore */
 	uint64_t		timelineStep;
+#else
+	VkFence			flushFence;				//unsignaled idle.
 #endif
+
 }vkvg_surface;
 
 #define LOCK_SURFACE(surf) \
@@ -59,4 +64,7 @@ void _create_surface_secondary_images (VkvgSurface surf);
 void _create_framebuffer (VkvgSurface surf);
 void _create_surface_images (VkvgSurface surf);
 VkvgSurface _create_surface (VkvgDevice dev, VkFormat format);
+
+void _surface_submit_cmd (VkvgSurface surf);
+//bool _surface_wait_cmd (VkvgSurface surf);
 #endif
