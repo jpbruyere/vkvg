@@ -1,3 +1,7 @@
+# /////////////////////////////////////////
+# This file is Licensed MIT, please refer to LICENSE.md for more information.
+# /////////////////////////////////////////
+
 project('voxgui', 'c', 'cpp', version: '0.3.0', license: 'MIT', meson_version: '>=0.62.0', default_options: ['c_std=c11', 'cpp_std=c++11'])
 cc = meson.get_compiler('c')
 
