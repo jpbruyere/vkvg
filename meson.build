@@ -11,40 +11,40 @@ cc = meson.get_compiler('c')
 
 # VKH Options
 # Enable Vulkan Validation Layer
-ENABLE_VALIDATION_OPT = false
+ENABLE_VALIDATION_OPT = get_option('ENABLE_VALIDATION_OPT')
 # Enable Vulkan Memory Allocator - For more information: https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-VKH_ENABLE_VMA = false
+VKH_ENABLE_VMA = get_option('VKH_ENABLE_VMA')
 
 # VMA Options
 # Enable VMA memory recording for debugging
-VMA_RECORDING_ENABLD = false
+VMA_RECORDING_ENABLED = get_option('VMA_RECORDING_ENABLED')
 # Use C++ STL containers instead of VMA's containers
-VMA_USE_STL_CONTAINERS = false
+VMA_USE_STL_CONTAINERS = get_option('VMA_USE_STL_CONTAINERS')
 # Link statically with Vulkan API
-VMA_STATIC_VULKAN_FUNCTIONS = false
+VMA_STATIC_VULKAN_FUNCTIONS = get_option('VMA_STATIC_VULKAN_FUNCTIONS')
 # Fetch pointers to Vulkan functions internally (no static linking)
-VMA_DYNAMIC_VULKAN_FUNCTIONS = true
+VMA_DYNAMIC_VULKAN_FUNCTIONS = get_option('VMA_DYNAMIC_VULKAN_FUNCTIONS')
 # Every allocation will have its own memory block
-VMA_DEBUG_ALWAYS_DEDICATED_MEMORY = false
+VMA_DEBUG_ALWAYS_DEDICATED_MEMORY = get_option('VMA_DEBUG_ALWAYS_DEDICATED_MEMORY')
 # Automatically fill new allocations and destroyed allocations with some bit pattern
-VMA_DEBUG_INITIALIZE_ALLOCATIONS = false
+VMA_DEBUG_INITIALIZE_ALLOCATIONS = get_option('VMA_DEBUG_INITIALIZE_ALLOCATIONS')
 # Enable single mutex protecting all entry calls to the library
-VMA_DEBUG_GLOBAL_MUTEX = false
+VMA_DEBUG_GLOBAL_MUTEX = get_option('VMA_DEBUG_GLOBAL_MUTEX')
 # Never exceed VkPhysicalDeviceLimits::maxMemoryAllocationCount and return error
-VMA_DEBUG_DONT_EXCEED_MAX_MEMORY_ALLOCATION_COUNT = false
+VMA_DEBUG_DONT_EXCEED_MAX_MEMORY_ALLOCATION_COUNT = get_option('VMA_DEBUG_DONT_EXCEED_MAX_MEMORY_ALLOCATION_COUNT')
 # Minimum alignment of all allocations, in bytes.
 # Set to more than 1 for debugging purposes only. Must be power of two.
-VMA_DEBUG_ALIGNMENT = 1
+VMA_DEBUG_ALIGNMENT = get_option('VMA_DEBUG_ALIGNMENT')
 # Minimum margin before and after every allocation, in bytes.
 # Set nonzero for debugging purposes only.
-VMA_DEBUG_MARGIN = 0
+VMA_DEBUG_MARGIN = get_option('VMA_DEBUG_MARGIN')
 # Minimum value for VkPhysicalDeviceLimits::bufferImageGranularity.
 # Set to more than 1 for debugging purposes only. Must be power of two.
-VMA_DEBUG_MIN_BUFFER_IMAGE_GRANULARITY = 1
+VMA_DEBUG_MIN_BUFFER_IMAGE_GRANULARITY = get_option('VMA_DEBUG_MIN_BUFFER_IMAGE_GRANULARITY')
 # Maximum size of a memory heap in Vulkan to consider it "small".
-VMA_SMALL_HEAP_MAX_SIZE = 1073741824 # 1 Gigabyte
+VMA_SMALL_HEAP_MAX_SIZE = get_option('VMA_SMALL_HEAP_MAX_SIZE') # 1 Gigabyte default
 # Default size of a block allocated as single VkDeviceMemory from a "large" heap.
-VMA_DEFAULT_LARGE_HEAP_BLOCK_SIZE = 268435456 # 256 Megabytes
+VMA_DEFAULT_LARGE_HEAP_BLOCK_SIZE = get_option('VMA_DEFAULT_LARGE_HEAP_BLOCK_SIZE') # 256 Megabytes default
 
 # Required Dependencies for VKH
 vulkan_dep = dependency('vulkan')
@@ -79,7 +79,7 @@ if (ENABLE_VALIDATION_OPT == true)
 endif
 
 # VMA Options Define Flags
-if (VMA_RECORDING_ENABLD == true)
+if (VMA_RECORDING_ENABLED == true)
     vkh_compile_options += '-DVMA_RECORDING_ENABLED=1'
 endif
 
@@ -182,17 +182,17 @@ vkh_static_dep = declare_dependency(dependencies: vkh_dependencies, include_dire
 
 # VKVG Options
 # Enable VKVG Debug Utilities
-VKVG_ENABLE_DBG_UTILS = false
+VKVG_ENABLE_DBG_UTILS = get_option('VKVG_ENABLE_DBG_UTILS')
 # Compile with -pg options
-VKVG_ENABLE_PROFILING = false
+VKVG_ENABLE_PROFILING = get_option('VKVG_ENABLE_PROFILING')
 # Enable experimental recording functions
-VKVG_RECORDING = true
+VKVG_RECORDING = get_option('VKVG_RECORDING')
 # Use premultiplied alpha for internal rendering
-VKVG_PREMULT_ALPHA = true
+VKVG_PREMULT_ALPHA = get_option('VKVG_PREMULT_ALPHA')
 # Record contexts statistics in the device
-VKVG_DBG_STATS = true
+VKVG_DBG_STATS = get_option('VKVG_DBG_STATS')
 # Fill non-zero with glu tesselator
-VKVG_USE_GLUTESS = true
+VKVG_USE_GLUTESS = get_option('VKVG_USE_GLUTESS')
 # Render svg with vkvg-svg library (Turned off if on Linux/Unix platform)
 if (build_machine.system() == 'linux')
     VKVG_SVG = false
@@ -200,21 +200,21 @@ else
     VKVG_SVG = true
 endif
 # Use freetype to load and render font glyphs
-VKVG_USE_FREETYPE = true
+VKVG_USE_FREETYPE = get_option('VKVG_USE_FREETYPE')
 # Use FontConfig to resolve font names
-VKVG_USE_FONTCONFIG = true
+VKVG_USE_FONTCONFIG = get_option('VKVG_USE_FONTCONFIG')
 # Use harfbuzz for text layouting
-VKVG_USE_HARFBUZZ = true
+VKVG_USE_HARFBUZZ = get_option('VKVG_USE_HARFBUZZ')
 # Enable freetype lcd font filtering
-VKVG_LCD_FONT_FILTER = false
+VKVG_LCD_FONT_FILTER = get_option('VKVG_LCD_FONT_FILTER')
 # Enable scalar block layout support
-VKVG_VK_SCALAR_BLOCK_SUPPORTED = true
+VKVG_VK_SCALAR_BLOCK_SUPPORTED = get_option('VKVG_VK_SCALAR_BLOCK_SUPPORTED')
 # Apply validation
-VKVG_ENABLE_VALIDATION = false
+VKVG_ENABLE_VALIDATION = get_option('VKVG_ENABLE_VALIDATION')
 # Add vulkan layers for supporting RenderDoc
-VKVG_ENABLE_RENDERDOC = false
+VKVG_ENABLE_RENDERDOC = get_option('VKVG_ENABLE_RENDERDOC')
 # Enable Debug Wire Fill
-VKVG_ENABLE_WIRED_FILL = false
+VKVG_ENABLE_WIRED_FILL = get_option('VKVG_ENABLE_WIRED_FILL')
 
 # VKVG Source Code
 vkvg_src = [
@@ -411,51 +411,57 @@ test_engine_includes = [
 ]
 
 # Test Cases
-# tests/ cases
-arcs_test = executable('arcs_test', sources: [test_engine_src, 'tests/arcs.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-bezier_test = executable('bezier_test', sources: [test_engine_src, 'tests/bezier.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-circles_test = executable('circles_test', sources: [test_engine_src, 'tests/circles.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-clip_test = executable('clip_test', sources: [test_engine_src, 'tests/clip.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-colinear_test = executable('colinear_test', sources: [test_engine_src, 'tests/colinear.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-compositing_test = executable('compositing_test', sources: [test_engine_src, 'tests/compositing.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-context_test = executable('context_test', sources: [test_engine_src, 'tests/context.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-curve_test = executable('curve_test', sources: [test_engine_src, 'tests/curve.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-dashes_test = executable('dashes_test', sources: [test_engine_src, 'tests/dashes.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-fill_and_stroke_test = executable('fill_and_stroke_test', sources: [test_engine_src, 'tests/fill_and_stroke.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-fill_non_zero_test = executable('fill_non_zero_test', sources: [test_engine_src, 'tests/fill_non_zero.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-fill_test = executable('fill_test', sources: [test_engine_src, 'tests/fill.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-gradient_test = executable('gradient_test', sources: [test_engine_src, 'tests/gradient.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-gradient2_test = executable('gradient2_test', sources: [test_engine_src, 'tests/gradient2.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-img_surf_test = executable('img_surf_test', sources: [test_engine_src, 'tests/img_surf.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-inverse_colinear_test = executable('inverse_colinear_test', sources: [test_engine_src, 'tests/inverse_colinear.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-line_caps_test = executable('line_caps_test', sources: [test_engine_src, 'tests/line_caps.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-line_join_test = executable('line_join_test', sources: [test_engine_src, 'tests/line_join.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-lines_test = executable('lines_test', sources: [test_engine_src, 'tests/lines.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-offscreen_test = executable('offscreen_test', sources: [test_engine_src, 'tests/offscreen.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-paint_surf_test = executable('paint_surf_test', sources: [test_engine_src, 'tests/paint_surf.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-path_extents_test = executable('path_extents_test', sources: [test_engine_src, 'tests/path_extents.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-pattern_transforms_test = executable('pattern_transforms_test', sources: [test_engine_src, 'tests/pattern_transforms.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-radial_gradient_test = executable('radial_gradient_test', sources: [test_engine_src, 'tests/radial_gradient.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-recording_test = executable('recording_test', sources: [test_engine_src, 'tests/recording.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-rect_fill_test = executable('rect_fill_test', sources: [test_engine_src, 'tests/rect_fill.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-save_restore_test = executable('save_restore_test', sources: [test_engine_src, 'tests/save_restore.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-simple_paint_test = executable('simple_paint_test', sources: [test_engine_src, 'tests/simple_paint.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-stroke_test = executable('stroke_test', sources: [test_engine_src, 'tests/stroke.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-surface_test = executable('surface_test', sources: [test_engine_src, 'tests/surface.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-svg_test = executable('svg_test', sources: [test_engine_src, 'tests/svg.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-test1_test = executable('test1_test', sources: [test_engine_src, 'tests/test1.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-text_test = executable('text_test', sources: [test_engine_src, 'tests/text.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-transform_test = executable('transform_test', sources: [test_engine_src, 'tests/transform.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
+INSTALL_TEST = get_option('INSTALL_TEST')
+if (INSTALL_TEST == true)
+    # tests/ cases
+    arcs_test = executable('arcs_test', sources: [test_engine_src, 'tests/arcs.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    bezier_test = executable('bezier_test', sources: [test_engine_src, 'tests/bezier.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    circles_test = executable('circles_test', sources: [test_engine_src, 'tests/circles.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    clip_test = executable('clip_test', sources: [test_engine_src, 'tests/clip.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    colinear_test = executable('colinear_test', sources: [test_engine_src, 'tests/colinear.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    compositing_test = executable('compositing_test', sources: [test_engine_src, 'tests/compositing.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    context_test = executable('context_test', sources: [test_engine_src, 'tests/context.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    curve_test = executable('curve_test', sources: [test_engine_src, 'tests/curve.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    dashes_test = executable('dashes_test', sources: [test_engine_src, 'tests/dashes.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    fill_and_stroke_test = executable('fill_and_stroke_test', sources: [test_engine_src, 'tests/fill_and_stroke.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    fill_non_zero_test = executable('fill_non_zero_test', sources: [test_engine_src, 'tests/fill_non_zero.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    fill_test = executable('fill_test', sources: [test_engine_src, 'tests/fill.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    gradient_test = executable('gradient_test', sources: [test_engine_src, 'tests/gradient.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    gradient2_test = executable('gradient2_test', sources: [test_engine_src, 'tests/gradient2.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    img_surf_test = executable('img_surf_test', sources: [test_engine_src, 'tests/img_surf.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    inverse_colinear_test = executable('inverse_colinear_test', sources: [test_engine_src, 'tests/inverse_colinear.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    line_caps_test = executable('line_caps_test', sources: [test_engine_src, 'tests/line_caps.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    line_join_test = executable('line_join_test', sources: [test_engine_src, 'tests/line_join.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    lines_test = executable('lines_test', sources: [test_engine_src, 'tests/lines.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    offscreen_test = executable('offscreen_test', sources: [test_engine_src, 'tests/offscreen.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    paint_surf_test = executable('paint_surf_test', sources: [test_engine_src, 'tests/paint_surf.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    path_extents_test = executable('path_extents_test', sources: [test_engine_src, 'tests/path_extents.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    pattern_transforms_test = executable('pattern_transforms_test', sources: [test_engine_src, 'tests/pattern_transforms.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    radial_gradient_test = executable('radial_gradient_test', sources: [test_engine_src, 'tests/radial_gradient.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    recording_test = executable('recording_test', sources: [test_engine_src, 'tests/recording.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    rect_fill_test = executable('rect_fill_test', sources: [test_engine_src, 'tests/rect_fill.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    save_restore_test = executable('save_restore_test', sources: [test_engine_src, 'tests/save_restore.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    simple_paint_test = executable('simple_paint_test', sources: [test_engine_src, 'tests/simple_paint.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    stroke_test = executable('stroke_test', sources: [test_engine_src, 'tests/stroke.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    surface_test = executable('surface_test', sources: [test_engine_src, 'tests/surface.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    svg_test = executable('svg_test', sources: [test_engine_src, 'tests/svg.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    test1_test = executable('test1_test', sources: [test_engine_src, 'tests/test1.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    text_test = executable('text_test', sources: [test_engine_src, 'tests/text.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    transform_test = executable('transform_test', sources: [test_engine_src, 'tests/transform.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
 
-# tests/multithreading
-multithreaded_test = executable('multithreaded_test', sources: [test_engine_src, 'tests/multithreading/multithreaded.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-multithreaded2_test = executable('multithreaded2_test', sources: [test_engine_src, 'tests/multithreading/multithreaded2.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-threaded_create_surf_test = executable('threaded_create_surf_test', sources: [test_engine_src, 'tests/multithreading/threaded_create_surf.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-threaded_text_test = executable('threaded_text_test', sources: [test_engine_src, 'tests/multithreading/threaded_text.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
+    # tests/multithreading
+    multithreaded_test = executable('multithreaded_test', sources: [test_engine_src, 'tests/multithreading/multithreaded.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    multithreaded2_test = executable('multithreaded2_test', sources: [test_engine_src, 'tests/multithreading/multithreaded2.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    threaded_create_surf_test = executable('threaded_create_surf_test', sources: [test_engine_src, 'tests/multithreading/threaded_create_surf.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    threaded_text_test = executable('threaded_text_test', sources: [test_engine_src, 'tests/multithreading/threaded_text.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
 
-# perfs
-random_rects_test = executable('random_rects_test', sources: [test_engine_src, 'tests/perfs/random_rects.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
-randoms_test = executable('randoms_test', sources: [test_engine_src, 'tests/perfs/randoms.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: false)
+    # perfs
+    random_rects_test = executable('random_rects_test', sources: [test_engine_src, 'tests/perfs/random_rects.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+    randoms_test = executable('randoms_test', sources: [test_engine_src, 'tests/perfs/randoms.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
+
+    # Ensure data folder get copied over
+    install_subdir('tests/data', install_dir: get_option('bindir') / 'vkvg_tests/data', strip_directory: false)
+endif
 
 # Summaries of all of the configuration options
 summary({
@@ -470,7 +476,7 @@ summary ({
 }, section: 'VKH Options')
 
 summary ({
-    'VMA_RECORDING_ENABLD': VMA_RECORDING_ENABLD,
+    'VMA_RECORDING_ENABLED': VMA_RECORDING_ENABLED,
     'VMA_USE_STL_CONTAINERS': VMA_USE_STL_CONTAINERS,
     'VMA_STATIC_VULKAN_FUNCTIONS': VMA_STATIC_VULKAN_FUNCTIONS,
     'VMA_DYNAMIC_VULKAN_FUNCTIONS': VMA_DYNAMIC_VULKAN_FUNCTIONS,
@@ -502,3 +508,7 @@ summary({
     'VKVG_ENABLE_RENDERDOC': VKVG_ENABLE_RENDERDOC,
     'VKVG_ENABLE_WIRED_FILL': VKVG_ENABLE_WIRED_FILL
 }, section: 'VKVG Options')
+
+summary({
+    'INSTALL_TEST': INSTALL_TEST
+})
