@@ -444,6 +444,7 @@ test_engine_includes = [
 ]
 
 # Test Cases
+ENABLE_TEST = get_option('ENABLE_TEST')
 INSTALL_TEST = get_option('INSTALL_TEST')
 TEST_HIDE_WARNINGS = get_option('TEST_HIDE_WARNINGS')
 test_c_args = []

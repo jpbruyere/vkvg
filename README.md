@@ -81,6 +81,7 @@ For API documentation and usage, please refer to the [Cairo](https://www.cairogr
 ## Requirements:
 
 - [CMake](https://cmake.org/): version >= 3.16
+- [Meson](https://mesonbuild.com): version >= 0.62.0
 - [Vulkan](https://www.khronos.org/vulkan/): version >= 1.1
 - [FontConfig](https://www.freedesktop.org/wiki/Software/fontconfig/): optional, without fontconfig, use `vkvg_load_font_from_path`.
 - [Freetype](https://www.freetype.org/): optional, stb_truetype as alternative.
@@ -96,8 +97,82 @@ if `glslc` or `xxd` are not present, a precompiled version of the shaders is sto
 <a href="https://aur.archlinux.org/packages/vkvg"><img src="https://img.shields.io/aur/version/vkvg"></a>
 <a href="https://mpr.hunterwittenborn.com/packages/vkvg"><img src="https://img.shields.io/badge/mpr-v0.3.0--beta-blue"></a>
 
+## Meson Build
 ```bash
-#fetch sources from github
+# fetch sources from github
+git clone --recursive https://github.com/jpbruyere/vkvg.git
+cd vkvg
+# set up and configure meson
+meson setup build
+# View available options to configure
+meson configure build
+# Set up install directory
+mkdir install
+meson configure build -Dprefix=$(pwd)/install
+# If you wish to install into /usr/local prefix then you can do this instead
+meson configure build -Dprefix=/usr/local
+# Build vkvg project
+meson compile -C build
+# Install vkvg project
+meson install -C build
+```
+### Meson configure options
+
+| Option Name | Type of Value | Default Value | Description |
+| ----------- | ------------- | ------------- | ----------- |
+| ENABLE_VALIDATION_OPT | boolean | false | Enable Vulkan Validation Layer |
+| VKH_ENABLE_VMA | boolean | false | Enable Vulkan Memory Allocator - For more information: https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator |
+| VMA_RECORDING_ENABLED | boolean | false | Enable VMA memory recording for debugging |
+| VMA_USE_STL_CONTAINERS | boolean | false | Use C++ STL containers instead of VMAs containers |
+| VMA_STATIC_VULKAN_FUNCTIONS | boolean | false | Link statically with Vulkan API |
+| VMA_DYNAMIC_VULKAN_FUNCTIONS | boolean | true | Fetch pointers to Vulkan functions internally (no static linking) |
+| VMA_DEBUG_ALWAYS_DEDICATED_MEMORY | boolean | false | Every allocation will have its own memory block |
+| VMA_DEBUG_INITIALIZE_ALLOCATIONS | boolean | false | Automatically fill new allocations and destroyed allocations with some bit pattern |
+| VMA_DEBUG_GLOBAL_MUTEX | boolean | false | Enable single mutex protecting all entry calls to the library |
+| VMA_DEBUG_DONT_EXCEED_MAX_MEMORY_ALLOCATION_COUNT | boolean | false | Never exceed VkPhysicalDeviceLimits::maxMemoryAllocationCount and return error |
+| VMA_DEBUG_ALIGNMENT | integer | 1 | Minimum alignment of all allocation |
+| VMA_DEBUG_MARGIN | integer | 0 | Minimum margin before and after every allocation |
+| VMA_DEBUG_MIN_BUFFER_IMAGE_GRANULARITY | integer | 1 | Minimum value for VkPhysicalDeviceLimits::bufferImageGranularity. Set to more than 1 for debugging purposes only. Must be power of two. |
+| VMA_SMALL_HEAP_MAX_SIZE | integer | 1073741824 | Maximum size of a memory heap in Vulkan to consider it "small". Default is 1 Gigabyte. |
+| VMA_DEFAULT_LARGE_HEAP_BLOCK_SIZE | integer | 268435456 | Default size of a block allocated as single VkDeviceMemory from a "large" heap. Default is 256 Megabytes. |
+| VKVG_ENABLE_DBG_UTILS | boolean | false | Enable VKVG Debug Utilities |
+| VKVG_ENABLE_PROFILING | boolean | false | Compile with -pg options |
+| VKVG_RECORDING | boolean | true | Enable experimental recording functions |
+| VKVG_PREMULT_ALPHA | boolean | true | Use premultiplied alpha for internal rendering |
+| VKVG_DBG_STATS | boolean | true | Record contexts statistics in the device |
+| VKVG_USE_GLUTESS | boolean | true | Fill non-zero with glu tesselator |
+| VKVG_USE_FREETYPE | boolean | true | Use freetype to load and render font glyphs |
+| VKVG_USE_FONTCONFIG | boolean | true | Use FontConfig to resolve font names |
+| VKVG_USE_HARFBUZZ | boolean | true | Use harfbuzz for text layouting |
+| VKVG_LCD_FONT_FILTER | boolean | false | Enable freetype lcd font filtering |
+| VKVG_VK_SCALAR_BLOCK_SUPPORTED | boolean | true | Enable scalar block layout support |
+| VKVG_ENABLE_VALIDATION | boolean | false | Apply validation |
+| VKVG_ENABLE_RENDERDOC | boolean | false | Add vulkan layers for supporting RenderDoc |
+| VKVG_ENABLE_WIRED_FILL | boolean | false | Enable Debug Wire Fill |
+| ENABLE_TEST | boolean | true | Determines if test cases should be built |
+| INSTALL_TEST | boolean | false | Determines if test cases should be installed |
+| TEST_HIDE_WARNINGS | boolean | true | Hide all warnings shown in Test Cases compilation |
+| COMPILE_SHADERS | boolean | false | Determines if shaders should be recompiled and have shaders.h generated. (Note that shaders.h must be copied over to src/ folder as Meson Build does not allows in-source modification during build) |
+| ANDROID_NDK | string |  | Path to Android NDK Directory (This is used to find glslc program for shader compilation) |
+| VULKAN_SDK | string |  | Path to Vulkan SDK Directory (This is used to find glslc program for shader compilation) |
+| GLSLC_PATH | string |  | Specify absolute path to glslc if it cannot be found by any other means (This is used to find glslc program for shader compilation) |
+| XXD_PATH | string |  | Specify absolute path to xxd if it cannot be found by any other means (This is used to find glslc program for shader compilation) |
+
+## Running Meson Tests
+
+```bash
+cd ./install/bin/vkvg_tests/
+./arcs_test
+# Or run any other test found in this directory
+ls -l
+```
+
+#### Future Note
+`meson test` cases are work in progress.
+
+## CMake
+```bash
+# fetch sources from github
 git clone --recursive https://github.com/jpbruyere/vkvg.git
 cd vkvg
 # Create build directory
