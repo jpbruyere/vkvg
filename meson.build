@@ -298,7 +298,7 @@ if (VKVG_USE_GLUTESS == true)
         'external/glutess/src/memalloc.c', 
         'external/glutess/src/mesh.c', 
         'external/glutess/src/normal.c', 
-        #'external/glutess/src/priorityq-heap.c', Commenting this out for duplicated functions
+        #'external/glutess/src/priorityq-heap.c', Commenting this out, because priorityq.c directly includes this
         'external/glutess/src/priorityq.c',
         'external/glutess/src/render.c',
         'external/glutess/src/sweep.c',
