@@ -254,33 +254,43 @@ if (build_machine.system() == 'linux')
     vkvg_compile_options += ['-Wno-unused-value', '-Wno-unused-variable', '-Wno-unknown-pragmas']
 endif
 # GLSL Defines
-GLSLDEFS = []
+GLSLDEFS = ''
 
 # If VKVG_VK_SCALAR_BLOCK_SUPPORTED is true, include defines for both VKVG and GLSL
 if (VKVG_VK_SCALAR_BLOCK_SUPPORTED == true)
     vkvg_compile_options += '-DVKVG_VK_SCALAR_BLOCK_SUPPORTED'
-    GLSLDEFS += '-DVKVG_VK_SCALAR_BLOCK_SUPPORTED'
+    GLSLDEFS = '-DVKVG_VK_SCALAR_BLOCK_SUPPORTED'
 endif
 
 # Shader Compilation Stage
 # Attempts to find GLSLC and XXD program
+COMPILE_SHADERS = get_option('COMPILE_SHADERS')
 ANDROID_NDK = get_option('ANDROID_NDK')
 VULKAN_SDK = get_option('VULKAN_SDK')
 GLSLC_PATH = get_option('GLSLC_PATH')
-glslc = find_program('glslc', '/bin/glslc', '/usr/bin/glslc', ANDROID_NDK / 'shader-tools/', VULKAN_SDK / 'bin', GLSLC_PATH, required: false, disabler: true)
 XXD_PATH = get_option('XXD_PATH')
-xxd = find_program('xxd', '/bin/xxd', '/usr/bin/xxd', XXD_PATH, required: false, disabler: true)
+if (COMPILE_SHADERS == true)
+    glslc = find_program('glslc', '/bin/glslc', '/usr/bin/glslc', ANDROID_NDK / 'shader-tools/', VULKAN_SDK / 'bin', GLSLC_PATH, required: false, disabler: true)
+    xxd = find_program('xxd', '/bin/xxd', '/usr/bin/xxd', XXD_PATH, required: false, disabler: true)
 
-if (glslc.found() == true && xxd.found() == true)
+    if (glslc.found() == true and xxd.found() == true)
+        shaders_h = custom_target('shaders.h', command: ['shaders/helper/GenShaders.sh', '@INPUT@' ], 
+            env: {'GLSLC_BIN': glslc.full_path(), 'GLSLDEFS': GLSLDEFS, 'XXD_BIN': xxd.full_path()}, 
+            input: ['shaders/shader.comp', 'shaders/shader2.comp', 'shaders/vkvg_main_lcd.frag',
+                    'shaders/vkvg_main.frag', 'shaders/vkvg_main.vert', 'shaders/wired.frag'],
+            output: 'shaders.h', install: true, install_dir: get_option('includedir') / 'vkvg', build_always_stale: true, build_by_default: true)
 
-else
-    if (glslc.found() == false)
-        message('GLSLC could not be found. Please refer to https://www.lunarg.com/vulkan-sdk/ or https://developer.android.com/ndk/ to obtain GLSLC program. Then specify path using either ANDROID_NDK, VULKAN_SDK, or GLSLC_PATH whichever applicable.')
+        message('Please note that shaders.h was generated, but must be copied manually to src/ folder, because this is the nature of Meson Build restricting in-source modification during build.')
+        message('You can find shaders.h in either build directory or install directory under include/vkvg/')
+    else
+        if (glslc.found() == false)
+            message('GLSLC could not be found. Please refer to https://www.lunarg.com/vulkan-sdk/ or https://developer.android.com/ndk/ to obtain GLSLC program. Then specify path using either ANDROID_NDK, VULKAN_SDK, or GLSLC_PATH whichever applicable.')
+        endif
+        if (xxd.found() == false)
+            message('XXD could not be found. Please search for XXD package on your respective platform or refer to https://sourceforge.net/projects/xxd-for-windows/ for Windows-based XXD software. Then specify path using XXD_PATH option.')
+        endif
+        message('Program(s) for shader compilation could not be found, skipping shader compilation.')
     endif
-    if (xxd.found() == false)
-        message('XXD could not be found. Please search for XXD package on your respective platform or refer to https://sourceforge.net/projects/xxd-for-windows/ for Windows-based XXD software. Then specify path using XXD_PATH option.')
-    endif
-    message('Program(s) for shader compilation could not be found, skipping shader compilation.')
 endif
 
 # VKVG Options Define Flags
@@ -377,7 +387,7 @@ endif
 
 # THIS IS THE PART WHERE DISABLING STRICT ANSI FIXES IT
 # Feel free to uncomment this line to see what happens
-#vkvg_compile_options += '-U__STRICT_ANSI__ '
+vkvg_compile_options += '-U__STRICT_ANSI__ '
 
 vkvg_static_library = static_library('vkvg', 
                                     c_args: [vkvg_compile_options, '-DVKVG_STATIC_BUILD'],
@@ -533,6 +543,7 @@ summary({
 }, section: 'Test Cases Option')
 
 summary({
+    'COMPILE_SHADERS': COMPILE_SHADERS,
     'ANDROID_NDK': ANDROID_NDK,
     'VULKAN_SDK': VULKAN_SDK,
     'GLSLC_PATH': GLSLC_PATH,
