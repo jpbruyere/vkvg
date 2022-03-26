@@ -1,3 +1,7 @@
+#include "vkvg.h"
+#include "vkvg-svg.h"
+#include "vkengine.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -8,10 +12,6 @@
 
 #include <stdarg.h>
 #include <ctype.h>
-
-#include "vkvg.h"
-#include "vkvg-svg.h"
-#include "vkengine.h"
 
 static VkvgDevice dev;
 static VkvgSurface svgSurf = NULL;
