@@ -448,7 +448,7 @@ ENABLE_TEST = get_option('ENABLE_TEST')
 INSTALL_TEST = get_option('INSTALL_TEST')
 TEST_HIDE_WARNINGS = get_option('TEST_HIDE_WARNINGS')
 test_c_args = []
-if (INSTALL_TEST == true)
+if (ENABLE_TEST == true)
     if (TEST_HIDE_WARNINGS == true)
         if (build_machine.system() == 'windows')
             test_c_args += '/w'
