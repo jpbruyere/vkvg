@@ -262,7 +262,26 @@ if (VKVG_VK_SCALAR_BLOCK_SUPPORTED == true)
     GLSLDEFS += '-DVKVG_VK_SCALAR_BLOCK_SUPPORTED'
 endif
 
-# TODO: Write shader generation build recipe here
+# Shader Compilation Stage
+# Attempts to find GLSLC and XXD program
+ANDROID_NDK = get_option('ANDROID_NDK')
+VULKAN_SDK = get_option('VULKAN_SDK')
+GLSLC_PATH = get_option('GLSLC_PATH')
+glslc = find_program('glslc', '/bin/glslc', '/usr/bin/glslc', ANDROID_NDK / 'shader-tools/', VULKAN_SDK / 'bin', GLSLC_PATH, required: false, disabler: true)
+XXD_PATH = get_option('XXD_PATH')
+xxd = find_program('xxd', '/bin/xxd', '/usr/bin/xxd', XXD_PATH, required: false, disabler: true)
+
+if (glslc.found() == true && xxd.found() == true)
+    
+else
+    if (glslc.found() == false)
+        message('GLSLC could not be found. Please refer to https://www.lunarg.com/vulkan-sdk/ or https://developer.android.com/ndk/ to obtain GLSLC program. Then specify path using either ANDROID_NDK, VULKAN_SDK, or GLSLC_PATH whichever applicable.')
+    endif
+    if (xxd.found() == false)
+        message('XXD could not be found. Please search for XXD package on your respective platform or refer to https://sourceforge.net/projects/xxd-for-windows/ for Windows-based XXD software. Then specify path using XXD_PATH option.')
+    endif
+    message('Program(s) for shader compilation could not be found, skipping shader compilation.')
+endif
 
 # VKVG Options Define Flags
 if (VKVG_ENABLE_DBG_UTILS == true)

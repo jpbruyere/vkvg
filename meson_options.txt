@@ -28,3 +28,7 @@ option('VKVG_ENABLE_VALIDATION', type: 'boolean', value: false, description: 'Ap
 option('VKVG_ENABLE_RENDERDOC', type: 'boolean', value: false, description: 'Add vulkan layers for supporting RenderDoc')
 option('VKVG_ENABLE_WIRED_FILL', type: 'boolean', value: false, description: 'Enable Debug Wire Fill')
 option('INSTALL_TEST', type: 'boolean', value: false, description: 'Determines if test cases should be installed, it will be saved in $PREFIX/bin/vkvg_tests/')
+option('ANDROID_NDK', type: 'string', value: '', description: 'Path to Android NDK Directory (This is used to find glslc program for shader compilation)')
+option('VULKAN_SDK', type: 'string', value: '', description: 'Path to Vulkan SDK Directory (This is used to find glslc program for shader compilation)')
+option('GLSLC_PATH', type: 'string', value: '', description: 'Specify absolute path to glslc if it cannot be found by any other means (This is used to find glslc program for shader compilation)')
+option('XXD_PATH', type: 'string', value: '', description: 'Specify absolute path to xxd if it cannot be found by any other means (This is used to find glslc program for shader compilation)')
