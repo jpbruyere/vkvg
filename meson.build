@@ -272,7 +272,7 @@ XXD_PATH = get_option('XXD_PATH')
 xxd = find_program('xxd', '/bin/xxd', '/usr/bin/xxd', XXD_PATH, required: false, disabler: true)
 
 if (glslc.found() == true && xxd.found() == true)
-    
+
 else
     if (glslc.found() == false)
         message('GLSLC could not be found. Please refer to https://www.lunarg.com/vulkan-sdk/ or https://developer.android.com/ndk/ to obtain GLSLC program. Then specify path using either ANDROID_NDK, VULKAN_SDK, or GLSLC_PATH whichever applicable.')
@@ -530,4 +530,11 @@ summary({
 
 summary({
     'INSTALL_TEST': INSTALL_TEST
-})
+}, section: 'Test Cases Option')
+
+summary({
+    'ANDROID_NDK': ANDROID_NDK,
+    'VULKAN_SDK': VULKAN_SDK,
+    'GLSLC_PATH': GLSLC_PATH,
+    'XXD_PATH': XXD_PATH
+}, section: 'Shader Compilation Options')
