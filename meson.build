@@ -274,6 +274,10 @@ if (COMPILE_SHADERS == true)
     xxd = find_program('xxd', '/bin/xxd', '/usr/bin/xxd', XXD_PATH, required: false, disabler: true)
 
     if (glslc.found() == true and xxd.found() == true)
+        GenShadersScript = 'shaders/helper/GenShaders.sh'
+        if (build_machine.system() == 'windows')
+            GenShadersScript = 'shaders/helper/GenShaders.bat'
+        endif
         shaders_h = custom_target('shaders.h', command: ['shaders/helper/GenShaders.sh', '@INPUT@' ], 
             env: {'GLSLC_BIN': glslc.full_path(), 'GLSLDEFS': GLSLDEFS, 'XXD_BIN': xxd.full_path()}, 
             input: ['shaders/shader.comp', 'shaders/shader2.comp', 'shaders/vkvg_main_lcd.frag',

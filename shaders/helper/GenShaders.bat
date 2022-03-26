@@ -1,5 +1,3 @@
-#!/bin/bash
-
 $GLSLC_BIN $GLSLDEFS $1 -o "shader_comp.spv"
 
 $GLSLC_BIN $GLSLDEFS $2 -o "shader2_comp.spv"
