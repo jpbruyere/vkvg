@@ -460,7 +460,7 @@ if (INSTALL_TEST == true)
     randoms_test = executable('randoms_test', sources: [test_engine_src, 'tests/perfs/randoms.c'], dependencies: test_engine_deps, include_directories: test_engine_includes, install: INSTALL_TEST, install_dir: get_option('bindir') / 'vkvg_tests/')
 
     # Ensure data folder get copied over
-    install_subdir('tests/data', install_dir: get_option('bindir') / 'vkvg_tests/data', strip_directory: false)
+    install_subdir('tests/data', install_dir: get_option('bindir') / 'vkvg_tests/data', strip_directory: true)
 endif
 
 # Summaries of all of the configuration options
