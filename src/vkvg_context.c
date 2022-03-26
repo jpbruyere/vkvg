@@ -968,12 +968,17 @@ void vkvg_stroke (VkvgContext ctx)
 	_stroke_preserve(ctx);
 	_clear_path(ctx);
 }
+
+static inline void _fill (VkvgContext ctx) {
+	_fill_preserve(ctx);
+	_clear_path(ctx);
+}
+
 void vkvg_fill (VkvgContext ctx){
 	if (ctx->status)
 		return;
 	RECORD(ctx, VKVG_CMD_FILL);
-	_fill_preserve(ctx);
-	_clear_path(ctx);
+	_fill(ctx);
 }
 void vkvg_clip_preserve (VkvgContext ctx) {
 	if (ctx->status)
@@ -994,10 +999,7 @@ void vkvg_stroke_preserve (VkvgContext ctx) {
 	_stroke_preserve (ctx);
 }
 
-void vkvg_paint (VkvgContext ctx){
-	if (ctx->status)
-		return;
-	RECORD(ctx, VKVG_CMD_PAINT);
+static void _paint(VkvgContext ctx) {
 	_finish_path (ctx);
 
 	if (ctx->pathPtr) {
@@ -1008,6 +1010,14 @@ void vkvg_paint (VkvgContext ctx){
 	_ensure_renderpass_is_started (ctx);
 	_draw_full_screen_quad (ctx, NULL);
 }
+
+void vkvg_paint (VkvgContext ctx) {
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_PAINT);
+	_paint(ctx);
+}
+
 void vkvg_set_source_color (VkvgContext ctx, uint32_t c) {
 	if (ctx->status)
 		return;
@@ -1030,21 +1040,29 @@ void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 	ctx->curColor = CreateRgbaf(r,g,b,a);
 	_update_cur_pattern (ctx, NULL);
 }
-void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
-	if (ctx->status)
-		return;
-	RECORD(ctx, VKVG_CMD_SET_SOURCE_SURFACE, x, y, surf);
+
+static inline void _set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y) {
 	ctx->pushConsts.source.x = x;
 	ctx->pushConsts.source.y = y;
 	_update_cur_pattern (ctx, vkvg_pattern_create_for_surface(surf));
 	ctx->pushCstDirty = true;
 }
+
+void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y) {
+	if (ctx->status)
+		return;
+	RECORD(ctx, VKVG_CMD_SET_SOURCE_SURFACE, x, y, surf);
+}
+
+static inline void _set_source (VkvgContext ctx, VkvgPattern pat) {
+	_update_cur_pattern (ctx, pat);
+	vkvg_pattern_reference	(pat);
+}
+
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
 	if (ctx->status)
 		return;
 	RECORD(ctx, VKVG_CMD_SET_SOURCE, pat);
-	_update_cur_pattern (ctx, pat);
-	vkvg_pattern_reference	(pat);
 }
 void vkvg_set_line_width (VkvgContext ctx, float width){
 	if (ctx->status)
@@ -1259,12 +1277,7 @@ void vkvg_font_extents (VkvgContext ctx, vkvg_font_extents_t* extents) {
 	_font_cache_font_extents(ctx, extents);
 }
 
-void vkvg_save (VkvgContext ctx){
-	if (ctx->status)
-		return;
-	RECORD(ctx, VKVG_CMD_SAVE);
-	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
-
+static void _save (VkvgContext ctx) {
 	VkvgDevice dev = ctx->dev;
 	vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
@@ -1386,12 +1399,17 @@ void vkvg_save (VkvgContext ctx){
 	ctx->pSavedCtxs = sav;
 
 }
-void vkvg_restore (VkvgContext ctx){
+
+void vkvg_save (VkvgContext ctx){
 	if (ctx->status)
 		return;
+	RECORD(ctx, VKVG_CMD_SAVE);
+	LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
-	RECORD(ctx, VKVG_CMD_RESTORE);
+	_save(ctx);
+}
 
+static void _restore (VkvgContext ctx) {
 	if (ctx->pSavedCtxs == NULL){
 		ctx->status = VKVG_STATUS_INVALID_RESTORE;
 		return;
@@ -1401,6 +1419,7 @@ void vkvg_restore (VkvgContext ctx){
 
 	vkvg_context_save_t* sav = ctx->pSavedCtxs;
 	ctx->pSavedCtxs = sav->pNext;
+	ctx->pSurf = sav->pSurf;
 
 	_flush_cmd_buff (ctx);
 	if (!_wait_flush_fence (ctx))
@@ -1521,6 +1540,15 @@ void vkvg_restore (VkvgContext ctx){
 	}
 
 	_free_ctx_save(sav);
+}
+
+void vkvg_restore (VkvgContext ctx){
+	if (ctx->status)
+		return;
+
+	RECORD(ctx, VKVG_CMD_RESTORE);
+
+	_restore(ctx);
 }
 
 void vkvg_translate (VkvgContext ctx, float dx, float dy){
@@ -1692,4 +1720,54 @@ vkvg_status_to_string (vkvg_status_t status) {
 	default:
 		return "<unknown error status>";
 	}
+}
+
+void vkvg_push_group (VkvgContext ctx) {
+	if (ctx->status)
+		return;
+
+	_save(ctx);
+	VkvgSurface surf = vkvg_surface_create(ctx->dev, ctx->pSurf->width, ctx->pSurf->height);
+	vkvg_surface_reference(surf);
+	ctx->pSurf = surf;
+	ctx->pSurf->new = false;
+	ctx->renderPassBeginInfo.framebuffer = ctx->pSurf->fb;
+	ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
+}
+
+VkvgPattern vkvg_pop_group (VkvgContext ctx) {
+	if (ctx->status)
+		return NULL;
+
+	if (!ctx->pSavedCtxs) {
+		/* error: no context has been pushed */
+		ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
+		return NULL;
+	}
+
+	vkvg_context_save_t *saved_ctx = ctx->pSavedCtxs;
+	while (saved_ctx->pNext && saved_ctx->pSurf == ctx->pSurf) {
+		saved_ctx = saved_ctx->pNext;
+	}
+	if (saved_ctx->pSurf == ctx->pSurf) {
+		/* error: there are saved contexts, but none have been pushed */
+		ctx->status = VKVG_STATUS_INVALID_POP_GROUP;
+		return NULL;
+	}
+
+	vkvg_flush(ctx);
+	VkvgPattern pat = vkvg_get_source(ctx);
+	vkvg_surface_destroy(ctx->pSurf);
+	while (ctx->pSavedCtxs != saved_ctx) {
+		_restore(ctx);
+	}
+
+	return pat;
+}
+
+void vkvg_pop_group_to_source (VkvgContext ctx) {
+	if (ctx->status)
+		return;
+	VkvgPattern pat = vkvg_pop_group(ctx);
+	_set_source(ctx, pat);
 }

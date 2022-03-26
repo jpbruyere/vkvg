@@ -136,7 +136,8 @@ typedef enum {
 	VKVG_STATUS_DEVICE_ERROR,			/*!< vkvg device initialization error */
 	VKVG_STATUS_INVALID_IMAGE,			/*!< */
 	VKVG_STATUS_INVALID_SURFACE,		/*!< */
-	VKVG_STATUS_INVALID_FONT			/*!< Unresolved font name*/
+	VKVG_STATUS_INVALID_FONT,			/*!< Unresolved font name*/
+	VKVG_STATUS_INVALID_POP_GROUP		/*!< the surface is the first element on the stack */
 }vkvg_status_t;
 
 typedef enum {
@@ -2023,6 +2024,15 @@ vkvg_public
 void vkvg_pattern_set_matrix (VkvgPattern pat, const vkvg_matrix_t* matrix);
 vkvg_public
 void vkvg_pattern_get_matrix (VkvgPattern pat, vkvg_matrix_t* matrix);
+
+vkvg_public
+void vkvg_push_group (VkvgContext ctx);
+
+vkvg_public
+VkvgPattern vkvg_pop_group (VkvgContext ctx);
+
+vkvg_public
+void vkvg_pop_group_to_source (VkvgContext ctx);
 
 /** @}*/
 
