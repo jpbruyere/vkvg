@@ -358,7 +358,7 @@ endif
 
 # THIS IS THE PART WHERE DISABLING STRICT ANSI FIXES IT
 # Feel free to uncomment this line to see what happens
-vkvg_compile_options += '-U__STRICT_ANSI__ '
+#vkvg_compile_options += '-U__STRICT_ANSI__ '
 
 vkvg_static_library = static_library('vkvg', 
                                     c_args: [vkvg_compile_options, '-DVKVG_STATIC_BUILD'],
