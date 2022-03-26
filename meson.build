@@ -390,6 +390,74 @@ install_headers(vkvg_public_headers, subdir: 'vkvg')
 vkvg_shared_dep = declare_dependency(dependencies: [vkvg_dependencies, vkh_shared_dep], include_directories: 'include/', link_with: vkvg_shared_library)
 vkvg_static_dep = declare_dependency(dependencies: [vkvg_dependencies, vkh_static_dep], include_directories: 'include/', link_with: vkvg_static_library)
 
+# Test Engine Codes
+test_engine_src = [
+    'tests/common/vkengine.c',
+    'tests/common/test.c',
+    'tests/common/rnd.c',
+    'tests/common/tinycthread.c'
+]
+
+test_engine_deps = [
+    vkvg_static_dep,
+    glfw3_dep
+]
+
+test_engine_includes = [
+    'tests/common',
+    'tests/',
+    'vkh/src/', # For vkh implementation headers
+    'src/' # For vectors.h
+]
+
+# Test Cases
+# tests/ cases
+arcs = executable('arcs_test', sources: [test_engine_src, 'tests/arcs.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+bezier = executable('bezier_test', sources: [test_engine_src, 'tests/bezier.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+circles = executable('circles_test', sources: [test_engine_src, 'tests/circles.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+clip = executable('clip_test', sources: [test_engine_src, 'tests/clip.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+colinear = executable('colinear_test', sources: [test_engine_src, 'tests/colinear.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+compositing = executable('compositing_test', sources: [test_engine_src, 'tests/compositing.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+context = executable('context_test', sources: [test_engine_src, 'tests/context.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+curve = executable('curve_test', sources: [test_engine_src, 'tests/curve.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+dashes = executable('dashes_test', sources: [test_engine_src, 'tests/dashes.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+fill_and_stroke = executable('fill_and_stroke_test', sources: [test_engine_src, 'tests/fill_and_stroke.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+fill_non_zero = executable('fill_non_zero_test', sources: [test_engine_src, 'tests/fill_non_zero.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+fill = executable('fill_test', sources: [test_engine_src, 'tests/fill.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+gradient = executable('gradient_test', sources: [test_engine_src, 'tests/gradient.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+gradient2 = executable('gradient2_test', sources: [test_engine_src, 'tests/gradient2.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+img_surf = executable('img_surf_test', sources: [test_engine_src, 'tests/img_surf.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+inverse_colinear = executable('inverse_colinear_test', sources: [test_engine_src, 'tests/inverse_colinear.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+line_caps = executable('line_caps_test', sources: [test_engine_src, 'tests/line_caps.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+line_join = executable('line_join_test', sources: [test_engine_src, 'tests/line_join.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+lines = executable('lines_test', sources: [test_engine_src, 'tests/lines.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+offscreen = executable('offscreen_test', sources: [test_engine_src, 'tests/offscreen.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+paint_surf = executable('paint_surf_test', sources: [test_engine_src, 'tests/paint_surf.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+path_extents = executable('path_extents_test', sources: [test_engine_src, 'tests/path_extents.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+pattern_transforms = executable('pattern_transforms_test', sources: [test_engine_src, 'tests/pattern_transforms.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+radial_gradient = executable('radial_gradient_test', sources: [test_engine_src, 'tests/radial_gradient.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+recording = executable('recording_test', sources: [test_engine_src, 'tests/recording.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+rect_fill = executable('rect_fill_test', sources: [test_engine_src, 'tests/rect_fill.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+save_restore = executable('save_restore_test', sources: [test_engine_src, 'tests/save_restore.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+simple_paint = executable('simple_paint_test', sources: [test_engine_src, 'tests/simple_paint.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+stroke = executable('stroke_test', sources: [test_engine_src, 'tests/stroke.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+surface = executable('surface_test', sources: [test_engine_src, 'tests/surface.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+svg = executable('svg_test', sources: [test_engine_src, 'tests/svg.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+test1 = executable('test1_test', sources: [test_engine_src, 'tests/test1.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+text = executable('text_test', sources: [test_engine_src, 'tests/text.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+transform = executable('transform_test', sources: [test_engine_src, 'tests/transform.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+
+# tests/multithreading
+multithreaded = executable('multithreaded_test', sources: [test_engine_src, 'tests/multithreading/multithreaded.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+multithreaded2 = executable('multithreaded2_test', sources: [test_engine_src, 'tests/multithreading/multithreaded2.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+threaded_create_surf = executable('threaded_create_surf_test', sources: [test_engine_src, 'tests/multithreading/threaded_create_surf.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+threaded_text = executable('threaded_text_test', sources: [test_engine_src, 'tests/multithreading/threaded_text.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+
+# perfs
+random_rects = executable('random_rects_test', sources: [test_engine_src, 'tests/perfs/random_rects.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+randoms = executable('randoms_test', sources: [test_engine_src, 'tests/perfs/randoms.c'], dependencies: test_engine_deps, include_directories: test_engine_includes)
+
+# Summaries of all of the configuration options
 summary({
     'bindir': get_option('bindir'),
     'libdir': get_option('libdir'),
