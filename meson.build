@@ -452,7 +452,7 @@ if (ENABLE_TEST == true)
     if (TEST_HIDE_WARNINGS == true)
         if (build_machine.system() == 'windows')
             test_c_args += '/w'
-        elif (build_machine.system() == 'linux')
+        else
             test_c_args += '-w'
         endif
     endif
