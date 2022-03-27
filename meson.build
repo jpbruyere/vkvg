@@ -477,7 +477,9 @@ if (ENABLE_TEST == true)
         )}
     endforeach
     # Ensure data folder get copied over
-    install_subdir('tests/data', install_dir: get_option('bindir') / 'vkvg_tests/data', strip_directory: true)
+    if (INSTALL_TEST == true)
+        install_subdir('tests/data', install_dir: get_option('bindir') / 'vkvg_tests/data', strip_directory: true)
+    endif
 endif
 
 # Summaries of all of the configuration options
