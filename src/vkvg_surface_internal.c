@@ -26,6 +26,8 @@
 #include "vkh_queue.h"
 
 void _explicit_ms_resolve (VkvgSurface surf){
+	LOCK_SURFACE (surf)
+
 	VkCommandBuffer cmd = surf->cmd;
 
 	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -52,10 +54,14 @@ void _explicit_ms_resolve (VkvgSurface surf){
 	vkh_cmd_end (cmd);
 
 	_surface_submit_cmd (surf);
+
+	UNLOCK_SURFACE (surf)
 }
 
 void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 {
+	LOCK_SURFACE (surf)
+
 	VkCommandBuffer cmd = surf->cmd;
 
 	vkh_cmd_begin (cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -97,6 +103,8 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 	vkh_cmd_end (cmd);
 
 	_surface_submit_cmd (surf);
+
+	UNLOCK_SURFACE (surf)
 }
 
 void _create_surface_main_image (VkvgSurface surf){

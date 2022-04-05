@@ -306,7 +306,7 @@ void _flush_cmd_buff			(VkvgContext ctx);
 void _ensure_renderpass_is_started		(VkvgContext ctx);
 void _emit_draw_cmd_undrawn_vertices	(VkvgContext ctx);
 void _flush_cmd_until_vx_base	(VkvgContext ctx);
-bool _wait_flush_fence			(VkvgContext ctx);
+bool _wait_ctx_flush_end		(VkvgContext ctx);
 bool _wait_and_submit_cmd		(VkvgContext ctx);
 void _update_push_constants		(VkvgContext ctx);
 void _update_cur_pattern		(VkvgContext ctx, VkvgPattern pat);

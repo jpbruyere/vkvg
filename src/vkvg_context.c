@@ -201,7 +201,7 @@ void vkvg_flush (VkvgContext ctx){
 	if (ctx->status)
 		return;
 	_flush_cmd_buff		(ctx);
-	_wait_flush_fence	(ctx);
+	_wait_ctx_flush_end	(ctx);
 /*
 #ifdef DEBUG
 
@@ -1280,7 +1280,7 @@ void vkvg_save (VkvgContext ctx){
 	vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
 	_flush_cmd_buff (ctx);
-	if (!_wait_flush_fence (ctx)) {
+	if (!_wait_ctx_flush_end (ctx)) {
 		free (sav);
 		return;
 	}
@@ -1414,7 +1414,7 @@ void vkvg_restore (VkvgContext ctx){
 	ctx->pSavedCtxs = sav->pNext;
 
 	_flush_cmd_buff (ctx);
-	if (!_wait_flush_fence (ctx))
+	if (!_wait_ctx_flush_end (ctx))
 		return;
 
 	ctx->pushConsts	  = sav->pushConsts;
@@ -1449,7 +1449,7 @@ void vkvg_restore (VkvgContext ctx){
 #endif
 
 			_flush_cmd_buff (ctx);
-			if (!_wait_flush_fence (ctx))
+			if (!_wait_ctx_flush_end (ctx))
 				return;
 		}
 	}
@@ -1491,7 +1491,7 @@ void vkvg_restore (VkvgContext ctx){
 
 			VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
 			_wait_and_submit_cmd (ctx);
-			if (!_wait_flush_fence (ctx))
+			if (!_wait_ctx_flush_end (ctx))
 				return;
 			vkh_image_destroy (savStencil);
 		}

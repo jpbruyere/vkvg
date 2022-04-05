@@ -176,7 +176,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
 	vkh_cmd_end		(cmd);
 
-	_surface_submit_cmd (surf);
+	_surface_submit_cmd (surf);//lock surface?
 
 	vkvg_buffer_destroy (&buff);
 	vkh_image_destroy	(stagImg);
