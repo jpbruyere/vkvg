@@ -229,6 +229,7 @@ void vkvg_flush (VkvgContext ctx){
 void _clear_context (VkvgContext ctx) {
 	//free saved context stack elmt
 	vkvg_context_save_t* next = ctx->pSavedCtxs;
+	ctx->pSavedCtxs = NULL;
 	while (next != NULL) {
 		vkvg_context_save_t* cur = next;
 		next = cur->pNext;
@@ -258,8 +259,10 @@ void _clear_context (VkvgContext ctx) {
 		ctx->pPrev->pNext = ctx->pNext;
 		ctx->pNext->pPrev = ctx->pPrev;
 	}*/
-	if (ctx->dashCount > 0)
+	if (ctx->dashCount > 0) {
 		free(ctx->dashes);
+		ctx->dashCount = 0;
+	}
 }
 
 void vkvg_destroy (VkvgContext ctx)
@@ -671,13 +674,13 @@ vkvg_status_t vkvg_rounded_rectangle (VkvgContext ctx, float x, float y, float w
 		radius = fmin (w / 2.0f, h / 2.0f);
 
 	vkvg_move_to(ctx, x, y + radius);
-	vkvg_arc(ctx, x + radius, y + radius, radius, (float)M_PI, (float)-M_PI_2);
+	vkvg_arc(ctx, x + radius, y + radius, radius, M_PIF, -M_PIF_2);
 	vkvg_line_to(ctx, x + w - radius, y);
-	vkvg_arc(ctx, x + w - radius, y + radius, radius, (float)-M_PI_2, 0);
+	vkvg_arc(ctx, x + w - radius, y + radius, radius, -M_PIF_2, 0);
 	vkvg_line_to(ctx, x + w, y + h - radius);
-	vkvg_arc(ctx, x + w - radius, y + h - radius, radius, 0, (float)M_PI_2);
+	vkvg_arc(ctx, x + w - radius, y + h - radius, radius, 0, M_PIF_2);
 	vkvg_line_to(ctx, x + radius, y + h);
-	vkvg_arc(ctx, x + radius, y + h - radius, radius, (float)M_PI_2, (float)M_PI);
+	vkvg_arc(ctx, x + radius, y + h - radius, radius, M_PIF_2, M_PIF);
 	vkvg_line_to(ctx, x, y + radius);
 	vkvg_close_path(ctx);
 

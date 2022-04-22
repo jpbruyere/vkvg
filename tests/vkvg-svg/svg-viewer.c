@@ -1,3 +1,7 @@
+#include "vkvg.h"
+#include "vkvg-svg.h"
+#include "vkengine.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -8,10 +12,6 @@
 
 #include <stdarg.h>
 #include <ctype.h>
-
-#include "vkvg.h"
-#include "vkvg-svg.h"
-#include "vkengine.h"
 
 static VkvgDevice dev;
 static VkvgSurface svgSurf = NULL;
@@ -37,6 +37,11 @@ struct stat file_stat;
 
 static int svg_file_count;
 static float maxScroll;
+
+/* not defined in c11, ok to define here only for sample */
+#ifndef DT_DIR
+	# define DT_DIR 4
+#endif
 
 int _count_svg_files () {
 	struct dirent *de;
@@ -101,7 +106,7 @@ void readSVG (VkEngine e) {
 			printf ("Unable to stat file: %s\n", filename);
 			exit(EXIT_FAILURE);
 		}
-		if (sb.st_mtim.tv_sec == file_stat.st_mtim.tv_sec)
+		if (sb.st_mtime == file_stat.st_mtime)
 			return;
 		file_stat = sb;
 		newSvgSurf = vkvg_surface_create_from_svg(dev, width, height, filename);
@@ -113,7 +118,7 @@ void readSVG (VkEngine e) {
 			printf ("Unable to stat file: %s\n", tmp);
 			exit(EXIT_FAILURE);
 		}
-		if (sb.st_mtim.tv_sec == file_stat.st_mtim.tv_sec)
+		if (sb.st_mtime == file_stat.st_mtime)
 			return;
 		file_stat = sb;
 		newSvgSurf = vkvg_surface_create_from_svg(dev, width, height, tmp);
