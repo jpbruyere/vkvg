@@ -247,8 +247,10 @@ void _clear_context (VkvgContext ctx) {
 		ctx->pPrev->pNext = ctx->pNext;
 		ctx->pNext->pPrev = ctx->pPrev;
 	}*/
-	if (ctx->dashCount > 0)
+	if (ctx->dashCount > 0) {
 		free(ctx->dashes);
+		ctx->dashCount = 0;
+	}
 }
 
 void vkvg_destroy (VkvgContext ctx)
