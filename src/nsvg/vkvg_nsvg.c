@@ -46,7 +46,7 @@ VkvgSurface _svg_load (VkvgDevice dev, NSVGimage* svg) {
 
 	surf->width = (uint32_t)svg->width;
 	surf->height = (uint32_t)svg->height;
-	surf->new = true;
+	surf->newSurf = true;
 
 	_create_surface_images (surf);
 

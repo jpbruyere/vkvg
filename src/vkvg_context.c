@@ -62,12 +62,16 @@ void _init_ctx (VkvgContext ctx) {
 	ctx->renderPassBeginInfo.renderArea.extent.height = ctx->pSurf->height;
 	ctx->renderPassBeginInfo.pClearValues = clearValues;
 
-	if (ctx->pSurf->new)
+	LOCK_SURFACE (ctx->pSurf)
+
+	if (ctx->pSurf->newSurf)
 		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
 	else
 		ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
+	ctx->pSurf->newSurf = false;
 
-	ctx->pSurf->new = false;
+	UNLOCK_SURFACE (ctx->pSurf);
+
 	vkvg_surface_reference (ctx->pSurf);
 
 	if (ctx->dev->samples == VK_SAMPLE_COUNT_1_BIT)
@@ -83,6 +87,9 @@ void _init_ctx (VkvgContext ctx) {
 	ctx->cmdStarted			= false;
 	ctx->curClipState		= vkvg_clip_state_none;
 	ctx->vertCount			= ctx->indCount = 0;
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	ctx->timelineStep		= 0;
+#endif
 }
 
 VkvgContext vkvg_create(VkvgSurface surf)
@@ -149,7 +156,10 @@ VkvgContext vkvg_create(VkvgSurface surf)
 
 	//for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
 	ctx->cmdPool	= vkh_cmd_pool_create ((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+#ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
 	ctx->flushFence	= vkh_fence_create_signaled ((VkhDevice)ctx->dev);
+#endif
 
 	_create_vertices_buff	(ctx);
 	_create_gradient_buff	(ctx);
@@ -173,8 +183,9 @@ VkvgContext vkvg_create(VkvgSurface surf)
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[0], "CTX Cmd Buff A");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1], "CTX Cmd Buff B");
+#ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
-
+#endif
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)ctx->descriptorPool, "CTX Descriptor Pool");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc, "CTX DescSet SOURCE");
 	vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
@@ -190,7 +201,7 @@ void vkvg_flush (VkvgContext ctx){
 	if (ctx->status)
 		return;
 	_flush_cmd_buff		(ctx);
-	_wait_flush_fence	(ctx);
+	_wait_ctx_flush_end	(ctx);
 /*
 #ifdef DEBUG
 
@@ -1272,7 +1283,7 @@ void vkvg_save (VkvgContext ctx){
 	vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1,sizeof(vkvg_context_save_t));
 
 	_flush_cmd_buff (ctx);
-	if (!_wait_flush_fence (ctx)) {
+	if (!_wait_ctx_flush_end (ctx)) {
 		free (sav);
 		return;
 	}
@@ -1406,7 +1417,7 @@ void vkvg_restore (VkvgContext ctx){
 	ctx->pSavedCtxs = sav->pNext;
 
 	_flush_cmd_buff (ctx);
-	if (!_wait_flush_fence (ctx))
+	if (!_wait_ctx_flush_end (ctx))
 		return;
 
 	ctx->pushConsts	  = sav->pushConsts;
@@ -1441,7 +1452,7 @@ void vkvg_restore (VkvgContext ctx){
 #endif
 
 			_flush_cmd_buff (ctx);
-			if (!_wait_flush_fence (ctx))
+			if (!_wait_ctx_flush_end (ctx))
 				return;
 		}
 	}
@@ -1483,7 +1494,7 @@ void vkvg_restore (VkvgContext ctx){
 
 			VK_CHECK_RESULT(vkEndCommandBuffer(ctx->cmd));
 			_wait_and_submit_cmd (ctx);
-			if (!_wait_flush_fence (ctx))
+			if (!_wait_ctx_flush_end (ctx))
 				return;
 			vkh_image_destroy (savStencil);
 		}

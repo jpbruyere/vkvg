@@ -5,7 +5,7 @@
 #include "test.h"
 #include "tinycthread.h"
 
-#define THREAD_COUNT 64
+#define THREAD_COUNT 32
 
 
 static int finishedThreadCount = 0;

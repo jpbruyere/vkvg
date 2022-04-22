@@ -31,6 +31,22 @@
 if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))	\
 	enabledExts[enabledExtsCount++] = #ext;						\
 }
+void vkvg_device_set_context_cache_size (VkvgDevice dev, uint32_t maxCount) {
+	if (maxCount == dev->cachedContextMaxCount)
+		return;
+
+	dev->cachedContextMaxCount = maxCount;
+
+	_cached_ctx* cur = dev->cachedContextLast;
+	while (cur && dev->cachedContextCount > dev->cachedContextMaxCount) {
+		_release_context_ressources (cur->ctx);
+		_cached_ctx* prev = cur;
+		cur = cur->pNext;
+		free (prev);
+		dev->cachedContextCount--;
+	}
+	dev->cachedContextLast = cur;
+}
 void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve) {
 	dev->instance = inst;
 	dev->hdpi	= 72;
@@ -42,6 +58,8 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 		dev->deferredResolve = deferredResolve;
 	dev->vkDev	= vkdev;
 	dev->phy	= phy;
+
+	dev->cachedContextMaxCount = VKVG_MAX_CACHED_CONTEXT_COUNT;
 
 #if VKVG_DBG_STATS
 	dev->debug_stats = (vkvg_debug_stats_t) {0};
@@ -171,19 +189,35 @@ vkvg_status_t vkvg_get_required_device_extensions (VkPhysicalDevice phy, const c
 
 	//https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VK_KHR_portability_subset
 	_CHECK_DEV_EXT(VK_KHR_portability_subset);
-
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
-	//ensure feature is implemented by driver.
 	VkPhysicalDeviceFeatures2 phyFeat2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
+	//ensure feature is implemented by driver.
 	VkPhysicalDeviceScalarBlockLayoutFeatures scalarBlockLayoutSupport = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES};
 	phyFeat2.pNext = &scalarBlockLayoutSupport;
+#endif
+
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreSupport = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES};
+	timelineSemaphoreSupport.pNext = phyFeat2.pNext;
+	phyFeat2.pNext = &timelineSemaphoreSupport;
+#endif
+
 	vkGetPhysicalDeviceFeatures2(phy, &phyFeat2);
 
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 	if (!scalarBlockLayoutSupport.scalarBlockLayout) {
-		LOG(VKVG_LOG_ERR, "CREATE Device failed, vkvg compiled with VKVG_VK_SCALAR_BLOCK_SUPPORTED and feature is not implemented for physical device.\n");
+		LOG(VKVG_LOG_ERR, "CREATE Device failed, vkvg compiled with VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT and feature is not implemented for physical device.\n");
 		return VKVG_STATUS_DEVICE_ERROR;
 	}
 	_CHECK_DEV_EXT(VK_EXT_scalar_block_layout)
+#endif
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	if (!timelineSemaphoreSupport.timelineSemaphore) {
+		LOG(VKVG_LOG_ERR, "CREATE Device failed, VK_SEMAPHORE_TYPE_TIMELINE not supported.\n");
+		return VKVG_STATUS_DEVICE_ERROR;
+	}
+	_CHECK_DEV_EXT(VK_KHR_timeline_semaphore)
 #endif
 
 	return VKVG_STATUS_SUCCESS;
@@ -198,32 +232,42 @@ const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeat
 
 	void* pNext = NULL;
 
-#ifdef VK_VERSION_1_2
+#ifdef VK_VERSION_1_2_
 	static VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 		,.scalarBlockLayout = VK_TRUE
+#endif
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+		,.timelineSemaphore = VK_TRUE
 #endif
 	};
 	enabledFeatures12.pNext = pNext;
 	pNext = &enabledFeatures12;
 #else
+#ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 	static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeat = {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT
-#ifdef VKVG_VK_SCALAR_BLOCK_SUPPORTED
 		,.scalarBlockLayout = VK_TRUE
-#endif
 	};
 	scalarBlockFeat.pNext = pNext;
 	pNext = &scalarBlockFeat;
-
+#endif
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	static VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timelineSemaFeat = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR
+		,.timelineSemaphore = VK_TRUE
+	};
+	timelineSemaFeat.pNext = pNext;
+	pNext = &timelineSemaFeat;
+#endif
 #endif
 
 	return pNext;
 }
 
 
-VkvgDevice vkvg_device_create(VkSampleCountFlags samples, bool deferredResolve) {
+VkvgDevice vkvg_device_create (VkSampleCountFlags samples, bool deferredResolve) {
 	LOG(VKVG_LOG_INFO, "CREATE Device\n");
 	VkvgDevice dev = (vkvg_device*)calloc(1,sizeof(vkvg_device));
 	if (!dev) {
@@ -354,10 +398,21 @@ void vkvg_device_destroy (VkvgDevice dev)
 	}
 	UNLOCK_DEVICE
 
-	while (dev->cachedContextCount > 0)
-		_release_context_ressources (dev->cachedContext[--dev->cachedContextCount]);
+
+	if (dev->cachedContextCount > 0) {
+		_cached_ctx* cur = dev->cachedContextLast;
+		while (cur) {
+			_release_context_ressources (cur->ctx);
+			_cached_ctx* prev = cur;
+			cur = cur->pNext;
+			free (prev);
+		}
+	}
+
 
 	LOG(VKVG_LOG_INFO, "DESTROY Device\n");
+
+	vkDeviceWaitIdle (dev->vkDev);
 
 	vkh_image_destroy				(dev->emptyImg);
 
@@ -387,7 +442,7 @@ void vkvg_device_destroy (VkvgDevice dev)
 	vkWaitForFences					(dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
 	vkDestroyFence					(dev->vkDev, dev->fence,NULL);
 
-	//vkFreeCommandBuffers			(dev->vkDev, dev->cmdPool, 1, &dev->cmd);
+	vkFreeCommandBuffers			(dev->vkDev, dev->cmdPool, 1, &dev->cmd);
 	vkDestroyCommandPool			(dev->vkDev, dev->cmdPool, NULL);
 
 	vkh_queue_destroy(dev->gQueue);

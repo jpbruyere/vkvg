@@ -36,13 +36,12 @@
 	
 </h1>
 
+**vkvg** is an open-source *2D graphics library* written in **C** using [Vulkan](https://www.khronos.org/vulkan/) as backend.
+The **API** follows the same pattern as [Cairo](https://www.cairographics.org/), but new functions and original drawing mechanics may be added.
 
+**vkvg** is in alpha development stage and the core api is mostly stabilized. All contributions are welcome.
 
-**vkvg** is an open-source *2D graphics library* written in **C** using [Vulkan](https://www.khronos.org/vulkan/) as backend. The **API** follows the same pattern as [Cairo](https://www.cairographics.org/), but new functions and original drawing mechanics may be added.
-
-**vkvg** is in early development stage, the API is subject to change. All contributions are welcome.
-
-For API documentation and usage, please refer to the [Cairo](https://www.cairographics.org/) for now.
+In progress API documentation is available online at https://www.vkvg.org.
 
 <p align="center">
   <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
@@ -115,6 +114,11 @@ cmake ..
 * `-DVKVG_SVG=true`: Enable experimental svg renderer. If false, use nanoSVG.
 * `-DVKVG_RECORDING=true`: Enable experimental draw commands recording infrastructure.
 * `-DVKVG_BUILD_DOCS=true`: Build documentation if doxygen is found.
+
+##### Vulkan Features:
+
+* `-DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT=true`: Enable `VK_EXT_scalar_block_layout` that reduce structure padding for gpu.
+* `-VKVG_ENABLE_VK_TIMELINE_SEMAPHORE=true`: Enable experimental work syncing with `VK_KHR_timeline_semaphore` instead of Fences.
 
 ##### Text rendering libraries:
 

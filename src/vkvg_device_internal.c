@@ -415,59 +415,62 @@ void _device_wait_idle (VkvgDevice dev) {
 }
 void _device_wait_and_reset_device_fence (VkvgDevice dev) {
 	vkWaitForFences (dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
-	_device_reset_fence(dev, dev->fence);
+	ResetFences (dev->vkDev, 1, &dev->fence);
 }
 
-void _device_destroy_fence (VkvgDevice dev, VkFence fence) {
-	LOCK_DEVICE
-
-	if (dev->gQLastFence == fence)
-		dev->gQLastFence = VK_NULL_HANDLE;
-
-	vkDestroyFence (dev->vkDev, fence, NULL);
-
-	UNLOCK_DEVICE
-}
-void _device_reset_fence (VkvgDevice dev, VkFence fence){
-	LOCK_DEVICE
-
-	if (dev->gQLastFence == fence)
-		dev->gQLastFence = VK_NULL_HANDLE;
-
-	ResetFences (dev->vkDev, 1, &fence);
-
-	UNLOCK_DEVICE
-}
 bool _device_try_get_cached_context (VkvgDevice dev, VkvgContext* pCtx) {
 	LOCK_DEVICE
 
-	if (dev->cachedContextCount)
-		*pCtx = dev->cachedContext[--dev->cachedContextCount];
-	else
-		*pCtx = NULL;
+	if (dev->cachedContextCount) {
+		thrd_t curThread = thrd_current ();
+		_cached_ctx* prev = NULL;
+		_cached_ctx* cur = dev->cachedContextLast;
+		while (cur) {
+			if (thrd_equal (cur->thread, curThread)) {
+				if (prev)
+					prev->pNext = cur->pNext;
+				else
+					dev->cachedContextLast = cur->pNext;
 
+				dev->cachedContextCount--;
+
+				LOG(VKVG_LOG_THREAD,"get cached context: %p, thd:%lu cached ctx: %d\n", cur->ctx, cur->thread, dev->cachedContextCount);
+
+				*pCtx = cur->ctx;
+				free (cur);
+				UNLOCK_DEVICE
+				return true;
+			}
+			prev = cur;
+			cur = cur->pNext;
+		}
+	}
+	*pCtx = NULL;
 	UNLOCK_DEVICE
-
-	return *pCtx != NULL;
+	return false;
 }
 void _device_store_context (VkvgContext ctx) {
 	VkvgDevice dev = ctx->dev;
 
 	LOCK_DEVICE
 
-	if (dev->gQLastFence == ctx->flushFence)
-		dev->gQLastFence = VK_NULL_HANDLE;
-	dev->cachedContext[dev->cachedContextCount++] = ctx;
+	_cached_ctx* cur = (_cached_ctx*)calloc(1, sizeof(_cached_ctx));
+	cur->ctx	= ctx;
+	cur->thread	= thrd_current ();
+	cur->pNext	= dev->cachedContextLast;
+
+	dev->cachedContextLast = cur;
+	dev->cachedContextCount++;
+
+	LOG(VKVG_LOG_THREAD,"store context: %p, thd:%lu cached ctx: %d\n", cur->ctx, cur->thread, dev->cachedContextCount);
+
 	ctx->references++;
 
 	UNLOCK_DEVICE
 }
 void _device_submit_cmd (VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
 	LOCK_DEVICE
-	if (dev->gQLastFence != VK_NULL_HANDLE)
-		WaitForFences (dev->vkDev, 1, &dev->gQLastFence, VK_TRUE, VKVG_FENCE_TIMEOUT);
 	vkh_cmd_submit (dev->gQueue, cmd, fence);
-	dev->gQLastFence = fence;
 	UNLOCK_DEVICE
 }
 

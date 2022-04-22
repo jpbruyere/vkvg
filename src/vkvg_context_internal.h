@@ -131,8 +131,12 @@ typedef struct _vkvg_context_t {
 
 	VkvgDevice			dev;
 	VkvgSurface			pSurf;			//surface bound to context, set on creation of ctx
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	uint64_t			timelineStep;	//context cmd last submission timeline id.
+#else
 	VkFence				flushFence;		//context fence
-	VkhImage			source;			//source of painting operation
+#endif
+	//VkDescriptorImageInfo sourceDescriptor;	//Store view/sampler in context
 
 	VkCommandPool		cmdPool;		//local pools ensure thread safety
 	VkCommandBuffer		cmdBuffers[2];	//double cmd buff for context operations
@@ -302,7 +306,7 @@ void _flush_cmd_buff			(VkvgContext ctx);
 void _ensure_renderpass_is_started		(VkvgContext ctx);
 void _emit_draw_cmd_undrawn_vertices	(VkvgContext ctx);
 void _flush_cmd_until_vx_base	(VkvgContext ctx);
-bool _wait_flush_fence			(VkvgContext ctx);
+bool _wait_ctx_flush_end		(VkvgContext ctx);
 bool _wait_and_submit_cmd		(VkvgContext ctx);
 void _update_push_constants		(VkvgContext ctx);
 void _update_cur_pattern		(VkvgContext ctx, VkvgPattern pat);

@@ -105,7 +105,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 	_font_cache_t* cache = dev->fontCache;
 
 	vkWaitForFences		(dev->vkDev, 1, &cache->uploadFence, VK_TRUE, UINT64_MAX);
-	_device_reset_fence (dev, cache->uploadFence);
+	ResetFences (dev->vkDev, 1, &cache->uploadFence);
 
 	vkResetCommandBuffer(cache->cmd, 0);
 
@@ -167,7 +167,8 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 
 	LOG(VKVG_LOG_INFO, "_flush_chars_to_tex pen(%d, %d)\n",f->curLine.penX, f->curLine.penY);
 	vkWaitForFences		(dev->vkDev,1,&cache->uploadFence,VK_TRUE,UINT64_MAX);
-	_device_reset_fence (dev, cache->uploadFence);
+	ResetFences (dev->vkDev, 1, &cache->uploadFence);
+
 	vkResetCommandBuffer(cache->cmd,0);
 
 	memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (uint64_t)f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize);

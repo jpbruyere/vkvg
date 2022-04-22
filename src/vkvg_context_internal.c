@@ -270,7 +270,7 @@ void _create_vertices_buff (VkvgContext ctx){
 		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
 }
 void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
-	if (!_wait_flush_fence (ctx))//wait previous cmd if not completed
+	if (!_wait_ctx_flush_end (ctx))//wait previous cmd if not completed
 		return;
 	LOG(VKVG_LOG_DBG_ARRAYS, "resize VBO: %d -> ", ctx->sizeVBO);
 	ctx->sizeVBO = new_size;
@@ -285,7 +285,7 @@ void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
 		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
 }
 void _resize_ibo (VkvgContext ctx, size_t new_size) {
-	if (!_wait_flush_fence (ctx))//wait previous cmd if not completed
+	if (!_wait_ctx_flush_end (ctx))//wait previous cmd if not completed
 		return;
 	ctx->sizeIBO = new_size;
 	uint32_t mod = ctx->sizeIBO % VKVG_IBO_SIZE;
@@ -420,24 +420,64 @@ void _create_cmd_buff (VkvgContext ctx){
 void _clear_attachment (VkvgContext ctx) {
 
 }
-bool _wait_flush_fence (VkvgContext ctx) {
+
+bool _wait_ctx_flush_end (VkvgContext ctx) {
 	LOG(VKVG_LOG_INFO, "CTX: _wait_flush_fence\n");
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	if (vkh_timeline_wait ((VkhDevice)ctx->dev, ctx->pSurf->timeline, ctx->timelineStep) == VK_SUCCESS)
+		return true;
+#else
 	if (WaitForFences (ctx->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
 		return true;
+#endif
 	LOG(VKVG_LOG_DEBUG, "CTX: _wait_flush_fence timeout\n");
 	ctx->status = VKVG_STATUS_TIMEOUT;
 	return false;
 }
+
+
 bool _wait_and_submit_cmd (VkvgContext ctx){
 	if (!ctx->cmdStarted)//current cmd buff is empty, be aware that wait is also canceled!!
 		return true;
 
 	LOG(VKVG_LOG_INFO, "CTX: _wait_and_submit_cmd\n");
 
-	if (!_wait_flush_fence (ctx))
+#ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	VkvgSurface surf = ctx->pSurf;
+	VkvgDevice dev = surf->dev;
+	//vkh_timeline_wait ((VkhDevice)dev, surf->timeline, ct->timelineStep);
+	if (ctx->pattern && ctx->pattern->type == VKVG_PATTERN_TYPE_SURFACE) {
+		//add source surface timeline sync.
+		VkvgSurface source = (VkvgSurface)ctx->pattern->data;
+		LOCK_SURFACE(surf)
+		LOCK_SURFACE(source)
+		LOCK_DEVICE
+		vkh_cmd_submit_timelined2 (dev->gQueue, &ctx->cmd,
+								  (VkSemaphore[2]){surf->timeline,source->timeline},
+								  (uint64_t[2]){surf->timelineStep,source->timelineStep},
+								  (uint64_t[2]){surf->timelineStep+1,source->timelineStep+1});
+		surf->timelineStep++;
+		source->timelineStep++;
+		ctx->timelineStep = surf->timelineStep;
+		UNLOCK_DEVICE
+		UNLOCK_SURFACE(source)
+		UNLOCK_SURFACE(surf)
+	} else {
+		LOCK_SURFACE(surf)
+		LOCK_DEVICE
+		vkh_cmd_submit_timelined (dev->gQueue, &ctx->cmd, surf->timeline, surf->timelineStep, surf->timelineStep+1);
+		surf->timelineStep++;
+		ctx->timelineStep = surf->timelineStep;
+		UNLOCK_DEVICE
+		UNLOCK_SURFACE(surf)
+	}
+#else
+
+	if (!_wait_ctx_flush_end (ctx))
 		return false;
-	_device_reset_fence(ctx->dev, ctx->flushFence);
+	ResetFences (ctx->dev->vkDev, 1, &ctx->flushFence);
 	_device_submit_cmd (ctx->dev, &ctx->cmd, ctx->flushFence);
+#endif
 
 	if (ctx->cmd == ctx->cmdBuffers[0])
 		ctx->cmd = ctx->cmdBuffers[1];
@@ -474,7 +514,7 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 //pre flush vertices because of vbo or ibo too small, all vertices except last draw call are flushed
 //this function expects a vertex offset > 0
 void _flush_vertices_caches_until_vertex_base (VkvgContext ctx) {
-	_wait_flush_fence (ctx);
+	_wait_ctx_flush_end (ctx);
 
 	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->curVertOffset * sizeof (Vertex));
 	memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->curIndStart * sizeof (VKVG_IBO_INDEX_TYPE));
@@ -491,7 +531,7 @@ void _flush_vertices_caches_until_vertex_base (VkvgContext ctx) {
 //copy vertex and index caches to the vbo and ibo vkbuffers used by gpu for drawing
 //current running cmd has to be completed to free usage of those
 void _flush_vertices_caches (VkvgContext ctx) {
-	if (!_wait_flush_fence (ctx))
+	if (!_wait_ctx_flush_end (ctx))
 		return;
 
 	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
@@ -671,7 +711,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 	switch (newPatternType)	 {
 	case VKVG_PATTERN_TYPE_SOLID:
 		_flush_cmd_buff				(ctx);
-		if (!_wait_flush_fence (ctx))
+		if (!_wait_ctx_flush_end (ctx))
 			return;
 		if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE)//unbind current source surface by replacing it with empty texture
 			_update_descriptor_set		(ctx, ctx->dev->emptyImg, ctx->dsSrc);
@@ -686,7 +726,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		if (ctx->cmdStarted){//transition of img without appropriate dependencies in subpass must be done outside renderpass.
 			_end_render_pass (ctx);
 			_flush_vertices_caches (ctx);
-		}else {
+		} else {
 			vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 			ctx->cmdStarted = true;
 		}
@@ -698,10 +738,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 
 		vkh_cmd_end				(ctx->cmd);
 		_wait_and_submit_cmd	(ctx);
-		if (!_wait_flush_fence (ctx))
+		if (!_wait_ctx_flush_end (ctx))
 			return;
-
-		ctx->source = surf->img;
 
 		VkSamplerAddressMode addrMode = 0;
 		VkFilter filter = VK_FILTER_NEAREST;
@@ -728,10 +766,10 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			filter = VK_FILTER_NEAREST;
 			break;
 		}
-		vkh_image_create_sampler (ctx->source, filter, filter,
+		vkh_image_create_sampler (surf->img, filter, filter,
 									VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
 
-		_update_descriptor_set (ctx, ctx->source, ctx->dsSrc);
+		_update_descriptor_set (ctx, surf->img, ctx->dsSrc);
 
 		if (pat->hasMatrix) {
 
@@ -744,7 +782,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 	case VKVG_PATTERN_TYPE_LINEAR:
 	case VKVG_PATTERN_TYPE_RADIAL:
 		_flush_cmd_buff (ctx);
-		if (!_wait_flush_fence (ctx))
+		if (!_wait_ctx_flush_end (ctx))
 			return;
 
 		if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
@@ -866,7 +904,10 @@ void _init_descriptor_sets (VkvgContext ctx){
 void _release_context_ressources (VkvgContext ctx) {
 	VkDevice dev = ctx->dev->vkDev;
 	
-	_device_destroy_fence (ctx->dev, ctx->flushFence);
+#ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+	vkDestroyFence (dev, ctx->flushFence, NULL);
+#endif
+
 	vkFreeCommandBuffers(dev, ctx->cmdPool, 2, ctx->cmdBuffers);
 	vkDestroyCommandPool(dev, ctx->cmdPool, NULL);
 
@@ -1609,7 +1650,7 @@ void _poly_fill (VkvgContext ctx, vec4* bounds){
 				_flush_vertices_caches (ctx);
 			vkh_cmd_end (ctx->cmd);
 			_wait_and_submit_cmd (ctx);
-			_wait_flush_fence (ctx);
+			_wait_ctx_flush_end (ctx);
 			if (ctx->sizeVBO - VKVG_ARRAY_THRESHOLD < ctx->pointCount){
 				_resize_vbo (ctx, ctx->pointCount + VKVG_ARRAY_THRESHOLD);
 				_resize_vertex_cache (ctx, ctx->sizeVBO);
