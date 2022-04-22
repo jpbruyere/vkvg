@@ -726,7 +726,7 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		if (ctx->cmdStarted){//transition of img without appropriate dependencies in subpass must be done outside renderpass.
 			_end_render_pass (ctx);
 			_flush_vertices_caches (ctx);
-		}else {
+		} else {
 			vkh_cmd_begin (ctx->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 			ctx->cmdStarted = true;
 		}
@@ -740,8 +740,6 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 		_wait_and_submit_cmd	(ctx);
 		if (!_wait_ctx_flush_end (ctx))
 			return;
-
-		ctx->source = surf->img;
 
 		VkSamplerAddressMode addrMode = 0;
 		VkFilter filter = VK_FILTER_NEAREST;
@@ -768,10 +766,10 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			filter = VK_FILTER_NEAREST;
 			break;
 		}
-		vkh_image_create_sampler (ctx->source, filter, filter,
+		vkh_image_create_sampler (surf->img, filter, filter,
 									VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
 
-		_update_descriptor_set (ctx, ctx->source, ctx->dsSrc);
+		_update_descriptor_set (ctx, surf->img, ctx->dsSrc);
 
 		if (pat->hasMatrix) {
 

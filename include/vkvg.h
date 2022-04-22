@@ -137,7 +137,8 @@ typedef enum {
 	VKVG_STATUS_DEVICE_ERROR,			/*!< vkvg device initialization error */
 	VKVG_STATUS_INVALID_IMAGE,			/*!< */
 	VKVG_STATUS_INVALID_SURFACE,		/*!< */
-	VKVG_STATUS_INVALID_FONT			/*!< Unresolved font name*/
+	VKVG_STATUS_INVALID_FONT,			/*!< Unresolved font name*/
+	VKVG_STATUS_ENUM_MAX = 0x7FFFFFFF
 }vkvg_status_t;
 
 typedef enum {
@@ -543,7 +544,14 @@ void vkvg_matrix_get_scale (const vkvg_matrix_t *matrix, float *sx, float *sy);
  * @{ */
 
 /**
- * @brief vkvg_device_set_thread_aware
+ * @brief Set device ready for multithreading.
+ *
+ * If thread aware mode is set to true,
+ *
+ * This method should be called only once on device creation. If this method is called while some surfaces or patterns are
+ * in use, this could have unexpected results.
+ *
+ *
  * @param dev
  * @param thread_awayre
  */

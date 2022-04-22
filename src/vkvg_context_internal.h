@@ -136,7 +136,7 @@ typedef struct _vkvg_context_t {
 #else
 	VkFence				flushFence;		//context fence
 #endif
-	VkhImage			source;			//source of painting operation
+	//VkDescriptorImageInfo sourceDescriptor;	//Store view/sampler in context
 
 	VkCommandPool		cmdPool;		//local pools ensure thread safety
 	VkCommandBuffer		cmdBuffers[2];	//double cmd buff for context operations
