@@ -218,6 +218,7 @@ void vkvg_flush (VkvgContext ctx){
 void _clear_context (VkvgContext ctx) {
 	//free saved context stack elmt
 	vkvg_context_save_t* next = ctx->pSavedCtxs;
+	ctx->pSavedCtxs = NULL;
 	while (next != NULL) {
 		vkvg_context_save_t* cur = next;
 		next = cur->pNext;
