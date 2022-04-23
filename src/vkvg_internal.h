@@ -64,7 +64,7 @@
 
 #define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
 #define ROUND_DOWN(v,p) (floorf(v * p) / p)
-#define EQUF(a, b) (fabsf(a-b)<=FLT_EPSILON)
+#define EQUF(a, b) (fabsf(a-(b))<=FLT_EPSILON)
 
 #ifndef MAX
 	#define MAX(a,b) ((a) > (b) ? (a) : (b))
