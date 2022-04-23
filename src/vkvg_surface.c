@@ -46,7 +46,7 @@ void _transition_surf_images (VkvgSurface surf) {
 	vkh_image_set_layout(surf->cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
 					 VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 					 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-	vkh_image_set_layout (surf->cmd, surf->stencil, VK_IMAGE_ASPECT_STENCIL_BIT,
+	vkh_image_set_layout (surf->cmd, surf->stencil, dev->stencilAspectFlag,
 						  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 						  VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
 	vkh_cmd_end (surf->cmd);

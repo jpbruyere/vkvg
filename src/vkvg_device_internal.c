@@ -517,7 +517,7 @@ void _device_create_empty_texture (VkvgDevice dev, VkFormat format, VkImageTilin
 	vkh_cmd_end (dev->cmd);
 	_device_submit_cmd (dev, &dev->cmd, dev->fence);
 }
-
+#define VKVG_SET_STENCIL_ASPECT dev->stencilAspectFlag = (dev->stencilFormat == VK_FORMAT_S8_UINT) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 void _device_check_best_image_tiling (VkvgDevice dev, VkFormat format) {
 	VkFlags stencilFormats[] = { VK_FORMAT_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT };
 	VkFormatProperties phyStencilProps = { 0 }, phyImgProps = { 0 };
@@ -553,6 +553,7 @@ void _device_check_best_image_tiling (VkvgDevice dev, VkFormat format) {
 			vkGetPhysicalDeviceFormatProperties(dev->phy, stencilFormats[i], &phyStencilProps);
 			if (phyStencilProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
 				dev->stencilFormat = stencilFormats[i];
+				VKVG_SET_STENCIL_ASPECT
 				dev->supportedTiling = VK_IMAGE_TILING_OPTIMAL;
 				return;
 			}
@@ -564,6 +565,7 @@ void _device_check_best_image_tiling (VkvgDevice dev, VkFormat format) {
 			vkGetPhysicalDeviceFormatProperties(dev->phy, stencilFormats[i], &phyStencilProps);
 			if (phyStencilProps.linearTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
 				dev->stencilFormat = stencilFormats[i];
+				VKVG_SET_STENCIL_ASPECT
 				dev->supportedTiling = VK_IMAGE_TILING_LINEAR;
 				return;
 			}

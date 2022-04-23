@@ -30,7 +30,7 @@
 #define STENCIL_CLIP_BIT	0x2
 #define STENCIL_ALL_BIT		0x3
 
-#define VKVG_MAX_CACHED_CONTEXT_COUNT 36
+#define VKVG_MAX_CACHED_CONTEXT_COUNT 2
 
 extern PFN_vkCmdBindPipeline			CmdBindPipeline;
 extern PFN_vkCmdBindDescriptorSets		CmdBindDescriptorSets;
@@ -68,6 +68,7 @@ typedef struct _vkvg_device_t {
 
 	VkImageTiling			supportedTiling;		/**< Supported image tiling for surface, 0xFF=no support */
 	VkFormat				stencilFormat;			/**< Supported vulkan image format for stencil */
+	VkImageAspectFlags		stencilAspectFlag;		/**< stencil only or depth stencil, could be solved by VK_KHR_separate_depth_stencil_layouts*/
 	VkFormat				pngStagFormat;			/**< Supported vulkan image format png write staging img */
 	VkImageTiling			pngStagTiling;			/**< tiling for the blit operation */
 

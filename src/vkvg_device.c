@@ -232,7 +232,7 @@ const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeat
 
 	void* pNext = NULL;
 
-#ifdef VK_VERSION_1_2_
+#ifdef VK_VERSION_1_2
 	static VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
 #ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
