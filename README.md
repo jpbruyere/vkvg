@@ -41,7 +41,7 @@ The **API** follows the same pattern as [Cairo](https://www.cairographics.org/),
 
 **vkvg** is in alpha development stage and the core api is mostly stabilized. All contributions are welcome.
 
-In progress API documentation is available online at https://www.vkvg.org.
+In progress API documentation is available online at http://vkvg.org.
 
 <p align="center">
   <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
