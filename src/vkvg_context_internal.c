@@ -177,9 +177,10 @@ void _finish_path (VkvgContext ctx){
 	if (ctx->pathPtr == 0 && ctx->simpleConvex)
 		ctx->pathes[0] |= PATH_IS_CONVEX_BIT;
 
-	if (ctx->segmentPtr > 0) {
+	if (ctx->segmentPtr > 0) {//pathes having curves are segmented
 		ctx->pathes[ctx->pathPtr] |= PATH_HAS_CURVES_BIT;
-		//if last segment is not a curve and point count > 0
+		//curved segment increment segmentPtr on curve end,
+		//so if last segment is not a curve and point count > 0
 		if ((ctx->pathes[ctx->pathPtr+ctx->segmentPtr]&PATH_HAS_CURVES_BIT)==0 &&
 				(ctx->pathes[ctx->pathPtr+ctx->segmentPtr]&PATH_ELT_MASK) > 0)
 			ctx->segmentPtr++;//current segment has to be included
@@ -520,6 +521,7 @@ void _flush_vertices_caches_until_vertex_base (VkvgContext ctx) {
 	memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->curIndStart * sizeof (VKVG_IBO_INDEX_TYPE));
 
 	//copy remaining vertices and indices to caches starts
+	//this could be optimized at the cost of additional offsets.
 	ctx->vertCount -= ctx->curVertOffset;
 	ctx->indCount -= ctx->curIndStart;
 	memcpy(ctx->vertexCache, &ctx->vertexCache[ctx->curVertOffset], ctx->vertCount * sizeof (Vertex));
