@@ -1,5 +1,19 @@
 #include "test.h"
 
+//"M80 170   C100 170 160 170 180 170 lZ"
+void test3() {
+	VkvgContext ctx = vkvg_create(surf);
+	vkvg_clear (ctx);
+	vkvg_set_line_width(ctx, 20);
+	vkvg_set_source_rgb (ctx,1,0,0);
+	vkvg_move_to (ctx,80,170);
+	vkvg_curve_to (ctx, 100,170,160,171,180,170);
+	//vkvg_rel_line_to (ctx, -30,100);
+	vkvg_close_path (ctx);
+	vkvg_stroke (ctx);
+	vkvg_destroy (ctx);
+
+}
 void test(){
 	VkvgContext ctx = vkvg_create(surf);
 
@@ -175,6 +189,8 @@ void long_curv_fill_stroke_eo () {
 }
 int main(int argc, char *argv[]) {
 	no_test_size = true;
+	PERFORM_TEST(test3, argc, argv);
+	return 0;
 	PERFORM_TEST(test, argc, argv);
 	PERFORM_TEST(test2, argc, argv);
 	PERFORM_TEST(curved_rect, argc, argv);
