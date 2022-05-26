@@ -205,6 +205,7 @@ static void scroll_callback(GLFWwindow* window, double x, double y) {
 
 void print_help_and_exit () {
 	printf("\nUsage: svgviewer [options] [svgfilepath]\n\n");
+	printf("\t-o file.png:\toutput result to file then exit.\n");
 	printf("\t-d directory:\tdirectory containing svg files, cycle pressing Enter.\n");
 	printf("\t\t\tif the -d option is not specified, svgfile path is mandatory.\n");
 	printf("\t-i size:\tif -d option is present, display all svg files as a list with the size specified.\n");
@@ -219,6 +220,7 @@ void print_help_and_exit () {
 
 int main (int argc, char *argv[]){
 	int i = 1;
+	char* output = NULL;
 
 	while (i < argc) {
 		int argLen = strlen(argv[i]);
@@ -249,7 +251,11 @@ int main (int argc, char *argv[]){
 				break;
 			case 'm':
 				if (argc < ++i + 1) print_help_and_exit();
-				margin = atoi(argv[++i]);
+				margin = atoi(argv[i]);
+				break;
+			case 'o':
+				if (argc < ++i + 1) print_help_and_exit();
+				output = argv[i];
 				break;
 			default:
 				print_help_and_exit();
@@ -268,74 +274,83 @@ int main (int argc, char *argv[]){
 	dev = vkvg_device_create_from_vk_multisample (vkh_app_get_inst(e->app),
 			 vkengine_get_physical_device(e), vkengine_get_device(e), vkengine_get_queue_fam_idx(e), 0, samples, false);
 
-	VkvgSurface surf = vkvg_surface_create(dev, width, height);
+	VkvgSurface surf = NULL;
 
-	vkh_presenter_build_blit_cmd (e->renderer, vkvg_surface_get_vk_image(surf), width, height);
+	if (output) {
+		surf = vkvg_surface_create_from_svg(dev, width, height, filename);
+		vkvg_surface_write_to_png (surf, output);
+	} else {
 
-	if (directory) {
-		pCurrentDir = opendir(directory);
-		if(!pCurrentDir) {
-			printf ("Directory not found: %s\n", directory);
-			exit(EXIT_FAILURE);
+		surf = vkvg_surface_create(dev, width, height);
+
+		vkh_presenter_build_blit_cmd (e->renderer, vkvg_surface_get_vk_image(surf), width, height);
+
+		if (directory) {
+			pCurrentDir = opendir(directory);
+			if(!pCurrentDir) {
+				printf ("Directory not found: %s\n", directory);
+				exit(EXIT_FAILURE);
+			}
+			dir = get_next_svg_file_in_current_directory(false);
+			if (!dir) {
+				printf ("No .svg file found in %s\n", directory);
+				closedir(pCurrentDir);
+				exit(EXIT_FAILURE);
+			}
+			if (iconSize > 0) {
+				svg_file_count = _count_svg_files();
+				int cellSize = iconSize + margin;
+				int iconPerLine = ceil((double)(width-iconSize) / cellSize);
+				int visibleLines = ceil((double)(height) / cellSize);
+				int totLines = ceil((double)svg_file_count / iconPerLine);
+				maxScroll = (totLines-visibleLines) * cellSize;
+			}
 		}
-		dir = get_next_svg_file_in_current_directory(false);
-		if (!dir) {
-			printf ("No .svg file found in %s\n", directory);
-			closedir(pCurrentDir);
-			exit(EXIT_FAILURE);
-		}
-		if (iconSize > 0) {
-			svg_file_count = _count_svg_files();
-			int cellSize = iconSize + margin;
-			int iconPerLine = ceil((double)(width-iconSize) / cellSize);
-			int visibleLines = ceil((double)(height) / cellSize);
-			int totLines = ceil((double)svg_file_count / iconPerLine);
-			maxScroll = (totLines-visibleLines) * cellSize;
-		}
-	}
 
 
 
-	while (!vkengine_should_close (e)) {
-		//vkvg_log_level = VKVG_LOG_INFO_CMD;
-		readSVG (e);
-		//vkvg_log_level = VKVG_LOG_ERR;
+		while (!vkengine_should_close (e)) {
+			//vkvg_log_level = VKVG_LOG_INFO_CMD;
+			readSVG (e);
+			//vkvg_log_level = VKVG_LOG_ERR;
 
-		VkvgContext ctx = vkvg_create(surf);
-		vkvg_set_source_rgb(ctx,0.1,0.1,0.1);
-		vkvg_paint(ctx);
-
-		if (svgSurf) {
-			vkvg_set_source_surface(ctx, svgSurf, 0, 0);
+			VkvgContext ctx = vkvg_create(surf);
+			vkvg_set_source_rgb(ctx,0.1,0.1,0.1);
 			vkvg_paint(ctx);
-		} else {
-			vkvg_set_line_width(ctx,10);
-			vkvg_set_source_rgb(ctx,1,0,0);
-			vkvg_move_to(ctx, 0,0);
-			vkvg_line_to(ctx, 512,512);
-			vkvg_move_to(ctx, 0,512);
-			vkvg_line_to(ctx, 512,0);
-			vkvg_stroke(ctx);
+
+			if (svgSurf) {
+				vkvg_set_source_surface(ctx, svgSurf, 0, 0);
+				vkvg_paint(ctx);
+			} else {
+				vkvg_set_line_width(ctx,10);
+				vkvg_set_source_rgb(ctx,1,0,0);
+				vkvg_move_to(ctx, 0,0);
+				vkvg_line_to(ctx, 512,512);
+				vkvg_move_to(ctx, 0,512);
+				vkvg_line_to(ctx, 512,0);
+				vkvg_stroke(ctx);
+
+			}
+			vkvg_destroy(ctx);
+
+			glfwPollEvents();
+
+			if (!vkh_presenter_draw (e->renderer)){
+				vkh_presenter_get_size (e->renderer, &width, &height);
+				vkvg_surface_destroy (surf);
+				surf = vkvg_surface_create(dev, width, height);
+				vkh_presenter_build_blit_cmd (e->renderer, vkvg_surface_get_vk_image(surf), width, height);
+				vkengine_wait_idle(e);
+				repaintIconList = true;
+				continue;
+			}
 
 		}
-		vkvg_destroy(ctx);
 
-		glfwPollEvents();
-
-		if (!vkh_presenter_draw (e->renderer)){
-			vkh_presenter_get_size (e->renderer, &width, &height);
-			vkvg_surface_destroy (surf);
-			surf = vkvg_surface_create(dev, width, height);
-			vkh_presenter_build_blit_cmd (e->renderer, vkvg_surface_get_vk_image(surf), width, height);
-			vkengine_wait_idle(e);
-			repaintIconList = true;
-			continue;
-		}
+		vkengine_wait_idle(e);
 
 	}
-	
-	vkengine_wait_idle(e);
-	
+
 	if (svgSurf)
 		vkvg_surface_destroy(svgSurf);
 	vkvg_surface_destroy(surf);
