@@ -52,13 +52,10 @@ logfile="$logdir/log-$today.txt"
 
 git log -n 1 --pretty=format:'%h %d %s%n%n' > $logfile
 
-files=( test_* )
-./"${files[0]}" -p >> $logfile
-
 echo "__________________________________________________________________________________________________________" >> $logfile
 echo "| N° | Test File Name  |         Sub Test          | Iter | Size |   FPS   | Average | Median  | Sigma   |" >> $logfile
 echo "|----|-----------------|---------------------------|------|------|---------|---------|---------|---------|" >> $logfile
-for file in test_*
+for file in *
 do
 	if [[ -x "$file" ]]
 	then
