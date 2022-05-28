@@ -255,20 +255,20 @@ float _get_arc_step (VkvgContext ctx, float radius) {
 	return fminf(M_PIF / 3.f,M_PIF / (r * 0.4f));
 }
 void _create_gradient_buff (VkvgContext ctx){
-	vkvg_buffer_create (ctx->dev,
+	vkh_buffer_init ((VkhDevice)ctx->dev,
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		sizeof(vkvg_gradient_t), &ctx->uboGrad);
+		VKH_MEMORY_USAGE_CPU_TO_GPU,
+		sizeof(vkvg_gradient_t), &ctx->uboGrad, true);
 }
 void _create_vertices_buff (VkvgContext ctx){
-	vkvg_buffer_create (ctx->dev,
+	vkh_buffer_init ((VkhDevice)ctx->dev,
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
-	vkvg_buffer_create (ctx->dev,
+		VKH_MEMORY_USAGE_CPU_TO_GPU,
+		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices, true);
+	vkh_buffer_init ((VkhDevice)ctx->dev,
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
+		VKH_MEMORY_USAGE_CPU_TO_GPU,
+		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices, true);
 }
 void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
 	if (!_wait_ctx_flush_end (ctx))//wait previous cmd if not completed
@@ -279,11 +279,7 @@ void _resize_vbo (VkvgContext ctx, uint32_t new_size) {
 	if (mod > 0)
 		ctx->sizeVBO += VKVG_VBO_SIZE - mod;
 	LOG(VKVG_LOG_DBG_ARRAYS, "%d\n", ctx->sizeVBO);
-	vkvg_buffer_destroy (&ctx->vertices);
-	vkvg_buffer_create (ctx->dev,
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeVBO * sizeof(Vertex), &ctx->vertices);
+	vkh_buffer_resize (&ctx->vertices, ctx->sizeVBO * sizeof(Vertex), true);
 }
 void _resize_ibo (VkvgContext ctx, size_t new_size) {
 	if (!_wait_ctx_flush_end (ctx))//wait previous cmd if not completed
@@ -292,12 +288,8 @@ void _resize_ibo (VkvgContext ctx, size_t new_size) {
 	uint32_t mod = ctx->sizeIBO % VKVG_IBO_SIZE;
 	if (mod > 0)
 		ctx->sizeIBO += VKVG_IBO_SIZE - mod;
-	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);
-	vkvg_buffer_destroy (&ctx->indices);
-	vkvg_buffer_create (ctx->dev,
-		VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices);
+	LOG(VKVG_LOG_DBG_ARRAYS, "resize IBO: new size: %d\n", ctx->sizeIBO);	
+	vkh_buffer_resize (&ctx->indices, ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), true);
 }
 void _add_vertexf (VkvgContext ctx, float x, float y){
 	Vertex* pVert = &ctx->vertexCache[ctx->vertCount];
@@ -517,8 +509,8 @@ bool _wait_and_submit_cmd (VkvgContext ctx){
 void _flush_vertices_caches_until_vertex_base (VkvgContext ctx) {
 	_wait_ctx_flush_end (ctx);
 
-	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->curVertOffset * sizeof (Vertex));
-	memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->curIndStart * sizeof (VKVG_IBO_INDEX_TYPE));
+	memcpy(vkh_buffer_get_mapped_pointer(&ctx->vertices), ctx->vertexCache, ctx->curVertOffset * sizeof (Vertex));
+	memcpy(vkh_buffer_get_mapped_pointer(&ctx->indices), ctx->indexCache, ctx->curIndStart * sizeof (VKVG_IBO_INDEX_TYPE));
 
 	//copy remaining vertices and indices to caches starts
 	//this could be optimized at the cost of additional offsets.
@@ -536,8 +528,8 @@ void _flush_vertices_caches (VkvgContext ctx) {
 	if (!_wait_ctx_flush_end (ctx))
 		return;
 
-	memcpy(ctx->vertices.allocInfo.pMappedData, ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
-	memcpy(ctx->indices.allocInfo.pMappedData, ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
+	memcpy(vkh_buffer_get_mapped_pointer(&ctx->vertices), ctx->vertexCache, ctx->vertCount * sizeof (Vertex));
+	memcpy(vkh_buffer_get_mapped_pointer(&ctx->indices), ctx->indexCache, ctx->indCount * sizeof (VKVG_IBO_INDEX_TYPE));
 
 	ctx->vertCount = ctx->indCount = ctx->curIndStart = ctx->curVertOffset = 0;
 }
@@ -828,8 +820,8 @@ void _update_cur_pattern (VkvgContext ctx, VkvgPattern pat) {
 			vkvg_matrix_transform_distance (&ctx->pushConsts.mat, &grad.cp[1].z, &grad.cp[0].w);
 		}
 
-		memcpy (ctx->uboGrad.allocInfo.pMappedData , &grad, sizeof(vkvg_gradient_t));
-		vkvg_buffer_flush(&ctx->uboGrad);
+		memcpy (vkh_buffer_get_mapped_pointer(&ctx->uboGrad) , &grad, sizeof(vkvg_gradient_t));
+		vkh_buffer_flush(&ctx->uboGrad);
 		break;
 	}
 	ctx->pushConsts.fsq_patternType = (ctx->pushConsts.fsq_patternType & FULLSCREEN_BIT) + newPatternType;
@@ -918,9 +910,9 @@ void _release_context_ressources (VkvgContext ctx) {
 
 	vkDestroyDescriptorPool (dev, ctx->descriptorPool,NULL);
 
-	vkvg_buffer_destroy (&ctx->uboGrad);
-	vkvg_buffer_destroy (&ctx->indices);
-	vkvg_buffer_destroy (&ctx->vertices);
+	vkh_buffer_reset (&ctx->uboGrad);
+	vkh_buffer_reset (&ctx->indices);
+	vkh_buffer_reset (&ctx->vertices);
 
 	free(ctx->vertexCache);
 	free(ctx->indexCache);

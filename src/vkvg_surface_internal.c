@@ -108,7 +108,7 @@ void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect)
 }
 
 void _create_surface_main_image (VkvgSurface surf){
-	surf->img = vkh_image_create((VkhDevice)surf->dev,surf->format,surf->width,surf->height,surf->dev->supportedTiling,VMA_MEMORY_USAGE_GPU_ONLY,
+	surf->img = vkh_image_create((VkhDevice)surf->dev,surf->format,surf->width,surf->height,surf->dev->supportedTiling,VKH_MEMORY_USAGE_GPU_ONLY,
 									 VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	vkh_image_create_descriptor(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
@@ -120,7 +120,7 @@ void _create_surface_main_image (VkvgSurface surf){
 //create multisample color img if sample count > 1 and the stencil buffer multisampled or not
 void _create_surface_secondary_images (VkvgSurface surf) {
 	if (surf->dev->samples > VK_SAMPLE_COUNT_1_BIT){
-		surf->imgMS = vkh_image_ms_create((VkhDevice)surf->dev,surf->format,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,
+		surf->imgMS = vkh_image_ms_create((VkhDevice)surf->dev,surf->format,surf->dev->samples,surf->width,surf->height,VKH_MEMORY_USAGE_GPU_ONLY,
 										  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		vkh_image_create_descriptor(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
 									VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
@@ -130,7 +130,7 @@ void _create_surface_secondary_images (VkvgSurface surf) {
 		vkh_device_set_object_name((VkhDevice)surf->dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->imgMS), "SURF MS color SAMPLER");
 #endif
 	}
-	surf->stencil = vkh_image_ms_create((VkhDevice)surf->dev,surf->dev->stencilFormat,surf->dev->samples,surf->width,surf->height,VMA_MEMORY_USAGE_GPU_ONLY,									 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+	surf->stencil = vkh_image_ms_create((VkhDevice)surf->dev,surf->dev->stencilFormat,surf->dev->samples,surf->width,surf->height,VKH_MEMORY_USAGE_GPU_ONLY,									 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 	vkh_image_create_descriptor(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST,
 								VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 #if defined(DEBUG) && defined (VKVG_DBG_UTILS)

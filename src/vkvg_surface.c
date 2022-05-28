@@ -125,19 +125,22 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 	VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
 	//original format image
 	VkhImage stagImg= vkh_image_create ((VkhDevice)surf->dev,VK_FORMAT_R8G8B8A8_UNORM,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
-										 VMA_MEMORY_USAGE_GPU_ONLY,
+										 VKH_MEMORY_USAGE_GPU_ONLY,
 										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	//bgra bliting target
 	VkhImage tmpImg = vkh_image_create ((VkhDevice)surf->dev,surf->format,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
-										 VMA_MEMORY_USAGE_GPU_ONLY,
+										 VKH_MEMORY_USAGE_GPU_ONLY,
 										 VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	vkh_image_create_descriptor (tmpImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
 								 VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 	//staging buffer
-	vkvg_buff buff = {0};
-	vkvg_buffer_create(dev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, imgSize, &buff);
+	vkh_buffer_t buff = {0};
+	vkh_buffer_init((VkhDevice)dev,
+					VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+					VKH_MEMORY_USAGE_CPU_TO_GPU,
+					imgSize, &buff, true);
 
-	memcpy (buff.allocInfo.pMappedData, img, imgSize);	
+	memcpy (vkh_buffer_get_mapped_pointer (&buff), img, imgSize);
 
 	VkCommandBuffer cmd = surf->cmd;
 
@@ -178,7 +181,7 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 
 	_surface_submit_cmd (surf);//lock surface?
 
-	vkvg_buffer_destroy (&buff);
+	vkh_buffer_reset	(&buff);
 	vkh_image_destroy	(stagImg);
 
 	surf->newSurf = false;
@@ -329,11 +332,11 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 
 	if (dev->pngStagTiling == VK_IMAGE_TILING_LINEAR)
 		stagImg = vkh_image_create ((VkhDevice)surf->dev, dev->pngStagFormat, surf->width, surf->height, dev->pngStagTiling,
-										 VMA_MEMORY_USAGE_GPU_TO_CPU,
+										 VKH_MEMORY_USAGE_GPU_TO_CPU,
 										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	else
 		stagImg = vkh_image_create ((VkhDevice)surf->dev, dev->pngStagFormat, surf->width,surf->height, dev->pngStagTiling,
-										 VMA_MEMORY_USAGE_GPU_ONLY,
+										 VKH_MEMORY_USAGE_GPU_ONLY,
 										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 	VkCommandBuffer cmd = surf->cmd;
@@ -363,7 +366,7 @@ vkvg_status_t vkvg_surface_write_to_png (VkvgSurface surf, const char* path){
 
 	if (dev->pngStagTiling == VK_IMAGE_TILING_OPTIMAL) {
 		stagImgLinear = vkh_image_create ((VkhDevice)surf->dev, dev->pngStagFormat, surf->width, surf->height, VK_IMAGE_TILING_LINEAR,
-										  VMA_MEMORY_USAGE_GPU_TO_CPU,
+										  VKH_MEMORY_USAGE_GPU_TO_CPU,
 										  VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		VkImageCopy cpy = {
 			.srcSubresource = imgSubResLayers,
@@ -421,7 +424,7 @@ vkvg_status_t vkvg_surface_write_to_memory (VkvgSurface surf, unsigned char* con
 
 	//RGBA to blit to, surf img is bgra
 	VkhImage stagImg= vkh_image_create ((VkhDevice)surf->dev,VK_FORMAT_B8G8R8A8_UNORM ,surf->width,surf->height,VK_IMAGE_TILING_LINEAR,
-										 VMA_MEMORY_USAGE_GPU_TO_CPU,
+										 VKH_MEMORY_USAGE_GPU_TO_CPU,
 										 VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 	VkCommandBuffer cmd = surf->cmd;

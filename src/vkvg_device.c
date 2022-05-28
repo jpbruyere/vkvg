@@ -48,6 +48,8 @@ void vkvg_device_set_context_cache_size (VkvgDevice dev, uint32_t maxCount) {
 	dev->cachedContextLast = cur;
 }
 void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve) {
+	dev->vkDev	= vkdev;
+	dev->phy	= phy;
 	dev->instance = inst;
 	dev->hdpi	= 72;
 	dev->vdpi	= 72;
@@ -56,8 +58,6 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 		dev->deferredResolve = false;
 	else
 		dev->deferredResolve = deferredResolve;
-	dev->vkDev	= vkdev;
-	dev->phy	= phy;
 
 	dev->cachedContextMaxCount = VKVG_MAX_CACHED_CONTEXT_COUNT;
 
@@ -84,11 +84,13 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 
 	vkh_phyinfo_destroy (phyInfos);
 
+#ifdef VKH_USE_VMA
 	VmaAllocatorCreateInfo allocatorInfo = {
 		.physicalDevice = phy,
 		.device = vkdev
 	};
 	vmaCreateAllocator(&allocatorInfo, &dev->allocator);
+#endif
 
 	dev->cmdPool= vkh_cmd_pool_create		((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 	dev->cmd	= vkh_cmd_buff_create		((VkhDevice)dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -449,7 +451,9 @@ void vkvg_device_destroy (VkvgDevice dev)
 
 	_font_cache_destroy(dev);
 
+#ifdef VKH_USE_VMA
 	vmaDestroyAllocator (dev->allocator);
+#endif
 
 	if (dev->threadAware)
 		mtx_destroy (&dev->mutex);

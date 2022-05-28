@@ -60,6 +60,7 @@
 #define FONT_NAME_MAX_SIZE		128
 
 #include "vkvg_internal.h"
+#include "vkh_buffer.h"
 
 //texture coordinates of one character in font cache array texture.
 typedef struct {
@@ -134,7 +135,7 @@ typedef struct {
 	uint8_t*		hostBuff;		/* host memory where bitmaps are first loaded */
 
 	VkCommandBuffer cmd;			/* vulkan command buffer for font textures upload */
-	vkvg_buff		buff;			/* stagin buffer */
+	vkh_buffer_t	buff;			/* stagin buffer */
 	VkhImage		texture;		/* 2d array texture used by contexts to draw characteres */
 	VkFormat		texFormat;		/* Format of the fonts texture array */
 	uint8_t			texPixelSize;	/* Size in byte of a single pixel in a font texture */

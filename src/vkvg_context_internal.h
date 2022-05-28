@@ -24,7 +24,6 @@
 
 #include "vkvg_internal.h"
 #include "vkvg.h"
-#include "vkvg_buff.h"
 #include "vkh.h"
 #include "vkvg_fonts.h"
 
@@ -165,10 +164,10 @@ typedef struct _vkvg_context_t {
 	vkvg_recording_t*	recording;
 #endif
 
-	vkvg_buff			uboGrad;		//uniform buff obj holdings gradient infos
+	vkh_buffer_t		uboGrad;		//uniform buff obj holdings gradient infos
 
 	//vk buffers, holds data until flush
-	vkvg_buff			indices;		//index buffer with persistent map memory
+	vkh_buffer_t		indices;		//index buffer with persistent map memory
 	uint32_t			sizeIBO;		//size of vk ibo
 	uint32_t			sizeIndices;	//reserved size
 	uint32_t			indCount;		//current indice count
@@ -176,7 +175,7 @@ typedef struct _vkvg_context_t {
 	uint32_t			curIndStart;	//last index recorded in cmd buff
 	VKVG_IBO_INDEX_TYPE	curVertOffset;	//vertex offset in draw indexed command
 
-	vkvg_buff			vertices;		//vertex buffer with persistent mapped memory
+	vkh_buffer_t		vertices;		//vertex buffer with persistent mapped memory
 	uint32_t			sizeVBO;		//size of vk vbo size
 	uint32_t			sizeVertices;	//reserved size
 	uint32_t			vertCount;		//effective vertices count

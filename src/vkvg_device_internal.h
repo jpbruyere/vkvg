@@ -63,8 +63,10 @@ typedef struct _vkvg_device_t {
 	VkDevice				vkDev;					/**< Vulkan Logical Device */
 	VkPhysicalDeviceMemoryProperties phyMemProps;	/**< Vulkan Physical device memory properties */
 	VkPhysicalDevice		phy;					/**< Vulkan Physical device */
-	VmaAllocator			allocator;				/**< Vulkan Memory allocator */
 	VkInstance				instance;				/**< Vulkan instance */
+#ifdef VKH_USE_VMA
+	void*					allocator;				/**< Vulkan Memory allocator */
+#endif
 
 	VkImageTiling			supportedTiling;		/**< Supported image tiling for surface, 0xFF=no support */
 	VkFormat				stencilFormat;			/**< Supported vulkan image format for stencil */

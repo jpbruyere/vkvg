@@ -87,7 +87,6 @@
 //#define VKVG_FENCE_TIMEOUT 10000
 
 #include "vkvg.h"
-#include "vkvg_buff.h"
 #include "vkh.h"
 #include "vectors.h"
 

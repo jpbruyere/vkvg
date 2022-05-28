@@ -68,7 +68,7 @@ void _fonts_cache_create (VkvgDevice dev){
 
 	cache->texLength = FONT_CACHE_INIT_LAYERS;
 	cache->texture = vkh_tex2d_array_create ((VkhDevice)dev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE,
-							cache->texLength ,VMA_MEMORY_USAGE_GPU_ONLY,
+							cache->texLength ,VKH_MEMORY_USAGE_GPU_ONLY,
 							VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 	vkh_image_create_descriptor (cache->texture, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
 								 VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
@@ -77,10 +77,10 @@ void _fonts_cache_create (VkvgDevice dev){
 
 	uint32_t buffLength = FONT_PAGE_SIZE*FONT_PAGE_SIZE*cache->texPixelSize;
 
-	vkvg_buffer_create (dev,
+	vkh_buffer_init ((VkhDevice)dev,
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VMA_MEMORY_USAGE_CPU_TO_GPU,
-		buffLength, &cache->buff);
+		VKH_MEMORY_USAGE_CPU_TO_GPU,
+		buffLength, &cache->buff, true);
 
 	cache->cmd = vkh_cmd_buff_create((VkhDevice)dev,dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
@@ -111,7 +111,7 @@ void _increase_font_tex_array (VkvgDevice dev){
 
 	uint8_t newSize = cache->texLength + FONT_CACHE_INIT_LAYERS;
 	VkhImage newImg = vkh_tex2d_array_create ((VkhDevice)dev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE,
-											  newSize ,VMA_MEMORY_USAGE_GPU_ONLY,
+											  newSize ,VKH_MEMORY_USAGE_GPU_ONLY,
 											  VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 	vkh_image_create_descriptor (newImg, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
 							   VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
@@ -171,7 +171,7 @@ void _flush_chars_to_tex (VkvgDevice dev, _vkvg_font_t* f) {
 
 	vkResetCommandBuffer(cache->cmd,0);
 
-	memcpy(cache->buff.allocInfo.pMappedData, cache->hostBuff, (uint64_t)f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize);
+	memcpy(vkh_buffer_get_mapped_pointer (&cache->buff), cache->hostBuff, (uint64_t)f->curLine.height * FONT_PAGE_SIZE * cache->texPixelSize);
 
 	vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -258,7 +258,7 @@ void _font_cache_destroy (VkvgDevice dev){
 	free(cache->fonts);
 	free(cache->pensY);
 
-	vkvg_buffer_destroy (&cache->buff);
+	vkh_buffer_reset	(&cache->buff);
 	vkh_image_destroy	(cache->texture);
 	//vkFreeCommandBuffers(dev->vkDev,dev->cmdPool, 1, &cache->cmd);
 	vkDestroyFence		(dev->vkDev,cache->uploadFence,NULL);
