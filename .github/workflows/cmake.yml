@@ -13,10 +13,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install Vulkan SDK
-      uses: humbletim/install-vulkan-sdk@v1.1.1
+      uses: humbletim/setup-vulkan-sdk@v1.2.0
       with:
-       version: 1.3.204.0
-       cache: true
+        vulkan-query-version: 1.3.204.0
+        vulkan-components: Vulkan-Headers, Vulkan-Loader
+        vulkan-use-cache: true
     - name: configure
       run: cmake -G "Visual Studio 16 2019" . -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
     - name: build
