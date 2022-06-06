@@ -55,7 +55,7 @@ ELSE()
 		ADD_COMPILE_OPTIONS(-O3 -w -ansi -pedantic -fvisibility=hidden -fno-rtti)
 		#ADD_COMPILE_OPTIONS(-flto -pthread -lpthread -Wl,--no-as-needed)
 	ELSEIF(MSVC)
-		ADD_COMPILE_OPTIONS(/O2 /TC /W0)
+		ADD_COMPILE_OPTIONS(/O2 /TC /W0 /Od)
 	ENDIF()
 ENDIF()
 
