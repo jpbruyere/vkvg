@@ -89,7 +89,7 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 		.physicalDevice = phy,
 		.device = vkdev
 	};
-	vmaCreateAllocator(&allocatorInfo, &dev->allocator);
+	vmaCreateAllocator(&allocatorInfo, (VmaAllocator*)&dev->allocator);
 #endif
 
 	dev->cmdPool= vkh_cmd_pool_create		((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
