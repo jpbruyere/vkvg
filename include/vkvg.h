@@ -752,7 +752,16 @@ VkvgSurface vkvg_surface_create_from_image (VkvgDevice dev, const char* filePath
  */
 vkvg_public
 VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg);
-// VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height);
+/**
+ * @brief Create a new vkvg surface from an in memory rgba bitmap
+ * @param dev The vkvg device used for creating the surface.
+ * @param img a pointer to a rgba encoded bimap
+ * @param width the width of the provided bitmap.
+ * @param height the height of the provided bitmap.
+ * @return
+ */
+vkvg_public
+VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height);
 /**
  * @brief Increment reference count on the surface by one.
  * @param The vkvg surface to increment the reference count for.
@@ -1684,7 +1693,7 @@ void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
  * @param matrix a valid #vkvg_matrix_t pointer to receive the current context's transform.
  */
 vkvg_public
-void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix);
+void vkvg_get_matrix (VkvgContext ctx, vkvg_matrix_t * const matrix);
 /**
  * @brief Set the current matrix to identity.
  *

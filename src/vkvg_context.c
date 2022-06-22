@@ -1594,8 +1594,8 @@ void vkvg_set_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
 	ctx->pushConsts.mat = (*matrix);
 	_set_mat_inv_and_vkCmdPush (ctx);
 }
-void vkvg_get_matrix (VkvgContext ctx, const vkvg_matrix_t* matrix){
-	memcpy ((void*)matrix, &ctx->pushConsts.mat, sizeof(vkvg_matrix_t));
+void vkvg_get_matrix (VkvgContext ctx, vkvg_matrix_t* const matrix){
+	*matrix = ctx->pushConsts.mat;
 }
 
 void vkvg_elliptic_arc_to (VkvgContext ctx, float x2, float y2, bool largeArc, bool sweepFlag, float rx, float ry, float phi) {
