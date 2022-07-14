@@ -47,7 +47,7 @@ void _init_ctx (VkvgContext ctx) {
 	ctx->miterLimit		= 10;
 	ctx->curOperator	= VKVG_OPERATOR_OVER;
 	ctx->curFillRule	= VKVG_FILL_RULE_NON_ZERO;
-	ctx->bounds = (VkRect2D) {{0,0},{ctx->pSurf->width,ctx->pSurf->height}};
+	ctx->bounds = (VkRect2D) { {0,0}, { ctx->pSurf->width, ctx->pSurf->height } };
 	ctx->pushConsts = (push_constants) {
 			{.a = 1},
 			{(float)ctx->pSurf->width,(float)ctx->pSurf->height},
@@ -575,7 +575,7 @@ void _curve_to (VkvgContext ctx, float x1, float y1, float x2, float y2, float x
 	//compute dyn distanceTolerance depending on current scale
 	float sx = 1, sy = 1;
 	vkvg_matrix_get_scale (&ctx->pushConsts.mat, &sx, &sy);
-	float distanceTolerance = fabs(0.25f / fmaxf(sx,sy));
+	float distanceTolerance = fabs(0.01f / fmaxf(sx,sy));
 
 	_recursive_bezier (ctx, distanceTolerance, cp.x, cp.y, x1, y1, x2, y2, x3, y3, 0);
 	/*cp.x = x3;

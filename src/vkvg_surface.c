@@ -65,8 +65,8 @@ VkvgSurface vkvg_surface_create (VkvgDevice dev, uint32_t width, uint32_t height
 	if (surf->status)
 		return surf;
 
-	surf->width = MAX(1, width);
-	surf->height = MAX(1, height);
+	surf->imgWidth = surf->width = MAX(1, width);
+	surf->imgHeight = surf->height = MAX(1, height);
 	surf->newSurf = true;//used to clear all attacments on first render pass
 
 	_create_surface_images (surf);
@@ -88,8 +88,8 @@ VkvgSurface vkvg_surface_create_for_VkhImage (VkvgDevice dev, void* vkhImg) {
 	}
 
 	VkhImage img = (VkhImage)vkhImg;
-	surf->width = img->infos.extent.width;
-	surf->height= img->infos.extent.height;
+	surf->imgWidth = img->infos.extent.width;
+	surf->imgHeight = img->infos.extent.height;
 
 	surf->img = img;
 
@@ -116,8 +116,8 @@ VkvgSurface vkvg_surface_create_from_bitmap (VkvgDevice dev, unsigned char* img,
 		return surf;
 	}
 
-	surf->width = MAX(1, width);
-	surf->height = MAX(1, height);
+	surf->imgWidth = surf->width = MAX(1, width);
+	surf->imgHeight = surf->height = MAX(1, height);
 
 	_create_surface_images (surf);
 
@@ -275,7 +275,31 @@ uint32_t vkvg_surface_get_reference_count (VkvgSurface surf) {
 		return 0;
 	return surf->references;
 }
+void vkvg_surface_resize(VkvgSurface surf, uint32_t width, uint32_t height) {
+	if (surf->status)
+		return;
 
+	surf->width = MAX(1, width);
+	surf->height = MAX(1, height);
+
+	vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
+
+	if (width > surf->imgWidth || height > surf->imgHeight) {
+		if (!surf->img->imported)
+			vkh_image_destroy(surf->img);
+		vkh_image_destroy(surf->imgMS);
+		vkh_image_destroy(surf->stencil);
+
+		surf->newSurf = true;//used to clear all attacments on first render pass
+		_create_surface_images (surf);
+		_transition_surf_images (surf);
+
+		surf->imgWidth = surf->width;
+		surf->imgHeight = surf->height;
+	}
+
+	_create_framebuffer (surf);
+}
 VkImage vkvg_surface_get_vk_image(VkvgSurface surf)
 {
 	if (surf->status)

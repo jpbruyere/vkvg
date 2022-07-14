@@ -790,6 +790,11 @@ void vkvg_surface_destroy (VkvgSurface surf);
 vkvg_public
 vkvg_status_t vkvg_surface_status (VkvgSurface surf);
 /**
+ * @brief Resize the surface.
+ */
+vkvg_public
+void vkvg_surface_resize(VkvgSurface surf, uint32_t width, uint32_t height);
+/**
  * @brief Clear surface's content.
  *
  * Clear the surface content, alpha is also set to 0 resulting in a transparent image. The clipping region is also

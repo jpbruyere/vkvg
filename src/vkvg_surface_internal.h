@@ -30,8 +30,10 @@ typedef struct _vkvg_surface_t {
 	vkvg_status_t	status;					/**< Current status of surface, affected by last operation */
 	uint32_t		references;
 	VkvgDevice		dev;
-	uint32_t		width;
-	uint32_t		height;
+	uint32_t		width;					/**< surface width, underlying vulkan image may be larger */
+	uint32_t		height;					/**< surface height, underlying vulkan image may be larger */
+	uint32_t		imgWidth;				/**< physical surface image width */
+	uint32_t		imgHeight;				/**< physical surface image height */
 	VkFormat		format;
 	VkFramebuffer	fb;
 	VkhImage		img;
