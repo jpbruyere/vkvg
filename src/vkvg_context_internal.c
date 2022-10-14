@@ -1311,6 +1311,8 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
 void _free_ctx_save (vkvg_context_save_t* sav){
 	if (sav->dashCount > 0)
 		free (sav->dashes);
+	if (sav->pattern)
+		vkvg_pattern_destroy(sav->pattern);
 	free (sav);
 }
 

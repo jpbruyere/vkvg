@@ -234,8 +234,6 @@ void _clear_context (VkvgContext ctx) {
 		vkvg_context_save_t* cur = next;
 		next = cur->pNext;
 		_free_ctx_save (cur);
-		if (cur->pattern)
-			vkvg_pattern_destroy (cur->pattern);
 	}
 	//free additional stencil use in save/restore process
 	if (ctx->savedStencils) {
