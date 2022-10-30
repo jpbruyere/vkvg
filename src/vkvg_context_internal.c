@@ -977,8 +977,8 @@ bool _build_vb_step(VkvgContext ctx, stroke_context_t* str, bool isCurve){
 		alpha = -alpha;
 
 	float halfAlpha = alpha / 2.f;
-
-	float lh = str->hw / cosf(halfAlpha);
+	float cosHalfAlpha = cosf(halfAlpha);
+	float lh = str->hw / cosHalfAlpha;
 	vec2 bisec_n_perp = vec2_perp(bisec_n);
 
 	//limit bisectrice length
@@ -1000,7 +1000,7 @@ bool _build_vb_step(VkvgContext ctx, stroke_context_t* str, bool isCurve){
 			vnPerp = vec2_perp (v0n);
 		vec2 vHwPerp = vec2_mult_s (vnPerp, str->hw);
 
-		double lbc = cosf(halfAlpha) * rlh;
+		double lbc = cosHalfAlpha * rlh;
 		if (det < 0.f) {
 			rlh_inside_pos	= vec2_add (vec2_add (vec2_mult_s(vnPerp, -lbc), vec2_add(p0, bisec)), vHwPerp);
 			rlh_outside_pos	= vec2_sub (p0, vec2_mult_s (bisec_n_perp, lh));
@@ -1029,7 +1029,7 @@ bool _build_vb_step(VkvgContext ctx, stroke_context_t* str, bool isCurve){
 
 	if (join == VKVG_LINE_JOIN_MITER){
 		if (lh > str->lhMax) {//miter limit
-			double x = (lh - str->lhMax) * cosf (halfAlpha);
+			double x = (lh - str->lhMax) * cosHalfAlpha;
 			vec2 bisecPerp = vec2_mult_s (bisec_n, x);
 			bisec = vec2_mult_s (bisec_n_perp, str->lhMax);
 			if (det < 0) {
