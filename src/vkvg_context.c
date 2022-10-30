@@ -1043,7 +1043,7 @@ void vkvg_set_source_rgba (VkvgContext ctx, float r, float g, float b, float a)
 	_update_cur_pattern (ctx, NULL);
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y){
-	if (ctx->status)
+	if (ctx->status || surf->status)
 		return;
 	RECORD(ctx, VKVG_CMD_SET_SOURCE_SURFACE, x, y, surf);
 	ctx->pushConsts.source.x = x;
@@ -1052,7 +1052,7 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
 	ctx->pushCstDirty = true;
 }
 void vkvg_set_source (VkvgContext ctx, VkvgPattern pat){
-	if (ctx->status)
+	if (ctx->status || pat->status)
 		return;
 	RECORD(ctx, VKVG_CMD_SET_SOURCE, pat);
 	_update_cur_pattern (ctx, pat);
