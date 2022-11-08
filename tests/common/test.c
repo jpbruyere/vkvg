@@ -321,17 +321,19 @@ void _parse_args (int argc, char* argv[]) {
 			_print_usage_and_exit();
 	}
 	if (printTestDetailsAndExit) {
-		#ifdef DEBUG
+#ifdef DEBUG
 		printf("Debug build\n");
-		#else
+#else
 		printf("Release build\n");
-		#endif
-		#ifdef VKVG_USE_RENDERDOC
+#endif
+#ifdef VKVG_USE_RENDERDOC
 		printf("Render doc enabled\n");
-		#endif
-		#ifdef VKVG_USE_VALIDATION
-		printf("Validation enabled\n");
-		#endif
+#endif
+#ifdef VKVG_USE_VALIDATION
+		printf("Validation:\tenabled\n");
+#else
+		printf("Validation:\no\n");
+#endif
 		printf("surf dims:\t%d x %d\n", test_width, test_height);
 		printf("Samples:\t%d\n", samples);
 		printf("Gpu type:\t");
@@ -426,6 +428,9 @@ void perform_test (void(*testfunc)(void), const char *testName, int argc, char* 
 	gettimeofday(&currentTime, NULL);
 	srand((unsigned)currentTime.tv_usec);
 
+	if (iterations == 0)
+		iterations = 9999;
+
 	if (single_test >= 0 && test_index != single_test) {
 		test_index++;
 		return;
@@ -463,8 +468,8 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 								   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
 								   , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
 								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-								   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+								   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
 								   , NULL);
 #endif
 	bool deferredResolve = false;

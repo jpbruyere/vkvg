@@ -75,7 +75,7 @@ void _fonts_cache_create (VkvgDevice dev){
 
 	cache->uploadFence = vkh_fence_create((VkhDevice)dev);
 
-	uint32_t buffLength = FONT_PAGE_SIZE*FONT_PAGE_SIZE*cache->texPixelSize;
+	const uint32_t buffLength = FONT_PAGE_SIZE*FONT_PAGE_SIZE*cache->texPixelSize;
 
 	vkh_buffer_init ((VkhDevice)dev,
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -85,7 +85,7 @@ void _fonts_cache_create (VkvgDevice dev){
 	cache->cmd = vkh_cmd_buff_create((VkhDevice)dev,dev->cmdPool,VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
 	//Set texture cache initial layout to shaderReadOnly to prevent error msg if cache is not fill
-	VkImageSubresourceRange subres		= {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,cache->texLength};
+	const VkImageSubresourceRange subres = {VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,cache->texLength};
 	vkh_cmd_begin (cache->cmd,VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	vkh_image_set_layout_subres(cache->cmd, cache->texture, subres,
 								VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -433,7 +433,7 @@ _vkvg_font_t* _find_or_create_font_size (VkvgContext ctx) {
 	newSize.charLookup = (_char_ref**)calloc (newSize.face->num_glyphs, sizeof(_char_ref*));
 
 	if (FT_IS_SCALABLE(newSize.face))
-		newSize.curLine.height = FT_MulFix(newSize.face->height, newSize.face->size->metrics.y_scale) >> 6;
+		newSize.curLine.height = newSize.face->size->metrics.height >> 6;
 	else
 		newSize.curLine.height = newSize.face->height >> 6;
 #else

@@ -929,12 +929,9 @@ void _release_context_ressources (VkvgContext ctx) {
 //populate vertice buff for stroke
 bool _build_vb_step(VkvgContext ctx, stroke_context_t* str, bool isCurve){
 	Vertex v = {{0},ctx->curColor, {0,0,-1}};
-	vec2 pL = ctx->points[str->iL];
 	vec2 p0 = ctx->points[str->cp];
-	vec2 pR = ctx->points[str->iR];
-
-	vec2 v0 = vec2_sub(p0, pL);
-	vec2 v1 = vec2_sub(pR, p0);
+	vec2 v0 = vec2_sub(p0, ctx->points[str->iL]);
+	vec2 v1 = vec2_sub(ctx->points[str->iR], p0);
 	float length_v0 = vec2_length(v0);
 	float length_v1 = vec2_length(v1);
 	if (length_v0 < FLT_EPSILON || length_v1 < FLT_EPSILON) {
@@ -966,12 +963,8 @@ bool _build_vb_step(VkvgContext ctx, stroke_context_t* str, bool isCurve){
 		return true;
 	}
 
-
 	vec2 bisec_n = vec2_norm(vec2_add(v0n,v1n));//bisec/bisec_perp are inverted names
-
-
 	float alpha = acosf(dot);
-
 
 	if (det<0)
 		alpha = -alpha;
