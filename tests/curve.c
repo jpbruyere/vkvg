@@ -190,7 +190,7 @@ void long_curv_fill_stroke_eo () {
 int main(int argc, char *argv[]) {
 	no_test_size = true;
 	PERFORM_TEST(test3, argc, argv);
-	return 0;
+	//return 0;
 	PERFORM_TEST(test, argc, argv);
 	PERFORM_TEST(test2, argc, argv);
 	PERFORM_TEST(curved_rect, argc, argv);

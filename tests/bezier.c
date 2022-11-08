@@ -54,7 +54,7 @@ void draw (){
 		vkvg_fill_preserve (ctx);
 	}
 
-	vkvg_set_source_rgba(ctx,1,0,0,1);
+	vkvg_set_source_rgba(ctx,1,0,0,0.3f);
 
 	vkvg_stroke (ctx);
 	vkvg_flush (ctx);

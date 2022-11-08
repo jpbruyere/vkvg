@@ -10,12 +10,13 @@ bool isClosed = false;
 bool startWithArc = false, endWithArc = false;
 
 int ptsCount = 4;
-int initPtsCount = 4;
+int initPtsCount = 5;
 vec2 pts[] = {
 	{150,150},
 	{200,300},
 	{250,150},
 	{280,350},
+	{300,100},
 };
 /*vec2 pts[] = {
 	{150,150},
@@ -39,7 +40,7 @@ void draw (){
 	vkvg_clear(ctx);
 	if (dashCount > 0)
 		vkvg_set_dash(ctx, dash, dashCount,0);
-	vkvg_set_source_rgba	(ctx,1,0,0,1);
+	vkvg_set_source_rgba	(ctx,1,0,0,0.3f);
 	vkvg_set_line_width		(ctx,lineWidth);
 	vkvg_set_line_join		(ctx, lineJoin);
 	vkvg_set_line_cap		(ctx, lineCap);
