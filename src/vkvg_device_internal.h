@@ -23,7 +23,6 @@
 #define VKVG_DEVICE_INTERNAL_H
 
 #include "vkvg_internal.h"
-#include "vkvg.h"
 #include "vkvg_fonts.h"
 
 #define STENCIL_FILL_BIT	0x1

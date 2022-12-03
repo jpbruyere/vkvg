@@ -23,8 +23,6 @@
 #define VKVG_CONTEXT_INTERNAL_H
 
 #include "vkvg_internal.h"
-#include "vkvg.h"
-#include "vkh.h"
 #include "vkvg_fonts.h"
 
 #if VKVG_RECORDING
