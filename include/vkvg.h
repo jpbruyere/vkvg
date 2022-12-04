@@ -544,7 +544,31 @@ void vkvg_matrix_get_scale (const vkvg_matrix_t *matrix, float *sx, float *sy);
  * Device holds the font cache so that each time a context draws text, the same cache is used.
  *
  * @{ */
-
+/**
+ * @brief vkvg device creation structure
+ *
+ * Structure used to pass parameter to the device creation method.
+ *
+ * @code
+ * x_new = xx * x + xy * y + x0;
+ * y_new = yx * x + yy * y + y0;
+ * @endcode
+ *
+ * @samples: sample count.
+ * @inst: vulkan instance used to create device, may be null to create a new instance.
+ * @phy: vulkan physical device to create vkvg device for, may be null.
+ * @vkdev: vulkan logical device, may be null to create a new one.
+ * @qFamIdx: graphic queue family index, ignored if vkdev is NULL.
+ * @qIndex: queue index, ignored if vkdev is NULL.
+ */
+typedef struct {
+	VkSampleCountFlags samples;
+	VkInstance inst;
+	VkPhysicalDevice phy;
+	VkDevice vkdev;
+	uint32_t qFamIdx;
+	uint32_t qIndex;
+}vkvg_device_create_info_t;
 /**
  * @brief Set device ready for multithreading.
  *
@@ -573,7 +597,7 @@ void vkvg_device_set_context_cache_size (VkvgDevice dev, uint32_t maxCount);
 /**
  * @brief Create a new vkvg device.
  *
- * Create a new #VkvgDevice owning vulkan instance and device.
+ * Create a new #VkvgDevice.
  *
  * On success, create a new vkvg device and set its reference count to 1.
  * On error, you may query the device status by calling @ref vkvg_device_status. Error could be
@@ -586,7 +610,7 @@ void vkvg_device_set_context_cache_size (VkvgDevice dev, uint32_t maxCount);
  * to #vkvg_surface_resolve() or
  */
 vkvg_public
-VkvgDevice vkvg_device_create (VkSampleCountFlags samples, bool deferredResolve);
+VkvgDevice vkvg_device_create (vkvg_device_create_info_t* info);
 /**
  * @brief Create a new vkvg device from an existing vulkan logical device.
  *

@@ -269,7 +269,7 @@ const void* vkvg_get_device_requirements (VkPhysicalDeviceFeatures* pEnabledFeat
 }
 
 
-VkvgDevice vkvg_device_create (VkSampleCountFlags samples, bool deferredResolve) {
+VkvgDevice vkvg_device_create (vkvg_device_create_info_t* info) {
 	LOG(VKVG_LOG_INFO, "CREATE Device\n");
 	VkvgDevice dev = (vkvg_device*)calloc(1,sizeof(vkvg_device));
 	if (!dev) {
@@ -323,8 +323,8 @@ VkvgDevice vkvg_device_create (VkSampleCountFlags samples, bool deferredResolve)
 		if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
 			pi = phys[0];
 
-	if (!(pi->properties.limits.framebufferColorSampleCounts&samples)) {
-		LOG(VKVG_LOG_ERR, "CREATE Device failed: sample count not supported: %d\n", samples);
+	if (!(pi->properties.limits.framebufferColorSampleCounts & info->samples)) {
+		LOG(VKVG_LOG_ERR, "CREATE Device failed: sample count not supported: %d\n", info->samples);
 		dev->status = VKVG_STATUS_DEVICE_ERROR;
 		vkh_app_free_phyinfos (phyCount, phys);
 		vkh_app_destroy (app);
@@ -365,7 +365,7 @@ VkvgDevice vkvg_device_create (VkSampleCountFlags samples, bool deferredResolve)
 				vkh_device_get_phy(vkhd),
 				vkh_device_get_vkdev(vkhd),
 				pi->gQueue, 0,
-				samples, deferredResolve);
+				info->samples, deferredResolve);
 
 	dev->vkhDev = vkhd;
 
