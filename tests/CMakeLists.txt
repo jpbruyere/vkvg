@@ -11,6 +11,11 @@ ENDIF ()
 FUNCTION (buildtest TEST_FILE)
 	GET_FILENAME_COMPONENT(TEST_NAME ${TEST_FILE} NAME_WE)
 	ADD_EXECUTABLE(${TEST_NAME} ${TEST_FILE} $<TARGET_OBJECTS:tests_common>)
+	SET_TARGET_PROPERTIES(${TEST_NAME} PROPERTIES
+			OUTPUT_NAME ${TEST_NAME}
+			C_STANDARD 11
+			LINKER_LANGUAGE C
+	)
 	TARGET_INCLUDE_DIRECTORIES(${TEST_NAME}
 		PRIVATE
 			${Vulkan_INCLUDE_DIRS}
@@ -25,7 +30,7 @@ FUNCTION (buildtest TEST_FILE)
 		PRIVATE
 			${Vulkan_LIBRARIES}
 			${GLFW3_LIBRARY}
-                        Threads::Threads
+			Threads::Threads
 	)
 	IF (TARGET vkvg_static)
 		TARGET_LINK_LIBRARIES(${TEST_NAME} PRIVATE vkvg_static)
@@ -73,7 +78,7 @@ add_custom_target("${PROJECT_NAME}_DataCopy" ALL DEPENDS ${DATAS})
 file(GLOB TESTS
 	"*.c"
 	"perfs/*.c"
-        "multithreading/*.c"
+	"multithreading/*.c"
 )
 
 IF (VKVG_SVG)
