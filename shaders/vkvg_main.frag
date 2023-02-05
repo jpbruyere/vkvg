@@ -145,7 +145,7 @@ void main()
 	if (inFontUV.z >= 0.0)
 		c *= texture(fontMap, inFontUV).r;
 
-	c.a *= inOpacity;
+	c *= inOpacity;
 	outFragColor = c;
 }
 
