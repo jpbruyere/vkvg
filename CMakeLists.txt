@@ -204,10 +204,15 @@ IF(GLSLC AND XXD)
 
 	ADD_CUSTOM_TARGET(BuildShaders ALL DEPENDS ${SHADER_OUTPUTS})
 
-	ADD_CUSTOM_TARGET(ClearShadersHeader
-		COMMAND ${CMAKE_COMMAND} -E rm -f ${SHADERS_H}
-
-	)
+	if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.17.0")
+		ADD_CUSTOM_TARGET(ClearShadersHeader
+			COMMAND ${CMAKE_COMMAND} -E rm -f ${SHADERS_H}
+		)
+	else()
+		ADD_CUSTOM_TARGET(ClearShadersHeader
+			COMMAND ${CMAKE_COMMAND} -E remove -f ${SHADERS_H}
+		)
+	endif()
 	ADD_CUSTOM_TARGET(BuildShadersHeader
 		DEPENDS ClearShadersHeader ${SHADER_OUTPUTS}
 	)
