@@ -52,10 +52,12 @@
 	*/
 
 	// *sigh* Microsoft has this in winsock2.h because they are too lazy to put it in the standard location ... !?!?
+#ifdef _MSC_VER
 	typedef struct timeval {
 		long tv_sec;
 		long tv_usec;
 	} timeval;
+#endif
 
 	// *sigh* no gettimeofday on Win32/Win64
 	int gettimeofday(struct timeval * tp, void * tzp);
