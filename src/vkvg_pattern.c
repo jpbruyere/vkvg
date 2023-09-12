@@ -41,6 +41,15 @@ VkvgPattern vkvg_pattern_create_for_surface (VkvgSurface surf){
 
 	return pat;
 }
+VkvgPattern vkvg_pattern_create_solid (uint32_t color) {
+	VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
+	pat->type = VKVG_PATTERN_TYPE_SOLID;
+	pat->extend = VKVG_EXTEND_NONE;
+	pat->data = color;
+	pat->references = 1;
+	
+	return pat;
+}
 vkvg_status_t vkvg_pattern_get_linear_points (VkvgPattern pat, float* x0, float* y0, float* x1, float* y1) {
 	if (pat->status)
 		return pat->status;
