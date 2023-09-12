@@ -770,10 +770,10 @@ void _font_cache_show_text_run (VkvgContext ctx, VkvgText tr) {
 	}
 }
 
-void _font_cache_show_text (VkvgContext ctx, const char* text){
+void _font_cache_show_text (VkvgContext ctx, const char* text, const int glyph_count){
 
 	vkvg_text_run_t tr = {0};
-	_font_cache_create_text_run (ctx, text, -1, &tr);
+	_font_cache_create_text_run (ctx, text, glyph_count, &tr);
 
 	if (ctx->status)
 		return;

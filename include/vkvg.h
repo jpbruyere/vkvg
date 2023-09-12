@@ -1751,6 +1751,18 @@ void vkvg_set_font_size (VkvgContext ctx, uint32_t size);
 vkvg_public
 void vkvg_show_text (VkvgContext ctx, const char* utf8);
 /**
+ * @brief Show a string of text.
+ *
+ * Show the provided utf8 string of text, up until the provided length, at the current position
+ * using the current font of the context.
+ *
+ * @param ctx a valid vkvg @ref context
+ * @param utf8 A utf8 encoded string of text.
+ * @param length the length of the string of text
+ */
+vkvg_public
+void vkvg_show_text_with_length (VkvgContext ctx, const char* utf8, const int length);
+/**
  * @brief Gets the extents for a string of text.
  *
  * @param ctx a valid vkvg @ref context
