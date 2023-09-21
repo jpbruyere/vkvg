@@ -161,9 +161,17 @@ void init_test (uint32_t width, uint32_t height){
 	vkengine_set_cursor_pos_callback(e, mouse_move_callback);
 	vkengine_set_scroll_callback(e, scroll_callback);
 
-	bool deferredResolve = false;
+    vkvg_device_create_info_t info = {
+        samples,
+        false,
+        vkh_app_get_inst(e->app),
+        r->dev->phy,
+        r->dev->dev,
+        r->qFam,
+        0
+    };
 
-	device = vkvg_device_create_from_vk_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
+    device = vkvg_device_create(&info);
 	surf = vkvg_surface_create(device, width, height);
 
 	vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), width, height);
@@ -496,8 +504,17 @@ void perform_test_offscreen (void(*testfunc)(void), const char *testName, int ar
 
 	VkhDevice dev = vkh_device_create(app, pi, &device_info);
 
+    vkvg_device_create_info_t info = {
+        samples,
+        deferredResolve,
+        vkh_app_get_inst(e->app),
+        dev->phy,
+        dev->dev,
+        pi->gQueue,
+        0
+    };
 
-	device  = vkvg_device_create_from_vk_multisample(vkh_app_get_inst(app), dev->phy, dev->dev, pi->gQueue, 0, samples, deferredResolve);
+    device = vkvg_device_create(&info);
 	//vkvg_device_set_dpy(device, 96, 96);
 
 	vkh_app_free_phyinfos (phyCount, phys);
@@ -559,9 +576,16 @@ void perform_test_onscreen (void(*testfunc)(void), const char *testName, int arg
 	vkengine_set_cursor_pos_callback (e, mouse_move_callback);
 	vkengine_set_scroll_callback (e, scroll_callback);
 
-	bool deferredResolve = false;
-
-	device  = vkvg_device_create_from_vk_multisample (vkh_app_get_inst (e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
+    vkvg_device_create_info_t info = {
+        samples,
+        false,
+        vkh_app_get_inst(e->app),
+        r->dev->phy,
+        r->dev->dev,
+        r->qFam,
+        0
+    };
+    device = vkvg_device_create(&info);
 
 	vkvg_device_set_dpy (device, 96, 96);
 	if (threadAware)
@@ -619,7 +643,7 @@ void perform_test_onscreen (void(*testfunc)(void), const char *testName, int arg
 
 		testfunc();
 
-		if (deferredResolve)
+        if (info.deferredResolve)
 			vkvg_surface_resolve(surf);
 		if (!vkh_presenter_draw (r)){
 			vkh_presenter_get_size (r, &test_width, &test_height);

@@ -47,17 +47,17 @@ void vkvg_device_set_context_cache_size (VkvgDevice dev, uint32_t maxCount) {
 	}
 	dev->cachedContextLast = cur;
 }
-void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve) {
-	dev->vkDev	= vkdev;
-	dev->phy	= phy;
-	dev->instance = inst;
+void _device_init (VkvgDevice dev, const vkvg_device_create_info_t* info) {
+    dev->vkDev	= info->vkdev;
+    dev->phy	= info->phy;
+    dev->instance = info->inst;
 	dev->hdpi	= 72;
-	dev->vdpi	= 72;
-	dev->samples= samples;
+    dev->vdpi	= 72;
+    dev->samples= info->samples;
 	if (dev->samples == VK_SAMPLE_COUNT_1_BIT)
 		dev->deferredResolve = false;
-	else
-		dev->deferredResolve = deferredResolve;
+    else
+        dev->deferredResolve = info->deferredResolve;
 
 	dev->cachedContextMaxCount = VKVG_MAX_CACHED_CONTEXT_COUNT;
 
@@ -78,16 +78,16 @@ void _device_init (VkvgDevice dev, VkInstance inst, VkPhysicalDevice phy, VkDevi
 
 	VkhPhyInfo phyInfos = vkh_phyinfo_create (dev->phy, NULL);
 
-	dev->phyMemProps = phyInfos->memProps;
-	dev->gQueue = vkh_queue_create ((VkhDevice)dev, qFamIdx, qIndex);
+    dev->phyMemProps = phyInfos->memProps;
+    dev->gQueue = vkh_queue_create ((VkhDevice)dev, info->qFamIdx, info->qIndex);
 	//mtx_init (&dev->gQMutex, mtx_plain);
 
 	vkh_phyinfo_destroy (phyInfos);
 
 #ifdef VKH_USE_VMA
 	VmaAllocatorCreateInfo allocatorInfo = {
-		.physicalDevice = phy,
-		.device = vkdev
+        .physicalDevice = info->phy,
+        .device = info->vkdev
 	};
 	vmaCreateAllocator(&allocatorInfo, (VmaAllocator*)&dev->allocator);
 #endif
@@ -279,114 +279,98 @@ VkvgDevice vkvg_device_create (vkvg_device_create_info_t* info) {
 
 	dev->references = 1;
 
-	const char* enabledExts [10];
-	const char* enabledLayers[10];
-	uint32_t enabledExtsCount = 0, enabledLayersCount = 0, phyCount = 0;
+    if (!info->vkdev) {
+        const char* enabledExts [10];
+        const char* enabledLayers[10];
+        uint32_t enabledExtsCount = 0, enabledLayersCount = 0, phyCount = 0;
 
-	vkh_layers_check_init();
+        vkh_layers_check_init();
 
-#ifdef VKVG_USE_VALIDATION
-	if (vkh_layer_is_present("VK_LAYER_KHRONOS_validation"))
-		enabledLayers[enabledLayersCount++] = "VK_LAYER_KHRONOS_validation";
-#endif
+    #ifdef VKVG_USE_VALIDATION
+        if (vkh_layer_is_present("VK_LAYER_KHRONOS_validation"))
+            enabledLayers[enabledLayersCount++] = "VK_LAYER_KHRONOS_validation";
+    #endif
 
-#ifdef VKVG_USE_RENDERDOC
-	if (vkh_layer_is_present("VK_LAYER_RENDERDOC_Capture"))
-		enabledLayers[enabledLayersCount++] = "VK_LAYER_RENDERDOC_Capture";
-#endif
-	vkh_layers_check_release();
+    #ifdef VKVG_USE_RENDERDOC
+        if (vkh_layer_is_present("VK_LAYER_RENDERDOC_Capture"))
+            enabledLayers[enabledLayersCount++] = "VK_LAYER_RENDERDOC_Capture";
+    #endif
+        vkh_layers_check_release();
 
-	vkvg_get_required_instance_extensions (enabledExts, &enabledExtsCount);
+        vkvg_get_required_instance_extensions (enabledExts, &enabledExtsCount);
 
-#ifdef VK_VERSION_1_2
-	VkhApp app = vkh_app_create(1, 2, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
-#else
-	VkhApp app = vkh_app_create(1, 1, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
-#endif
+    #ifdef VK_VERSION_1_2
+        VkhApp app = vkh_app_create(1, 2, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+    #else
+        VkhApp app = vkh_app_create(1, 1, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
+    #endif
 
-#if defined(DEBUG) && defined (VKVG_DBG_UTILS)
-	vkh_app_enable_debug_messenger(app
-			, VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-			, VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
-			, NULL);
-#endif
+    #if defined(DEBUG) && defined (VKVG_DBG_UTILS)
+        vkh_app_enable_debug_messenger(app
+                , VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                , VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+                , NULL);
+    #endif
 
-	VkhPhyInfo* phys = vkh_app_get_phyinfos (app, &phyCount, VK_NULL_HANDLE);
-	if (phyCount == 0) {
-		dev->status = VKVG_STATUS_DEVICE_ERROR;
-		vkh_app_destroy (app);
-		return dev;
-	}
+        VkhPhyInfo* phys = vkh_app_get_phyinfos (app, &phyCount, VK_NULL_HANDLE);
+        if (phyCount == 0) {
+            dev->status = VKVG_STATUS_DEVICE_ERROR;
+            vkh_app_destroy (app);
+            return dev;
+        }
 
-	VkhPhyInfo pi = 0;
-	if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
-		if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
-			pi = phys[0];
+        VkhPhyInfo pi = 0;
+        if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
+            if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
+                pi = phys[0];
 
-	if (!(pi->properties.limits.framebufferColorSampleCounts & info->samples)) {
-		LOG(VKVG_LOG_ERR, "CREATE Device failed: sample count not supported: %d\n", info->samples);
-		dev->status = VKVG_STATUS_DEVICE_ERROR;
-		vkh_app_free_phyinfos (phyCount, phys);
-		vkh_app_destroy (app);
-		return dev;
-	}
+        if (!(pi->properties.limits.framebufferColorSampleCounts & info->samples)) {
+            LOG(VKVG_LOG_ERR, "CREATE Device failed: sample count not supported: %d\n", info->samples);
+            dev->status = VKVG_STATUS_DEVICE_ERROR;
+            vkh_app_free_phyinfos (phyCount, phys);
+            vkh_app_destroy (app);
+            return dev;
+        }
 
-	uint32_t qCount = 0;
-	float qPriorities[] = {0.0};
-	VkDeviceQueueCreateInfo pQueueInfos[] = { {0},{0},{0} };
+        uint32_t qCount = 0;
+        float qPriorities[] = {0.0};
+        VkDeviceQueueCreateInfo pQueueInfos[] = { {0},{0},{0} };
 
-	if (vkh_phyinfo_create_queues (pi, pi->gQueue, 1, qPriorities, &pQueueInfos[qCount]))
-		qCount++;
+        if (vkh_phyinfo_create_queues (pi, pi->gQueue, 1, qPriorities, &pQueueInfos[qCount]))
+            qCount++;
 
-	enabledExtsCount=0;
+        enabledExtsCount=0;
 
-	if (vkvg_get_required_device_extensions (pi->phy, enabledExts, &enabledExtsCount) != VKVG_STATUS_SUCCESS){
-		dev->status = VKVG_STATUS_DEVICE_ERROR;
-		vkh_app_free_phyinfos (phyCount, phys);
-		vkh_app_destroy (app);
-		return dev;
-	}
+        if (vkvg_get_required_device_extensions (pi->phy, enabledExts, &enabledExtsCount) != VKVG_STATUS_SUCCESS){
+            dev->status = VKVG_STATUS_DEVICE_ERROR;
+            vkh_app_free_phyinfos (phyCount, phys);
+            vkh_app_destroy (app);
+            return dev;
+        }
 
-	VkPhysicalDeviceFeatures enabledFeatures = {0};
-	const void* pNext = vkvg_get_device_requirements (&enabledFeatures);
+        VkPhysicalDeviceFeatures enabledFeatures = {0};
+        const void* pNext = vkvg_get_device_requirements (&enabledFeatures);
 
-	VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-									   .queueCreateInfoCount = qCount,
-									   .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
-									   .enabledExtensionCount = enabledExtsCount,
-									   .ppEnabledExtensionNames = enabledExts,
-									   .pEnabledFeatures = &enabledFeatures,
-									   .pNext = pNext};
+        VkDeviceCreateInfo device_info = { .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+                                           .queueCreateInfoCount = qCount,
+                                           .pQueueCreateInfos = (VkDeviceQueueCreateInfo*)&pQueueInfos,
+                                           .enabledExtensionCount = enabledExtsCount,
+                                           .ppEnabledExtensionNames = enabledExts,
+                                           .pEnabledFeatures = &enabledFeatures,
+                                           .pNext = pNext};
+        dev->vkhDev = vkh_device_create(app, pi, &device_info);
 
-	VkhDevice vkhd = vkh_device_create(app, pi, &device_info);
+        vkh_app_free_phyinfos (phyCount, phys);
 
-	_device_init (dev,
-				vkh_app_get_inst(app),
-				vkh_device_get_phy(vkhd),
-				vkh_device_get_vkdev(vkhd),
-				pi->gQueue, 0,
-				info->samples, deferredResolve);
+        info->inst      = vkh_app_get_inst(app);
+        info->phy       = vkh_device_get_phy(dev->vkhDev);
+        info->vkdev     = vkh_device_get_vkdev(dev->vkhDev);
+        info->qFamIdx   = pi->gQueue;
+        info->qIndex    = 0;
+    }
 
-	dev->vkhDev = vkhd;
+    _device_init (dev, info);
 
-	vkh_app_free_phyinfos (phyCount, phys);
-
-	return dev;
-}
-VkvgDevice vkvg_device_create_from_vk(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex)
-{
-	return vkvg_device_create_from_vk_multisample (inst,phy,vkdev,qFamIdx,qIndex, VK_SAMPLE_COUNT_1_BIT, false);
-}
-VkvgDevice vkvg_device_create_from_vk_multisample(VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve)
-{
-	LOG(VKVG_LOG_INFO, "CREATE Device from vk: qFam = %d; qIdx = %d\n", qFamIdx, qIndex);
-	VkvgDevice dev = (vkvg_device*)calloc(1,sizeof(vkvg_device));
-	if (!dev) {
-		LOG(VKVG_LOG_ERR, "CREATE Device failed, no memory\n");
-		exit(-1);
-	}
-	dev->references = 1;
-	_device_init(dev, inst, phy, vkdev, qFamIdx, qIndex, samples, deferredResolve);
 	return dev;
 }
 

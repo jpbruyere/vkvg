@@ -1,7 +1,10 @@
 #include "vkvg.h"
 
 int main(int argc, char *argv[]) {
-	VkvgDevice dev = vkvg_device_create(VK_SAMPLE_COUNT_1_BIT, false);
+    vkvg_device_create_info_t info = {
+        VK_SAMPLE_COUNT_1_BIT, false
+    };
+    VkvgDevice dev = vkvg_device_create(&info);
 	VkvgSurface surf = vkvg_surface_create(dev, 512,512);
 	VkvgContext ctx = vkvg_create(surf);
 

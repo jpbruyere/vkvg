@@ -550,8 +550,6 @@ void vkvg_matrix_get_scale (const vkvg_matrix_t *matrix, float *sx, float *sy);
  * Structure used to pass parameter to the device creation method.
  *
  * @code
- * x_new = xx * x + xy * y + x0;
- * y_new = yx * x + yy * y + y0;
  * @endcode
  *
  * @samples: sample count.
@@ -560,14 +558,18 @@ void vkvg_matrix_get_scale (const vkvg_matrix_t *matrix, float *sx, float *sy);
  * @vkdev: vulkan logical device, may be null to create a new one.
  * @qFamIdx: graphic queue family index, ignored if vkdev is NULL.
  * @qIndex: queue index, ignored if vkdev is NULL.
+ * @deferredResolve: If true, the final simple sampled image of the surface will only be resolved on demand
+ * when calling @ref vkvg_surface_get_vk_image or by explicitly calling @ref vkvg_multisample_surface_resolve.
+ * If false, multisampled image is resolved on each draw operation.
  */
 typedef struct {
-	VkSampleCountFlags samples;
-	VkInstance inst;
+    VkSampleCountFlags samples;
+    bool deferredResolve;
+    VkInstance inst;
 	VkPhysicalDevice phy;
 	VkDevice vkdev;
 	uint32_t qFamIdx;
-	uint32_t qIndex;
+    uint32_t qIndex;
 }vkvg_device_create_info_t;
 /**
  * @brief Set device ready for multithreading.
@@ -629,10 +631,7 @@ VkvgDevice vkvg_device_create (vkvg_device_create_info_t* info);
  * @param qFamIdx Queue family Index of the graphic queue used for drawing operations.
  * @param qIndex Index of the queue into the choosen familly, 0 in general.
  * @return The handle of the created vkvg device, or null if an error occured.
- */
-vkvg_public
-VkvgDevice vkvg_device_create_from_vk (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex);
-/**
+
  * @brief Create a new multisampled vkvg device.
  *
  * This function allows to create vkvg device for working with multisampled surfaces.
@@ -646,12 +645,10 @@ VkvgDevice vkvg_device_create_from_vk (VkInstance inst, VkPhysicalDevice phy, Vk
  * @param qFamIdx Queue family Index of the graphic queue used for drawing operations.
  * @param qIndex Index of the queue into the choosen familly, 0 in general.
  * @param samples The sample count that will be setup for the surfaces created by this device.
- * @param deferredResolve If true, the final simple sampled image of the surface will only be resolved on demand
- * when calling @ref vkvg_surface_get_vk_image or by explicitly calling @ref vkvg_multisample_surface_resolve. If false, multisampled image is resolved on each draw operation.
+
  * @return The handle of the created vkvg device, or null if an error occured.
- */
-vkvg_public
-VkvgDevice vkvg_device_create_from_vk_multisample (VkInstance inst, VkPhysicalDevice phy, VkDevice vkdev, uint32_t qFamIdx, uint32_t qIndex, VkSampleCountFlags samples, bool deferredResolve);
+
+
 /**
  * @brief Decrement the reference count of the device by 1. Release all its resources if count reaches 0.
  *
