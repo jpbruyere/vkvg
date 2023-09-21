@@ -270,9 +270,16 @@ int main (int argc, char *argv[]){
 	VkEngine e = vkengine_create (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,VK_PRESENT_MODE_FIFO_KHR, width, height);
 	vkengine_set_key_callback (e, key_callback);
 	vkengine_set_scroll_callback(e, scroll_callback);
-
-	dev = vkvg_device_create_from_vk_multisample (vkh_app_get_inst(e->app),
-			 vkengine_get_physical_device(e), vkengine_get_device(e), vkengine_get_queue_fam_idx(e), 0, samples, false);
+    vkvg_device_create_info_t info = {
+        samples,
+        false,
+        vkh_app_get_inst(e->app),
+        vkengine_get_physical_device(e),
+        vkengine_get_device(e),
+        vkengine_get_queue_fam_idx(e),
+        0
+    };
+    dev = vkvg_device_create(&info);
 
 	VkvgSurface surf = NULL;
 

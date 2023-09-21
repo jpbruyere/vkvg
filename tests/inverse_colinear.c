@@ -187,10 +187,17 @@ int main(int argc, char* argv[]) {
 	vkengine_set_cursor_pos_callback(e, mouse_move_callback);
 	vkengine_set_scroll_callback(e, scroll_callback);
 
-	bool deferredResolve = false;
-
-	device = vkvg_device_create_from_vk_multisample(vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0, samples, deferredResolve);
-	surf = vkvg_surface_create(device, test_width, test_height);
+    vkvg_device_create_info_t info = {
+        samples,
+        false,
+        vkh_app_get_inst(e->app),
+        r->dev->phy,
+        r->dev->dev,
+        r->qFam,
+        0
+    };
+    device = vkvg_device_create(&info);
+    surf = vkvg_surface_create(device, test_width, test_height);
 
 	vkh_presenter_build_blit_cmd (r, vkvg_surface_get_vk_image(surf), test_width, test_height);
 
