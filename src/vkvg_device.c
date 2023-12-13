@@ -21,7 +21,6 @@
  */
 
 #include "vkvg_device_internal.h"
-#include "vkvg_surface_internal.h"
 #include "vkvg_context_internal.h"
 #include "vkh_queue.h"
 #include "vkh_phyinfo.h"

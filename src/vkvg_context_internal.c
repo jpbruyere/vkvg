@@ -1859,7 +1859,8 @@ void _fill_non_zero (VkvgContext ctx){
 
 		if (pathPointCount > 2) {
 			VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
-			ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
+            //ear_clip_point* ecps = (ear_clip_point*)malloc(pathPointCount*sizeof(ear_clip_point));
+            ear_clip_point ecps[pathPointCount];
 			uint32_t ecps_count = pathPointCount;
 			VKVG_IBO_INDEX_TYPE i = 0;
 
@@ -1912,7 +1913,6 @@ void _fill_non_zero (VkvgContext ctx){
 			}
 			if (ecps_count == 3)
 				_add_triangle_indices(ctx, ecp_current->next->idx, ecp_current->idx, ecp_current->next->next->idx);
-			free (ecps);
 
 			//limit batch size here to 1/3 of the ibo index type ability
 			if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3)
