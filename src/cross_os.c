@@ -23,8 +23,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define _CRT_SECURE_NO_WARNINGS
-
 int directoryExists (const char* path) {
 #if defined(_WIN32) || defined(_WIN64)
 #elif __APPLE__

@@ -40,6 +40,7 @@
 	#define vkvg_inline static
 	#define disable_warning (warn)
 	#define reset_warning (warn)
+
 #elif __unix__
 	#include <unistd.h>
 	#include <sys/types.h>
