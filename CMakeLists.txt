@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.13)
 
 SET(LANG "C")
 SET(CMAKE_${LANG}_STANDARD 11)
@@ -12,9 +12,9 @@ SET(CMAKE_CXX_STANDARD 11)
 PROJECT(vkvg VERSION 0.3.0 DESCRIPTION "Vulkan Vector Graphic")
 
 ADD_COMPILE_DEFINITIONS(
-	"VKVG_VERSION_MAJOR=${vkvg_VERSION_MAJOR}"
-	"VKVG_VERSION_MINOR=${vkvg_VERSION_MINOR}"
-	"VKVG_VERSION_REVISION=${vkvg_VERSION_PATCH}"
+    "VKVG_VERSION_MAJOR=${vkvg_VERSION_MAJOR}"
+    "VKVG_VERSION_MINOR=${vkvg_VERSION_MINOR}"
+    "VKVG_VERSION_REVISION=${vkvg_VERSION_PATCH}"
 )
 
 INCLUDE(CheckSymbolExists)
@@ -30,64 +30,65 @@ ENDIF()
 
 
 IF (UNIX)
-	ADD_COMPILE_OPTIONS(-lm)
-	IF (BUILD_SHARED_LIBS)
-		#force PIC for all subproject, even static libs
-		ADD_COMPILE_OPTIONS(-fPIC)
-	ENDIF()
+    ADD_COMPILE_OPTIONS(-lm)
+    IF (BUILD_SHARED_LIBS)
+        #force PIC for all subproject, even static libs
+        ADD_COMPILE_OPTIONS(-fPIC)
+    ENDIF()
 ENDIF()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-	ADD_DEFINITIONS (-DDEBUG)
-	OPTION(ENABLE_VALIDATION "enable vulkan validation layer" ON)
-	OPTION(VKVG_USE_MESA_OVERLAY "enable VK_LAYER_MESA_overlay if present." OFF)
-	IF (VKVG_USE_MESA_OVERLAY)
-		ADD_DEFINITIONS (-DVKVG_USE_MESA_OVERLAY)
-	ENDIF ()
-	OPTION(ENABLE_DBG_UTILS "enable VK_EXT_debug_utils extension" ON)
-	OPTION(VKVG_WIRED_FILL "enable wired polygon draw to check vertices and primitives" OFF)
-	IF (UNIX)
-		ADD_COMPILE_OPTIONS(-Wall -Wno-extra -Wno-unknown-pragmas -Wno-missing-braces -Wno-unused-variable -Wno-switch -Wno-unused-value)
-	ELSEIF(MSVC)
-		ADD_COMPILE_OPTIONS(/TC /W4 /wd4201 /wd4204 /wd4221 /wd4100) # c11 compliant
-	ENDIF()
+    ADD_DEFINITIONS (-DDEBUG)
+    OPTION(ENABLE_VALIDATION "enable vulkan validation layer" ON)
+    OPTION(VKVG_USE_MESA_OVERLAY "enable VK_LAYER_MESA_overlay if present." OFF)
+    IF (VKVG_USE_MESA_OVERLAY)
+        ADD_DEFINITIONS (-DVKVG_USE_MESA_OVERLAY)
+    ENDIF ()
+    OPTION(ENABLE_DBG_UTILS "enable VK_EXT_debug_utils extension" ON)
+    OPTION(VKVG_WIRED_FILL "enable wired polygon draw to check vertices and primitives" OFF)
+    IF (UNIX)
+        ADD_COMPILE_OPTIONS(-Wall -Wno-extra -Wno-unknown-pragmas -Wno-missing-braces -Wno-unused-variable -Wno-switch -Wno-unused-value  -fno-omit-frame-pointer)
+    ELSEIF(MSVC)
+        ADD_COMPILE_OPTIONS(/TC /W4 /wd4201 /wd4204 /wd4221 /wd4100) # c11 compliant
+    ENDIF()
 ELSE()
-	UNSET(ENABLE_VALIDATION CACHE)
-	UNSET(ENABLE_DBG_UTILS CACHE)
-	UNSET(VKVG_WIRED_FILL CACHE)
-	UNSET(VKVG_USE_MESA_OVERLAY CACHE)
-	IF (ANDROID)
-		ADD_COMPILE_OPTIONS(-O3 -w -pedantic)
-	ELSEIF (UNIX)		
-		#ADD_COMPILE_OPTIONS(-O3 -w -pedantic -fvisibility=hidden -fno-rtti)
-		#ADD_COMPILE_OPTIONS(-flto -pthread -lpthread -Wl,--no-as-needed)
-	ELSEIF(MSVC)
-		ADD_COMPILE_OPTIONS(/O2 /TC /W0 /Od)
-	ENDIF()
+    UNSET(ENABLE_VALIDATION CACHE)
+    UNSET(ENABLE_DBG_UTILS CACHE)
+    UNSET(VKVG_WIRED_FILL CACHE)
+    UNSET(VKVG_USE_MESA_OVERLAY CACHE)
+    IF (ANDROID)
+        ADD_COMPILE_OPTIONS(-O3 -w -pedantic)
+    ELSEIF (UNIX)
+        #ADD_COMPILE_OPTIONS(-O3 -w -pedantic -fvisibility=hidden -fno-rtti)
+        #ADD_COMPILE_OPTIONS(-flto -pthread -lpthread -Wl,--no-as-needed)
+        ADD_COMPILE_OPTIONS(-O3 -w -pedantic -fvisibility=hidden -fno-rtti -flto -pthread -lpthread -Wl,--no-as-needed)
+    ELSEIF(MSVC)
+        ADD_COMPILE_OPTIONS(/O2 /TC /W0 /Od)
+    ENDIF()
 ENDIF()
 
 OPTION(ENABLE_PROFILING "compile with the -pg options..." OFF)
 
 IF (ENABLE_PROFILING)
-	ADD_COMPILE_OPTIONS(
-		-pg -fno-reorder-functions -fno-inline
-		-O1
-		-fthread-jumps
-		-falign-functions  -falign-jumps
-		-falign-loops  -falign-labels)
+    ADD_COMPILE_OPTIONS(
+        -pg -fno-reorder-functions -fno-inline
+        -O1
+        -fthread-jumps
+        -falign-functions  -falign-jumps
+        -falign-loops  -falign-labels)
 ENDIF()
 
 OPTION(VKVG_RECORDING "enable experimental recording functions" OFF)
 
 OPTION(VKVG_PREMULT_ALPHA "use premultiplied alpha for internal rendering" ON)
 IF (VKVG_PREMULT_ALPHA)
-	ADD_DEFINITIONS (-DVKVG_PREMULT_ALPHA)
-	SET(GLSLDEFS ${GLSLDEFS} -DVKVG_PREMULT_ALPHA)
+    ADD_DEFINITIONS (-DVKVG_PREMULT_ALPHA)
+    SET(GLSLDEFS ${GLSLDEFS} -DVKVG_PREMULT_ALPHA)
 ENDIF ()
 
 OPTION(VKVG_DBG_STATS "record contexts statistics in the device" OFF)
 IF (VKVG_DBG_STATS)
-	ADD_DEFINITIONS (-DVKVG_DBG_STATS)
+    ADD_DEFINITIONS (-DVKVG_DBG_STATS)
 ENDIF ()
 
 OPTION(VKVG_USE_GLUTESS "Fill non-zero with glu tesselator" ON)
@@ -95,23 +96,23 @@ OPTION(VKVG_USE_GLUTESS "Fill non-zero with glu tesselator" ON)
 CMAKE_DEPENDENT_OPTION(VKVG_SVG "render svg with vkvg-svg library" OFF "UNIX" OFF)
 
 IF (NOT TARGET vkh)
-	ADD_SUBDIRECTORY (vkh)
+    ADD_SUBDIRECTORY (vkh)
 ENDIF()
 
 #use c++ vulkan memory allocator library (https://gpuopen.com/vulkan-memory-allocator/)
 IF (VKH_USE_VMA)
-	ADD_DEFINITIONS (-DVKH_USE_VMA)
+    ADD_DEFINITIONS (-DVKH_USE_VMA)
 ENDIF()
 
 IF (ENABLE_VALIDATION)
-	ADD_DEFINITIONS (-DVKVG_USE_VALIDATION)
-	OPTION(ENABLE_RENDERDOC "enable renderdoc" OFF)
-	IF (ENABLE_RENDERDOC)
-		ADD_DEFINITIONS (-DVKVG_USE_RENDERDOC)
-	ENDIF ()
+    ADD_DEFINITIONS (-DVKVG_USE_VALIDATION)
+    OPTION(ENABLE_RENDERDOC "enable renderdoc" OFF)
+    IF (ENABLE_RENDERDOC)
+        ADD_DEFINITIONS (-DVKVG_USE_RENDERDOC)
+    ENDIF ()
 ENDIF ()
 IF (VKVG_WIRED_FILL)
-	ADD_DEFINITIONS (-DVKVG_WIRED_DEBUG)
+    ADD_DEFINITIONS (-DVKVG_WIRED_DEBUG)
 ENDIF ()
 
 FIND_PACKAGE(Vulkan REQUIRED)
@@ -139,109 +140,109 @@ CMAKE_DEPENDENT_OPTION(VKVG_LCD_FONT_FILTER "enable freetype lcd font filtering"
 # todo if cmake vers >= 3.23: make dependent option on Vulkan_VERSION >= 1_2:
 OPTION(VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT "Enable scalar block layout support." ON)
 IF (VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
-	ADD_DEFINITIONS (-DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
-	SET(GLSLDEFS ${GLSLDEFS} -DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
+    ADD_DEFINITIONS (-DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
+    SET(GLSLDEFS ${GLSLDEFS} -DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
 ENDIF ()
 
 OPTION(VKVG_ENABLE_VK_TIMELINE_SEMAPHORE "Enable vulkan TimelineSemaphore support." OFF)
 IF (VKVG_ENABLE_VK_TIMELINE_SEMAPHORE)
-	ADD_DEFINITIONS (-DVKVG_ENABLE_VK_TIMELINE_SEMAPHORE)
+    ADD_DEFINITIONS (-DVKVG_ENABLE_VK_TIMELINE_SEMAPHORE)
 ENDIF ()
 
 
 IF (ENABLE_DBG_UTILS)
-	ADD_DEFINITIONS (-DVKVG_DBG_UTILS)
+    ADD_DEFINITIONS (-DVKVG_DBG_UTILS)
 ENDIF ()
 IF (VKVG_USE_FREETYPE)
-	ADD_DEFINITIONS (-DVKVG_USE_FREETYPE)
+    ADD_DEFINITIONS (-DVKVG_USE_FREETYPE)
 ENDIF ()
 IF (VKVG_USE_FONTCONFIG)
-	ADD_DEFINITIONS (-DVKVG_USE_FONTCONFIG)
+    ADD_DEFINITIONS (-DVKVG_USE_FONTCONFIG)
 ENDIF ()
 IF (VKVG_USE_HARFBUZZ)
-	ADD_DEFINITIONS (-DVKVG_USE_HARFBUZZ)
+    ADD_DEFINITIONS (-DVKVG_USE_HARFBUZZ)
 ENDIF ()
 IF (VKVG_LCD_FONT_FILTER)
-	ADD_DEFINITIONS (-DVKVG_LCD_FONT_FILTER)
+    ADD_DEFINITIONS (-DVKVG_LCD_FONT_FILTER)
 ENDIF ()
 
 # Find glslc shader compiler.
 # On Android, the NDK includes the binary, so no external dependency.
 IF(ANDROID)
-	FILE(GLOB glslc-folders ${ANDROID_NDK}/shader-tools/*)
+    FILE(GLOB glslc-folders ${ANDROID_NDK}/shader-tools/*)
 ELSE()
-	FILE(GLOB glslc-folders ${VULKAN_SDK}/bin)
+    FILE(GLOB glslc-folders ${VULKAN_SDK}/bin)
 ENDIF()
 FIND_PROGRAM(GLSLC glslc HINTS ${glslc-folders})
 FIND_PROGRAM(XXD xxd)
 
 IF(GLSLC AND XXD)
-	SET(SHADERS_H "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders.h")
-	SET(SHADER_DIR "shaders")
-	SET(SHADER_FILES ${SHADER_DIR}/*.frag ${SHADER_DIR}/*.vert ${SHADER_DIR}/*.geom  ${SHADER_DIR}/*.comp)
-	FILE(GLOB_RECURSE SHADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SHADER_FILES})
-	FOREACH(SHADER ${SHADERS})
-		SET(shader-input ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER})
-		SET(shader-output ${CMAKE_CURRENT_BINARY_DIR}/${SHADER}.spv)
-		ADD_CUSTOM_COMMAND (
-		  OUTPUT ${shader-output}
-		  COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}"
-		  COMMAND ${GLSLC} ${GLSLDEFS} ${shader-input} -o ${shader-output}# --target-env=vulkan1.2
-		  COMMENT "Compiling ${shader-input}"
-		  DEPENDS ${SHADER}
-		  VERBATIM
-		)
-		SET(SHADER_OUTPUTS ${SHADER_OUTPUTS} ${shader-output})
-	ENDFOREACH()
+    SET(SHADERS_H "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders.h")
+    SET(SHADER_DIR "shaders")
+    SET(SHADER_FILES ${SHADER_DIR}/*.frag ${SHADER_DIR}/*.vert ${SHADER_DIR}/*.geom  ${SHADER_DIR}/*.comp)
+    FILE(GLOB_RECURSE SHADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SHADER_FILES})
+    FOREACH(SHADER ${SHADERS})
+        SET(shader-input ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER})
+        SET(shader-output ${CMAKE_CURRENT_BINARY_DIR}/${SHADER}.spv)
+        ADD_CUSTOM_COMMAND (
+          OUTPUT ${shader-output}
+          COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}"
+          COMMAND ${GLSLC} ${GLSLDEFS} ${shader-input} -o ${shader-output}# --target-env=vulkan1.2
+          COMMENT "Compiling ${shader-input}"
+          DEPENDS ${SHADER}
+          VERBATIM
+        )
+        SET(SHADER_OUTPUTS ${SHADER_OUTPUTS} ${shader-output})
+    ENDFOREACH()
 
-	ADD_CUSTOM_TARGET(BuildShaders ALL DEPENDS ${SHADER_OUTPUTS})
+    ADD_CUSTOM_TARGET(BuildShaders ALL DEPENDS ${SHADER_OUTPUTS})
 
-	if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.17.0")
-		ADD_CUSTOM_TARGET(ClearShadersHeader
-			COMMAND ${CMAKE_COMMAND} -E rm -f ${SHADERS_H}
-		)
-	else()
-		ADD_CUSTOM_TARGET(ClearShadersHeader
-			COMMAND ${CMAKE_COMMAND} -E remove -f ${SHADERS_H}
-		)
-	endif()
-	ADD_CUSTOM_TARGET(BuildShadersHeader
-		DEPENDS ClearShadersHeader ${SHADER_OUTPUTS}
-	)
+    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.17.0")
+        ADD_CUSTOM_TARGET(ClearShadersHeader
+            COMMAND ${CMAKE_COMMAND} -E rm -f ${SHADERS_H}
+        )
+    else()
+        ADD_CUSTOM_TARGET(ClearShadersHeader
+            COMMAND ${CMAKE_COMMAND} -E remove -f ${SHADERS_H}
+        )
+    endif()
+    ADD_CUSTOM_TARGET(BuildShadersHeader
+        DEPENDS ClearShadersHeader ${SHADER_OUTPUTS}
+    )
 
-	FOREACH(shad_spv ${SHADER_OUTPUTS})
-		GET_FILENAME_COMPONENT(SPV ${shad_spv} NAME)
-		ADD_CUSTOM_COMMAND (
-			TARGET BuildShadersHeader
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}
-			COMMAND ${XXD} -i ${SPV} >> ${SHADERS_H}
-		)
-	ENDFOREACH()
-	SET_SOURCE_FILES_PROPERTIES(${SHADERS_H} PROPERTIES GENERATED 1)
-	#add_definitions( -DDEBUG_VK_PERF=true )
+    FOREACH(shad_spv ${SHADER_OUTPUTS})
+        GET_FILENAME_COMPONENT(SPV ${shad_spv} NAME)
+        ADD_CUSTOM_COMMAND (
+            TARGET BuildShadersHeader
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}
+            COMMAND ${XXD} -i ${SPV} >> ${SHADERS_H}
+        )
+    ENDFOREACH()
+    SET_SOURCE_FILES_PROPERTIES(${SHADERS_H} PROPERTIES GENERATED 1)
+    #add_definitions( -DDEBUG_VK_PERF=true )
 ENDIF()
 
 IF (VKVG_USE_GLUTESS)
-	ADD_DEFINITIONS (-DVKVG_FILL_NZ_GLUTESS)
-	ADD_SUBDIRECTORY (external/glutess)
+    ADD_DEFINITIONS (-DVKVG_FILL_NZ_GLUTESS)
+    ADD_SUBDIRECTORY (external/glutess)
 ENDIF ()
 
 FILE(GLOB VKVG_SRC src/*.c src/deps/*.c)
 SET (VKVG_PUBLIC_HEADERS "include/vkvg.h;include/vkvg-svg.h")
 
 IF (VKVG_SVG)
-	ADD_DEFINITIONS (-DVKVG_SVG)
-	FILE(GLOB SVG_SRC external/vkvg-svg/src/*.c)
+    ADD_DEFINITIONS (-DVKVG_SVG)
+    FILE(GLOB SVG_SRC external/vkvg-svg/src/*.c)
 ELSE()
-	FILE(GLOB SVG_SRC src/nsvg/*.c)
+    FILE(GLOB SVG_SRC src/nsvg/*.c)
 ENDIF()
 
 LIST (APPEND VKVG_SRC ${SVG_SRC})
 
 IF (VKVG_RECORDING)
-	ADD_DEFINITIONS (-DVKVG_RECORDING)
-	FILE(GLOB RECORDING_SRC src/recording/*.c)
-	LIST (APPEND VKVG_SRC ${RECORDING_SRC})
+    ADD_DEFINITIONS (-DVKVG_RECORDING)
+    FILE(GLOB RECORDING_SRC src/recording/*.c)
+    LIST (APPEND VKVG_SRC ${RECORDING_SRC})
 ENDIF()
 
 CONFIGURE_FILE(vkvg.pc.in vkvg.pc @ONLY)
@@ -257,163 +258,163 @@ SOURCE_GROUP(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${VKVG_SRC})
 ADD_LIBRARY("${PROJECT_NAME}" ${VKVG_SRC})
 
 SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
-		OUTPUT_NAME ${PROJECT_NAME}
-		VERSION ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}
-		SOVERSION ${vkvg_VERSION_MAJOR}
-		C_STANDARD 11
-		LINKER_LANGUAGE C
-		PUBLIC_HEADER "${VKVG_PUBLIC_HEADERS}"
+        OUTPUT_NAME ${PROJECT_NAME}
+        VERSION ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}
+        SOVERSION ${vkvg_VERSION_MAJOR}
+        C_STANDARD 11
+        LINKER_LANGUAGE C
+        PUBLIC_HEADER "${VKVG_PUBLIC_HEADERS}"
 )
 
 TARGET_INCLUDE_DIRECTORIES("${PROJECT_NAME}"
-	PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/src
-		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
-		$<$<BOOL:${VKVG_USE_FREETYPE}>:${FREETYPE_INCLUDE_DIRS}>
-		$<$<BOOL:${VKVG_USE_HARFBUZZ}>:${HarfBuzz_INCLUDE_DIRS}>
-		$<$<BOOL:${VKVG_USE_FONTCONFIG}>:${Fontconfig_INCLUDE_DIRS}>
-		$<$<NOT:$<BOOL:${VKVG_SVG}>>:${CMAKE_CURRENT_SOURCE_DIR}/src/nsvg>
-	PUBLIC
-		${Vulkan_INCLUDE_DIRS}
-		${CMAKE_CURRENT_SOURCE_DIR}/include
-		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
+        $<$<BOOL:${VKVG_USE_FREETYPE}>:${FREETYPE_INCLUDE_DIRS}>
+        $<$<BOOL:${VKVG_USE_HARFBUZZ}>:${HarfBuzz_INCLUDE_DIRS}>
+        $<$<BOOL:${VKVG_USE_FONTCONFIG}>:${Fontconfig_INCLUDE_DIRS}>
+        $<$<NOT:$<BOOL:${VKVG_SVG}>>:${CMAKE_CURRENT_SOURCE_DIR}/src/nsvg>
+    PUBLIC
+        ${Vulkan_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 )
 
 IF (UNIX AND BUILD_SHARED_LIBS)
-	#make libm public for shared build to solve libm missing for common_test object lib linking even
-	#if -lm present on cc command.
-	TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PUBLIC m)
+    #make libm public for shared build to solve libm missing for common_test object lib linking even
+    #if -lm present on cc command.
+    TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PUBLIC m)
 ENDIF()
 
 IF(VKVG_USE_FREETYPE)
-	TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PUBLIC ${FREETYPE_LIBRARY})
+    TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PUBLIC ${FREETYPE_LIBRARY})
 ENDIF()
 IF(VKVG_USE_FONTCONFIG)
-	TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PRIVATE ${Fontconfig_LIBRARIES})
+    TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PRIVATE ${Fontconfig_LIBRARIES})
 ENDIF()
 IF(VKVG_USE_HARFBUZZ)
-	TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PRIVATE ${HarfBuzz_LIBRARIES})
+    TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PRIVATE ${HarfBuzz_LIBRARIES})
 ENDIF()
 IF(VKVG_USE_GLUTESS)
-	TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PRIVATE glutess)
+    TARGET_LINK_LIBRARIES("${PROJECT_NAME}" PRIVATE glutess)
 ENDIF()
 
 TARGET_LINK_LIBRARIES("${PROJECT_NAME}"
-	PUBLIC
-		${Vulkan_LIBRARIES}
-		vkh
+    PUBLIC
+        ${Vulkan_LIBRARIES}
+        vkh
 )
 IF (SHADERS_H)
-	ADD_DEPENDENCIES("${PROJECT_NAME}" BuildShadersHeader)
+    ADD_DEPENDENCIES("${PROJECT_NAME}" BuildShadersHeader)
 ENDIF()
 
 INSTALL(TARGETS "${PROJECT_NAME}" "${PROJECT_NAME}"
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 IF (VKVG_BUILD_TESTS)
-	ADD_SUBDIRECTORY(tests)
+    ADD_SUBDIRECTORY(tests)
 ELSEIF (VKVG_BUILD_OFFSCREEN_TEST)
-	ADD_EXECUTABLE(test_offscreen "${CMAKE_CURRENT_SOURCE_DIR}/tests/offscreen.c")
-	TARGET_INCLUDE_DIRECTORIES(test_offscreen PRIVATE
-		${Vulkan_INCLUDE_DIRS}
-		${CMAKE_CURRENT_SOURCE_DIR}/include
-	)
-	TARGET_LINK_LIBRARIES(test_offscreen
-		vkvg
-		${Vulkan_LIBRARIES}
-	)
+    ADD_EXECUTABLE(test_offscreen "${CMAKE_CURRENT_SOURCE_DIR}/tests/offscreen.c")
+    TARGET_INCLUDE_DIRECTORIES(test_offscreen PRIVATE
+        ${Vulkan_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    TARGET_LINK_LIBRARIES(test_offscreen
+        vkvg
+        ${Vulkan_LIBRARIES}
+    )
 ENDIF (VKVG_BUILD_TESTS)
 
 IF (VKVG_BUILD_DOCS)
-	set(DOXYGEN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/doc)
-	set(DOXYGEN_INPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
-	set(DOXYGEN_IMAGE_DIR "${DOXYGEN_DIR}/images")
-	set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/doc)
-	set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html)
+    set(DOXYGEN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/doc)
+    set(DOXYGEN_INPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    set(DOXYGEN_IMAGE_DIR "${DOXYGEN_DIR}/images")
+    set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/doc)
+    set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html)
 
-	set(DOXYFILE_IN ${DOXYGEN_DIR}/Doxygen.in)
-	set(DOXYFILE_OUT ${DOXYGEN_OUTPUT_DIR}/Doxyfile)
+    set(DOXYFILE_IN ${DOXYGEN_DIR}/Doxygen.in)
+    set(DOXYFILE_OUT ${DOXYGEN_OUTPUT_DIR}/Doxyfile)
 
-	#configure_file(${DOXYGEN_DIR}/dox_layout.xml ${DOXYGEN_OUTPUT_DIR}/dox_layout.xml @ONLY)
+    #configure_file(${DOXYGEN_DIR}/dox_layout.xml ${DOXYGEN_OUTPUT_DIR}/dox_layout.xml @ONLY)
 
-	configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
+    configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
 
-	add_custom_target(copy-doc-files ALL
-		COMMAND ${CMAKE_COMMAND} -E copy_directory "${DOXYGEN_DIR}/doxy_theme" ${DOXYGEN_OUTPUT_DIR})
+    add_custom_target(copy-doc-files ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${DOXYGEN_DIR}/doxy_theme" ${DOXYGEN_OUTPUT_DIR})
 
-	add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
-					   DEPENDS "${VKVG_PUBLIC_HEADERS}" copy-doc-files
-					   COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
-					   MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
-					   COMMENT "Generating docs")
-	add_custom_target(doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
+    add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
+                       DEPENDS "${VKVG_PUBLIC_HEADERS}" copy-doc-files
+                       COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+                       MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
+                       COMMENT "Generating docs")
+    add_custom_target(doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
 
-	find_package(Sphinx)
+    find_package(Sphinx)
 
-	IF (Sphinx_FOUND)
+    IF (Sphinx_FOUND)
 
-		set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/doc)
-		set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/doc/sphinx)
-		set(SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html)
+        set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/doc)
+        set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/doc/sphinx)
+        set(SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html)
 
-		add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
-						COMMAND
-						${SPHINX_EXECUTABLE} -b html
-						-Dbreathe_projects.VKVG=${DOXYGEN_OUTPUT_DIR}/xml
-						${SPHINX_SOURCE} ${SPHINX_BUILD}
-						WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-						DEPENDS
-								doxygen
-								# Other docs files you want to track should go here (or in some variable)
-								${SPHINX_SOURCE}/index.rst
-								${DOXYGEN_INDEX_FILE}
-						MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
-						COMMENT "Generating documentation with Sphinx")
+        add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
+                        COMMAND
+                        ${SPHINX_EXECUTABLE} -b html
+                        -Dbreathe_projects.VKVG=${DOXYGEN_OUTPUT_DIR}/xml
+                        ${SPHINX_SOURCE} ${SPHINX_BUILD}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                        DEPENDS
+                                doxygen
+                                # Other docs files you want to track should go here (or in some variable)
+                                ${SPHINX_SOURCE}/index.rst
+                                ${DOXYGEN_INDEX_FILE}
+                        MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
+                        COMMENT "Generating documentation with Sphinx")
 
-		add_custom_target(sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
-	ENDIF ()
+        add_custom_target(sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
+    ENDIF ()
 ENDIF (VKVG_BUILD_DOCS)
 
 IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
-	SET(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+    SET(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 
-	SET(CPACK_PACKAGE_DESCRIPTION "Vulkan vector graphic library")
-	SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "2d vector drawing library using vulkan")
-	SET(CPACK_PACKAGE_VENDOR "jp Bruyere")
-	SET(CPACK_PACKAGE_CONTACT "jp_bruyere@hotmail.com")
+    SET(CPACK_PACKAGE_DESCRIPTION "Vulkan vector graphic library")
+    SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "2d vector drawing library using vulkan")
+    SET(CPACK_PACKAGE_VENDOR "jp Bruyere")
+    SET(CPACK_PACKAGE_CONTACT "jp_bruyere@hotmail.com")
 
-	SET(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
-	SET(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
-	SET(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
-	SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-	SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+    SET(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+    SET(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+    SET(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+    SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+    SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
-	SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
-	INCLUDE(InstallRequiredSystemLibraries)
-	#SET(CPACK_COMPONENTS_ALL Libraries ApplicationData)
-	#dependencies for this service menu
-	IF(UNIX)
-		SET(CPACK_PACKAGING_INSTALL_PREFIX "/tmp")
-		SET(CPACK_SET_DESTDIR "on")
-		SET(CPACK_ADD_LDCONFIG_CALL 1)
-		SET(CPACK_DEBIAN_PACKAGE_DEPENDS " libharfbuzz-gobject0 , libfontconfig1 , libfreetype6 ")
-		SET(CPACK_GENERATOR "DEB")
+    SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
+    INCLUDE(InstallRequiredSystemLibraries)
+    #SET(CPACK_COMPONENTS_ALL Libraries ApplicationData)
+    #dependencies for this service menu
+    IF(UNIX)
+        SET(CPACK_PACKAGING_INSTALL_PREFIX "/tmp")
+        SET(CPACK_SET_DESTDIR "on")
+        SET(CPACK_ADD_LDCONFIG_CALL 1)
+        SET(CPACK_DEBIAN_PACKAGE_DEPENDS " libharfbuzz-gobject0 , libfontconfig1 , libfreetype6 ")
+        SET(CPACK_GENERATOR "DEB")
 
-		SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-		SET(CPACK_DEBIAN_PACKAGE_SECTION "libraries")
-		SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
+        SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+        SET(CPACK_DEBIAN_PACKAGE_SECTION "libraries")
+        SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
 
-	ELSEIF (MSVC)
-		SET(CPACK_GENERATOR NSIS)
-		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY ${PROJECT_NAME})
-		SET(CPACK_NSIS_MODIFY_PATH "ON")
+    ELSEIF (MSVC)
+        SET(CPACK_GENERATOR NSIS)
+        SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY ${PROJECT_NAME})
+        SET(CPACK_NSIS_MODIFY_PATH "ON")
 
-	ENDIF ()
+    ENDIF ()
 
 
-	INCLUDE(CPack)
+    INCLUDE(CPack)
 ENDIF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 
