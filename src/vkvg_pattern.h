@@ -25,25 +25,25 @@
 #include "vkvg_internal.h"
 
 typedef struct _vkvg_pattern_t {
-	vkvg_status_t		status;
-	uint32_t			references;
-	vkvg_pattern_type_t type;
-	vkvg_extend_t		extend;
-	vkvg_filter_t		filter;
-	vkvg_matrix_t		matrix;
-	bool				hasMatrix;
-	void*				data;
-}vkvg_pattern_t;
+    vkvg_status_t       status;
+    uint32_t            references;
+    vkvg_pattern_type_t type;
+    vkvg_extend_t       extend;
+    vkvg_filter_t       filter;
+    vkvg_matrix_t       matrix;
+    bool                hasMatrix;
+    void               *data;
+} vkvg_pattern_t;
 
 typedef struct _vkvg_gradient_t {
-	vkvg_color_t	colors[16];
+    vkvg_color_t colors[16];
 #ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
-	float			stops[16];
+    float stops[16];
 #else
-	vec4			stops[16];
+    vec4 stops[16];
 #endif
-	vec4			cp[2];
-	uint32_t		count;
-}vkvg_gradient_t;
+    vec4     cp[2];
+    uint32_t count;
+} vkvg_gradient_t;
 
 #endif

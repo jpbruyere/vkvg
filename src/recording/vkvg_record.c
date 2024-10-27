@@ -25,53 +25,52 @@
 #include "vkvg_record_internal.h"
 
 #ifdef VKVG_RECORDING
-void vkvg_start_recording (VkvgContext ctx) {
-	if (ctx->status)
-		return;
-	_start_recording(ctx);
+void vkvg_start_recording(VkvgContext ctx) {
+    if (ctx->status)
+        return;
+    _start_recording(ctx);
 }
-VkvgRecording vkvg_stop_recording (VkvgContext ctx) {
-	if (ctx->status)
-		return NULL;
-	return _stop_recording (ctx);
+VkvgRecording vkvg_stop_recording(VkvgContext ctx) {
+    if (ctx->status)
+        return NULL;
+    return _stop_recording(ctx);
 }
-uint32_t vkvg_recording_get_count (VkvgRecording rec) {
-	if (!rec)
-		return 0;
-	return rec->commandsCount;
+uint32_t vkvg_recording_get_count(VkvgRecording rec) {
+    if (!rec)
+        return 0;
+    return rec->commandsCount;
 }
-void* vkvg_recording_get_data (VkvgRecording rec) {
-	if (!rec)
-		return 0;
-	return rec->buffer;
+void *vkvg_recording_get_data(VkvgRecording rec) {
+    if (!rec)
+        return 0;
+    return rec->buffer;
 }
-void vkvg_recording_get_command (VkvgRecording rec, uint32_t cmdIndex, uint32_t* cmd, void** dataOffset) {
-	if (!rec)
-		return;
-	if (cmdIndex < rec->commandsCount) {
-		*cmd = rec->commands[cmdIndex].cmd;
-		*dataOffset = (void*)rec->commands[cmdIndex].dataOffset;
-	} else {
-		*cmd = 0;
-		*dataOffset = NULL;
-	}
-
+void vkvg_recording_get_command(VkvgRecording rec, uint32_t cmdIndex, uint32_t *cmd, void **dataOffset) {
+    if (!rec)
+        return;
+    if (cmdIndex < rec->commandsCount) {
+        *cmd        = rec->commands[cmdIndex].cmd;
+        *dataOffset = (void *)rec->commands[cmdIndex].dataOffset;
+    } else {
+        *cmd        = 0;
+        *dataOffset = NULL;
+    }
 }
-void vkvg_replay (VkvgContext ctx, VkvgRecording rec) {
-	if (!rec)
-		return;
-	for (uint32_t i=0; i<rec->commandsCount; i++)
-		_replay_command(ctx, rec, i);
+void vkvg_replay(VkvgContext ctx, VkvgRecording rec) {
+    if (!rec)
+        return;
+    for (uint32_t i = 0; i < rec->commandsCount; i++)
+        _replay_command(ctx, rec, i);
 }
-void vkvg_replay_command (VkvgContext ctx, VkvgRecording rec, uint32_t cmdIndex) {
-	if (!rec)
-		return;
-	if (cmdIndex < rec->commandsCount)
-		_replay_command(ctx, rec, cmdIndex);
+void vkvg_replay_command(VkvgContext ctx, VkvgRecording rec, uint32_t cmdIndex) {
+    if (!rec)
+        return;
+    if (cmdIndex < rec->commandsCount)
+        _replay_command(ctx, rec, cmdIndex);
 }
-void vkvg_recording_destroy (VkvgRecording rec) {
-	if (!rec)
-		return;
-	_destroy_recording(rec);
+void vkvg_recording_destroy(VkvgRecording rec) {
+    if (!rec)
+        return;
+    _destroy_recording(rec);
 }
 #endif
