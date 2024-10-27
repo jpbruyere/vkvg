@@ -27,7 +27,4 @@
 #include <stdbool.h>
 #include "vkvg.h"
 
-
-
-
 #endif

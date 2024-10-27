@@ -23,6 +23,3 @@
 #include <string.h>
 #include "vkvg_experimental.h"
 #include "vkvg_context_internal.h"
-
-
-

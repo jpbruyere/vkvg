@@ -27,44 +27,44 @@
 #include "vkh.h"
 
 typedef struct _vkvg_surface_t {
-	vkvg_status_t	status;					/**< Current status of surface, affected by last operation */
-	uint32_t		references;
-	VkvgDevice		dev;
-	uint32_t		width;
-	uint32_t		height;
-	VkFormat		format;
-	VkFramebuffer	fb;
-	VkhImage		img;
-	VkhImage		imgMS;
-	VkhImage		stencil;
-	VkCommandPool	cmdPool;				//local pools ensure thread safety
-	VkCommandBuffer cmd;					//surface local command buffer.
-	bool			newSurf;
-	mtx_t			mutex;
+    vkvg_status_t   status; /**< Current status of surface, affected by last operation */
+    uint32_t        references;
+    VkvgDevice      dev;
+    uint32_t        width;
+    uint32_t        height;
+    VkFormat        format;
+    VkFramebuffer   fb;
+    VkhImage        img;
+    VkhImage        imgMS;
+    VkhImage        stencil;
+    VkCommandPool   cmdPool; // local pools ensure thread safety
+    VkCommandBuffer cmd;     // surface local command buffer.
+    bool            newSurf;
+    mtx_t           mutex;
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-	VkSemaphore		timeline;				/**< Timeline semaphore */
-	uint64_t		timelineStep;
+    VkSemaphore timeline; /**< Timeline semaphore */
+    uint64_t    timelineStep;
 #else
-	VkFence			flushFence;				//unsignaled idle.
+    VkFence flushFence; // unsignaled idle.
 #endif
 
-}vkvg_surface;
+} vkvg_surface;
 
-#define LOCK_SURFACE(surf) \
-	if (surf->dev->threadAware)\
-		mtx_lock (&surf->mutex);
-#define UNLOCK_SURFACE(surf) \
-	if (surf->dev->threadAware)\
-		mtx_unlock (&surf->mutex);
+#define LOCK_SURFACE(surf)                                                                                             \
+    if (surf->dev->threadAware)                                                                                        \
+        mtx_lock(&surf->mutex);
+#define UNLOCK_SURFACE(surf)                                                                                           \
+    if (surf->dev->threadAware)                                                                                        \
+        mtx_unlock(&surf->mutex);
 
-void _explicit_ms_resolve (VkvgSurface surf);
-void _clear_surface (VkvgSurface surf, VkImageAspectFlags aspect);
-void _create_surface_main_image (VkvgSurface surf);
-void _create_surface_secondary_images (VkvgSurface surf);
-void _create_framebuffer (VkvgSurface surf);
-void _create_surface_images (VkvgSurface surf);
-VkvgSurface _create_surface (VkvgDevice dev, VkFormat format);
+void        _explicit_ms_resolve(VkvgSurface surf);
+void        _clear_surface(VkvgSurface surf, VkImageAspectFlags aspect);
+void        _create_surface_main_image(VkvgSurface surf);
+void        _create_surface_secondary_images(VkvgSurface surf);
+void        _create_framebuffer(VkvgSurface surf);
+void        _create_surface_images(VkvgSurface surf);
+VkvgSurface _create_surface(VkvgDevice dev, VkFormat format);
 
-void _surface_submit_cmd (VkvgSurface surf);
-//bool _surface_wait_cmd (VkvgSurface surf);
+void _surface_submit_cmd(VkvgSurface surf);
+// bool _surface_wait_cmd (VkvgSurface surf);
 #endif
