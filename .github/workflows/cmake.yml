@@ -11,7 +11,9 @@ jobs:
   Win_jorb:
     runs-on: windows-2019
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
     - name: Install Vulkan SDK
       uses: humbletim/setup-vulkan-sdk@v1.2.0
       with:
@@ -43,10 +45,11 @@ jobs:
         persist-credentials: false
     - run: echo "${{ env.VULKAN_SDK }}/bin" >> $GITHUB_PATH
     - run: sudo apt update && sudo apt install xorg-dev
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         path: 'source'
         persist-credentials: false
+        submodules: 'true'
     - run: mkdir -p source/build
     - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} -G "Unix Makefiles" .. -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
       working-directory: source/build
@@ -72,8 +75,9 @@ jobs:
         ref: macos
         persist-credentials: false
     - run: echo "${{ env.VULKAN_SDK }}/bin" >> $GITHUB_PATH
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
+        submodules: 'true'
         path: 'source'
         persist-credentials: false
     - run: mkdir -p source/build
