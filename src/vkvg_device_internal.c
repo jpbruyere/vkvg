@@ -495,7 +495,7 @@ bool _device_init_function_pointers(VkvgDevice dev) {
         LOG(VKVG_LOG_ERR, "vkvg create device failed: 'VK_EXT_debug_utils' has to be loaded for Debug build\n");
         return false;
     }
-    vkh_device_init_debug_utils((VkhDevice)dev);
+    vkh_device_init_debug_utils((VkhDevice)&dev->vkDev);
 #endif
     CmdBindPipeline          = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdBindPipeline);
     CmdBindDescriptorSets    = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdBindDescriptorSets);
@@ -519,7 +519,7 @@ bool _device_init_function_pointers(VkvgDevice dev) {
 
 void _device_create_empty_texture(VkvgDevice dev, VkFormat format, VkImageTiling tiling) {
     // create empty image to bind to context source descriptor when not in use
-    dev->emptyImg = vkh_image_create((VkhDevice)dev, format, 16, 16, tiling, VKH_MEMORY_USAGE_GPU_ONLY,
+    dev->emptyImg = vkh_image_create((VkhDevice)&dev->vkDev, format, 16, 16, tiling, VKH_MEMORY_USAGE_GPU_ONLY,
                                      VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     vkh_image_create_descriptor(dev->emptyImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
                                 VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,

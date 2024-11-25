@@ -53,8 +53,6 @@ void threaded_text(int (*testfunc)(void *)) {
     mtx_t mutex;
     pmutex = &mutex;
 
-    vkvg_device_set_thread_aware(device, 1);
-
     thrd_t threads[THREAD_COUNT];
 
     finishedThreadCount = 0;
@@ -70,8 +68,6 @@ void threaded_text(int (*testfunc)(void *)) {
     mtx_unlock(pmutex);
     mtx_destroy(pmutex);
     pmutex = NULL;
-
-    vkvg_device_set_thread_aware(device, 0);
 }
 void single_font_and_size() { threaded_text(_single_font_and_size); }
 

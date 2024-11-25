@@ -26,9 +26,15 @@
 #include "vkvg_pattern.h"
 
 VkvgPattern vkvg_pattern_create_for_surface(VkvgSurface surf) {
+    if (!surf) {
+        LOG(VKVG_LOG_ERR, "CREATE Pattern failed, invalid surface\n");
+        return (VkvgPattern)&_vkvg_status_null_pointer;
+    }
     VkvgPattern pat = (vkvg_pattern_t *)calloc(1, sizeof(vkvg_pattern_t));
-    if (!pat)
-        return (VkvgPattern)&_no_mem_status;
+    if (!pat) {
+        LOG(VKVG_LOG_ERR, "CREATE Pattern failed, no memory\n");
+        return (VkvgPattern)&_vkvg_status_null_pointer;
+    }
 
     pat->type       = VKVG_PATTERN_TYPE_SURFACE;
     pat->extend     = VKVG_EXTEND_NONE;
@@ -68,8 +74,10 @@ vkvg_status_t vkvg_pattern_edit_linear(VkvgPattern pat, float x0, float y0, floa
 }
 VkvgPattern vkvg_pattern_create_linear(float x0, float y0, float x1, float y1) {
     VkvgPattern pat = (vkvg_pattern_t *)calloc(1, sizeof(vkvg_pattern_t));
-    if (!pat)
-        return (VkvgPattern)&_no_mem_status;
+    if (!pat) {
+        LOG(VKVG_LOG_ERR, "CREATE Pattern failed, no memory\n");
+        return (VkvgPattern)&_vkvg_status_null_pointer;
+    }
     pat->type   = VKVG_PATTERN_TYPE_LINEAR;
     pat->extend = VKVG_EXTEND_NONE;
 
@@ -78,8 +86,9 @@ VkvgPattern vkvg_pattern_create_linear(float x0, float y0, float x1, float y1) {
     if (pat->data) {
         vkvg_pattern_edit_linear(pat, x0, y0, x1, y1);
         pat->references = 1;
-    } else
-        pat->status = VKVG_STATUS_NO_MEMORY;
+    } else {
+        pat->status = VKVG_STATUS_PATTERN_INVALID_GRADIENT;
+    }
 
     return pat;
 }
@@ -110,8 +119,10 @@ vkvg_status_t vkvg_pattern_edit_radial(VkvgPattern pat, float cx0, float cy0, fl
 }
 VkvgPattern vkvg_pattern_create_radial(float cx0, float cy0, float radius0, float cx1, float cy1, float radius1) {
     VkvgPattern pat = (vkvg_pattern_t *)calloc(1, sizeof(vkvg_pattern_t));
-    if (!pat)
-        return (VkvgPattern)&_no_mem_status;
+    if (!pat) {
+        LOG(VKVG_LOG_ERR, "CREATE Pattern failed, no memory\n");
+        return (VkvgPattern)&_vkvg_status_null_pointer;
+    }
     pat->type   = VKVG_PATTERN_TYPE_RADIAL;
     pat->extend = VKVG_EXTEND_NONE;
 

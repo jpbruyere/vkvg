@@ -51,13 +51,16 @@ typedef struct _vkvg_surface_t {
 } vkvg_surface;
 
 #define LOCK_SURFACE(surf)                                                                                             \
-    if (surf->dev->threadAware)                                                                                        \
-        mtx_lock(&surf->mutex);
+    if (surf->dev->threadAware) {                                                                                      \
+        mtx_lock(&surf->mutex);                                                                                        \
+    }
 #define UNLOCK_SURFACE(surf)                                                                                           \
-    if (surf->dev->threadAware)                                                                                        \
-        mtx_unlock(&surf->mutex);
+    if (surf->dev->threadAware) {                                                                                      \
+        mtx_unlock(&surf->mutex);                                                                                      \
+    }
 
 void        _explicit_ms_resolve(VkvgSurface surf);
+void        _transition_surf_images(VkvgSurface surf);
 void        _clear_surface(VkvgSurface surf, VkImageAspectFlags aspect);
 void        _create_surface_main_image(VkvgSurface surf);
 void        _create_surface_secondary_images(VkvgSurface surf);

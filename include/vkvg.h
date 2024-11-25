@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2025 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -43,10 +43,12 @@ extern "C" {
  */
 
 /*! @file vkvg.h
- *	@brief The header of the VKVG library.
+ *	@brief Main header of the VKVG library.
  *
  *	This is the header file of the VKVG library.  It defines all its types and
  *	declares all its functions.
+ *
+ *  To start drawing with vkvg, simply include this header.
  *
  */
 /*! @defgroup surface Surface
@@ -123,12 +125,12 @@ extern vkvg_wired_debug_mode vkvg_wired_debug;
 typedef enum {
     VKVG_STATUS_SUCCESS = 0,              /*!< no error occurred.*/
     VKVG_STATUS_NO_MEMORY,                /*!< out of memory*/
+    VKVG_STATUS_NULL_POINTER,             /*!< NULL pointer*/
     VKVG_STATUS_INVALID_RESTORE,          /*!< call to #vkvg_restore without matching call to #vkvg_save*/
     VKVG_STATUS_NO_CURRENT_POINT,         /*!< path command expecting a current point to be defined failed*/
     VKVG_STATUS_INVALID_MATRIX,           /*!< invalid matrix (not invertible)*/
     VKVG_STATUS_INVALID_STATUS,           /*!< */
     VKVG_STATUS_INVALID_INDEX,            /*!< */
-    VKVG_STATUS_NULL_POINTER,             /*!< NULL pointer*/
     VKVG_STATUS_WRITE_ERROR,              /*!< */
     VKVG_STATUS_PATTERN_TYPE_MISMATCH,    /*!< */
     VKVG_STATUS_PATTERN_INVALID_GRADIENT, /*!< occurs when stops count is zero */
@@ -136,11 +138,14 @@ typedef enum {
     VKVG_STATUS_FILE_NOT_FOUND,           /*!< */
     VKVG_STATUS_INVALID_DASH,             /*!< invalid value for a dash setting */
     VKVG_STATUS_INVALID_RECT,             /*!< rectangle with height or width equal to 0. */
-    VKVG_STATUS_TIMEOUT,         /*!< waiting for a vulkan operation to finish resulted in a fence timeout (5 seconds)*/
-    VKVG_STATUS_DEVICE_ERROR,    /*!< vkvg device initialization error */
-    VKVG_STATUS_INVALID_IMAGE,   /*!< */
-    VKVG_STATUS_INVALID_SURFACE, /*!< */
-    VKVG_STATUS_INVALID_FONT,    /*!< Unresolved font name*/
+    VKVG_STATUS_TIMEOUT,      /*!< waiting for a vulkan operation to finish resulted in a fence timeout (5 seconds)*/
+    VKVG_STATUS_DEVICE_ERROR, /*!< vkvg device initialization error */
+    VKVG_STATUS_INVALID_DEVICE_CREATE_INFO, /*!< vkvg device initialization error */
+    VKVG_STATUS_INVALID_IMAGE,              /*!< */
+    VKVG_STATUS_INVALID_SURFACE,            /*!< */
+    VKVG_STATUS_INVALID_FONT,               /*!< Unresolved font name*/
+    VKVG_STATUS_IN_CACHE, /*!< This is not an error, context is stored in cache, not usable until recovered for another
+                             context creation. */
     VKVG_STATUS_ENUM_MAX = 0x7FFFFFFF
 } vkvg_status_t;
 
@@ -329,6 +334,7 @@ typedef struct _vkvg_pattern_t *VkvgPattern;
  *
  * @ingroup device
  */
+#define VKVG_HAS_DBG_STATS /*!< If defined, #vkvg_device_get_stats and #vkvg_device_reset_stats are available.*/
 typedef struct {
     uint32_t sizePoints;   /**< maximum point array size					*/
     uint32_t sizePathes;   /**< maximum path array size					*/
@@ -339,7 +345,7 @@ typedef struct {
 } vkvg_debug_stats_t;
 
 vkvg_debug_stats_t vkvg_device_get_stats(VkvgDevice dev);
-vkvg_debug_stats_t vkvg_device_reset_stats(VkvgDevice dev);
+void               vkvg_device_reset_stats(VkvgDevice dev);
 #endif
 
 /**
@@ -554,20 +560,9 @@ typedef struct {
     VkDevice           vkdev;
     uint32_t           qFamIdx;
     uint32_t           qIndex;
+    bool               threadAware; /**< if true, mutex is created and guard device queue and caches access */
 } vkvg_device_create_info_t;
-/**
- * @brief Set device ready for multithreading.
- *
- * If thread aware mode is set to true,
- *
- * This method should be called only once on device creation. If this method is called while some surfaces or patterns
- * are in use, this could have unexpected results.
- *
- *
- * @param dev
- * @param thread_awayre
- */
-vkvg_public void vkvg_device_set_thread_aware(VkvgDevice dev, uint32_t thread_awayre);
+
 vkvg_public
     /**
      * @brief Set maximum cached context count.
@@ -590,6 +585,7 @@ vkvg_public
  * one of the following:
  * - VKVG_STATUS_INVALID_FORMAT: the combination of image format and tiling is not supported
  * - VKVG_STATUS_NULL_POINTER: vulkan function pointer fetching failed.
+ * - VKVG_STATUS_NO_MEMORY: either info parameter was null or memory allocation for device structure failed.
  *
  * @param samples The sample count that will be setup for the surfaces created by this device.
  * @param deferredResolve If true, the final simple sampled image of the surface will only be resolved on demand with a
@@ -630,7 +626,7 @@ vkvg_public VkvgDevice vkvg_device_create(vkvg_device_create_info_t *info);
  * @param samples The sample count that will be setup for the surfaces created by this device.
 
  * @return The handle of the created vkvg device, or null if an error occured.
-
+ */
 
 /**
  * @brief Decrement the reference count of the device by 1. Release all its resources if count reaches 0.
@@ -755,6 +751,14 @@ vkvg_public VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void *v
  */
 vkvg_public VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char *img, uint32_t width,
                                                         uint32_t height);
+/**
+ * @brief Get the current status of the surface.
+ *
+ * Query current status of surface. See @ref vkvg_status_t for more informations.
+ * @param surf a valid vkvg surface pointer. If null, VKVG_STATUS_NO_MEMORY is return;
+ * @return current state.
+ */
+vkvg_public vkvg_status_t vkvg_surface_status(VkvgSurface surf);
 /**
  * @brief Increment reference count on the surface by one.
  * @param The vkvg surface to increment the reference count for.

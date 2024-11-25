@@ -33,6 +33,10 @@
 #include <stdarg.h>
 #include <string.h>
 
+// should be supported by c11
+// #include <threads.h>
+// #include <stdatomic.h>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -98,6 +102,11 @@
     vkvg_status_t status;
 } _vkvg_no_mem_struct;*/
 
-static vkvg_status_t _no_mem_status = VKVG_STATUS_NO_MEMORY;
+// static error value whose address is returned instead of vkvg object pointers to avoid null pointers.
+static vkvg_status_t _vkvg_status_no_memory       = VKVG_STATUS_NO_MEMORY;
+static vkvg_status_t _vkvg_status_null_pointer    = VKVG_STATUS_NULL_POINTER;
+static vkvg_status_t _vkvg_status_invalid_dev_ci  = VKVG_STATUS_INVALID_DEVICE_CREATE_INFO;
+static vkvg_status_t _vkvg_status_device_error    = VKVG_STATUS_DEVICE_ERROR;
+static vkvg_status_t _vkvg_status_invalid_surface = VKVG_STATUS_INVALID_SURFACE;
 
 #endif

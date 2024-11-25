@@ -251,13 +251,13 @@ float _get_arc_step(VkvgContext ctx, float radius) {
     return fminf(M_PIF / 3.f, M_PIF / (r * 0.4f));
 }
 void _create_gradient_buff(VkvgContext ctx) {
-    vkh_buffer_init((VkhDevice)ctx->dev, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
+    vkh_buffer_init((VkhDevice)&ctx->dev->vkDev, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
                     sizeof(vkvg_gradient_t), &ctx->uboGrad, true);
 }
 void _create_vertices_buff(VkvgContext ctx) {
-    vkh_buffer_init((VkhDevice)ctx->dev, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
+    vkh_buffer_init((VkhDevice)&ctx->dev->vkDev, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
                     ctx->sizeVBO * sizeof(Vertex), &ctx->vertices, true);
-    vkh_buffer_init((VkhDevice)ctx->dev, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
+    vkh_buffer_init((VkhDevice)&ctx->dev->vkDev, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
                     ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices, true);
 }
 void _resize_vbo(VkvgContext ctx, uint32_t new_size) {
@@ -395,9 +395,10 @@ void _ensure_renderpass_is_started(VkvgContext ctx) {
         _update_push_constants(ctx);
 }
 void _create_cmd_buff(VkvgContext ctx) {
-    vkh_cmd_buffs_create((VkhDevice)ctx->dev, ctx->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 2, ctx->cmdBuffers);
+    vkh_cmd_buffs_create((VkhDevice)&ctx->dev->vkDev, ctx->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 2,
+                         ctx->cmdBuffers);
 #if defined(DEBUG) && defined(ENABLE_VALIDATION)
-    vkh_device_set_object_name((VkhDevice)ctx->pSurf->dev, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
+    vkh_device_set_object_name((VkhDevice)&ctx->pSurf->dev->vkDev, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
                                (uint64_t)ctx->cmd, "vkvgCtxCmd");
 #endif
 }
@@ -406,7 +407,7 @@ void _clear_attachment(VkvgContext ctx) {}
 bool _wait_ctx_flush_end(VkvgContext ctx) {
     LOG(VKVG_LOG_INFO, "CTX: _wait_flush_fence\n");
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-    if (vkh_timeline_wait((VkhDevice)ctx->dev, ctx->pSurf->timeline, ctx->timelineStep) == VK_SUCCESS)
+    if (vkh_timeline_wait((VkhDevice)&ctx->dev->vkDev, ctx->pSurf->timeline, ctx->timelineStep) == VK_SUCCESS)
         return true;
 #else
     if (WaitForFences(ctx->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
@@ -426,7 +427,7 @@ bool _wait_and_submit_cmd(VkvgContext ctx) {
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     VkvgSurface surf = ctx->pSurf;
     VkvgDevice  dev  = surf->dev;
-    // vkh_timeline_wait ((VkhDevice)dev, surf->timeline, ct->timelineStep);
+    // vkh_timeline_wait ((VkhDevice)&dev->vkDev, surf->timeline, ct->timelineStep);
     if (ctx->pattern && ctx->pattern->type == VKVG_PATTERN_TYPE_SURFACE) {
         // add source surface timeline sync.
         VkvgSurface source = (VkvgSurface)ctx->pattern->data;
@@ -755,11 +756,19 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
 
         _update_descriptor_set(ctx, surf->img, ctx->dsSrc);
 
-        if (pat->hasMatrix) {
-        }
-
         ctx->pushConsts.source.width  = (float)surf->width;
         ctx->pushConsts.source.height = (float)surf->height;
+
+        vkvg_matrix_t mat;
+        if (pat->hasMatrix) {
+            vkvg_pattern_get_matrix(pat, &mat);
+            // if (vkvg_matrix_invert(&mat) != VKVG_STATUS_SUCCESS)
+            //     mat = VKVG_IDENTITY_MATRIX;
+            // vkvg_matrix_transform_point(&mat, &ctx->pushConsts.source.x, &ctx->pushConsts.source.y);
+            // vkvg_matrix_transform_distance(&mat, &ctx->pushConsts.source.width, &ctx->pushConsts.source.height);
+            vkvg_matrix_multiply(&ctx->pushConsts.matInv, &ctx->pushConsts.matInv, &mat);
+        }
+
         break;
     }
     case VKVG_PATTERN_TYPE_LINEAR:
@@ -784,15 +793,15 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             ctx->status = VKVG_STATUS_PATTERN_INVALID_GRADIENT;
             return;
         }
+
         vkvg_matrix_t mat;
         if (pat->hasMatrix) {
             vkvg_pattern_get_matrix(pat, &mat);
             if (vkvg_matrix_invert(&mat) != VKVG_STATUS_SUCCESS)
                 mat = VKVG_IDENTITY_MATRIX;
+            vkvg_matrix_transform_point(&mat, &grad.cp[0].x, &grad.cp[0].y);
         }
 
-        if (pat->hasMatrix)
-            vkvg_matrix_transform_point(&mat, &grad.cp[0].x, &grad.cp[0].y);
         vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
         if (pat->type == VKVG_PATTERN_TYPE_LINEAR) {
             if (pat->hasMatrix)

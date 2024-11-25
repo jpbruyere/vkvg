@@ -51,10 +51,7 @@ void _init_ctx(VkvgContext ctx) {
 
     vkvg_surface_reference(ctx->pSurf);
 
-    if (ctx->dev->samples == VK_SAMPLE_COUNT_1_BIT)
-        ctx->renderPassBeginInfo.clearValueCount = 2;
-    else
-        ctx->renderPassBeginInfo.clearValueCount = 3;
+    ctx->renderPassBeginInfo.clearValueCount = ctx->dev->samples == VK_SAMPLE_COUNT_1_BIT ? 2 : 3;
 
     ctx->selectedCharSize    = 10 << 6;
     ctx->currentFont         = NULL;
@@ -70,37 +67,36 @@ void _init_ctx(VkvgContext ctx) {
 }
 
 VkvgContext vkvg_create(VkvgSurface surf) {
+    LOG(VKVG_LOG_INFO, "CREATE Context\n");
+    if (vkvg_surface_status(surf)) {
+        LOG(VKVG_LOG_ERR, "CREATE Context failed, invalid surface\n");
+        return (VkvgContext)&_vkvg_status_invalid_surface;
+    }
     VkvgDevice  dev = surf->dev;
+    if (vkvg_device_status(dev)) {
+        LOG(VKVG_LOG_ERR, "CREATE Context failed, invalid device\n");
+        return (VkvgContext)&_vkvg_status_device_error;
+    }
     VkvgContext ctx = NULL;
 
     if (_device_try_get_cached_context(dev, &ctx)) {
         ctx->pSurf = surf;
-
-        if (!surf || surf->status) {
-            ctx->status = VKVG_STATUS_INVALID_SURFACE;
-            return ctx;
-        }
-
+        ctx->status = VKVG_STATUS_SUCCESS;
         _init_ctx(ctx);
         _update_descriptor_set(ctx, surf->dev->emptyImg, ctx->dsSrc);
         _clear_path(ctx);
-        ctx->cmd    = ctx->cmdBuffers[0]; // current recording buffer
-        ctx->status = VKVG_STATUS_SUCCESS;
+        ctx->cmd = ctx->cmdBuffers[0]; // current recording buffer
         return ctx;
     }
     ctx = (vkvg_context *)calloc(1, sizeof(vkvg_context));
 
-    LOG(VKVG_LOG_INFO, "CREATE Context: ctx = %p; surf = %p\n", ctx, surf);
-
-    if (!ctx)
-        return (VkvgContext)&_no_mem_status;
-
-    ctx->pSurf = surf;
-
-    if (!surf || surf->status) {
-        ctx->status = VKVG_STATUS_INVALID_SURFACE;
-        return ctx;
+    if (!ctx) {
+        LOG(VKVG_LOG_ERR, "CREATE context failed, no memory\n");
+        return (VkvgContext)&_vkvg_status_no_memory;
     }
+
+    LOG(VKVG_LOG_INFO, "CREATE Context: ctx = %p; surf = %p\n", ctx, surf);
+    ctx->pSurf = surf;
 
     ctx->sizePoints   = VKVG_PTS_SIZE;
     ctx->sizeVertices = ctx->sizeVBO = VKVG_VBO_SIZE;
@@ -110,15 +106,12 @@ VkvgContext vkvg_create(VkvgSurface surf) {
 
     ctx->dev = surf->dev;
 
-    _init_ctx(ctx);
-
     ctx->points      = (vec2 *)malloc(VKVG_VBO_SIZE * sizeof(vec2));
     ctx->pathes      = (uint32_t *)malloc(VKVG_PATHES_SIZE * sizeof(uint32_t));
     ctx->vertexCache = (Vertex *)malloc(ctx->sizeVertices * sizeof(Vertex));
     ctx->indexCache  = (VKVG_IBO_INDEX_TYPE *)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 
     if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache) {
-        dev->status = VKVG_STATUS_NO_MEMORY;
         if (ctx->points)
             free(ctx->points);
         if (ctx->pathes)
@@ -127,15 +120,18 @@ VkvgContext vkvg_create(VkvgSurface surf) {
             free(ctx->vertexCache);
         if (ctx->indexCache)
             free(ctx->indexCache);
-        return NULL;
+        LOG(VKVG_LOG_ERR, "CREATE context failed, no memory\n");
+        return (VkvgContext)&_vkvg_status_no_memory;
     }
 
+    _init_ctx(ctx);
+
+    VkhDevice vkhd = (VkhDevice)&dev->vkDev;
     // for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
-    ctx->cmdPool =
-        vkh_cmd_pool_create((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    ctx->cmdPool = vkh_cmd_pool_create(vkhd, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 #ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-    ctx->flushFence = vkh_fence_create_signaled((VkhDevice)ctx->dev);
+    ctx->flushFence = vkh_fence_create_signaled((VkhDevice)&ctx->dev->vkDev);
 #endif
 
     _create_vertices_buff(ctx);
@@ -159,32 +155,26 @@ VkvgContext vkvg_create(VkvgSurface surf) {
         ctx->sizeIBO);
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[0],
-                               "CTX Cmd Buff A");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1],
-                               "CTX Cmd Buff B");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[0], "CTX Cmd Buff A");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1], "CTX Cmd Buff B");
 #ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
 #endif
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)ctx->descriptorPool,
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)ctx->descriptorPool,
                                "CTX Descriptor Pool");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc,
-                               "CTX DescSet SOURCE");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont,
-                               "CTX DescSet FONT");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsGrad,
-                               "CTX DescSet GRADIENT");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc, "CTX DescSet SOURCE");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsGrad, "CTX DescSet GRADIENT");
 
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer,
-                               "CTX Vertex Buff");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
 #endif
 
     return ctx;
 }
 void vkvg_flush(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     _flush_cmd_buff(ctx);
     _wait_ctx_flush_end(ctx);
@@ -250,7 +240,7 @@ void _clear_context(VkvgContext ctx) {
 }
 
 void vkvg_destroy(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     ctx->references--;
@@ -300,13 +290,14 @@ void vkvg_destroy(VkvgContext ctx) {
 
     if (!ctx->status && ctx->dev->cachedContextCount < VKVG_MAX_CACHED_CONTEXT_COUNT) {
         _device_store_context(ctx);
+        ctx->status = VKVG_STATUS_IN_CACHE;
         return;
     }
 
     _release_context_ressources(ctx);
 }
 void vkvg_set_opacity(VkvgContext ctx, float opacity) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     if (EQUF(ctx->pushConsts.opacity, opacity))
@@ -317,23 +308,23 @@ void vkvg_set_opacity(VkvgContext ctx, float opacity) {
     ctx->pushCstDirty       = true;
 }
 float vkvg_get_opacity(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return 0;
     return ctx->pushConsts.opacity;
 }
-vkvg_status_t vkvg_status(VkvgContext ctx) { return ctx->status; }
+vkvg_status_t vkvg_status(VkvgContext ctx) { return !ctx ? VKVG_STATUS_NULL_POINTER : ctx->status; }
 VkvgContext   vkvg_reference(VkvgContext ctx) {
     if (!ctx->status)
         ctx->references++;
     return ctx;
 }
 uint32_t vkvg_get_reference_count(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return 0;
     return ctx->references;
 }
 void vkvg_new_sub_path(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     RECORD(ctx, VKVG_CMD_NEW_SUB_PATH);
@@ -342,7 +333,7 @@ void vkvg_new_sub_path(VkvgContext ctx) {
     _finish_path(ctx);
 }
 void vkvg_new_path(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: new_path:\n");
@@ -351,7 +342,7 @@ void vkvg_new_path(VkvgContext ctx) {
     RECORD(ctx, VKVG_CMD_NEW_PATH);
 }
 void vkvg_close_path(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     RECORD(ctx, VKVG_CMD_CLOSE_PATH);
@@ -375,7 +366,7 @@ void vkvg_close_path(VkvgContext ctx) {
     _finish_path(ctx);
 }
 void vkvg_rel_line_to(VkvgContext ctx, float dx, float dy) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     RECORD(ctx, VKVG_CMD_REL_LINE_TO, dx, dy);
@@ -387,7 +378,7 @@ void vkvg_rel_line_to(VkvgContext ctx, float dx, float dy) {
     _line_to(ctx, cp.x + dx, cp.y + dy);
 }
 void vkvg_line_to(VkvgContext ctx, float x, float y) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     RECORD(ctx, VKVG_CMD_LINE_TO, x, y);
@@ -395,7 +386,7 @@ void vkvg_line_to(VkvgContext ctx, float x, float y) {
     _line_to(ctx, x, y);
 }
 void vkvg_arc(VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     RECORD(ctx, VKVG_CMD_ARC, xc, yc, radius, a1, a2);
@@ -451,7 +442,7 @@ void vkvg_arc(VkvgContext ctx, float xc, float yc, float radius, float a1, float
     _set_curve_end(ctx);
 }
 void vkvg_arc_negative(VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_ARC_NEG, xc, yc, radius, a1, a2);
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: %f,%f %f %f %f\n", xc, yc, radius, a1, a2);
@@ -505,7 +496,7 @@ void vkvg_arc_negative(VkvgContext ctx, float xc, float yc, float radius, float 
     _set_curve_end(ctx);
 }
 void vkvg_rel_move_to(VkvgContext ctx, float x, float y) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_REL_MOVE_TO, x, y);
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_mote_to: %f, %f\n", x, y);
@@ -516,7 +507,7 @@ void vkvg_rel_move_to(VkvgContext ctx, float x, float y) {
     _add_point(ctx, cp.x + x, cp.y + y);
 }
 void vkvg_move_to(VkvgContext ctx, float x, float y) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_MOVE_TO, x, y);
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: move_to: %f,%f\n", x, y);
@@ -524,7 +515,7 @@ void vkvg_move_to(VkvgContext ctx, float x, float y) {
     _add_point(ctx, x, y);
 }
 bool vkvg_has_current_point(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return false;
     return !_current_path_is_empty(ctx);
 }
@@ -575,14 +566,14 @@ void         _quadratic_to(VkvgContext ctx, float x1, float y1, float x2, float 
                       y2 + (y1 - y2) * quadraticFact, x2, y2);
 }
 void vkvg_quadratic_to(VkvgContext ctx, float x1, float y1, float x2, float y2) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_QUADRATIC_TO, x1, y1, x2, y2);
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: quadratic_to: %f, %f, %f, %f\n", x1, y1, x2, y2);
     _quadratic_to(ctx, x1, y1, x2, y2);
 }
 void vkvg_rel_quadratic_to(VkvgContext ctx, float x1, float y1, float x2, float y2) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_REL_QUADRATIC_TO, x1, y1, x2, y2);
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: rel_quadratic_to: %f, %f, %f, %f\n", x1, y1, x2, y2);
@@ -590,14 +581,14 @@ void vkvg_rel_quadratic_to(VkvgContext ctx, float x1, float y1, float x2, float 
     _quadratic_to(ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2);
 }
 void vkvg_curve_to(VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_CURVE_TO, x1, y1, x2, y2, x3, y3);
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: curve_to %f,%f %f,%f %f,%f:\n", x1, y1, x2, y2, x3, y3);
     _curve_to(ctx, x1, y1, x2, y2, x3, y3);
 }
 void vkvg_rel_curve_to(VkvgContext ctx, float x1, float y1, float x2, float y2, float x3, float y3) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     if (_current_path_is_empty(ctx)) {
         ctx->status = VKVG_STATUS_NO_CURRENT_POINT;
@@ -609,7 +600,7 @@ void vkvg_rel_curve_to(VkvgContext ctx, float x1, float y1, float x2, float y2, 
     _curve_to(ctx, cp.x + x1, cp.y + y1, cp.x + x2, cp.y + y2, cp.x + x3, cp.y + y3);
 }
 void vkvg_fill_rectangle(VkvgContext ctx, float x, float y, float w, float h) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: fill_rectangle:\n");
     _vao_add_rectangle(ctx, x, y, w, h);
@@ -617,7 +608,7 @@ void vkvg_fill_rectangle(VkvgContext ctx, float x, float y, float w, float h) {
 }
 
 vkvg_status_t vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return ctx->status;
     RECORD2(ctx, VKVG_CMD_RECTANGLE, x, y, w, h);
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: rectangle: %f,%f,%f,%f\n", x, y, w, h);
@@ -637,7 +628,7 @@ vkvg_status_t vkvg_rectangle(VkvgContext ctx, float x, float y, float w, float h
     return VKVG_STATUS_SUCCESS;
 }
 vkvg_status_t vkvg_rounded_rectangle(VkvgContext ctx, float x, float y, float w, float h, float radius) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return ctx->status;
     LOG(VKVG_LOG_INFO_CMD, "CMD: rounded_rectangle:\n");
     _finish_path(ctx);
@@ -662,7 +653,7 @@ vkvg_status_t vkvg_rounded_rectangle(VkvgContext ctx, float x, float y, float w,
     return VKVG_STATUS_SUCCESS;
 }
 void vkvg_rounded_rectangle2(VkvgContext ctx, float x, float y, float w, float h, float rx, float ry) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     LOG(VKVG_LOG_INFO_CMD, "CMD: rounded_rectangle2:\n");
     vkvg_move_to(ctx, x + rx, y);
@@ -681,7 +672,7 @@ void vkvg_rounded_rectangle2(VkvgContext ctx, float x, float y, float w, float h
     vkvg_close_path(ctx);
 }
 void vkvg_path_extents(VkvgContext ctx, float *x1, float *y1, float *x2, float *y2) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     _finish_path(ctx);
@@ -716,7 +707,7 @@ void _reset_clip(VkvgContext ctx) {
 }
 
 void vkvg_reset_clip(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     RECORD(ctx, VKVG_CMD_RESET_CLIP);
@@ -731,7 +722,7 @@ void vkvg_reset_clip(VkvgContext ctx) {
     _reset_clip(ctx);
 }
 void vkvg_clear(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     RECORD(ctx, VKVG_CMD_CLEAR);
@@ -947,47 +938,47 @@ void _stroke_preserve(VkvgContext ctx) {
 }
 
 void vkvg_clip(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_CLIP);
     _clip_preserve(ctx);
     _clear_path(ctx);
 }
 void vkvg_stroke(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_STROKE);
     _stroke_preserve(ctx);
     _clear_path(ctx);
 }
 void vkvg_fill(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_FILL);
     _fill_preserve(ctx);
     _clear_path(ctx);
 }
 void vkvg_clip_preserve(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_CLIP_PRESERVE);
     _clip_preserve(ctx);
 }
 void vkvg_fill_preserve(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_FILL_PRESERVE);
     _fill_preserve(ctx);
 }
 void vkvg_stroke_preserve(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_STROKE_PRESERVE);
     _stroke_preserve(ctx);
 }
 
 void vkvg_paint(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_PAINT);
     _finish_path(ctx);
@@ -1001,21 +992,21 @@ void vkvg_paint(VkvgContext ctx) {
     _draw_full_screen_quad(ctx, NULL);
 }
 void vkvg_set_source_color(VkvgContext ctx, uint32_t c) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_SOURCE_COLOR, c);
     ctx->curColor = c;
     _update_cur_pattern(ctx, NULL);
 }
 void vkvg_set_source_rgb(VkvgContext ctx, float r, float g, float b) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_SOURCE_RGB, r, g, b);
     ctx->curColor = CreateRgbaf(r, g, b, 1);
     _update_cur_pattern(ctx, NULL);
 }
 void vkvg_set_source_rgba(VkvgContext ctx, float r, float g, float b, float a) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_SOURCE_RGBA, r, g, b, a);
     ctx->curColor = CreateRgbaf(r, g, b, a);
@@ -1038,31 +1029,31 @@ void vkvg_set_source(VkvgContext ctx, VkvgPattern pat) {
     vkvg_pattern_reference(pat);
 }
 void vkvg_set_line_width(VkvgContext ctx, float width) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_LINE_WIDTH, width);
     ctx->lineWidth = width;
 }
 void vkvg_set_miter_limit(VkvgContext ctx, float limit) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_LINE_WIDTH, limit);
     ctx->miterLimit = limit;
 }
 void vkvg_set_line_cap(VkvgContext ctx, vkvg_line_cap_t cap) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_LINE_CAP, cap);
     ctx->lineCap = cap;
 }
 void vkvg_set_line_join(VkvgContext ctx, vkvg_line_join_t join) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_LINE_JOIN, join);
     ctx->lineJoin = join;
 }
 void vkvg_set_operator(VkvgContext ctx, vkvg_operator_t op) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_OPERATOR, op);
     if (op == ctx->curOperator)
@@ -1077,7 +1068,7 @@ void vkvg_set_operator(VkvgContext ctx, vkvg_operator_t op) {
         _bind_draw_pipeline(ctx);
 }
 void vkvg_set_fill_rule(VkvgContext ctx, vkvg_fill_rule_t fr) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 #ifndef __APPLE__
     RECORD(ctx, VKVG_CMD_SET_FILL_RULE, fr);
@@ -1085,17 +1076,17 @@ void vkvg_set_fill_rule(VkvgContext ctx, vkvg_fill_rule_t fr) {
 #endif
 }
 vkvg_fill_rule_t vkvg_get_fill_rule(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return VKVG_FILL_RULE_NON_ZERO;
     return ctx->curFillRule;
 }
 float vkvg_get_line_width(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return 0;
     return ctx->lineWidth;
 }
 void vkvg_set_dash(VkvgContext ctx, const float *dashes, uint32_t num_dashes, float offset) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     if (ctx->dashCount > 0)
         free(ctx->dashes);
@@ -1108,7 +1099,7 @@ void vkvg_set_dash(VkvgContext ctx, const float *dashes, uint32_t num_dashes, fl
     memcpy(ctx->dashes, dashes, sizeof(float) * ctx->dashCount);
 }
 void vkvg_get_dash(VkvgContext ctx, const float *dashes, uint32_t *num_dashes, float *offset) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     *num_dashes = ctx->dashCount;
     *offset     = ctx->dashOffset;
@@ -1118,35 +1109,35 @@ void vkvg_get_dash(VkvgContext ctx, const float *dashes, uint32_t *num_dashes, f
 }
 
 vkvg_line_cap_t vkvg_get_line_cap(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return (vkvg_line_cap_t)0;
     return ctx->lineCap;
 }
 vkvg_line_join_t vkvg_get_line_join(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return (vkvg_line_join_t)0;
     return ctx->lineJoin;
 }
 vkvg_operator_t vkvg_get_operator(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return (vkvg_operator_t)0;
     return ctx->curOperator;
 }
 VkvgPattern vkvg_get_source(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return NULL;
     vkvg_pattern_reference(ctx->pattern);
     return ctx->pattern;
 }
 
 void vkvg_select_font_face(VkvgContext ctx, const char *name) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_FACE, name);
     _select_font_face(ctx, name);
 }
 void vkvg_load_font_from_path(VkvgContext ctx, const char *path, const char *name) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
     _vkvg_font_identity_t *fid = _font_cache_add_font_identity(ctx, path, name);
@@ -1157,7 +1148,7 @@ void vkvg_load_font_from_path(VkvgContext ctx, const char *path, const char *nam
     _select_font_face(ctx, name);
 }
 void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char *fontBuffer, long fontBufferByteSize, const char *name) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     // RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
     _vkvg_font_identity_t *fid = _font_cache_add_font_identity(ctx, NULL, name);
@@ -1167,7 +1158,7 @@ void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char *fontBuffer, long
     _select_font_face(ctx, name);
 }
 void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_SIZE, size);
 #ifdef VKVG_USE_FREETYPE
@@ -1185,7 +1176,7 @@ void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
 void vkvg_set_text_direction(vkvg_context *ctx, vkvg_direction_t direction) {}
 
 void vkvg_show_text(VkvgContext ctx, const char *text) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SHOW_TEXT, text);
     LOG(VKVG_LOG_INFO_CMD, "CMD: show_text:\n");
@@ -1195,14 +1186,14 @@ void vkvg_show_text(VkvgContext ctx, const char *text) {
 }
 
 VkvgText vkvg_text_run_create(VkvgContext ctx, const char *text) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return NULL;
     VkvgText tr = (vkvg_text_run_t *)calloc(1, sizeof(vkvg_text_run_t));
     _font_cache_create_text_run(ctx, text, -1, tr);
     return tr;
 }
 VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char *text, uint32_t length) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return NULL;
     VkvgText tr = (vkvg_text_run_t *)calloc(1, sizeof(vkvg_text_run_t));
     _font_cache_create_text_run(ctx, text, length, tr);
@@ -1225,25 +1216,25 @@ void vkvg_text_run_destroy(VkvgText textRun) {
     free(textRun);
 }
 void vkvg_show_text_run(VkvgContext ctx, VkvgText textRun) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     _font_cache_show_text_run(ctx, textRun);
 }
 void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t *extents) { *extents = textRun->extents; }
 
 void vkvg_text_extents(VkvgContext ctx, const char *text, vkvg_text_extents_t *extents) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     _font_cache_text_extents(ctx, text, -1, extents);
 }
 void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t *extents) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     _font_cache_font_extents(ctx, extents);
 }
 
 void vkvg_save(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SAVE);
     LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
@@ -1275,7 +1266,7 @@ void vkvg_save(VkvgContext ctx) {
             }
             ctx->savedStencils  = savedStencilsPtr;
             VkhImage savStencil = vkh_image_ms_create(
-                (VkhDevice)dev, dev->stencilFormat, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
+                (VkhDevice)&ctx->dev->vkDev, dev->stencilFormat, dev->samples, ctx->pSurf->width, ctx->pSurf->height,
                 VKH_MEMORY_USAGE_GPU_ONLY, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
             ctx->savedStencils[curSaveStencil - 1] = savStencil;
 
@@ -1368,7 +1359,7 @@ void vkvg_save(VkvgContext ctx) {
     ctx->pSavedCtxs = sav;
 }
 void vkvg_restore(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
 
     RECORD(ctx, VKVG_CMD_RESTORE);
@@ -1506,7 +1497,7 @@ void vkvg_restore(VkvgContext ctx) {
 }
 
 void vkvg_translate(VkvgContext ctx, float dx, float dy) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_TRANSLATE, dx, dy);
     LOG(VKVG_LOG_INFO_CMD, "CMD: translate: %f, %f\n", dx, dy);
@@ -1515,7 +1506,7 @@ void vkvg_translate(VkvgContext ctx, float dx, float dy) {
     _set_mat_inv_and_vkCmdPush(ctx);
 }
 void vkvg_scale(VkvgContext ctx, float sx, float sy) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SCALE, sx, sy);
     LOG(VKVG_LOG_INFO_CMD, "CMD: scale: %f, %f\n", sx, sy);
@@ -1524,7 +1515,7 @@ void vkvg_scale(VkvgContext ctx, float sx, float sy) {
     _set_mat_inv_and_vkCmdPush(ctx);
 }
 void vkvg_rotate(VkvgContext ctx, float radians) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_ROTATE, radians);
     LOG(VKVG_LOG_INFO_CMD, "CMD: rotate: %f\n", radians);
@@ -1533,7 +1524,7 @@ void vkvg_rotate(VkvgContext ctx, float radians) {
     _set_mat_inv_and_vkCmdPush(ctx);
 }
 void vkvg_transform(VkvgContext ctx, const vkvg_matrix_t *matrix) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_TRANSFORM, matrix);
     LOG(VKVG_LOG_INFO_CMD, "CMD: transform: %f, %f, %f, %f, %f, %f\n", matrix->xx, matrix->yx, matrix->xy, matrix->yy,
@@ -1545,7 +1536,7 @@ void vkvg_transform(VkvgContext ctx, const vkvg_matrix_t *matrix) {
     _set_mat_inv_and_vkCmdPush(ctx);
 }
 void vkvg_identity_matrix(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_IDENTITY_MATRIX);
     LOG(VKVG_LOG_INFO_CMD, "CMD: identity_matrix:\n");
@@ -1555,7 +1546,7 @@ void vkvg_identity_matrix(VkvgContext ctx) {
     _set_mat_inv_and_vkCmdPush(ctx);
 }
 void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t *matrix) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_MATRIX, matrix);
     LOG(VKVG_LOG_INFO_CMD, "CMD: set_matrix: %f, %f, %f, %f, %f, %f\n", matrix->xx, matrix->yx, matrix->xy, matrix->yy,
@@ -1568,7 +1559,7 @@ void vkvg_get_matrix(VkvgContext ctx, vkvg_matrix_t *const matrix) { *matrix = c
 
 void vkvg_elliptic_arc_to(VkvgContext ctx, float x2, float y2, bool largeArc, bool sweepFlag, float rx, float ry,
                           float phi) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_ELLIPTICAL_ARC_TO, x2, y2, rx, ry, phi, largeArc, sweepFlag);
     LOG(VKVG_LOG_INFO_CMD,
@@ -1580,7 +1571,7 @@ void vkvg_elliptic_arc_to(VkvgContext ctx, float x2, float y2, bool largeArc, bo
 }
 void vkvg_rel_elliptic_arc_to(VkvgContext ctx, float x2, float y2, bool largeArc, bool sweepFlag, float rx, float ry,
                               float phi) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_REL_ELLIPTICAL_ARC_TO, x2, y2, rx, ry, phi, largeArc, sweepFlag);
     LOG(VKVG_LOG_INFO_CMD,
@@ -1593,7 +1584,7 @@ void vkvg_rel_elliptic_arc_to(VkvgContext ctx, float x2, float y2, bool largeArc
 }
 
 void vkvg_ellipse(VkvgContext ctx, float radiusX, float radiusY, float x, float y, float rotationAngle) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return;
     LOG(VKVG_LOG_INFO_CMD, "CMD: ellipse:\n");
 
@@ -1629,7 +1620,7 @@ void vkvg_ellipse(VkvgContext ctx, float radiusX, float radiusY, float x, float 
 }
 
 VkvgSurface vkvg_get_target(VkvgContext ctx) {
-    if (ctx->status)
+    if (vkvg_status(ctx))
         return NULL;
     return ctx->pSurf;
 }
@@ -1638,8 +1629,8 @@ const char *vkvg_status_to_string(vkvg_status_t status) {
     switch (status) {
     case VKVG_STATUS_SUCCESS:
         return "no error has occurred";
-    case VKVG_STATUS_NO_MEMORY:
-        return "out of memory";
+    /*case VKVG_STATUS_NO_MEMORY:
+        return "out of memory";*/
     case VKVG_STATUS_INVALID_RESTORE:
         return "vkvg_restore() without matching vkvg_save()";
     case VKVG_STATUS_NO_CURRENT_POINT:
