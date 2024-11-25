@@ -59,6 +59,7 @@ typedef struct _cached_ctx {
 } _cached_ctx;
 
 typedef struct _vkvg_device_t {
+    vkvg_status_t                    status;      /**< Current status of device, affected by last operation */
     VkDevice                         vkDev;       /**< Vulkan Logical Device */
     VkPhysicalDeviceMemoryProperties phyMemProps; /**< Vulkan Physical device memory properties */
     VkPhysicalDevice                 phy;         /**< Vulkan Physical device */
@@ -109,7 +110,6 @@ typedef struct _vkvg_device_t {
     VkhImage           emptyImg;        /**< prevent unbound descriptor to trigger Validation error 61 */
     VkSampleCountFlags samples;         /**< samples count common to all surfaces */
     bool               deferredResolve; /**< if true, resolve only on context destruction and set as source */
-    vkvg_status_t      status;          /**< Current status of device, affected by last operation */
 
     _font_cache_t *fontCache; /**< Store everything relative to common font caching system */
 

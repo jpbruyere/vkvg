@@ -558,12 +558,11 @@ void perform_test_onscreen(void (*testfunc)(void), const char *testName, int arg
     vkengine_set_cursor_pos_callback(e, mouse_move_callback);
     vkengine_set_scroll_callback(e, scroll_callback);
 
-    vkvg_device_create_info_t info = {samples, false, vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0};
+    vkvg_device_create_info_t info = {samples, false,      vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam,
+                                      0,       threadAware};
     device                         = vkvg_device_create(&info);
 
     vkvg_device_set_dpy(device, 96, 96);
-    if (threadAware)
-        vkvg_device_set_thread_aware(device, 1);
 
 #ifdef VKVG_TEST_DIRECT_DRAW
     surfaces = (VkvgSurface *)malloc(r->imgCount * sizeof(VkvgSurface));

@@ -19,8 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef CROSS_OS_H
-#define CROSS_OS_H
+#pragma once
 
 // cross platform os helpers
 #if defined(_WIN32) || defined(_WIN64)
@@ -53,5 +52,3 @@ void _linux_register_error_handler();
 #endif
 
 const char *getUserDir();
-
-#endif // CROSS_OS_H

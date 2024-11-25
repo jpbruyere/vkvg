@@ -1,6 +1,7 @@
 #include "test.h"
 
 float       lineWidth = 10.f;
+static float angle     = 0;
 const char *imgPath   = "data/miroir.jpg";
 
 VkvgPattern create_grad(VkvgContext ctx) {
@@ -47,6 +48,41 @@ void img_scale() {
     vkvg_surface_destroy(imgSurf);
 }
 
+void icon_sheet() {
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, "data/blender_icons16.png");
+    VkvgPattern pat     = vkvg_pattern_create_for_surface(imgSurf);
+    VkvgContext ctx     = _initCtx(surf);
+
+    vkvg_translate(ctx, 100, 100);
+
+    vkvg_matrix_t mat;
+    // vkvg_matrix_init_rotate(&mat, 1.2f);
+    // vkvg_matrix_init_translate(&mat, 23.f, 0.f);
+
+    float scale = 0.5f;
+
+    // vkvg_matrix_init_scale(&mat, scale, scale);
+    // vkvg_matrix_rotate(&mat, -0.3f);
+    vkvg_matrix_init_translate(&mat, 22.0f, 27.0f);
+    vkvg_matrix_scale(&mat, scale, scale);
+    vkvg_matrix_rotate(&mat, 0.2f);
+
+    // vkvg_matrix_init_rotate(&mat, 0.14f);
+    vkvg_pattern_set_matrix(pat, &mat);
+
+    // vkvg_scale(ctx, 4.f, 4.f);
+    // vkvg_rotate(ctx, 0.5f);
+    vkvg_set_source(ctx, pat);
+
+    vkvg_rectangle(ctx, 0, 0, 24.f / scale, 24.f / scale);
+    // vkvg_rectangle(ctx, 0, 0, 602.f, 640.f);
+    // vkvg_rectangle(ctx, 0, 0, 24.f, 24.f);
+    vkvg_fill(ctx);
+    vkvg_destroy(ctx);
+    vkvg_pattern_destroy(pat);
+    vkvg_surface_destroy(imgSurf);
+}
+
 void pat_scale() {
 
     VkvgContext ctx = _initCtx(surf);
@@ -64,8 +100,8 @@ void pat_scale() {
     vkvg_destroy(ctx);
     vkvg_pattern_destroy(pat);
 }
-static float angle = 0;
-void         pat_rotate() {
+
+void pat_rotate() {
     angle += 0.001f;
 
     VkvgContext ctx = _initCtx(surf);
@@ -89,5 +125,6 @@ int main(int argc, char *argv[]) {
     PERFORM_TEST(pat_scale, argc, argv);
     PERFORM_TEST(pat_rotate, argc, argv);
     PERFORM_TEST(img_scale, argc, argv);
+    PERFORM_TEST(icon_sheet, argc, argv);
     return 0;
 }

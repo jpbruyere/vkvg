@@ -22,8 +22,6 @@ void fixedSizeRects() {
     mtx_t mutex;
     pmutex = &mutex;
 
-    vkvg_device_set_thread_aware(device, 1);
-
     thrd_t threads[THREAD_COUNT];
 
     finishedThreadCount = 0;
@@ -39,8 +37,6 @@ void fixedSizeRects() {
     mtx_unlock(pmutex);
     mtx_destroy(pmutex);
     pmutex = NULL;
-
-    vkvg_device_set_thread_aware(device, 0);
 }
 
 int main(int argc, char *argv[]) {

@@ -48,6 +48,9 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	OPTION(VKVG_WIRED_FILL "enable wired polygon draw to check vertices and primitives" OFF)
 	IF (UNIX)
 		ADD_COMPILE_OPTIONS(-Wall -Wno-extra -Wno-unknown-pragmas -Wno-missing-braces -Wno-unused-variable -Wno-switch -Wno-unused-value)
+                IF (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+                    ADD_COMPILE_OPTIONS(-g3) # include macro info in debug
+                ENDIF()
 	ELSEIF(MSVC)
 		ADD_COMPILE_OPTIONS(/TC /W4 /wd4201 /wd4204 /wd4221 /wd4100) # c11 compliant
 	ENDIF()
@@ -59,22 +62,27 @@ ELSE()
 	IF (ANDROID)
 		ADD_COMPILE_OPTIONS(-O3 -w -pedantic)
 	ELSEIF (UNIX)		
-		#ADD_COMPILE_OPTIONS(-O3 -w -pedantic -fvisibility=hidden -fno-rtti)
-		#ADD_COMPILE_OPTIONS(-flto -pthread -lpthread -Wl,--no-as-needed)
+            #ADD_COMPILE_OPTIONS(-O3 -w -pedantic -fvisibility=hidden -fno-rtti)
+            #ADD_COMPILE_OPTIONS(-flto -pthread -lpthread -Wl,--no-as-needed)
 	ELSEIF(MSVC)
 		ADD_COMPILE_OPTIONS(/O2 /TC /W0 /Od)
 	ENDIF()
 ENDIF()
 
 OPTION(ENABLE_PROFILING "compile with the -pg options..." OFF)
+OPTION(ENABLE_GTESTS "enable google unit tests" ON)
+
+IF(ENABLE_GTESTS)
+    ADD_SUBDIRECTORY (gunit_tests)
+ENDIF()
 
 IF (ENABLE_PROFILING)
-	ADD_COMPILE_OPTIONS(
-		-pg -fno-reorder-functions -fno-inline
-		-O1
-		-fthread-jumps
-		-falign-functions  -falign-jumps
-		-falign-loops  -falign-labels)
+    ADD_COMPILE_OPTIONS(
+        -pg -fno-reorder-functions -fno-inline
+        -O1
+        -fthread-jumps
+        -falign-functions  -falign-jumps
+        -falign-loops  -falign-labels)
 ENDIF()
 
 OPTION(VKVG_RECORDING "enable experimental recording functions" OFF)
@@ -87,7 +95,7 @@ ENDIF ()
 
 OPTION(VKVG_DBG_STATS "record contexts statistics in the device" OFF)
 IF (VKVG_DBG_STATS)
-	ADD_DEFINITIONS (-DVKVG_DBG_STATS)
+    ADD_DEFINITIONS (-DVKVG_DBG_STATS)
 ENDIF ()
 
 OPTION(VKVG_USE_GLUTESS "Fill non-zero with glu tesselator" ON)
@@ -95,7 +103,7 @@ OPTION(VKVG_USE_GLUTESS "Fill non-zero with glu tesselator" ON)
 CMAKE_DEPENDENT_OPTION(VKVG_SVG "render svg with vkvg-svg library" OFF "UNIX" OFF)
 
 IF (NOT TARGET vkh)
-	ADD_SUBDIRECTORY (vkh)
+    ADD_SUBDIRECTORY (vkh)
 ENDIF()
 
 #use c++ vulkan memory allocator library (https://gpuopen.com/vulkan-memory-allocator/)

@@ -67,22 +67,24 @@ void _fonts_cache_create(VkvgDevice dev) {
     cache->texPixelSize = 1;
 #endif
 
+    VkhDevice vkhd = (VkhDevice)&dev->vkDev;
+
     cache->texLength = FONT_CACHE_INIT_LAYERS;
     cache->texture   = vkh_tex2d_array_create(
-        (VkhDevice)dev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, cache->texLength, VKH_MEMORY_USAGE_GPU_ONLY,
+        vkhd, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, cache->texLength, VKH_MEMORY_USAGE_GPU_ONLY,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     vkh_image_create_descriptor(cache->texture, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
                                 VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
                                 VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
 
-    cache->uploadFence = vkh_fence_create((VkhDevice)dev);
+    cache->uploadFence = vkh_fence_create(vkhd);
 
     const uint32_t buffLength = FONT_PAGE_SIZE * FONT_PAGE_SIZE * cache->texPixelSize;
 
-    vkh_buffer_init((VkhDevice)dev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU, buffLength,
-                    &cache->buff, true);
+    vkh_buffer_init(vkhd, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU, buffLength, &cache->buff,
+                    true);
 
-    cache->cmd = vkh_cmd_buff_create((VkhDevice)dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    cache->cmd = vkh_cmd_buff_create(vkhd, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
     // Set texture cache initial layout to shaderReadOnly to prevent error msg if cache is not fill
     const VkImageSubresourceRange subres = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, cache->texLength};
@@ -111,7 +113,7 @@ void _increase_font_tex_array(VkvgDevice dev) {
 
     uint8_t  newSize = cache->texLength + FONT_CACHE_INIT_LAYERS;
     VkhImage newImg  = vkh_tex2d_array_create(
-        (VkhDevice)dev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, newSize, VKH_MEMORY_USAGE_GPU_ONLY,
+        (VkhDevice)&dev->vkDev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, newSize, VKH_MEMORY_USAGE_GPU_ONLY,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     vkh_image_create_descriptor(newImg, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
                                 VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,

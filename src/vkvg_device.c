@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2025 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -71,6 +71,8 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t *info) {
     if (dev->status != VKVG_STATUS_SUCCESS)
         return;
 
+    VkhDevice vkhd = (VkhDevice)&dev->vkDev;
+
     if (!_device_init_function_pointers(dev)) {
         dev->status = VKVG_STATUS_NULL_POINTER;
         return;
@@ -79,7 +81,7 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t *info) {
     VkhPhyInfo phyInfos = vkh_phyinfo_create(dev->phy, NULL);
 
     dev->phyMemProps = phyInfos->memProps;
-    dev->gQueue      = vkh_queue_create((VkhDevice)dev, info->qFamIdx, info->qIndex);
+    dev->gQueue      = vkh_queue_create(vkhd, info->qFamIdx, info->qIndex);
     // mtx_init (&dev->gQMutex, mtx_plain);
 
     vkh_phyinfo_destroy(phyInfos);
@@ -89,10 +91,9 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t *info) {
     vmaCreateAllocator(&allocatorInfo, (VmaAllocator *)&dev->allocator);
 #endif
 
-    dev->cmdPool =
-        vkh_cmd_pool_create((VkhDevice)dev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    dev->cmd   = vkh_cmd_buff_create((VkhDevice)dev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-    dev->fence = vkh_fence_create_signaled((VkhDevice)dev);
+    dev->cmdPool = vkh_cmd_pool_create(vkhd, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    dev->cmd     = vkh_cmd_buff_create(vkhd, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    dev->fence   = vkh_fence_create_signaled(vkhd);
 
     _device_create_pipeline_cache(dev);
     _fonts_cache_create(dev);
@@ -120,38 +121,31 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t *info) {
     _linux_register_error_handler();
 #endif
 #ifdef VKVG_DBG_UTILS
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)dev->cmdPool, "Device Cmd Pool");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)dev->cmd, "Device Cmd Buff");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_FENCE, (uint64_t)dev->fence, "Device Fence");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass,
-                               "RP load img/stencil");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearStencil,
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)dev->cmdPool, "Device Cmd Pool");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)dev->cmd, "Device Cmd Buff");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_FENCE, (uint64_t)dev->fence, "Device Fence");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass, "RP load img/stencil");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearStencil,
                                "RP clear stencil");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearAll,
-                               "RP clear all");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearAll, "RP clear all");
 
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc,
-                               "DSLayout SOURCE");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont,
-                               "DSLayout FONT");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad,
-                               "DSLayout GRADIENT");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout,
-                               "PLLayout dev");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
 
 #ifndef __APPLE__
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelinePolyFill,
-                               "PL Poly fill");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelinePolyFill, "PL Poly fill");
 #endif
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelineClipping, "PL Clipping");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_OVER, "PL draw Over");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_SUB, "PL draw Substract");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_CLEAR, "PL draw Clear");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelineClipping, "PL Clipping");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_OVER, "PL draw Over");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_SUB, "PL draw Substract");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_CLEAR, "PL draw Clear");
 
     vkh_image_set_name(dev->emptyImg, "empty IMG");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(dev->emptyImg),
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(dev->emptyImg),
                                "empty IMG VIEW");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(dev->emptyImg),
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(dev->emptyImg),
                                "empty IMG SAMPLER");
 #endif
 #endif
@@ -286,13 +280,24 @@ const void *vkvg_get_device_requirements(VkPhysicalDeviceFeatures *pEnabledFeatu
 
 VkvgDevice vkvg_device_create(vkvg_device_create_info_t *info) {
     LOG(VKVG_LOG_INFO, "CREATE Device\n");
+    if (!info) {
+        LOG(VKVG_LOG_ERR, "CREATE Device failed, provided vkvg_device_create_info_t is null\n");
+        return (VkvgDevice)&_vkvg_status_invalid_dev_ci;
+    }
     VkvgDevice dev = (vkvg_device *)calloc(1, sizeof(vkvg_device));
     if (!dev) {
         LOG(VKVG_LOG_ERR, "CREATE Device failed, no memory\n");
-        exit(-1);
+        return (VkvgDevice)&_vkvg_status_no_memory;
     }
 
     dev->references = 1;
+
+    dev->threadAware = info->threadAware;
+    if (dev->threadAware) {
+        mtx_init(&dev->mutex, mtx_plain);
+        mtx_init(&dev->fontCache->mutex, mtx_plain);
+        dev->threadAware = true;
+    }
 
     if (!info->vkdev) {
         const char *enabledExts[10];
@@ -336,6 +341,9 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t *info) {
         if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
             if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
                 pi = phys[0];
+
+        if (!info->samples) // if not set, default to 1 sample
+            info->samples = VK_SAMPLE_COUNT_1_BIT;
 
         if (!(pi->properties.limits.framebufferColorSampleCounts & info->samples)) {
             LOG(VKVG_LOG_ERR, "CREATE Device failed: sample count not supported: %d\n", info->samples);
@@ -388,6 +396,10 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t *info) {
 }
 
 void vkvg_device_destroy(VkvgDevice dev) {
+    if (vkvg_device_status(dev)) {
+        LOG(VKVG_LOG_ERR, "DESTROY Device failed, see Status for info");
+        return;
+    }
     LOCK_DEVICE
     dev->references--;
     if (dev->references > 0) {
@@ -396,17 +408,19 @@ void vkvg_device_destroy(VkvgDevice dev) {
     }
     UNLOCK_DEVICE
 
+    LOG(VKVG_LOG_INFO, "DESTROY Device\n");
+
     if (dev->cachedContextCount > 0) {
         _cached_ctx *cur = dev->cachedContextLast;
         while (cur) {
+            assert(cur->ctx->status == VKVG_STATUS_IN_CACHE);
+            cur->ctx->status = VKVG_STATUS_SUCCESS;
             _release_context_ressources(cur->ctx);
             _cached_ctx *prev = cur;
             cur               = cur->pNext;
             free(prev);
         }
     }
-
-    LOG(VKVG_LOG_INFO, "DESTROY Device\n");
 
     vkDeviceWaitIdle(dev->vkDev);
 
@@ -449,8 +463,10 @@ void vkvg_device_destroy(VkvgDevice dev) {
     vmaDestroyAllocator(dev->allocator);
 #endif
 
-    if (dev->threadAware)
+    if (dev->threadAware) {
         mtx_destroy(&dev->mutex);
+        mtx_destroy(&dev->fontCache->mutex);
+    }
 
     if (dev->vkhDev) {
         VkhApp app = vkh_device_get_app(dev->vkhDev);
@@ -461,38 +477,38 @@ void vkvg_device_destroy(VkvgDevice dev) {
     free(dev);
 }
 
-vkvg_status_t vkvg_device_status(VkvgDevice dev) { return dev->status; }
+vkvg_status_t vkvg_device_status(VkvgDevice dev) { return !dev ? VKVG_STATUS_NULL_POINTER : dev->status; }
 VkvgDevice    vkvg_device_reference(VkvgDevice dev) {
-    LOCK_DEVICE
-    dev->references++;
-    UNLOCK_DEVICE
+    if (!vkvg_device_status(dev)) {
+        LOCK_DEVICE
+        dev->references++;
+        UNLOCK_DEVICE
+    }
     return dev;
 }
-uint32_t vkvg_device_get_reference_count(VkvgDevice dev) { return dev->references; }
-void     vkvg_device_set_dpy(VkvgDevice dev, int hdpy, int vdpy) {
+uint32_t vkvg_device_get_reference_count(VkvgDevice dev) { return vkvg_device_status(dev) ? 0 : dev->references; }
+// TODO dpy reorganisation
+void vkvg_device_set_dpy(VkvgDevice dev, int hdpy, int vdpy) {
+    if (vkvg_device_status(dev))
+        return;
     dev->hdpi = hdpy;
     dev->vdpi = vdpy;
 
     // TODO: reset font cache
 }
 void vkvg_device_get_dpy(VkvgDevice dev, int *hdpy, int *vdpy) {
+    if (vkvg_device_status(dev))
+        return;
     *hdpy = dev->hdpi;
     *vdpy = dev->vdpi;
 }
-void vkvg_device_set_thread_aware(VkvgDevice dev, uint32_t thread_aware) {
-    if (thread_aware) {
-        if (dev->threadAware)
-            return;
-        mtx_init(&dev->mutex, mtx_plain);
-        mtx_init(&dev->fontCache->mutex, mtx_plain);
-        dev->threadAware = true;
-    } else if (dev->threadAware) {
-        mtx_destroy(&dev->mutex);
-        mtx_destroy(&dev->fontCache->mutex);
-        dev->threadAware = false;
-    }
-}
 #if VKVG_DBG_STATS
-vkvg_debug_stats_t vkvg_device_get_stats(VkvgDevice dev) { return dev->debug_stats; }
-vkvg_debug_stats_t vkvg_device_reset_stats(VkvgDevice dev) { dev->debug_stats = (vkvg_debug_stats_t){0}; }
+vkvg_debug_stats_t vkvg_device_get_stats(VkvgDevice dev) {
+    return vkvg_device_status(dev) ? (vkvg_debug_stats_t){0} : dev->debug_stats;
+}
+void vkvg_device_reset_stats(VkvgDevice dev) {
+    if (vkvg_device_status(dev))
+        return;
+    dev->debug_stats = (vkvg_debug_stats_t){0};
+}
 #endif

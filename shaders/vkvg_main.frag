@@ -143,7 +143,7 @@ void main()
 	}
 
 	if (inFontUV.z >= 0.0)
-		c *= texture(fontMap, inFontUV).r;
+            c *= texture(fontMap, inFontUV).r;
 
 #ifdef VKVG_PREMULT_ALPHA
 	c *= inOpacity;
