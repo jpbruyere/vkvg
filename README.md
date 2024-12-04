@@ -11,12 +11,6 @@
   <a href="https://github.com/jpbruyere/vkvg/actions/workflows/cmake.yml">
      <img src="https://github.com/jpbruyere/vkvg/actions/workflows/cmake.yml/badge.svg">
   </a>
-  <a href="https://travis-ci.org/jpbruyere/vkvg">
-    <img src="https://img.shields.io/travis/jpbruyere/vkvg.svg?label=Linux&logo=travis&logoColor=white&message=build">
-  </a>
-  <a href="https://ci.appveyor.com/project/jpbruyere/vkvg">
-    <img src="https://img.shields.io/appveyor/ci/jpbruyere/vkvg?label=Win64&logo=appveyor&logoColor=lightgrey">
-  </a>
   <img src="https://img.shields.io/github/license/jpbruyere/vkvg.svg?style=flat-square">
   <a href="https://www.paypal.me/GrandTetraSoftware">
     <img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square">

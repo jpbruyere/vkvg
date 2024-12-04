@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+ * Copyright (c) 2018-2025 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -19,8 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef VKVG_INTERNAL_H
-#define VKVG_INTERNAL_H
+#pragma once
 
 // disable warning on iostream functions on windows
 #define _CRT_SECURE_NO_WARNINGS
@@ -109,4 +108,3 @@ static vkvg_status_t _vkvg_status_invalid_dev_ci  = VKVG_STATUS_INVALID_DEVICE_C
 static vkvg_status_t _vkvg_status_device_error    = VKVG_STATUS_DEVICE_ERROR;
 static vkvg_status_t _vkvg_status_invalid_surface = VKVG_STATUS_INVALID_SURFACE;
 
-#endif

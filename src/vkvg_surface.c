@@ -197,7 +197,7 @@ void vkvg_surface_destroy(VkvgSurface surf) {
         LOG(VKVG_LOG_ERR, "DESTROY surface failed, invalid surface\n");
         return;
     }
-    if (!surf->dev || surf->dev->status) {
+    if (vkvg_device_status(surf->dev)) {
         LOG(VKVG_LOG_ERR, "DESTROY surface failed, device error\n");
         return;
     }
@@ -251,40 +251,40 @@ uint32_t vkvg_surface_get_reference_count(VkvgSurface surf) {
 }
 
 VkImage vkvg_surface_get_vk_image(VkvgSurface surf) {
-    if (surf->status)
+    if (vkvg_surface_status(surf))
         return NULL;
     if (surf->dev->deferredResolve)
         _explicit_ms_resolve(surf);
     return vkh_image_get_vkimage(surf->img);
 }
 void vkvg_surface_resolve(VkvgSurface surf) {
-    if (surf->status || !surf->dev->deferredResolve)
+    if (vkvg_surface_status(surf) || !surf->dev->deferredResolve)
         return;
     _explicit_ms_resolve(surf);
 }
 VkFormat vkvg_surface_get_vk_format(VkvgSurface surf) {
-    if (surf->status)
+    if (vkvg_surface_status(surf))
         return VK_FORMAT_UNDEFINED;
     return surf->format;
 }
 uint32_t vkvg_surface_get_width(VkvgSurface surf) {
-    if (surf->status)
+    if (vkvg_surface_status(surf))
         return 0;
     return surf->width;
 }
 uint32_t vkvg_surface_get_height(VkvgSurface surf) {
-    if (surf->status)
+    if (vkvg_surface_status(surf))
         return 0;
     return surf->height;
 }
 
 vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path) {
-    if (surf->status) {
-        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid status: %d\n", surf->status);
+    if (vkvg_surface_status(surf)) {
+        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid status: %d\n", vkvg_surface_status(surf));
         return VKVG_STATUS_INVALID_STATUS;
     }
-    if (surf->dev->status) {
-        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid device status: %d\n", surf->dev->status);
+    if (vkvg_device_status(surf->dev)) {
+        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid device status: %d\n", vkvg_device_status(surf->dev));
         return VKVG_STATUS_INVALID_STATUS;
     }
     if (surf->dev->pngStagFormat == VK_FORMAT_UNDEFINED) {
@@ -376,8 +376,8 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path) {
 }
 
 vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char *const bitmap) {
-    if (surf->status) {
-        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_memory failed, invalid status: %d\n", surf->status);
+    if (vkvg_surface_status(surf)) {
+        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_memory failed, invalid status: %d\n", vkvg_surface_status(surf));
         return VKVG_STATUS_INVALID_STATUS;
     }
     if (!bitmap) {
