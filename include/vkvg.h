@@ -650,7 +650,7 @@ vkvg_public vkvg_status_t vkvg_device_status(VkvgDevice dev);
  * @brief Increment the reference count on this device.
  *
  * Increment by one the reference count on the device.
- * @param The vkvg device pointer to increment the reference count for.
+ * @param dev The vkvg device pointer to increment the reference count for.
  * @return
  */
 vkvg_public VkvgDevice vkvg_device_reference(VkvgDevice dev);
@@ -761,24 +761,24 @@ vkvg_public VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned
 vkvg_public vkvg_status_t vkvg_surface_status(VkvgSurface surf);
 /**
  * @brief Increment reference count on the surface by one.
- * @param The vkvg surface to increment the reference count for.
+ * @param surf The vkvg surface to increment the reference count for.
  * @return ?
  */
 vkvg_public VkvgSurface vkvg_surface_reference(VkvgSurface surf);
 /**
  * @brief Get the current reference count on this surface.
- * @param The vkvg surface to get the reference count for.
+ * @param surf The vkvg surface to get the reference count for.
  * @return The reference count on the surface.
  */
 vkvg_public uint32_t vkvg_surface_get_reference_count(VkvgSurface surf);
 /**
  * @brief Decrement the reference count on the surface by one. Destroy it if count reach 0.
- * @param The vkvg surface to destroy.
+ * @param surf The vkvg surface to destroy.
  */
 vkvg_public void vkvg_surface_destroy(VkvgSurface surf);
 /**
  * @brief Query the current status of the surface.
- * @param The vkvg surface to query the status for.
+ * @param surf The vkvg surface to query the status for.
  * @return The current surface status.
  */
 vkvg_public vkvg_status_t vkvg_surface_status(VkvgSurface surf);
@@ -790,44 +790,44 @@ vkvg_public vkvg_status_t vkvg_surface_status(VkvgSurface surf);
  *
  * @remark Internaly, the vulkan method used to clear the surface is the slowest, prefer using the @ref vkvg_clear
  * function of the context that will try to use the render pass load operations when possible.
- * @param The surface to clear.
+ * @param surf The surface to clear.
  */
 vkvg_public void vkvg_surface_clear(VkvgSurface surf);
 /**
  * @brief Get the final single sampled vulkan image of this surface.
- * @param The vkvg surface to get the vulkan texture of.
+ * @param surf The vkvg surface to get the vulkan texture of.
  * @return The VkImage object containing the result of the drawing operations on the surface.
  */
 vkvg_public VkImage vkvg_surface_get_vk_image(VkvgSurface surf);
 /**
  * @brief Get the vulkan format of the vulkan texture used as backend for this surface.
- * @param The surface to get the format for.
+ * @param surf The surface to get the format for.
  * @return The VkFormat.
  */
 vkvg_public VkFormat vkvg_surface_get_vk_format(VkvgSurface surf);
 /**
  * @brief Get the actual surface width.
- * @param The vkvg surface to get the width for.
+ * @param surf The vkvg surface to get the width for.
  * @return The width in pixel of the surface.
  */
 vkvg_public uint32_t vkvg_surface_get_width(VkvgSurface surf);
 /**
  * @brief Get the actual surface height.
- * @param The vkvg surface to get the height for.
+ * @param surf The vkvg surface to get the height for.
  * @return The height in pixel of the surface.
  */
 vkvg_public uint32_t vkvg_surface_get_height(VkvgSurface surf);
 /**
  * @brief Write surface content to a png file on disk.
- * @param The surface to save on disk.
- * @param The png file path.
+ * @param surf The surface to save on disk.
+ * @param path The png file path.
  * @return SUCCESS or not.
  */
 vkvg_public vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path);
 /**
  * @brief Save surface to memory
- * @param The surface to save
- * @param A valid pointer on cpu memory large enough to contain surface pixels (stride * height)
+ * @param surf The surface to save
+ * @param bitmap A valid pointer on cpu memory large enough to contain surface pixels (stride * height)
  * @return SUCCESS or not.
  */
 vkvg_public vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char *const bitmap);
@@ -986,7 +986,7 @@ vkvg_public void vkvg_new_sub_path(VkvgContext ctx);
  * @param x2 right of the resulting extents
  * @param y2 bottom of the resulting extents
  */
-vkvg_public void vkvg_path_extents(VkvgContext ctx, float *x1, float *y1, float *x2, float *y2);
+vkvg_public void vkvg_path_extents(VkvgContext ctx, float* const x1, float *const y1, float *const x2, float *const y2);
 /**
  * @brief Get the current point.
  *
@@ -1375,6 +1375,24 @@ vkvg_public void vkvg_set_source_rgba(VkvgContext ctx, float r, float g, float b
  */
 vkvg_public void vkvg_set_source_rgb(VkvgContext ctx, float r, float g, float b);
 /**
+ * @brief use supplied surface as current pattern.
+ *
+ * set #VkvgSurface as the current context source.
+ * @param ctx a valid vkvg @ref context
+ * @param surf the vkvg surface to use as source.
+ * @param x an x offset to apply for drawing operations using this surface.
+ * @param y an y offset to apply for drawing operations using this surface.
+ */
+vkvg_public void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y);
+/**
+ * @brief set supplied pattern as current source.
+ *
+ * set #VkvgPattern as the new source for the targeted context.
+ * @param ctx a valid vkvg @ref context
+ * @param pat the new pattern to use as source for further drawing operations.
+ */
+vkvg_public void vkvg_set_source(VkvgContext ctx, VkvgPattern pat);
+/**
  * @brief set line width for the next draw command.
  *
  * Set the current line width for the targeted context. All further calls to #vkvg_stroke on this context
@@ -1426,24 +1444,6 @@ vkvg_public void vkvg_set_line_cap(VkvgContext ctx, vkvg_line_cap_t cap);
  * @param join new line join as defined in #vkvg_line_joint_t.
  */
 vkvg_public void vkvg_set_line_join(VkvgContext ctx, vkvg_line_join_t join);
-/**
- * @brief use supplied surface as current pattern.
- *
- * set #VkvgSurface as the current context source.
- * @param ctx a valid vkvg @ref context
- * @param surf the vkvg surface to use as source.
- * @param x an x offset to apply for drawing operations using this surface.
- * @param y an y offset to apply for drawing operations using this surface.
- */
-vkvg_public void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y);
-/**
- * @brief set supplied pattern as current source.
- *
- * set #VkvgPattern as the new source for the targeted context.
- * @param ctx a valid vkvg @ref context
- * @param pat the new pattern to use as source for further drawing operations.
- */
-vkvg_public void vkvg_set_source(VkvgContext ctx, VkvgPattern pat);
 /**
  * @brief
  *

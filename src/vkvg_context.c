@@ -120,6 +120,7 @@ VkvgContext vkvg_create(VkvgSurface surf) {
             free(ctx->vertexCache);
         if (ctx->indexCache)
             free(ctx->indexCache);
+        free(ctx);
         LOG(VKVG_LOG_ERR, "CREATE context failed, no memory\n");
         return (VkvgContext)&_vkvg_status_no_memory;
     }
@@ -336,10 +337,10 @@ void vkvg_new_path(VkvgContext ctx) {
     if (vkvg_status(ctx))
         return;
 
+    RECORD(ctx, VKVG_CMD_NEW_PATH);
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: new_path:\n");
 
     _clear_path(ctx);
-    RECORD(ctx, VKVG_CMD_NEW_PATH);
 }
 void vkvg_close_path(VkvgContext ctx) {
     if (vkvg_status(ctx))
@@ -520,7 +521,11 @@ bool vkvg_has_current_point(VkvgContext ctx) {
     return !_current_path_is_empty(ctx);
 }
 void vkvg_get_current_point(VkvgContext ctx, float *x, float *y) {
-    if (ctx->status || _current_path_is_empty(ctx)) {
+    if (vkvg_status(ctx))
+        return;
+    assert(x);
+    assert(y);
+    if (_current_path_is_empty(ctx)) {
         *x = *y = 0;
         return;
     }
@@ -671,7 +676,7 @@ void vkvg_rounded_rectangle2(VkvgContext ctx, float x, float y, float w, float h
 
     vkvg_close_path(ctx);
 }
-void vkvg_path_extents(VkvgContext ctx, float *x1, float *y1, float *x2, float *y2) {
+void vkvg_path_extents(VkvgContext ctx, float* const x1, float *const y1, float *const x2, float *const y2) {
     if (vkvg_status(ctx))
         return;
 
@@ -1013,7 +1018,7 @@ void vkvg_set_source_rgba(VkvgContext ctx, float r, float g, float b, float a) {
     _update_cur_pattern(ctx, NULL);
 }
 void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y) {
-    if (ctx->status || surf->status)
+    if (vkvg_status(ctx) || vkvg_surface_status(surf))
         return;
     RECORD(ctx, VKVG_CMD_SET_SOURCE_SURFACE, x, y, surf);
     ctx->pushConsts.source.x = x;
@@ -1022,7 +1027,7 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
     ctx->pushCstDirty = true;
 }
 void vkvg_set_source(VkvgContext ctx, VkvgPattern pat) {
-    if (ctx->status || pat->status)
+    if (vkvg_status(ctx) || vkvg_pattern_status(pat))
         return;
     RECORD(ctx, VKVG_CMD_SET_SOURCE, pat);
     _update_cur_pattern(ctx, pat);
@@ -1085,6 +1090,11 @@ float vkvg_get_line_width(VkvgContext ctx) {
         return 0;
     return ctx->lineWidth;
 }
+float vkvg_get_miter_limit(VkvgContext ctx) {
+    if (vkvg_status(ctx))
+        return 0;
+    return ctx->miterLimit;
+}
 void vkvg_set_dash(VkvgContext ctx, const float *dashes, uint32_t num_dashes, float offset) {
     if (vkvg_status(ctx))
         return;
@@ -1120,7 +1130,7 @@ vkvg_line_join_t vkvg_get_line_join(VkvgContext ctx) {
 }
 vkvg_operator_t vkvg_get_operator(VkvgContext ctx) {
     if (vkvg_status(ctx))
-        return (vkvg_operator_t)0;
+        return VKVG_OPERATOR_OVER;
     return ctx->curOperator;
 }
 VkvgPattern vkvg_get_source(VkvgContext ctx) {
@@ -1555,7 +1565,11 @@ void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t *matrix) {
     ctx->pushConsts.mat = (*matrix);
     _set_mat_inv_and_vkCmdPush(ctx);
 }
-void vkvg_get_matrix(VkvgContext ctx, vkvg_matrix_t *const matrix) { *matrix = ctx->pushConsts.mat; }
+void vkvg_get_matrix(VkvgContext ctx, vkvg_matrix_t *const matrix) {
+    if (vkvg_status(ctx) || !matrix)
+        return;
+    *matrix = ctx->pushConsts.mat;
+}
 
 void vkvg_elliptic_arc_to(VkvgContext ctx, float x2, float y2, bool largeArc, bool sweepFlag, float rx, float ry,
                           float phi) {
