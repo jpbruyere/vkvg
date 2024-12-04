@@ -494,7 +494,7 @@ void perform_test_offscreen(void (*testfunc)(void), const char *testName, int ar
     VkhDevice dev = vkh_device_create(app, pi, &device_info);
 
     vkvg_device_create_info_t info = {
-        samples, deferredResolve, vkh_app_get_inst(e->app), dev->phy, dev->dev, pi->gQueue, 0};
+        samples, deferredResolve, vkh_app_get_inst(app), dev->phy, dev->dev, pi->gQueue, 0};
 
     device = vkvg_device_create(&info);
     // vkvg_device_set_dpy(device, 96, 96);
