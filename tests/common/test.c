@@ -361,15 +361,48 @@ void _parse_args(int argc, char *argv[]) {
         exit(0);
     }
 }
+typedef struct time_struct {
+    double start_time;
+    double stop_time;
+    double run_time;
+    double run_total;
+    double min_run_time;
+    double max_run_time;
+    double *run_time_values;
+    uint32_t count;
+} time_struct_t;
 
-void _print_results(const char *testName, int argc, char *argv[], uint32_t i, double run_total,
-                    double *run_time_values) {
+time_struct_t time_struct_create (uint32_t iterations) {
+    time_struct_t ts = {0};
+    ts.run_time_values = (double *)malloc(iterations * sizeof(double));
+    return ts;
+}
+void time_struct_destroy (time_struct_t* ts) {
+    free(ts->run_time_values);
+}
+void time_struct_start(time_struct_t* ts) {
+    ts->start_time = get_tick();
+}
+void time_struct_end(time_struct_t* ts) {
+    ts->stop_time          = get_tick();
+    ts->run_time           = ts->stop_time - ts->start_time;
+    ts->run_time_values[ts->count] = ts->run_time;
+
+    if (ts->min_run_time < 0)
+        ts->min_run_time = ts->run_time;
+    else
+        ts->min_run_time = MIN(ts->run_time, ts->min_run_time);
+    ts->max_run_time = MAX(ts->run_time, ts->max_run_time);
+    ts->run_total += ts->run_time;
+    ts->count++;
+}
+void _print_results(const char *testName, int argc, char *argv[], time_struct_t* ts) {
     char *whoami;
     (whoami = strrchr(argv[0], '/')) ? ++whoami : (whoami = argv[0]);
 
-    double avg_run_time          = run_total / (double)i;
-    double med_run_time          = median_run_time(run_time_values, i);
-    double standard_dev          = standard_deviation(run_time_values, i, avg_run_time);
+    double avg_run_time          = ts->run_total / (double)ts->count;
+    double med_run_time          = median_run_time(ts->run_time_values, ts->count);
+    double standard_dev          = standard_deviation(ts->run_time_values, ts->count, avg_run_time);
     double avg_frames_per_second = (1.0 / avg_run_time);
     avg_frames_per_second        = (avg_frames_per_second < 9999) ? avg_frames_per_second : 9999;
 
@@ -391,7 +424,7 @@ void _print_results(const char *testName, int argc, char *argv[], uint32_t i, do
 #endif
     }
 
-    printf("| %2d | %-15s | %-25s | %4d | ", test_index, whoami, testName, i);
+    printf("| %2d | %-15s | %-25s | %4d | ", test_index, whoami, testName, ts->count);
     if (no_test_size)
         printf("%4d | ", 1);
     else
@@ -503,34 +536,22 @@ void perform_test_offscreen(void (*testfunc)(void), const char *testName, int ar
 
     surf = vkvg_surface_create(device, test_width, test_height);
 
-    double  start_time = 0.0, stop_time = 0.0, run_time = 0.0, run_total = 0.0, min_run_time = -1, max_run_time = 0.0;
-    double *run_time_values = (double *)malloc(iterations * sizeof(double));
+    time_struct_t ts = time_struct_create(iterations);
 
-    uint32_t i = 0;
-    while (i < iterations) {
-        start_time = get_tick();
+    while (ts.count < iterations) {
+        time_struct_start(&ts);
 
         testfunc();
 
         if (deferredResolve)
             vkvg_surface_resolve(surf);
 
-        stop_time          = get_tick();
-        run_time           = stop_time - start_time;
-        run_time_values[i] = run_time;
-
-        if (min_run_time < 0)
-            min_run_time = run_time;
-        else
-            min_run_time = MIN(run_time, min_run_time);
-        max_run_time = MAX(run_time, max_run_time);
-        run_total += run_time;
-        i++;
+        time_struct_end(&ts);
     }
 
-    _print_results(testName, argc, argv, i, run_total, run_time_values);
+    _print_results(testName, argc, argv, &ts);
 
-    free(run_time_values);
+    time_struct_destroy(&ts);
 
     vkDeviceWaitIdle(dev->dev);
 
@@ -573,17 +594,14 @@ void perform_test_onscreen(void (*testfunc)(void), const char *testName, int arg
     vkh_presenter_build_blit_cmd(r, vkvg_surface_get_vk_image(surf), test_width, test_height);
 #endif
 
-    double  start_time = 0.0, stop_time = 0.0, run_time = 0.0, run_total = 0.0, min_run_time = -1, max_run_time = 0.0;
-    double *run_time_values = (double *)malloc(iterations * sizeof(double));
-
-    uint32_t i = 0;
+    time_struct_t ts = time_struct_create(iterations);
 
     vkengine_set_title(e, testName);
 
-    while (!vkengine_should_close(e) && i < iterations) {
+    while (!vkengine_should_close(e) && ts.count < iterations) {
         glfwPollEvents();
 
-        start_time = get_tick();
+        time_struct_start(&ts);
 
 #ifdef VKVG_TEST_DIRECT_DRAW
 
@@ -627,26 +645,15 @@ void perform_test_onscreen(void (*testfunc)(void), const char *testName, int arg
             continue;
         }
 #endif
-
-        stop_time          = get_tick();
-        run_time           = stop_time - start_time;
-        run_time_values[i] = run_time;
-
-        if (min_run_time < 0)
-            min_run_time = run_time;
-        else
-            min_run_time = MIN(run_time, min_run_time);
-        max_run_time = MAX(run_time, max_run_time);
-        run_total += run_time;
-        i++;
+        time_struct_end(&ts);
     }
 
     if (saveToPng)
         vkvg_surface_write_to_png(surf, saveToPng);
 
-    _print_results(testName, argc, argv, i, run_total, run_time_values);
+    _print_results(testName, argc, argv, &ts);
 
-    free(run_time_values);
+    time_struct_destroy(&ts);
 
     vkDeviceWaitIdle(e->dev->dev);
 
