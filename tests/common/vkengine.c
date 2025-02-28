@@ -178,13 +178,13 @@ vk_engine_t *vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_app_enable_debug_messenger(e->app,
                                    VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-                                   //| VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-                                   //| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+                                   | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+                                   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
                                    ,
                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
                                        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-                                   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-                                   //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+                                   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+                                   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
                                    ,
                                    NULL);
 #endif
