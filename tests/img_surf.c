@@ -155,9 +155,74 @@ void test() {
     vkvg_destroy(ctx);
 }
 
+const char* imgPath2 = "data/miroir.png";
+const char* imgPath3 = "data/filled.png";
+
+void imgTest() {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_line_width(ctx, 1.0); // 设置线宽
+    vkvg_set_line_cap(ctx, VKVG_LINE_CAP_ROUND); // 设置线条端点样式
+    vkvg_set_line_join(ctx, VKVG_LINE_JOIN_ROUND); // 设置线条连接样式
+
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath3);
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+    vkvg_paint(ctx);
+
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
+void imgTest2() {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_line_width(ctx, 10.0); // 设置线宽
+    vkvg_set_line_cap(ctx, VKVG_LINE_CAP_ROUND); // 设置线条端点样式
+    vkvg_set_line_join(ctx, VKVG_LINE_JOIN_ROUND); // 设置线条连接样式
+
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath3);
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+
+    float arcSize = 70.f;
+    vkvg_translate(ctx, 20, 20);
+
+    vkvg_arc(ctx, arcSize, arcSize, arcSize, 0, 2.f * M_PIF);
+    vkvg_fill_preserve(ctx);
+    vkvg_arc(ctx, arcSize, arcSize, arcSize, 0, 2.f * M_PIF);
+    vkvg_set_source_rgba(ctx,0.4f,0.4f,0.9f,1);
+
+    vkvg_stroke(ctx);
+
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
+void imgTestClipped() {
+    VkvgContext ctx = vkvg_create(surf);
+
+    vkvg_set_line_width(ctx, 10.0); // 设置线宽
+    vkvg_set_line_cap(ctx, VKVG_LINE_CAP_ROUND); // 设置线条端点样式
+    vkvg_set_line_join(ctx, VKVG_LINE_JOIN_ROUND); // 设置线条连接样式
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD); // 设置线条连接样式
+
+    vkvg_set_source_rgba(ctx,0,0,0,1);
+    vkvg_paint(ctx);//black background, or png will be transparent
+
+
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath3);
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+
+    float arcSize = 70.f;
+
+    vkvg_arc(ctx, arcSize, arcSize, 71.f, 0, 2.f * M_PIF);
+    vkvg_clip_preserve(ctx);
+
+    vkvg_fill(ctx);
+
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
+
 int main(int argc, char *argv[]) {
     no_test_size = true;
-    PERFORM_TEST(paint, argc, argv);
+    PERFORM_TEST(imgTestClipped, argc, argv);
+    /*PERFORM_TEST(paint, argc, argv);
     PERFORM_TEST(paint_offset, argc, argv);
     PERFORM_TEST(paint_with_scale, argc, argv);
     PERFORM_TEST(offset_and_scale, argc, argv);
@@ -168,7 +233,7 @@ int main(int argc, char *argv[]) {
     PERFORM_TEST(paint_patt_repeat, argc, argv);
     PERFORM_TEST(paint_patt_repeat_scalled, argc, argv);
     PERFORM_TEST(paint_patt_pad, argc, argv);
-    PERFORM_TEST(test, argc, argv);
+    PERFORM_TEST(test, argc, argv);*/
 
     return 0;
 }

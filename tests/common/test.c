@@ -48,7 +48,7 @@ int single_test = -1; // if not < 0, contains the index of the single test to ru
 static bool                 paused                     = false;
 static bool                 offscreen                  = false;
 static bool                 threadAware                = false;
-static VkSampleCountFlags   samples                    = VK_SAMPLE_COUNT_1_BIT;
+static VkSampleCountFlags   samples                    = VK_SAMPLE_COUNT_4_BIT;
 static VkPhysicalDeviceType preferedPhysicalDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 static vk_engine_t         *e;
 static char                *saveToPng = NULL;
