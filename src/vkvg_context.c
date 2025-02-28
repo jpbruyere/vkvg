@@ -22,8 +22,8 @@ static VkClearValue clearValues[3] = {
     {.color.float32 = {0, 0, 0, 0}}, {.depthStencil = {1.0f, 0}}, {.color.float32 = {0, 0, 0, 0}}};
 
 void _init_ctx(VkvgContext ctx) {
-    ctx->lineWidth                       = 1;
-    ctx->miterLimit                      = 10;
+    ctx->lineWidth                       = 1.f;
+    ctx->miterLimit                      = 10.f;
     ctx->curOperator                     = VKVG_OPERATOR_OVER;
     ctx->curFillRule                     = VKVG_FILL_RULE_NON_ZERO;
     ctx->bounds                          = (VkRect2D){{0, 0}, {ctx->pSurf->width, ctx->pSurf->height}};
@@ -41,11 +41,12 @@ void _init_ctx(VkvgContext ctx) {
 
     LOCK_SURFACE(ctx->pSurf)
 
-    if (ctx->pSurf->newSurf)
+    if (ctx->pSurf->newSurf) {
         ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
-    else
+        ctx->pSurf->newSurf = false;
+    } else {
         ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
-    ctx->pSurf->newSurf = false;
+    }
 
     UNLOCK_SURFACE(ctx->pSurf);
 
@@ -60,6 +61,8 @@ void _init_ctx(VkvgContext ctx) {
     ctx->curColor            = 0xff000000; // opaque black
     ctx->cmdStarted          = false;
     ctx->curClipState        = vkvg_clip_state_none;
+
+
     ctx->vertCount = ctx->indCount = 0;
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     ctx->timelineStep = 0;

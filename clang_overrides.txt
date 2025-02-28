@@ -1,0 +1,12 @@
+# CMAKE_USER_MAKE_RULES_OVERRIDE should point to this file
+SET (CMAKE_C_FLAGS_INIT                "-Wall -std=c11 -fdiagnostics-color=always -fdiagnostics-show-hotness -Rpass-analysis=loop-vectorize -fsave-optimization-record -Weverything")
+SET (CMAKE_C_FLAGS_DEBUG_INIT          "-g -fprofile-instr-generate -fcoverage-mapping")
+SET (CMAKE_C_FLAGS_MINSIZEREL_INIT     "-Os -DNDEBUG")
+SET (CMAKE_C_FLAGS_RELEASE_INIT        "-O3 -DNDEBUG")
+SET (CMAKE_C_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
+
+SET (CMAKE_CXX_FLAGS_INIT                "-Wall -std=c++17")
+SET (CMAKE_CXX_FLAGS_DEBUG_INIT          "-g -fprofile-instr-generate -fcoverage-mapping")
+SET (CMAKE_CXX_FLAGS_MINSIZEREL_INIT     "-Os -DNDEBUG")
+SET (CMAKE_CXX_FLAGS_RELEASE_INIT        "-O3 -DNDEBUG")
+SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")

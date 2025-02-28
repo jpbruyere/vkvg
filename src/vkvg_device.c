@@ -31,6 +31,23 @@
         if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))                                                  \
             enabledExts[enabledExtsCount++] = #ext;                                                                    \
     }
+
+#define _CHECK_INST_EXT(ext)                                                                                           \
+if (vkh_instance_extension_supported(#ext)) {                                                                      \
+        if (pExtensions)                                                                                               \
+        pExtensions[*pExtCount] = #ext;                                                                            \
+        (*pExtCount)++;                                                                                                \
+}
+
+#define _CHECK_DEV_EXT(ext)                                                                                            \
+{                                                                                                                  \
+        if (_get_dev_extension_is_supported(pExtensionProperties, extensionCount, #ext)) {                             \
+            if (pExtensions)                                                                                           \
+            pExtensions[*pExtCount] = #ext;                                                                        \
+            (*pExtCount)++;                                                                                            \
+    }                                                                                                              \
+}
+
 void vkvg_device_set_context_cache_size(VkvgDevice dev, uint32_t maxCount) {
     if (maxCount == dev->cachedContextMaxCount)
         return;
@@ -152,12 +169,7 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t *info) {
     dev->status = VKVG_STATUS_SUCCESS;
 }
 
-#define _CHECK_INST_EXT(ext)                                                                                           \
-    if (vkh_instance_extension_supported(#ext)) {                                                                      \
-        if (pExtensions)                                                                                               \
-            pExtensions[*pExtCount] = #ext;                                                                            \
-        (*pExtCount)++;                                                                                                \
-    }
+
 void vkvg_get_required_instance_extensions(const char **pExtensions, uint32_t *pExtCount) {
     *pExtCount = 0;
 
@@ -179,14 +191,7 @@ bool _get_dev_extension_is_supported(VkExtensionProperties *pExtensionProperties
     }
     return false;
 }
-#define _CHECK_DEV_EXT(ext)                                                                                            \
-    {                                                                                                                  \
-        if (_get_dev_extension_is_supported(pExtensionProperties, extensionCount, #ext)) {                             \
-            if (pExtensions)                                                                                           \
-                pExtensions[*pExtCount] = #ext;                                                                        \
-            (*pExtCount)++;                                                                                            \
-        }                                                                                                              \
-    }
+
 
 vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const char **pExtensions, uint32_t *pExtCount) {
     VkExtensionProperties *pExtensionProperties;
