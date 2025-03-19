@@ -9,21 +9,22 @@ on:
 
 jobs:
   Win_jorb:
-    runs-on: windows-2019
+    runs-on: windows-latest
+    timeout-minutes: 4
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: 'true'
     - name: Install Vulkan SDK
-      uses: humbletim/setup-vulkan-sdk@v1.2.0
+      uses: humbletim/setup-vulkan-sdk@v1.2.1
       with:
-        vulkan-query-version: 1.3.204.0
+        vulkan-query-version: 1.4.304.1
         vulkan-components: Vulkan-Headers, Vulkan-Loader
-        vulkan-use-cache: true
+        vulkan-use-cache: false
     - name: configure
-      run: cmake -G "Visual Studio 16 2019" . -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
-    - name: build
-      run: cmake --build .
+      run: cmake -B build_win64 -G "Visual Studio 17 2022" -A x64 -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true -DBUILD_SHARED_LIBS=ON
+    - name: build win64
+      run: cmake --build build_win64 --parallel
 
   linux_jorb:
     runs-on: ubuntu-latest
