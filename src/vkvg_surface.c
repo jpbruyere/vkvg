@@ -34,6 +34,7 @@ void vkvg_surface_clear(VkvgSurface surf) {
         return;
     _clear_surface(surf, VK_IMAGE_ASPECT_STENCIL_BIT | VK_IMAGE_ASPECT_COLOR_BIT);
 }
+
 VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height) {
     VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
     if (surf->status)
@@ -362,9 +363,22 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path) {
         vkh_image_destroy(stagImg);
     }
 
-    void *img = vkh_image_map(stagImgLinear);
+    unsigned char* img = (unsigned char*)vkh_image_map(stagImgLinear);
 
     uint64_t stride = vkh_image_get_stride(stagImgLinear);
+
+#ifdef VKVG_PREMULT_ALPHA
+    //unpremult alpha for saving on disk.
+    for(int y = 0; y < surf->height; y++) {
+        for(int x = 0; x < surf->width; x++) {
+            unsigned char* p = img + y * stride + x * 4;
+            double alpha = (double)p[3] / 255.f;
+            p[0] = (unsigned char)((double)p[0] / alpha);
+            p[1] = (unsigned char)((double)p[1] / alpha);
+            p[2] = (unsigned char)((double)p[2] / alpha);
+        }
+    }
+#endif
 
     stbi_write_png(path, (int32_t)surf->width, (int32_t)surf->height, 4, img, (int32_t)stride);
 
@@ -391,7 +405,7 @@ vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char *cons
     VkvgDevice               dev             = surf->dev;
 
     // RGBA to blit to, surf img is bgra
-    VkhImage stagImg = vkh_image_create((VkhDevice)&surf->dev->vkDev, VK_FORMAT_B8G8R8A8_UNORM, surf->width,
+    VkhImage stagImg = vkh_image_create((VkhDevice)&surf->dev->vkDev, VK_FORMAT_R8G8B8A8_UNORM, surf->width,
                                         surf->height, VK_IMAGE_TILING_LINEAR, VKH_MEMORY_USAGE_GPU_TO_CPU,
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
@@ -421,8 +435,22 @@ vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char *cons
     uint64_t stride      = vkh_image_get_stride(stagImg);
     uint32_t dest_stride = surf->width * 4;
 
-    char *img = vkh_image_map(stagImg);
-    char *row = (char *)bitmap;
+    unsigned char *img = vkh_image_map(stagImg);
+
+#ifdef VKVG_PREMULT_ALPHA
+    //unpremult alpha for saving on disk.
+    for(int y = 0; y < surf->height; y++) {
+        for(int x = 0; x < surf->width; x++) {
+            unsigned char* p = img + y * stride + x * 4;
+            double alpha = (double)p[3] / 255.f;
+            p[0] = (unsigned char)((double)p[0] / alpha);
+            p[1] = (unsigned char)((double)p[1] / alpha);
+            p[2] = (unsigned char)((double)p[2] / alpha);
+        }
+    }
+#endif
+
+    unsigned char *row = (unsigned char *)bitmap;
     for (uint32_t y = 0; y < surf->height; y++) {
         memcpy(row, img, dest_stride);
         row += dest_stride;
