@@ -32,7 +32,6 @@ TEST_F(ContextTest, CtxCreate) {
 
     VkvgContext ctx = vkvg_create(NULL);
     EXPECT_EQ(VKVG_STATUS_INVALID_SURFACE, vkvg_status(ctx));
-    vkvg_destroy(ctx);
 
     ctx = vkvg_create(surf);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
