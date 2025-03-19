@@ -38,7 +38,7 @@ jobs:
       VULKAN_SDK: ${{ github.workspace }}/VulkanSDK/x86_64
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         repository: 'krOoze/vk_sdk_lite'
         path: 'VulkanSDK'
@@ -69,7 +69,7 @@ jobs:
       VULKAN_SDK: ${{ github.workspace }}/VulkanSDK/macOS
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         repository: 'krOoze/vk_sdk_lite'
         path: 'VulkanSDK'
