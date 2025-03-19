@@ -1933,8 +1933,8 @@ void _draw_full_screen_quad(VkvgContext ctx, vec4 *scissor) {
     _ensure_vertex_cache_size(ctx, 3);
 
     _add_vertexf_unchecked(ctx, -1, -1);
-    _add_vertexf_unchecked(ctx, 3, -1);
-    _add_vertexf_unchecked(ctx, -1, 3);
+    _add_vertexf_unchecked(ctx,  3, -1);
+    _add_vertexf_unchecked(ctx, -1,  3);
 
     ctx->curVertOffset = ctx->vertCount;
 
