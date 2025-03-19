@@ -540,7 +540,7 @@ void _device_check_best_image_tiling(VkvgDevice dev, VkFormat format) {
     VkFormatProperties phyStencilProps = {0}, phyImgProps = {0};
 
     // check png blit format
-    VkFlags pngBlitFormats[] = {VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_R8G8B8A8_UNORM};
+    VkFlags pngBlitFormats[] = {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB};
     dev->pngStagFormat       = VK_FORMAT_UNDEFINED;
     for (int i = 0; i < 2; i++) {
         vkGetPhysicalDeviceFormatProperties(dev->phy, pngBlitFormats[i], &phyImgProps);
