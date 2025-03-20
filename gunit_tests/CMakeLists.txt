@@ -18,6 +18,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 set(GTEST_PNG_ROOT "${CMAKE_SOURCE_DIR}/ReferenceImages" CACHE STRING "Reference png root path")
+set(GTEST_DATA_ROOT "${CMAKE_SOURCE_DIR}/tests/data" CACHE STRING "Data path for unit tests")
 
 add_executable("${PROJECT_NAME}"
   main.cpp
@@ -25,9 +26,12 @@ add_executable("${PROJECT_NAME}"
   surface.cpp
   context.cpp
   basicDraw.cpp
+  drawTestBase.cpp
+  drawTestBase.h
 )
 target_compile_definitions("${PROJECT_NAME}" PUBLIC
     GTEST_PNG_ROOT="${GTEST_PNG_ROOT}"
+    GTEST_DATA_ROOT="${GTEST_DATA_ROOT}"
 )
 target_include_directories("${PROJECT_NAME}" PUBLIC
   "${CMAKE_SOURCE_DIR}/include"
