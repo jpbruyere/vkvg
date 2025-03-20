@@ -35,7 +35,7 @@ void DrawTestBase::compareWithRefImage() {
 
     if (fs::exists(targetPath)) {
         int w = 0, h = 0, channels = 0;
-        unsigned char *refImg = stbi_load(targetPath.c_str(), &w, &h, &channels, 4); // force 4 components per pixel
+        unsigned char *refImg = stbi_load((char*)targetPath.c_str(), &w, &h, &channels, 4); // force 4 components per pixel
         EXPECT_TRUE(refImg != nullptr) << "Could not load image from " << targetPath << stbi_failure_reason();
         EXPECT_EQ(vkvg_surface_get_width(surf),w);
         EXPECT_EQ(vkvg_surface_get_height(surf),h);
@@ -67,13 +67,13 @@ void DrawTestBase::compareWithRefImage() {
         if (totDiff > 0) {
             fs::path diffPath = diffDir / ::testing::UnitTest::GetInstance()->current_test_info()->name();
             targetPath.replace_extension(".png");
-            stbi_write_png(diffPath.c_str(), (int32_t)w, (int32_t)h, 4, diffImg, (int32_t)(4 * w));
+            stbi_write_png((char*)diffPath.c_str(), (int32_t)w, (int32_t)h, 4, diffImg, (int32_t)(4 * w));
         }
 
         free(img);
         free(diffImg);
     } else {
-        vkvg_status_t result = vkvg_surface_write_to_png(surf, targetPath.c_str());
+        vkvg_status_t result = vkvg_surface_write_to_png(surf, (char*)targetPath.c_str());
         EXPECT_EQ(result, VKVG_STATUS_SUCCESS);
         GTEST_SKIP() << "Updating reference image: " << targetPath;
     }
