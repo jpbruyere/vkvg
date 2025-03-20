@@ -299,6 +299,8 @@ void vkvg_destroy(VkvgContext ctx) {
     }
 
     _release_context_ressources(ctx);
+
+    ctx = NULL;
 }
 void vkvg_set_opacity(VkvgContext ctx, float opacity) {
     if (vkvg_status(ctx))
@@ -563,7 +565,7 @@ void _curve_to(VkvgContext ctx, float x1, float y1, float x2, float y2, float x3
     _set_curve_end(ctx);
 }
 const double quadraticFact = 2.0 / 3.0;
-void         _quadratic_to(VkvgContext ctx, float x1, float y1, float x2, float y2) {
+void _quadratic_to(VkvgContext ctx, float x1, float y1, float x2, float y2) {
     float x0, y0;
     if (_current_path_is_empty(ctx)) {
         x0 = x1;
