@@ -28,6 +28,9 @@ add_executable("${PROJECT_NAME}"
   basicDraw.cpp
   drawTestBase.cpp
   drawTestBase.h
+  imageDraw.cpp
+  matrices.cpp
+  patternDraw.cpp
 )
 target_compile_definitions("${PROJECT_NAME}" PUBLIC
     GTEST_PNG_ROOT="${GTEST_PNG_ROOT}"
