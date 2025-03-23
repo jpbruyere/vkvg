@@ -42,14 +42,14 @@ VkvgPattern vkvg_pattern_create_for_surface(VkvgSurface surf) {
     pat->references = 1;
 
     vkvg_surface_reference(surf);
-    if (surf->status)
-        pat->status = surf->status;
+    if (vkvg_surface_status(surf))
+        pat->status = VKVG_STATUS_INVALID_SURFACE;
 
     return pat;
 }
 vkvg_status_t vkvg_pattern_get_linear_points(VkvgPattern pat, float *x0, float *y0, float *x1, float *y1) {
-    if (pat->status)
-        return pat->status;
+    if (vkvg_pattern_status(pat))
+        return vkvg_pattern_status(pat);
     if (pat->type != VKVG_PATTERN_TYPE_LINEAR)
         return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 
@@ -62,8 +62,8 @@ vkvg_status_t vkvg_pattern_get_linear_points(VkvgPattern pat, float *x0, float *
     return VKVG_STATUS_SUCCESS;
 }
 vkvg_status_t vkvg_pattern_edit_linear(VkvgPattern pat, float x0, float y0, float x1, float y1) {
-    if (pat->status)
-        return pat->status;
+    if (vkvg_pattern_status(pat))
+        return vkvg_pattern_status(pat);
     if (pat->type != VKVG_PATTERN_TYPE_LINEAR)
         return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 
@@ -94,8 +94,8 @@ VkvgPattern vkvg_pattern_create_linear(float x0, float y0, float x1, float y1) {
 }
 vkvg_status_t vkvg_pattern_edit_radial(VkvgPattern pat, float cx0, float cy0, float radius0, float cx1, float cy1,
                                        float radius1) {
-    if (pat->status)
-        return pat->status;
+    if (vkvg_pattern_status(pat))
+        return vkvg_pattern_status(pat);
     if (pat->type != VKVG_PATTERN_TYPE_RADIAL)
         return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 
@@ -137,18 +137,18 @@ VkvgPattern vkvg_pattern_create_radial(float cx0, float cy0, float radius0, floa
     return pat;
 }
 VkvgPattern vkvg_pattern_reference(VkvgPattern pat) {
-    if (!pat->status)
+    if (!vkvg_pattern_status(pat))
         pat->references++;
     return pat;
 }
 uint32_t vkvg_pattern_get_reference_count(VkvgPattern pat) {
-    if (pat->status)
+    if (vkvg_pattern_status(pat))
         return 0;
     return pat->references;
 }
 vkvg_status_t vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r, float g, float b, float a) {
-    if (pat->status)
-        return pat->status;
+    if (vkvg_pattern_status(pat))
+        return vkvg_pattern_status(pat);
     if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID)
         return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
 
@@ -167,34 +167,34 @@ vkvg_status_t vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r
     grad->count++;
 }
 void vkvg_pattern_set_extend(VkvgPattern pat, vkvg_extend_t extend) {
-    if (pat->status)
+    if (vkvg_pattern_status(pat))
         return;
     pat->extend = extend;
 }
 void vkvg_pattern_set_filter(VkvgPattern pat, vkvg_filter_t filter) {
-    if (pat->status)
+    if (vkvg_pattern_status(pat))
         return;
     pat->filter = filter;
 }
 
 vkvg_extend_t vkvg_pattern_get_extend(VkvgPattern pat) {
-    if (pat->status)
+    if (vkvg_pattern_status(pat))
         return (vkvg_extend_t)0;
     return pat->extend;
 }
 vkvg_filter_t vkvg_pattern_get_filter(VkvgPattern pat) {
-    if (pat->status)
+    if (vkvg_pattern_status(pat))
         return (vkvg_filter_t)0;
     return pat->filter;
 }
 vkvg_pattern_type_t vkvg_pattern_get_type(VkvgPattern pat) {
-    if (pat->status)
+    if (vkvg_pattern_status(pat))
         return (vkvg_pattern_type_t)0;
     return pat->type;
 }
 vkvg_status_t vkvg_pattern_get_color_stop_count(VkvgPattern pat, uint32_t *count) {
-    if (pat->status)
-        return pat->status;
+    if (vkvg_pattern_status(pat))
+        return vkvg_pattern_status(pat);
     if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID)
         return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
     vkvg_gradient_t *grad = (vkvg_gradient_t *)pat->data;
@@ -203,8 +203,8 @@ vkvg_status_t vkvg_pattern_get_color_stop_count(VkvgPattern pat, uint32_t *count
 }
 vkvg_status_t vkvg_pattern_get_color_stop_rgba(VkvgPattern pat, uint32_t index, float *offset, float *r, float *g,
                                                float *b, float *a) {
-    if (pat->status)
-        return pat->status;
+    if (vkvg_pattern_status(pat))
+        return vkvg_pattern_status(pat);
     if (pat->type == VKVG_PATTERN_TYPE_SURFACE || pat->type == VKVG_PATTERN_TYPE_SOLID)
         return VKVG_STATUS_PATTERN_TYPE_MISMATCH;
     vkvg_gradient_t *grad = (vkvg_gradient_t *)pat->data;
@@ -213,7 +213,7 @@ vkvg_status_t vkvg_pattern_get_color_stop_rgba(VkvgPattern pat, uint32_t index, 
 #ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
     *offset = grad->stops[index];
 #else
-    *offset                    = grad->stops[index].r;
+    *offset = grad->stops[index].r;
 #endif
     vkvg_color_t c = grad->colors[index];
     *r             = c.r;
@@ -223,23 +223,23 @@ vkvg_status_t vkvg_pattern_get_color_stop_rgba(VkvgPattern pat, uint32_t index, 
     return VKVG_STATUS_SUCCESS;
 }
 void vkvg_pattern_set_matrix(VkvgPattern pat, const vkvg_matrix_t *matrix) {
-    if (pat->status)
+    if (vkvg_pattern_status(pat))
         return;
     pat->matrix    = *matrix;
     pat->hasMatrix = true;
 }
 void vkvg_pattern_get_matrix(VkvgPattern pat, vkvg_matrix_t *matrix) {
-    if (pat->status)
+    if (vkvg_pattern_status(pat))
         return;
     if (pat->hasMatrix)
         *matrix = pat->matrix;
     else
         *matrix = VKVG_IDENTITY_MATRIX;
 }
-vkvg_status_t vkvg_pattern_status(VkvgPattern pat) { return pat->status; }
+vkvg_status_t vkvg_pattern_status(VkvgPattern pat) { return !pat ? VKVG_STATUS_NULL_POINTER : pat->status; }
 
 void vkvg_pattern_destroy(VkvgPattern pat) {
-    if (pat->status)
+    if (vkvg_pattern_status(pat))
         return;
     pat->references--;
     if (pat->references > 0)
@@ -252,4 +252,5 @@ void vkvg_pattern_destroy(VkvgPattern pat) {
         free(pat->data);
 
     free(pat);
+    pat = NULL;
 }

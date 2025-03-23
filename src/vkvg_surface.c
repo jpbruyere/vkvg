@@ -233,6 +233,7 @@ void vkvg_surface_destroy(VkvgSurface surf) {
 
     vkvg_device_destroy(surf->dev);
     free(surf);
+    surf = NULL;
 }
 
 vkvg_status_t vkvg_surface_status(VkvgSurface surf) { return !surf ? VKVG_STATUS_NULL_POINTER : surf->status; }
@@ -396,7 +397,7 @@ vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char *cons
     }
     if (!bitmap) {
         LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_memory failed, null path\n");
-        return VKVG_STATUS_INVALID_IMAGE;
+        return VKVG_STATUS_WRITE_ERROR;
     }
 
     LOCK_SURFACE(surf)

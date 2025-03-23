@@ -140,8 +140,6 @@ typedef struct _vkvg_context_t {
     VkCommandPool    cmdPool;        // local pools ensure thread safety
     VkCommandBuffer  cmdBuffers[2];  // double cmd buff for context operations
     VkCommandBuffer  cmd;            // current recording buffer
-    bool             cmdStarted;     // prevent flushing empty renderpass
-    bool             pushCstDirty;   // prevent pushing to gpu if not requested
     VkDescriptorPool descriptorPool; // one pool per thread
     VkDescriptorSet  dsFont;         // fonts glyphs texture atlas descriptor (local for thread safety)
     VkDescriptorSet  dsSrc;          // source ds
@@ -197,6 +195,9 @@ typedef struct _vkvg_context_t {
     uint32_t subpathCount; // store count of subpath, not straight forward to retrieve from segmented path array
     bool     simpleConvex; // true if path is single rect or concave closed curve.
 
+    bool     cmdStarted;     // prevent flushing empty renderpass
+    bool     pushCstDirty;   // prevent pushing to gpu if not requested
+
     float    lineWidth;
     float    miterLimit;
     uint32_t dashCount;  // value count in dash array, 0 if dash not set.
@@ -218,11 +219,11 @@ typedef struct _vkvg_context_t {
     push_constants pushConsts;
     VkvgPattern    pattern;
 
-    vkvg_context_save_t *pSavedCtxs; // last ctx saved ptr
-    uint8_t           curSavBit; // current stencil bit used to save context, 6 bits used by stencil for save/restore
-    VkhImage         *savedStencils; // additional image for saving contexes once more than 6 save/restore are reached
-    vkvg_clip_state_t curClipState;  // current clipping status relative to the previous saved one or clear state if
-                                    // none.
+    vkvg_context_save_t *pSavedCtxs;   // last ctx saved ptr
+    uint8_t              curSavBit;    // current stencil bit used to save context, 6 bits used by stencil for save/restore
+    VkhImage            *savedStencils;// additional image for saving contexes once more than 6 save/restore are reached
+    vkvg_clip_state_t    curClipState; // current clipping status relative to the previous saved one or clear state if
+                                       // none.
 
     VkClearRect           clearRect;
     VkRenderPassBeginInfo renderPassBeginInfo;
