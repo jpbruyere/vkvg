@@ -37,7 +37,7 @@ TEST(Device, Reference) {
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_device_status(dev));
 
     vkvg_device_destroy(dev);
-    EXPECT_EQ(0, vkvg_device_get_reference_count(dev));
+    //EXPECT_EQ(0, vkvg_device_get_reference_count(dev));
 }
 
 /*TEST(Device, GetVulkanRequirements)

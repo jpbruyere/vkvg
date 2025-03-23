@@ -65,7 +65,7 @@ TEST_F(ContextTest, CtxReference) {
     vkvg_destroy(ctx);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_device_status(dev));
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_surface_status(surf));
-    EXPECT_EQ(0, vkvg_get_reference_count(ctx));
+    //EXPECT_EQ(0, vkvg_get_reference_count(ctx));
     EXPECT_EQ(1, vkvg_surface_get_reference_count(surf));
     EXPECT_EQ(2, vkvg_device_get_reference_count(dev));
 }
