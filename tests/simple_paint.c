@@ -2,7 +2,7 @@
 
 void paint() {
     VkvgContext ctx = _initCtx(surf);
-    vkvg_set_source_rgba(ctx, 1, 0, 0, 1);
+    vkvg_set_source_rgba(ctx, 1, 0, 0, 0.5f);
     vkvg_paint(ctx);
     vkvg_destroy(ctx);
 }

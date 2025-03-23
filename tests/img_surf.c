@@ -1,6 +1,11 @@
 #include "test.h"
 
 const char *imgPath = "data/miroir.jpg";
+const char* imgPath2 = "data/miroir.png";
+const char* imgPath3 = "data/filled.png";
+const char *imgPath4 = "data/miroir2.png";
+const char *imgPath5 = "data/miroir2-64.png";
+
 void        paint() {
     VkvgContext ctx     = vkvg_create(surf);
     VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
@@ -84,10 +89,26 @@ void offset_and_rot() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
+void offset_and_rot_center() {
+    angle += 0.005;
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_clear(ctx);
+
+    vkvg_translate(ctx, 142,142);
+    vkvg_rotate(ctx, angle);
+    vkvg_translate(ctx, -142,-142);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath4);
+    vkvg_set_source_surface(ctx, imgSurf, 100, 100);
+
+    vkvg_paint(ctx);
+
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
 
 void paint_pattern() {
     VkvgContext ctx     = vkvg_create(surf);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath5);
     VkvgPattern pat     = vkvg_pattern_create_for_surface(imgSurf);
     vkvg_set_source(ctx, pat);
     vkvg_paint(ctx);
@@ -120,7 +141,7 @@ void paint_patt_repeat_scalled() {
 }
 void paint_patt_pad() {
     VkvgContext ctx     = vkvg_create(surf);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath5);
     VkvgPattern pat     = vkvg_pattern_create_for_surface(imgSurf);
     vkvg_pattern_set_extend(pat, VKVG_EXTEND_PAD);
     vkvg_set_source(ctx, pat);
@@ -154,9 +175,6 @@ void test() {
 
     vkvg_destroy(ctx);
 }
-
-const char* imgPath2 = "data/miroir.png";
-const char* imgPath3 = "data/filled.png";
 
 void imgTest() {
     VkvgContext ctx = vkvg_create(surf);
@@ -216,24 +234,91 @@ void imgTestClipped() {
     vkvg_fill(ctx);
 
     vkvg_surface_destroy(imgSurf);
+    vkvg_reset_clip(ctx);
     vkvg_destroy(ctx);
 }
+void imgTest3() {
+    VkvgSurface surface = vkvg_surface_create(device, 800, 600);
 
+    VkvgContext ctx = vkvg_create(surface);
+
+
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+    VkvgSurface imgSurf2 = vkvg_surface_create_from_image(device, imgPath3);
+    vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
+
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
+    //vkvg_set_source_rgba(ctx, 1.0, 1.0, 1.0, 0.4);
+    vkvg_set_source_surface(ctx, imgSurf2, 40, 40);
+    vkvg_paint(ctx);
+
+    vkvg_arc(ctx, 200, 200, 41.f, 0, M_PIF * 2);
+    vkvg_fill_preserve(ctx);
+    vkvg_destroy(ctx);
+
+    vkvg_surface_destroy(imgSurf);
+    vkvg_surface_destroy(imgSurf2);
+
+    vkvg_surface_write_to_png(surface, "imgTest3.png");
+
+    vkvg_surface_destroy(surface);
+}
+void imgTest4() {
+    VkvgContext ctx = vkvg_create(surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+    VkvgSurface imgSurf2 = vkvg_surface_create_from_image(device, imgPath3);
+
+    vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
+
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+    vkvg_paint(ctx);
+
+    float arcSize = 70.f;
+
+    //vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
+    //vkvg_set_source_rgba(ctx, 1.0, 1.0, 1.0, 0.4);
+
+    vkvg_set_source_surface(ctx, imgSurf2, 50, 50);
+    //vkvg_arc(ctx, arcSize, arcSize, 60.f, 0, 2.f * M_PIF);
+    vkvg_rectangle(ctx,50,50,120,120);
+    vkvg_paint(ctx);
+
+    vkvg_set_source_rgba(ctx, 1.0f, 0.0f, 0.0f, 0.9f);
+    vkvg_arc(ctx, 200, 200, 21.f, 0, M_PIF * 2);
+    vkvg_fill(ctx);
+
+
+
+    //vkvg_set_line_width(ctx, 1);
+
+
+    vkvg_surface_destroy(imgSurf2);
+    vkvg_surface_destroy(imgSurf);
+
+    vkvg_destroy(ctx);
+
+    //vkvg_surface_write_to_png(surf, "imgTest4.png");
+}
 int main(int argc, char *argv[]) {
     no_test_size = true;
-    PERFORM_TEST(imgTestClipped, argc, argv);
-    /*PERFORM_TEST(paint, argc, argv);
+    //PERFORM_TEST(imgTestClipped, argc, argv);
+    //PERFORM_TEST(imgTest3, argc, argv);
+    PERFORM_TEST(paint, argc, argv);
     PERFORM_TEST(paint_offset, argc, argv);
     PERFORM_TEST(paint_with_scale, argc, argv);
     PERFORM_TEST(offset_and_scale, argc, argv);
     PERFORM_TEST(translate, argc, argv);
     PERFORM_TEST(paint_with_rot, argc, argv);
     PERFORM_TEST(offset_and_rot, argc, argv);
+    PERFORM_TEST(offset_and_rot_center, argc, argv);
     PERFORM_TEST(paint_pattern, argc, argv);
     PERFORM_TEST(paint_patt_repeat, argc, argv);
     PERFORM_TEST(paint_patt_repeat_scalled, argc, argv);
     PERFORM_TEST(paint_patt_pad, argc, argv);
-    PERFORM_TEST(test, argc, argv);*/
+    PERFORM_TEST(test, argc, argv);
+    PERFORM_TEST(imgTest4, argc, argv);
 
     return 0;
 }

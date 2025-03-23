@@ -75,8 +75,11 @@ void main()
 			inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
 			inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
 		);
+                uv /= inSrc.zw;
+                /*if (uv.x < 0 || uv.y < 0 || uv.x > 1 || uv.y > 1)
+                    discard;*/
 
-		c = texture (source, uv / inSrc.zw);
+                c = texture (source, uv);
 		break;
 	case LINEAR:
 		float dist = 1;

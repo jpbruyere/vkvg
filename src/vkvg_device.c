@@ -480,6 +480,7 @@ void vkvg_device_destroy(VkvgDevice dev) {
     }
 
     free(dev);
+    dev = NULL;
 }
 
 vkvg_status_t vkvg_device_status(VkvgDevice dev) { return !dev ? VKVG_STATUS_NULL_POINTER : dev->status; }

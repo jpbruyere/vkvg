@@ -1672,7 +1672,6 @@ void fan_vertex2(VKVG_IBO_INDEX_TYPE v, VkvgContext ctx) {
         break;
     }
 }
-
 void strip_vertex2(VKVG_IBO_INDEX_TYPE v, VkvgContext ctx) {
     VKVG_IBO_INDEX_TYPE i = (VKVG_IBO_INDEX_TYPE)v;
     if (ctx->tesselator_idx_counter < 3) {
@@ -1681,7 +1680,6 @@ void strip_vertex2(VKVG_IBO_INDEX_TYPE v, VkvgContext ctx) {
         _add_indice_for_strip(ctx, i, ctx->tesselator_idx_counter % 2);
     ctx->tesselator_idx_counter++;
 }
-
 void triangle_vertex2(VKVG_IBO_INDEX_TYPE v, VkvgContext ctx) {
     VKVG_IBO_INDEX_TYPE i = (VKVG_IBO_INDEX_TYPE)v;
     _add_indice(ctx, i);
