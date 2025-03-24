@@ -153,7 +153,7 @@ VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char *img, 
     vkh_buffer_reset(&buff);
     vkh_image_destroy(stagImg);
 
-    surf->newSurf = false;
+    surf->newSurf = true;
 
     // create tmp context with rendering pipeline to create the multisample img
     VkvgContext ctx = vkvg_create(surf);
