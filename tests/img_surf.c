@@ -1,10 +1,10 @@
 #include "test.h"
 
-const char *imgPath = "data/miroir.jpg";
-const char* imgPath2 = "data/miroir.png";
-const char* imgPath3 = "data/filled.png";
-const char *imgPath4 = "data/miroir2.png";
-const char *imgPath5 = "data/miroir2-64.png";
+const char *imgPath = TESTS_DATA_ROOT "/miroir.jpg";
+const char* imgPath2 = TESTS_DATA_ROOT "/miroir.png";
+const char* imgPath3 = TESTS_DATA_ROOT "/filled.png";
+const char *imgPath4 = TESTS_DATA_ROOT "/miroir2.png";
+const char *imgPath5 = TESTS_DATA_ROOT "/miroir2-64.png";
 
 void        paint() {
     VkvgContext ctx     = vkvg_create(surf);
@@ -238,11 +238,7 @@ void imgTestClipped() {
     vkvg_destroy(ctx);
 }
 void imgTest3() {
-    VkvgSurface surface = vkvg_surface_create(device, 800, 600);
-
-    VkvgContext ctx = vkvg_create(surface);
-
-
+    VkvgContext ctx = vkvg_create(surf);
     VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
     VkvgSurface imgSurf2 = vkvg_surface_create_from_image(device, imgPath3);
     vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
@@ -261,9 +257,39 @@ void imgTest3() {
     vkvg_surface_destroy(imgSurf);
     vkvg_surface_destroy(imgSurf2);
 
-    vkvg_surface_write_to_png(surface, "imgTest3.png");
+    //vkvg_surface_write_to_png(surface, "imgTest3.png");
 
-    vkvg_surface_destroy(surface);
+    //vkvg_surface_destroy(surface);
+}
+
+void imgWithAlphaTest0() {    //VkvgSurface surface = vkvg_surface_create(device, 800, 600);
+
+    VkvgContext ctx = vkvg_create(surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath3);
+
+    vkvg_set_source_surface(ctx, imgSurf, 40, 40);
+    vkvg_paint(ctx);
+
+    vkvg_destroy(ctx);
+    vkvg_surface_destroy(imgSurf);
+}
+void imgWithAlphaTest1() {
+    VkvgContext ctx = vkvg_create(surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+    VkvgSurface imgSurf2 = vkvg_surface_create_from_image(device, imgPath3);
+
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+    vkvg_paint(ctx);
+
+    vkvg_flush(ctx);
+
+    vkvg_set_source_surface(ctx, imgSurf2, 50, 50);
+    vkvg_paint(ctx);
+
+    vkvg_surface_destroy(imgSurf2);
+    vkvg_surface_destroy(imgSurf);
+
+    vkvg_destroy(ctx);
 }
 void imgTest4() {
     VkvgContext ctx = vkvg_create(surf);
@@ -303,8 +329,6 @@ void imgTest4() {
 }
 int main(int argc, char *argv[]) {
     no_test_size = true;
-    //PERFORM_TEST(imgTestClipped, argc, argv);
-    //PERFORM_TEST(imgTest3, argc, argv);
     PERFORM_TEST(paint, argc, argv);
     PERFORM_TEST(paint_offset, argc, argv);
     PERFORM_TEST(paint_with_scale, argc, argv);
@@ -318,7 +342,11 @@ int main(int argc, char *argv[]) {
     PERFORM_TEST(paint_patt_repeat_scalled, argc, argv);
     PERFORM_TEST(paint_patt_pad, argc, argv);
     PERFORM_TEST(test, argc, argv);
+    PERFORM_TEST(imgTest3, argc, argv);
     PERFORM_TEST(imgTest4, argc, argv);
+    PERFORM_TEST(imgTestClipped, argc, argv);
+    PERFORM_TEST(imgWithAlphaTest0, argc, argv);
+    PERFORM_TEST(imgWithAlphaTest1, argc, argv);
 
     return 0;
 }

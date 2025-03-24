@@ -8,7 +8,7 @@ EXPECT_FLOAT_EQ (mat.x0, _x0);EXPECT_FLOAT_EQ (mat.y0, _y0);
 
 
 TEST(MatrixTest, MatixInit) {
-    vkvg_matrix_t mat = VKVG_IDENTITY_MATRIX;
+    vkvg_matrix_t mat = {1,0,0,1,0,0};
     CHECK_MAT(1,0,0,1,0,0);
 
     vkvg_matrix_init_identity(&mat);

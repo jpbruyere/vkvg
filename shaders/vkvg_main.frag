@@ -78,7 +78,6 @@ void main()
                 uv /= inSrc.zw;
                 /*if (uv.x < 0 || uv.y < 0 || uv.x > 1 || uv.y > 1)
                     discard;*/
-
                 c = texture (source, uv);
 		break;
 	case LINEAR:

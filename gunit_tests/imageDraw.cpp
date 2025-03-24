@@ -130,4 +130,20 @@ TEST_F(ImageDrawTest, PaintImageTransform) {
     compareWithRefImage();
 }
 
+TEST_F(ImageDrawTest, PaintImageOnImage) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+    vkvg_paint(ctx);
+
+    fs::path imgPath2 = fs::path(GTEST_DATA_ROOT) / "filled.png";
+    VkvgSurface imgSurf2 = vkvg_surface_create_from_image(dev, (char*)imgPath2.c_str());
+
+    vkvg_set_source_surface(ctx, imgSurf2, 50, 50);
+    vkvg_paint(ctx);
+
+    vkvg_surface_destroy(imgSurf2);
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
 

@@ -14,6 +14,7 @@ DrawTestBase::DrawTestBase() {
         fs::create_directories(diffDir);
 
     vkvg_device_create_info_t info{};
+    info.samples = VK_SAMPLE_COUNT_4_BIT;
     dev  = vkvg_device_create(&info);
 }
 
