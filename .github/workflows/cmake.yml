@@ -56,7 +56,8 @@ jobs:
       working-directory: source/build
     - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source/build
-
+    - run: source/build/gunit_tests/unit_tests
+      working-directory: source/build
   mac_jorb:
     runs-on: macos-latest
     strategy:
