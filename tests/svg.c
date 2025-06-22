@@ -3,8 +3,8 @@
 #include "vkvg-svg.h"
 
 static float       rotation   = 0.f;
-static const char *path       = "data/tiger.svg";
-static const char *svgSubPath = "data/checkbox.svg";
+static const char *path       = TESTS_DATA_ROOT "tiger.svg";
+static const char *svgSubPath = TESTS_DATA_ROOT "checkbox.svg";
 
 void svg_surface() {
     VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, test_width, test_height, path);

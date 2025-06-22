@@ -67,7 +67,7 @@ void DrawTestBase::compareWithRefImage() {
 
         if (totDiff > 0) {
             fs::path diffPath = diffDir / ::testing::UnitTest::GetInstance()->current_test_info()->name();
-            targetPath.replace_extension(".png");
+            diffPath.replace_extension(".png");
             stbi_write_png((char*)diffPath.c_str(), (int32_t)w, (int32_t)h, 4, diffImg, (int32_t)(4 * w));
         }
 

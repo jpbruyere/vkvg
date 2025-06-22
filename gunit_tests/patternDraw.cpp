@@ -3,7 +3,7 @@
 class PatternDrawTest : public DrawTestBase {
 
   protected:
-    fs::path imgPath = fs::path(GTEST_DATA_ROOT) / "miroir2.png";
+    fs::path imgPath = fs::path(GTEST_DATA_ROOT) / "mirror2.png";
     VkvgSurface imgSurf;
 
     void SetUp() override {

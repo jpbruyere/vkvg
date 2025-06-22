@@ -3,7 +3,7 @@
 class ImageDrawTest : public DrawTestBase {
 
   protected:
-    fs::path imgPath = fs::path(GTEST_DATA_ROOT) / "miroir2.png";
+    fs::path imgPath = fs::path(GTEST_DATA_ROOT) / "mirror2.png";
     VkvgSurface imgSurf;
 
     void SetUp() override {
@@ -100,7 +100,7 @@ TEST_F(ImageDrawTest, PaintImageTransform) {
     vkvg_set_source_rgb(ctx, 0.5f, 0.5f, 0.5f);
     vkvg_paint(ctx);
 
-    fs::path imgPath = fs::path(GTEST_DATA_ROOT) / "miroir2-64.png";
+    fs::path imgPath = fs::path(GTEST_DATA_ROOT) / "mirror2-64.png";
     VkvgSurface imgSurf = vkvg_surface_create_from_image(dev, (char*)imgPath.c_str());
 
     vkvg_translate(ctx, 10, 10);

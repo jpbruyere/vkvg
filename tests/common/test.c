@@ -698,8 +698,8 @@ VkvgContext _initCtx() {
 
 const int star_points[11][2] = {{0, 85},    {75, 75},   {100, 10}, {125, 75}, {200, 85}, {150, 125},
                                 {160, 190}, {100, 150}, {40, 190}, {50, 125}, {0, 85}};
-void      randomize_color(VkvgContext ctx) { vkvg_set_source_rgba(ctx, rndf(), rndf(), rndf(), rndf()); }
-void      draw_random_shape(VkvgContext ctx, shape_t shape, float sizeFact) {
+void randomize_color(VkvgContext ctx) { vkvg_set_source_rgba(ctx, rndf(), rndf(), rndf(), rndf()); }
+void draw_random_shape(VkvgContext ctx, shape_t shape, float sizeFact) {
     float w = (float)test_width;
     float h = (float)test_height;
 
