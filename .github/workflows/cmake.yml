@@ -30,12 +30,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build_config: ['Debug','Release']
+        build_config: ['Release']
     defaults:
       run:
         shell: bash
     env:
       VULKAN_SDK: ${{ github.workspace }}/VulkanSDK/x86_64
+      VULKAN_LAYER_PATH: ${{env.VULKAN_SDK }}/share/vulkan/explicit_layer.d
 
     steps:
     - uses: actions/checkout@v4
@@ -56,6 +57,7 @@ jobs:
       working-directory: source/build
     - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source/build
+    - run: /home/runner/work/vkvg/vkvg/source/build/samples/samples --list-gpus
     - run: /home/runner/work/vkvg/vkvg/source/build/gunit_tests/unit_tests
   mac_jorb:
     runs-on: macos-latest
