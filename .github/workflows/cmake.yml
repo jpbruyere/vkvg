@@ -45,7 +45,7 @@ jobs:
         ref: linux
         persist-credentials: false
     - run: echo "${{ env.VULKAN_SDK }}/bin" >> $GITHUB_PATH
-    - run: sudo apt update && sudo apt install xorg-dev
+    - run: sudo apt update && sudo apt install xorg-dev libglfw3-dev xxd
     - uses: actions/checkout@v4
       with:
         path: 'source'
