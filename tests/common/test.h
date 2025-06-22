@@ -1,3 +1,4 @@
+#include "vkvg.h"
 #include "vkengine.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +7,6 @@
 #include <time.h>
 
 #include "rnd.h"
-#include "vkvg.h"
 
 #include "vkh_device.h"
 #include "vkh_presenter.h"

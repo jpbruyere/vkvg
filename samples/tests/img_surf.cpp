@@ -1,14 +1,9 @@
-#include "test.h"
 
-const char *imgPath = TESTS_DATA_ROOT "miroir.jpg";
-const char* imgPath2 = TESTS_DATA_ROOT "miroir.png";
-const char* imgPath3 = TESTS_DATA_ROOT "filled.png";
-const char *imgPath4 = TESTS_DATA_ROOT "miroir2.png";
-const char *imgPath5 = TESTS_DATA_ROOT "miroir2-64.png";
+#include "VkvgTest.hpp"
 
-void        paint() {
-    VkvgContext ctx     = vkvg_create(surf);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+TEST(img_paint) {
+    VkvgContext ctx = vkvg_create(test->surf);    
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
 
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
     vkvg_paint(ctx);
@@ -16,20 +11,20 @@ void        paint() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-void paint_offset() {
-    VkvgContext ctx     = vkvg_create(surf);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
-
+TEST(img_paint_offset) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
     vkvg_set_source_surface(ctx, imgSurf, 100, 100);
     vkvg_paint(ctx);
 
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-void paint_with_scale() {
-    VkvgContext ctx = vkvg_create(surf);
+TEST(img_paint_with_scale) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
+
     vkvg_scale(ctx, 0.2f, 0.2f);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
 
     vkvg_paint(ctx);
@@ -37,10 +32,10 @@ void paint_with_scale() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-void translate() {
-    VkvgContext ctx = vkvg_create(surf);
+TEST(img_translate) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
     vkvg_translate(ctx, 150, 50);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
 
     vkvg_paint(ctx);
@@ -48,10 +43,10 @@ void translate() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-void offset_and_scale() {
-    VkvgContext ctx = vkvg_create(surf);
+TEST(img_offset_and_scale) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
     vkvg_scale(ctx, 0.2f, 0.2f);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
     vkvg_set_source_surface(ctx, imgSurf, 100, 100);
 
     vkvg_paint(ctx);
@@ -61,13 +56,16 @@ void offset_and_scale() {
 }
 
 static float angle = 0;
-void         paint_with_rot() {
+
+TEST(img_paint_with_rot) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
+
+
     angle += 0.005;
-    VkvgContext ctx = vkvg_create(surf);
     vkvg_clear(ctx);
 
     vkvg_rotate(ctx, angle);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
 
     vkvg_paint(ctx);
@@ -75,13 +73,13 @@ void         paint_with_rot() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-void offset_and_rot() {
+TEST(img_offset_and_rot) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
     angle += 0.005;
-    VkvgContext ctx = vkvg_create(surf);
     vkvg_clear(ctx);
 
     vkvg_rotate(ctx, angle);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
     vkvg_set_source_surface(ctx, imgSurf, 100, 100);
 
     vkvg_paint(ctx);
@@ -89,15 +87,15 @@ void offset_and_rot() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-void offset_and_rot_center() {
+TEST(img_offset_and_rot_center) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror2.png"));
     angle += 0.005;
-    VkvgContext ctx = vkvg_create(surf);
     vkvg_clear(ctx);
 
     vkvg_translate(ctx, 142,142);
     vkvg_rotate(ctx, angle);
     vkvg_translate(ctx, -142,-142);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath4);
     vkvg_set_source_surface(ctx, imgSurf, 100, 100);
 
     vkvg_paint(ctx);
@@ -105,10 +103,9 @@ void offset_and_rot_center() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-
-void paint_pattern() {
-    VkvgContext ctx     = vkvg_create(surf);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath5);
+TEST(img_paint_pattern) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror2-64.png"));
     VkvgPattern pat     = vkvg_pattern_create_for_surface(imgSurf);
     vkvg_set_source(ctx, pat);
     vkvg_paint(ctx);
@@ -116,9 +113,9 @@ void paint_pattern() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-void paint_patt_repeat() {
-    VkvgContext ctx     = vkvg_create(surf);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
+TEST(img_paint_patt_repeat) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
     VkvgPattern pat     = vkvg_pattern_create_for_surface(imgSurf);
     vkvg_pattern_set_extend(pat, VKVG_EXTEND_REPEAT);
     vkvg_set_source(ctx, pat);
@@ -127,10 +124,10 @@ void paint_patt_repeat() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-void paint_patt_repeat_scalled() {
-    VkvgContext ctx = vkvg_create(surf);
+TEST(img_paint_patt_repeat_scalled) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
     vkvg_scale(ctx, 0.2f, 0.2f);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
     VkvgPattern pat     = vkvg_pattern_create_for_surface(imgSurf);
     vkvg_pattern_set_extend(pat, VKVG_EXTEND_REPEAT);
     vkvg_set_source(ctx, pat);
@@ -139,9 +136,9 @@ void paint_patt_repeat_scalled() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
-void paint_patt_pad() {
-    VkvgContext ctx     = vkvg_create(surf);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath5);
+TEST(img_paint_patt_pad) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror2-64.png"));
     VkvgPattern pat     = vkvg_pattern_create_for_surface(imgSurf);
     vkvg_pattern_set_extend(pat, VKVG_EXTEND_PAD);
     vkvg_set_source(ctx, pat);
@@ -150,7 +147,35 @@ void paint_patt_pad() {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
+TEST(imgWithAlphaTest0) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("filled.png"));
 
+    vkvg_set_source_surface(ctx, imgSurf, 40, 40);
+    vkvg_paint(ctx);
+
+    vkvg_destroy(ctx);
+    vkvg_surface_destroy(imgSurf);
+}
+TEST(imgWithAlphaTest1) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
+    VkvgSurface imgSurf2 = vkvg_surface_create_from_image(test->device, GET_PATH("filled.png"));
+
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+    vkvg_paint(ctx);
+
+    vkvg_flush(ctx);
+
+    vkvg_set_source_surface(ctx, imgSurf2, 50, 50);
+    vkvg_paint(ctx);
+
+    vkvg_surface_destroy(imgSurf2);
+    vkvg_surface_destroy(imgSurf);
+
+    vkvg_destroy(ctx);
+}
+/*
 void test() {
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
@@ -262,35 +287,7 @@ void imgTest3() {
     //vkvg_surface_destroy(surface);
 }
 
-void imgWithAlphaTest0() {    //VkvgSurface surface = vkvg_surface_create(device, 800, 600);
 
-    VkvgContext ctx = vkvg_create(surf);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath3);
-
-    vkvg_set_source_surface(ctx, imgSurf, 40, 40);
-    vkvg_paint(ctx);
-
-    vkvg_destroy(ctx);
-    vkvg_surface_destroy(imgSurf);
-}
-void imgWithAlphaTest1() {
-    VkvgContext ctx = vkvg_create(surf);
-    VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
-    VkvgSurface imgSurf2 = vkvg_surface_create_from_image(device, imgPath3);
-
-    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
-    vkvg_paint(ctx);
-
-    vkvg_flush(ctx);
-
-    vkvg_set_source_surface(ctx, imgSurf2, 50, 50);
-    vkvg_paint(ctx);
-
-    vkvg_surface_destroy(imgSurf2);
-    vkvg_surface_destroy(imgSurf);
-
-    vkvg_destroy(ctx);
-}
 void imgTest4() {
     VkvgContext ctx = vkvg_create(surf);
     VkvgSurface imgSurf = vkvg_surface_create_from_image(device, imgPath);
@@ -326,27 +323,5 @@ void imgTest4() {
     vkvg_destroy(ctx);
 
     //vkvg_surface_write_to_png(surf, "imgTest4.png");
-}
-int main(int argc, char *argv[]) {
-    no_test_size = true;
-    PERFORM_TEST(paint, argc, argv);
-    PERFORM_TEST(paint_offset, argc, argv);
-    PERFORM_TEST(paint_with_scale, argc, argv);
-    PERFORM_TEST(offset_and_scale, argc, argv);
-    PERFORM_TEST(translate, argc, argv);
-    PERFORM_TEST(paint_with_rot, argc, argv);
-    PERFORM_TEST(offset_and_rot, argc, argv);
-    PERFORM_TEST(offset_and_rot_center, argc, argv);
-    PERFORM_TEST(paint_pattern, argc, argv);
-    PERFORM_TEST(paint_patt_repeat, argc, argv);
-    PERFORM_TEST(paint_patt_repeat_scalled, argc, argv);
-    PERFORM_TEST(paint_patt_pad, argc, argv);
-    PERFORM_TEST(test, argc, argv);
-    PERFORM_TEST(imgTest3, argc, argv);
-    PERFORM_TEST(imgTest4, argc, argv);
-    PERFORM_TEST(imgTestClipped, argc, argv);
-    PERFORM_TEST(imgWithAlphaTest0, argc, argv);
-    PERFORM_TEST(imgWithAlphaTest1, argc, argv);
+}*/
 
-    return 0;
-}
