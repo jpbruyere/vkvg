@@ -56,6 +56,7 @@ jobs:
       working-directory: source/build
     - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source/build
+    - run: ls -R 
     - run: source/build/gunit_tests/unit_tests
       working-directory: source/build
   mac_jorb:
