@@ -22,7 +22,7 @@ jobs:
         vulkan-components: Vulkan-Headers, Vulkan-Loader
         vulkan-use-cache: false
     - name: configure
-      run: cmake -B build_win64 -G "Visual Studio 17 2022" -A x64 -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true -DBUILD_SHARED_LIBS=OFF
+      run: cmake -B build_win64 -G "Visual Studio 17 2022" -A x64 -DVKVG_RECORDING=false -DVKVG_SVG=false -DBUILD_SHARED_LIBS=OFF
     - name: build win64
       run: cmake --build build_win64 --parallel
 
@@ -52,12 +52,12 @@ jobs:
         persist-credentials: false
         submodules: 'true'
     - run: mkdir -p source/build
-    - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} -G "Unix Makefiles" .. -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
+    - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} -G "Unix Makefiles" .. -DVKVG_RECORDING=false -DVKVG_SVG=false
       working-directory: source/build
     - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source/build
-    - run: ls -R 
-    - run: source/build/gunit_tests/unit_tests
+    - run: ls -R ..
+    - run: build/gunit_tests/unit_tests
       working-directory: source/build
   mac_jorb:
     runs-on: macos-latest
@@ -84,7 +84,7 @@ jobs:
         path: 'source'
         persist-credentials: false
     - run: mkdir -p source/build
-    - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} .. -DVKVG_RECORDING=false -DVKVG_SVG=false -DGIT_SUBMODULE=true
+    - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} .. -DVKVG_RECORDING=false -DVKVG_SVG=false
       working-directory: source/build
     - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source/build
