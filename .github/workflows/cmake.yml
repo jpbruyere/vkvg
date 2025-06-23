@@ -58,7 +58,7 @@ jobs:
     - run: cmake --build . --config ${{ matrix.build_config }}
       working-directory: source/build
     - run: ldd /home/runner/work/vkvg/vkvg/source/build/samples/samples
-    - run: $GITHUB_PATH/vulkaninfo
+    - run: vulkaninfo
     - run: /home/runner/work/vkvg/vkvg/source/build/samples/samples --list-gpus
     - run: /home/runner/work/vkvg/vkvg/source/build/gunit_tests/unit_tests
   mac_jorb:
