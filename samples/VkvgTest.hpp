@@ -8,7 +8,6 @@
 
 #include "SampleApp.hpp"
 
-
 #define M_PIF        3.14159265359f /* float pi */
 #define M_PIF_MULT_2 6.28318530718f
 #ifndef M_PI
@@ -40,21 +39,20 @@ typedef enum _shape_t {
 } shape_t;
 
 class VkvgTest;
-typedef void (*VkvgTestFunc) (VkvgTest* test);
-
+typedef void (*VkvgTestFunc)(VkvgTest* test);
 
 class VkvgTest {
     VkvgTestFunc testFunc;
+
   public:
     static std::vector<VkvgTest*> tests;
 
-    SampleApp* app;
+    SampleApp*  app;
     std::string name;
     VkvgTest(VkvgTestFunc testFunc, std::string _name);
 
-    VkvgDevice device;
+    VkvgDevice  device;
     VkvgSurface surf;
-
 
     void initTest(SampleApp* app);
     void performTest();
@@ -64,10 +62,10 @@ class VkvgTest {
     void draw_random_curve(VkvgContext ctx);
     void draw_random_square(VkvgContext ctx, float s);
 };
-#define TEST(name)                 \
-    static void name(VkvgTest* test);      \
-    static VkvgTest _##name(name, #name); \
-    static void name(VkvgTest* test)
+#define TEST(name)                                                                                                     \
+    static void     name(VkvgTest* test);                                                                              \
+    static VkvgTest _##name(name, #name);                                                                              \
+    static void     name(VkvgTest* test)
 
 void draw_growing_circles(VkvgContext ctx, float y, int count);
 void randomize_color(VkvgContext ctx);

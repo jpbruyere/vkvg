@@ -1,6 +1,5 @@
 #include "VkvgTest.hpp"
 
-
 //"M80 170   C100 170 160 170 180 170 lZ"
 /*TEST(curve2) {
     VkvgContext ctx = vkvg_create(test->surf);
@@ -170,8 +169,8 @@ void _long_curv(VkvgTest* test, vkvg_fill_rule_t fill_rule) {
 }
 
 TEST(long_curv_fill_nz) {
-    fillAndStroke = false;    
-    _long_curv(test,VKVG_FILL_RULE_NON_ZERO);
+    fillAndStroke = false;
+    _long_curv(test, VKVG_FILL_RULE_NON_ZERO);
 }
 TEST(long_curv_fill_eo) {
     fillAndStroke = false;

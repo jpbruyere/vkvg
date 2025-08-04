@@ -69,7 +69,7 @@ typedef struct {
 #ifdef VKVG_USE_FREETYPE
     FT_Vector advance; /* horizontal or vertical advance */
 #else
-    vec2               advance;
+    vec2 advance;
 #endif
 } _char_ref;
 
@@ -89,28 +89,28 @@ typedef struct {
     FT_F26Dot6 charSize; /* Font size*/
     FT_Face    face;     /* FreeType face*/
 #else
-    uint32_t           charSize; /* Font size in pixel */
-    float              scale;    /* scale factor for the given size */
-    int                ascent;   /* unscalled stb font metrics */
-    int                descent;
-    int                lineGap;
+    uint32_t charSize; /* Font size in pixel */
+    float    scale;    /* scale factor for the given size */
+    int      ascent;   /* unscalled stb font metrics */
+    int      descent;
+    int      lineGap;
 #endif
 
 #ifdef VKVG_USE_HARFBUZZ
-    hb_font_t *hb_font; /* HarfBuzz font instance*/
+    hb_font_t* hb_font; /* HarfBuzz font instance*/
 #endif
-    _char_ref **charLookup; /* Lookup table of characteres in cache, if not found, upload is queued*/
+    _char_ref** charLookup; /* Lookup table of characteres in cache, if not found, upload is queued*/
 
     _tex_ref_t curLine; /* tex coord where to add new char bmp's */
 } _vkvg_font_t;
 
 /* Font identification structure */
 typedef struct {
-    char   **names; /* Resolved Input names to this font by fontConfig or custom name set by @ref vkvg_load_from_path*/
+    char**   names; /* Resolved Input names to this font by fontConfig or custom name set by @ref vkvg_load_from_path*/
     uint32_t namesCount;        /* Count of resolved names by fontConfig */
-    unsigned char *fontBuffer;  /* stb_truetype in memory buffer */
+    unsigned char* fontBuffer;  /* stb_truetype in memory buffer */
     long           fontBufSize; /* */
-    char          *fontFile;    /* Font file full path*/
+    char*          fontFile;    /* Font file full path*/
 #ifndef VKVG_USE_FREETYPE
     stbtt_fontinfo stbInfo; /* stb_truetype structure */
     int            ascent;  /* unscalled stb font metrics */
@@ -118,7 +118,7 @@ typedef struct {
     int            lineGap;
 #endif
     uint32_t      sizeCount; /* available font size loaded */
-    _vkvg_font_t *sizes;     /* loaded font size array */
+    _vkvg_font_t* sizes;     /* loaded font size array */
 } _vkvg_font_identity_t;
 
 // Font cache global structure, entry point for all font related operations.
@@ -128,11 +128,11 @@ typedef struct {
 #else
 #endif
 #ifdef VKVG_USE_FONTCONFIG
-    FcConfig *config; /* Font config, used to find font files by font names*/
+    FcConfig* config; /* Font config, used to find font files by font names*/
 #endif
 
     int      stagingX; /* x pen in host buffer */
-    uint8_t *hostBuff; /* host memory where bitmaps are first loaded */
+    uint8_t* hostBuff; /* host memory where bitmaps are first loaded */
 
     VkCommandBuffer cmd;          /* vulkan command buffer for font textures upload */
     vkh_buffer_t    buff;         /* stagin buffer */
@@ -141,12 +141,12 @@ typedef struct {
     uint8_t         texPixelSize; /* Size in byte of a single pixel in a font texture */
     uint8_t texLength;   /* layer count of 2d array texture, starts with FONT_CACHE_INIT_LAYERS count and increased when
                             needed */
-    int    *pensY;       /* array of current y pen positions for each texture in cache 2d array */
+    int*    pensY;       /* array of current y pen positions for each texture in cache 2d array */
     VkFence uploadFence; /* Signaled when upload is finished */
     mtx_t   mutex;       /* font cache global mutex, used only if device is in thread aware mode (see:
                             vkvg_device_set_thread_aware) */
 
-    _vkvg_font_identity_t *fonts;      /* Loaded fonts structure array */
+    _vkvg_font_identity_t* fonts;      /* Loaded fonts structure array */
     int32_t                fontsCount; /* Loaded fonts array count*/
 } _font_cache_t;
 
@@ -159,17 +159,17 @@ typedef struct {
 
 // Precompute everything necessary to measure and draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
-    _vkvg_font_identity_t *fontId;      /* vkvg font structure pointer */
-    _vkvg_font_t          *font;        /* vkvg font structure pointer */
+    _vkvg_font_identity_t* fontId;      /* vkvg font structure pointer */
+    _vkvg_font_t*          font;        /* vkvg font structure pointer */
     VkvgDevice             dev;         /* vkvg device associated with this text run */
     vkvg_text_extents_t    extents;     /* store computed text extends */
-    const char            *text;        /* utf8 char array of text*/
+    const char*            text;        /* utf8 char array of text*/
     unsigned int           glyph_count; /* Total glyph count */
 #ifdef VKVG_USE_HARFBUZZ
-    hb_buffer_t         *hbBuf;  /* HarfBuzz buffer of text */
-    hb_glyph_position_t *glyphs; /* HarfBuzz computed glyph positions array */
+    hb_buffer_t*         hbBuf;  /* HarfBuzz buffer of text */
+    hb_glyph_position_t* glyphs; /* HarfBuzz computed glyph positions array */
 #else
-    vkvg_glyph_info_t *glyphs; /* computed glyph positions array */
+    vkvg_glyph_info_t* glyphs; /* computed glyph positions array */
 #endif
 } vkvg_text_run_t;
 
@@ -177,16 +177,16 @@ typedef struct _vkvg_text_run_t {
 void _fonts_cache_create(VkvgDevice dev);
 // Release all ressources of font cache.
 void                   _font_cache_destroy(VkvgDevice dev);
-_vkvg_font_identity_t *_font_cache_add_font_identity(VkvgContext ctx, const char *fontFile, const char *name);
-bool                   _font_cache_load_font_file_in_memory(_vkvg_font_identity_t *fontId);
+_vkvg_font_identity_t* _font_cache_add_font_identity(VkvgContext ctx, const char* fontFile, const char* name);
+bool                   _font_cache_load_font_file_in_memory(_vkvg_font_identity_t* fontId);
 // Draw text
-void _font_cache_show_text(VkvgContext ctx, const char *text);
+void _font_cache_show_text(VkvgContext ctx, const char* text);
 // Get text dimmensions
-void _font_cache_text_extents(VkvgContext ctx, const char *text, int length, vkvg_text_extents_t *extents);
+void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkvg_text_extents_t* extents);
 // Get font global dimmensions
-void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t *extents);
+void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents);
 // Create text object that could be drawn multiple times minimizing harfbuzz and compute processing.
-void _font_cache_create_text_run(VkvgContext ctx, const char *text, int length, VkvgText textRun);
+void _font_cache_create_text_run(VkvgContext ctx, const char* text, int length, VkvgText textRun);
 // Release ressources held by a text run.
 void _font_cache_destroy_text_run(VkvgText textRun);
 // Draw text run

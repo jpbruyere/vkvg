@@ -51,4 +51,4 @@ void _linux_register_error_handler();
 #endif
 #endif
 
-const char *getUserDir();
+const char* getUserDir();

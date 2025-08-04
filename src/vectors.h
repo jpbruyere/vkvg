@@ -143,7 +143,7 @@ vkvg_inline vec2 vec2_norm(vec2 a) {
 // compute perpendicular vector
 vkvg_inline vec2 vec2_perp(vec2 a) { return (vec2){a.y, -a.x}; }
 // compute opposite of single precision vector
-vkvg_inline void vec2_inv(vec2 *v) {
+vkvg_inline void vec2_inv(vec2* v) {
     v->x = -v->x;
     v->y = -v->y;
 }
@@ -162,6 +162,6 @@ vkvg_inline bool vec4_equ(vec4 a, vec4 b) {
 vkvg_inline vec2 mat2_mult_vec2(mat2 m, vec2 v) {
     return (vec2){(m.row0.x * v.x) + (m.row0.y * v.y), (m.row1.x * v.x) + (m.row1.y * v.y)};
 }
-vkvg_inline float mat2_det(mat2 *m) { return (m->row0.x * m->row1.y) - (m->row0.y * m->row1.y); }
+vkvg_inline float mat2_det(mat2* m) { return (m->row0.x * m->row1.y) - (m->row0.y * m->row1.y); }
 
 #endif

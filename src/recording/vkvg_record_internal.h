@@ -100,19 +100,19 @@ typedef struct _vkvg_record_t {
 } vkvg_record_t;
 
 typedef struct _vkvg_recording_t {
-    vkvg_record_t *commands;
+    vkvg_record_t* commands;
     uint32_t       commandsCount;
     uint32_t       commandsReservedCount;
     size_t         bufferSize;
     size_t         bufferReservedSize;
-    char          *buffer;
+    char*          buffer;
 } vkvg_recording_t;
 
 void              _start_recording(VkvgContext ctx);
-vkvg_recording_t *_stop_recording(VkvgContext ctx);
-void              _destroy_recording(vkvg_recording_t *rec);
+vkvg_recording_t* _stop_recording(VkvgContext ctx);
+void              _destroy_recording(vkvg_recording_t* rec);
 void              _replay_command(VkvgContext ctx, VkvgRecording rec, uint32_t index);
-void              _record(vkvg_recording_t *rec, ...);
+void              _record(vkvg_recording_t* rec, ...);
 
 #define RECORD(ctx, ...)                                                                                               \
     {                                                                                                                  \

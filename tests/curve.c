@@ -184,7 +184,7 @@ void long_curv_fill_stroke_eo() {
     fill_rule     = VKVG_FILL_RULE_EVEN_ODD;
     _long_curv();
 }
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
     PERFORM_TEST(test3, argc, argv);
     // return 0;

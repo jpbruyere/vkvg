@@ -36,7 +36,7 @@
             enabledExts[enabledExtsCount++] = #ext;                                                                    \
     }
 
-static void glfw_error_callback(int error, const char *description) {
+static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "vkengine: GLFW error %d: %s\n", error, description);
 }
 
@@ -94,7 +94,7 @@ void vkengine_dump_available_layers() {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, NULL);
 
-    VkLayerProperties *availableLayers = (VkLayerProperties *)malloc(layerCount * sizeof(VkLayerProperties));
+    VkLayerProperties* availableLayers = (VkLayerProperties*)malloc(layerCount * sizeof(VkLayerProperties));
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers);
 
     printf("Available Layers:\n");
@@ -105,7 +105,7 @@ void vkengine_dump_available_layers() {
     printf("-----------------\n\n");
     free(availableLayers);
 }
-bool vkengine_try_get_phyinfo(VkhPhyInfo *phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo *phy) {
+bool vkengine_try_get_phyinfo(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
     for (uint32_t i = 0; i < phyCount; i++) {
         if (phys[i]->properties.deviceType == gpuType) {
             *phy = phys[i];
@@ -114,8 +114,8 @@ bool vkengine_try_get_phyinfo(VkhPhyInfo *phys, uint32_t phyCount, VkPhysicalDev
     }
     return false;
 }
-bool instance_extension_supported(VkExtensionProperties *instanceExtProps, uint32_t extCount,
-                                  const char *instanceName) {
+bool instance_extension_supported(VkExtensionProperties* instanceExtProps, uint32_t extCount,
+                                  const char* instanceName) {
     for (uint32_t i = 0; i < extCount; i++) {
         if (!strcmp(instanceExtProps[i].extensionName, instanceName))
             return true;
@@ -123,7 +123,7 @@ bool instance_extension_supported(VkExtensionProperties *instanceExtProps, uint3
     return false;
 }
 
-vk_engine_t *vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width,
+vk_engine_t* vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width,
                              uint32_t height) {
     glfwSetErrorCallback(glfw_error_callback);
 
@@ -137,8 +137,8 @@ vk_engine_t *vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
         exit(-1);
     }
 
-    const char *enabledLayers[10];
-    const char *enabledExts[10];
+    const char* enabledLayers[10];
+    const char* enabledExts[10];
     uint32_t    enabledExtsCount = 0, enabledLayersCount = 0, phyCount = 0;
 
     vkh_layers_check_init();
@@ -158,7 +158,7 @@ vk_engine_t *vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
     vkh_layers_check_release();
 
     uint32_t     glfwReqExtsCount = 0;
-    const char **gflwExts         = glfwGetRequiredInstanceExtensions(&glfwReqExtsCount);
+    const char** gflwExts         = glfwGetRequiredInstanceExtensions(&glfwReqExtsCount);
 
     vkvg_get_required_instance_extensions(enabledExts, &enabledExtsCount);
 
@@ -167,7 +167,7 @@ vk_engine_t *vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
 
     enabledExtsCount += glfwReqExtsCount;
 
-    vk_engine_t *e = (vk_engine_t *)calloc(1, sizeof(vk_engine_t));
+    vk_engine_t* e = (vk_engine_t*)calloc(1, sizeof(vk_engine_t));
 
 #ifdef VK_VERSION_1_2
     e->app = vkh_app_create(1, 2, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
@@ -176,17 +176,13 @@ vk_engine_t *vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
 #endif
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
-    vkh_app_enable_debug_messenger(e->app,
-                                   VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-                                   | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-                                   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
-                                   ,
-                                   VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
-                                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-                                   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-                                   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-                                   ,
-                                   NULL);
+    vkh_app_enable_debug_messenger(
+        e->app,
+        VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT,
+        NULL);
 #endif
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -199,7 +195,7 @@ vk_engine_t *vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
     VkSurfaceKHR surf;
     VK_CHECK_RESULT(glfwCreateWindowSurface(e->app->inst, e->window, NULL, &surf))
 
-    VkhPhyInfo *phys = vkh_app_get_phyinfos(e->app, &phyCount, surf);
+    VkhPhyInfo* phys = vkh_app_get_phyinfos(e->app, &phyCount, surf);
 
     VkhPhyInfo pi = 0;
     if (!vkengine_try_get_phyinfo(phys, phyCount, preferedGPU, &pi) &&
@@ -231,11 +227,11 @@ vk_engine_t *vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
     TRY_LOAD_DEVICE_EXT(VK_KHR_swapchain)
 
     VkPhysicalDeviceFeatures enabledFeatures = {0};
-    const void              *pNext           = vkvg_get_device_requirements(&enabledFeatures);
+    const void*              pNext           = vkvg_get_device_requirements(&enabledFeatures);
 
     VkDeviceCreateInfo device_info = {.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                       .queueCreateInfoCount    = qCount,
-                                      .pQueueCreateInfos       = (VkDeviceQueueCreateInfo *)&pQueueInfos,
+                                      .pQueueCreateInfos       = (VkDeviceQueueCreateInfo*)&pQueueInfos,
                                       .enabledExtensionCount   = enabledExtsCount,
                                       .ppEnabledExtensionNames = enabledExts,
                                       .pEnabledFeatures        = &enabledFeatures,
@@ -280,7 +276,7 @@ void vkengine_blitter_run(VkEngine e, VkImage img, uint32_t width, uint32_t heig
     }
 }
 bool             vkengine_should_close(VkEngine e) { return glfwWindowShouldClose(e->window); }
-void             vkengine_set_title(VkEngine e, const char *title) { glfwSetWindowTitle(e->window, title); }
+void             vkengine_set_title(VkEngine e, const char* title) { glfwSetWindowTitle(e->window, title); }
 VkInstance       vkengine_get_instance(VkEngine e) { return e->dev->instance; }
 VkDevice         vkengine_get_device(VkEngine e) { return e->dev->dev; }
 VkPhysicalDevice vkengine_get_physical_device(VkEngine e) { return e->dev->phy; }

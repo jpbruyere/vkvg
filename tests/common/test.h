@@ -66,7 +66,7 @@ typedef struct timeval {
 #endif
 
 // *sigh* no gettimeofday on Win32/Win64
-int gettimeofday(struct timeval *tp, void *tzp);
+int gettimeofday(struct timeval* tp, void* tzp);
 #else
 #include <sys/time.h>
 #endif
@@ -107,13 +107,13 @@ extern float            dashes[];
 extern uint32_t         dashes_count;
 
 VkvgContext _initCtx();
-void        _parse_args(int argc, char *argv[]);
+void        _parse_args(int argc, char* argv[]);
 /*******************************/
 
 // run test in one step
-void perform_test(void (*testfunc)(), const char *testName, int argc, char *argv[]);
-void perform_test_onscreen(void (*testfunc)(void), const char *testName, int argc, char *argv[]);
-void perform_test_offscreen(void (*testfunc)(void), const char *testName, int argc, char *argv[]);
+void perform_test(void (*testfunc)(), const char* testName, int argc, char* argv[]);
+void perform_test_onscreen(void (*testfunc)(void), const char* testName, int argc, char* argv[]);
+void perform_test_offscreen(void (*testfunc)(void), const char* testName, int argc, char* argv[]);
 
 void randomize_color(VkvgContext ctx);
 void draw_random_shape(VkvgContext ctx, shape_t shape, float sizeFact);

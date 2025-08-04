@@ -148,7 +148,7 @@ void gradient_alpha() {
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
     PERFORM_TEST(gradient_alpha, argc, argv);
     PERFORM_TEST(paint, argc, argv);

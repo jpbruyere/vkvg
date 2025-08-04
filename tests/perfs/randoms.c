@@ -57,7 +57,7 @@ void random_fill() { _shape_fill(SHAPE_RANDOM); }
 void random_stroke() { _shape_stroke(SHAPE_RANDOM); }
 void random_fill_stroke() { _shape_fill_stroke(SHAPE_RANDOM); }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     PERFORM_TEST(rectangles_fill, argc, argv);
     PERFORM_TEST(rectangles_stroke, argc, argv);
     PERFORM_TEST(rectangles_fill_stroke, argc, argv);

@@ -17,10 +17,10 @@ static VkvgDevice  dev;
 static VkvgSurface svgSurf = NULL;
 static double      scale   = 1;
 
-static char              *filename    = NULL;
-static char              *directory   = NULL;
-static DIR               *pCurrentDir = NULL;
-struct dirent            *dir         = NULL;
+static char*              filename    = NULL;
+static char*              directory   = NULL;
+static DIR*               pCurrentDir = NULL;
+struct dirent*            dir         = NULL;
 static int                iconSize    = -1;
 static VkSampleCountFlags samples     = VK_SAMPLE_COUNT_8_BIT;
 static uint32_t           width = 512, height = 512, margin = 10;
@@ -42,7 +42,7 @@ static float maxScroll;
 #endif
 
 int _count_svg_files() {
-    struct dirent *de;
+    struct dirent* de;
     rewinddir(pCurrentDir);
     int i = 0;
     while ((de = readdir(pCurrentDir)) != NULL) {
@@ -69,7 +69,7 @@ void readSVG(VkEngine e) {
         newSvgSurf      = vkvg_surface_create(dev, width, height);
         VkvgContext ctx = vkvg_create(newSvgSurf);
 
-        struct dirent *de;
+        struct dirent* de;
         rewinddir(pCurrentDir);
         int i = 0;
         while ((de = readdir(pCurrentDir)) != NULL) {
@@ -141,8 +141,8 @@ void readSVG(VkEngine e) {
 #endif
 }
 
-struct dirent *get_next_svg_file_in_current_directory(bool cycle) {
-    struct dirent *de;
+struct dirent* get_next_svg_file_in_current_directory(bool cycle) {
+    struct dirent* de;
     while ((de = readdir(pCurrentDir)) != NULL) {
         if (de->d_type != DT_DIR) {
             if (!strcasecmp(strrchr(de->d_name, '\0') - 4, ".svg"))
@@ -155,7 +155,7 @@ struct dirent *get_next_svg_file_in_current_directory(bool cycle) {
     return get_next_svg_file_in_current_directory(false);
 }
 
-static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action == GLFW_RELEASE)
         return;
     switch (key) {
@@ -185,7 +185,7 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
         break;
     }
 }
-static void scroll_callback(GLFWwindow *window, double x, double y) {
+static void scroll_callback(GLFWwindow* window, double x, double y) {
     if (iconSize == 0)
         return;
     scrollX -= x * 25;
@@ -213,9 +213,9 @@ void print_help_and_exit() {
     exit(-1);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     int   i      = 1;
-    char *output = NULL;
+    char* output = NULL;
 
     while (i < argc) {
         int argLen = strlen(argv[i]);

@@ -40,17 +40,17 @@ uint32_t vkvg_recording_get_count(VkvgRecording rec) {
         return 0;
     return rec->commandsCount;
 }
-void *vkvg_recording_get_data(VkvgRecording rec) {
+void* vkvg_recording_get_data(VkvgRecording rec) {
     if (!rec)
         return 0;
     return rec->buffer;
 }
-void vkvg_recording_get_command(VkvgRecording rec, uint32_t cmdIndex, uint32_t *cmd, void **dataOffset) {
+void vkvg_recording_get_command(VkvgRecording rec, uint32_t cmdIndex, uint32_t* cmd, void** dataOffset) {
     if (!rec)
         return;
     if (cmdIndex < rec->commandsCount) {
         *cmd        = rec->commands[cmdIndex].cmd;
-        *dataOffset = (void *)rec->commands[cmdIndex].dataOffset;
+        *dataOffset = (void*)rec->commands[cmdIndex].dataOffset;
     } else {
         *cmd        = 0;
         *dataOffset = NULL;

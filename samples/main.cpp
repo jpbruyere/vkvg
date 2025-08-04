@@ -3,7 +3,7 @@
 
 #include "argparse/argparse.hpp"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     SampleApp app{};
 
     argparse::ArgumentParser program("samples");
@@ -42,25 +42,18 @@ int main(int argc, char **argv) {
         .scan<'u', uint32_t>()
         .nargs(argparse::nargs_pattern::at_least_one);
 
-    program.add_argument("--list-tests")
-        .help("Get tests list")
-        .default_value(false)
-        .implicit_value(true);
+    program.add_argument("--list-tests").help("Get tests list").default_value(false).implicit_value(true);
 
     program.add_argument("--list-gpus")
         .help("Get available GPU's, select with option '-g'")
         .default_value(false)
         .implicit_value(true)
         .store_into(app.listGpus);
-    program.add_argument("-g", "--gpu")
-        .help("GPU index")
-        .default_value<int32_t>(-1)
-        .store_into<int32_t>(app.gpuIndex);
+    program.add_argument("-g", "--gpu").help("GPU index").default_value<int32_t>(-1).store_into<int32_t>(app.gpuIndex);
 
     try {
         program.parse_args(argc, argv);
-    }
-    catch (const std::exception& err) {
+    } catch (const std::exception& err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
         std::exit(1);
@@ -82,5 +75,4 @@ int main(int argc, char **argv) {
 
     app.Init();
     app.Run();
-
 }

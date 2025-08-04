@@ -19,7 +19,7 @@ void fixedSizeRects() {
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     PERFORM_TEST(fixedSizeRects, argc, argv);
     return 0;
 }

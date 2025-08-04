@@ -107,4 +107,3 @@ static vkvg_status_t _vkvg_status_null_pointer    = VKVG_STATUS_NULL_POINTER;
 static vkvg_status_t _vkvg_status_invalid_dev_ci  = VKVG_STATUS_INVALID_DEVICE_CREATE_INFO;
 static vkvg_status_t _vkvg_status_device_error    = VKVG_STATUS_DEVICE_ERROR;
 static vkvg_status_t _vkvg_status_invalid_surface = VKVG_STATUS_INVALID_SURFACE;
-

@@ -44,7 +44,7 @@ freely, subject to the following restrictions:
 
 /* Standard, good-to-have defines */
 #ifndef NULL
-#define NULL (void *)0
+#define NULL (void*)0
 #endif
 #ifndef TRUE
 #define TRUE 1
@@ -53,7 +53,7 @@ freely, subject to the following restrictions:
 #define FALSE 0
 #endif
 
-int mtx_init(mtx_t *mtx, int type) {
+int mtx_init(mtx_t* mtx, int type) {
 #if defined(_TTHREAD_WIN32_)
     mtx->mAlreadyLocked = FALSE;
     mtx->mRecursive     = type & mtx_recursive;
@@ -72,7 +72,7 @@ int mtx_init(mtx_t *mtx, int type) {
 #endif
 }
 
-void mtx_destroy(mtx_t *mtx) {
+void mtx_destroy(mtx_t* mtx) {
 #if defined(_TTHREAD_WIN32_)
     DeleteCriticalSection(&mtx->mHandle);
 #else
@@ -80,7 +80,7 @@ void mtx_destroy(mtx_t *mtx) {
 #endif
 }
 
-int mtx_lock(mtx_t *mtx) {
+int mtx_lock(mtx_t* mtx) {
 #if defined(_TTHREAD_WIN32_)
     EnterCriticalSection(&mtx->mHandle);
     if (!mtx->mRecursive) {
@@ -94,14 +94,14 @@ int mtx_lock(mtx_t *mtx) {
 #endif
 }
 
-int mtx_timedlock(mtx_t *mtx, const struct timespec *ts) {
+int mtx_timedlock(mtx_t* mtx, const struct timespec* ts) {
     /* FIXME! */
     (void)mtx;
     (void)ts;
     return thrd_error;
 }
 
-int mtx_trylock(mtx_t *mtx) {
+int mtx_trylock(mtx_t* mtx) {
 #if defined(_TTHREAD_WIN32_)
     int ret = TryEnterCriticalSection(&mtx->mHandle) ? thrd_success : thrd_busy;
     if ((!mtx->mRecursive) && (ret == thrd_success) && mtx->mAlreadyLocked) {
@@ -114,7 +114,7 @@ int mtx_trylock(mtx_t *mtx) {
 #endif
 }
 
-int mtx_unlock(mtx_t *mtx) {
+int mtx_unlock(mtx_t* mtx) {
 #if defined(_TTHREAD_WIN32_)
     mtx->mAlreadyLocked = FALSE;
     LeaveCriticalSection(&mtx->mHandle);
@@ -130,7 +130,7 @@ int mtx_unlock(mtx_t *mtx) {
 #define _CONDITION_EVENT_ALL 1
 #endif
 
-int cnd_init(cnd_t *cond) {
+int cnd_init(cnd_t* cond) {
 #if defined(_TTHREAD_WIN32_)
     cond->mWaitersCount = 0;
 
@@ -156,7 +156,7 @@ int cnd_init(cnd_t *cond) {
 #endif
 }
 
-void cnd_destroy(cnd_t *cond) {
+void cnd_destroy(cnd_t* cond) {
 #if defined(_TTHREAD_WIN32_)
     if (cond->mEvents[_CONDITION_EVENT_ONE] != NULL) {
         CloseHandle(cond->mEvents[_CONDITION_EVENT_ONE]);
@@ -170,7 +170,7 @@ void cnd_destroy(cnd_t *cond) {
 #endif
 }
 
-int cnd_signal(cnd_t *cond) {
+int cnd_signal(cnd_t* cond) {
 #if defined(_TTHREAD_WIN32_)
     int haveWaiters;
 
@@ -192,7 +192,7 @@ int cnd_signal(cnd_t *cond) {
 #endif
 }
 
-int cnd_broadcast(cnd_t *cond) {
+int cnd_broadcast(cnd_t* cond) {
 #if defined(_TTHREAD_WIN32_)
     int haveWaiters;
 
@@ -215,7 +215,7 @@ int cnd_broadcast(cnd_t *cond) {
 }
 
 #if defined(_TTHREAD_WIN32_)
-static int _cnd_timedwait_win32(cnd_t *cond, mtx_t *mtx, DWORD timeout) {
+static int _cnd_timedwait_win32(cnd_t* cond, mtx_t* mtx, DWORD timeout) {
     int result, lastWaiter;
 
     /* Increment number of waiters */
@@ -256,7 +256,7 @@ static int _cnd_timedwait_win32(cnd_t *cond, mtx_t *mtx, DWORD timeout) {
 }
 #endif
 
-int cnd_wait(cnd_t *cond, mtx_t *mtx) {
+int cnd_wait(cnd_t* cond, mtx_t* mtx) {
 #if defined(_TTHREAD_WIN32_)
     return _cnd_timedwait_win32(cond, mtx, INFINITE);
 #else
@@ -264,7 +264,7 @@ int cnd_wait(cnd_t *cond, mtx_t *mtx) {
 #endif
 }
 
-int cnd_timedwait(cnd_t *cond, mtx_t *mtx, const struct timespec *ts) {
+int cnd_timedwait(cnd_t* cond, mtx_t* mtx, const struct timespec* ts) {
 #if defined(_TTHREAD_WIN32_)
     struct timespec now;
     if (clock_gettime(CLOCK_REALTIME, &now) == 0) {
@@ -285,30 +285,30 @@ int cnd_timedwait(cnd_t *cond, mtx_t *mtx, const struct timespec *ts) {
 /** Information to pass to the new thread (what to run). */
 typedef struct {
     thrd_start_t mFunction; /**< Pointer to the function to be executed. */
-    void        *mArg;      /**< Function argument for the thread function. */
+    void*        mArg;      /**< Function argument for the thread function. */
 } _thread_start_info;
 
 /* Thread wrapper function. */
 #if defined(_TTHREAD_WIN32_)
-static unsigned WINAPI _thrd_wrapper_function(void *aArg)
+static unsigned WINAPI _thrd_wrapper_function(void* aArg)
 #elif defined(_TTHREAD_POSIX_)
-static void *_thrd_wrapper_function(void *aArg)
+static void* _thrd_wrapper_function(void* aArg)
 #endif
 {
     thrd_start_t fun;
-    void        *arg;
+    void*        arg;
     int          res;
 #if defined(_TTHREAD_POSIX_)
-    void *pres;
+    void* pres;
 #endif
 
     /* Get thread startup information */
-    _thread_start_info *ti = (_thread_start_info *)aArg;
+    _thread_start_info* ti = (_thread_start_info*)aArg;
     fun                    = ti->mFunction;
     arg                    = ti->mArg;
 
     /* The thread is responsible for freeing the startup information */
-    free((void *)ti);
+    free((void*)ti);
 
     /* Call the actual client thread function */
     res = fun(arg);
@@ -318,16 +318,16 @@ static void *_thrd_wrapper_function(void *aArg)
 #else
     pres = malloc(sizeof(int));
     if (pres != NULL) {
-        *(int *)pres = res;
+        *(int*)pres = res;
     }
     return pres;
 #endif
 }
 
-int thrd_create(thrd_t *thr, thrd_start_t func, void *arg) {
+int thrd_create(thrd_t* thr, thrd_start_t func, void* arg) {
     /* Fill out the thread startup information (passed to the thread wrapper,
        which will eventually free it) */
-    _thread_start_info *ti = (_thread_start_info *)malloc(sizeof(_thread_start_info));
+    _thread_start_info* ti = (_thread_start_info*)malloc(sizeof(_thread_start_info));
     if (ti == NULL) {
         return thrd_nomem;
     }
@@ -336,9 +336,9 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg) {
 
     /* Create the thread */
 #if defined(_TTHREAD_WIN32_)
-    *thr = (HANDLE)_beginthreadex(NULL, 0, _thrd_wrapper_function, (void *)ti, 0, NULL);
+    *thr = (HANDLE)_beginthreadex(NULL, 0, _thrd_wrapper_function, (void*)ti, 0, NULL);
 #elif defined(_TTHREAD_POSIX_)
-    if (pthread_create(thr, NULL, _thrd_wrapper_function, (void *)ti) != 0) {
+    if (pthread_create(thr, NULL, _thrd_wrapper_function, (void*)ti) != 0) {
         *thr = 0;
     }
 #endif
@@ -378,15 +378,15 @@ void thrd_exit(int res) {
 #if defined(_TTHREAD_WIN32_)
     ExitThread(res);
 #else
-    void *pres = malloc(sizeof(int));
+    void* pres = malloc(sizeof(int));
     if (pres != NULL) {
-        *(int *)pres = res;
+        *(int*)pres = res;
     }
     pthread_exit(pres);
 #endif
 }
 
-int thrd_join(thrd_t thr, int *res) {
+int thrd_join(thrd_t thr, int* res) {
 #if defined(_TTHREAD_WIN32_)
     if (WaitForSingleObject(thr, INFINITE) == WAIT_FAILED) {
         return thrd_error;
@@ -397,13 +397,13 @@ int thrd_join(thrd_t thr, int *res) {
         *res = dwRes;
     }
 #elif defined(_TTHREAD_POSIX_)
-    void *pres;
+    void* pres;
     int   ires = 0;
     if (pthread_join(thr, &pres) != 0) {
         return thrd_error;
     }
     if (pres != NULL) {
-        ires = *(int *)pres;
+        ires = *(int*)pres;
         free(pres);
     }
     if (res != NULL) {
@@ -413,7 +413,7 @@ int thrd_join(thrd_t thr, int *res) {
     return thrd_success;
 }
 
-int thrd_sleep(const struct timespec *time_point, struct timespec *remaining) {
+int thrd_sleep(const struct timespec* time_point, struct timespec* remaining) {
     struct timespec now;
 #if defined(_TTHREAD_WIN32_)
     DWORD delta;
@@ -461,7 +461,7 @@ void thrd_yield(void) {
 #endif
 }
 
-int tss_create(tss_t *key, tss_dtor_t dtor) {
+int tss_create(tss_t* key, tss_dtor_t dtor) {
 #if defined(_TTHREAD_WIN32_)
     /* FIXME: The destructor function is not supported yet... */
     if (dtor != NULL) {
@@ -487,7 +487,7 @@ void tss_delete(tss_t key) {
 #endif
 }
 
-void *tss_get(tss_t key) {
+void* tss_get(tss_t key) {
 #if defined(_TTHREAD_WIN32_)
     return TlsGetValue(key);
 #else
@@ -495,7 +495,7 @@ void *tss_get(tss_t key) {
 #endif
 }
 
-int tss_set(tss_t key, void *val) {
+int tss_set(tss_t key, void* val) {
 #if defined(_TTHREAD_WIN32_)
     if (TlsSetValue(key, val) == 0) {
         return thrd_error;
@@ -509,7 +509,7 @@ int tss_set(tss_t key, void *val) {
 }
 
 #if defined(_TTHREAD_EMULATE_CLOCK_GETTIME_)
-int _tthread_clock_gettime(clockid_t clk_id, struct timespec *ts) {
+int _tthread_clock_gettime(clockid_t clk_id, struct timespec* ts) {
 #if defined(_TTHREAD_WIN32_)
     struct _timeb tb;
     _ftime(&tb);

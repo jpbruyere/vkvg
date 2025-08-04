@@ -22,8 +22,8 @@ class SurfaceTest : public testing::Test {
     void TearDown() override {}
 
     void checkPixels(VkvgSurface surf, uint32_t expectedPixelValue) {
-        uint32_t w = vkvg_surface_get_width(surf);
-        uint32_t h = vkvg_surface_get_height(surf);
+        uint32_t  w    = vkvg_surface_get_width(surf);
+        uint32_t  h    = vkvg_surface_get_height(surf);
         uint32_t* buff = (uint32_t*)malloc(w * h * sizeof(uint32_t));
         vkvg_surface_write_to_memory(surf, (unsigned char*)buff);
 
@@ -75,7 +75,7 @@ TEST_F(SurfaceTest, SurfReference) {
 
     vkvg_surface_destroy(surf);
     EXPECT_EQ(devRefCntInit, vkvg_device_get_reference_count(dev));
-    //EXPECT_EQ(0, vkvg_surface_get_reference_count(surf));
+    // EXPECT_EQ(0, vkvg_surface_get_reference_count(surf));
 }
 TEST_F(SurfaceTest, SurfProperties) {
     EXPECT_EQ(0, vkvg_surface_get_width(NULL));
@@ -95,10 +95,10 @@ TEST_F(SurfaceTest, SurfWrite) {
     EXPECT_EQ(VKVG_STATUS_INVALID_STATUS, vkvg_surface_write_to_memory(NULL, NULL));
     EXPECT_EQ(VKVG_STATUS_INVALID_STATUS, vkvg_surface_write_to_png(NULL, NULL));
     const uint32_t imgSize = 8;
-    VkvgSurface surf = vkvg_surface_create(dev, imgSize, imgSize);
+    VkvgSurface    surf    = vkvg_surface_create(dev, imgSize, imgSize);
     EXPECT_EQ(VKVG_STATUS_WRITE_ERROR, vkvg_surface_write_to_memory(surf, NULL));
     EXPECT_EQ(VKVG_STATUS_WRITE_ERROR, vkvg_surface_write_to_png(surf, NULL));
-    uint32_t buff[imgSize*imgSize];
+    uint32_t buff[imgSize * imgSize];
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_surface_write_to_memory(surf, (unsigned char*)buff));
 
     vkvg_surface_destroy(surf);
@@ -106,8 +106,8 @@ TEST_F(SurfaceTest, SurfWrite) {
 
 TEST_F(SurfaceTest, SurfClear) {
     const uint32_t imgSize = 8;
-    VkvgSurface surf = vkvg_surface_create(dev, imgSize, imgSize);
-    VkvgContext ctx = vkvg_create(surf);
+    VkvgSurface    surf    = vkvg_surface_create(dev, imgSize, imgSize);
+    VkvgContext    ctx     = vkvg_create(surf);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
     vkvg_paint(ctx);
     vkvg_destroy(ctx);

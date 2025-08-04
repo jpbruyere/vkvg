@@ -32,7 +32,7 @@ typedef struct _vkvg_pattern_t {
     vkvg_filter_t       filter;
     vkvg_matrix_t       matrix;
     bool                hasMatrix;
-    void               *data;
+    void*               data;
 } vkvg_pattern_t;
 
 typedef struct _vkvg_gradient_t {

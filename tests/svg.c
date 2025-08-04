@@ -3,8 +3,8 @@
 #include "vkvg-svg.h"
 
 static float       rotation   = 0.f;
-static const char *path       = TESTS_DATA_ROOT "tiger.svg";
-static const char *svgSubPath = TESTS_DATA_ROOT "checkbox.svg";
+static const char* path       = TESTS_DATA_ROOT "tiger.svg";
+static const char* svgSubPath = TESTS_DATA_ROOT "checkbox.svg";
 
 void svg_surface() {
     VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, test_width, test_height, path);
@@ -47,7 +47,7 @@ void vkvg_svg_sub() {
     vkvg_svg_destroy(svg);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
 
     PERFORM_TEST(svg_surface, argc, argv);

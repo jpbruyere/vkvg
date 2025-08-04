@@ -38,7 +38,7 @@ void test() {
     vkvg_recording_destroy(rec);
 }
 #endif
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
 #if VKVG_RECORDING
     PERFORM_TEST(test, argc, argv);

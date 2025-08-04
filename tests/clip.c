@@ -168,7 +168,7 @@ void test_clip2() {
 
     vkvg_destroy(ctx);
 }
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
     PERFORM_TEST(clip_transformed_ec, argc, argv);
     PERFORM_TEST(clipped_paint_ec, argc, argv);

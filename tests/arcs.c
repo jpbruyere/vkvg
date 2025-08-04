@@ -83,7 +83,7 @@ void test() {
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
     PERFORM_TEST(sizes, argc, argv);
     PERFORM_TEST(scaled_up, argc, argv);

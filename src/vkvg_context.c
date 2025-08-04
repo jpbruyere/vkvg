@@ -43,7 +43,7 @@ void _init_ctx(VkvgContext ctx) {
 
     if (ctx->pSurf->newSurf) {
         ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearAll;
-        ctx->pSurf->newSurf = false;
+        ctx->pSurf->newSurf                 = false;
     } else {
         ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
     }
@@ -62,7 +62,6 @@ void _init_ctx(VkvgContext ctx) {
     ctx->cmdStarted          = false;
     ctx->curClipState        = vkvg_clip_state_none;
 
-
     ctx->vertCount = ctx->indCount = 0;
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     ctx->timelineStep = 0;
@@ -75,7 +74,7 @@ VkvgContext vkvg_create(VkvgSurface surf) {
         LOG(VKVG_LOG_ERR, "CREATE Context failed, invalid surface\n");
         return (VkvgContext)&_vkvg_status_invalid_surface;
     }
-    VkvgDevice  dev = surf->dev;
+    VkvgDevice dev = surf->dev;
     if (vkvg_device_status(dev)) {
         LOG(VKVG_LOG_ERR, "CREATE Context failed, invalid device\n");
         return (VkvgContext)&_vkvg_status_device_error;
@@ -83,7 +82,7 @@ VkvgContext vkvg_create(VkvgSurface surf) {
     VkvgContext ctx = NULL;
 
     if (_device_try_get_cached_context(dev, &ctx)) {
-        ctx->pSurf = surf;
+        ctx->pSurf  = surf;
         ctx->status = VKVG_STATUS_SUCCESS;
         _init_ctx(ctx);
         _update_descriptor_set(ctx, surf->dev->emptyImg, ctx->dsSrc);
@@ -91,7 +90,7 @@ VkvgContext vkvg_create(VkvgSurface surf) {
         ctx->cmd = ctx->cmdBuffers[0]; // current recording buffer
         return ctx;
     }
-    ctx = (vkvg_context *)calloc(1, sizeof(vkvg_context));
+    ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
     if (!ctx) {
         LOG(VKVG_LOG_ERR, "CREATE context failed, no memory\n");
@@ -109,10 +108,10 @@ VkvgContext vkvg_create(VkvgSurface surf) {
 
     ctx->dev = surf->dev;
 
-    ctx->points      = (vec2 *)malloc(VKVG_VBO_SIZE * sizeof(vec2));
-    ctx->pathes      = (uint32_t *)malloc(VKVG_PATHES_SIZE * sizeof(uint32_t));
-    ctx->vertexCache = (Vertex *)malloc(ctx->sizeVertices * sizeof(Vertex));
-    ctx->indexCache  = (VKVG_IBO_INDEX_TYPE *)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
+    ctx->points      = (vec2*)malloc(VKVG_VBO_SIZE * sizeof(vec2));
+    ctx->pathes      = (uint32_t*)malloc(VKVG_PATHES_SIZE * sizeof(uint32_t));
+    ctx->vertexCache = (Vertex*)malloc(ctx->sizeVertices * sizeof(Vertex));
+    ctx->indexCache  = (VKVG_IBO_INDEX_TYPE*)malloc(ctx->sizeIndices * sizeof(VKVG_IBO_INDEX_TYPE));
 
     if (!ctx->points || !ctx->pathes || !ctx->vertexCache || !ctx->indexCache) {
         if (ctx->points)
@@ -208,10 +207,10 @@ void vkvg_flush(VkvgContext ctx) {
 
 void _clear_context(VkvgContext ctx) {
     // free saved context stack elmt
-    vkvg_context_save_t *next = ctx->pSavedCtxs;
+    vkvg_context_save_t* next = ctx->pSavedCtxs;
     ctx->pSavedCtxs           = NULL;
     while (next != NULL) {
-        vkvg_context_save_t *cur = next;
+        vkvg_context_save_t* cur = next;
         next                     = cur->pNext;
         _free_ctx_save(cur);
     }
@@ -272,7 +271,7 @@ void vkvg_destroy(VkvgContext ctx) {
     if (ctx->dev->threadAware)
         mtx_lock(&ctx->dev->mutex);
 
-    vkvg_debug_stats_t *dbgstats = &ctx->dev->debug_stats;
+    vkvg_debug_stats_t* dbgstats = &ctx->dev->debug_stats;
     if (dbgstats->sizePoints < ctx->sizePoints)
         dbgstats->sizePoints = ctx->sizePoints;
     if (dbgstats->sizePathes < ctx->sizePathes)
@@ -525,7 +524,7 @@ bool vkvg_has_current_point(VkvgContext ctx) {
         return false;
     return !_current_path_is_empty(ctx);
 }
-void vkvg_get_current_point(VkvgContext ctx, float *x, float *y) {
+void vkvg_get_current_point(VkvgContext ctx, float* x, float* y) {
     if (vkvg_status(ctx))
         return;
     assert(x);
@@ -565,7 +564,7 @@ void _curve_to(VkvgContext ctx, float x1, float y1, float x2, float y2, float x3
     _set_curve_end(ctx);
 }
 const double quadraticFact = 2.0 / 3.0;
-void _quadratic_to(VkvgContext ctx, float x1, float y1, float x2, float y2) {
+void         _quadratic_to(VkvgContext ctx, float x1, float y1, float x2, float y2) {
     float x0, y0;
     if (_current_path_is_empty(ctx)) {
         x0 = x1;
@@ -681,7 +680,7 @@ void vkvg_rounded_rectangle2(VkvgContext ctx, float x, float y, float w, float h
 
     vkvg_close_path(ctx);
 }
-void vkvg_path_extents(VkvgContext ctx, float* const x1, float *const y1, float *const x2, float *const y2) {
+void vkvg_path_extents(VkvgContext ctx, float* const x1, float* const y1, float* const x2, float* const y2) {
     if (vkvg_status(ctx))
         return;
 
@@ -918,7 +917,7 @@ void _stroke_preserve(VkvgContext ctx) {
             str.iR       = firstPathPointIdx;
             bool inverse = _build_vb_step(ctx, &str, false);
 
-            VKVG_IBO_INDEX_TYPE *inds = &ctx->indexCache[ctx->indCount - 6];
+            VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount - 6];
             VKVG_IBO_INDEX_TYPE  ii   = str.firstIdx;
             if (inverse) {
                 inds[1] = ii + 1;
@@ -1100,7 +1099,7 @@ float vkvg_get_miter_limit(VkvgContext ctx) {
         return 0;
     return ctx->miterLimit;
 }
-void vkvg_set_dash(VkvgContext ctx, const float *dashes, uint32_t num_dashes, float offset) {
+void vkvg_set_dash(VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset) {
     if (vkvg_status(ctx))
         return;
     if (ctx->dashCount > 0)
@@ -1110,17 +1109,17 @@ void vkvg_set_dash(VkvgContext ctx, const float *dashes, uint32_t num_dashes, fl
     ctx->dashOffset = offset;
     if (ctx->dashCount == 0)
         return;
-    ctx->dashes = (float *)malloc(sizeof(float) * ctx->dashCount);
+    ctx->dashes = (float*)malloc(sizeof(float) * ctx->dashCount);
     memcpy(ctx->dashes, dashes, sizeof(float) * ctx->dashCount);
 }
-void vkvg_get_dash(VkvgContext ctx, const float *dashes, uint32_t *num_dashes, float *offset) {
+void vkvg_get_dash(VkvgContext ctx, const float* dashes, uint32_t* num_dashes, float* offset) {
     if (vkvg_status(ctx))
         return;
     *num_dashes = ctx->dashCount;
     *offset     = ctx->dashOffset;
     if (ctx->dashCount == 0 || dashes == NULL)
         return;
-    memcpy((float *)dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
+    memcpy((float*)dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
 }
 
 vkvg_line_cap_t vkvg_get_line_cap(VkvgContext ctx) {
@@ -1145,28 +1144,28 @@ VkvgPattern vkvg_get_source(VkvgContext ctx) {
     return ctx->pattern;
 }
 
-void vkvg_select_font_face(VkvgContext ctx, const char *name) {
+void vkvg_select_font_face(VkvgContext ctx, const char* name) {
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_FACE, name);
     _select_font_face(ctx, name);
 }
-void vkvg_load_font_from_path(VkvgContext ctx, const char *path, const char *name) {
+void vkvg_load_font_from_path(VkvgContext ctx, const char* path, const char* name) {
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-    _vkvg_font_identity_t *fid = _font_cache_add_font_identity(ctx, path, name);
+    _vkvg_font_identity_t* fid = _font_cache_add_font_identity(ctx, path, name);
     if (!_font_cache_load_font_file_in_memory(fid)) {
         ctx->status = VKVG_STATUS_FILE_NOT_FOUND;
         return;
     }
     _select_font_face(ctx, name);
 }
-void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char *fontBuffer, long fontBufferByteSize, const char *name) {
+void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize, const char* name) {
     if (vkvg_status(ctx))
         return;
     // RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-    _vkvg_font_identity_t *fid = _font_cache_add_font_identity(ctx, NULL, name);
+    _vkvg_font_identity_t* fid = _font_cache_add_font_identity(ctx, NULL, name);
     fid->fontBuffer            = fontBuffer;
     fid->fontBufSize           = fontBufferByteSize;
 
@@ -1188,9 +1187,9 @@ void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
     ctx->currentFontSize  = NULL;
 }
 
-void vkvg_set_text_direction(vkvg_context *ctx, vkvg_direction_t direction) {}
+void vkvg_set_text_direction(vkvg_context* ctx, vkvg_direction_t direction) {}
 
-void vkvg_show_text(VkvgContext ctx, const char *text) {
+void vkvg_show_text(VkvgContext ctx, const char* text) {
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SHOW_TEXT, text);
@@ -1200,22 +1199,22 @@ void vkvg_show_text(VkvgContext ctx, const char *text) {
     //_flush_undrawn_vertices (ctx);
 }
 
-VkvgText vkvg_text_run_create(VkvgContext ctx, const char *text) {
+VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text) {
     if (vkvg_status(ctx))
         return NULL;
-    VkvgText tr = (vkvg_text_run_t *)calloc(1, sizeof(vkvg_text_run_t));
+    VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
     _font_cache_create_text_run(ctx, text, -1, tr);
     return tr;
 }
-VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char *text, uint32_t length) {
+VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
     if (vkvg_status(ctx))
         return NULL;
-    VkvgText tr = (vkvg_text_run_t *)calloc(1, sizeof(vkvg_text_run_t));
+    VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
     _font_cache_create_text_run(ctx, text, length, tr);
     return tr;
 }
 uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun) { return textRun->glyph_count; }
-void     vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg_glyph_info_t *pGlyphInfo) {
+void     vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg_glyph_info_t* pGlyphInfo) {
     if (index >= textRun->glyph_count) {
         *pGlyphInfo = (vkvg_glyph_info_t){0};
         return;
@@ -1223,7 +1222,7 @@ void     vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg
 #if VKVG_USE_HARFBUZZ
     memcpy(pGlyphInfo, &textRun->glyphs[index], sizeof(vkvg_glyph_info_t));
 #else
-    *pGlyphInfo  = textRun->glyphs[index];
+    *pGlyphInfo = textRun->glyphs[index];
 #endif
 }
 void vkvg_text_run_destroy(VkvgText textRun) {
@@ -1235,14 +1234,14 @@ void vkvg_show_text_run(VkvgContext ctx, VkvgText textRun) {
         return;
     _font_cache_show_text_run(ctx, textRun);
 }
-void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t *extents) { *extents = textRun->extents; }
+void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents) { *extents = textRun->extents; }
 
-void vkvg_text_extents(VkvgContext ctx, const char *text, vkvg_text_extents_t *extents) {
+void vkvg_text_extents(VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
     if (vkvg_status(ctx))
         return;
     _font_cache_text_extents(ctx, text, -1, extents);
 }
-void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t *extents) {
+void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
     if (vkvg_status(ctx))
         return;
     _font_cache_font_extents(ctx, extents);
@@ -1255,7 +1254,7 @@ void vkvg_save(VkvgContext ctx) {
     LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
     VkvgDevice           dev = ctx->dev;
-    vkvg_context_save_t *sav = (vkvg_context_save_t *)calloc(1, sizeof(vkvg_context_save_t));
+    vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1, sizeof(vkvg_context_save_t));
 
     _flush_cmd_buff(ctx);
     if (!_wait_ctx_flush_end(ctx)) {
@@ -1269,11 +1268,11 @@ void vkvg_save(VkvgContext ctx) {
         uint8_t curSaveStencil = ctx->curSavBit / 6;
 
         if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0) { // new save/restore stencil image have to be created
-            VkhImage *savedStencilsPtr = NULL;
+            VkhImage* savedStencilsPtr = NULL;
             if (savedStencilsPtr)
-                savedStencilsPtr = (VkhImage *)realloc(ctx->savedStencils, curSaveStencil * sizeof(VkhImage));
+                savedStencilsPtr = (VkhImage*)realloc(ctx->savedStencils, curSaveStencil * sizeof(VkhImage));
             else
-                savedStencilsPtr = (VkhImage *)malloc(curSaveStencil * sizeof(VkhImage));
+                savedStencilsPtr = (VkhImage*)malloc(curSaveStencil * sizeof(VkhImage));
             if (savedStencilsPtr == NULL) {
                 free(sav);
                 ctx->status = VKVG_STATUS_NO_MEMORY;
@@ -1348,7 +1347,7 @@ void vkvg_save(VkvgContext ctx) {
     sav->dashOffset = ctx->dashOffset;
     sav->dashCount  = ctx->dashCount;
     if (ctx->dashCount > 0) {
-        sav->dashes = (float *)malloc(sizeof(float) * ctx->dashCount);
+        sav->dashes = (float*)malloc(sizeof(float) * ctx->dashCount);
         memcpy(sav->dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
     }
     sav->lineWidth   = ctx->lineWidth;
@@ -1386,7 +1385,7 @@ void vkvg_restore(VkvgContext ctx) {
 
     LOG(VKVG_LOG_INFO, "RESTORE CONTEXT: ctx = %p\n", ctx);
 
-    vkvg_context_save_t *sav = ctx->pSavedCtxs;
+    vkvg_context_save_t* sav = ctx->pSavedCtxs;
     ctx->pSavedCtxs          = sav->pNext;
 
     _flush_cmd_buff(ctx);
@@ -1481,7 +1480,7 @@ void vkvg_restore(VkvgContext ctx) {
         free(ctx->dashes);
     ctx->dashCount = sav->dashCount;
     if (ctx->dashCount > 0) {
-        ctx->dashes = (float *)malloc(sizeof(float) * ctx->dashCount);
+        ctx->dashes = (float*)malloc(sizeof(float) * ctx->dashCount);
         memcpy(ctx->dashes, sav->dashes, sizeof(float) * ctx->dashCount);
     }
 
@@ -1538,7 +1537,7 @@ void vkvg_rotate(VkvgContext ctx, float radians) {
     vkvg_matrix_rotate(&ctx->pushConsts.mat, radians);
     _set_mat_inv_and_vkCmdPush(ctx);
 }
-void vkvg_transform(VkvgContext ctx, const vkvg_matrix_t *matrix) {
+void vkvg_transform(VkvgContext ctx, const vkvg_matrix_t* matrix) {
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_TRANSFORM, matrix);
@@ -1560,7 +1559,7 @@ void vkvg_identity_matrix(VkvgContext ctx) {
     ctx->pushConsts.mat = im;
     _set_mat_inv_and_vkCmdPush(ctx);
 }
-void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t *matrix) {
+void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t* matrix) {
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_MATRIX, matrix);
@@ -1570,7 +1569,7 @@ void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t *matrix) {
     ctx->pushConsts.mat = (*matrix);
     _set_mat_inv_and_vkCmdPush(ctx);
 }
-void vkvg_get_matrix(VkvgContext ctx, vkvg_matrix_t *const matrix) {
+void vkvg_get_matrix(VkvgContext ctx, vkvg_matrix_t* const matrix) {
     if (vkvg_status(ctx) || !matrix)
         return;
     *matrix = ctx->pushConsts.mat;
@@ -1644,7 +1643,7 @@ VkvgSurface vkvg_get_target(VkvgContext ctx) {
     return ctx->pSurf;
 }
 
-const char *vkvg_status_to_string(vkvg_status_t status) {
+const char* vkvg_status_to_string(vkvg_status_t status) {
     switch (status) {
     case VKVG_STATUS_SUCCESS:
         return "no error has occurred";

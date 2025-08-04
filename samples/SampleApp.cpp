@@ -10,9 +10,7 @@
 #include "SampleApp.hpp"
 #include "VkvgTest.hpp"
 
-
-
-bool SampleApp::try_get_phyinfo(VkhPhyInfo *phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo *phy) {
+bool SampleApp::try_get_phyinfo(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
     for (uint32_t i = 0; i < phyCount; i++) {
         if (phys[i]->properties.deviceType == gpuType) {
             *phy = phys[i];
@@ -22,26 +20,25 @@ bool SampleApp::try_get_phyinfo(VkhPhyInfo *phys, uint32_t phyCount, VkPhysicalD
     return false;
 }
 
-static void glfw_error_callback(int error, const char *description) {
+static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "vkengine: GLFW error %d: %s\n", error, description);
 }
-void SampleApp::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+void SampleApp::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action != GLFW_PRESS)
         return;
     switch (key) {
     case GLFW_KEY_SPACE:
-        //paused = !paused;
+        // paused = !paused;
         break;
     case GLFW_KEY_ESCAPE:
         glfwSetWindowShouldClose(window, GLFW_TRUE);
         break;
     }
 }
-static void char_callback(GLFWwindow *window, uint32_t c) {}
-static void mouse_move_callback(GLFWwindow *window, double x, double y) {}
-static void scroll_callback(GLFWwindow *window, double x, double y) {}
-static void mouse_button_callback(GLFWwindow *window, int but, int state, int modif) {}
-
+static void char_callback(GLFWwindow* window, uint32_t c) {}
+static void mouse_move_callback(GLFWwindow* window, double x, double y) {}
+static void scroll_callback(GLFWwindow* window, double x, double y) {}
+static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif) {}
 
 void SampleApp::Init() {
     glfwSetErrorCallback(glfw_error_callback);
@@ -55,8 +52,9 @@ void SampleApp::Init() {
         perror("glfwVulkanSupported return false.");
         exit(-1);
     }
-    const char *enabledLayers[10];
-    const char *enabledExts[10];
+
+    const char* enabledLayers[10];
+    const char* enabledExts[10];
     uint32_t    enabledExtsCount = 0, enabledLayersCount = 0, phyCount = 0;
 
     vkh_layers_check_init();
@@ -76,26 +74,23 @@ void SampleApp::Init() {
     vkh_layers_check_release();
 
     uint32_t     glfwReqExtsCount = 0;
-    const char **gflwExts         = glfwGetRequiredInstanceExtensions(&glfwReqExtsCount);
+    const char** gflwExts         = glfwGetRequiredInstanceExtensions(&glfwReqExtsCount);
 
     vkvg_get_required_instance_extensions(enabledExts, &enabledExtsCount);
 
     for (uint32_t i = 0; i < glfwReqExtsCount; i++)
         enabledExts[i + enabledExtsCount] = gflwExts[i];
-
     enabledExtsCount += glfwReqExtsCount;
 
     app = vkh_app_create(1, 2, "vkvg", enabledLayersCount, enabledLayers, enabledExtsCount, enabledExts);
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     uint32_t severity = 0;
-    for(const uint32_t& s : logSeverity)
+    for (const uint32_t& s : logSeverity)
         severity += pow(16, s);
 
-    vkh_app_enable_debug_messenger(app,
-                                   (VkDebugUtilsMessageTypeFlagBitsEXT)logType,
-                                   (VkDebugUtilsMessageSeverityFlagBitsEXT)severity,
-                                   NULL);
+    vkh_app_enable_debug_messenger(app, (VkDebugUtilsMessageTypeFlagBitsEXT)logType,
+                                   (VkDebugUtilsMessageSeverityFlagBitsEXT)severity, NULL);
 #endif
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -106,7 +101,7 @@ void SampleApp::Init() {
 
     glfwCreateWindowSurface(vkh_app_get_inst(app), win, NULL, &vkSurf);
 
-    VkhPhyInfo *phys = vkh_app_get_phyinfos(app, &phyCount, vkSurf);
+    VkhPhyInfo* phys = vkh_app_get_phyinfos(app, &phyCount, vkSurf);
 
     if (listGpus) {
         std::cout << "Available GPU's:" << std::endl;
@@ -156,29 +151,27 @@ void SampleApp::Init() {
     TRY_LOAD_DEVICE_EXT(VK_KHR_swapchain)
 
     VkPhysicalDeviceFeatures enabledFeatures{};
-    const void *pNext = vkvg_get_device_requirements(&enabledFeatures);
+    const void*              pNext = vkvg_get_device_requirements(&enabledFeatures);
 
-    VkDeviceCreateInfo device_info = {.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-                                      .pNext                   = pNext,
-                                      .queueCreateInfoCount    = qCount,
-                                      .pQueueCreateInfos       = (VkDeviceQueueCreateInfo *)&pQueueInfos,
-                                      .enabledExtensionCount   = enabledExtsCount,
-                                      .ppEnabledExtensionNames = enabledExts,
-                                      .pEnabledFeatures        = &enabledFeatures,
+    VkDeviceCreateInfo device_info = {
+        .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext                   = pNext,
+        .queueCreateInfoCount    = qCount,
+        .pQueueCreateInfos       = (VkDeviceQueueCreateInfo*)&pQueueInfos,
+        .enabledExtensionCount   = enabledExtsCount,
+        .ppEnabledExtensionNames = enabledExts,
+        .pEnabledFeatures        = &enabledFeatures,
     };
 
-    vkhDev = vkh_device_create(app, pi, &device_info);
+    vkhDev        = vkh_device_create(app, pi, &device_info);
     presentQIndex = (uint32_t)pi->pQueue;
-    renderer =
-        vkh_presenter_create(vkhDev, presentQIndex, vkSurf, width, height, VK_FORMAT_B8G8R8A8_SRGB, presentMode);
-
+    renderer = vkh_presenter_create(vkhDev, presentQIndex, vkSurf, width, height, VK_FORMAT_B8G8R8A8_SRGB, presentMode);
 
     vkh_app_free_phyinfos(phyCount, phys);
 
     glfwSetKeyCallback(win, key_callback);
     glfwSetMouseButtonCallback(win, mouse_button_callback);
     glfwSetCursorPosCallback(win, mouse_move_callback);
-
 }
 
 void SampleApp::Run() {
@@ -187,8 +180,8 @@ void SampleApp::Run() {
     if (VkvgTest::tests.empty())
         return;
 
-    int testIdx = 0;
-    auto it = VkvgTest::tests.begin();
+    int       testIdx = 0;
+    auto      it      = VkvgTest::tests.begin();
     VkvgTest* curTest = NULL;
 
     if (testsToRun.empty()) {
@@ -217,7 +210,7 @@ void SampleApp::Run() {
                 testIdx++;
                 curTest->cleanTest();
                 if (testsToRun.empty()) {
-                    if (++it == VkvgTest::tests.end()){
+                    if (++it == VkvgTest::tests.end()) {
                         curTest = NULL;
                         break;
                     }

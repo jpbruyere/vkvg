@@ -50,7 +50,7 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
     surf->status = VKVG_STATUS_SUCCESS;
     return surf;
 }
-VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void *vkhImg) {
+VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void* vkhImg) {
     VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
     if (surf->status)
         return surf;
@@ -79,7 +79,7 @@ VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void *vkhImg) {
     return surf;
 }
 // TODO: it would be better to blit in original size and create ms final image with dest surf dims
-VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char *img, uint32_t width, uint32_t height) {
+VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height) {
     VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
     if (surf->status)
         return surf;
@@ -178,9 +178,9 @@ VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char *img, 
     surf->status = VKVG_STATUS_SUCCESS;
     return surf;
 }
-VkvgSurface vkvg_surface_create_from_image(VkvgDevice dev, const char *filePath) {
+VkvgSurface vkvg_surface_create_from_image(VkvgDevice dev, const char* filePath) {
     int            w = 0, h = 0, channels = 0;
-    unsigned char *img = stbi_load(filePath, &w, &h, &channels, 4); // force 4 components per pixel
+    unsigned char* img = stbi_load(filePath, &w, &h, &channels, 4); // force 4 components per pixel
     if (!img) {
         LOG(VKVG_LOG_ERR, "Could not load texture from %s, %s\n", filePath, stbi_failure_reason());
         return (VkvgSurface)&_vkvg_status_null_pointer;
@@ -280,13 +280,14 @@ uint32_t vkvg_surface_get_height(VkvgSurface surf) {
     return surf->height;
 }
 
-vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path) {
+vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char* path) {
     if (vkvg_surface_status(surf)) {
         LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid status: %d\n", vkvg_surface_status(surf));
         return VKVG_STATUS_INVALID_STATUS;
     }
     if (vkvg_device_status(surf->dev)) {
-        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid device status: %d\n", vkvg_device_status(surf->dev));
+        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid device status: %d\n",
+            vkvg_device_status(surf->dev));
         return VKVG_STATUS_INVALID_STATUS;
     }
     if (surf->dev->pngStagFormat == VK_FORMAT_UNDEFINED) {
@@ -315,12 +316,12 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path) {
 
     VkCommandBuffer cmd = surf->cmd;
     vkh_cmd_begin(cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    vkh_image_set_layout(cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
-                         VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout(cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
-                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout(cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL,
+                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                         VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout(cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                         VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     VkImageBlit blit = {
         .srcSubresource = imgSubResLayers,
@@ -348,12 +349,12 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path) {
                            .extent         = {(int32_t)surf->width, (int32_t)surf->height, 1}};
 
         vkh_cmd_begin(cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-        vkh_image_set_layout(cmd, stagImgLinear, VK_IMAGE_ASPECT_COLOR_BIT,
-                             VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-        vkh_image_set_layout(cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT,
-                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+        vkh_image_set_layout(cmd, stagImgLinear, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL,
+                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                             VK_PIPELINE_STAGE_TRANSFER_BIT);
+        vkh_image_set_layout(cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                             VK_PIPELINE_STAGE_TRANSFER_BIT);
         vkCmdCopyImage(cmd, vkh_image_get_vkimage(stagImg), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                        vkh_image_get_vkimage(stagImgLinear), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &cpy);
 
@@ -369,14 +370,14 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path) {
     uint64_t stride = vkh_image_get_stride(stagImgLinear);
 
 #ifdef VKVG_PREMULT_ALPHA
-    //unpremult alpha for saving on disk.
-    for(int y = 0; y < surf->height; y++) {
-        for(int x = 0; x < surf->width; x++) {
-            unsigned char* p = img + y * stride + x * 4;
-            double alpha = (double)p[3] / 255.f;
-            p[0] = (unsigned char)((double)p[0] / alpha);
-            p[1] = (unsigned char)((double)p[1] / alpha);
-            p[2] = (unsigned char)((double)p[2] / alpha);
+    // unpremult alpha for saving on disk.
+    for (int y = 0; y < surf->height; y++) {
+        for (int x = 0; x < surf->width; x++) {
+            unsigned char* p     = img + y * stride + x * 4;
+            double         alpha = (double)p[3] / 255.f;
+            p[0]                 = (unsigned char)((double)p[0] / alpha);
+            p[1]                 = (unsigned char)((double)p[1] / alpha);
+            p[2]                 = (unsigned char)((double)p[2] / alpha);
         }
     }
 #endif
@@ -390,7 +391,7 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path) {
     return VKVG_STATUS_SUCCESS;
 }
 
-vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char *const bitmap) {
+vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char* const bitmap) {
     if (vkvg_surface_status(surf)) {
         LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_memory failed, invalid status: %d\n", vkvg_surface_status(surf));
         return VKVG_STATUS_INVALID_STATUS;
@@ -416,9 +417,9 @@ vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char *cons
     vkh_image_set_layout(cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL,
                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                          VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout(cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
-                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    vkh_image_set_layout(cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                         VK_PIPELINE_STAGE_TRANSFER_BIT);
 
     VkImageBlit blit = {
         .srcSubresource = imgSubResLayers,
@@ -436,22 +437,22 @@ vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char *cons
     uint64_t stride      = vkh_image_get_stride(stagImg);
     uint32_t dest_stride = surf->width * 4;
 
-    unsigned char *img = vkh_image_map(stagImg);
+    unsigned char* img = vkh_image_map(stagImg);
 
 #ifdef VKVG_PREMULT_ALPHA
-    //unpremult alpha for saving on disk.
-    for(int y = 0; y < surf->height; y++) {
-        for(int x = 0; x < surf->width; x++) {
-            unsigned char* p = img + y * stride + x * 4;
-            double alpha = (double)p[3] / 255.f;
-            p[0] = (unsigned char)((double)p[0] / alpha);
-            p[1] = (unsigned char)((double)p[1] / alpha);
-            p[2] = (unsigned char)((double)p[2] / alpha);
+    // unpremult alpha for saving on disk.
+    for (int y = 0; y < surf->height; y++) {
+        for (int x = 0; x < surf->width; x++) {
+            unsigned char* p     = img + y * stride + x * 4;
+            double         alpha = (double)p[3] / 255.f;
+            p[0]                 = (unsigned char)((double)p[0] / alpha);
+            p[1]                 = (unsigned char)((double)p[1] / alpha);
+            p[2]                 = (unsigned char)((double)p[2] / alpha);
         }
     }
 #endif
 
-    unsigned char *row = (unsigned char *)bitmap;
+    unsigned char* row = (unsigned char*)bitmap;
     for (uint32_t y = 0; y < surf->height; y++) {
         memcpy(row, img, dest_stride);
         row += dest_stride;

@@ -31,7 +31,7 @@ void opacity() {
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
     PERFORM_TEST(compositing, argc, argv);
     PERFORM_TEST(opacity, argc, argv);

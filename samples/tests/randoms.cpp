@@ -1,6 +1,5 @@
 #include "VkvgTest.hpp"
 
-
 static float shape_size = 0.2f;
 
 void _shape_fill(VkvgTest* test, shape_t shape) {

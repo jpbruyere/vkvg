@@ -1,8 +1,8 @@
 #include "test.h"
 
-float       lineWidth = 10.f;
+float        lineWidth = 10.f;
 static float angle     = 0;
-const char *imgPath   = "data/miroir.jpg";
+const char*  imgPath   = "data/miroir.jpg";
 
 VkvgPattern create_grad(VkvgContext ctx) {
     VkvgPattern pat = vkvg_pattern_create_linear(0, 0, 200, 0);
@@ -120,7 +120,7 @@ void pat_rotate() {
     vkvg_destroy(ctx);
     vkvg_pattern_destroy(pat);
 }
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
     PERFORM_TEST(pat_scale, argc, argv);
     PERFORM_TEST(pat_rotate, argc, argv);

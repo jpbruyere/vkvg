@@ -55,7 +55,7 @@ extern PFN_vkResetCommandBuffer ResetCommandBuffer;
 typedef struct _cached_ctx {
     thrd_t              thread;
     VkvgContext         ctx;
-    struct _cached_ctx *pNext;
+    struct _cached_ctx* pNext;
 } _cached_ctx;
 
 typedef struct _vkvg_device_t {
@@ -65,7 +65,7 @@ typedef struct _vkvg_device_t {
     VkPhysicalDevice                 phy;         /**< Vulkan Physical device */
     VkInstance                       instance;    /**< Vulkan instance */
 #ifdef VKH_USE_VMA
-    void *allocator; /**< Vulkan Memory allocator */
+    void* allocator; /**< Vulkan Memory allocator */
 #endif
 
     VkImageTiling      supportedTiling;   /**< Supported image tiling for surface, 0xFF=no support */
@@ -111,14 +111,14 @@ typedef struct _vkvg_device_t {
     VkSampleCountFlags samples;         /**< samples count common to all surfaces */
     bool               deferredResolve; /**< if true, resolve only on context destruction and set as source */
 
-    _font_cache_t *fontCache; /**< Store everything relative to common font caching system */
+    _font_cache_t* fontCache; /**< Store everything relative to common font caching system */
 
     VkvgContext lastCtx; /**< last element of double linked list of context, used to trigger font caching system update
                             on all contexts*/
 
     int32_t      cachedContextMaxCount; /**< Maximum context cache element count.*/
     int32_t      cachedContextCount;    /**< Current context cache element count.*/
-    _cached_ctx *cachedContextLast;     /**< Last element of single linked list of saved context for fast reuse.*/
+    _cached_ctx* cachedContextLast;     /**< Last element of single linked list of saved context for fast reuse.*/
 
 #ifdef VKVG_WIRED_DEBUG
     VkPipeline pipelineWired;
@@ -136,10 +136,10 @@ typedef struct _vkvg_device_t {
     if (dev->threadAware)                                                                                              \
         mtx_unlock(&dev->mutex);
 
-bool _device_try_get_phyinfo(VkhPhyInfo *phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo *phy);
+bool _device_try_get_phyinfo(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);
 bool _device_init_function_pointers(VkvgDevice dev);
 void _device_create_empty_texture(VkvgDevice dev, VkFormat format, VkImageTiling tiling);
-void _device_get_best_image_tiling(VkvgDevice dev, VkFormat format, VkImageTiling *pTiling);
+void _device_get_best_image_tiling(VkvgDevice dev, VkFormat format, VkImageTiling* pTiling);
 void _device_check_best_image_tiling(VkvgDevice dev, VkFormat format);
 void _device_create_pipeline_cache(VkvgDevice dev);
 VkRenderPass _device_createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
@@ -149,8 +149,8 @@ void         _device_setupPipelines(VkvgDevice dev);
 void         _device_createDescriptorSetLayout(VkvgDevice dev);
 void         _device_wait_idle(VkvgDevice dev);
 void         _device_wait_and_reset_device_fence(VkvgDevice dev);
-void         _device_submit_cmd(VkvgDevice dev, VkCommandBuffer *cmd, VkFence fence);
+void         _device_submit_cmd(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
 
-bool _device_try_get_cached_context(VkvgDevice dev, VkvgContext *pCtx);
+bool _device_try_get_cached_context(VkvgDevice dev, VkvgContext* pCtx);
 void _device_store_context(VkvgContext ctx);
 #endif

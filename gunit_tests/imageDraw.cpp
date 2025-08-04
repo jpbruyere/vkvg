@@ -3,11 +3,11 @@
 class ImageDrawTest : public DrawTestBase {
 
   protected:
-    fs::path imgPath = fs::path(GTEST_DATA_ROOT) / "mirror2.png";
+    fs::path    imgPath = fs::path(GTEST_DATA_ROOT) / "mirror2.png";
     VkvgSurface imgSurf;
 
     void SetUp() override {
-        surf = vkvg_surface_create(dev, 512, 512);
+        surf    = vkvg_surface_create(dev, 512, 512);
         imgSurf = vkvg_surface_create_from_image(dev, (char*)imgPath.c_str());
     }
     void TearDown() override {
@@ -41,7 +41,7 @@ TEST_F(ImageDrawTest, References) {
 
     EXPECT_EQ(1, vkvg_surface_get_reference_count(surf2));
     vkvg_surface_destroy(surf2);
-    //EXPECT_EQ(NULL, surf2);
+    // EXPECT_EQ(NULL, surf2);
     EXPECT_EQ(devRefCntInit, vkvg_device_get_reference_count(dev));
 }
 
@@ -83,9 +83,9 @@ TEST_F(ImageDrawTest, PaintImageRotateInPlace) {
     vkvg_set_source_rgb(ctx, 0.5f, 0.5f, 0.5f);
     vkvg_paint(ctx);
     vkvg_matrix_t mat;
-    vkvg_matrix_init_translate(&mat, 142,142);
-    vkvg_matrix_rotate(&mat,0.1f);
-    vkvg_matrix_init_translate(&mat, -142,-142);
+    vkvg_matrix_init_translate(&mat, 142, 142);
+    vkvg_matrix_rotate(&mat, 0.1f);
+    vkvg_matrix_init_translate(&mat, -142, -142);
 
     vkvg_set_source_surface(ctx, imgSurf, 50, 50);
     vkvg_set_matrix(ctx, &mat);
@@ -100,7 +100,7 @@ TEST_F(ImageDrawTest, PaintImageTransform) {
     vkvg_set_source_rgb(ctx, 0.5f, 0.5f, 0.5f);
     vkvg_paint(ctx);
 
-    fs::path imgPath = fs::path(GTEST_DATA_ROOT) / "mirror2-64.png";
+    fs::path    imgPath = fs::path(GTEST_DATA_ROOT) / "mirror2-64.png";
     VkvgSurface imgSurf = vkvg_surface_create_from_image(dev, (char*)imgPath.c_str());
 
     vkvg_translate(ctx, 10, 10);
@@ -135,7 +135,7 @@ TEST_F(ImageDrawTest, PaintImageOnImage) {
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
     vkvg_paint(ctx);
 
-    fs::path imgPath2 = fs::path(GTEST_DATA_ROOT) / "filled.png";
+    fs::path    imgPath2 = fs::path(GTEST_DATA_ROOT) / "filled.png";
     VkvgSurface imgSurf2 = vkvg_surface_create_from_image(dev, (char*)imgPath2.c_str());
 
     vkvg_set_source_surface(ctx, imgSurf2, 50, 50);
@@ -146,4 +146,3 @@ TEST_F(ImageDrawTest, PaintImageOnImage) {
 
     compareWithRefImage();
 }
-

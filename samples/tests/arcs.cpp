@@ -70,4 +70,3 @@ TEST(arc_test) {
 
     vkvg_destroy(ctx);
 }
-

@@ -57,7 +57,7 @@ PFN_vkWaitForFences      WaitForFences;
 PFN_vkResetFences        ResetFences;
 PFN_vkResetCommandBuffer ResetCommandBuffer;
 
-bool _device_try_get_phyinfo(VkhPhyInfo *phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo *phy) {
+bool _device_try_get_phyinfo(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
     for (uint32_t i = 0; i < phyCount; i++) {
         if (vkh_phyinfo_get_properties(phys[i]).deviceType == gpuType) {
             *phy = phys[i];
@@ -293,14 +293,14 @@ void _device_setupPipelines(VkvgDevice dev) {
     VkShaderModule modVert, modFrag;
 #endif
     VkShaderModuleCreateInfo createInfo = {.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                                           .pCode    = (uint32_t *)vkvg_main_vert_spv,
+                                           .pCode    = (uint32_t*)vkvg_main_vert_spv,
                                            .codeSize = vkvg_main_vert_spv_len};
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modVert));
 #if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
-    createInfo.pCode    = (uint32_t *)vkvg_main_lcd_frag_spv;
+    createInfo.pCode    = (uint32_t*)vkvg_main_lcd_frag_spv;
     createInfo.codeSize = vkvg_main_lcd_frag_spv_len;
 #else
-    createInfo.pCode    = (uint32_t *)vkvg_main_frag_spv;
+    createInfo.pCode    = (uint32_t*)vkvg_main_frag_spv;
     createInfo.codeSize = vkvg_main_frag_spv_len;
 #endif
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFrag));
@@ -377,7 +377,7 @@ void _device_setupPipelines(VkvgDevice dev) {
     blendAttachmentState.blendEnable = VK_TRUE;
     colorBlendState.logicOp          = VK_LOGIC_OP_CLEAR;
 
-    createInfo.pCode = (uint32_t *)wired_frag_spv;
+    createInfo.pCode = (uint32_t*)wired_frag_spv;
 
     createInfo.codeSize = wired_frag_spv_len;
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFragWired));
@@ -420,7 +420,7 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
                                                            .pushConstantRangeCount = 1,
                                                            .pPushConstantRanges =
-                                                               (VkPushConstantRange *)&pushConstantRange,
+                                                               (VkPushConstantRange*)&pushConstantRange,
                                                            .setLayoutCount = 3,
                                                            .pSetLayouts    = dsls};
     VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
@@ -432,13 +432,13 @@ void _device_wait_and_reset_device_fence(VkvgDevice dev) {
     ResetFences(dev->vkDev, 1, &dev->fence);
 }
 
-bool _device_try_get_cached_context(VkvgDevice dev, VkvgContext *pCtx) {
+bool _device_try_get_cached_context(VkvgDevice dev, VkvgContext* pCtx) {
     LOCK_DEVICE
 
     if (dev->cachedContextCount) {
         thrd_t       curThread = thrd_current();
-        _cached_ctx *prev      = NULL;
-        _cached_ctx *cur       = dev->cachedContextLast;
+        _cached_ctx* prev      = NULL;
+        _cached_ctx* cur       = dev->cachedContextLast;
         while (cur) {
             if (thrd_equal(cur->thread, curThread)) {
                 if (prev)
@@ -469,7 +469,7 @@ void _device_store_context(VkvgContext ctx) {
 
     LOCK_DEVICE
 
-    _cached_ctx *cur = (_cached_ctx *)calloc(1, sizeof(_cached_ctx));
+    _cached_ctx* cur = (_cached_ctx*)calloc(1, sizeof(_cached_ctx));
     cur->ctx         = ctx;
     cur->thread      = thrd_current();
     cur->pNext       = dev->cachedContextLast;
@@ -483,7 +483,7 @@ void _device_store_context(VkvgContext ctx) {
 
     UNLOCK_DEVICE
 }
-void _device_submit_cmd(VkvgDevice dev, VkCommandBuffer *cmd, VkFence fence) {
+void _device_submit_cmd(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
     LOCK_DEVICE
     vkh_cmd_submit(dev->gQueue, cmd, fence);
     UNLOCK_DEVICE

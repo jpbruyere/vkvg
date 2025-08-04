@@ -103,7 +103,7 @@ void cairo_tests() {
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
     PERFORM_TEST(cairo_tests, argc, argv);
     return 0;

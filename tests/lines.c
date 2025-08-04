@@ -96,7 +96,7 @@ void multi_segments() {
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
 

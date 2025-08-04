@@ -3,11 +3,11 @@
 class PatternDrawTest : public DrawTestBase {
 
   protected:
-    fs::path imgPath = fs::path(GTEST_DATA_ROOT) / "mirror2.png";
+    fs::path    imgPath = fs::path(GTEST_DATA_ROOT) / "mirror2.png";
     VkvgSurface imgSurf;
 
     void SetUp() override {
-        surf = vkvg_surface_create(dev, 512, 512);
+        surf    = vkvg_surface_create(dev, 512, 512);
         imgSurf = vkvg_surface_create_from_image(dev, (char*)imgPath.c_str());
     }
     void TearDown() override {
@@ -23,7 +23,7 @@ TEST_F(PatternDrawTest, References) {
     VkvgPattern pat = vkvg_pattern_create_for_surface(NULL);
     EXPECT_EQ(VKVG_STATUS_NULL_POINTER, vkvg_pattern_status(pat));
 
-    pat = vkvg_pattern_create_linear(0,0,0,0);
+    pat = vkvg_pattern_create_linear(0, 0, 0, 0);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_pattern_status(pat));
     EXPECT_EQ(1, vkvg_pattern_get_reference_count(pat));
     vkvg_pattern_reference(pat);
@@ -33,7 +33,7 @@ TEST_F(PatternDrawTest, References) {
     vkvg_pattern_destroy(pat);
     EXPECT_EQ(1, vkvg_pattern_get_reference_count(pat));
     vkvg_pattern_destroy(pat);
-    //EXPECT_EQ(NULL, pat);
+    // EXPECT_EQ(NULL, pat);
 }
 
 TEST_F(PatternDrawTest, PaintPattern) {

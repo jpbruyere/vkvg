@@ -1,31 +1,33 @@
 #include "VkvgTest.hpp"
 
-
 std::vector<VkvgTest*> VkvgTest::tests;
 
 VkvgTest::VkvgTest(VkvgTestFunc testFunc, std::string _name) {
     this->testFunc = testFunc;
-    this->name = _name;
+    this->name     = _name;
     VkvgTest::tests.push_back(this);
 }
 void VkvgTest::initTest(SampleApp* app) {
     this->app = app;
 
-    vkvg_device_create_info_t info = {
-        app->samples, false,
-        vkh_app_get_inst(app->app), vkh_device_get_phy(app->vkhDev), vkh_device_get_vkdev(app->vkhDev), app->presentQIndex, 0, false};
+    vkvg_device_create_info_t info = {app->samples,
+                                      false,
+                                      vkh_app_get_inst(app->app),
+                                      vkh_device_get_phy(app->vkhDev),
+                                      vkh_device_get_vkdev(app->vkhDev),
+                                      app->presentQIndex,
+                                      0,
+                                      false};
 
     device = vkvg_device_create(&info);
-    surf = vkvg_surface_create(device, app->width, app->height);
+    surf   = vkvg_surface_create(device, app->width, app->height);
     vkvg_device_set_dpy(device, 96, 96);
 
     vkh_presenter_build_blit_cmd(app->renderer, vkvg_surface_get_vk_image(surf), app->width, app->height);
 
     vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
 }
-void VkvgTest::performTest() {
-    testFunc(this);
-}
+void VkvgTest::performTest() { testFunc(this); }
 void VkvgTest::cleanTest() {
     vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
     vkvg_surface_destroy(surf);
@@ -64,12 +66,11 @@ float    line_width   = 2.f;
 
 const int star_points[11][2] = {{0, 85},    {75, 75},   {100, 10}, {125, 75}, {200, 85}, {150, 125},
                                 {160, 190}, {100, 150}, {40, 190}, {50, 125}, {0, 85}};
-void randomize_color(VkvgContext ctx) { vkvg_set_source_rgba(ctx, rndf(), rndf(), rndf(), rndf()); }
+void      randomize_color(VkvgContext ctx) { vkvg_set_source_rgba(ctx, rndf(), rndf(), rndf(), rndf()); }
 
 void VkvgTest::draw_random_shape(VkvgContext ctx, shape_t shape, float sizeFact) {
     float w = (float)app->width;
     float h = (float)app->height;
-
 
     float x, y, z, v, r;
 

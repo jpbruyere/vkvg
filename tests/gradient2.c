@@ -64,7 +64,7 @@ void draw() {
     vkvg_pattern_destroy(pat);
     vkvg_destroy(ctx);
 }
-static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action != GLFW_PRESS)
         return;
     switch (key) {
@@ -90,7 +90,7 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
         break;
     }
 }
-static void mouse_move_callback(GLFWwindow *window, double x, double y) {
+static void mouse_move_callback(GLFWwindow* window, double x, double y) {
     if (mouseDown) {
         if (hoverPt < 0)
             return;
@@ -107,13 +107,13 @@ static void mouse_move_callback(GLFWwindow *window, double x, double y) {
         hoverPt = -1;
     }
 }
-static void scroll_callback(GLFWwindow *window, double x, double y) {
+static void scroll_callback(GLFWwindow* window, double x, double y) {
     if (y < 0.f)
         zoom *= 0.5f;
     else
         zoom *= 2.0f;
 }
-static void mouse_button_callback(GLFWwindow *window, int but, int state, int modif) {
+static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif) {
     if (but != GLFW_MOUSE_BUTTON_1)
         return;
     if (state == GLFW_TRUE)
@@ -122,7 +122,7 @@ static void mouse_button_callback(GLFWwindow *window, int but, int state, int mo
         mouseDown = false;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
 
     _parse_args(argc, argv);
 

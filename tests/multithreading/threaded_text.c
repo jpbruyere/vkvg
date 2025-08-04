@@ -8,7 +8,7 @@
 #define THREAD_COUNT 16
 
 static int    finishedThreadCount = 0;
-static mtx_t *pmutex;
+static mtx_t* pmutex;
 
 void drawRandomRect(VkvgContext ctx, float s) {
     float w = (float)test_width;
@@ -49,7 +49,7 @@ int _single_font_and_size() {
     vkvg_surface_destroy(s);
     return 0;
 }
-void threaded_text(int (*testfunc)(void *)) {
+void threaded_text(int (*testfunc)(void*)) {
     mtx_t mutex;
     pmutex = &mutex;
 
@@ -71,7 +71,7 @@ void threaded_text(int (*testfunc)(void *)) {
 }
 void single_font_and_size() { threaded_text(_single_font_and_size); }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     PERFORM_TEST(single_font_and_size, argc, argv);
     return 0;
 }

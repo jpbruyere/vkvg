@@ -1,13 +1,13 @@
 #include "VkvgTest.hpp"
 
-static const char *txt = "The quick brown fox jumps over the lazy dog";
+static const char* txt = "The quick brown fox jumps over the lazy dog";
 
 void print(VkvgContext ctx, float penY, uint32_t size) {
     vkvg_set_font_size(ctx, size);
     vkvg_move_to(ctx, 10, penY);
     vkvg_show_text(ctx, txt);
 }
-void print_boxed(VkvgContext ctx, const char *text, float penX, float penY, uint32_t size) {
+void print_boxed(VkvgContext ctx, const char* text, float penX, float penY, uint32_t size) {
     vkvg_set_font_size(ctx, size);
     vkvg_text_extents_t te = {0};
     vkvg_text_extents(ctx, text, &te);
@@ -23,7 +23,7 @@ void print_boxed(VkvgContext ctx, const char *text, float penX, float penY, uint
     vkvg_set_source_rgb(ctx, 1, 1, 1);
     vkvg_show_text(ctx, text);
 }
-void print_unboxed(VkvgContext ctx, const char *text, float penX, float penY, uint32_t size) {
+void print_unboxed(VkvgContext ctx, const char* text, float penX, float penY, uint32_t size) {
     vkvg_set_font_size(ctx, size);
     vkvg_move_to(ctx, penX, penY);
     vkvg_set_source_rgb(ctx, 1, 1, 1);
@@ -246,7 +246,7 @@ TEST(text_random_size) {
     vkvg_destroy(ctx);
 }
 
-const char *const fonts[] = {"mono", "droid", "times", "arial", "times:bold"};
+const char* const fonts[] = {"mono", "droid", "times", "arial", "times:bold"};
 
 TEST(text_random_font_and_size) {
     VkvgContext ctx = vkvg_create(test->surf);

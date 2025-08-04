@@ -8,8 +8,8 @@ class DrawTestBase : public testing::Test {
   public:
     VkvgDevice  dev;
     VkvgSurface surf;
-    fs::path targetDir;
-    fs::path diffDir;
+    fs::path    targetDir;
+    fs::path    diffDir;
 
   protected:
     DrawTestBase();
@@ -19,4 +19,3 @@ class DrawTestBase : public testing::Test {
 
     void compareWithRefImage();
 };
-

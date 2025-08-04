@@ -291,7 +291,7 @@ typedef struct _glyph_info_t {
  * Drawing text with @ref vkvg_show_text() implicitly create such intermediate structure
  * that is destroyed imediatly after the function call.
  */
-typedef struct _vkvg_text_run_t *VkvgText;
+typedef struct _vkvg_text_run_t* VkvgText;
 
 /**
  * @brief The Vkvg drawing Context.
@@ -299,7 +299,7 @@ typedef struct _vkvg_text_run_t *VkvgText;
  *
  * A #VkvgContext is the central object for drawing operations.
  */
-typedef struct _vkvg_context_t *VkvgContext;
+typedef struct _vkvg_context_t* VkvgContext;
 /**
  * @brief Opaque pointer on a Vkvg Surface structure.
  * @ingroup surface
@@ -311,14 +311,14 @@ typedef struct _vkvg_context_t *VkvgContext;
  * with the surface as the target, using #vkvg_create().
  *
  */
-typedef struct _vkvg_surface_t *VkvgSurface;
+typedef struct _vkvg_surface_t* VkvgSurface;
 /**
  * @brief Opaque pointer on a Vkvg device structure.
  * @ingroup device
  *
  * A #VkvgDevice is required for creating new surfaces.
  */
-typedef struct _vkvg_device_t *VkvgDevice;
+typedef struct _vkvg_device_t* VkvgDevice;
 /**
  * @brief Opaque pointer on a Vkvg pattern structure.
  * @ingroup pattern
@@ -326,7 +326,7 @@ typedef struct _vkvg_device_t *VkvgDevice;
  * Patterns are images to be drawn on surface with several
  * configurable parameters such as the wrap mode, the filtering, etc...
  */
-typedef struct _vkvg_pattern_t *VkvgPattern;
+typedef struct _vkvg_pattern_t* VkvgPattern;
 
 #if VKVG_DBG_STATS
 /**
@@ -355,8 +355,7 @@ void               vkvg_device_reset_stats(VkvgDevice dev);
  * This is the reference documentation for handling matrices to use as transformation in drawing operations.
  * Matrix computations in vkvg are taken from the cairo library.
  * @{ */
-#define VKVG_IDENTITY_MATRIX                                                                                           \
-    (vkvg_matrix_t) { 1, 0, 0, 1, 0, 0 } /*!< The identity matrix*/
+#define VKVG_IDENTITY_MATRIX (vkvg_matrix_t){1, 0, 0, 1, 0, 0} /*!< The identity matrix*/
 /**
  * @brief vkvg matrix structure
  *
@@ -388,7 +387,7 @@ typedef struct {
  * Initialize members of the supplied #vkvg_matrix_t to make an identity matrix of it.
  * @param matrix a valid #vkvg_matrix_t pointer.
  */
-vkvg_public void vkvg_matrix_init_identity(vkvg_matrix_t *matrix);
+vkvg_public void vkvg_matrix_init_identity(vkvg_matrix_t* matrix);
 /**
  * @brief Matrix initialization.
  *
@@ -402,7 +401,7 @@ vkvg_public void vkvg_matrix_init_identity(vkvg_matrix_t *matrix);
  * @param x0 X translation component of the affine transformation
  * @param y0 Y translation component of the affine transformation
  */
-vkvg_public void vkvg_matrix_init(vkvg_matrix_t *matrix, float xx, float yx, float xy, float yy, float x0, float y0);
+vkvg_public void vkvg_matrix_init(vkvg_matrix_t* matrix, float xx, float yx, float xy, float yy, float x0, float y0);
 /**
  * @brief Rotation matrix initialization
  *
@@ -411,7 +410,7 @@ vkvg_public void vkvg_matrix_init(vkvg_matrix_t *matrix, float xx, float yx, flo
  * @param tx translation in the X direction
  * @param ty translation in the Y direction
  */
-vkvg_public void vkvg_matrix_init_translate(vkvg_matrix_t *matrix, float tx, float ty);
+vkvg_public void vkvg_matrix_init_translate(vkvg_matrix_t* matrix, float tx, float ty);
 /**
  * @brief scaling matrix initialization
  *
@@ -420,7 +419,7 @@ vkvg_public void vkvg_matrix_init_translate(vkvg_matrix_t *matrix, float tx, flo
  * @param sx scale in the x direction
  * @param sy Scale in the y direction
  */
-vkvg_public void vkvg_matrix_init_scale(vkvg_matrix_t *matrix, float sx, float sy);
+vkvg_public void vkvg_matrix_init_scale(vkvg_matrix_t* matrix, float sx, float sy);
 /**
  * @brief rotation matrix initialization
  *
@@ -432,7 +431,7 @@ vkvg_public void vkvg_matrix_init_scale(vkvg_matrix_t *matrix, float sx, float s
  * axis orientation of vkvg, positive angles rotate in a clockwise
  * direction.
  */
-vkvg_public void vkvg_matrix_init_rotate(vkvg_matrix_t *matrix, float radians);
+vkvg_public void vkvg_matrix_init_rotate(vkvg_matrix_t* matrix, float radians);
 /**
  * @brief apply translation on matrix
  *
@@ -443,7 +442,7 @@ vkvg_public void vkvg_matrix_init_rotate(vkvg_matrix_t *matrix, float radians);
  * @param tx translation in the x direction
  * @param ty translation in the y direction
  */
-vkvg_public void vkvg_matrix_translate(vkvg_matrix_t *matrix, float tx, float ty);
+vkvg_public void vkvg_matrix_translate(vkvg_matrix_t* matrix, float tx, float ty);
 /**
  * @brief apply scale on matrix
  *
@@ -454,7 +453,7 @@ vkvg_public void vkvg_matrix_translate(vkvg_matrix_t *matrix, float tx, float ty
  * @param sx scale in the x direction
  * @param sy scale in the y direction
  */
-vkvg_public void vkvg_matrix_scale(vkvg_matrix_t *matrix, float sx, float sy);
+vkvg_public void vkvg_matrix_scale(vkvg_matrix_t* matrix, float sx, float sy);
 /**
  * @brief apply rotation on matrix
  *
@@ -466,7 +465,7 @@ vkvg_public void vkvg_matrix_scale(vkvg_matrix_t *matrix, float sx, float sy);
  * rotate in the direction from the positive X axis toward the positive Y axis.
  * With the default axis orientation of cairo, positive angles rotate in a clockwise direction.
  */
-vkvg_public void vkvg_matrix_rotate(vkvg_matrix_t *matrix, float radians);
+vkvg_public void vkvg_matrix_rotate(vkvg_matrix_t* matrix, float radians);
 /**
  * @brief matrices multiplication
  *
@@ -475,7 +474,7 @@ vkvg_public void vkvg_matrix_rotate(vkvg_matrix_t *matrix, float radians);
  * @param a first operand of the multiplication
  * @param b second operand of the multiplication
  */
-vkvg_public void vkvg_matrix_multiply(vkvg_matrix_t *result, const vkvg_matrix_t *a, const vkvg_matrix_t *b);
+vkvg_public void vkvg_matrix_multiply(vkvg_matrix_t* result, const vkvg_matrix_t* a, const vkvg_matrix_t* b);
 /**
  * @brief transform distances
  *
@@ -491,7 +490,7 @@ vkvg_public void vkvg_matrix_multiply(vkvg_matrix_t *result, const vkvg_matrix_t
  * @param dx X component of a distance vector. An in/out parameter
  * @param dy Y component of a distance vector. An in/out parameter
  */
-vkvg_public void vkvg_matrix_transform_distance(const vkvg_matrix_t *matrix, float *dx, float *dy);
+vkvg_public void vkvg_matrix_transform_distance(const vkvg_matrix_t* matrix, float* dx, float* dy);
 /**
  * @brief transform point
  *
@@ -500,7 +499,7 @@ vkvg_public void vkvg_matrix_transform_distance(const vkvg_matrix_t *matrix, flo
  * @param x X position. An in/out parameter
  * @param y Y position. An in/out parameter
  */
-vkvg_public void vkvg_matrix_transform_point(const vkvg_matrix_t *matrix, float *x, float *y);
+vkvg_public void vkvg_matrix_transform_point(const vkvg_matrix_t* matrix, float* x, float* y);
 /**
  * @brief invert matrix
  *
@@ -510,8 +509,8 @@ vkvg_public void vkvg_matrix_transform_point(const vkvg_matrix_t *matrix, float 
  * @return If matrix has an inverse, modifies matrix to be the inverse matrix and returns VKVG_STATUS_SUCCESS.
  * Otherwise, returns VKVG_STATUS_INVALID_MATRIX.
  */
-vkvg_public vkvg_status_t vkvg_matrix_invert(vkvg_matrix_t *matrix);
-vkvg_public void          vkvg_matrix_get_scale(const vkvg_matrix_t *matrix, float *sx, float *sy);
+vkvg_public vkvg_status_t vkvg_matrix_invert(vkvg_matrix_t* matrix);
+vkvg_public void          vkvg_matrix_get_scale(const vkvg_matrix_t* matrix, float* sx, float* sy);
 /** @}*/
 
 /*!
@@ -591,7 +590,7 @@ vkvg_public
  * @param deferredResolve If true, the final simple sampled image of the surface will only be resolved on demand with a
  * call to #vkvg_surface_resolve() or
  */
-vkvg_public VkvgDevice vkvg_device_create(vkvg_device_create_info_t *info);
+vkvg_public VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info);
 /**
  * @brief Create a new vkvg device from an existing vulkan logical device.
  *
@@ -680,7 +679,7 @@ vkvg_public void vkvg_device_set_dpy(VkvgDevice dev, int hdpy, int vdpy);
  * @param hdpy The current horizontal dot per inch.
  * @param vdpy The current vertical dot per inch.
  */
-vkvg_public void vkvg_device_get_dpy(VkvgDevice dev, int *hdpy, int *vdpy);
+vkvg_public void vkvg_device_get_dpy(VkvgDevice dev, int* hdpy, int* vdpy);
 
 /**
  * @brief query required instance extensions for vkvg.
@@ -689,7 +688,7 @@ vkvg_public void vkvg_device_get_dpy(VkvgDevice dev, int *hdpy, int *vdpy);
  * by calling this method with pExtension being a NULL pointer.
  * @param pExtCount a valid pointer to an integer that will be fill with the required extension count.
  */
-vkvg_public void vkvg_get_required_instance_extensions(const char **pExtensions, uint32_t *pExtCount);
+vkvg_public void vkvg_get_required_instance_extensions(const char** pExtensions, uint32_t* pExtCount);
 /**
  * @brief query required device extensions for vkvg.
  * @param phy the vulkan physical device that will be used to create the @ref VkvgDevice.
@@ -698,8 +697,8 @@ vkvg_public void vkvg_get_required_instance_extensions(const char **pExtensions,
  * @param pExtCount a valid pointer to an integer that will be fill with the required extension count.
  * @return #VKVG_STATUS_SUCCESS or #VKVG_STATUS_DEVICE_ERROR if a fatal error occured.
  */
-vkvg_public vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const char **pExtensions,
-                                                              uint32_t *pExtCount);
+vkvg_public vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const char** pExtensions,
+                                                              uint32_t* pExtCount);
 /**
  * @brief get vulkan device creation requirement to fit vkvg needs.
  *
@@ -707,7 +706,7 @@ vkvg_public vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice p
  * @return the required pNext chain for the vulkan device creation. The first structure is guarantied to
  * be VkPhysicalDeviceVulkan12Features if vulkan version is >= 1.2
  */
-vkvg_public const void *vkvg_get_device_requirements(VkPhysicalDeviceFeatures *pEnabledFeatures);
+vkvg_public const void* vkvg_get_device_requirements(VkPhysicalDeviceFeatures* pEnabledFeatures);
 /** @}*/
 
 /** @addtogroup surface
@@ -732,7 +731,7 @@ vkvg_public VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint
  * @param filePath The path of the image to load for creating the surface.
  * @return The new vkvg surface with the loaded image as content, or null if an error occured.
  */
-vkvg_public VkvgSurface vkvg_surface_create_from_image(VkvgDevice dev, const char *filePath);
+vkvg_public VkvgSurface vkvg_surface_create_from_image(VkvgDevice dev, const char* filePath);
 /**
  * @brief Create a new vkvg surface using an existing vulkan texture as backend.
  * This method will always return a valid pointer.
@@ -740,7 +739,7 @@ vkvg_public VkvgSurface vkvg_surface_create_from_image(VkvgDevice dev, const cha
  * @param vkhImg The VkhImage to use as the backend texture for drawing operations.
  * @return A new surface, or null if an error occured.
  */
-vkvg_public VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void *vkhImg);
+vkvg_public VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void* vkhImg);
 /**
  * @brief Create a new vkvg surface from an in memory rgba bitmap
  * @param dev The vkvg device used for creating the surface.
@@ -749,7 +748,7 @@ vkvg_public VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void *v
  * @param height the height of the provided bitmap.
  * @return
  */
-vkvg_public VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char *img, uint32_t width,
+vkvg_public VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, uint32_t width,
                                                         uint32_t height);
 /**
  * @brief Get the current status of the surface.
@@ -823,14 +822,14 @@ vkvg_public uint32_t vkvg_surface_get_height(VkvgSurface surf);
  * @param path The png file path.
  * @return SUCCESS or not.
  */
-vkvg_public vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char *path);
+vkvg_public vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char* path);
 /**
  * @brief Save surface to memory
  * @param surf The surface to save
  * @param bitmap A valid pointer on cpu memory large enough to contain surface pixels (stride * height)
  * @return SUCCESS or not.
  */
-vkvg_public vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char *const bitmap);
+vkvg_public vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char* const bitmap);
 /**
  * @brief Explicitly resolve a multisampled surface.
  *
@@ -927,7 +926,7 @@ vkvg_public vkvg_status_t vkvg_status(VkvgContext ctx);
  *
  * Returns: a string representation of the status
  **/
-vkvg_public const char *vkvg_status_to_string(vkvg_status_t status);
+vkvg_public const char* vkvg_status_to_string(vkvg_status_t status);
 /**
  * @brief Increment by one the reference count on this context.
  * @param ctx The context to increment the reference count for.
@@ -986,7 +985,7 @@ vkvg_public void vkvg_new_sub_path(VkvgContext ctx);
  * @param x2 right of the resulting extents
  * @param y2 bottom of the resulting extents
  */
-vkvg_public void vkvg_path_extents(VkvgContext ctx, float* const x1, float *const y1, float *const x2, float *const y2);
+vkvg_public void vkvg_path_extents(VkvgContext ctx, float* const x1, float* const y1, float* const x2, float* const y2);
 /**
  * @brief Get the current point.
  *
@@ -995,7 +994,7 @@ vkvg_public void vkvg_path_extents(VkvgContext ctx, float* const x1, float *cons
  * @param x A valid float pointer to receive the x coordinate of the current point.
  * @param y A valid float pointer to receive the y coordinate of the current point.
  */
-vkvg_public void vkvg_get_current_point(VkvgContext ctx, float *x, float *y);
+vkvg_public void vkvg_get_current_point(VkvgContext ctx, float* x, float* y);
 /**
  * @brief Add a line to the current path from the current point to the coordinate given in arguments.
  *
@@ -1470,7 +1469,7 @@ vkvg_public void vkvg_set_fill_rule(VkvgContext ctx, vkvg_fill_rule_t fr);
  * @param num_dashes the length of the dash array.
  * @param offset an offset into the dash pattern at which the stroke should start.
  */
-vkvg_public void vkvg_set_dash(VkvgContext ctx, const float *dashes, uint32_t num_dashes, float offset);
+vkvg_public void vkvg_set_dash(VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset);
 /**
  * @brief get current dash settings.
  *
@@ -1482,7 +1481,7 @@ vkvg_public void vkvg_set_dash(VkvgContext ctx, const float *dashes, uint32_t nu
  * @param num_dashes[out] return length of dash array or 0 if dash is not set.
  * @param offset[out] return value for the current dash offset
  */
-vkvg_public void vkvg_get_dash(VkvgContext ctx, const float *dashes, uint32_t *num_dashes, float *offset);
+vkvg_public void vkvg_get_dash(VkvgContext ctx, const float* dashes, uint32_t* num_dashes, float* offset);
 
 /**
  * @brief get current line width
@@ -1608,7 +1607,7 @@ vkvg_public void vkvg_rotate(VkvgContext ctx, float radians);
  * @param ctx a valid vkvg @ref context
  * @param matrix
  */
-vkvg_public void vkvg_transform(VkvgContext ctx, const vkvg_matrix_t *matrix);
+vkvg_public void vkvg_transform(VkvgContext ctx, const vkvg_matrix_t* matrix);
 /**
  * @brief Set the current matrix.
  *
@@ -1617,7 +1616,7 @@ vkvg_public void vkvg_transform(VkvgContext ctx, const vkvg_matrix_t *matrix);
  * @param ctx a valid vkvg @ref context
  * @param matrix
  */
-vkvg_public void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t *matrix);
+vkvg_public void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t* matrix);
 /**
  * @brief Get the current matrix.
  *
@@ -1626,7 +1625,7 @@ vkvg_public void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t *matrix);
  * @param ctx a valid vkvg @ref context
  * @param matrix a valid #vkvg_matrix_t pointer to receive the current context's transform.
  */
-vkvg_public void vkvg_get_matrix(VkvgContext ctx, vkvg_matrix_t *const matrix);
+vkvg_public void vkvg_get_matrix(VkvgContext ctx, vkvg_matrix_t* const matrix);
 /**
  * @brief Set the current matrix to identity.
  *
@@ -1642,7 +1641,7 @@ vkvg_public void vkvg_identity_matrix(VkvgContext ctx);
  * @param ctx a valid vkvg @ref context
  * @param name A name to be recognized by the FontConfig library
  */
-vkvg_public void vkvg_select_font_face(VkvgContext ctx, const char *name);
+vkvg_public void vkvg_select_font_face(VkvgContext ctx, const char* name);
 /**
  * @brief Select a new font by providing its file path.
  *
@@ -1650,7 +1649,7 @@ vkvg_public void vkvg_select_font_face(VkvgContext ctx, const char *name);
  * @param path A valid font file path.
  * @param name A short name to select this font afteward
  */
-vkvg_public void vkvg_load_font_from_path(VkvgContext ctx, const char *path, const char *name);
+vkvg_public void vkvg_load_font_from_path(VkvgContext ctx, const char* path, const char* name);
 /**
  * @brief Select a new font by providing a pointer on the font file loaded in memory and its size in byte.
  *
@@ -1659,8 +1658,8 @@ vkvg_public void vkvg_load_font_from_path(VkvgContext ctx, const char *path, con
  * @param fontBufferByteSize the size of the font buffer in bytes.
  * @param name A short name to select this font afteward
  */
-vkvg_public void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char *fontBuffer, long fontBufferByteSize,
-                                            const char *name);
+vkvg_public void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize,
+                                            const char* name);
 /**
  * @brief
  *
@@ -1677,7 +1676,7 @@ vkvg_public void vkvg_set_font_size(VkvgContext ctx, uint32_t size);
  * @param ctx a valid vkvg @ref context
  * @param utf8 A null-terminated utf8 encoded string of text.
  */
-vkvg_public void vkvg_show_text(VkvgContext ctx, const char *utf8);
+vkvg_public void vkvg_show_text(VkvgContext ctx, const char* utf8);
 /**
  * @brief Gets the extents for a string of text.
  *
@@ -1685,14 +1684,14 @@ vkvg_public void vkvg_show_text(VkvgContext ctx, const char *utf8);
  * @param utf8 A null-terminated utf8 encoded string of text.
  * @param extents
  */
-vkvg_public void vkvg_text_extents(VkvgContext ctx, const char *utf8, vkvg_text_extents_t *extents);
+vkvg_public void vkvg_text_extents(VkvgContext ctx, const char* utf8, vkvg_text_extents_t* extents);
 /**
  * @brief Gets the font extents for the currently selected font.
  *
  * @param ctx a valid vkvg @ref context
  * @param extents A valid #vkvg_font_extents_t handle to be filled with current font extents.
  */
-vkvg_public void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t *extents);
+vkvg_public void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents);
 
 // text run holds harfbuz datas, and prevent recreating them multiple times for the same line of text.
 /**
@@ -1702,7 +1701,7 @@ vkvg_public void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t *extents
  * @param text Null terminated utf8 string.
  * @return VkvgText
  */
-vkvg_public VkvgText vkvg_text_run_create(VkvgContext ctx, const char *text);
+vkvg_public VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text);
 /**
  * @brief Create a new text run for a non null terminated string.
  *
@@ -1711,7 +1710,7 @@ vkvg_public VkvgText vkvg_text_run_create(VkvgContext ctx, const char *text);
  * @param length glyphs count, not to be confused with byte length.
  * @return VkvgText
  */
-vkvg_public VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char *text, uint32_t length);
+vkvg_public VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char* text, uint32_t length);
 /**
  * @brief Release resources holded by the text run.
  *
@@ -1731,7 +1730,7 @@ vkvg_public void vkvg_show_text_run(VkvgContext ctx, VkvgText textRun);
  * @param textRun
  * @param extents
  */
-vkvg_public void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t *extents);
+vkvg_public void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents);
 /**
  * @brief Get glyph count of text run.
  *
@@ -1742,7 +1741,7 @@ vkvg_public uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun);
  * @brief retrieve glyph positions.
  *
  */
-vkvg_public void vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg_glyph_info_t *pGlyphInfo);
+vkvg_public void vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg_glyph_info_t* pGlyphInfo);
 /** @}*/
 
 /**
@@ -1824,7 +1823,7 @@ vkvg_public vkvg_status_t vkvg_pattern_edit_linear(VkvgPattern pat, float x0, fl
  * @param y1 y coordinate of the end point
  * @return VKVG_STATUS_SUCCESS, or VKVG_STATUS_PATTERN_TYPE_MISMATCH if the pattern is not a linear gradient.
  */
-vkvg_public vkvg_status_t vkvg_pattern_get_linear_points(VkvgPattern pat, float *x0, float *y0, float *x1, float *y1);
+vkvg_public vkvg_status_t vkvg_pattern_get_linear_points(VkvgPattern pat, float* x0, float* y0, float* x1, float* y1);
 /**
  * @brief create a new radial gradient.
  *
@@ -1866,7 +1865,7 @@ vkvg_public vkvg_status_t vkvg_pattern_edit_radial(VkvgPattern pat, float cx0, f
  * @param count a valid integer pointer to old the current stop count returned.
  * @return VKVG_STATUS_SUCCESS, or VKVG_STATUS_PATTERN_TYPE_MISMATCH if the pattern is not a gradient.
  */
-vkvg_public vkvg_status_t vkvg_pattern_get_color_stop_count(VkvgPattern pat, uint32_t *count);
+vkvg_public vkvg_status_t vkvg_pattern_get_color_stop_count(VkvgPattern pat, uint32_t* count);
 /**
  * @brief get color stop.
  *
@@ -1883,8 +1882,8 @@ vkvg_public vkvg_status_t vkvg_pattern_get_color_stop_count(VkvgPattern pat, uin
  * @return VKVG_STATUS_SUCCESS, VKVG_STATUS_PATTERN_TYPE_MISMATCH if the pattern is not a gradient,
  * VKVG_STATUS_INVALID_INDEX if index is out of bounds.
  */
-vkvg_public vkvg_status_t vkvg_pattern_get_color_stop_rgba(VkvgPattern pat, uint32_t index, float *offset, float *r,
-                                                           float *g, float *b, float *a);
+vkvg_public vkvg_status_t vkvg_pattern_get_color_stop_rgba(VkvgPattern pat, uint32_t index, float* offset, float* r,
+                                                           float* g, float* b, float* a);
 
 /**
  * @brief dispose pattern.
@@ -1949,24 +1948,24 @@ vkvg_public vkvg_filter_t vkvg_pattern_get_filter(VkvgPattern pat);
  * @return vkvg_pattern_type_t
  */
 vkvg_public vkvg_pattern_type_t vkvg_pattern_get_type(VkvgPattern pat);
-vkvg_public void                vkvg_pattern_set_matrix(VkvgPattern pat, const vkvg_matrix_t *matrix);
-vkvg_public void                vkvg_pattern_get_matrix(VkvgPattern pat, vkvg_matrix_t *matrix);
+vkvg_public void                vkvg_pattern_set_matrix(VkvgPattern pat, const vkvg_matrix_t* matrix);
+vkvg_public void                vkvg_pattern_get_matrix(VkvgPattern pat, vkvg_matrix_t* matrix);
 
 /** @}*/
 
 /********* EXPERIMENTAL **************/
-vkvg_public void vkvg_set_source_color_name(VkvgContext ctx, const char *color);
+vkvg_public void vkvg_set_source_color_name(VkvgContext ctx, const char* color);
 
 #ifdef VKVG_RECORDING
-typedef struct _vkvg_recording_t *VkvgRecording;
+typedef struct _vkvg_recording_t* VkvgRecording;
 
 vkvg_public void          vkvg_start_recording(VkvgContext ctx);
 vkvg_public VkvgRecording vkvg_stop_recording(VkvgContext ctx);
 vkvg_public void          vkvg_replay(VkvgContext ctx, VkvgRecording rec);
 vkvg_public void          vkvg_replay_command(VkvgContext ctx, VkvgRecording rec, uint32_t cmdIndex);
-vkvg_public void     vkvg_recording_get_command(VkvgRecording rec, uint32_t cmdIndex, uint32_t *cmd, void **dataOffset);
+vkvg_public void     vkvg_recording_get_command(VkvgRecording rec, uint32_t cmdIndex, uint32_t* cmd, void** dataOffset);
 vkvg_public uint32_t vkvg_recording_get_count(VkvgRecording rec);
-vkvg_public void    *vkvg_recording_get_data(VkvgRecording rec);
+vkvg_public void*    vkvg_recording_get_data(VkvgRecording rec);
 vkvg_public void     vkvg_recording_destroy(VkvgRecording rec);
 /*************************************/
 #endif

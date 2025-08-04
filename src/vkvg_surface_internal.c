@@ -218,15 +218,15 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format) {
         return (VkvgSurface)&_vkvg_status_device_error;
     }
 
-    VkvgSurface surf = (vkvg_surface *)calloc(1, sizeof(vkvg_surface));
+    VkvgSurface surf = (vkvg_surface*)calloc(1, sizeof(vkvg_surface));
     if (!surf) {
         LOG(VKVG_LOG_ERR, "CREATE Surface failed, no memory\n");
         return (VkvgSurface)&_vkvg_status_no_memory;
     }
 
     surf->references = 1;
-    surf->dev    = dev;
-    surf->format = format;
+    surf->dev        = dev;
+    surf->format     = format;
 
     if (dev->threadAware)
         mtx_init(&surf->mutex, mtx_plain);

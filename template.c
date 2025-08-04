@@ -10,7 +10,7 @@ void test_name() {
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     PERFORM_TEST(test_name, argc, argv);
     return 0;
 }

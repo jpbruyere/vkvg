@@ -63,7 +63,7 @@ void cairo_test_text(VkvgContext cr) {
     vkvg_font_extents_t ft;
 
     // vkvg_set_fill_rule(cr, VKVG_FILL_RULE_NON_ZERO);
-    const char *utf8 = "vkvg|Ãp";
+    const char* utf8 = "vkvg|Ãp";
     float       x, y;
 
     // vkvg_select_font_face (cr, "times");
@@ -392,7 +392,7 @@ void cairo_tests() {
     vkvg_destroy(ctx);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     no_test_size = true;
     PERFORM_TEST(cairo_tests, argc, argv);
     return 0;

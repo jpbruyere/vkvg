@@ -50,4 +50,3 @@ TEST(line_caps0) {
 
     vkvg_destroy(ctx);
 }
-

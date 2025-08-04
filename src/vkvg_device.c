@@ -33,20 +33,20 @@
     }
 
 #define _CHECK_INST_EXT(ext)                                                                                           \
-if (vkh_instance_extension_supported(#ext)) {                                                                      \
+    if (vkh_instance_extension_supported(#ext)) {                                                                      \
         if (pExtensions)                                                                                               \
-        pExtensions[*pExtCount] = #ext;                                                                            \
+            pExtensions[*pExtCount] = #ext;                                                                            \
         (*pExtCount)++;                                                                                                \
-}
+    }
 
 #define _CHECK_DEV_EXT(ext)                                                                                            \
-{                                                                                                                  \
+    {                                                                                                                  \
         if (_get_dev_extension_is_supported(pExtensionProperties, extensionCount, #ext)) {                             \
             if (pExtensions)                                                                                           \
-            pExtensions[*pExtCount] = #ext;                                                                        \
+                pExtensions[*pExtCount] = #ext;                                                                        \
             (*pExtCount)++;                                                                                            \
-    }                                                                                                              \
-}
+        }                                                                                                              \
+    }
 
 void vkvg_device_set_context_cache_size(VkvgDevice dev, uint32_t maxCount) {
     if (maxCount == dev->cachedContextMaxCount)
@@ -54,17 +54,17 @@ void vkvg_device_set_context_cache_size(VkvgDevice dev, uint32_t maxCount) {
 
     dev->cachedContextMaxCount = maxCount;
 
-    _cached_ctx *cur = dev->cachedContextLast;
+    _cached_ctx* cur = dev->cachedContextLast;
     while (cur && dev->cachedContextCount > dev->cachedContextMaxCount) {
         _release_context_ressources(cur->ctx);
-        _cached_ctx *prev = cur;
+        _cached_ctx* prev = cur;
         cur               = cur->pNext;
         free(prev);
         dev->cachedContextCount--;
     }
     dev->cachedContextLast = cur;
 }
-void _device_init(VkvgDevice dev, const vkvg_device_create_info_t *info) {
+void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     dev->vkDev    = info->vkdev;
     dev->phy      = info->phy;
     dev->instance = info->inst;
@@ -105,7 +105,7 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t *info) {
 
 #ifdef VKH_USE_VMA
     VmaAllocatorCreateInfo allocatorInfo = {.physicalDevice = info->phy, .device = info->vkdev};
-    vmaCreateAllocator(&allocatorInfo, (VmaAllocator *)&dev->allocator);
+    vmaCreateAllocator(&allocatorInfo, (VmaAllocator*)&dev->allocator);
 #endif
 
     dev->cmdPool = vkh_cmd_pool_create(vkhd, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -169,8 +169,7 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t *info) {
     dev->status = VKVG_STATUS_SUCCESS;
 }
 
-
-void vkvg_get_required_instance_extensions(const char **pExtensions, uint32_t *pExtCount) {
+void vkvg_get_required_instance_extensions(const char** pExtensions, uint32_t* pExtCount) {
     *pExtCount = 0;
 
     vkh_instance_extensions_check_init();
@@ -183,8 +182,8 @@ void vkvg_get_required_instance_extensions(const char **pExtensions, uint32_t *p
     vkh_instance_extensions_check_release();
 }
 
-bool _get_dev_extension_is_supported(VkExtensionProperties *pExtensionProperties, uint32_t extensionCount,
-                                     const char *name) {
+bool _get_dev_extension_is_supported(VkExtensionProperties* pExtensionProperties, uint32_t extensionCount,
+                                     const char* name) {
     for (uint32_t i = 0; i < extensionCount; i++) {
         if (strcmp(name, pExtensionProperties[i].extensionName) == 0)
             return true;
@@ -192,15 +191,14 @@ bool _get_dev_extension_is_supported(VkExtensionProperties *pExtensionProperties
     return false;
 }
 
-
-vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const char **pExtensions, uint32_t *pExtCount) {
-    VkExtensionProperties *pExtensionProperties;
+vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const char** pExtensions, uint32_t* pExtCount) {
+    VkExtensionProperties* pExtensionProperties;
     uint32_t               extensionCount;
 
     *pExtCount = 0;
 
     VK_CHECK_RESULT(vkEnumerateDeviceExtensionProperties(phy, NULL, &extensionCount, NULL));
-    pExtensionProperties = (VkExtensionProperties *)malloc(extensionCount * sizeof(VkExtensionProperties));
+    pExtensionProperties = (VkExtensionProperties*)malloc(extensionCount * sizeof(VkExtensionProperties));
     VK_CHECK_RESULT(vkEnumerateDeviceExtensionProperties(phy, NULL, &extensionCount, pExtensionProperties));
 
     // https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VK_KHR_portability_subset
@@ -243,13 +241,13 @@ vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const ch
 }
 
 // enabledFeature12 is guarantied to be the first in pNext chain
-const void *vkvg_get_device_requirements(VkPhysicalDeviceFeatures *pEnabledFeatures) {
+const void* vkvg_get_device_requirements(VkPhysicalDeviceFeatures* pEnabledFeatures) {
 
     pEnabledFeatures->fillModeNonSolid  = VK_TRUE;
     pEnabledFeatures->sampleRateShading = VK_TRUE;
     pEnabledFeatures->logicOp           = VK_TRUE;
 
-    void *pNext = NULL;
+    void* pNext = NULL;
 
 #ifdef VK_VERSION_1_2
     static VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
@@ -269,8 +267,8 @@ const void *vkvg_get_device_requirements(VkPhysicalDeviceFeatures *pEnabledFeatu
 #ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
     static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeat = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT, .scalarBlockLayout = VK_TRUE};
-    scalarBlockFeat.pNext                                                = pNext;
-    pNext                                                                = &scalarBlockFeat;
+    scalarBlockFeat.pNext = pNext;
+    pNext                 = &scalarBlockFeat;
 #endif
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     static VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timelineSemaFeat = {
@@ -283,13 +281,13 @@ const void *vkvg_get_device_requirements(VkPhysicalDeviceFeatures *pEnabledFeatu
     return pNext;
 }
 
-VkvgDevice vkvg_device_create(vkvg_device_create_info_t *info) {
+VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
     LOG(VKVG_LOG_INFO, "CREATE Device\n");
     if (!info) {
         LOG(VKVG_LOG_ERR, "CREATE Device failed, provided vkvg_device_create_info_t is null\n");
         return (VkvgDevice)&_vkvg_status_invalid_dev_ci;
     }
-    VkvgDevice dev = (vkvg_device *)calloc(1, sizeof(vkvg_device));
+    VkvgDevice dev = (vkvg_device*)calloc(1, sizeof(vkvg_device));
     if (!dev) {
         LOG(VKVG_LOG_ERR, "CREATE Device failed, no memory\n");
         return (VkvgDevice)&_vkvg_status_no_memory;
@@ -305,8 +303,8 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t *info) {
     }
 
     if (!info->vkdev) {
-        const char *enabledExts[10];
-        const char *enabledLayers[10];
+        const char* enabledExts[10];
+        const char* enabledLayers[10];
         uint32_t    enabledExtsCount = 0, enabledLayersCount = 0, phyCount = 0;
 
         vkh_layers_check_init();
@@ -335,7 +333,7 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t *info) {
                                        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT, NULL);
 #endif
 
-        VkhPhyInfo *phys = vkh_app_get_phyinfos(app, &phyCount, VK_NULL_HANDLE);
+        VkhPhyInfo* phys = vkh_app_get_phyinfos(app, &phyCount, VK_NULL_HANDLE);
         if (phyCount == 0) {
             dev->status = VKVG_STATUS_DEVICE_ERROR;
             vkh_app_destroy(app);
@@ -375,11 +373,11 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t *info) {
         }
 
         VkPhysicalDeviceFeatures enabledFeatures = {0};
-        const void              *pNext           = vkvg_get_device_requirements(&enabledFeatures);
+        const void*              pNext           = vkvg_get_device_requirements(&enabledFeatures);
 
         VkDeviceCreateInfo device_info = {.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                           .queueCreateInfoCount    = qCount,
-                                          .pQueueCreateInfos       = (VkDeviceQueueCreateInfo *)&pQueueInfos,
+                                          .pQueueCreateInfos       = (VkDeviceQueueCreateInfo*)&pQueueInfos,
                                           .enabledExtensionCount   = enabledExtsCount,
                                           .ppEnabledExtensionNames = enabledExts,
                                           .pEnabledFeatures        = &enabledFeatures,
@@ -416,12 +414,12 @@ void vkvg_device_destroy(VkvgDevice dev) {
     LOG(VKVG_LOG_INFO, "DESTROY Device\n");
 
     if (dev->cachedContextCount > 0) {
-        _cached_ctx *cur = dev->cachedContextLast;
+        _cached_ctx* cur = dev->cachedContextLast;
         while (cur) {
             assert(cur->ctx->status == VKVG_STATUS_IN_CACHE);
             cur->ctx->status = VKVG_STATUS_SUCCESS;
             _release_context_ressources(cur->ctx);
-            _cached_ctx *prev = cur;
+            _cached_ctx* prev = cur;
             cur               = cur->pNext;
             free(prev);
         }
@@ -502,7 +500,7 @@ void vkvg_device_set_dpy(VkvgDevice dev, int hdpy, int vdpy) {
 
     // TODO: reset font cache
 }
-void vkvg_device_get_dpy(VkvgDevice dev, int *hdpy, int *vdpy) {
+void vkvg_device_get_dpy(VkvgDevice dev, int* hdpy, int* vdpy) {
     if (vkvg_device_status(dev))
         return;
     *hdpy = dev->hdpi;

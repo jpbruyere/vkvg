@@ -95,7 +95,7 @@ void _long_path() {
 void path() { _long_path(); }
 void curve() { _long_curve(); }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     dashes_count = 2;
     dashes[0]    = 0;
     dashes[1]    = 10;

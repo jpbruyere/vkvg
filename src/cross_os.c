@@ -25,7 +25,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-int directoryExists(const char *path) {
+int directoryExists(const char* path) {
 #if defined(_WIN32) || defined(_WIN64)
 #elif __APPLE__
 #elif __unix__
@@ -35,12 +35,12 @@ int directoryExists(const char *path) {
     return -1;
 #endif
 }
-const char *getUserDir() {
+const char* getUserDir() {
 #if defined(_WIN32) || defined(_WIN64)
     return getenv("HOME");
 #elif __APPLE__
 #elif __unix__
-    struct passwd *pw = getpwuid(getuid());
+    struct passwd* pw = getpwuid(getuid());
     return pw->pw_dir;
 #endif
 }
@@ -53,7 +53,7 @@ const char *getUserDir() {
 #include <unistd.h>
 
 void handler(int sig) {
-    void  *array[100];
+    void*  array[100];
     size_t size;
 
     // get void*'s for all entries on the stack

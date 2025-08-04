@@ -158,4 +158,3 @@ TEST(gradient_alpha) {
 
     vkvg_destroy(ctx);
 }
-

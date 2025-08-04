@@ -3,7 +3,7 @@
 #include <string.h>
 
 #if defined(_WIN32) || defined(_WIN64)
-int gettimeofday(struct timeval *tp, void *tzp) {
+int gettimeofday(struct timeval* tp, void* tzp) {
     // FILETIME Jan 1 1970 00:00:00
     // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
     static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
@@ -41,7 +41,7 @@ bool     test_vsync   = false;
 bool     quiet        = false; // if true, don't print details and head row
 bool     first_test   = true;  // if multiple tests, dont print header row.
 bool     no_test_size = false; // several test consist of a single draw sequence without looping 'size' times
-                           // those test must be preceded by setting no_test_size to 'true'
+                               // those test must be preceded by setting no_test_size to 'true'
 int test_index  = 0;
 int single_test = -1; // if not < 0, contains the index of the single test to run
 
@@ -50,10 +50,10 @@ static bool                 offscreen                  = false;
 static bool                 threadAware                = false;
 static VkSampleCountFlags   samples                    = VK_SAMPLE_COUNT_4_BIT;
 static VkPhysicalDeviceType preferedPhysicalDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-static vk_engine_t         *e;
-static char                *saveToPng = NULL;
+static vk_engine_t*         e;
+static char*                saveToPng = NULL;
 
-static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action != GLFW_PRESS)
         return;
     switch (key) {
@@ -76,8 +76,8 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
 #endif
     }
 }
-static void char_callback(GLFWwindow *window, uint32_t c) {}
-static void mouse_move_callback(GLFWwindow *window, double x, double y) {
+static void char_callback(GLFWwindow* window, uint32_t c) {}
+static void mouse_move_callback(GLFWwindow* window, double x, double y) {
     if (mouseDown) {
         panX += ((float)x - lastX);
         panY += ((float)y - lastY);
@@ -85,13 +85,13 @@ static void mouse_move_callback(GLFWwindow *window, double x, double y) {
     lastX = (float)x;
     lastY = (float)y;
 }
-static void scroll_callback(GLFWwindow *window, double x, double y) {
+static void scroll_callback(GLFWwindow* window, double x, double y) {
     if (y < 0.f)
         zoom *= 0.5f;
     else
         zoom *= 2.0f;
 }
-static void mouse_button_callback(GLFWwindow *window, int but, int state, int modif) {
+static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif) {
     if (but != GLFW_MOUSE_BUTTON_1)
         return;
     if (state == GLFW_TRUE)
@@ -170,7 +170,7 @@ void clear_test() {
 }
 
 #ifdef VKVG_TEST_DIRECT_DRAW
-VkvgSurface *surfaces;
+VkvgSurface* surfaces;
 #endif
 void _print_usage_and_exit() {
     printf("\nUsage: test [options]\n\n");
@@ -214,7 +214,7 @@ void _print_usage_and_exit() {
     printf("\n");
     exit(-1);
 }
-void _parse_args(int argc, char *argv[]) {
+void _parse_args(int argc, char* argv[]) {
     bool printTestDetailsAndExit = false;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-h\0") == 0)
@@ -362,30 +362,26 @@ void _parse_args(int argc, char *argv[]) {
     }
 }
 typedef struct time_struct {
-    double start_time;
-    double stop_time;
-    double run_time;
-    double run_total;
-    double min_run_time;
-    double max_run_time;
-    double *run_time_values;
+    double   start_time;
+    double   stop_time;
+    double   run_time;
+    double   run_total;
+    double   min_run_time;
+    double   max_run_time;
+    double*  run_time_values;
     uint32_t count;
 } time_struct_t;
 
-time_struct_t time_struct_create (uint32_t iterations) {
-    time_struct_t ts = {0};
-    ts.run_time_values = (double *)malloc(iterations * sizeof(double));
+time_struct_t time_struct_create(uint32_t iterations) {
+    time_struct_t ts   = {0};
+    ts.run_time_values = (double*)malloc(iterations * sizeof(double));
     return ts;
 }
-void time_struct_destroy (time_struct_t* ts) {
-    free(ts->run_time_values);
-}
-void time_struct_start(time_struct_t* ts) {
-    ts->start_time = get_tick();
-}
+void time_struct_destroy(time_struct_t* ts) { free(ts->run_time_values); }
+void time_struct_start(time_struct_t* ts) { ts->start_time = get_tick(); }
 void time_struct_end(time_struct_t* ts) {
-    ts->stop_time          = get_tick();
-    ts->run_time           = ts->stop_time - ts->start_time;
+    ts->stop_time                  = get_tick();
+    ts->run_time                   = ts->stop_time - ts->start_time;
     ts->run_time_values[ts->count] = ts->run_time;
 
     if (ts->min_run_time < 0)
@@ -396,8 +392,8 @@ void time_struct_end(time_struct_t* ts) {
     ts->run_total += ts->run_time;
     ts->count++;
 }
-void _print_results(const char *testName, int argc, char *argv[], time_struct_t* ts) {
-    char *whoami;
+void _print_results(const char* testName, int argc, char* argv[], time_struct_t* ts) {
+    char* whoami;
     (whoami = strrchr(argv[0], '/')) ? ++whoami : (whoami = argv[0]);
 
     double avg_run_time          = ts->run_total / (double)ts->count;
@@ -448,7 +444,7 @@ void _print_debug_stats() {
 }
 #endif
 
-void perform_test(void (*testfunc)(void), const char *testName, int argc, char *argv[]) {
+void perform_test(void (*testfunc)(void), const char* testName, int argc, char* argv[]) {
     setlocale(LC_ALL, "");
     // dumpLayerExts();
     _parse_args(argc, argv);
@@ -472,18 +468,18 @@ void perform_test(void (*testfunc)(void), const char *testName, int argc, char *
         perform_test_onscreen(testfunc, testName, argc, argv);
 }
 
-void perform_test_offscreen(void (*testfunc)(void), const char *testName, int argc, char *argv[]) {
+void perform_test_offscreen(void (*testfunc)(void), const char* testName, int argc, char* argv[]) {
     uint32_t    enabledExtsCount = 0, phyCount = 0;
-    const char *enabledExts[10];
+    const char* enabledExts[10];
 #ifdef VKVG_USE_RENDERDOC
     const uint32_t enabledLayersCount = 2;
-    const char    *enabledLayers[]    = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_RENDERDOC_Capture"};
+    const char*    enabledLayers[]    = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_RENDERDOC_Capture"};
 #elif defined(VKVG_USE_VALIDATION)
     const uint32_t enabledLayersCount = 1;
-    const char    *enabledLayers[]    = {"VK_LAYER_KHRONOS_validation"};
+    const char*    enabledLayers[]    = {"VK_LAYER_KHRONOS_validation"};
 #else
     const uint32_t enabledLayersCount = 0;
-    const char    *enabledLayers[]    = {NULL};
+    const char*    enabledLayers[]    = {NULL};
 #endif
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     enabledExts[enabledExtsCount] = "VK_EXT_debug_utils";
@@ -503,7 +499,7 @@ void perform_test_offscreen(void (*testfunc)(void), const char *testName, int ar
         NULL);
 #endif
     bool        deferredResolve = false;
-    VkhPhyInfo *phys            = vkh_app_get_phyinfos(app, &phyCount, VK_NULL_HANDLE);
+    VkhPhyInfo* phys            = vkh_app_get_phyinfos(app, &phyCount, VK_NULL_HANDLE);
     VkhPhyInfo  pi              = 0;
     if (!vkengine_try_get_phyinfo(phys, phyCount, preferedPhysicalDeviceType, &pi))
         if (!vkengine_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
@@ -521,13 +517,13 @@ void perform_test_offscreen(void (*testfunc)(void), const char *testName, int ar
 
     VkDeviceCreateInfo device_info = {.sType                = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                       .queueCreateInfoCount = qCount,
-                                      .pQueueCreateInfos    = (VkDeviceQueueCreateInfo *)&pQueueInfos,
+                                      .pQueueCreateInfos    = (VkDeviceQueueCreateInfo*)&pQueueInfos,
                                       .pEnabledFeatures     = &enabledFeatures};
 
     VkhDevice dev = vkh_device_create(app, pi, &device_info);
 
-    vkvg_device_create_info_t info = {
-        samples, deferredResolve, vkh_app_get_inst(app), dev->phy, dev->dev, pi->gQueue, 0};
+    vkvg_device_create_info_t info = {samples, deferredResolve, vkh_app_get_inst(app), dev->phy, dev->dev, pi->gQueue,
+                                      0};
 
     device = vkvg_device_create(&info);
     // vkvg_device_set_dpy(device, 96, 96);
@@ -567,7 +563,7 @@ void perform_test_offscreen(void (*testfunc)(void), const char *testName, int ar
     test_index++;
 }
 
-void perform_test_onscreen(void (*testfunc)(void), const char *testName, int argc, char *argv[]) {
+void perform_test_onscreen(void (*testfunc)(void), const char* testName, int argc, char* argv[]) {
     if (test_vsync)
         e = vkengine_create(preferedPhysicalDeviceType, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
     else
@@ -586,11 +582,11 @@ void perform_test_onscreen(void (*testfunc)(void), const char *testName, int arg
     vkvg_device_set_dpy(device, 96, 96);
 
 #ifdef VKVG_TEST_DIRECT_DRAW
-    surfaces = (VkvgSurface *)malloc(r->imgCount * sizeof(VkvgSurface));
+    surfaces = (VkvgSurface*)malloc(r->imgCount * sizeof(VkvgSurface));
     for (uint32_t i = 0; i < r->imgCount; i++)
         surfaces[i] = vkvg_surface_create_for_VkhImage(device, r->ScBuffers[i]);
 #else
-    surf                              = vkvg_surface_create(device, test_width, test_height);
+    surf = vkvg_surface_create(device, test_width, test_height);
     vkh_presenter_build_blit_cmd(r, vkvg_surface_get_vk_image(surf), test_width, test_height);
 #endif
 
@@ -698,8 +694,8 @@ VkvgContext _initCtx() {
 
 const int star_points[11][2] = {{0, 85},    {75, 75},   {100, 10}, {125, 75}, {200, 85}, {150, 125},
                                 {160, 190}, {100, 150}, {40, 190}, {50, 125}, {0, 85}};
-void randomize_color(VkvgContext ctx) { vkvg_set_source_rgba(ctx, rndf(), rndf(), rndf(), rndf()); }
-void draw_random_shape(VkvgContext ctx, shape_t shape, float sizeFact) {
+void      randomize_color(VkvgContext ctx) { vkvg_set_source_rgba(ctx, rndf(), rndf(), rndf(), rndf()); }
+void      draw_random_shape(VkvgContext ctx, shape_t shape, float sizeFact) {
     float w = (float)test_width;
     float h = (float)test_height;
 

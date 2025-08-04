@@ -170,4 +170,3 @@ TEST(line_join2) {
 
     vkvg_destroy(ctx);
 }
-

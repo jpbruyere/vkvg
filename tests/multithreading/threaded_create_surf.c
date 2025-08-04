@@ -4,7 +4,7 @@
 #define THREAD_COUNT 16
 
 static int    finishedThreadCount = 0;
-static mtx_t *pmutex;
+static mtx_t* pmutex;
 
 int create_surfs() {
     for (uint32_t i = 0; i < test_size; i++) {
@@ -39,7 +39,7 @@ void fixedSizeRects() {
     pmutex = NULL;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     PERFORM_TEST(fixedSizeRects, argc, argv);
     return 0;
 }
