@@ -29,6 +29,20 @@ In general, we follow the ["fork-and-pull" Git workflow](https://github.com/susa
 6. Push changes to your fork
 7. Open a PR in our repository and follow the PR template so that we can efficiently review the changes.
 
+### Testing
+
+To build and run unit tests:
+```bash
+cd vkvg
+mkdir build
+cd build
+cmake ..
+make
+./gunit_tests/unit_tests
+```
+
+**Note**: Visual regression tests will skip on first run to generate reference images in `ReferenceImages/`. Subsequent runs compare against these baselines.
+
 ## Getting Help
 
 Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets).
