@@ -42,7 +42,16 @@ int main(int argc, char** argv) {
         .scan<'u', uint32_t>()
         .nargs(argparse::nargs_pattern::at_least_one);
 
-    program.add_argument("--list-tests").help("Get tests list").default_value(false).implicit_value(true);
+    program.add_argument("--png")
+        .help("save last image to png")
+        .default_value(false)
+        .implicit_value(true)
+        .store_into(app.save_img);
+
+    program.add_argument("--list-tests")
+        .help("Get tests list")
+        .default_value(false)
+        .implicit_value(true);
 
     program.add_argument("--list-gpus")
         .help("Get available GPU's, select with option '-g'")

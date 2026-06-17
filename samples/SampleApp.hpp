@@ -29,6 +29,7 @@ class SampleApp {
     std::vector<uint32_t> logSeverity = {1};
     uint32_t              logType     = 0;
     bool                  listGpus    = false;
+    bool                  save_img    = false;
     int32_t               gpuIndex    = -1;
     VkSampleCountFlags    samples     = VK_SAMPLE_COUNT_1_BIT;
 

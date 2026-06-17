@@ -30,6 +30,10 @@ void VkvgTest::initTest(SampleApp* app) {
 void VkvgTest::performTest() { testFunc(this); }
 void VkvgTest::cleanTest() {
     vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
+    if (this->app->save_img) {
+        std::string path = this->name + ".png";
+        vkvg_surface_write_to_png(surf, path.c_str());
+    }
     vkvg_surface_destroy(surf);
     vkvg_device_destroy(device);
     vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
