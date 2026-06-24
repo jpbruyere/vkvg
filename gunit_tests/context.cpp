@@ -1,5 +1,19 @@
-#include "vkvg.h"
 #include <gtest/gtest.h>
+#include "vkvg.h"
+
+#include "unitTest.h"
+
+#define EXPECT_CP(x, y)                                                                                                \
+{                                                                                                                      \
+        vkvg_get_current_point(ctx, &a, &b);                                                                           \
+        EXPECT_FLOAT_EQ(x, a);                                                                                         \
+        EXPECT_FLOAT_EQ(y, b);                                                                                         \
+}
+#define EXPECT_NO_CP()                                                                                                 \
+{                                                                                                                      \
+        EXPECT_EQ(false, vkvg_has_current_point(ctx));                                                                 \
+        EXPECT_CP(0, 0);                                                                                               \
+}
 
 // The fixture for testing class Foo.
 class ContextTest : public testing::Test {
@@ -162,20 +176,11 @@ TEST_F(ContextTest, CtxDrawBasicNullContext) {
     // vkvg_text_run_destroy(NULL);
     vkvg_show_text_run(ctx, NULL);
 }
-#define EXPECT_CP(x, y)                                                                                                \
-    {                                                                                                                  \
-        vkvg_get_current_point(ctx, &a, &b);                                                                           \
-        EXPECT_FLOAT_EQ(x, a);                                                                                         \
-        EXPECT_FLOAT_EQ(y, b);                                                                                         \
-    }
-#define EXPECT_NO_CP()                                                                                                 \
-    {                                                                                                                  \
-        EXPECT_EQ(false, vkvg_has_current_point(ctx));                                                                 \
-        EXPECT_CP(0, 0);                                                                                               \
-    }
+
 
 TEST_F(ContextTest, CtxBasicPathCommands) {
-    float       a = 0.0, b = 0.0, c = 0.0, d = 0.0;
+    float a = 0.0, b = 0.0, c = 0.0, d = 0.0;
+
     VkvgContext ctx = vkvg_create(surf);
     EXPECT_NO_CP();
 
@@ -215,6 +220,63 @@ TEST_F(ContextTest, CtxBasicPathCommands) {
     vkvg_new_path(ctx);
 
     EXPECT_NO_CP();
+    EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
 
     vkvg_destroy(ctx);
+}
+
+
+TEST_F(ContextTest, CtxSaveRestore) {
+    vkvg_matrix_t mat = {1, 0, 0, 1, 0, 0};
+
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_save(ctx);
+    EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
+
+    vkvg_set_opacity(ctx, 0.5f);
+    vkvg_set_line_width(ctx, 1.5f);
+    vkvg_set_miter_limit(ctx, 0.3f);
+    vkvg_set_line_cap(ctx, VKVG_LINE_CAP_BUTT);
+    vkvg_set_line_join(ctx, VKVG_LINE_JOIN_BEVEL);
+    vkvg_set_operator(ctx, VKVG_OPERATOR_SOURCE);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
+    const float dash[]{0.1f,0.5f};
+    vkvg_set_dash(ctx, dash, 2, 0.5f);
+    vkvg_translate(ctx, 10, 10);
+    vkvg_set_font_size(ctx, 30);
+    vkvg_select_font_face(ctx, "mono");
+    vkvg_set_source_color(ctx, 0xFAFAFAFA);
+    vkvg_move_to(ctx, 200, 250);
+
+    vkvg_restore(ctx);
+    EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
+
+    EXPECT_EQ(1, vkvg_get_opacity(ctx));
+    EXPECT_EQ(VKVG_LINE_CAP_BUTT, vkvg_get_line_cap(ctx));
+    EXPECT_EQ(VKVG_LINE_JOIN_MITER, vkvg_get_line_join(ctx));
+    EXPECT_EQ(VKVG_OPERATOR_OVER, vkvg_get_operator(ctx));
+    EXPECT_EQ(VKVG_FILL_RULE_NON_ZERO, vkvg_get_fill_rule(ctx));
+    EXPECT_EQ(10, vkvg_get_miter_limit(ctx));
+    EXPECT_EQ(1, vkvg_get_line_width(ctx));
+    vkvg_get_matrix(ctx, &mat);
+    CHECK_MAT(1, 0, 0, 1, 0, 0);
+
+
+    vkvg_save(ctx);
+    EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
+
+    VkvgSurface surf2 = vkvg_surface_create(dev, 256, 256);
+    vkvg_set_source_surface(ctx, surf2, 10, 10);
+    vkvg_paint(ctx);
+
+    vkvg_restore(ctx);
+
+    VkvgPattern srcPat = vkvg_get_source(ctx);
+
+    /*vkvg_set_source_rgb(ctx, 0.4f, 0.5f, 0.6f);
+    vkvg_set_source_rgba(ctx, 0.4f, 0.5f, 0.6f, 0.5f);
+
+    vkvg_set_source(ctx, NULL);*/
+
+    //EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
 }

@@ -36,6 +36,8 @@ class SurfaceTest : public testing::Test {
 
 TEST_F(SurfaceTest, SurfCreate) {
     EXPECT_EQ(VKVG_STATUS_NULL_POINTER, vkvg_surface_status(NULL));
+    EXPECT_EQ(0, vkvg_surface_get_reference_count(NULL));
+    EXPECT_NO_FATAL_FAILURE(vkvg_surface_reference(NULL));
     EXPECT_NO_FATAL_FAILURE(vkvg_surface_destroy(NULL));
 
     VkvgSurface surf = vkvg_surface_create(NULL, 0, 0);

@@ -1,10 +1,10 @@
 #include "test.h"
 
-const char* imgPath  = TESTS_DATA_ROOT "miroir.jpg";
-const char* imgPath2 = TESTS_DATA_ROOT "miroir.png";
+const char* imgPath  = TESTS_DATA_ROOT "mirror.jpg";
+const char* imgPath2 = TESTS_DATA_ROOT "mirror.png";
 const char* imgPath3 = TESTS_DATA_ROOT "filled.png";
-const char* imgPath4 = TESTS_DATA_ROOT "miroir2.png";
-const char* imgPath5 = TESTS_DATA_ROOT "miroir2-64.png";
+const char* imgPath4 = TESTS_DATA_ROOT "mirfor2.png";
+const char* imgPath5 = TESTS_DATA_ROOT "mirfor2-64.png";
 
 void paint() {
     VkvgContext ctx     = vkvg_create(surf);

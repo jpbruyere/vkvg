@@ -31,6 +31,8 @@ add_executable("${PROJECT_NAME}"
   imageDraw.cpp
   matrices.cpp
   patternDraw.cpp
+  save_restore.cpp
+  unitTest.h
 )
 target_compile_definitions("${PROJECT_NAME}" PUBLIC
     GTEST_PNG_ROOT="${GTEST_PNG_ROOT}"

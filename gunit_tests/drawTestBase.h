@@ -1,5 +1,6 @@
-#include "vkvg.h"
+#pragma once
 #include <gtest/gtest.h>
+#include "vkvg.h"
 #include <filesystem>
 
 namespace fs = std::filesystem;

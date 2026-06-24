@@ -1,4 +1,5 @@
 #include "drawTestBase.h"
+#include <math.h>
 
 class ImageDrawTest : public DrawTestBase {
 
@@ -16,10 +17,6 @@ class ImageDrawTest : public DrawTestBase {
     }
 };
 TEST_F(ImageDrawTest, References) {
-    EXPECT_EQ(VKVG_STATUS_NULL_POINTER, vkvg_surface_status(NULL));
-    EXPECT_EQ(0, vkvg_surface_get_reference_count(NULL));
-    EXPECT_NO_FATAL_FAILURE(vkvg_surface_reference(NULL));
-
     VkvgSurface surf2 = vkvg_surface_create_from_image(NULL, NULL);
     EXPECT_EQ(VKVG_STATUS_NULL_POINTER, vkvg_surface_status(surf2));
     surf2 = vkvg_surface_create_from_image(dev, NULL);
@@ -142,6 +139,34 @@ TEST_F(ImageDrawTest, PaintImageOnImage) {
     vkvg_paint(ctx);
 
     vkvg_surface_destroy(imgSurf2);
+
+    EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+
+TEST_F(ImageDrawTest, PaintImageClipped) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_arc(ctx, 140, 140, 100, 0, 2.f*M_PI);
+    vkvg_clip(ctx);
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+    vkvg_paint(ctx);
+
+    EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(ImageDrawTest, PaintImageClipped2) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_rectangle(ctx, 100,100, 200, 200);
+    vkvg_arc(ctx, 140, 140, 100, 0, 2.f*M_PI);
+    vkvg_clip(ctx);
+    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
+    vkvg_paint(ctx);
+
+    EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
     vkvg_destroy(ctx);
 
     compareWithRefImage();

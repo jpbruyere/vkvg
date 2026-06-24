@@ -1,13 +1,6 @@
-#include "vkvg.h"
 #include <gtest/gtest.h>
-
-#define CHECK_MAT(_xx, _yx, _xy, _yy, _x0, _y0)                                                                        \
-    EXPECT_FLOAT_EQ(mat.xx, _xx);                                                                                      \
-    EXPECT_FLOAT_EQ(mat.yx, _yx);                                                                                      \
-    EXPECT_FLOAT_EQ(mat.xy, _xy);                                                                                      \
-    EXPECT_FLOAT_EQ(mat.yy, _yy);                                                                                      \
-    EXPECT_FLOAT_EQ(mat.x0, _x0);                                                                                      \
-    EXPECT_FLOAT_EQ(mat.y0, _y0);
+#include "vkvg.h"
+#include "unitTest.h"
 
 TEST(MatrixTest, MatixInit) {
     vkvg_matrix_t mat = {1, 0, 0, 1, 0, 0};
