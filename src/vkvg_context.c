@@ -1389,13 +1389,12 @@ void vkvg_restore(VkvgContext ctx) {
     ctx->pSavedCtxs          = sav->pNext;
 
     _flush_cmd_buff(ctx);
-    if (!_wait_ctx_flush_end(ctx))
-        return;
-
-    ctx->pushConsts   = sav->pushConsts;
-    ctx->pushCstDirty = true;
 
     if (ctx->curClipState) { //!=none
+
+        if (!_wait_ctx_flush_end(ctx))
+            return;
+
         if (ctx->curClipState == vkvg_clip_state_clip && sav->clippingState == vkvg_clip_state_clear) {
             _reset_clip(ctx);
         } else {
@@ -1472,6 +1471,9 @@ void vkvg_restore(VkvgContext ctx) {
             vkh_image_destroy(savStencil);
         }
     }
+
+    ctx->pushConsts   = sav->pushConsts;
+    ctx->pushCstDirty = true;
 
     ctx->curClipState = vkvg_clip_state_none;
 
