@@ -12,6 +12,22 @@
         if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))                                                  \
             enabledExts[enabledExtsCount++] = #ext;                                                                    \
     }
+#if defined(__GNUC__) || defined(__clang__)
+#define BENCHMARK_ALWAYS_INLINE __attribute__((always_inline))
+#elif defined(_MSC_VER) && !defined(__clang__)
+#define BENCHMARK_ALWAYS_INLINE __forceinline
+#define __func__ __FUNCTION__
+#else
+#define BENCHMARK_ALWAYS_INLINE
+#endif
+template <class Tp>
+inline BENCHMARK_ALWAYS_INLINE void DoNotOptimize(Tp& value) {
+#if defined(__clang__)
+    asm volatile("" : "+r,m"(value) : : "memory");
+#else
+    asm volatile("" : "+m,r"(value) : : "memory");
+#endif
+}
 
 class SampleApp {
     bool try_get_phyinfo(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy);

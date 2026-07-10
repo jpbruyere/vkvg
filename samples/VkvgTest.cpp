@@ -1,10 +1,35 @@
+#include <iostream>
 #include "VkvgTest.hpp"
+
+double median_run_time(double data[], int n) {
+    double temp;
+    int    i, j;
+    for (i = 0; i < n; i++)
+        for (j = i + 1; j < n; j++) {
+            if (data[i] > data[j]) {
+                temp    = data[j];
+                data[j] = data[i];
+                data[i] = temp;
+            }
+        }
+    if (n % 2 == 0)
+        return ((data[n / 2] + data[n / 2 - 1]) / 2);
+    return data[n / 2];
+}
+double standard_deviation(const double data[], int n, double mean) {
+    double sum_deviation = 0.0;
+    int    i;
+    for (i = 0; i < n; ++i)
+        sum_deviation += (data[i] - mean) * (data[i] - mean);
+    return sqrt(sum_deviation / n);
+}
 
 std::vector<VkvgTest*> VkvgTest::tests;
 
 VkvgTest::VkvgTest(VkvgTestFunc testFunc, std::string _name) {
     this->testFunc = testFunc;
     this->name     = _name;
+    this->index    = VkvgTest::tests.size();
     VkvgTest::tests.push_back(this);
 }
 void VkvgTest::initTest(SampleApp* app) {
@@ -27,8 +52,11 @@ void VkvgTest::initTest(SampleApp* app) {
 
     vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
 }
-void VkvgTest::performTest() { testFunc(this); }
-void VkvgTest::cleanTest() {
+int VkvgTest::performTest(int inst) {
+    testFunc(this);
+    return inst;
+}
+void VkvgTest::cleanTest(double _totTime, double* run_time_values) {
     vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
     if (this->app->save_img) {
         std::string path = this->name + ".png";
@@ -36,9 +64,29 @@ void VkvgTest::cleanTest() {
     }
     vkvg_surface_destroy(surf);
     vkvg_device_destroy(device);
+    if (run_time_values) {
+        double count = app->iterations;
+        this->totTime                = _totTime;
+        avg_run_time          = totTime / count;
+        med_run_time          = median_run_time(run_time_values, count);
+        standard_dev          = standard_deviation(run_time_values, count, avg_run_time);
+        avg_frames_per_second = (1.0 / avg_run_time);
+        std::cout.imbue(std::locale("en_US.utf8"));
+        std::cout << "\uFF5C "<< std::right << std::setw(3) << std::setprecision(3) << this->index << " \uFF5C ";
+        std::cout << std::left << std::setw(40) << this->name << "\uFF5C";
+        //std::cout << std::right << std::setw(10) << std::setprecision(3) << std::fixed << this->totTime * 1000 << " \uFF5C ";
+        std::cout << std::right << std::setw(10) << std::setprecision(5) << std::fixed << this->avg_run_time << " \uFF5C ";
+        std::cout << std::right << std::setw(10) << std::setprecision(5) << std::fixed << this->med_run_time << " \uFF5C ";
+        std::cout << std::right << std::setw(10) << std::setprecision(5) << std::fixed << this->standard_dev << " \uFF5C ";
+        //std::cout << std::right << std::setw(10) << std::setprecision(3) << std::fixed << this->totTime * 1000 / this->app->iterations << " \uFF5C ";
+        std::cout << std::endl;
+        /*for (int var = 0; var < count; ++var) {
+            std::cout << std::right << std::setw(10) << std::setprecision(5) << std::fixed << run_time_values[var]<< ";";
+        }
+        std::cout << std::endl;*/
+    }
     vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
 }
-
 void draw_growing_circles(VkvgContext ctx, float y, int count) {
     float x = 2;
     for (int i = 1; i < count; i++) {

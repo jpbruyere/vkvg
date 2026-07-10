@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdio.h>
+#include <chrono>
 
 #include "vkvg.h"
 #include "vkh.h"
@@ -183,6 +184,9 @@ void SampleApp::Run() {
     int       testIdx = 0;
     auto      it      = VkvgTest::tests.begin();
     VkvgTest* curTest = NULL;
+    std::vector<double> run_time_values;
+    run_time_values.reserve(iterations);
+    double totTime = 0;
 
     if (testsToRun.empty()) {
         curTest = (*it);
@@ -191,24 +195,41 @@ void SampleApp::Run() {
     }
 
     glfwSetWindowTitle(win, curTest->name.c_str());
+
     curTest->initTest(this);
+    curTest->performTest(testIdx);//warm-up
 
     while (!glfwWindowShouldClose(win)) {
         glfwPollEvents();
 
-        curTest->performTest();
+        int idx = testIdx;
+        auto start = std::chrono::steady_clock::now();
+        DoNotOptimize(idx);
+        int res = curTest->performTest(idx);
+        DoNotOptimize(res);
+        auto finish = std::chrono::steady_clock::now();
+
+        auto elapsed = finish - start;
+        /*double elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                     elapsed).count();*/
+        double elapsed_ms = std::chrono::duration<double, std::milli>(elapsed).count();
+
 
         if (!vkh_presenter_draw(renderer)) {
             vkh_presenter_get_size(renderer, &width, &height);
-            curTest->cleanTest();
+            curTest->cleanTest(0, nullptr);
             curTest->initTest(this);
+            curTest->performTest(testIdx);//warm-up
             continue;
         }
 
         if (iterations > 0) {
+            totTime += elapsed_ms;
+            run_time_values.push_back(elapsed_ms);
+
             if (++curIter == iterations) {
+                curTest->cleanTest(totTime, run_time_values.data());
                 testIdx++;
-                curTest->cleanTest();
                 if (testsToRun.empty()) {
                     if (++it == VkvgTest::tests.end()) {
                         curTest = NULL;
@@ -224,13 +245,17 @@ void SampleApp::Run() {
                 }
 
                 curIter = 0;
+                totTime = 0;
+                run_time_values.clear();
+                run_time_values.reserve(iterations);
                 glfwSetWindowTitle(win, curTest->name.c_str());
                 curTest->initTest(this);
+                curTest->performTest(testIdx);//warm-up
             }
         }
     }
     if (curTest != NULL)
-        curTest->cleanTest();
+        curTest->cleanTest(totTime, run_time_values.data());
 }
 
 void SampleApp::CleanUp() {

@@ -43,20 +43,28 @@ typedef void (*VkvgTestFunc)(VkvgTest* test);
 
 class VkvgTest {
     VkvgTestFunc testFunc;
+    double totTime;
+    double avg_run_time;
+    double med_run_time;
+    double standard_dev;
+    double avg_frames_per_second;
 
   public:
     static std::vector<VkvgTest*> tests;
 
     SampleApp*  app;
     std::string name;
+    int         index;
+
     VkvgTest(VkvgTestFunc testFunc, std::string _name);
 
     VkvgDevice  device;
     VkvgSurface surf;
 
+
     void initTest(SampleApp* app);
-    void performTest();
-    void cleanTest();
+    int performTest(int inst);
+    void cleanTest(double _totTime, double *run_time_values);
 
     void draw_random_shape(VkvgContext ctx, shape_t shape, float sizeFact);
     void draw_random_curve(VkvgContext ctx);

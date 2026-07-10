@@ -1,5 +1,5 @@
 #include "VkvgTest.hpp"
-TEST(clipped_paint_ec) {
+TEST(clipped_paint_nz) {
     VkvgContext ctx = vkvg_create(test->surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
@@ -22,7 +22,7 @@ TEST(clipped_paint_eo) {
 
     vkvg_destroy(ctx);
 }
-TEST(clipped_paint2_ec) {
+TEST(clipped_paint2_nz) {
     VkvgContext ctx = vkvg_create(test->surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
@@ -55,7 +55,7 @@ TEST(clipped_paint2_eo) {
 
     vkvg_destroy(ctx);
 }
-TEST(clipped_transformed_ec) {
+TEST(clipped_transformed_nz) {
     VkvgContext ctx = vkvg_create(test->surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
@@ -67,7 +67,7 @@ TEST(clipped_transformed_ec) {
     vkvg_paint(ctx);
     vkvg_destroy(ctx);
 }
-TEST(clip_transformed_ec) {
+TEST(clip_transformed_nz) {
     VkvgContext ctx = vkvg_create(test->surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
@@ -96,9 +96,21 @@ TEST(clipped_transformed_eo) {
 
     vkvg_destroy(ctx);
 }
+TEST(clip_clear) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_rectangle(ctx, 100, 100, 300, 200);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 1, 0);
+    vkvg_paint(ctx);
+    vkvg_destroy(ctx);
+
+}
 TEST(test_clip) {
     VkvgContext ctx = vkvg_create(test->surf);
-    vkvg_clear(ctx);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
     vkvg_move_to(ctx, 10, 10);
     vkvg_line_to(ctx, 400, 150);
@@ -123,7 +135,6 @@ TEST(test_clip) {
 }
 TEST(test_clip2) {
     VkvgContext ctx = vkvg_create(test->surf);
-    vkvg_clear(ctx);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
     vkvg_rectangle(ctx, 50, 50, 500, 500);
     vkvg_clip(ctx);
@@ -166,3 +177,4 @@ TEST(test_clip2) {
 
     vkvg_destroy(ctx);
 }
+
