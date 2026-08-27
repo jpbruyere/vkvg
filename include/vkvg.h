@@ -955,7 +955,7 @@ vkvg_public void vkvg_flush(VkvgContext ctx);
  *
  * Calling #vkvg_new_path is equivalent to a clear of the current path stored in the context
  * without drawing anything on the target surface.
- * The current position is reseted to (0,0).
+ * The current position is reset to (0,0).
  * @param ctx The vkvg context pointer.
  */
 vkvg_public void vkvg_new_path(VkvgContext ctx);
