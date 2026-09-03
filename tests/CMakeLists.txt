@@ -37,7 +37,7 @@ FUNCTION (buildtest TEST_FILE)
 			${GLFW3_LIBRARY}
 			Threads::Threads
 	)
-	TARGET_LINK_LIBRARIES(${TEST_NAME} PRIVATE vkvg)
+        TARGET_LINK_LIBRARIES(${TEST_NAME} PRIVATE vkvg vkh)
 
 ENDFUNCTION (buildtest)
 

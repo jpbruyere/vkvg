@@ -104,7 +104,7 @@ extern "C" {
 #define VKVG_LOG_INFO       0x00008000 //(VKVG_LOG_INFO_PTS|VKVG_LOG_INFO_PATH|VKVG_LOG_INFO_CMD|VKVG_LOG_INFO_VAO)
 
 #ifdef DEBUG
-extern uint32_t vkvg_log_level;
+vkvg_public extern uint32_t vkvg_log_level;
 #ifdef VKVG_WIRED_DEBUG
 typedef enum {
     vkvg_wired_debug_mode_normal = 0x01,
@@ -113,7 +113,7 @@ typedef enum {
     vkvg_wired_debug_mode_both   = vkvg_wired_debug_mode_points | vkvg_wired_debug_mode_lines,
     vkvg_wired_debug_mode_all    = 0xFFFFFFFF
 } vkvg_wired_debug_mode;
-extern vkvg_wired_debug_mode vkvg_wired_debug;
+vkvg_public extern vkvg_wired_debug_mode vkvg_wired_debug;
 #endif
 #endif
 
