@@ -22,15 +22,23 @@
 #pragma once
 
 // disable warning on iostream functions on windows
-#define _CRT_SECURE_NO_WARNINGS
+
+#if defined(_WIN32)
+#  define _CRT_SECURE_NO_WARNINGS
+#  define WIN32_LEAN_AND_MEAN
+#  define NOMINMAX
+#endif
 
 #include <assert.h>
+
+#include "vkh.h"
+#include "vkvg.h"
+
 #include <float.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h> // needed before stdarg.h on Windows
 #include <stdarg.h>
-#include <string.h>
 
 // should be supported by c11
 // #include <threads.h>
@@ -49,7 +57,7 @@
     #define M_2_PI		0.63661977236758134308	// 2/pi
 #endif*/
 
-#ifdef DEBUG
+/*#ifdef DEBUG
 #define LOG(level, ...)                                                                                                \
     {                                                                                                                  \
         if ((vkvg_log_level) & (level))                                                                                \
@@ -57,7 +65,16 @@
     }
 #else
 #define LOG
-#endif
+#endif*/
+
+#define VK_CHECK_RESULT(f)                                                                                             \
+{                                                                                                                  \
+        VkResult res = (f);                                                                                            \
+        if (res != VK_SUCCESS) {                                                                                       \
+            LOG(VKH_LOG_ERR, "Fatal : VkResult is %d in %s at line %d\n", res, __FILE__, __LINE__);                    \
+            assert(res == VK_SUCCESS);                                                                                 \
+    }                                                                                                              \
+}
 
 #define PATH_CLOSED_BIT 0x80000000 /* most significant bit of path elmts is closed/open path state */
 #define PATH_HAS_CURVES_BIT                                                                                            \
@@ -93,8 +110,6 @@
 #define VKVG_FENCE_TIMEOUT 30000000000
 // #define VKVG_FENCE_TIMEOUT 10000
 
-#include "vkvg.h"
-#include "vkh.h"
 #include "vectors.h"
 
 /*typedef struct {

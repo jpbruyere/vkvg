@@ -4,12 +4,14 @@ SET(LANG "C")
 SET(CMAKE_${LANG}_STANDARD 11)
 SET(CMAKE_${LANG}_EXTENSIONS on)
 
-SET(CMAKE_CXX_STANDARD 11)
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 #OPTION (VKVG_BUILD_SHARED_LIB "Build using shared libraries" OFF)
 #SET(BUILD_SHARED_LIBS ${VKVG_BUILD_SHARED_LIB})
 
-PROJECT(vkvg VERSION 0.3.0 DESCRIPTION "Vulkan Vector Graphic")
+PROJECT(vkvg VERSION 0.3.0 DESCRIPTION "Vulkan Vector Graphic" LANGUAGES C CXX)
 
 ADD_COMPILE_DEFINITIONS(
     "VKVG_VERSION_MAJOR=${vkvg_VERSION_MAJOR}"
@@ -35,6 +37,16 @@ IF (UNIX)
         #force PIC for all subproject, even static libs
         ADD_COMPILE_OPTIONS(-fPIC)
     ENDIF()
+ENDIF()
+
+OPTION(ENABLE_PROFILING "compile with the -pg options..." OFF)
+IF (ENABLE_PROFILING)
+    ADD_COMPILE_OPTIONS(
+        -pg -fno-reorder-functions -fno-inline
+        -O1
+        -fthread-jumps
+        -falign-functions  -falign-jumps
+        -falign-loops  -falign-labels)
 ENDIF()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -72,21 +84,13 @@ ELSE()
     ENDIF()
 ENDIF()
 
-OPTION(ENABLE_PROFILING "compile with the -pg options..." OFF)
 OPTION(ENABLE_GTESTS "enable google unit tests" ON)
 
 IF(ENABLE_GTESTS)
     ADD_SUBDIRECTORY (gunit_tests)
 ENDIF()
 
-IF (ENABLE_PROFILING)
-    ADD_COMPILE_OPTIONS(
-        -pg -fno-reorder-functions -fno-inline
-        -O1
-        -fthread-jumps
-        -falign-functions  -falign-jumps
-        -falign-loops  -falign-labels)
-ENDIF()
+
 
 OPTION(VKVG_RECORDING "enable experimental recording functions" OFF)
 
@@ -275,6 +279,8 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
 		VERSION ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}
 		SOVERSION ${vkvg_VERSION_MAJOR}
 		C_STANDARD 11
+                C_STANDARD_REQUIRED ON
+                C_EXTENSIONS OFF
 		LINKER_LANGUAGE C
 		PUBLIC_HEADER "${VKVG_PUBLIC_HEADERS}"
 )
@@ -287,10 +293,10 @@ TARGET_INCLUDE_DIRECTORIES("${PROJECT_NAME}"
 		$<$<BOOL:${VKVG_USE_HARFBUZZ}>:${HarfBuzz_INCLUDE_DIRS}>
 		$<$<BOOL:${VKVG_USE_FONTCONFIG}>:${Fontconfig_INCLUDE_DIRS}>
 		$<$<NOT:$<BOOL:${VKVG_SVG}>>:${CMAKE_CURRENT_SOURCE_DIR}/src/nsvg>
-	PUBLIC
+                ${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
+        PUBLIC
 		${Vulkan_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
-		${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
 )
 
 IF (UNIX AND BUILD_SHARED_LIBS)

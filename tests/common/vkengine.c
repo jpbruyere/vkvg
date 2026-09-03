@@ -30,6 +30,8 @@
 
 #include "vkvg.h"
 
+#include <string.h>
+
 #define TRY_LOAD_DEVICE_EXT(ext)                                                                                       \
     {                                                                                                                  \
         if (vkh_phyinfo_try_get_extension_properties(pi, #ext, NULL))                                                  \

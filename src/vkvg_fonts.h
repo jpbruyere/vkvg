@@ -25,6 +25,9 @@
 // disable warning on iostream functions on windows
 #define _CRT_SECURE_NO_WARNINGS
 
+#include "vkvg_internal.h"
+#include "vkh_buffer.h"
+
 #ifdef VKVG_USE_FREETYPE
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -45,7 +48,9 @@
 
 #ifdef VKVG_USE_HARFBUZZ
 #include <harfbuzz/hb.h>
+#if VKVG_USE_FREETYPE
 #include <harfbuzz/hb-ft.h>
+#endif
 #else
 #endif
 
@@ -57,9 +62,6 @@
 #define FONT_CACHE_INIT_LAYERS  1
 #define FONT_FILE_NAME_MAX_SIZE 1024
 #define FONT_NAME_MAX_SIZE      128
-
-#include "vkvg_internal.h"
-#include "vkh_buffer.h"
 
 // texture coordinates of one character in font cache array texture.
 typedef struct {

@@ -36,6 +36,37 @@ TEST_F(PatternDrawTest, References) {
     // EXPECT_EQ(NULL, pat);
 }
 
+TEST_F(PatternDrawTest, CreateSetGet) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_paint(ctx);
+    VkvgPattern src = vkvg_get_source (ctx);//get default pattern
+
+    VkvgPattern pat = vkvg_pattern_create_for_surface(NULL);
+    vkvg_set_source(ctx, pat);
+    EXPECT_EQ(2, vkvg_pattern_get_reference_count(pat));
+    src = vkvg_get_source (ctx);
+    EXPECT_EQ(3, vkvg_pattern_get_reference_count(pat));
+    vkvg_pattern_destroy(pat);
+    EXPECT_EQ(2, vkvg_pattern_get_reference_count(pat));
+    vkvg_pattern_destroy(pat);
+    EXPECT_EQ(1, vkvg_pattern_get_reference_count(pat));
+    vkvg_pattern_destroy(pat);
+    EXPECT_EQ(0, vkvg_pattern_get_reference_count(pat));
+    EXPECT_EQ(0, vkvg_pattern_get_reference_count(src));
+    EXPECT_EQ(VKVG_STATUS_NULL_POINTER, vkvg_pattern_status(pat));
+    EXPECT_EQ(VKVG_STATUS_NULL_POINTER, vkvg_pattern_status(src));
+
+    src = vkvg_get_source (ctx);
+
+    /*pat = vkvg_pattern_create_linear(0, 0, 0, 0);
+    src = vkvg_get_source (ctx);
+    EXPECT_EQ(3, vkvg_pattern_get_reference_count(pat));*/
+
+
+
+    vkvg_destroy(ctx);
+}
+
 TEST_F(PatternDrawTest, PaintPattern) {
 
     VkvgContext ctx = vkvg_create(surf);

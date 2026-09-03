@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
-project(samples)
 
-# GoogleTest requires at least C++14
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+project(samples C CXX)
 
 include(FetchContent)
 
@@ -21,10 +18,14 @@ file(GLOB SAMPLES_SRC "*.cpp" "tests/*.cpp")
 
 add_executable("${PROJECT_NAME}" ${SAMPLES_SRC})
 
+set_target_properties("${PROJECT_NAME}" PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+)
 target_compile_definitions("${PROJECT_NAME}" PUBLIC
     SAMPLES_DATA_ROOT="${GTEST_DATA_ROOT}"
 )
-target_include_directories("${PROJECT_NAME}" PUBLIC
+target_include_directories("${PROJECT_NAME}" PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}"
   "${CMAKE_SOURCE_DIR}/include"
   ${GLFW3_INCLUDE_DIR}
@@ -32,7 +33,7 @@ target_include_directories("${PROJECT_NAME}" PUBLIC
   "${CMAKE_SOURCE_DIR}/vkh/include"
   "${CMAKE_SOURCE_DIR}/vkh/src"
 )
-target_link_libraries("${PROJECT_NAME}"
+target_link_libraries("${PROJECT_NAME}" PRIVATE
   vkvg
   ${Vulkan_LIBRARIES}
   ${GLFW3_LIBRARY}

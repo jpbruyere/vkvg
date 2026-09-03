@@ -1,5 +1,7 @@
 #pragma once
 
+#include <math.h>
+
 #define CHECK_MAT(_xx, _yx, _xy, _yy, _x0, _y0)                                                                        \
 EXPECT_FLOAT_EQ(mat.xx, _xx);                                                                                          \
     EXPECT_FLOAT_EQ(mat.yx, _yx);                                                                                      \

@@ -1,9 +1,11 @@
 #pragma once
 #include <stdio.h>
 #include <vector>
+#include <math.h>
+#include <assert.h>
 
-#include "vkvg.h"
 #include "vkh.h"
+#include "vkvg.h"
 
 #include <GLFW/glfw3.h>
 

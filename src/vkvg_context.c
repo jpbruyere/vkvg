@@ -1257,6 +1257,7 @@ void vkvg_save(VkvgContext ctx) {
     vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1, sizeof(vkvg_context_save_t));
 
     _flush_cmd_buff(ctx);
+
     if (!_wait_ctx_flush_end(ctx)) {
         free(sav);
         return;
@@ -1268,7 +1269,7 @@ void vkvg_save(VkvgContext ctx) {
         uint8_t curSaveStencil = ctx->curSavBit / 6;
 
         if (ctx->curSavBit > 0 && ctx->curSavBit % 6 == 0) { // new save/restore stencil image have to be created
-            VkhImage* savedStencilsPtr = NULL;
+            VkhImage* savedStencilsPtr = ctx->savedStencils;
             if (savedStencilsPtr)
                 savedStencilsPtr = (VkhImage*)realloc(ctx->savedStencils, curSaveStencil * sizeof(VkhImage));
             else
@@ -1401,6 +1402,7 @@ void vkvg_restore(VkvgContext ctx) {
 
             uint8_t curSaveBit = 1 << ((ctx->curSavBit - 1) % 6 + 2);
 
+            //ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
             _start_cmd_for_render_pass(ctx);
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)

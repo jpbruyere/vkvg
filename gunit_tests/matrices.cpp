@@ -1,5 +1,5 @@
-#include <gtest/gtest.h>
 #include "vkvg.h"
+#include <gtest/gtest.h>
 #include "unitTest.h"
 
 TEST(MatrixTest, MatixInit) {

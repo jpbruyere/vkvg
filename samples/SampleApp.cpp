@@ -1,15 +1,14 @@
-#include <iostream>
-#include <stdio.h>
-#include <chrono>
 
-#include "vkvg.h"
-#include "vkh.h"
+#include "SampleApp.hpp"
 #include "vkh_phyinfo.h"
 
 #include <GLFW/glfw3.h>
 
-#include "SampleApp.hpp"
 #include "VkvgTest.hpp"
+
+#include <iostream>
+#include <stdio.h>
+#include <chrono>
 
 bool SampleApp::try_get_phyinfo(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
     for (uint32_t i = 0; i < phyCount; i++) {

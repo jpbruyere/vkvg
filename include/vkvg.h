@@ -22,8 +22,15 @@
 #ifndef VKVG_H
 #define VKVG_H
 
+#include <stdint.h>
+#include <stddef.h>
+
+#include <vulkan/vulkan.h>
+
 #ifdef __cplusplus
 extern "C" {
+#else
+#include <stdbool.h>
 #endif
 
 /** @mainpage Documentation
@@ -66,18 +73,14 @@ extern "C" {
  *	@brief Functions and types related to path edition.
  */
 
-#include <vulkan/vulkan.h>
-#include <math.h>
-#include <stdbool.h>
-
 #ifndef vkvg_public
 #ifdef VKVG_SHARED_BUILD
-#if (defined(_WIN32) || defined(_WIN64))
+#if (defined(_WIN32) || defined(__CYGWIN__))
 #define vkvg_public __declspec(dllexport)
 #else
 #define vkvg_public __attribute__((visibility("default")))
 #endif
-#elif (defined(VKVG_SHARED_LINKING) && (defined(_WIN32) || defined(_WIN64)))
+#elif (defined(VKVG_SHARED_LINKING) && (defined(_WIN32) || defined(__CYGWIN__)))
 #define vkvg_public __declspec(dllimport)
 #else
 #define vkvg_public
@@ -99,6 +102,7 @@ extern "C" {
 #define VKVG_LOG_FULL       0xffffffff
 
 #define VKVG_LOG_INFO       0x00008000 //(VKVG_LOG_INFO_PTS|VKVG_LOG_INFO_PATH|VKVG_LOG_INFO_CMD|VKVG_LOG_INFO_VAO)
+
 #ifdef DEBUG
 extern uint32_t vkvg_log_level;
 #ifdef VKVG_WIRED_DEBUG

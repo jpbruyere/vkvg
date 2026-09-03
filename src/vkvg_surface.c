@@ -23,8 +23,12 @@
 #include "vkvg_surface_internal.h"
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
+
+#define STBI_ASSERT(x) ((void)0)
+#define STBIW_ASSERT(x) ((void)0)
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include "vkh_image.h"

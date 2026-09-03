@@ -236,6 +236,7 @@ vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const ch
     }
     _CHECK_DEV_EXT(VK_KHR_timeline_semaphore)
 #endif
+    _CHECK_DEV_EXT(VK_EXT_extended_dynamic_state)
 
     return VKVG_STATUS_SUCCESS;
 }
