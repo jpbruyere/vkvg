@@ -23,6 +23,8 @@
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
 
+#define _svg_placeholder NSVGimage
+
 #define NANOSVG_IMPLEMENTATION // Expands implementation
 #include "nanosvg.h"
 #include "vkvg-svg.h"
