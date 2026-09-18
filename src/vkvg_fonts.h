@@ -63,6 +63,75 @@
 #define FONT_FILE_NAME_MAX_SIZE 1024
 #define FONT_NAME_MAX_SIZE      128
 
+// Bjoern Hoehrmann's UTF-8 State Magic Constants
+#define UTF8_ACCEPT 0
+#define UTF8_REJECT 1
+
+static const uint8_t utf8d[] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
+    8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
+    0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
+    0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
+    0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s7
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,2,1,1,1,1,1,1,1,1,1,1, // s8..s9
+    1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // sA..sB
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1, // sC..sD
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1, // sE..sF
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // sG..sH
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1, // sI..sJ
+};
+
+/**
+ * @brief Decodes a single byte stream step into a Unicode code point.
+ * @param state Pointer to the persistent decoder state tracker (initialize to UTF8_ACCEPT).
+ * @param codep Pointer to the resulting uint32_t Unicode scalar value.
+ * @param byte The raw next byte from the UTF-8 stream.
+ * @return uint32_t Returns UTF8_ACCEPT when a character is fully decoded.
+ */
+inline uint32_t decode_utf8_byte(uint32_t *const restrict state, uint32_t *const restrict codep, uint8_t byte) {
+    uint32_t type = utf8d[byte];
+
+    *codep = (*state != UTF8_ACCEPT) ?
+                 (byte & 0x3fu) | (*codep << 6) :
+                 (0xffu >> type) & (byte);
+
+    *state = utf8d[256 + *state * 16 + type];
+    return *state;
+}
+
+// A perfectly optimized, branchless UTF-8 length lookup table
+static const uint8_t utf8_len_table[256] = {
+    // 0x00 to 0x7F: Standard ASCII (1 byte)
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+
+    // 0x80 to 0xBF: Continuation bytes (invalid as first byte, but default to 1 to prevent infinite loops)
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+
+    // 0xC0 to 0xDF: Multi-byte leaders (2 bytes)
+    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+
+    // 0xE0 to 0xEF: Multi-byte leaders (3 bytes)
+    3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+
+    // 0xF0 to 0xF7: Multi-byte leaders (4 bytes)
+    4,4,4,4,4,4,4,4,
+
+    // 0xF8 to 0xFF: Invalid UTF-8 (safely fallback to 1)
+    1,1,1,1,1,1,1,1
+};
+
+inline int get_utf8_char_length(uint8_t first_byte) {
+    return utf8_len_table[first_byte];
+}
 // texture coordinates of one character in font cache array texture.
 typedef struct {
     vec4    bounds;  /* normalized float bounds of character bitmap in font cache texture. */
@@ -108,7 +177,7 @@ typedef struct {
 
 /* Font identification structure */
 typedef struct {
-    char**   names; /* Resolved Input names to this font by fontConfig or custom name set by @ref vkvg_load_from_path*/
+    uint64_t       names[5];    /* Resolved Input names to this font by fontConfig or custom name set by @ref vkvg_load_from_path. Maximum count is 5.*/
     uint32_t namesCount;        /* Count of resolved names by fontConfig */
     unsigned char* fontBuffer;  /* stb_truetype in memory buffer */
     long           fontBufSize; /* */

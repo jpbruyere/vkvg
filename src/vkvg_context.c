@@ -56,7 +56,7 @@ void _init_ctx(VkvgContext ctx) {
 
     ctx->selectedCharSize    = 10 << 6;
     ctx->currentFont         = NULL;
-    ctx->selectedFontName[0] = 0;
+    ctx->selectedFontName    = 0;
     ctx->pattern             = NULL;
     ctx->curColor            = 0xff000000; // opaque black
     ctx->cmdStarted          = false;
@@ -1359,7 +1359,7 @@ void vkvg_save(VkvgContext ctx) {
     sav->curFillRule = ctx->curFillRule;
 
     sav->selectedCharSize = ctx->selectedCharSize;
-    strcpy(sav->selectedFontName, ctx->selectedFontName);
+    sav->selectedFontName =ctx->selectedFontName;
 
     sav->currentFont   = ctx->currentFont;
     sav->textDirection = ctx->textDirection;
@@ -1496,7 +1496,7 @@ void vkvg_restore(VkvgContext ctx) {
     ctx->curFillRule = sav->curFillRule;
 
     ctx->selectedCharSize = sav->selectedCharSize;
-    strcpy(ctx->selectedFontName, sav->selectedFontName);
+    ctx->selectedFontName = sav->selectedFontName;
 
     ctx->currentFont   = sav->currentFont;
     ctx->textDirection = sav->textDirection;
