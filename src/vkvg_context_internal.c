@@ -1955,9 +1955,10 @@ void _draw_full_screen_quad(VkvgContext ctx, vec4* scissor) {
 }
 
 void _select_font_face(VkvgContext ctx, const char* name) {
-    if (strcmp(ctx->selectedFontName, name) == 0)
+    uint64_t h = fnv1a_64_str(name);
+    if (ctx->selectedFontName == h)
         return;
-    strcpy(ctx->selectedFontName, name);
+    ctx->selectedFontName = h;
     ctx->currentFont     = NULL;
     ctx->currentFontSize = NULL;
 }

@@ -53,6 +53,29 @@
 #define M_2_PIF 0.63661977236758134308f // 2/pi
 #endif
 
+/**
+ * @brief Computes the 64-bit FNV-1a hash of a ascii string lowering case.
+ *
+ * @param str Pointer to the start of the null terminated ascii string to hash.
+ * @return uint64_t The 64-bit hash value.
+ */
+inline uint64_t fnv1a_64_str(const char *const restrict str) {
+    uint64_t hash = 0xcbf29ce484222325ULL;
+    const uint8_t *restrict data = (const uint8_t *)str;
+
+    while (*data) {
+        uint8_t c = *data;
+        // Fast branchless lowercase for ASCII font names/paths
+        if (c >= 'A' && c <= 'Z') {
+            c |= 0x20;
+        }
+        hash ^= c;
+        hash *= 0x00000100000001B3ULL;
+        data++;
+    }
+
+    return hash;
+}
 /*#ifndef M_2_PI
     #define M_2_PI		0.63661977236758134308	// 2/pi
 #endif*/

@@ -114,7 +114,7 @@ typedef struct _vkvg_context_save_t {
     vkvg_fill_rule_t curFillRule;
 
     long                   selectedCharSize; /* Font size*/
-    char                   selectedFontName[FONT_NAME_MAX_SIZE];
+    uint64_t               selectedFontName;
     _vkvg_font_identity_t  selectedFont; // hold current face and size before cache addition
     _vkvg_font_identity_t* currentFont;  // font ready for lookup
     vkvg_direction_t       textDirection;
@@ -211,7 +211,7 @@ typedef struct _vkvg_context_t {
     vkvg_fill_rule_t curFillRule;
 
     long selectedCharSize; /* Font size*/
-    char selectedFontName[FONT_NAME_MAX_SIZE];
+    uint64_t               selectedFontName;
     //_vkvg_font_t		  selectedFont;		//hold current face and size before cache addition
     _vkvg_font_identity_t* currentFont;     // font pointing to cached fonts identity
     _vkvg_font_t*          currentFontSize; // font structure by size ready for lookup

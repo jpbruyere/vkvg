@@ -252,8 +252,6 @@ void _font_cache_destroy(VkvgDevice dev) {
         }
         free(f->sizes);
         free(f->fontFile);
-        for (uint32_t j = 0; j < f->namesCount; j++)
-            free(f->names[j]);
         if (f->namesCount > 0)
             free(f->names);
         free(f->fontBuffer);
@@ -470,7 +468,7 @@ bool _tryFindFontByName(VkvgContext ctx, _vkvg_font_identity_t** font) {
     _font_cache_t* cache = ctx->dev->fontCache;
     for (int i = 0; i < cache->fontsCount; ++i) {
         for (uint32_t j = 0; j < cache->fonts[i].namesCount; j++) {
-            if (strcmp(cache->fonts[i].names[j], ctx->selectedFontName) == 0) {
+            if (cache->fonts[i].names[j] == ctx->selectedFontName) {
                 *font = &cache->fonts[i];
                 return true;
             }
