@@ -57,12 +57,12 @@ typedef _stream_t *const restrict stream;
 
 int parse_children(svg_context *const svg);
 
-int parse_element_tag(svg_context *const svg) {
-    static uint8_t level = 0;
+int try_parse_attibute(svg_context *const svg) {
     const uint8_t *buff = svg->buff_ptr;
     const uint8_t *const buff_end = svg->buff_end;
+
     while (buff < buff_end) {
-        if (*buff > 64) { //attribute name start
+        if (*buff > 64) {
             svg->att = buff;
             while (++buff < buff_end) {
                 if (*buff < 65) {
@@ -73,14 +73,11 @@ int parse_element_tag(svg_context *const svg) {
                         continue;
                     }
                     svg->att_len = buff - svg->att;
-                    print_tabs(level);
-                    printf("\tAttribute: ");
-                    fwrite(svg->att, sizeof(uint8_t), svg->att_len,stdout);
                     //expecting '=' or white space
                     while (*buff != '=') {
                         if (++buff == buff_end) {
                             perror("malformed xml, expecting '=' or white space.\n");
-                            return -1;
+                            return 0;
                         }
                     }
                     while (++buff < buff_end) {
@@ -93,14 +90,35 @@ int parse_element_tag(svg_context *const svg) {
                             break;
                     }
                     svg->value_len = buff - svg->value;
-                    printf("=");
-                    fwrite(svg->value, sizeof(uint8_t), svg->value_len,stdout);
-                    printf("\n");
-                    fflush(stdout);
-                    break;
+                    svg->buff_ptr = buff + 1;
+                    return 1;
                 }
             }
-        } else if (*buff == '>') {
+        } else if (*buff == '/' || *buff == '>' || *buff == '<' ) {
+            svg->buff_ptr = buff;
+            return 0;
+        }
+        buff++;
+    }
+    return 0;
+}
+
+int parse_element_tag(svg_context *const svg) {
+    while (try_parse_attibute(svg)) {
+        printf("\tAttribute: ");
+        fwrite(svg->att, sizeof(uint8_t), svg->att_len,stdout);
+        printf("=");
+        fwrite(svg->value, sizeof(uint8_t), svg->value_len,stdout);
+        printf("\n");
+        fflush(stdout);
+    }
+
+    static uint8_t level = 0;
+    const uint8_t *buff = svg->buff_ptr;
+    const uint8_t *const buff_end = svg->buff_end;
+
+    while (buff < buff_end) {
+        if (*buff == '>') {
             //read element childrens
             svg->buff_ptr = ++buff;
             level++;
@@ -108,22 +126,22 @@ int parse_element_tag(svg_context *const svg) {
             parse_children(svg);
             buff = svg->buff_ptr;
             level--;
-            return 0;
+            return 1;
         } else if (*buff == '/') {
             //self closing tag
             if (++buff < buff_end && *buff == '>') {
                 svg->buff_ptr = ++buff;
-                return 0;
+                return 1;
             }
             perror("malformed xml, expecting '>'\n");
-            return -1;
+            return 0;
         } else if (*buff == '<') {
             perror("malformed xml, unexpected '<', expecting '>'\n");
-            return -1;
+            return 0;
         } else
             buff++;
     }
-    return -1;
+    return 0;
 }
 
 int parse_children(svg_context *const svg) {
