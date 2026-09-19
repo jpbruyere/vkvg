@@ -165,7 +165,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         paused = !paused;
         break;
     case GLFW_KEY_R:
-        // recording = !recording;
+        //recording = !recording;
         file_stat = (struct stat){0};
         break;
     case GLFW_KEY_ESCAPE:
@@ -174,7 +174,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     case GLFW_KEY_ENTER:
         if (!pCurrentDir)
             break;
-        dir       = get_next_svg_file_in_current_directory(true);
+        dir = get_next_svg_file_in_current_directory(true);
         file_stat = (struct stat){0};
         break;
     case GLFW_KEY_KP_ADD:
@@ -211,6 +211,7 @@ void print_help_and_exit() {
     printf("\t-w width:\tset output surface width.\n");
     printf("\t-h height:\tset output surface height.\n");
     printf("\t-s samples:\tset sample count, set to 1 to disable multisampling.\n");
+    //printf("\t-r record only:\tload and emit drawing commands without performing draw (parser tests).\n\n");
     printf("\n");
     exit(-1);
 }
@@ -218,6 +219,7 @@ void print_help_and_exit() {
 int main(int argc, char* argv[]) {
     int   i      = 1;
     char* output = NULL;
+    bool record = false;
 
     while (i < argc) {
         int argLen = strlen(argv[i]);
@@ -262,6 +264,8 @@ int main(int argc, char* argv[]) {
                     print_help_and_exit();
                 output = argv[i];
                 break;
+            /*case 'r':
+                record = true;*/
             default:
                 print_help_and_exit();
             }
@@ -286,21 +290,6 @@ int main(int argc, char* argv[]) {
         vkvg_surface_destroy(surf);
         vkvg_device_destroy(dev);
     } else {
-        VkEngine e = vkengine_create(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
-        vkengine_set_key_callback(e, key_callback);
-        vkengine_set_scroll_callback(e, scroll_callback);
-        vkvg_device_create_info_t info = {samples,
-                                          false,
-                                          vkh_app_get_inst(e->app),
-                                          vkengine_get_physical_device(e),
-                                          vkengine_get_device(e),
-                                          vkengine_get_queue_fam_idx(e),
-                                          0};
-        dev                            = vkvg_device_create(&info);
-        surf = vkvg_surface_create(dev, width, height);
-
-        vkh_presenter_build_blit_cmd(e->renderer, vkvg_surface_get_vk_image(surf), width, height);
-
         if (directory) {
             pCurrentDir = opendir(directory);
             if (!pCurrentDir) {
@@ -322,6 +311,20 @@ int main(int argc, char* argv[]) {
                 maxScroll        = (totLines - visibleLines) * cellSize;
             }
         }
+
+        VkEngine e = vkengine_create(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
+        vkengine_set_key_callback(e, key_callback);
+        vkengine_set_scroll_callback(e, scroll_callback);
+        vkvg_device_create_info_t info = {samples,
+                                          false,
+                                          vkh_app_get_inst(e->app),
+                                          vkengine_get_physical_device(e),
+                                          vkengine_get_device(e),
+                                          vkengine_get_queue_fam_idx(e),
+                                          0};
+        dev                            = vkvg_device_create(&info);
+        surf = vkvg_surface_create(dev, width, height);
+        vkh_presenter_build_blit_cmd(e->renderer, vkvg_surface_get_vk_image(surf), width, height);
 
         while (!vkengine_should_close(e)) {
             //vkh_log_level = VKVG_LOG_INFO | VKVG_LOG_DEBUG | VKVG_LOG_ERR;
