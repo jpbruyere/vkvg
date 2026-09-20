@@ -35,6 +35,7 @@
 
 /* Enum representing our supported SVG elements and attributes */
 typedef enum {
+    SVG_TOK_UNKNOWN,
     SVG_TOK_SVG,
     SVG_TOK_G,
     SVG_TOK_DEFS,
@@ -118,14 +119,14 @@ struct SvgEltKeyword {
     const char *name;
     SvgEltTokId id;
 };
-#line 96 "src/svg_elt_keywords.gperf"
+#line 101 "src/svg_elt_keywords.gperf"
 struct SvgEltKeyword;
 
-#define TOTAL_KEYWORDS 76
-#define MIN_WORD_LENGTH 1
-#define MAX_WORD_LENGTH 19
-#define MIN_HASH_VALUE 1
-#define MAX_HASH_VALUE 123
+#define ELT_TOTAL_KEYWORDS 76
+#define ELT_MIN_WORD_LENGTH 1
+#define ELT_MAX_WORD_LENGTH 19
+#define ELT_MIN_HASH_VALUE 1
+#define ELT_MAX_HASH_VALUE 123
 /* maximum key range = 123, duplicates = 0 */
 
 #ifdef __GNUC__
@@ -136,7 +137,7 @@ inline
 #endif
 #endif
 static unsigned int
-hash (register const char *str, register size_t len)
+hash_svg_elt (register const char *str, register size_t len)
 {
   static const unsigned char asso_values[] =
     {
@@ -191,183 +192,183 @@ hash (register const char *str, register size_t len)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #endif
-static const struct SvgEltKeyword wordlist[] =
+static const struct SvgEltKeyword svg_elt_wordlist[] =
   {
     {""},
-#line 156 "src/svg_elt_keywords.gperf"
+#line 161 "src/svg_elt_keywords.gperf"
     {"a", SVG_TOK_A},
     {""},
-#line 160 "src/svg_elt_keywords.gperf"
+#line 165 "src/svg_elt_keywords.gperf"
     {"set", SVG_TOK_SET},
-#line 157 "src/svg_elt_keywords.gperf"
+#line 162 "src/svg_elt_keywords.gperf"
     {"view", SVG_TOK_VIEW},
-#line 103 "src/svg_elt_keywords.gperf"
+#line 108 "src/svg_elt_keywords.gperf"
     {"title", SVG_TOK_TITLE},
     {""}, {""},
-#line 105 "src/svg_elt_keywords.gperf"
+#line 110 "src/svg_elt_keywords.gperf"
     {"use", SVG_TOK_USE},
-#line 116 "src/svg_elt_keywords.gperf"
+#line 121 "src/svg_elt_keywords.gperf"
     {"text", SVG_TOK_TEXT},
-#line 170 "src/svg_elt_keywords.gperf"
+#line 175 "src/svg_elt_keywords.gperf"
     {"vkern", SVG_TOK_VKERN},
-#line 158 "src/svg_elt_keywords.gperf"
+#line 163 "src/svg_elt_keywords.gperf"
     {"script", SVG_TOK_SCRIPT},
-#line 113 "src/svg_elt_keywords.gperf"
+#line 118 "src/svg_elt_keywords.gperf"
     {"ellipse", SVG_TOK_ELLIPSE},
     {""},
-#line 112 "src/svg_elt_keywords.gperf"
-    {"line", SVG_TOK_LINE},
 #line 117 "src/svg_elt_keywords.gperf"
+    {"line", SVG_TOK_LINE},
+#line 122 "src/svg_elt_keywords.gperf"
     {"tspan", SVG_TOK_TSPAN},
     {""},
-#line 127 "src/svg_elt_keywords.gperf"
+#line 132 "src/svg_elt_keywords.gperf"
     {"pattern", SVG_TOK_PATTERN},
-#line 114 "src/svg_elt_keywords.gperf"
+#line 119 "src/svg_elt_keywords.gperf"
     {"polyline", SVG_TOK_POLYLINE},
-#line 110 "src/svg_elt_keywords.gperf"
-    {"rect", SVG_TOK_RECT},
-#line 108 "src/svg_elt_keywords.gperf"
-    {"style", SVG_TOK_STYLE},
-#line 111 "src/svg_elt_keywords.gperf"
-    {"circle", SVG_TOK_CIRCLE},
 #line 115 "src/svg_elt_keywords.gperf"
+    {"rect", SVG_TOK_RECT},
+#line 113 "src/svg_elt_keywords.gperf"
+    {"style", SVG_TOK_STYLE},
+#line 116 "src/svg_elt_keywords.gperf"
+    {"circle", SVG_TOK_CIRCLE},
+#line 120 "src/svg_elt_keywords.gperf"
     {"polygon", SVG_TOK_POLYGON},
     {""},
-#line 124 "src/svg_elt_keywords.gperf"
+#line 129 "src/svg_elt_keywords.gperf"
     {"linearGradient", SVG_TOK_LINEARGRADIENT},
-#line 107 "src/svg_elt_keywords.gperf"
+#line 112 "src/svg_elt_keywords.gperf"
     {"image", SVG_TOK_IMAGE},
-#line 155 "src/svg_elt_keywords.gperf"
+#line 160 "src/svg_elt_keywords.gperf"
     {"cursor", SVG_TOK_CURSOR},
-#line 159 "src/svg_elt_keywords.gperf"
+#line 164 "src/svg_elt_keywords.gperf"
     {"animate", SVG_TOK_ANIMATE},
-#line 123 "src/svg_elt_keywords.gperf"
+#line 128 "src/svg_elt_keywords.gperf"
     {"color-profile", SVG_TOK_COLOR_PROFILE},
-#line 118 "src/svg_elt_keywords.gperf"
+#line 123 "src/svg_elt_keywords.gperf"
     {"tref", SVG_TOK_TREF},
     {""},
-#line 104 "src/svg_elt_keywords.gperf"
+#line 109 "src/svg_elt_keywords.gperf"
     {"symbol", SVG_TOK_SYMBOL},
-#line 151 "src/svg_elt_keywords.gperf"
+#line 156 "src/svg_elt_keywords.gperf"
     {"feFuncR", SVG_TOK_FEFUNCR},
-#line 144 "src/svg_elt_keywords.gperf"
+#line 149 "src/svg_elt_keywords.gperf"
     {"feOffset", SVG_TOK_FEOFFSET},
-#line 165 "src/svg_elt_keywords.gperf"
+#line 170 "src/svg_elt_keywords.gperf"
     {"font", SVG_TOK_FONT},
     {""},
-#line 122 "src/svg_elt_keywords.gperf"
+#line 127 "src/svg_elt_keywords.gperf"
     {"marker", SVG_TOK_MARKER},
-#line 162 "src/svg_elt_keywords.gperf"
+#line 167 "src/svg_elt_keywords.gperf"
     {"animateColor", SVG_TOK_ANIMATECOLOR},
-#line 161 "src/svg_elt_keywords.gperf"
-    {"animateMotion", SVG_TOK_ANIMATEMOTION},
 #line 166 "src/svg_elt_keywords.gperf"
+    {"animateMotion", SVG_TOK_ANIMATEMOTION},
+#line 171 "src/svg_elt_keywords.gperf"
     {"font-face", SVG_TOK_FONT_FACE},
     {""},
-#line 130 "src/svg_elt_keywords.gperf"
+#line 135 "src/svg_elt_keywords.gperf"
     {"filter", SVG_TOK_FILTER},
-#line 149 "src/svg_elt_keywords.gperf"
+#line 154 "src/svg_elt_keywords.gperf"
     {"fePointLight", SVG_TOK_FEPOINTLIGHT},
-#line 174 "src/svg_elt_keywords.gperf"
+#line 179 "src/svg_elt_keywords.gperf"
     {"foreignObject", SVG_TOK_FOREIGNOBJECT},
-#line 173 "src/svg_elt_keywords.gperf"
+#line 178 "src/svg_elt_keywords.gperf"
     {"font-face-name", SVG_TOK_FONT_FACE_NAME},
     {""},
-#line 172 "src/svg_elt_keywords.gperf"
+#line 177 "src/svg_elt_keywords.gperf"
     {"font-face-format", SVG_TOK_FONT_FACE_FORMAT},
-#line 140 "src/svg_elt_keywords.gperf"
+#line 145 "src/svg_elt_keywords.gperf"
     {"feImage", SVG_TOK_FEIMAGE},
-#line 120 "src/svg_elt_keywords.gperf"
+#line 125 "src/svg_elt_keywords.gperf"
     {"altGlyph", SVG_TOK_ALTGLYPH},
-#line 109 "src/svg_elt_keywords.gperf"
+#line 114 "src/svg_elt_keywords.gperf"
     {"path", SVG_TOK_PATH},
-#line 169 "src/svg_elt_keywords.gperf"
+#line 174 "src/svg_elt_keywords.gperf"
     {"hkern", SVG_TOK_HKERN},
-#line 134 "src/svg_elt_keywords.gperf"
+#line 139 "src/svg_elt_keywords.gperf"
     {"feComposite", SVG_TOK_FECOMPOSITE},
-#line 154 "src/svg_elt_keywords.gperf"
+#line 159 "src/svg_elt_keywords.gperf"
     {"feFuncA", SVG_TOK_FEFUNCA},
-#line 119 "src/svg_elt_keywords.gperf"
+#line 124 "src/svg_elt_keywords.gperf"
     {"textPath", SVG_TOK_TEXTPATH},
-#line 102 "src/svg_elt_keywords.gperf"
+#line 107 "src/svg_elt_keywords.gperf"
     {"desc", SVG_TOK_DESC},
     {""},
-#line 163 "src/svg_elt_keywords.gperf"
+#line 168 "src/svg_elt_keywords.gperf"
     {"animateTransform", SVG_TOK_ANIMATETRANSFORM},
-#line 153 "src/svg_elt_keywords.gperf"
+#line 158 "src/svg_elt_keywords.gperf"
     {"feFuncB", SVG_TOK_FEFUNCB},
-#line 132 "src/svg_elt_keywords.gperf"
+#line 137 "src/svg_elt_keywords.gperf"
     {"feColorMatrix", SVG_TOK_FECOLORMATRIX},
-#line 125 "src/svg_elt_keywords.gperf"
+#line 130 "src/svg_elt_keywords.gperf"
     {"radialGradient", SVG_TOK_RADIALGRADIENT},
     {""},
-#line 135 "src/svg_elt_keywords.gperf"
+#line 140 "src/svg_elt_keywords.gperf"
     {"feConvolveMatrix", SVG_TOK_FECONVOLVEMATRIX},
     {""},
-#line 171 "src/svg_elt_keywords.gperf"
+#line 176 "src/svg_elt_keywords.gperf"
     {"font-face-uri", SVG_TOK_FONT_FACE_URI},
-#line 133 "src/svg_elt_keywords.gperf"
+#line 138 "src/svg_elt_keywords.gperf"
     {"feComponentTransfer", SVG_TOK_FECOMPONENTTRANSFER},
-#line 164 "src/svg_elt_keywords.gperf"
+#line 169 "src/svg_elt_keywords.gperf"
     {"mpath", SVG_TOK_MPATH},
-#line 106 "src/svg_elt_keywords.gperf"
+#line 111 "src/svg_elt_keywords.gperf"
     {"switch", SVG_TOK_SWITCH},
-#line 141 "src/svg_elt_keywords.gperf"
+#line 146 "src/svg_elt_keywords.gperf"
     {"feMerge", SVG_TOK_FEMERGE},
     {""},
-#line 101 "src/svg_elt_keywords.gperf"
+#line 106 "src/svg_elt_keywords.gperf"
     {"defs", SVG_TOK_DEFS},
     {""},
-#line 142 "src/svg_elt_keywords.gperf"
+#line 147 "src/svg_elt_keywords.gperf"
     {"feMergeNode", SVG_TOK_FEMERGENODE},
-#line 138 "src/svg_elt_keywords.gperf"
+#line 143 "src/svg_elt_keywords.gperf"
     {"feFlood", SVG_TOK_FEFLOOD},
-#line 168 "src/svg_elt_keywords.gperf"
+#line 173 "src/svg_elt_keywords.gperf"
     {"missing-glyph", SVG_TOK_MISSING_GLYPH},
-#line 148 "src/svg_elt_keywords.gperf"
+#line 153 "src/svg_elt_keywords.gperf"
     {"feDistantLight", SVG_TOK_FEDISTANTLIGHT},
     {""},
-#line 150 "src/svg_elt_keywords.gperf"
+#line 155 "src/svg_elt_keywords.gperf"
     {"feSpotLight", SVG_TOK_FESPOTLIGHT},
-#line 152 "src/svg_elt_keywords.gperf"
+#line 157 "src/svg_elt_keywords.gperf"
     {"feFuncG", SVG_TOK_FEFUNCG},
-#line 128 "src/svg_elt_keywords.gperf"
+#line 133 "src/svg_elt_keywords.gperf"
     {"clipPath", SVG_TOK_CLIPPATH},
-#line 126 "src/svg_elt_keywords.gperf"
+#line 131 "src/svg_elt_keywords.gperf"
     {"stop", SVG_TOK_STOP},
     {""},
-#line 100 "src/svg_elt_keywords.gperf"
+#line 105 "src/svg_elt_keywords.gperf"
     {"g", SVG_TOK_G},
-#line 137 "src/svg_elt_keywords.gperf"
+#line 142 "src/svg_elt_keywords.gperf"
     {"feDisplacementMap", SVG_TOK_FEDISPLACEMENTMAP},
-#line 99 "src/svg_elt_keywords.gperf"
+#line 104 "src/svg_elt_keywords.gperf"
     {"svg", SVG_TOK_SVG},
-#line 129 "src/svg_elt_keywords.gperf"
+#line 134 "src/svg_elt_keywords.gperf"
     {"mask", SVG_TOK_MASK},
     {""},
-#line 146 "src/svg_elt_keywords.gperf"
+#line 151 "src/svg_elt_keywords.gperf"
     {"feTile", SVG_TOK_FETILE},
-#line 143 "src/svg_elt_keywords.gperf"
+#line 148 "src/svg_elt_keywords.gperf"
     {"feMorphology", SVG_TOK_FEMORPHOLOGY},
-#line 121 "src/svg_elt_keywords.gperf"
+#line 126 "src/svg_elt_keywords.gperf"
     {"glyphRef", SVG_TOK_GLYPHREF},
-#line 139 "src/svg_elt_keywords.gperf"
+#line 144 "src/svg_elt_keywords.gperf"
     {"feGaussianBlur", SVG_TOK_FEGAUSSIANBLUR},
     {""}, {""},
-#line 147 "src/svg_elt_keywords.gperf"
+#line 152 "src/svg_elt_keywords.gperf"
     {"feTurbulence", SVG_TOK_FETURBULENCE},
     {""}, {""}, {""}, {""},
-#line 131 "src/svg_elt_keywords.gperf"
+#line 136 "src/svg_elt_keywords.gperf"
     {"feBlend", SVG_TOK_FEBLEND},
     {""}, {""},
-#line 167 "src/svg_elt_keywords.gperf"
+#line 172 "src/svg_elt_keywords.gperf"
     {"glyph", SVG_TOK_GLYPH},
     {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
     {""}, {""}, {""}, {""}, {""}, {""}, {""},
-#line 136 "src/svg_elt_keywords.gperf"
+#line 141 "src/svg_elt_keywords.gperf"
     {"feDiffuseLighting", SVG_TOK_FEDIFFUSELIGHTING},
     {""}, {""}, {""}, {""}, {""},
-#line 145 "src/svg_elt_keywords.gperf"
+#line 150 "src/svg_elt_keywords.gperf"
     {"feSpecularLighting", SVG_TOK_FESPECULARLIGHTING}
   };
 #if (defined __GNUC__ && __GNUC__ + (__GNUC_MINOR__ >= 6) > 4) || (defined __clang__ && __clang_major__ >= 3)
@@ -375,37 +376,37 @@ static const struct SvgEltKeyword wordlist[] =
 #endif
 
 const struct SvgEltKeyword *
-in_word_set (register const char *str, register size_t len)
+lookup_svg_elt_token_default (register const char *str, register size_t len)
 {
-  if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
+  if (len <= ELT_MAX_WORD_LENGTH && len >= ELT_MIN_WORD_LENGTH)
     {
-      register unsigned int key = hash (str, len);
+      register unsigned int key = hash_svg_elt (str, len);
 
-      if (key <= MAX_HASH_VALUE)
+      if (key <= ELT_MAX_HASH_VALUE)
         {
-          register const char *s = wordlist[key].name;
+          register const char *s = svg_elt_wordlist[key].name;
 
           if (*str == *s && !strcmp (str + 1, s + 1))
-            return &wordlist[key];
+            return &svg_elt_wordlist[key];
         }
     }
   return (struct SvgEltKeyword *) 0;
 }
-#line 175 "src/svg_elt_keywords.gperf"
+#line 180 "src/svg_elt_keywords.gperf"
 
 const struct SvgEltKeyword*
 lookup_svg_elt_token (register const char *str, register size_t len)
 {
-    if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
+    if (len <= ELT_MAX_WORD_LENGTH && len >= ELT_MIN_WORD_LENGTH)
     {
-        register unsigned int key = hash (str, len);
+        register unsigned int key = hash_svg_elt (str, len);
 
-        if (key <= MAX_HASH_VALUE)
+        if (key <= ELT_MAX_HASH_VALUE)
         {
-            register const char *s = wordlist[key].name;
+            register const char *s = svg_elt_wordlist[key].name;
 
             if (*str == *s && !memcmp (str + 1, s + 1, len -1) && s[len] == '\0')
-                return &wordlist[key];
+                return &svg_elt_wordlist[key];
         }
     }
     return (struct SvgEltKeyword *) 0;
