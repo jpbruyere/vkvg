@@ -1,12 +1,47 @@
 #ifndef VKVG_SVG_INTERNAL_H
 #define VKVG_SVG_INTERNAL_H
 
+#include <stdint.h>
+#include <stdio.h>
+
 #include "svg_elt_gperf.h"
+#include "svg_att_gperf.h"
+#include "svg_colors_gperf.h"
+
 #include "array.h"
 #include "vkvg.h"
 
-#include <stdint.h>
-#include <stdio.h>
+
+//#define DEBUG_LOG
+#ifdef LOG
+#undef LOG
+#endif
+
+#ifdef DEBUG_LOG
+#define LOG(...) fprintf(stdout, "[SVG] " __VA_ARGS__)
+#else
+#define LOG
+#endif
+
+
+#ifndef M_PIF
+#define M_PIF ((float)3.14159265358979323846)
+#endif
+#define degToRad(x) (x * M_PIF / 180.0)
+
+#define FNV_32_PRIME 0x01000193
+#define FNV_32_OFFSET 0x811C9DC5
+
+static inline uint32_t hash_svg_id(const uint8_t *str, const size_t len) {
+    uint32_t hash = FNV_32_OFFSET;
+
+    for (size_t i = 0; i < len; i++) {
+        hash ^= str[i];
+        hash *= FNV_32_PRIME;
+    }
+
+    return hash;
+}
 
 typedef enum {
     svg_element_type_rect,
@@ -98,7 +133,8 @@ typedef struct {
 
 typedef struct {
     svg_element_header id;
-    char              *d;
+    const uint8_t     *d;
+    size_t             d_len;
 } svg_element_path;
 
 typedef struct {
@@ -122,6 +158,35 @@ typedef struct {
     VkvgPattern              pattern;
 } svg_element_linear_gradient;
 
+
+
+/* --- SVG 1.2 TINY ENUMERATIONS --- */
+typedef enum { SVG_VECTOR_EFFECT_NONE = 0, SVG_VECTOR_EFFECT_NON_SCALING_STROKE } SvgVectorEffect;
+typedef enum { SVG_FONT_STYLE_NORMAL = 0, SVG_FONT_STYLE_ITALIC, SVG_FONT_STYLE_OBLIQUE } SvgFontStyle;
+typedef enum { SVG_FONT_VARIANT_NORMAL = 0, SVG_FONT_VARIANT_SMALL_CAPS } SvgFontVariant;
+typedef enum {
+    SVG_FONT_WEIGHT_100 = 0, SVG_FONT_WEIGHT_200, SVG_FONT_WEIGHT_300,
+    SVG_FONT_WEIGHT_NORMAL, SVG_FONT_WEIGHT_500, SVG_FONT_WEIGHT_600,
+    SVG_FONT_WEIGHT_BOLD, SVG_FONT_WEIGHT_800, SVG_FONT_WEIGHT_900
+} SvgFontWeight;
+typedef enum { SVG_FONT_STRETCH_NORMAL = 0, SVG_FONT_STRETCH_WIDER, SVG_FONT_STRETCH_NARROWER, SVG_FONT_STRETCH_CONDENSED, SVG_FONT_STRETCH_EXPANDED } SvgFontStretch;
+typedef enum { SVG_DIR_LTR = 0, SVG_DIR_RTL } SvgDirection;
+typedef enum { SVG_BIDI_NORMAL = 0, SVG_BIDI_EMBED, SVG_BIDI_OVERRIDE } SvgUnicodeBidi;
+typedef enum { SVG_ANCHOR_START = 0, SVG_ANCHOR_MIDDLE, SVG_ANCHOR_END } SvgTextAnchor;
+typedef enum { SVG_TEXT_REND_AUTO = 0, SVG_TEXT_REND_SPEED, SVG_TEXT_REND_LEGIBILITY, SVG_TEXT_REND_GEOMETRIC } SvgTextRendering;
+typedef enum { SVG_DISPLAY_NONE = 0, SVG_DISPLAY_INLINE } SvgDisplay;
+typedef enum { SVG_VISIBILITY_HIDDEN = 0, SVG_VISIBILITY_VISIBLE } SvgVisibility;
+typedef enum { SVG_IMG_REND_AUTO = 0, SVG_IMG_REND_SPEED, SVG_IMG_REND_QUALITY } SvgImageRendering;
+typedef enum { SVG_SHAPE_REND_AUTO = 0, SVG_SHAPE_REND_SPEED, SVG_SHAPE_REND_CRISP, SVG_SHAPE_REND_GEOMETRIC } SvgShapeRendering;
+typedef enum { SVG_OVERFLOW_VISIBLE = 0, SVG_OVERFLOW_HIDDEN, SVG_OVERFLOW_SCROLL, SVG_OVERFLOW_AUTO } SvgOverflow;
+typedef enum { SVG_BUFFER_AUTO = 0, SVG_BUFFER_STATIC, SVG_BUFFER_DYNAMIC } SvgBufferedRendering;
+
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} SvgColor;
+
 typedef struct {
     svg_paint_type  hasColor;
     svg_paint_type  hasStroke;
@@ -133,10 +198,60 @@ typedef struct {
     float           fill_opacity;
     float           stroke_opacity;
     svg_text_anchor text_anchor;
-} svg_attributes;
+} svg_attributes_old;
 
-static inline uint32_t         _get_element_hash(void *elt);
-static inline svg_element_type _get_element_type(void *elt);
+typedef struct {
+    uint32_t fill;
+    uint32_t stroke;
+    uint32_t solid_color;
+    uint32_t color;
+
+    svg_paint_type       fill_type         : 2;
+    svg_paint_type       stroke_type       : 2;
+
+    uint32_t             fill_opacity      : 8;  // 0-255 -> 0.0-1.0
+    uint32_t             stroke_opacity    : 8;
+    uint32_t             solid_opacity     : 8;
+    uint32_t             opacity           : 8;
+
+    uint32_t             stroke_miterlimit : 6;  // Step 0.25 (0.0 to 15.75)
+    uint32_t             stroke_width      : 16; // Scaled by 100
+
+    SvgFontStyle         font_style        : 2;
+    SvgFontVariant       font_variant      : 1;
+    SvgFontWeight        font_weight       : 4;
+    SvgFontStretch       font_stretch      : 4;
+    SvgDirection         direction         : 1;
+    SvgUnicodeBidi       unicode_bidi      : 2;
+    SvgTextAnchor        text_anchor       : 2;
+    SvgTextRendering     text_rendering    : 2;
+    uint32_t             font_size         : 16; // Scaled by 100
+    uint16_t             font_family_id;
+
+    SvgVectorEffect      vector_effect     : 1;
+    SvgDisplay           display           : 1;
+    SvgVisibility        visibility        : 1;
+    SvgImageRendering    image_rendering   : 2;
+    SvgShapeRendering    shape_rendering   : 2;
+
+    SvgOverflow          overflow          : 2;
+    SvgBufferedRendering buffered_rend    : 2;
+
+    float*               stroke_dasharray;       // Ignored / NULL for basic demo
+    uint16_t             dasharray_count;
+    int16_t              stroke_dashoffset;
+} SvgPresentationAttributes;
+
+static inline uint32_t         _get_element_hash(void *elt) { return ((svg_element_header *)elt)->hash; }
+static inline svg_element_type _get_element_type(void *elt) { return ((svg_element_header *)elt)->type; }
+static inline float _get_pixel_coord(const float reference, const svg_length_or_percentage *const lop) {
+    switch (lop->units) {
+    case svg_unit_percentage:
+        return reference * lop->number / 100.0f;
+    default:
+        return lop->number;
+    }
+}
 
 typedef struct {
     float x;
@@ -150,6 +265,7 @@ enum prevCmd { none, quad, cubic };
 typedef struct {
     const uint8_t *buff_ptr;
     const uint8_t *buff_end;
+
     const uint8_t *ns;
     const uint8_t *elt;
     const uint8_t *att;
@@ -158,12 +274,18 @@ typedef struct {
     size_t         elt_len;
     size_t         att_len;
     size_t         value_len;
+
     VkvgDevice     dev;
     VkvgContext    ctx;
     VkvgSurface    surf;
-    uint32_t       width; // force surface width & height
-    uint32_t       height;
-    svg_viewbox    viewBox;
+    uint32_t       forced_width; // force surface width & height
+    uint32_t       forced_height;
+
+    svg_viewbox              viewBox;
+    svg_length_or_percentage x;
+    svg_length_or_percentage y;
+    svg_length_or_percentage width;
+    svg_length_or_percentage height;
 
     //-- flags --
     uint32_t    is_in_defs          : 1;
@@ -171,9 +293,10 @@ typedef struct {
     uint32_t    preserveAspectRatio : 1;
     uint32_t    skip                : 1; // skip tag and children
     uint32_t    skipDraw            : 1;
-    uint32_t    inDefs              : 1;     // in defs
-    uint32_t    skipStore           : 1;  // use
+    uint32_t    inDefs              : 1; // in defs
+    uint32_t    skipStore           : 1; // use
     uint32_t    ownContext          : 1; // must destroy vkvg ctx on clean
+    uint32_t    hasViewBox          : 1;
     //-----------
 
     uint32_t    renderOnlyIdHash;
@@ -181,28 +304,27 @@ typedef struct {
     uint32_t    currentXlinkHref;
     array_t    *idList;
     /*long		currentTagStartPos;*/
+    SvgEltTokId curEltType;
 } svg_context;
 
-int parse_element_tag(svg_context * const svg);
+int parse_element(svg_context * const svg, SvgPresentationAttributes * const attribs);
+void parse_attributes(svg_context * const svg, SvgPresentationAttributes * const attribs);
+int try_parse_attibute(svg_context *const svg);
 
-#define PARSE_ELEMENT parse_element_tag(svg);
+bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percentage *const lop);
+bool parse_viewbox(svg_context *const svg);
 
-#define PREPROC_SVG printf("element svg correctly identify\n");
-#define POSTPROC_SVG
-
-#define PREPROC_G printf("element g correctly identify\n");
-#define POSTPROC_G
-
-#define PREPROC_PATH printf("element path correctly identify\n");
-#define POSTPROC_PATH
+#define PARSE_ATTRIBUTES parse_attributes(svg, attribs);
+#define PARSE_ELEMENT parse_element(svg, attribs);
 
 #define SVG_ELT_LUT_FUNC_HEAD                                                                                   \
-int elt_lut_func(svg_context *const svg) {                                                                      \
+int elt_lut_func(svg_context *const svg, SvgPresentationAttributes * const attribs) {                           \
     const struct SvgEltKeyword *res = lookup_svg_elt_token((const char*)svg->elt, svg->elt_len);                \
-    int token_id = (res != NULL) ? res->id : -1;                                                                \
+    SvgEltTokId token_id = (res != NULL) ? res->id : SVG_TOK_UNKNOWN;                                           \
     switch (token_id) {
 
 #define SVG_ELT_LUT_FUNC_FOOTER                                                                                 \
+    case SVG_TOK_UNKNOWN:                                                                                       \
     default:                                                                                                    \
         printf("Unidentify element: ");                                                                         \
         fwrite(svg->elt, sizeof(uint8_t), svg->elt_len, stdout);                                                \
@@ -211,4 +333,22 @@ int elt_lut_func(svg_context *const svg) {                                      
         break;                                                                                                  \
     }                                                                                                           \
 }
+
+#define SVG_ATT_LUT_FUNC_HEAD                                                                                   \
+void parse_attributes(svg_context *const svg, SvgPresentationAttributes * const attribs) {                      \
+    while (try_parse_attibute(svg)) {                                                                           \
+        const struct SvgAttKeyword *res = lookup_svg_att_token((const char*)svg->att, svg->att_len);            \
+        SvgAttTokId token_id = (res != NULL) ? res->id : SVG_ATT_TOK_UNKNOWN;                                   \
+        switch (token_id) {
+#define SVG_ATT_LUT_FUNC_FOOTER                                                                                 \
+        case SVG_ATT_TOK_UNKNOWN:                                                                               \
+        default:                                                                                                \
+            printf("Unprocess Attribute: ");                                                                    \
+            fwrite(svg->att, sizeof(uint8_t), svg->att_len, stdout);                                            \
+            printf("\n");                                                                                       \
+            break;                                                                                              \
+        }                                                                                                       \
+    }                                                                                                           \
+}
+
 #endif // VKVG_SVG_INTERNAL_H
