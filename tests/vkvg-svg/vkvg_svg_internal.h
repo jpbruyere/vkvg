@@ -12,7 +12,7 @@
 #include "vkvg.h"
 
 
-//#define DEBUG_LOG
+#define DEBUG_LOG
 #ifdef LOG
 #undef LOG
 #endif
@@ -59,7 +59,8 @@ typedef enum {
     svg_paint_type_none,
     svg_paint_type_solid,
     svg_paint_type_pattern,
-} svg_paint_type;
+} __attribute__((packed)) svg_paint_type;
+_Static_assert(sizeof(svg_paint_type) == 1, "Error: svg_paint_type is not exactly 1 byte!");
 
 typedef enum {
     svg_unit_cm,
@@ -206,8 +207,10 @@ typedef struct {
     uint32_t solid_color;
     uint32_t color;
 
-    svg_paint_type       fill_type         : 2;
-    svg_paint_type       stroke_type       : 2;
+    svg_paint_type       fill_type;
+    svg_paint_type       stroke_type;
+    svg_paint_type       solid_type;
+    svg_paint_type       color_type;
 
     uint32_t             fill_opacity      : 8;  // 0-255 -> 0.0-1.0
     uint32_t             stroke_opacity    : 8;
@@ -244,6 +247,7 @@ typedef struct {
 
 static inline uint32_t         _get_element_hash(void *elt) { return ((svg_element_header *)elt)->hash; }
 static inline svg_element_type _get_element_type(void *elt) { return ((svg_element_header *)elt)->type; }
+
 static inline float _get_pixel_coord(const float reference, const svg_length_or_percentage *const lop) {
     switch (lop->units) {
     case svg_unit_percentage:
@@ -307,21 +311,44 @@ typedef struct {
     SvgEltTokId curEltType;
 } svg_context;
 
-int parse_element(svg_context * const svg, SvgPresentationAttributes * const attribs);
-void parse_attributes(svg_context * const svg, SvgPresentationAttributes * const attribs);
+#define CREATE_CTOR_ELT(elt)                                                                                           \
+svg_element_##elt *_new_##elt() {                                                                                      \
+        svg_element_##elt *c = (svg_element_##elt *)calloc(1, sizeof(svg_element_##elt));                              \
+        c->id.type           = svg_element_type_##elt;                                                                 \
+        return c;                                                                                                      \
+}
+
+CREATE_CTOR_ELT(rect)
+CREATE_CTOR_ELT(circle)
+CREATE_CTOR_ELT(line)
+CREATE_CTOR_ELT(ellipse)
+CREATE_CTOR_ELT(path)
+
+#define CASTELT(var, type, data) svg_element_##type *var = (svg_element_##type *)data
+#define CAST(type) ((svg_element_##type *)parentData)
+//#define OBJ_FLD(type) ((svg_element_##type *)parentData)
+
+
+#define SVG_COMMON_SIG svg_context *const svg, SvgPresentationAttributes *const attribs, void *parentData
+#define SVG_SIG_STACK_ATTRIB svg_context *const svg, SvgPresentationAttributes attribs, void *parentData
+
+int parse_element(SVG_COMMON_SIG);
+void parse_attributes(SVG_COMMON_SIG);
 int try_parse_attibute(svg_context *const svg);
 
+bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, svg_paint_type *isEnabled, uint32_t *colorValue);
 bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percentage *const lop);
 bool parse_viewbox(svg_context *const svg);
+void  _process_element(svg_context *svg, SvgPresentationAttributes *const attribs, void *elt, bool use);
 
-#define PARSE_ATTRIBUTES parse_attributes(svg, attribs);
-#define PARSE_ELEMENT parse_element(svg, attribs);
+#define PARSE_ATTRIBUTES parse_attributes(svg, &attribs, parentData);
+#define PARSE_ELEMENT parse_element(svg, &attribs, parentData);
 
 #define SVG_ELT_LUT_FUNC_HEAD                                                                                   \
-int elt_lut_func(svg_context *const svg, SvgPresentationAttributes * const attribs) {                           \
+int elt_lut_func(SVG_SIG_STACK_ATTRIB) {                                                                        \
     const struct SvgEltKeyword *res = lookup_svg_elt_token((const char*)svg->elt, svg->elt_len);                \
-    SvgEltTokId token_id = (res != NULL) ? res->id : SVG_TOK_UNKNOWN;                                           \
-    switch (token_id) {
+    svg->curEltType = (res != NULL) ? res->id : SVG_TOK_UNKNOWN;                                           \
+    switch (svg->curEltType) {
 
 #define SVG_ELT_LUT_FUNC_FOOTER                                                                                 \
     case SVG_TOK_UNKNOWN:                                                                                       \
@@ -335,7 +362,7 @@ int elt_lut_func(svg_context *const svg, SvgPresentationAttributes * const attri
 }
 
 #define SVG_ATT_LUT_FUNC_HEAD                                                                                   \
-void parse_attributes(svg_context *const svg, SvgPresentationAttributes * const attribs) {                      \
+void parse_attributes(SVG_COMMON_SIG) {                                                                         \
     while (try_parse_attibute(svg)) {                                                                           \
         const struct SvgAttKeyword *res = lookup_svg_att_token((const char*)svg->att, svg->att_len);            \
         SvgAttTokId token_id = (res != NULL) ? res->id : SVG_ATT_TOK_UNKNOWN;                                   \
