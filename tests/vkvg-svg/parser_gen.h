@@ -1209,1264 +1209,1540 @@ SVG_ELT_LUT_FUNC_HEAD
 	#endif
 SVG_ELT_LUT_FUNC_FOOTER
 SVG_ATT_LUT_FUNC_HEAD
-	#if defined(SVG_ATT_PROC_XMLNS)
-		case SVG_ATT_TOK_XMLNS: {
-			SVG_ATT_PROC_XMLNS
+	#if defined(SVG_ATT_ACCUMULATE)
+		case SVG_ATT_TOK_ACCUMULATE: {
+			SVG_ATT_ACCUMULATE
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_XMLNS_XLINK)
-		case SVG_ATT_TOK_XMLNS_XLINK: {
-			SVG_ATT_PROC_XMLNS_XLINK
+	#if defined(SVG_ATT_ADDITIVE)
+		case SVG_ATT_TOK_ADDITIVE: {
+			SVG_ATT_ADDITIVE
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_ID)
-		case SVG_ATT_TOK_ID: {
-			SVG_ATT_PROC_ID
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_XML_BASE)
-		case SVG_ATT_TOK_XML_BASE: {
-			SVG_ATT_PROC_XML_BASE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_XML_LANG)
-		case SVG_ATT_TOK_XML_LANG: {
-			SVG_ATT_PROC_XML_LANG
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_REQUIREDFEATURES)
-		case SVG_ATT_TOK_REQUIREDFEATURES: {
-			SVG_ATT_PROC_REQUIREDFEATURES
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_REQUIREDEXTENSIONS)
-		case SVG_ATT_TOK_REQUIREDEXTENSIONS: {
-			SVG_ATT_PROC_REQUIREDEXTENSIONS
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_SYSTEMLANGUAGE)
-		case SVG_ATT_TOK_SYSTEMLANGUAGE: {
-			SVG_ATT_PROC_SYSTEMLANGUAGE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STYLE)
-		case SVG_ATT_TOK_STYLE: {
-			SVG_ATT_PROC_STYLE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_CLASS)
-		case SVG_ATT_TOK_CLASS: {
-			SVG_ATT_PROC_CLASS
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ENABLE_BACKGROUND)
-		case SVG_ATT_TOK_ENABLE_BACKGROUND: {
-			SVG_ATT_PROC_ENABLE_BACKGROUND
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_CLIP)
-		case SVG_ATT_TOK_CLIP: {
-			SVG_ATT_PROC_CLIP
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_BASELINE_SHIFT)
-		case SVG_ATT_TOK_BASELINE_SHIFT: {
-			SVG_ATT_PROC_BASELINE_SHIFT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_GLYPH_ORIENTATION_HORIZONTAL)
-		case SVG_ATT_TOK_GLYPH_ORIENTATION_HORIZONTAL: {
-			SVG_ATT_PROC_GLYPH_ORIENTATION_HORIZONTAL
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_GLYPH_ORIENTATION_VERTICAL)
-		case SVG_ATT_TOK_GLYPH_ORIENTATION_VERTICAL: {
-			SVG_ATT_PROC_GLYPH_ORIENTATION_VERTICAL
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_KERNING)
-		case SVG_ATT_TOK_KERNING: {
-			SVG_ATT_PROC_KERNING
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_LETTER_SPACING)
-		case SVG_ATT_TOK_LETTER_SPACING: {
-			SVG_ATT_PROC_LETTER_SPACING
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TEXT_DECORATION)
-		case SVG_ATT_TOK_TEXT_DECORATION: {
-			SVG_ATT_PROC_TEXT_DECORATION
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_WORD_SPACING)
-		case SVG_ATT_TOK_WORD_SPACING: {
-			SVG_ATT_PROC_WORD_SPACING
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FONT_FAMILY)
-		case SVG_ATT_TOK_FONT_FAMILY: {
-			SVG_ATT_PROC_FONT_FAMILY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FONT_SIZE)
-		case SVG_ATT_TOK_FONT_SIZE: {
-			SVG_ATT_PROC_FONT_SIZE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FONT_SIZE_ADJUST)
-		case SVG_ATT_TOK_FONT_SIZE_ADJUST: {
-			SVG_ATT_PROC_FONT_SIZE_ADJUST
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FILL)
-		case SVG_ATT_TOK_FILL: {
-			SVG_ATT_PROC_FILL
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STROKE)
-		case SVG_ATT_TOK_STROKE: {
-			SVG_ATT_PROC_STROKE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STROKE_DASHARRAY)
-		case SVG_ATT_TOK_STROKE_DASHARRAY: {
-			SVG_ATT_PROC_STROKE_DASHARRAY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STROKE_DASHOFFSET)
-		case SVG_ATT_TOK_STROKE_DASHOFFSET: {
-			SVG_ATT_PROC_STROKE_DASHOFFSET
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STROKE_MITERLIMIT)
-		case SVG_ATT_TOK_STROKE_MITERLIMIT: {
-			SVG_ATT_PROC_STROKE_MITERLIMIT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STROKE_WIDTH)
-		case SVG_ATT_TOK_STROKE_WIDTH: {
-			SVG_ATT_PROC_STROKE_WIDTH
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_COLOR)
-		case SVG_ATT_TOK_COLOR: {
-			SVG_ATT_PROC_COLOR
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_OPACITY)
-		case SVG_ATT_TOK_OPACITY: {
-			SVG_ATT_PROC_OPACITY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FILL_OPACITY)
-		case SVG_ATT_TOK_FILL_OPACITY: {
-			SVG_ATT_PROC_FILL_OPACITY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STROKE_OPACITY)
-		case SVG_ATT_TOK_STROKE_OPACITY: {
-			SVG_ATT_PROC_STROKE_OPACITY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_MARKER_START)
-		case SVG_ATT_TOK_MARKER_START: {
-			SVG_ATT_PROC_MARKER_START
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_MARKER_MID)
-		case SVG_ATT_TOK_MARKER_MID: {
-			SVG_ATT_PROC_MARKER_MID
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_MARKER_END)
-		case SVG_ATT_TOK_MARKER_END: {
-			SVG_ATT_PROC_MARKER_END
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_COLOR_PROFILE)
-		case SVG_ATT_TOK_COLOR_PROFILE: {
-			SVG_ATT_PROC_COLOR_PROFILE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STOP_COLOR)
-		case SVG_ATT_TOK_STOP_COLOR: {
-			SVG_ATT_PROC_STOP_COLOR
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STOP_OPACITY)
-		case SVG_ATT_TOK_STOP_OPACITY: {
-			SVG_ATT_PROC_STOP_OPACITY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_CLIP_PATH)
-		case SVG_ATT_TOK_CLIP_PATH: {
-			SVG_ATT_PROC_CLIP_PATH
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_MASK)
-		case SVG_ATT_TOK_MASK: {
-			SVG_ATT_PROC_MASK
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FILTER)
-		case SVG_ATT_TOK_FILTER: {
-			SVG_ATT_PROC_FILTER
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_CURSOR)
-		case SVG_ATT_TOK_CURSOR: {
-			SVG_ATT_PROC_CURSOR
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FLOOD_COLOR)
-		case SVG_ATT_TOK_FLOOD_COLOR: {
-			SVG_ATT_PROC_FLOOD_COLOR
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FLOOD_OPACITY)
-		case SVG_ATT_TOK_FLOOD_OPACITY: {
-			SVG_ATT_PROC_FLOOD_OPACITY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_LIGHTING_COLOR)
-		case SVG_ATT_TOK_LIGHTING_COLOR: {
-			SVG_ATT_PROC_LIGHTING_COLOR
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONUNLOAD)
-		case SVG_ATT_TOK_ONUNLOAD: {
-			SVG_ATT_PROC_ONUNLOAD
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONABORT)
-		case SVG_ATT_TOK_ONABORT: {
-			SVG_ATT_PROC_ONABORT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONERROR)
-		case SVG_ATT_TOK_ONERROR: {
-			SVG_ATT_PROC_ONERROR
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONRESIZE)
-		case SVG_ATT_TOK_ONRESIZE: {
-			SVG_ATT_PROC_ONRESIZE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONSCROLL)
-		case SVG_ATT_TOK_ONSCROLL: {
-			SVG_ATT_PROC_ONSCROLL
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONZOOM)
-		case SVG_ATT_TOK_ONZOOM: {
-			SVG_ATT_PROC_ONZOOM
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONFOCUSIN)
-		case SVG_ATT_TOK_ONFOCUSIN: {
-			SVG_ATT_PROC_ONFOCUSIN
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONFOCUSOUT)
-		case SVG_ATT_TOK_ONFOCUSOUT: {
-			SVG_ATT_PROC_ONFOCUSOUT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONACTIVATE)
-		case SVG_ATT_TOK_ONACTIVATE: {
-			SVG_ATT_PROC_ONACTIVATE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONCLICK)
-		case SVG_ATT_TOK_ONCLICK: {
-			SVG_ATT_PROC_ONCLICK
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONMOUSEDOWN)
-		case SVG_ATT_TOK_ONMOUSEDOWN: {
-			SVG_ATT_PROC_ONMOUSEDOWN
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONMOUSEUP)
-		case SVG_ATT_TOK_ONMOUSEUP: {
-			SVG_ATT_PROC_ONMOUSEUP
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONMOUSEOVER)
-		case SVG_ATT_TOK_ONMOUSEOVER: {
-			SVG_ATT_PROC_ONMOUSEOVER
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONMOUSEMOVE)
-		case SVG_ATT_TOK_ONMOUSEMOVE: {
-			SVG_ATT_PROC_ONMOUSEMOVE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONMOUSEOUT)
-		case SVG_ATT_TOK_ONMOUSEOUT: {
-			SVG_ATT_PROC_ONMOUSEOUT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONLOAD)
-		case SVG_ATT_TOK_ONLOAD: {
-			SVG_ATT_PROC_ONLOAD
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_X)
-		case SVG_ATT_TOK_X: {
-			SVG_ATT_PROC_X
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_Y)
-		case SVG_ATT_TOK_Y: {
-			SVG_ATT_PROC_Y
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_WIDTH)
-		case SVG_ATT_TOK_WIDTH: {
-			SVG_ATT_PROC_WIDTH
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_HEIGHT)
-		case SVG_ATT_TOK_HEIGHT: {
-			SVG_ATT_PROC_HEIGHT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_VIEWBOX)
-		case SVG_ATT_TOK_VIEWBOX: {
-			SVG_ATT_PROC_VIEWBOX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_PRESERVEASPECTRATIO)
-		case SVG_ATT_TOK_PRESERVEASPECTRATIO: {
-			SVG_ATT_PROC_PRESERVEASPECTRATIO
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_VERSION)
-		case SVG_ATT_TOK_VERSION: {
-			SVG_ATT_PROC_VERSION
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_BASEPROFILE)
-		case SVG_ATT_TOK_BASEPROFILE: {
-			SVG_ATT_PROC_BASEPROFILE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_CONTENTSCRIPTTYPE)
-		case SVG_ATT_TOK_CONTENTSCRIPTTYPE: {
-			SVG_ATT_PROC_CONTENTSCRIPTTYPE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_CONTENTSTYLETYPE)
-		case SVG_ATT_TOK_CONTENTSTYLETYPE: {
-			SVG_ATT_PROC_CONTENTSTYLETYPE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TRANSFORM)
-		case SVG_ATT_TOK_TRANSFORM: {
-			SVG_ATT_PROC_TRANSFORM
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_XLINK_HREF)
-		case SVG_ATT_TOK_XLINK_HREF: {
-			SVG_ATT_PROC_XLINK_HREF
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_XLINK_ROLE)
-		case SVG_ATT_TOK_XLINK_ROLE: {
-			SVG_ATT_PROC_XLINK_ROLE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_XLINK_ARCROLE)
-		case SVG_ATT_TOK_XLINK_ARCROLE: {
-			SVG_ATT_PROC_XLINK_ARCROLE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_XLINK_TITLE)
-		case SVG_ATT_TOK_XLINK_TITLE: {
-			SVG_ATT_PROC_XLINK_TITLE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TYPE)
-		case SVG_ATT_TOK_TYPE: {
-			SVG_ATT_PROC_TYPE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_MEDIA)
-		case SVG_ATT_TOK_MEDIA: {
-			SVG_ATT_PROC_MEDIA
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TITLE)
-		case SVG_ATT_TOK_TITLE: {
-			SVG_ATT_PROC_TITLE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_D)
-		case SVG_ATT_TOK_D: {
-			SVG_ATT_PROC_D
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_PATHLENGTH)
-		case SVG_ATT_TOK_PATHLENGTH: {
-			SVG_ATT_PROC_PATHLENGTH
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_RX)
-		case SVG_ATT_TOK_RX: {
-			SVG_ATT_PROC_RX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_RY)
-		case SVG_ATT_TOK_RY: {
-			SVG_ATT_PROC_RY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_CX)
-		case SVG_ATT_TOK_CX: {
-			SVG_ATT_PROC_CX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_CY)
-		case SVG_ATT_TOK_CY: {
-			SVG_ATT_PROC_CY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_R)
-		case SVG_ATT_TOK_R: {
-			SVG_ATT_PROC_R
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_X1)
-		case SVG_ATT_TOK_X1: {
-			SVG_ATT_PROC_X1
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_Y1)
-		case SVG_ATT_TOK_Y1: {
-			SVG_ATT_PROC_Y1
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_X2)
-		case SVG_ATT_TOK_X2: {
-			SVG_ATT_PROC_X2
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_Y2)
-		case SVG_ATT_TOK_Y2: {
-			SVG_ATT_PROC_Y2
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_POINTS)
-		case SVG_ATT_TOK_POINTS: {
-			SVG_ATT_PROC_POINTS
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_DX)
-		case SVG_ATT_TOK_DX: {
-			SVG_ATT_PROC_DX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_DY)
-		case SVG_ATT_TOK_DY: {
-			SVG_ATT_PROC_DY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ROTATE)
-		case SVG_ATT_TOK_ROTATE: {
-			SVG_ATT_PROC_ROTATE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TEXTLENGTH)
-		case SVG_ATT_TOK_TEXTLENGTH: {
-			SVG_ATT_PROC_TEXTLENGTH
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STARTOFFSET)
-		case SVG_ATT_TOK_STARTOFFSET: {
-			SVG_ATT_PROC_STARTOFFSET
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_GLYPHREF)
-		case SVG_ATT_TOK_GLYPHREF: {
-			SVG_ATT_PROC_GLYPHREF
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FORMAT)
-		case SVG_ATT_TOK_FORMAT: {
-			SVG_ATT_PROC_FORMAT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_REFX)
-		case SVG_ATT_TOK_REFX: {
-			SVG_ATT_PROC_REFX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_REFY)
-		case SVG_ATT_TOK_REFY: {
-			SVG_ATT_PROC_REFY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_MARKERWIDTH)
-		case SVG_ATT_TOK_MARKERWIDTH: {
-			SVG_ATT_PROC_MARKERWIDTH
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_MARKERHEIGHT)
-		case SVG_ATT_TOK_MARKERHEIGHT: {
-			SVG_ATT_PROC_MARKERHEIGHT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ORIENT)
-		case SVG_ATT_TOK_ORIENT: {
-			SVG_ATT_PROC_ORIENT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_LOCAL)
-		case SVG_ATT_TOK_LOCAL: {
-			SVG_ATT_PROC_LOCAL
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_NAME)
-		case SVG_ATT_TOK_NAME: {
-			SVG_ATT_PROC_NAME
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_GRADIENTTRANSFORM)
-		case SVG_ATT_TOK_GRADIENTTRANSFORM: {
-			SVG_ATT_PROC_GRADIENTTRANSFORM
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FX)
-		case SVG_ATT_TOK_FX: {
-			SVG_ATT_PROC_FX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FY)
-		case SVG_ATT_TOK_FY: {
-			SVG_ATT_PROC_FY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_OFFSET)
-		case SVG_ATT_TOK_OFFSET: {
-			SVG_ATT_PROC_OFFSET
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_PATTERNTRANSFORM)
-		case SVG_ATT_TOK_PATTERNTRANSFORM: {
-			SVG_ATT_PROC_PATTERNTRANSFORM
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FILTERRES)
-		case SVG_ATT_TOK_FILTERRES: {
-			SVG_ATT_PROC_FILTERRES
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_RESULT)
-		case SVG_ATT_TOK_RESULT: {
-			SVG_ATT_PROC_RESULT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_IN)
-		case SVG_ATT_TOK_IN: {
-			SVG_ATT_PROC_IN
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_IN2)
-		case SVG_ATT_TOK_IN2: {
-			SVG_ATT_PROC_IN2
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_VALUES)
-		case SVG_ATT_TOK_VALUES: {
-			SVG_ATT_PROC_VALUES
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_K1)
-		case SVG_ATT_TOK_K1: {
-			SVG_ATT_PROC_K1
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_K2)
-		case SVG_ATT_TOK_K2: {
-			SVG_ATT_PROC_K2
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_K3)
-		case SVG_ATT_TOK_K3: {
-			SVG_ATT_PROC_K3
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_K4)
-		case SVG_ATT_TOK_K4: {
-			SVG_ATT_PROC_K4
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ORDER)
-		case SVG_ATT_TOK_ORDER: {
-			SVG_ATT_PROC_ORDER
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_KERNELMATRIX)
-		case SVG_ATT_TOK_KERNELMATRIX: {
-			SVG_ATT_PROC_KERNELMATRIX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_DIVISOR)
-		case SVG_ATT_TOK_DIVISOR: {
-			SVG_ATT_PROC_DIVISOR
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_BIAS)
-		case SVG_ATT_TOK_BIAS: {
-			SVG_ATT_PROC_BIAS
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TARGETX)
-		case SVG_ATT_TOK_TARGETX: {
-			SVG_ATT_PROC_TARGETX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TARGETY)
-		case SVG_ATT_TOK_TARGETY: {
-			SVG_ATT_PROC_TARGETY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_KERNELUNITLENGTH)
-		case SVG_ATT_TOK_KERNELUNITLENGTH: {
-			SVG_ATT_PROC_KERNELUNITLENGTH
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_SURFACESCALE)
-		case SVG_ATT_TOK_SURFACESCALE: {
-			SVG_ATT_PROC_SURFACESCALE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_DIFFUSECONSTANT)
-		case SVG_ATT_TOK_DIFFUSECONSTANT: {
-			SVG_ATT_PROC_DIFFUSECONSTANT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_SCALE)
-		case SVG_ATT_TOK_SCALE: {
-			SVG_ATT_PROC_SCALE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_STDDEVIATION)
-		case SVG_ATT_TOK_STDDEVIATION: {
-			SVG_ATT_PROC_STDDEVIATION
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_RADIUS)
-		case SVG_ATT_TOK_RADIUS: {
-			SVG_ATT_PROC_RADIUS
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_SPECULARCONSTANT)
-		case SVG_ATT_TOK_SPECULARCONSTANT: {
-			SVG_ATT_PROC_SPECULARCONSTANT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_SPECULAREXPONENT)
-		case SVG_ATT_TOK_SPECULAREXPONENT: {
-			SVG_ATT_PROC_SPECULAREXPONENT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_BASEFREQUENCY)
-		case SVG_ATT_TOK_BASEFREQUENCY: {
-			SVG_ATT_PROC_BASEFREQUENCY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_NUMOCTAVES)
-		case SVG_ATT_TOK_NUMOCTAVES: {
-			SVG_ATT_PROC_NUMOCTAVES
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_SEED)
-		case SVG_ATT_TOK_SEED: {
-			SVG_ATT_PROC_SEED
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_AZIMUTH)
-		case SVG_ATT_TOK_AZIMUTH: {
-			SVG_ATT_PROC_AZIMUTH
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ELEVATION)
-		case SVG_ATT_TOK_ELEVATION: {
-			SVG_ATT_PROC_ELEVATION
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_Z)
-		case SVG_ATT_TOK_Z: {
-			SVG_ATT_PROC_Z
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_POINTSATX)
-		case SVG_ATT_TOK_POINTSATX: {
-			SVG_ATT_PROC_POINTSATX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_POINTSATY)
-		case SVG_ATT_TOK_POINTSATY: {
-			SVG_ATT_PROC_POINTSATY
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_POINTSATZ)
-		case SVG_ATT_TOK_POINTSATZ: {
-			SVG_ATT_PROC_POINTSATZ
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_LIMITINGCONEANGLE)
-		case SVG_ATT_TOK_LIMITINGCONEANGLE: {
-			SVG_ATT_PROC_LIMITINGCONEANGLE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TABLEVALUES)
-		case SVG_ATT_TOK_TABLEVALUES: {
-			SVG_ATT_PROC_TABLEVALUES
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_SLOPE)
-		case SVG_ATT_TOK_SLOPE: {
-			SVG_ATT_PROC_SLOPE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_INTERCEPT)
-		case SVG_ATT_TOK_INTERCEPT: {
-			SVG_ATT_PROC_INTERCEPT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_AMPLITUDE)
-		case SVG_ATT_TOK_AMPLITUDE: {
-			SVG_ATT_PROC_AMPLITUDE
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_EXPONENT)
-		case SVG_ATT_TOK_EXPONENT: {
-			SVG_ATT_PROC_EXPONENT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TARGET)
-		case SVG_ATT_TOK_TARGET: {
-			SVG_ATT_PROC_TARGET
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_VIEWTARGET)
-		case SVG_ATT_TOK_VIEWTARGET: {
-			SVG_ATT_PROC_VIEWTARGET
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONBEGIN)
-		case SVG_ATT_TOK_ONBEGIN: {
-			SVG_ATT_PROC_ONBEGIN
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONEND)
-		case SVG_ATT_TOK_ONEND: {
-			SVG_ATT_PROC_ONEND
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ONREPEAT)
-		case SVG_ATT_TOK_ONREPEAT: {
-			SVG_ATT_PROC_ONREPEAT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_ATTRIBUTENAME)
+	#if defined(SVG_ATT_ATTRIBUTENAME)
 		case SVG_ATT_TOK_ATTRIBUTENAME: {
-			SVG_ATT_PROC_ATTRIBUTENAME
+			SVG_ATT_ATTRIBUTENAME
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_ATTRIBUTETYPE)
+	#if defined(SVG_ATT_ATTRIBUTETYPE)
 		case SVG_ATT_TOK_ATTRIBUTETYPE: {
-			SVG_ATT_PROC_ATTRIBUTETYPE
+			SVG_ATT_ATTRIBUTETYPE
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_BEGIN)
+	#if defined(SVG_ATT_BEGIN)
 		case SVG_ATT_TOK_BEGIN: {
-			SVG_ATT_PROC_BEGIN
+			SVG_ATT_BEGIN
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_DUR)
-		case SVG_ATT_TOK_DUR: {
-			SVG_ATT_PROC_DUR
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_END)
-		case SVG_ATT_TOK_END: {
-			SVG_ATT_PROC_END
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_MIN)
-		case SVG_ATT_TOK_MIN: {
-			SVG_ATT_PROC_MIN
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_MAX)
-		case SVG_ATT_TOK_MAX: {
-			SVG_ATT_PROC_MAX
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_REPEATCOUNT)
-		case SVG_ATT_TOK_REPEATCOUNT: {
-			SVG_ATT_PROC_REPEATCOUNT
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_REPEATDUR)
-		case SVG_ATT_TOK_REPEATDUR: {
-			SVG_ATT_PROC_REPEATDUR
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_KEYTIMES)
-		case SVG_ATT_TOK_KEYTIMES: {
-			SVG_ATT_PROC_KEYTIMES
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_KEYSPLINES)
-		case SVG_ATT_TOK_KEYSPLINES: {
-			SVG_ATT_PROC_KEYSPLINES
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_FROM)
-		case SVG_ATT_TOK_FROM: {
-			SVG_ATT_PROC_FROM
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_TO)
-		case SVG_ATT_TOK_TO: {
-			SVG_ATT_PROC_TO
-		} break;
-	#endif
-	#if defined(SVG_ATT_PROC_BY)
+	#if defined(SVG_ATT_BY)
 		case SVG_ATT_TOK_BY: {
-			SVG_ATT_PROC_BY
+			SVG_ATT_BY
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_PATH)
-		case SVG_ATT_TOK_PATH: {
-			SVG_ATT_PROC_PATH
+	#if defined(SVG_ATT_CALCMODE)
+		case SVG_ATT_TOK_CALCMODE: {
+			SVG_ATT_CALCMODE
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_KEYPOINTS)
+	#if defined(SVG_ATT_DUR)
+		case SVG_ATT_TOK_DUR: {
+			SVG_ATT_DUR
+		} break;
+	#endif
+	#if defined(SVG_ATT_END)
+		case SVG_ATT_TOK_END: {
+			SVG_ATT_END
+		} break;
+	#endif
+	#if defined(SVG_ATT_FILL)
+		case SVG_ATT_TOK_FILL: {
+			SVG_ATT_FILL
+		} break;
+	#endif
+	#if defined(SVG_ATT_FROM)
+		case SVG_ATT_TOK_FROM: {
+			SVG_ATT_FROM
+		} break;
+	#endif
+	#if defined(SVG_ATT_KEYPOINTS)
 		case SVG_ATT_TOK_KEYPOINTS: {
-			SVG_ATT_PROC_KEYPOINTS
+			SVG_ATT_KEYPOINTS
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_ORIGIN)
+	#if defined(SVG_ATT_KEYSPLINES)
+		case SVG_ATT_TOK_KEYSPLINES: {
+			SVG_ATT_KEYSPLINES
+		} break;
+	#endif
+	#if defined(SVG_ATT_KEYTIMES)
+		case SVG_ATT_TOK_KEYTIMES: {
+			SVG_ATT_KEYTIMES
+		} break;
+	#endif
+	#if defined(SVG_ATT_MAX)
+		case SVG_ATT_TOK_MAX: {
+			SVG_ATT_MAX
+		} break;
+	#endif
+	#if defined(SVG_ATT_MIN)
+		case SVG_ATT_TOK_MIN: {
+			SVG_ATT_MIN
+		} break;
+	#endif
+	#if defined(SVG_ATT_ORIGIN)
 		case SVG_ATT_TOK_ORIGIN: {
-			SVG_ATT_PROC_ORIGIN
+			SVG_ATT_ORIGIN
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_HORIZ_ORIGIN_X)
-		case SVG_ATT_TOK_HORIZ_ORIGIN_X: {
-			SVG_ATT_PROC_HORIZ_ORIGIN_X
+	#if defined(SVG_ATT_PATH)
+		case SVG_ATT_TOK_PATH: {
+			SVG_ATT_PATH
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_HORIZ_ORIGIN_Y)
-		case SVG_ATT_TOK_HORIZ_ORIGIN_Y: {
-			SVG_ATT_PROC_HORIZ_ORIGIN_Y
+	#if defined(SVG_ATT_REPEATCOUNT)
+		case SVG_ATT_TOK_REPEATCOUNT: {
+			SVG_ATT_REPEATCOUNT
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_HORIZ_ADV_X)
-		case SVG_ATT_TOK_HORIZ_ADV_X: {
-			SVG_ATT_PROC_HORIZ_ADV_X
+	#if defined(SVG_ATT_REPEATDUR)
+		case SVG_ATT_TOK_REPEATDUR: {
+			SVG_ATT_REPEATDUR
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_VERT_ORIGIN_X)
-		case SVG_ATT_TOK_VERT_ORIGIN_X: {
-			SVG_ATT_PROC_VERT_ORIGIN_X
+	#if defined(SVG_ATT_RESTART)
+		case SVG_ATT_TOK_RESTART: {
+			SVG_ATT_RESTART
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_VERT_ORIGIN_Y)
-		case SVG_ATT_TOK_VERT_ORIGIN_Y: {
-			SVG_ATT_PROC_VERT_ORIGIN_Y
+	#if defined(SVG_ATT_ANIMATION_ROTATE) || defined(SVG_ATT_TEXT_ROTATE) || defined(SVG_ATT_TSPAN_ROTATE)
+		case SVG_ATT_TOK_ROTATE: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_ANIMATION_ROTATE)
+					case SVG_TOK_ANIMATION: {
+						SVG_ATT_ANIMATION_ROTATE
+					} break;
+				#endif
+				#if defined(SVG_ATT_TEXT_ROTATE)
+					case SVG_TOK_TEXT: {
+						SVG_ATT_TEXT_ROTATE
+					} break;
+				#endif
+				#if defined(SVG_ATT_TSPAN_ROTATE)
+					case SVG_TOK_TSPAN: {
+						SVG_ATT_TSPAN_ROTATE
+					} break;
+				#endif
+			}
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_VERT_ADV_Y)
-		case SVG_ATT_TOK_VERT_ADV_Y: {
-			SVG_ATT_PROC_VERT_ADV_Y
+	#if defined(SVG_ATT_TO)
+		case SVG_ATT_TOK_TO: {
+			SVG_ATT_TO
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_FONT_STYLE)
-		case SVG_ATT_TOK_FONT_STYLE: {
-			SVG_ATT_PROC_FONT_STYLE
+	#if defined(SVG_ATT_TYPE)
+		case SVG_ATT_TOK_TYPE: {
+			SVG_ATT_TYPE
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_FONT_VARIANT)
-		case SVG_ATT_TOK_FONT_VARIANT: {
-			SVG_ATT_PROC_FONT_VARIANT
+	#if defined(SVG_ATT_VALUES)
+		case SVG_ATT_TOK_VALUES: {
+			SVG_ATT_VALUES
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_FONT_WEIGHT)
-		case SVG_ATT_TOK_FONT_WEIGHT: {
-			SVG_ATT_PROC_FONT_WEIGHT
+	#if defined(SVG_ATT_CIRCLE_CX) || defined(SVG_ATT_ELLIPSE_CX) || defined(SVG_ATT_RADIALGRADIENT_CX)
+		case SVG_ATT_TOK_CX: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_CIRCLE_CX)
+					case SVG_TOK_CIRCLE: {
+						SVG_ATT_CIRCLE_CX
+					} break;
+				#endif
+				#if defined(SVG_ATT_ELLIPSE_CX)
+					case SVG_TOK_ELLIPSE: {
+						SVG_ATT_ELLIPSE_CX
+					} break;
+				#endif
+				#if defined(SVG_ATT_RADIALGRADIENT_CX)
+					case SVG_TOK_RADIALGRADIENT: {
+						SVG_ATT_RADIALGRADIENT_CX
+					} break;
+				#endif
+			}
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_FONT_STRETCH)
+	#if defined(SVG_ATT_CIRCLE_CY) || defined(SVG_ATT_ELLIPSE_CY) || defined(SVG_ATT_RADIALGRADIENT_CY)
+		case SVG_ATT_TOK_CY: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_CIRCLE_CY)
+					case SVG_TOK_CIRCLE: {
+						SVG_ATT_CIRCLE_CY
+					} break;
+				#endif
+				#if defined(SVG_ATT_ELLIPSE_CY)
+					case SVG_TOK_ELLIPSE: {
+						SVG_ATT_ELLIPSE_CY
+					} break;
+				#endif
+				#if defined(SVG_ATT_RADIALGRADIENT_CY)
+					case SVG_TOK_RADIALGRADIENT: {
+						SVG_ATT_RADIALGRADIENT_CY
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_CIRCLE_R) || defined(SVG_ATT_RADIALGRADIENT_R)
+		case SVG_ATT_TOK_R: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_CIRCLE_R)
+					case SVG_TOK_CIRCLE: {
+						SVG_ATT_CIRCLE_R
+					} break;
+				#endif
+				#if defined(SVG_ATT_RADIALGRADIENT_R)
+					case SVG_TOK_RADIALGRADIENT: {
+						SVG_ATT_RADIALGRADIENT_R
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_CLIPPATHUNITS)
+		case SVG_ATT_TOK_CLIPPATHUNITS: {
+			SVG_ATT_CLIPPATHUNITS
+		} break;
+	#endif
+	#if defined(SVG_ATT_REQUIREDEXTENSIONS)
+		case SVG_ATT_TOK_REQUIREDEXTENSIONS: {
+			SVG_ATT_REQUIREDEXTENSIONS
+		} break;
+	#endif
+	#if defined(SVG_ATT_REQUIREDFEATURES)
+		case SVG_ATT_TOK_REQUIREDFEATURES: {
+			SVG_ATT_REQUIREDFEATURES
+		} break;
+	#endif
+	#if defined(SVG_ATT_SYSTEMLANGUAGE)
+		case SVG_ATT_TOK_SYSTEMLANGUAGE: {
+			SVG_ATT_SYSTEMLANGUAGE
+		} break;
+	#endif
+	#if defined(SVG_ATT_CLASS)
+		case SVG_ATT_TOK_CLASS: {
+			SVG_ATT_CLASS
+		} break;
+	#endif
+	#if defined(SVG_ATT_ID)
+		case SVG_ATT_TOK_ID: {
+			SVG_ATT_ID
+		} break;
+	#endif
+	#if defined(SVG_ATT_STYLE)
+		case SVG_ATT_TOK_STYLE: {
+			SVG_ATT_STYLE
+		} break;
+	#endif
+	#if defined(SVG_ATT_TABINDEX)
+		case SVG_ATT_TOK_TABINDEX: {
+			SVG_ATT_TABINDEX
+		} break;
+	#endif
+	#if defined(SVG_ATT_XML_BASE)
+		case SVG_ATT_TOK_XML_BASE: {
+			SVG_ATT_XML_BASE
+		} break;
+	#endif
+	#if defined(SVG_ATT_XML_LANG)
+		case SVG_ATT_TOK_XML_LANG: {
+			SVG_ATT_XML_LANG
+		} break;
+	#endif
+	#if defined(SVG_ATT_XML_SPACE)
+		case SVG_ATT_TOK_XML_SPACE: {
+			SVG_ATT_XML_SPACE
+		} break;
+	#endif
+	#if defined(SVG_ATT_ELLIPSE_RX) || defined(SVG_ATT_RECT_RX)
+		case SVG_ATT_TOK_RX: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_ELLIPSE_RX)
+					case SVG_TOK_ELLIPSE: {
+						SVG_ATT_ELLIPSE_RX
+					} break;
+				#endif
+				#if defined(SVG_ATT_RECT_RX)
+					case SVG_TOK_RECT: {
+						SVG_ATT_RECT_RX
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_ELLIPSE_RY) || defined(SVG_ATT_RECT_RY)
+		case SVG_ATT_TOK_RY: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_ELLIPSE_RY)
+					case SVG_TOK_ELLIPSE: {
+						SVG_ATT_ELLIPSE_RY
+					} break;
+				#endif
+				#if defined(SVG_ATT_RECT_RY)
+					case SVG_TOK_RECT: {
+						SVG_ATT_RECT_RY
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEBLEND_MODE)
+		case SVG_ATT_TOK_FEBLEND_MODE: {
+			SVG_ATT_FEBLEND_MODE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECOLORMATRIX_TYPE)
+		case SVG_ATT_TOK_FECOLORMATRIX_TYPE: {
+			SVG_ATT_FECOLORMATRIX_TYPE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECOLORMATRIX_VALUES)
+		case SVG_ATT_TOK_FECOLORMATRIX_VALUES: {
+			SVG_ATT_FECOLORMATRIX_VALUES
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECOMPONENTTRANSFER_TYPE)
+		case SVG_ATT_TOK_FECOMPONENTTRANSFER_TYPE: {
+			SVG_ATT_FECOMPONENTTRANSFER_TYPE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECOMPOSITE_K1)
+		case SVG_ATT_TOK_FECOMPOSITE_K1: {
+			SVG_ATT_FECOMPOSITE_K1
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECOMPOSITE_K2)
+		case SVG_ATT_TOK_FECOMPOSITE_K2: {
+			SVG_ATT_FECOMPOSITE_K2
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECOMPOSITE_K3)
+		case SVG_ATT_TOK_FECOMPOSITE_K3: {
+			SVG_ATT_FECOMPOSITE_K3
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECOMPOSITE_K4)
+		case SVG_ATT_TOK_FECOMPOSITE_K4: {
+			SVG_ATT_FECOMPOSITE_K4
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECOMPOSITE_OPERATOR)
+		case SVG_ATT_TOK_FECOMPOSITE_OPERATOR: {
+			SVG_ATT_FECOMPOSITE_OPERATOR
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECONVOLVEMATRIX_BIAS)
+		case SVG_ATT_TOK_FECONVOLVEMATRIX_BIAS: {
+			SVG_ATT_FECONVOLVEMATRIX_BIAS
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECONVOLVEMATRIX_DIVISOR)
+		case SVG_ATT_TOK_FECONVOLVEMATRIX_DIVISOR: {
+			SVG_ATT_FECONVOLVEMATRIX_DIVISOR
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECONVOLVEMATRIX_EDGEMODE)
+		case SVG_ATT_TOK_FECONVOLVEMATRIX_EDGEMODE: {
+			SVG_ATT_FECONVOLVEMATRIX_EDGEMODE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECONVOLVEMATRIX_KERNELMATRIX)
+		case SVG_ATT_TOK_FECONVOLVEMATRIX_KERNELMATRIX: {
+			SVG_ATT_FECONVOLVEMATRIX_KERNELMATRIX
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECONVOLVEMATRIX_KERNELUNITLENGTH)
+		case SVG_ATT_TOK_FECONVOLVEMATRIX_KERNELUNITLENGTH: {
+			SVG_ATT_FECONVOLVEMATRIX_KERNELUNITLENGTH
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECONVOLVEMATRIX_ORDER)
+		case SVG_ATT_TOK_FECONVOLVEMATRIX_ORDER: {
+			SVG_ATT_FECONVOLVEMATRIX_ORDER
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECONVOLVEMATRIX_PRESERVEALPHA)
+		case SVG_ATT_TOK_FECONVOLVEMATRIX_PRESERVEALPHA: {
+			SVG_ATT_FECONVOLVEMATRIX_PRESERVEALPHA
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECONVOLVEMATRIX_TARGETX)
+		case SVG_ATT_TOK_FECONVOLVEMATRIX_TARGETX: {
+			SVG_ATT_FECONVOLVEMATRIX_TARGETX
+		} break;
+	#endif
+	#if defined(SVG_ATT_FECONVOLVEMATRIX_TARGETY)
+		case SVG_ATT_TOK_FECONVOLVEMATRIX_TARGETY: {
+			SVG_ATT_FECONVOLVEMATRIX_TARGETY
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEDIFFUSELIGHTING_DIFFUSECONSTANT)
+		case SVG_ATT_TOK_FEDIFFUSELIGHTING_DIFFUSECONSTANT: {
+			SVG_ATT_FEDIFFUSELIGHTING_DIFFUSECONSTANT
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEDIFFUSELIGHTING_KERNELUNITLENGTH)
+		case SVG_ATT_TOK_FEDIFFUSELIGHTING_KERNELUNITLENGTH: {
+			SVG_ATT_FEDIFFUSELIGHTING_KERNELUNITLENGTH
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEDIFFUSELIGHTING_SURFACESCALE)
+		case SVG_ATT_TOK_FEDIFFUSELIGHTING_SURFACESCALE: {
+			SVG_ATT_FEDIFFUSELIGHTING_SURFACESCALE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEDISPLACEMENTMAP_SCALE)
+		case SVG_ATT_TOK_FEDISPLACEMENTMAP_SCALE: {
+			SVG_ATT_FEDISPLACEMENTMAP_SCALE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEDISPLACEMENTMAP_XCHANNELSELECTOR)
+		case SVG_ATT_TOK_FEDISPLACEMENTMAP_XCHANNELSELECTOR: {
+			SVG_ATT_FEDISPLACEMENTMAP_XCHANNELSELECTOR
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEDISPLACEMENTMAP_YCHANNELSELECTOR)
+		case SVG_ATT_TOK_FEDISPLACEMENTMAP_YCHANNELSELECTOR: {
+			SVG_ATT_FEDISPLACEMENTMAP_YCHANNELSELECTOR
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEDROPSHADOW_DX)
+		case SVG_ATT_TOK_FEDROPSHADOW_DX: {
+			SVG_ATT_FEDROPSHADOW_DX
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEDROPSHADOW_DY)
+		case SVG_ATT_TOK_FEDROPSHADOW_DY: {
+			SVG_ATT_FEDROPSHADOW_DY
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEDROPSHADOW_STDDEVIATION)
+		case SVG_ATT_TOK_FEDROPSHADOW_STDDEVIATION: {
+			SVG_ATT_FEDROPSHADOW_STDDEVIATION
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEGAUSSIANBLUR_EDGEMODE)
+		case SVG_ATT_TOK_FEGAUSSIANBLUR_EDGEMODE: {
+			SVG_ATT_FEGAUSSIANBLUR_EDGEMODE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEGAUSSIANBLUR_STDDEVIATION)
+		case SVG_ATT_TOK_FEGAUSSIANBLUR_STDDEVIATION: {
+			SVG_ATT_FEGAUSSIANBLUR_STDDEVIATION
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEIMAGE_PRESERVEASPECTRATIO)
+		case SVG_ATT_TOK_FEIMAGE_PRESERVEASPECTRATIO: {
+			SVG_ATT_FEIMAGE_PRESERVEASPECTRATIO
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEMORPHOLOGY_OPERATOR)
+		case SVG_ATT_TOK_FEMORPHOLOGY_OPERATOR: {
+			SVG_ATT_FEMORPHOLOGY_OPERATOR
+		} break;
+	#endif
+	#if defined(SVG_ATT_FEMORPHOLOGY_RADIUS)
+		case SVG_ATT_TOK_FEMORPHOLOGY_RADIUS: {
+			SVG_ATT_FEMORPHOLOGY_RADIUS
+		} break;
+	#endif
+	#if defined(SVG_ATT_FESPECULARLIGHTING_KERNELUNITLENGTH)
+		case SVG_ATT_TOK_FESPECULARLIGHTING_KERNELUNITLENGTH: {
+			SVG_ATT_FESPECULARLIGHTING_KERNELUNITLENGTH
+		} break;
+	#endif
+	#if defined(SVG_ATT_FESPECULARLIGHTING_SPECULARCONSTANT)
+		case SVG_ATT_TOK_FESPECULARLIGHTING_SPECULARCONSTANT: {
+			SVG_ATT_FESPECULARLIGHTING_SPECULARCONSTANT
+		} break;
+	#endif
+	#if defined(SVG_ATT_FESPECULARLIGHTING_SPECULAREXPONENT)
+		case SVG_ATT_TOK_FESPECULARLIGHTING_SPECULAREXPONENT: {
+			SVG_ATT_FESPECULARLIGHTING_SPECULAREXPONENT
+		} break;
+	#endif
+	#if defined(SVG_ATT_FESPECULARLIGHTING_SURFACESCALE)
+		case SVG_ATT_TOK_FESPECULARLIGHTING_SURFACESCALE: {
+			SVG_ATT_FESPECULARLIGHTING_SURFACESCALE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FETILE)
+		case SVG_ATT_TOK_FETILE: {
+			SVG_ATT_FETILE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FETURBULENCE_BASEFREQUENCY)
+		case SVG_ATT_TOK_FETURBULENCE_BASEFREQUENCY: {
+			SVG_ATT_FETURBULENCE_BASEFREQUENCY
+		} break;
+	#endif
+	#if defined(SVG_ATT_FETURBULENCE_NUMOCTAVES)
+		case SVG_ATT_TOK_FETURBULENCE_NUMOCTAVES: {
+			SVG_ATT_FETURBULENCE_NUMOCTAVES
+		} break;
+	#endif
+	#if defined(SVG_ATT_FETURBULENCE_SEED)
+		case SVG_ATT_TOK_FETURBULENCE_SEED: {
+			SVG_ATT_FETURBULENCE_SEED
+		} break;
+	#endif
+	#if defined(SVG_ATT_FETURBULENCE_STITCHTILES)
+		case SVG_ATT_TOK_FETURBULENCE_STITCHTILES: {
+			SVG_ATT_FETURBULENCE_STITCHTILES
+		} break;
+	#endif
+	#if defined(SVG_ATT_FETURBULENCE_TYPE)
+		case SVG_ATT_TOK_FETURBULENCE_TYPE: {
+			SVG_ATT_FETURBULENCE_TYPE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FILTERUNITS)
+		case SVG_ATT_TOK_FILTERUNITS: {
+			SVG_ATT_FILTERUNITS
+		} break;
+	#endif
+	#if defined(SVG_ATT_PRIMITIVEUNITS)
+		case SVG_ATT_TOK_PRIMITIVEUNITS: {
+			SVG_ATT_PRIMITIVEUNITS
+		} break;
+	#endif
+	#if defined(SVG_ATT_FILTER_PRIMITIVE_HEIGHT) || defined(SVG_ATT_IMAGE_HEIGHT) || defined(SVG_ATT_MASK_HEIGHT) || defined(SVG_ATT_PATTERN_HEIGHT) || defined(SVG_ATT_RECT_HEIGHT) || defined(SVG_ATT_SVG_HEIGHT) || defined(SVG_ATT_USE_HEIGHT)
+		case SVG_ATT_TOK_HEIGHT: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_FILTER_PRIMITIVE_HEIGHT)
+					case SVG_TOK_FILTER_PRIMITIVE: {
+						SVG_ATT_FILTER_PRIMITIVE_HEIGHT
+					} break;
+				#endif
+				#if defined(SVG_ATT_IMAGE_HEIGHT)
+					case SVG_TOK_IMAGE: {
+						SVG_ATT_IMAGE_HEIGHT
+					} break;
+				#endif
+				#if defined(SVG_ATT_MASK_HEIGHT)
+					case SVG_TOK_MASK: {
+						SVG_ATT_MASK_HEIGHT
+					} break;
+				#endif
+				#if defined(SVG_ATT_PATTERN_HEIGHT)
+					case SVG_TOK_PATTERN: {
+						SVG_ATT_PATTERN_HEIGHT
+					} break;
+				#endif
+				#if defined(SVG_ATT_RECT_HEIGHT)
+					case SVG_TOK_RECT: {
+						SVG_ATT_RECT_HEIGHT
+					} break;
+				#endif
+				#if defined(SVG_ATT_SVG_HEIGHT)
+					case SVG_TOK_SVG: {
+						SVG_ATT_SVG_HEIGHT
+					} break;
+				#endif
+				#if defined(SVG_ATT_USE_HEIGHT)
+					case SVG_TOK_USE: {
+						SVG_ATT_USE_HEIGHT
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_IN)
+		case SVG_ATT_TOK_IN: {
+			SVG_ATT_IN
+		} break;
+	#endif
+	#if defined(SVG_ATT_IN2)
+		case SVG_ATT_TOK_IN2: {
+			SVG_ATT_IN2
+		} break;
+	#endif
+	#if defined(SVG_ATT_RESULT)
+		case SVG_ATT_TOK_RESULT: {
+			SVG_ATT_RESULT
+		} break;
+	#endif
+	#if defined(SVG_ATT_FILTER_PRIMITIVE_WIDTH) || defined(SVG_ATT_IMAGE_WIDTH) || defined(SVG_ATT_MASK_WIDTH) || defined(SVG_ATT_PATTERN_WIDTH) || defined(SVG_ATT_RECT_WIDTH) || defined(SVG_ATT_SVG_WIDTH) || defined(SVG_ATT_USE_WIDTH)
+		case SVG_ATT_TOK_WIDTH: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_FILTER_PRIMITIVE_WIDTH)
+					case SVG_TOK_FILTER_PRIMITIVE: {
+						SVG_ATT_FILTER_PRIMITIVE_WIDTH
+					} break;
+				#endif
+				#if defined(SVG_ATT_IMAGE_WIDTH)
+					case SVG_TOK_IMAGE: {
+						SVG_ATT_IMAGE_WIDTH
+					} break;
+				#endif
+				#if defined(SVG_ATT_MASK_WIDTH)
+					case SVG_TOK_MASK: {
+						SVG_ATT_MASK_WIDTH
+					} break;
+				#endif
+				#if defined(SVG_ATT_PATTERN_WIDTH)
+					case SVG_TOK_PATTERN: {
+						SVG_ATT_PATTERN_WIDTH
+					} break;
+				#endif
+				#if defined(SVG_ATT_RECT_WIDTH)
+					case SVG_TOK_RECT: {
+						SVG_ATT_RECT_WIDTH
+					} break;
+				#endif
+				#if defined(SVG_ATT_SVG_WIDTH)
+					case SVG_TOK_SVG: {
+						SVG_ATT_SVG_WIDTH
+					} break;
+				#endif
+				#if defined(SVG_ATT_USE_WIDTH)
+					case SVG_TOK_USE: {
+						SVG_ATT_USE_WIDTH
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_FILTER_PRIMITIVE_X) || defined(SVG_ATT_IMAGE_X) || defined(SVG_ATT_MASK_X) || defined(SVG_ATT_PATTERN_X) || defined(SVG_ATT_RECT_X) || defined(SVG_ATT_SVG_X) || defined(SVG_ATT_TEXT_X) || defined(SVG_ATT_TSPAN_X) || defined(SVG_ATT_USE_X)
+		case SVG_ATT_TOK_X: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_FILTER_PRIMITIVE_X)
+					case SVG_TOK_FILTER_PRIMITIVE: {
+						SVG_ATT_FILTER_PRIMITIVE_X
+					} break;
+				#endif
+				#if defined(SVG_ATT_IMAGE_X)
+					case SVG_TOK_IMAGE: {
+						SVG_ATT_IMAGE_X
+					} break;
+				#endif
+				#if defined(SVG_ATT_MASK_X)
+					case SVG_TOK_MASK: {
+						SVG_ATT_MASK_X
+					} break;
+				#endif
+				#if defined(SVG_ATT_PATTERN_X)
+					case SVG_TOK_PATTERN: {
+						SVG_ATT_PATTERN_X
+					} break;
+				#endif
+				#if defined(SVG_ATT_RECT_X)
+					case SVG_TOK_RECT: {
+						SVG_ATT_RECT_X
+					} break;
+				#endif
+				#if defined(SVG_ATT_SVG_X)
+					case SVG_TOK_SVG: {
+						SVG_ATT_SVG_X
+					} break;
+				#endif
+				#if defined(SVG_ATT_TEXT_X)
+					case SVG_TOK_TEXT: {
+						SVG_ATT_TEXT_X
+					} break;
+				#endif
+				#if defined(SVG_ATT_TSPAN_X)
+					case SVG_TOK_TSPAN: {
+						SVG_ATT_TSPAN_X
+					} break;
+				#endif
+				#if defined(SVG_ATT_USE_X)
+					case SVG_TOK_USE: {
+						SVG_ATT_USE_X
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_FILTER_PRIMITIVE_Y) || defined(SVG_ATT_IMAGE_Y) || defined(SVG_ATT_MASK_Y) || defined(SVG_ATT_PATTERN_Y) || defined(SVG_ATT_RECT_Y) || defined(SVG_ATT_SVG_Y) || defined(SVG_ATT_TEXT_Y) || defined(SVG_ATT_TSPAN_Y) || defined(SVG_ATT_USE_Y)
+		case SVG_ATT_TOK_Y: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_FILTER_PRIMITIVE_Y)
+					case SVG_TOK_FILTER_PRIMITIVE: {
+						SVG_ATT_FILTER_PRIMITIVE_Y
+					} break;
+				#endif
+				#if defined(SVG_ATT_IMAGE_Y)
+					case SVG_TOK_IMAGE: {
+						SVG_ATT_IMAGE_Y
+					} break;
+				#endif
+				#if defined(SVG_ATT_MASK_Y)
+					case SVG_TOK_MASK: {
+						SVG_ATT_MASK_Y
+					} break;
+				#endif
+				#if defined(SVG_ATT_PATTERN_Y)
+					case SVG_TOK_PATTERN: {
+						SVG_ATT_PATTERN_Y
+					} break;
+				#endif
+				#if defined(SVG_ATT_RECT_Y)
+					case SVG_TOK_RECT: {
+						SVG_ATT_RECT_Y
+					} break;
+				#endif
+				#if defined(SVG_ATT_SVG_Y)
+					case SVG_TOK_SVG: {
+						SVG_ATT_SVG_Y
+					} break;
+				#endif
+				#if defined(SVG_ATT_TEXT_Y)
+					case SVG_TOK_TEXT: {
+						SVG_ATT_TEXT_Y
+					} break;
+				#endif
+				#if defined(SVG_ATT_TSPAN_Y)
+					case SVG_TOK_TSPAN: {
+						SVG_ATT_TSPAN_Y
+					} break;
+				#endif
+				#if defined(SVG_ATT_USE_Y)
+					case SVG_TOK_USE: {
+						SVG_ATT_USE_Y
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_CROSSORIGIN)
+		case SVG_ATT_TOK_CROSSORIGIN: {
+			SVG_ATT_CROSSORIGIN
+		} break;
+	#endif
+	#if defined(SVG_ATT_IMAGE_HREF) || defined(SVG_ATT_LINEARGRADIENT_HREF) || defined(SVG_ATT_PATTERN_HREF) || defined(SVG_ATT_RADIALGRADIENT_HREF) || defined(SVG_ATT_TEXTPATH_HREF) || defined(SVG_ATT_USE_HREF)
+		case SVG_ATT_TOK_HREF: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_IMAGE_HREF)
+					case SVG_TOK_IMAGE: {
+						SVG_ATT_IMAGE_HREF
+					} break;
+				#endif
+				#if defined(SVG_ATT_LINEARGRADIENT_HREF)
+					case SVG_TOK_LINEARGRADIENT: {
+						SVG_ATT_LINEARGRADIENT_HREF
+					} break;
+				#endif
+				#if defined(SVG_ATT_PATTERN_HREF)
+					case SVG_TOK_PATTERN: {
+						SVG_ATT_PATTERN_HREF
+					} break;
+				#endif
+				#if defined(SVG_ATT_RADIALGRADIENT_HREF)
+					case SVG_TOK_RADIALGRADIENT: {
+						SVG_ATT_RADIALGRADIENT_HREF
+					} break;
+				#endif
+				#if defined(SVG_ATT_TEXTPATH_HREF)
+					case SVG_TOK_TEXTPATH: {
+						SVG_ATT_TEXTPATH_HREF
+					} break;
+				#endif
+				#if defined(SVG_ATT_USE_HREF)
+					case SVG_TOK_USE: {
+						SVG_ATT_USE_HREF
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_IMAGE_PRESERVEASPECTRATIO) || defined(SVG_ATT_MARKER_PRESERVEASPECTRATIO) || defined(SVG_ATT_PATTERN_PRESERVEASPECTRATIO) || defined(SVG_ATT_SVG_PRESERVEASPECTRATIO)
+		case SVG_ATT_TOK_PRESERVEASPECTRATIO: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_IMAGE_PRESERVEASPECTRATIO)
+					case SVG_TOK_IMAGE: {
+						SVG_ATT_IMAGE_PRESERVEASPECTRATIO
+					} break;
+				#endif
+				#if defined(SVG_ATT_MARKER_PRESERVEASPECTRATIO)
+					case SVG_TOK_MARKER: {
+						SVG_ATT_MARKER_PRESERVEASPECTRATIO
+					} break;
+				#endif
+				#if defined(SVG_ATT_PATTERN_PRESERVEASPECTRATIO)
+					case SVG_TOK_PATTERN: {
+						SVG_ATT_PATTERN_PRESERVEASPECTRATIO
+					} break;
+				#endif
+				#if defined(SVG_ATT_SVG_PRESERVEASPECTRATIO)
+					case SVG_TOK_SVG: {
+						SVG_ATT_SVG_PRESERVEASPECTRATIO
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONABORT)
+		case SVG_ATT_TOK_ONABORT: {
+			SVG_ATT_ONABORT
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONACTIVATE)
+		case SVG_ATT_TOK_ONACTIVATE: {
+			SVG_ATT_ONACTIVATE
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONBEGIN)
+		case SVG_ATT_TOK_ONBEGIN: {
+			SVG_ATT_ONBEGIN
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONCLICK)
+		case SVG_ATT_TOK_ONCLICK: {
+			SVG_ATT_ONCLICK
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONEND)
+		case SVG_ATT_TOK_ONEND: {
+			SVG_ATT_ONEND
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONERROR)
+		case SVG_ATT_TOK_ONERROR: {
+			SVG_ATT_ONERROR
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONFOCUSIN)
+		case SVG_ATT_TOK_ONFOCUSIN: {
+			SVG_ATT_ONFOCUSIN
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONFOCUSOUT)
+		case SVG_ATT_TOK_ONFOCUSOUT: {
+			SVG_ATT_ONFOCUSOUT
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONKEYDOWN)
+		case SVG_ATT_TOK_ONKEYDOWN: {
+			SVG_ATT_ONKEYDOWN
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONKEYPRESS)
+		case SVG_ATT_TOK_ONKEYPRESS: {
+			SVG_ATT_ONKEYPRESS
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONKEYUP)
+		case SVG_ATT_TOK_ONKEYUP: {
+			SVG_ATT_ONKEYUP
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONLOAD)
+		case SVG_ATT_TOK_ONLOAD: {
+			SVG_ATT_ONLOAD
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONMOUSEDOWN)
+		case SVG_ATT_TOK_ONMOUSEDOWN: {
+			SVG_ATT_ONMOUSEDOWN
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONMOUSEMOVE)
+		case SVG_ATT_TOK_ONMOUSEMOVE: {
+			SVG_ATT_ONMOUSEMOVE
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONMOUSEOUT)
+		case SVG_ATT_TOK_ONMOUSEOUT: {
+			SVG_ATT_ONMOUSEOUT
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONMOUSEOVER)
+		case SVG_ATT_TOK_ONMOUSEOVER: {
+			SVG_ATT_ONMOUSEOVER
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONMOUSEUP)
+		case SVG_ATT_TOK_ONMOUSEUP: {
+			SVG_ATT_ONMOUSEUP
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONREPEAT)
+		case SVG_ATT_TOK_ONREPEAT: {
+			SVG_ATT_ONREPEAT
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONRESIZE)
+		case SVG_ATT_TOK_ONRESIZE: {
+			SVG_ATT_ONRESIZE
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONSCROLL)
+		case SVG_ATT_TOK_ONSCROLL: {
+			SVG_ATT_ONSCROLL
+		} break;
+	#endif
+	#if defined(SVG_ATT_ONUNLOAD)
+		case SVG_ATT_TOK_ONUNLOAD: {
+			SVG_ATT_ONUNLOAD
+		} break;
+	#endif
+	#if defined(SVG_ATT_LINE_X1) || defined(SVG_ATT_LINEARGRADIENT_X1)
+		case SVG_ATT_TOK_X1: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_LINE_X1)
+					case SVG_TOK_LINE: {
+						SVG_ATT_LINE_X1
+					} break;
+				#endif
+				#if defined(SVG_ATT_LINEARGRADIENT_X1)
+					case SVG_TOK_LINEARGRADIENT: {
+						SVG_ATT_LINEARGRADIENT_X1
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_LINE_X2) || defined(SVG_ATT_LINEARGRADIENT_X2)
+		case SVG_ATT_TOK_X2: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_LINE_X2)
+					case SVG_TOK_LINE: {
+						SVG_ATT_LINE_X2
+					} break;
+				#endif
+				#if defined(SVG_ATT_LINEARGRADIENT_X2)
+					case SVG_TOK_LINEARGRADIENT: {
+						SVG_ATT_LINEARGRADIENT_X2
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_LINE_Y1) || defined(SVG_ATT_LINEARGRADIENT_Y1)
+		case SVG_ATT_TOK_Y1: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_LINE_Y1)
+					case SVG_TOK_LINE: {
+						SVG_ATT_LINE_Y1
+					} break;
+				#endif
+				#if defined(SVG_ATT_LINEARGRADIENT_Y1)
+					case SVG_TOK_LINEARGRADIENT: {
+						SVG_ATT_LINEARGRADIENT_Y1
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_LINE_Y2) || defined(SVG_ATT_LINEARGRADIENT_Y2)
+		case SVG_ATT_TOK_Y2: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_LINE_Y2)
+					case SVG_TOK_LINE: {
+						SVG_ATT_LINE_Y2
+					} break;
+				#endif
+				#if defined(SVG_ATT_LINEARGRADIENT_Y2)
+					case SVG_TOK_LINEARGRADIENT: {
+						SVG_ATT_LINEARGRADIENT_Y2
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_LINEARGRADIENT_GRADIENTTRANSFORM) || defined(SVG_ATT_RADIALGRADIENT_GRADIENTTRANSFORM)
+		case SVG_ATT_TOK_GRADIENTTRANSFORM: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_LINEARGRADIENT_GRADIENTTRANSFORM)
+					case SVG_TOK_LINEARGRADIENT: {
+						SVG_ATT_LINEARGRADIENT_GRADIENTTRANSFORM
+					} break;
+				#endif
+				#if defined(SVG_ATT_RADIALGRADIENT_GRADIENTTRANSFORM)
+					case SVG_TOK_RADIALGRADIENT: {
+						SVG_ATT_RADIALGRADIENT_GRADIENTTRANSFORM
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_LINEARGRADIENT_GRADIENTUNITS) || defined(SVG_ATT_RADIALGRADIENT_GRADIENTUNITS)
+		case SVG_ATT_TOK_GRADIENTUNITS: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_LINEARGRADIENT_GRADIENTUNITS)
+					case SVG_TOK_LINEARGRADIENT: {
+						SVG_ATT_LINEARGRADIENT_GRADIENTUNITS
+					} break;
+				#endif
+				#if defined(SVG_ATT_RADIALGRADIENT_GRADIENTUNITS)
+					case SVG_TOK_RADIALGRADIENT: {
+						SVG_ATT_RADIALGRADIENT_GRADIENTUNITS
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_LINEARGRADIENT_SPREADMETHOD) || defined(SVG_ATT_RADIALGRADIENT_SPREADMETHOD)
+		case SVG_ATT_TOK_SPREADMETHOD: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_LINEARGRADIENT_SPREADMETHOD)
+					case SVG_TOK_LINEARGRADIENT: {
+						SVG_ATT_LINEARGRADIENT_SPREADMETHOD
+					} break;
+				#endif
+				#if defined(SVG_ATT_RADIALGRADIENT_SPREADMETHOD)
+					case SVG_TOK_RADIALGRADIENT: {
+						SVG_ATT_RADIALGRADIENT_SPREADMETHOD
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_MARKERHEIGHT)
+		case SVG_ATT_TOK_MARKERHEIGHT: {
+			SVG_ATT_MARKERHEIGHT
+		} break;
+	#endif
+	#if defined(SVG_ATT_MARKERUNITS)
+		case SVG_ATT_TOK_MARKERUNITS: {
+			SVG_ATT_MARKERUNITS
+		} break;
+	#endif
+	#if defined(SVG_ATT_MARKERWIDTH)
+		case SVG_ATT_TOK_MARKERWIDTH: {
+			SVG_ATT_MARKERWIDTH
+		} break;
+	#endif
+	#if defined(SVG_ATT_ORIENT)
+		case SVG_ATT_TOK_ORIENT: {
+			SVG_ATT_ORIENT
+		} break;
+	#endif
+	#if defined(SVG_ATT_REFX)
+		case SVG_ATT_TOK_REFX: {
+			SVG_ATT_REFX
+		} break;
+	#endif
+	#if defined(SVG_ATT_REFY)
+		case SVG_ATT_TOK_REFY: {
+			SVG_ATT_REFY
+		} break;
+	#endif
+	#if defined(SVG_ATT_MARKER_VIEWBOX) || defined(SVG_ATT_PATTERN_VIEWBOX) || defined(SVG_ATT_SVG_VIEWBOX)
+		case SVG_ATT_TOK_VIEWBOX: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_MARKER_VIEWBOX)
+					case SVG_TOK_MARKER: {
+						SVG_ATT_MARKER_VIEWBOX
+					} break;
+				#endif
+				#if defined(SVG_ATT_PATTERN_VIEWBOX)
+					case SVG_TOK_PATTERN: {
+						SVG_ATT_PATTERN_VIEWBOX
+					} break;
+				#endif
+				#if defined(SVG_ATT_SVG_VIEWBOX)
+					case SVG_TOK_SVG: {
+						SVG_ATT_SVG_VIEWBOX
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_MASKCONTENTUNITS)
+		case SVG_ATT_TOK_MASKCONTENTUNITS: {
+			SVG_ATT_MASKCONTENTUNITS
+		} break;
+	#endif
+	#if defined(SVG_ATT_MASKUNITS)
+		case SVG_ATT_TOK_MASKUNITS: {
+			SVG_ATT_MASKUNITS
+		} break;
+	#endif
+	#if defined(SVG_ATT_D)
+		case SVG_ATT_TOK_D: {
+			SVG_ATT_D
+		} break;
+	#endif
+	#if defined(SVG_ATT_PATHLENGTH)
+		case SVG_ATT_TOK_PATHLENGTH: {
+			SVG_ATT_PATHLENGTH
+		} break;
+	#endif
+	#if defined(SVG_ATT_PATTERNCONTENTUNITS)
+		case SVG_ATT_TOK_PATTERNCONTENTUNITS: {
+			SVG_ATT_PATTERNCONTENTUNITS
+		} break;
+	#endif
+	#if defined(SVG_ATT_PATTERNTRANSFORM)
+		case SVG_ATT_TOK_PATTERNTRANSFORM: {
+			SVG_ATT_PATTERNTRANSFORM
+		} break;
+	#endif
+	#if defined(SVG_ATT_PATTERNUNITS)
+		case SVG_ATT_TOK_PATTERNUNITS: {
+			SVG_ATT_PATTERNUNITS
+		} break;
+	#endif
+	#if defined(SVG_ATT_POLYGON_POINTS) || defined(SVG_ATT_POLYLINE_POINTS)
+		case SVG_ATT_TOK_POINTS: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_POLYGON_POINTS)
+					case SVG_TOK_POLYGON: {
+						SVG_ATT_POLYGON_POINTS
+					} break;
+				#endif
+				#if defined(SVG_ATT_POLYLINE_POINTS)
+					case SVG_TOK_POLYLINE: {
+						SVG_ATT_POLYLINE_POINTS
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_ALIGNMENT_BASELINE)
+		case SVG_ATT_TOK_ALIGNMENT_BASELINE: {
+			SVG_ATT_ALIGNMENT_BASELINE
+		} break;
+	#endif
+	#if defined(SVG_ATT_BASELINE_SHIFT)
+		case SVG_ATT_TOK_BASELINE_SHIFT: {
+			SVG_ATT_BASELINE_SHIFT
+		} break;
+	#endif
+	#if defined(SVG_ATT_CLIP)
+		case SVG_ATT_TOK_CLIP: {
+			SVG_ATT_CLIP
+		} break;
+	#endif
+	#if defined(SVG_ATT_CLIP_PATH)
+		case SVG_ATT_TOK_CLIP_PATH: {
+			SVG_ATT_CLIP_PATH
+		} break;
+	#endif
+	#if defined(SVG_ATT_CLIP_RULE)
+		case SVG_ATT_TOK_CLIP_RULE: {
+			SVG_ATT_CLIP_RULE
+		} break;
+	#endif
+	#if defined(SVG_ATT_COLOR)
+		case SVG_ATT_TOK_COLOR: {
+			SVG_ATT_COLOR
+		} break;
+	#endif
+	#if defined(SVG_ATT_COLOR_INTERPOLATION)
+		case SVG_ATT_TOK_COLOR_INTERPOLATION: {
+			SVG_ATT_COLOR_INTERPOLATION
+		} break;
+	#endif
+	#if defined(SVG_ATT_COLOR_INTERPOLATION_FILTERS)
+		case SVG_ATT_TOK_COLOR_INTERPOLATION_FILTERS: {
+			SVG_ATT_COLOR_INTERPOLATION_FILTERS
+		} break;
+	#endif
+	#if defined(SVG_ATT_COLOR_PROFILE)
+		case SVG_ATT_TOK_COLOR_PROFILE: {
+			SVG_ATT_COLOR_PROFILE
+		} break;
+	#endif
+	#if defined(SVG_ATT_COLOR_RENDERING)
+		case SVG_ATT_TOK_COLOR_RENDERING: {
+			SVG_ATT_COLOR_RENDERING
+		} break;
+	#endif
+	#if defined(SVG_ATT_CURSOR)
+		case SVG_ATT_TOK_CURSOR: {
+			SVG_ATT_CURSOR
+		} break;
+	#endif
+	#if defined(SVG_ATT_DIRECTION)
+		case SVG_ATT_TOK_DIRECTION: {
+			SVG_ATT_DIRECTION
+		} break;
+	#endif
+	#if defined(SVG_ATT_DISPLAY)
+		case SVG_ATT_TOK_DISPLAY: {
+			SVG_ATT_DISPLAY
+		} break;
+	#endif
+	#if defined(SVG_ATT_DOMINANT_BASELINE)
+		case SVG_ATT_TOK_DOMINANT_BASELINE: {
+			SVG_ATT_DOMINANT_BASELINE
+		} break;
+	#endif
+	#if defined(SVG_ATT_ENABLE_BACKGROUND)
+		case SVG_ATT_TOK_ENABLE_BACKGROUND: {
+			SVG_ATT_ENABLE_BACKGROUND
+		} break;
+	#endif
+	#if defined(SVG_ATT_FILL_OPACITY)
+		case SVG_ATT_TOK_FILL_OPACITY: {
+			SVG_ATT_FILL_OPACITY
+		} break;
+	#endif
+	#if defined(SVG_ATT_FILL_RULE)
+		case SVG_ATT_TOK_FILL_RULE: {
+			SVG_ATT_FILL_RULE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FILTER)
+		case SVG_ATT_TOK_FILTER: {
+			SVG_ATT_FILTER
+		} break;
+	#endif
+	#if defined(SVG_ATT_FLOOD_COLOR)
+		case SVG_ATT_TOK_FLOOD_COLOR: {
+			SVG_ATT_FLOOD_COLOR
+		} break;
+	#endif
+	#if defined(SVG_ATT_FLOOD_OPACITY)
+		case SVG_ATT_TOK_FLOOD_OPACITY: {
+			SVG_ATT_FLOOD_OPACITY
+		} break;
+	#endif
+	#if defined(SVG_ATT_FONT_FAMILY)
+		case SVG_ATT_TOK_FONT_FAMILY: {
+			SVG_ATT_FONT_FAMILY
+		} break;
+	#endif
+	#if defined(SVG_ATT_FONT_SIZE)
+		case SVG_ATT_TOK_FONT_SIZE: {
+			SVG_ATT_FONT_SIZE
+		} break;
+	#endif
+	#if defined(SVG_ATT_FONT_SIZE_ADJUST)
+		case SVG_ATT_TOK_FONT_SIZE_ADJUST: {
+			SVG_ATT_FONT_SIZE_ADJUST
+		} break;
+	#endif
+	#if defined(SVG_ATT_FONT_STRETCH)
 		case SVG_ATT_TOK_FONT_STRETCH: {
-			SVG_ATT_PROC_FONT_STRETCH
+			SVG_ATT_FONT_STRETCH
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_UNICODE_RANGE)
-		case SVG_ATT_TOK_UNICODE_RANGE: {
-			SVG_ATT_PROC_UNICODE_RANGE
+	#if defined(SVG_ATT_FONT_STYLE)
+		case SVG_ATT_TOK_FONT_STYLE: {
+			SVG_ATT_FONT_STYLE
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_UNITS_PER_EM)
-		case SVG_ATT_TOK_UNITS_PER_EM: {
-			SVG_ATT_PROC_UNITS_PER_EM
+	#if defined(SVG_ATT_FONT_VARIANT)
+		case SVG_ATT_TOK_FONT_VARIANT: {
+			SVG_ATT_FONT_VARIANT
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_PANOSE_1)
-		case SVG_ATT_TOK_PANOSE_1: {
-			SVG_ATT_PROC_PANOSE_1
+	#if defined(SVG_ATT_FONT_WEIGHT)
+		case SVG_ATT_TOK_FONT_WEIGHT: {
+			SVG_ATT_FONT_WEIGHT
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_STEMV)
-		case SVG_ATT_TOK_STEMV: {
-			SVG_ATT_PROC_STEMV
+	#if defined(SVG_ATT_GLYPH_ORIENTATION_HORIZONTAL)
+		case SVG_ATT_TOK_GLYPH_ORIENTATION_HORIZONTAL: {
+			SVG_ATT_GLYPH_ORIENTATION_HORIZONTAL
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_STEMH)
-		case SVG_ATT_TOK_STEMH: {
-			SVG_ATT_PROC_STEMH
+	#if defined(SVG_ATT_GLYPH_ORIENTATION_VERTICAL)
+		case SVG_ATT_TOK_GLYPH_ORIENTATION_VERTICAL: {
+			SVG_ATT_GLYPH_ORIENTATION_VERTICAL
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_CAP_HEIGHT)
-		case SVG_ATT_TOK_CAP_HEIGHT: {
-			SVG_ATT_PROC_CAP_HEIGHT
+	#if defined(SVG_ATT_IMAGE_RENDERING)
+		case SVG_ATT_TOK_IMAGE_RENDERING: {
+			SVG_ATT_IMAGE_RENDERING
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_X_HEIGHT)
-		case SVG_ATT_TOK_X_HEIGHT: {
-			SVG_ATT_PROC_X_HEIGHT
+	#if defined(SVG_ATT_LIGHTING_COLOR)
+		case SVG_ATT_TOK_LIGHTING_COLOR: {
+			SVG_ATT_LIGHTING_COLOR
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_ACCENT_HEIGHT)
-		case SVG_ATT_TOK_ACCENT_HEIGHT: {
-			SVG_ATT_PROC_ACCENT_HEIGHT
+	#if defined(SVG_ATT_MARKER_END)
+		case SVG_ATT_TOK_MARKER_END: {
+			SVG_ATT_MARKER_END
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_ASCENT)
-		case SVG_ATT_TOK_ASCENT: {
-			SVG_ATT_PROC_ASCENT
+	#if defined(SVG_ATT_MARKER_MID)
+		case SVG_ATT_TOK_MARKER_MID: {
+			SVG_ATT_MARKER_MID
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_DESCENT)
-		case SVG_ATT_TOK_DESCENT: {
-			SVG_ATT_PROC_DESCENT
+	#if defined(SVG_ATT_MARKER_START)
+		case SVG_ATT_TOK_MARKER_START: {
+			SVG_ATT_MARKER_START
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_WIDTHS)
-		case SVG_ATT_TOK_WIDTHS: {
-			SVG_ATT_PROC_WIDTHS
+	#if defined(SVG_ATT_MASK)
+		case SVG_ATT_TOK_MASK: {
+			SVG_ATT_MASK
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_BBOX)
-		case SVG_ATT_TOK_BBOX: {
-			SVG_ATT_PROC_BBOX
+	#if defined(SVG_ATT_OPACITY)
+		case SVG_ATT_TOK_OPACITY: {
+			SVG_ATT_OPACITY
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_IDEOGRAPHIC)
-		case SVG_ATT_TOK_IDEOGRAPHIC: {
-			SVG_ATT_PROC_IDEOGRAPHIC
+	#if defined(SVG_ATT_OVERFLOW)
+		case SVG_ATT_TOK_OVERFLOW: {
+			SVG_ATT_OVERFLOW
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_ALPHABETIC)
-		case SVG_ATT_TOK_ALPHABETIC: {
-			SVG_ATT_PROC_ALPHABETIC
+	#if defined(SVG_ATT_PAINT_ORDER)
+		case SVG_ATT_TOK_PAINT_ORDER: {
+			SVG_ATT_PAINT_ORDER
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_MATHEMATICAL)
-		case SVG_ATT_TOK_MATHEMATICAL: {
-			SVG_ATT_PROC_MATHEMATICAL
+	#if defined(SVG_ATT_POINTER_EVENTS)
+		case SVG_ATT_TOK_POINTER_EVENTS: {
+			SVG_ATT_POINTER_EVENTS
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_HANGING)
-		case SVG_ATT_TOK_HANGING: {
-			SVG_ATT_PROC_HANGING
+	#if defined(SVG_ATT_SHAPE_RENDERING)
+		case SVG_ATT_TOK_SHAPE_RENDERING: {
+			SVG_ATT_SHAPE_RENDERING
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_V_IDEOGRAPHIC)
-		case SVG_ATT_TOK_V_IDEOGRAPHIC: {
-			SVG_ATT_PROC_V_IDEOGRAPHIC
+	#if defined(SVG_ATT_STOP_COLOR)
+		case SVG_ATT_TOK_STOP_COLOR: {
+			SVG_ATT_STOP_COLOR
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_V_ALPHABETIC)
-		case SVG_ATT_TOK_V_ALPHABETIC: {
-			SVG_ATT_PROC_V_ALPHABETIC
+	#if defined(SVG_ATT_STOP_OPACITY)
+		case SVG_ATT_TOK_STOP_OPACITY: {
+			SVG_ATT_STOP_OPACITY
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_V_MATHEMATICAL)
-		case SVG_ATT_TOK_V_MATHEMATICAL: {
-			SVG_ATT_PROC_V_MATHEMATICAL
+	#if defined(SVG_ATT_STROKE)
+		case SVG_ATT_TOK_STROKE: {
+			SVG_ATT_STROKE
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_V_HANGING)
-		case SVG_ATT_TOK_V_HANGING: {
-			SVG_ATT_PROC_V_HANGING
+	#if defined(SVG_ATT_STROKE_DASHARRAY)
+		case SVG_ATT_TOK_STROKE_DASHARRAY: {
+			SVG_ATT_STROKE_DASHARRAY
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_UNDERLINE_POSITION)
-		case SVG_ATT_TOK_UNDERLINE_POSITION: {
-			SVG_ATT_PROC_UNDERLINE_POSITION
+	#if defined(SVG_ATT_STROKE_DASHOFFSET)
+		case SVG_ATT_TOK_STROKE_DASHOFFSET: {
+			SVG_ATT_STROKE_DASHOFFSET
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_UNDERLINE_THICKNESS)
-		case SVG_ATT_TOK_UNDERLINE_THICKNESS: {
-			SVG_ATT_PROC_UNDERLINE_THICKNESS
+	#if defined(SVG_ATT_STROKE_LINECAP)
+		case SVG_ATT_TOK_STROKE_LINECAP: {
+			SVG_ATT_STROKE_LINECAP
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_STRIKETHROUGH_POSITION)
-		case SVG_ATT_TOK_STRIKETHROUGH_POSITION: {
-			SVG_ATT_PROC_STRIKETHROUGH_POSITION
+	#if defined(SVG_ATT_STROKE_LINEJOIN)
+		case SVG_ATT_TOK_STROKE_LINEJOIN: {
+			SVG_ATT_STROKE_LINEJOIN
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_STRIKETHROUGH_THICKNESS)
-		case SVG_ATT_TOK_STRIKETHROUGH_THICKNESS: {
-			SVG_ATT_PROC_STRIKETHROUGH_THICKNESS
+	#if defined(SVG_ATT_STROKE_MITERLIMIT)
+		case SVG_ATT_TOK_STROKE_MITERLIMIT: {
+			SVG_ATT_STROKE_MITERLIMIT
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_OVERLINE_POSITION)
-		case SVG_ATT_TOK_OVERLINE_POSITION: {
-			SVG_ATT_PROC_OVERLINE_POSITION
+	#if defined(SVG_ATT_STROKE_OPACITY)
+		case SVG_ATT_TOK_STROKE_OPACITY: {
+			SVG_ATT_STROKE_OPACITY
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_OVERLINE_THICKNESS)
-		case SVG_ATT_TOK_OVERLINE_THICKNESS: {
-			SVG_ATT_PROC_OVERLINE_THICKNESS
+	#if defined(SVG_ATT_STROKE_WIDTH)
+		case SVG_ATT_TOK_STROKE_WIDTH: {
+			SVG_ATT_STROKE_WIDTH
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_UNICODE)
-		case SVG_ATT_TOK_UNICODE: {
-			SVG_ATT_PROC_UNICODE
+	#if defined(SVG_ATT_TEXT_ANCHOR)
+		case SVG_ATT_TOK_TEXT_ANCHOR: {
+			SVG_ATT_TEXT_ANCHOR
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_GLYPH_NAME)
-		case SVG_ATT_TOK_GLYPH_NAME: {
-			SVG_ATT_PROC_GLYPH_NAME
+	#if defined(SVG_ATT_TEXT_DECORATION)
+		case SVG_ATT_TOK_TEXT_DECORATION: {
+			SVG_ATT_TEXT_DECORATION
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_ORIENTATION)
-		case SVG_ATT_TOK_ORIENTATION: {
-			SVG_ATT_PROC_ORIENTATION
+	#if defined(SVG_ATT_TEXT_RENDERING)
+		case SVG_ATT_TOK_TEXT_RENDERING: {
+			SVG_ATT_TEXT_RENDERING
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_ARABIC_FORM)
-		case SVG_ATT_TOK_ARABIC_FORM: {
-			SVG_ATT_PROC_ARABIC_FORM
+	#if defined(SVG_ATT_UNICODE_BIDI)
+		case SVG_ATT_TOK_UNICODE_BIDI: {
+			SVG_ATT_UNICODE_BIDI
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_LANG)
-		case SVG_ATT_TOK_LANG: {
-			SVG_ATT_PROC_LANG
+	#if defined(SVG_ATT_VECTOR_EFFECT)
+		case SVG_ATT_TOK_VECTOR_EFFECT: {
+			SVG_ATT_VECTOR_EFFECT
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_U1)
-		case SVG_ATT_TOK_U1: {
-			SVG_ATT_PROC_U1
+	#if defined(SVG_ATT_VISIBILITY)
+		case SVG_ATT_TOK_VISIBILITY: {
+			SVG_ATT_VISIBILITY
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_G1)
-		case SVG_ATT_TOK_G1: {
-			SVG_ATT_PROC_G1
+	#if defined(SVG_ATT_WORD_SPACING)
+		case SVG_ATT_TOK_WORD_SPACING: {
+			SVG_ATT_WORD_SPACING
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_U2)
-		case SVG_ATT_TOK_U2: {
-			SVG_ATT_PROC_U2
+	#if defined(SVG_ATT_WRITING_MODE)
+		case SVG_ATT_TOK_WRITING_MODE: {
+			SVG_ATT_WRITING_MODE
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_G2)
-		case SVG_ATT_TOK_G2: {
-			SVG_ATT_PROC_G2
+	#if defined(SVG_ATT_FR)
+		case SVG_ATT_TOK_FR: {
+			SVG_ATT_FR
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_K)
-		case SVG_ATT_TOK_K: {
-			SVG_ATT_PROC_K
+	#if defined(SVG_ATT_FX)
+		case SVG_ATT_TOK_FX: {
+			SVG_ATT_FX
 		} break;
 	#endif
-	#if defined(SVG_ATT_PROC_STRING)
-		case SVG_ATT_TOK_STRING: {
-			SVG_ATT_PROC_STRING
+	#if defined(SVG_ATT_FY)
+		case SVG_ATT_TOK_FY: {
+			SVG_ATT_FY
+		} break;
+	#endif
+	#if defined(SVG_ATT_OFFSET)
+		case SVG_ATT_TOK_OFFSET: {
+			SVG_ATT_OFFSET
+		} break;
+	#endif
+	#if defined(SVG_ATT_BASEPROFILE)
+		case SVG_ATT_TOK_BASEPROFILE: {
+			SVG_ATT_BASEPROFILE
+		} break;
+	#endif
+	#if defined(SVG_ATT_VERSION)
+		case SVG_ATT_TOK_VERSION: {
+			SVG_ATT_VERSION
+		} break;
+	#endif
+	#if defined(SVG_ATT_ZOOMANDPAN)
+		case SVG_ATT_TOK_ZOOMANDPAN: {
+			SVG_ATT_ZOOMANDPAN
+		} break;
+	#endif
+	#if defined(SVG_ATT_TEXT_DX) || defined(SVG_ATT_TSPAN_DX)
+		case SVG_ATT_TOK_DX: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_TEXT_DX)
+					case SVG_TOK_TEXT: {
+						SVG_ATT_TEXT_DX
+					} break;
+				#endif
+				#if defined(SVG_ATT_TSPAN_DX)
+					case SVG_TOK_TSPAN: {
+						SVG_ATT_TSPAN_DX
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_TEXT_DY) || defined(SVG_ATT_TSPAN_DY)
+		case SVG_ATT_TOK_DY: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_TEXT_DY)
+					case SVG_TOK_TEXT: {
+						SVG_ATT_TEXT_DY
+					} break;
+				#endif
+				#if defined(SVG_ATT_TSPAN_DY)
+					case SVG_TOK_TSPAN: {
+						SVG_ATT_TSPAN_DY
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_TEXT_LENGTHADJUST) || defined(SVG_ATT_TSPAN_LENGTHADJUST)
+		case SVG_ATT_TOK_LENGTHADJUST: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_TEXT_LENGTHADJUST)
+					case SVG_TOK_TEXT: {
+						SVG_ATT_TEXT_LENGTHADJUST
+					} break;
+				#endif
+				#if defined(SVG_ATT_TSPAN_LENGTHADJUST)
+					case SVG_TOK_TSPAN: {
+						SVG_ATT_TSPAN_LENGTHADJUST
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_TEXT_TEXTLENGTH) || defined(SVG_ATT_TSPAN_TEXTLENGTH)
+		case SVG_ATT_TOK_TEXTLENGTH: {
+			switch (svg->curEltType) {
+				#if defined(SVG_ATT_TEXT_TEXTLENGTH)
+					case SVG_TOK_TEXT: {
+						SVG_ATT_TEXT_TEXTLENGTH
+					} break;
+				#endif
+				#if defined(SVG_ATT_TSPAN_TEXTLENGTH)
+					case SVG_TOK_TSPAN: {
+						SVG_ATT_TSPAN_TEXTLENGTH
+					} break;
+				#endif
+			}
+		} break;
+	#endif
+	#if defined(SVG_ATT_METHOD)
+		case SVG_ATT_TOK_METHOD: {
+			SVG_ATT_METHOD
+		} break;
+	#endif
+	#if defined(SVG_ATT_SIDE)
+		case SVG_ATT_TOK_SIDE: {
+			SVG_ATT_SIDE
+		} break;
+	#endif
+	#if defined(SVG_ATT_SPACING)
+		case SVG_ATT_TOK_SPACING: {
+			SVG_ATT_SPACING
+		} break;
+	#endif
+	#if defined(SVG_ATT_STARTOFFSET)
+		case SVG_ATT_TOK_STARTOFFSET: {
+			SVG_ATT_STARTOFFSET
+		} break;
+	#endif
+	#if defined(SVG_ATT_XLINK_ACTUATE)
+		case SVG_ATT_TOK_XLINK_ACTUATE: {
+			SVG_ATT_XLINK_ACTUATE
+		} break;
+	#endif
+	#if defined(SVG_ATT_XLINK_ARCROLE)
+		case SVG_ATT_TOK_XLINK_ARCROLE: {
+			SVG_ATT_XLINK_ARCROLE
+		} break;
+	#endif
+	#if defined(SVG_ATT_XLINK_HREF)
+		case SVG_ATT_TOK_XLINK_HREF: {
+			SVG_ATT_XLINK_HREF
+		} break;
+	#endif
+	#if defined(SVG_ATT_XLINK_ROLE)
+		case SVG_ATT_TOK_XLINK_ROLE: {
+			SVG_ATT_XLINK_ROLE
+		} break;
+	#endif
+	#if defined(SVG_ATT_XLINK_SHOW)
+		case SVG_ATT_TOK_XLINK_SHOW: {
+			SVG_ATT_XLINK_SHOW
+		} break;
+	#endif
+	#if defined(SVG_ATT_XLINK_TITLE)
+		case SVG_ATT_TOK_XLINK_TITLE: {
+			SVG_ATT_XLINK_TITLE
+		} break;
+	#endif
+	#if defined(SVG_ATT_XLINK_TYPE)
+		case SVG_ATT_TOK_XLINK_TYPE: {
+			SVG_ATT_XLINK_TYPE
 		} break;
 	#endif
 SVG_ATT_LUT_FUNC_FOOTER
-#ifndef HEADING_SVG_XMLNS_ATTRIB
-	#define HEADING_SVG_XMLNS_ATTRIB
-#endif
-#ifndef PROCESS_SVG_XMLNS_ATTRIB
-	#define PROCESS_SVG_XMLNS_ATTRIB
-#endif
-#ifndef HEADING_SVG_CORE_ATTRIB
-	#define HEADING_SVG_CORE_ATTRIB
-#endif
-#ifndef PROCESS_SVG_CORE_ATTRIB
-	#define PROCESS_SVG_CORE_ATTRIB
-#endif
-#ifndef HEADING_SVG_CONDITIONAL_ATTRIB
-	#define HEADING_SVG_CONDITIONAL_ATTRIB
-#endif
-#ifndef PROCESS_SVG_CONDITIONAL_ATTRIB
-	#define PROCESS_SVG_CONDITIONAL_ATTRIB
-#endif
-#ifndef HEADING_SVG_STYLE_ATTRIB
-	#define HEADING_SVG_STYLE_ATTRIB
-#endif
-#ifndef PROCESS_SVG_STYLE_ATTRIB
-	#define PROCESS_SVG_STYLE_ATTRIB
-#endif
-#ifndef HEADING_SVG_PRESENTATION_ATTRIB
-	#define HEADING_SVG_PRESENTATION_ATTRIB
-#endif
-#ifndef PROCESS_SVG_PRESENTATION_ATTRIB
-	#define PROCESS_SVG_PRESENTATION_ATTRIB
-#endif
-#ifndef HEADING_SVG_VIEWPORT_ATTRIB
-	#define HEADING_SVG_VIEWPORT_ATTRIB
-#endif
-#ifndef PROCESS_SVG_VIEWPORT_ATTRIB
-	#define PROCESS_SVG_VIEWPORT_ATTRIB
-#endif
-#ifndef HEADING_SVG_TEXTCONTENT_ATTRIB
-	#define HEADING_SVG_TEXTCONTENT_ATTRIB
-#endif
-#ifndef PROCESS_SVG_TEXTCONTENT_ATTRIB
-	#define PROCESS_SVG_TEXTCONTENT_ATTRIB
-#endif
-#ifndef HEADING_SVG_FONT_ATTRIB
-	#define HEADING_SVG_FONT_ATTRIB
-#endif
-#ifndef PROCESS_SVG_FONT_ATTRIB
-	#define PROCESS_SVG_FONT_ATTRIB
-#endif
-#ifndef HEADING_SVG_PAINT_ATTRIB
-	#define HEADING_SVG_PAINT_ATTRIB
-#endif
-#ifndef PROCESS_SVG_PAINT_ATTRIB
-	#define PROCESS_SVG_PAINT_ATTRIB
-#endif
-#ifndef HEADING_SVG_COLOR_ATTRIB
-	#define HEADING_SVG_COLOR_ATTRIB
-#endif
-#ifndef PROCESS_SVG_COLOR_ATTRIB
-	#define PROCESS_SVG_COLOR_ATTRIB
-#endif
-#ifndef HEADING_SVG_OPACITY_ATTRIB
-	#define HEADING_SVG_OPACITY_ATTRIB
-#endif
-#ifndef PROCESS_SVG_OPACITY_ATTRIB
-	#define PROCESS_SVG_OPACITY_ATTRIB
-#endif
-#ifndef HEADING_SVG_GRAPHICS_ATTRIB
-	#define HEADING_SVG_GRAPHICS_ATTRIB
-#endif
-#ifndef PROCESS_SVG_GRAPHICS_ATTRIB
-	#define PROCESS_SVG_GRAPHICS_ATTRIB
-#endif
-#ifndef HEADING_SVG_MARKER_ATTRIB
-	#define HEADING_SVG_MARKER_ATTRIB
-#endif
-#ifndef PROCESS_SVG_MARKER_ATTRIB
-	#define PROCESS_SVG_MARKER_ATTRIB
-#endif
-#ifndef HEADING_SVG_GRADIENT_ATTRIB
-	#define HEADING_SVG_GRADIENT_ATTRIB
-#endif
-#ifndef PROCESS_SVG_GRADIENT_ATTRIB
-	#define PROCESS_SVG_GRADIENT_ATTRIB
-#endif
-#ifndef HEADING_SVG_CLIP_ATTRIB
-	#define HEADING_SVG_CLIP_ATTRIB
-#endif
-#ifndef PROCESS_SVG_CLIP_ATTRIB
-	#define PROCESS_SVG_CLIP_ATTRIB
-#endif
-#ifndef HEADING_SVG_DOCUMENTEVENTS_ATTRIB
-	#define HEADING_SVG_DOCUMENTEVENTS_ATTRIB
-#endif
-#ifndef PROCESS_SVG_DOCUMENTEVENTS_ATTRIB
-	#define PROCESS_SVG_DOCUMENTEVENTS_ATTRIB
-#endif
-#ifndef HEADING_SVG_GRAPHICALEVENTS_ATTRIB
-	#define HEADING_SVG_GRAPHICALEVENTS_ATTRIB
-#endif
-#ifndef PROCESS_SVG_GRAPHICALEVENTS_ATTRIB
-	#define PROCESS_SVG_GRAPHICALEVENTS_ATTRIB
-#endif
-#ifndef HEADING_SVG_XLINKEMBED_ATTRIB
-	#define HEADING_SVG_XLINKEMBED_ATTRIB
-#endif
-#ifndef PROCESS_SVG_XLINKEMBED_ATTRIB
-	#define PROCESS_SVG_XLINKEMBED_ATTRIB
-#endif
-#ifndef HEADING_SVG_XLINKREQUIRED_ATTRIB
-	#define HEADING_SVG_XLINKREQUIRED_ATTRIB
-#endif
-#ifndef PROCESS_SVG_XLINKREQUIRED_ATTRIB
-	#define PROCESS_SVG_XLINKREQUIRED_ATTRIB
-#endif
-#ifndef HEADING_SVG_XLINK_ATTRIB
-	#define HEADING_SVG_XLINK_ATTRIB
-#endif
-#ifndef PROCESS_SVG_XLINK_ATTRIB
-	#define PROCESS_SVG_XLINK_ATTRIB
-#endif
-#ifndef HEADING_SVG_FILTERPRIMITIVEWITHIN_ATTRIB
-	#define HEADING_SVG_FILTERPRIMITIVEWITHIN_ATTRIB
-#endif
-#ifndef PROCESS_SVG_FILTERPRIMITIVEWITHIN_ATTRIB
-	#define PROCESS_SVG_FILTERPRIMITIVEWITHIN_ATTRIB
-#endif
-#ifndef HEADING_SVG_FILTERPRIMITIVE_ATTRIB
-	#define HEADING_SVG_FILTERPRIMITIVE_ATTRIB
-#endif
-#ifndef PROCESS_SVG_FILTERPRIMITIVE_ATTRIB
-	#define PROCESS_SVG_FILTERPRIMITIVE_ATTRIB
-#endif
-#ifndef HEADING_SVG_XLINKREPLACE_ATTRIB
-	#define HEADING_SVG_XLINKREPLACE_ATTRIB
-#endif
-#ifndef PROCESS_SVG_XLINKREPLACE_ATTRIB
-	#define PROCESS_SVG_XLINKREPLACE_ATTRIB
-#endif
-#ifndef HEADING_SVG_ANIMATIONEVENTS_ATTRIB
-	#define HEADING_SVG_ANIMATIONEVENTS_ATTRIB
-#endif
-#ifndef PROCESS_SVG_ANIMATIONEVENTS_ATTRIB
-	#define PROCESS_SVG_ANIMATIONEVENTS_ATTRIB
-#endif
-#ifndef HEADING_SVG_ANIMATION_ATTRIB
-	#define HEADING_SVG_ANIMATION_ATTRIB
-#endif
-#ifndef PROCESS_SVG_ANIMATION_ATTRIB
-	#define PROCESS_SVG_ANIMATION_ATTRIB
-#endif
-#ifndef HEADING_SVG_ANIMATIONATTRIBUTE_ATTRIB
-	#define HEADING_SVG_ANIMATIONATTRIBUTE_ATTRIB
-#endif
-#ifndef PROCESS_SVG_ANIMATIONATTRIBUTE_ATTRIB
-	#define PROCESS_SVG_ANIMATIONATTRIBUTE_ATTRIB
-#endif
-#ifndef HEADING_SVG_ANIMATIONTIMING_ATTRIB
-	#define HEADING_SVG_ANIMATIONTIMING_ATTRIB
-#endif
-#ifndef PROCESS_SVG_ANIMATIONTIMING_ATTRIB
-	#define PROCESS_SVG_ANIMATIONTIMING_ATTRIB
-#endif
-#ifndef HEADING_SVG_ANIMATIONVALUE_ATTRIB
-	#define HEADING_SVG_ANIMATIONVALUE_ATTRIB
-#endif
-#ifndef PROCESS_SVG_ANIMATIONVALUE_ATTRIB
-	#define PROCESS_SVG_ANIMATIONVALUE_ATTRIB
-#endif
-#ifndef HEADING_SVG_ANIMATIONADDTION_ATTRIB
-	#define HEADING_SVG_ANIMATIONADDTION_ATTRIB
-#endif
-#ifndef PROCESS_SVG_ANIMATIONADDTION_ATTRIB
-	#define PROCESS_SVG_ANIMATIONADDTION_ATTRIB
-#endif
 #endif

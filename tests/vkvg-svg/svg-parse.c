@@ -84,45 +84,41 @@
 #define PREPROC_G   vkvg_save (svg->ctx);
 #define POSTPROC_G  vkvg_restore (svg->ctx);
 
-#define PREPROC_PATH vkvg_paint(svg->ctx);
-#define POSTPROC_PATH
+#define PRE_PROC_DEFS   svg->inDefs = true;
+#define POST_PROC_DEFS  svg->inDefs = false;
 
-#define SVG_ATT_PROC_ID svg->currentIdHash = hash_svg_id(svg->value, svg->value_len);
-#define SVG_ATT_PROC_WIDTH                                                  \
-switch(svg->curEltType) {                                                   \
-    case SVG_TOK_SVG:                                                       \
-        try_parse_length_or_percentage(svg, &svg->width);                   \
-        break;                                                              \
-}
-#define SVG_ATT_PROC_HEIGHT                                                 \
-switch(svg->curEltType) {                                                   \
-    case SVG_TOK_SVG:                                                       \
-        try_parse_length_or_percentage(svg, &svg->height);                  \
-        break;                                                              \
-}
-#define PROCESS_ATT_PROC_COLOR  try_parse_color(svg->value, svg->value + svg->value_len, &attribs.hasColor, &attribs.color);
-#define PROCESS_ATT_PROC_STROKE try_parse_color(svg->value, svg->value + svg->value_len, &attribs.hasStroke, &attribs.stroke);
-#define PROCESS_ATT_PROC_FILL   try_parse_color(svg->value, svg->value + svg->value_len, &attribs.hasFill, &attribs.fill);
+#define PREPROC_RECT    vkvg_save(svg->ctx);                                                                                               \
+                        parentData = _new_rect();
+//=== RECT ===
+#define PROCESS_RECT    _process_element(svg, &attribs, parentData, false);
+#define POSTPROC_RECT   vkvg_restore(svg->ctx);
+#define SVG_ATT_RECT_X            try_parse_length_or_percentage(svg, &(CAST(rect)->x));
+#define SVG_ATT_RECT_Y            try_parse_length_or_percentage(svg, &(CAST(rect)->y));
+#define SVG_ATT_RECT_WIDTH        try_parse_length_or_percentage(svg, &(CAST(rect)->w));
+#define SVG_ATT_RECT_HEIGHT       try_parse_length_or_percentage(svg, &(CAST(rect)->h));
+#define SVG_ATT_RECT_RX           try_parse_length_or_percentage(svg, &(CAST(rect)->rx));
+#define SVG_ATT_RECT_RY           try_parse_length_or_percentage(svg, &(CAST(rect)->ry));
+
+//=== PATH ===
+#define PREPROC_PATH    vkvg_save(svg->ctx);                                                                    \
+                        svg_element_path *p = _new_path();
+
+#define PROCESS_PATH    _process_element(svg, &attribs, p, false);
+#define POSTPROC_PATH   vkvg_restore(svg->ctx);
+#define SVG_ATT_D
 
 
-#define SVG_ATT_PROC_VIEWBOX svg->hasViewBox = parse_viewbox(svg);
+#define SVG_ATT_ID          svg->currentIdHash = hash_svg_id(svg->value, svg->value_len);
+#define SVG_ATT_COLOR       try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->color_type, &attribs->color);
+#define SVG_ATT_STROKE      try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->stroke_type, &attribs->stroke);
+#define SVG_ATT_FILL        try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->fill_type, &attribs->fill);
+
+
+#define SVG_ATT_SVG_WIDTH   try_parse_length_or_percentage(svg, &svg->width);
+#define SVG_ATT_SVG_HEIGHT  try_parse_length_or_percentage(svg, &svg->height);
+#define SVG_ATT_VIEWBOX     svg->hasViewBox = parse_viewbox(svg);
 
 #include "parser_gen.h"
-
-#define CREATE_CTOR_ELT(elt)                                                                                           \
-svg_element_##elt *_new_##elt() {                                                                                      \
-        svg_element_##elt *c = (svg_element_##elt *)calloc(1, sizeof(svg_element_##elt));                              \
-        c->id.type           = svg_element_type_##elt;                                                                 \
-        return c;                                                                                                      \
-}
-
-CREATE_CTOR_ELT(rect)
-CREATE_CTOR_ELT(circle)
-CREATE_CTOR_ELT(line)
-CREATE_CTOR_ELT(ellipse)
-CREATE_CTOR_ELT(path)
-
-#define CASTELT(var, type, data) svg_element_##type *var = (svg_element_##type *)data
 
 // A perfectly optimized, branchless UTF-8 length lookup table
 static const uint8_t utf8_len_table[256] = {
@@ -155,12 +151,6 @@ int get_utf8_char_length(uint8_t first_byte) {
 
 //#define ISWHITESPACE(c) (c == 0x9 || c == 0x20 || c == 0xA || c == 0xD)
 //#define READ if (++ptr < buff_size) c = buff[ptr]; else break
-
-void print_tabs(int n) {
-    while (n-- > 0) {
-        putchar('\t'); // Ou ' ' si tu préfères des espaces
-    }
-}
 
 static const double POWERS_OF_10[] = {
     1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0,
@@ -358,12 +348,7 @@ static inline bool parse_rgb_channel(const uint8_t **ptr, const uint8_t *const e
     return true;
 }
 
-bool try_parse_color_stream(
-    const uint8_t **buff_ptr,
-    const uint8_t *const buff_end,
-    svg_paint_type *isEnabled,
-    uint32_t *colorValue
-    ) {
+bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, svg_paint_type *isEnabled, uint32_t *colorValue) {
     const uint8_t *ptr = *buff_ptr;
     *colorValue = 0;
     *isEnabled = svg_paint_type_none;
@@ -1385,7 +1370,7 @@ void  _process_element(svg_context *svg, SvgPresentationAttributes *const attrib
         _store_or_throw(svg, elt);
 }
 
-int parse_children(svg_context *const svg, SvgPresentationAttributes * const attribs);
+int parse_children(SVG_COMMON_SIG);
 
 int try_parse_attibute(svg_context *const svg) {
     const uint8_t *buff = svg->buff_ptr;
@@ -1433,8 +1418,7 @@ int try_parse_attibute(svg_context *const svg) {
     return 0;
 }
 
-int parse_element(svg_context *const svg, SvgPresentationAttributes *const attribs) {
-    static uint8_t level = 0;
+int parse_element(SVG_COMMON_SIG) {
     const uint8_t *buff = svg->buff_ptr;
     const uint8_t *const buff_end = svg->buff_end;
 
@@ -1442,11 +1426,8 @@ int parse_element(svg_context *const svg, SvgPresentationAttributes *const attri
         if (*buff == '>') {
             //read element childrens
             svg->buff_ptr = ++buff;
-            level++;
-            print_tabs(level);
-            parse_children(svg, attribs);
+            parse_children(svg, attribs, parentData);
             buff = svg->buff_ptr;
-            level--;
             return 1;
         } else if (*buff == '/') {
             //self closing tag
@@ -1465,7 +1446,7 @@ int parse_element(svg_context *const svg, SvgPresentationAttributes *const attri
     return 0;
 }
 
-int parse_children(svg_context *const svg, SvgPresentationAttributes *const attribs) {
+int parse_children(SVG_COMMON_SIG) {
     const uint8_t *buff = svg->buff_ptr;
     const uint8_t *const buff_end = svg->buff_end;
     //store current element name
@@ -1495,7 +1476,7 @@ int parse_children(svg_context *const svg, SvgPresentationAttributes *const attr
                 }
                 svg->elt_len = buff - svg->elt;
                 svg->buff_ptr = buff;
-                elt_lut_func(svg, attribs);
+                elt_lut_func(svg, *attribs, parentData);
                 buff = svg->buff_ptr;
                 continue;
             } else if (c == '!') {
@@ -1577,9 +1558,11 @@ int main(int argc, char *argv[]) {
 
     svg_context svg = {file_buffer, file_buffer + bytes_read};
     vkvg_device_create_info_t dev_info = {0};
-    svg.dev = vkvg_device_create(&dev_info);
-    svg.width = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
-    svg.height = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
+    svg.preserveAspectRatio = true;
+    svg.dev     = vkvg_device_create(&dev_info);
+    svg.width   = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
+    svg.height  = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
+    svg.idList  = array_create();
 
     SvgPresentationAttributes attribs = {
         0xff000000,
@@ -1588,14 +1571,16 @@ int main(int argc, char *argv[]) {
         0xff000000,
         svg_paint_type_solid,
         svg_paint_type_none,
+        svg_paint_type_none,
+        svg_paint_type_none,
         1.0f,
         1.0f,
         1.0f,
         1.0f, // opacities
-        svg_text_anchor_start,
     };
+    attribs.text_anchor = SVG_ANCHOR_START;
 
-    parse_children (&svg, &attribs);
+    parse_children (&svg, &attribs, NULL);
 
     if (!vkvg_surface_status(svg.surf)) {
         vkvg_surface_write_to_png(svg.surf, "test.png");
