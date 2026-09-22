@@ -1,4 +1,4 @@
-//#include "vkvg.h"
+#include "vkvg-svg.h"
 
 #include <stdio.h>
 #include <stddef.h>
@@ -13,10 +13,10 @@
 #define ARRAY_INIT         8
 #define ARRAY_ELEMENT_TYPE void *
 
-#define ARRAY_IMPLEMENTATION
+#define ARRAY_IMPLEMENTATION<
 #include "array.h"
 
-#define PREPROC_SVG printf("element svg correctly identify\n");
+//#define PREPROC_SVG
 #define PROCESS_SVG                                                                                        \
     int   surfW = 0, surfH = 0;                                                                                        \
     float xScale = 1, yScale = 1;                                                                                      \
@@ -908,7 +908,7 @@ void _resolve_pattern_href(svg_context *svg, void *rootElt, VkvgPattern pat) {
             id->xlinkHref = 0; // reset once resolved
             id            = (svg_element_header *)elt;
         } else {
-            LOG("xlink:href svg element error  %s\n", svg->value);
+            LOG("xlink:href svg element error  %.*s\n", (int)svg->value_len, svg->value);
             return;
         }
     }
@@ -919,7 +919,7 @@ void _resolve_pattern_href(svg_context *svg, void *rootElt, VkvgPattern pat) {
         else if (_get_element_type(elt) == svg_element_type_linear_gradient)
             refPatter = (VkvgPattern)((svg_element_linear_gradient *)elt)->pattern;
         else {
-            LOG("xlink:href svg element error, expecting gradient%s\n", svg->value);
+            LOG("xlink:href svg element error, expecting gradient%.*s\n", (int)svg->value_len, svg->value);
             return;
         }
         _copy_pattern_color_stops(refPatter, pat);
@@ -1297,7 +1297,8 @@ void _parse_path_d_attribute(svg_context *const svg, const uint8_t *const restri
         prev = none;
     }
 }
-void _parse_path_d_attribute2(svg_context *const svg, const uint8_t *const restrict buff_ptr, const uint8_t *const restrict buff_end) {
+
+/*void _parse_path_d_attribute2(svg_context *const svg, const uint8_t *const restrict buff_ptr, const uint8_t *const restrict buff_end) {
     const uint8_t *buff = buff_ptr;
     float        x, y, c1x, c1y, c2x, c2y, cpX, cpY, rx, ry, rotx;
     bool         large, sweep;
@@ -1470,142 +1471,7 @@ void _parse_path_d_attribute2(svg_context *const svg, const uint8_t *const restr
         }
     }
 }
-static inline bool is_command_char(uint8_t c) {
-    // Branchless coordinate vs command selector table flag map
-    static const uint8_t cmd_map[256] = {
-        ['M']=1, ['m']=1, ['L']=1, ['l']=1, ['H']=1, ['h']=1,
-        ['V']=1, ['v']=1, ['C']=1, ['c']=1, ['S']=1, ['s']=1,
-        ['Q']=1, ['q']=1, ['T']=1, ['t']=1, ['A']=1, ['a']=1,
-        ['Z']=1, ['z']=1
-    };
-    return cmd_map[c];
-}
-
-void _parse_path_d_attribute3(svg_context *const svg) {
-    const uint8_t *buff = svg->value;
-    const uint8_t *const buff_end = svg->value + svg->value_len;
-
-           // Track state context variables for absolute vs relative path conversions
-    float current_x = 0.0f;
-    float current_y = 0.0f;
-    float start_x   = 0.0f;
-    float start_y   = 0.0f;
-
-    // Command track state variables
-    uint8_t cmd = 0;
-
-    // Control variables for relative scaling transformations
-    float x1, y1, x2, y2, x, y;
-
-    while (buff < buff_end) {
-        buff = skip_separators(buff, buff_end);
-        if (buff >= buff_end) break;
-
-        // Check if the current pointer position is a brand new command token letter
-        if (is_command_char(*buff)) {
-            cmd = *buff;
-            buff++;
-            buff = skip_separators(buff, buff_end);
-        }
-
-        // Defensive guard checking if we are somehow processing an empty path data slice
-        if (cmd == 0) break;
-
-        switch (cmd) {
-        // --- MoveTo Commands ---
-        case 'M':
-        case 'm':
-            if (!try_parse_float(&buff, buff_end, &x) ||
-                !try_parse_float(&buff, buff_end, &y)) goto malformed;
-
-            if (cmd == 'm') {
-                x += current_x;
-                y += current_y;
-            }
-            vkvg_move_to(svg->ctx, x, y);
-            current_x = start_x = x;
-            current_y = start_y = y;
-
-            // SVG specification requirement: implicit trailing arguments following a MoveTo
-            // token are systematically parsed as implicit LineTo ('L' / 'l') operations.
-            cmd = (cmd == 'm') ? 'l' : 'L';
-            break;
-
-        // --- LineTo Commands ---
-        case 'L':
-        case 'l':
-            if (!try_parse_float(&buff, buff_end, &x) ||
-                !try_parse_float(&buff, buff_end, &y)) goto malformed;
-
-            if (cmd == 'l') {
-                x += current_x;
-                y += current_y;
-            }
-            vkvg_line_to(svg->ctx, x, y);
-            current_x = x;
-            current_y = y;
-            break;
-
-                   // --- Horizontal LineTo Commands ---
-        case 'H':
-        case 'h':
-            if (!try_parse_float(&buff, buff_end, &x)) goto malformed;
-            if (cmd == 'h') x += current_x;
-
-            vkvg_line_to(svg->ctx, x, current_y);
-            current_x = x;
-            break;
-
-                   // --- Vertical LineTo Commands ---
-        case 'V':
-        case 'v':
-            if (!try_parse_float(&buff, buff_end, &y)) goto malformed;
-            if (cmd == 'v') y += current_y;
-
-             vkvg_line_to(svg->ctx, current_x, y);
-            current_y = y;
-            break;
-
-                   // --- Cubic Bézier Curve Commands ---
-        case 'C':
-        case 'c':
-            if (!try_parse_float(&buff, buff_end, &x1) || !try_parse_float(&buff, buff_end, &y1) ||
-                !try_parse_float(&buff, buff_end, &x2) || !try_parse_float(&buff, buff_end, &y2) ||
-                !try_parse_float(&buff, buff_end, &x)  || !try_parse_float(&buff, buff_end, &y)) goto malformed;
-
-            if (cmd == 'c') {
-                x1 += current_x; y1 += current_y;
-                x2 += current_x; y2 += current_y;
-                x  += current_x; y  += current_y;
-            }
-            vkvg_curve_to(svg->ctx, x1, y1, x2, y2, x, y);
-            current_x = x;
-            current_y = y;
-            break;
-
-                   // --- ClosePath Commands ---
-        case 'Z':
-        case 'z':
-            vkvg_close_path(svg->ctx);
-            current_x = start_x;
-            current_y = start_y;
-            // Close path has no parameter args; force clear command state to prevent looping lockups
-            cmd = 0;
-            break;
-
-        default:
-            // Fallback catch block for advanced commands: S, s, Q, q, T, t, A, a
-            // We can integrate these components sequentially as needed
-            printf("Advanced Command '%c' skipped.\n", cmd);
-            cmd = 0; // Unhandled command, escape to avoid infinite loop
-            break;
-        }
-    }
-    return;
-
-malformed:
-    perror("Malformed SVG string structure detected inside path data payload.\n");
-}
+*/
 
 static inline float _normalized_diagonal(float w, float h) { return sqrtf(powf(w, 2) + powf(h, 2)) / sqrtf(2); }
 void draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
@@ -1713,6 +1579,18 @@ void  _process_element(svg_context *svg, SvgPresentationAttributes *const attrib
     if (!use)
         _store_or_throw(svg, elt);
     svg->currentIdHash = 0;
+}
+void _process_use(svg_context *svg, SvgPresentationAttributes *const attribs) {
+    if (!svg->currentXlinkHref) {
+        LOG("no xlink:href defined for use element\n");
+        return;
+    }
+    void *elt;
+    if (!try_find_by_id(svg, svg->currentXlinkHref, &elt)) {
+        LOG("xlink:href not resolved %.*s\n", (int)svg->value_len, svg->value);
+        return;
+    }
+    _process_element(svg, attribs, elt, true);
 }
 void apply_transform(svg_context *svg) {
     vkvg_matrix_t current;
@@ -1895,16 +1773,74 @@ int parse_children(SVG_COMMON_SIG) {
     }
 }
 
-int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        printf("Usage: %s <filename.svg>\n", argv[0]);
-        return 1;
+void vkvg_svg_get_dimensions(VkvgSvg svg, uint32_t *width, uint32_t *height) {
+    /*if (!svg) {
+        *width = *height = 0;
+        return;
     }
+    *width  = svg->width;
+    *height = svg->height;*/
+}
+void vkvg_svg_render(VkvgSvg svg, VkvgContext ctx, const char *id) {
+    /*if (!svg || !ctx || vkvg_status(ctx))
+        return;
+    _create_from_file_handle(NULL, svg->width, svg->height, svg->fileHandle, ctx, id);
+    rewind(svg->fileHandle);*/
+}
+VkvgSvg vkvg_svg_load(const char *svgFilePath) {
+    /*vkvg_svg_t *svg = (vkvg_svg_t *)calloc(1, sizeof(vkvg_svg_t));
+    if (!svg)
+        return NULL;
+    FILE *f = fopen(svgFilePath, "r");
+    if (f) {
+        fseek(f, 0, SEEK_END);
+        svg->size = ftell(f);
+        rewind(f);
 
-    FILE *file = fopen(argv[1], "r");
+        svg->buffer = (char *)malloc(sizeof(char) * svg->size);
+        fread(svg->buffer, 1, svg->size, f);
+
+        fclose(f);
+
+        svg->fileHandle = fmemopen((void *)svg->buffer, svg->size, "r");
+    }
+    _query_dimensions(svg);
+    return svg;*/
+}
+VkvgSvg vkvg_svg_load_fragment(char *svgFragment) {
+    /*if (!svgFragment)
+        return NULL;
+    vkvg_svg_t *svg = (vkvg_svg_t *)calloc(1, sizeof(vkvg_svg_t));
+    if (!svg)
+        return NULL;
+    svg->size   = strlen(svgFragment);
+    svg->buffer = (char *)malloc(sizeof(char) * svg->size);
+    memcpy(svg->buffer, svgFragment, svg->size);
+    svg->fileHandle = fmemopen((void *)svg->buffer, svg->size, "r");
+    _query_dimensions(svg);
+    return svg;*/
+}
+
+void vkvg_svg_destroy(VkvgSvg svg) {
+    /*if (!svg)
+        return;
+    fclose(svg->fileHandle);
+    free(svg->buffer);
+    free(svg);*/
+}
+
+VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width, uint32_t height, char *svgFragment) {
+ /*   FILE       *f    = fmemopen((void *)svgFragment, strlen(svgFragment), "r");
+    VkvgSurface surf = _create_from_file_handle(dev, width, height, f, NULL, NULL);
+    fclose(f);
+    return surf;*/
+    return NULL;
+}
+VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_t height, const char *svgFilePath) {
+    FILE *file = fopen(svgFilePath, "r");
     if (!file) {
-        perror("Error opening file");
-        return 1;
+        LOG("[SVG]Error opening file");
+        return NULL;
     }
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
@@ -1915,24 +1851,22 @@ int main(int argc, char *argv[]) {
     fseek(file, 0, SEEK_SET);
     uint8_t *const file_buffer = malloc((size_t)size);
     if (!file_buffer) {
-        perror("Memory allocation failed");
+        LOG("[SVG]Memory allocation failed");
         fclose(file);
-        return EXIT_FAILURE;
+        return NULL;
     }
     size_t bytes_read = fread(file_buffer, 1, (size_t)size, file);
     fclose(file);
 
-    // 5. Check and skip UTF-8 BOM if present
-
     svg_context svg = {file_buffer, file_buffer + bytes_read};
     vkvg_device_create_info_t dev_info = {0};
     svg.preserveAspectRatio = true;
-    svg.dev     = vkvg_device_create(&dev_info);
+    svg.dev     = dev;
     svg.width   = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
     svg.height  = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
     svg.idList  = array_create();
-    svg.forced_width = 512;
-    svg.forced_height = 512;
+    svg.forced_width = width;
+    svg.forced_height = height;
 
     SvgPresentationAttributes attribs = {
         0xff000000,
@@ -1953,14 +1887,20 @@ int main(int argc, char *argv[]) {
 
     parse_children (&svg, &attribs, NULL);
 
-    if (!vkvg_surface_status(svg.surf)) {
-        vkvg_surface_write_to_png(svg.surf, "test.png");
-        vkvg_surface_destroy(svg.surf);
-    }
-
-    vkvg_device_destroy(svg.dev);
-
     free(file_buffer);
-    printf("Parsing pipeline completed successfully.\n");
-    return EXIT_SUCCESS;
+
+    for (uint32_t i = 0; i < svg.idList->count; i++) {
+        switch (_get_element_type(svg.idList->elements[i])) {
+        case svg_element_type_linear_gradient:
+            vkvg_pattern_destroy((VkvgPattern)((svg_element_linear_gradient *)svg.idList->elements[i])->pattern);
+            break;
+        case svg_element_type_radial_gradient:
+            vkvg_pattern_destroy((VkvgPattern)((svg_element_radial_gradient *)svg.idList->elements[i])->pattern);
+            break;
+        }
+        free(svg.idList->elements[i]);
+    }
+    array_destroy(svg.idList);
+
+    return svg.surf;
 }
