@@ -1,5 +1,5 @@
 #pragma once
-
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 #define CHECK_MAT(_xx, _yx, _xy, _yy, _x0, _y0)                                                                        \

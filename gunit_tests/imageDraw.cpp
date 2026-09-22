@@ -1,5 +1,4 @@
 #include "drawTestBase.h"
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 class ImageDrawTest : public DrawTestBase {
