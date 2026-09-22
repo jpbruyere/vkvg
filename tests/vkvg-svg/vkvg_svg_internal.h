@@ -12,7 +12,7 @@
 #include "vkvg.h"
 
 
-#define DEBUG_LOG
+//#define DEBUG_LOG
 #ifdef LOG
 #undef LOG
 #endif
@@ -340,6 +340,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
 bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percentage *const lop);
 bool parse_viewbox(svg_context *const svg);
 void  _process_element(svg_context *svg, SvgPresentationAttributes *const attribs, void *elt, bool use);
+void apply_transform(svg_context *svg);
 
 #define PARSE_ATTRIBUTES parse_attributes(svg, &attribs, parentData);
 #define PARSE_ELEMENT parse_element(svg, &attribs, parentData);
