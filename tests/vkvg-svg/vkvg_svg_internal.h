@@ -51,7 +51,8 @@ typedef enum {
     svg_element_type_polygon,
     svg_element_type_path,
     svg_element_type_linear_gradient,
-    svg_element_type_radial_gradient
+    svg_element_type_radial_gradient,
+    svg_element_type_gradient_stop
 } svg_element_type;
 
 typedef enum {
@@ -139,24 +140,42 @@ typedef struct {
 typedef struct {
     svg_element_header       id;
     svg_gradient_unit        gradientUnits;
+    VkvgPattern              pattern;
+    vkvg_matrix_t            transform;
+    bool                     hasTransform;
+} svg_class_gradient;
+
+typedef struct {
+    svg_element_header       id;
+    svg_gradient_unit        gradientUnits;
+    VkvgPattern              pattern;
+    vkvg_matrix_t            transform;
+    bool                     hasTransform;
     svg_length_or_percentage cx;
     svg_length_or_percentage cy;
     svg_length_or_percentage fx;
     svg_length_or_percentage fy;
     svg_length_or_percentage r;
-    VkvgPattern              pattern;
 } svg_element_radial_gradient;
 
 typedef struct {
     svg_element_header       id;
     svg_gradient_unit        gradientUnits;
+    VkvgPattern              pattern;
+    vkvg_matrix_t            transform;
+    bool                     hasTransform;
     svg_length_or_percentage x1;
     svg_length_or_percentage x2;
     svg_length_or_percentage y1;
     svg_length_or_percentage y2;
-    VkvgPattern              pattern;
 } svg_element_linear_gradient;
 
+typedef struct {
+    svg_element_header      id;
+    uint32_t                color;
+    float                   offset;
+    float                   opacity;
+} svg_element_gradient_stop;
 
 
 /* --- SVG 1.2 TINY ENUMERATIONS --- */
@@ -255,6 +274,14 @@ static inline float _get_pixel_coord(const float reference, const svg_length_or_
         return lop->number;
     }
 }
+/*static inline uint32_t apply_opacity(const uint32_t abgr, const float opacity) {
+    uint32_t old_alpha = abgr >> 24;
+    int new_alpha = (int)((float)old_alpha * opacity);
+    return (abgr & 0x00FFFFFF) | ((uint32_t)new_alpha << 24);
+}*/
+#define MULTIPLY_ALPHA_ABGR(abgr, mult) \
+    (((abgr) & 0x00FFFFFF) |            \
+     ((uint32_t)((int)((((abgr) >> 24) * (mult)) + 0.5f) & ~255) ? 255 : (uint32_t)(((abgr) >> 24) * (mult)) << 24))
 
 typedef struct {
     float x;
@@ -323,10 +350,12 @@ CREATE_CTOR_ELT(line)
 CREATE_CTOR_ELT(ellipse)
 CREATE_CTOR_ELT(path)
 CREATE_CTOR_ELT(polygon)
-
+CREATE_CTOR_ELT(gradient_stop)
 #define CASTELT(var, type, data) svg_element_##type *var = (svg_element_##type *)data
 #define CAST(type) ((svg_element_##type *)parentData)
-//#define OBJ_FLD(type) ((svg_element_##type *)parentData)
+
+svg_element_linear_gradient *_new_linear_gradient();
+svg_element_radial_gradient *_new_radial_gradient();
 
 
 #define SVG_COMMON_SIG svg_context *const svg, SvgPresentationAttributes *const attribs, void *parentData
@@ -337,11 +366,23 @@ void parse_attributes(SVG_COMMON_SIG);
 int try_parse_attibute(svg_context *const svg);
 
 bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, svg_paint_type *isEnabled, uint32_t *colorValue);
+bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat);
 bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percentage *const lop);
 bool try_parse_viewbox(svg_context *const svg);
 float parse_opacity(svg_context *const svg);
 void  _process_element(svg_context *svg, SvgPresentationAttributes *const attribs, void *elt, bool use);
 void apply_transform(svg_context *svg);
+static inline float parse_ratio(svg_context *const svg) {
+    svg_length_or_percentage ratio;
+    if (!try_parse_length_or_percentage(svg, &ratio)) {
+        LOG("error parsing ratio: %.*s\n", (int)svg->value_len, svg->value);
+        return 1.f;
+    }
+    if (ratio.units == svg_unit_percentage)
+        return ratio.number / 100.0f;
+    else
+        return ratio.number;
+}
 
 #define PARSE_ATTRIBUTES parse_attributes(svg, &attribs, parentData);
 #define PARSE_ELEMENT parse_element(svg, &attribs, parentData);
@@ -349,13 +390,13 @@ void apply_transform(svg_context *svg);
 #define SVG_ELT_LUT_FUNC_HEAD                                                                                   \
 int elt_lut_func(SVG_SIG_STACK_ATTRIB) {                                                                        \
     const struct SvgEltKeyword *res = lookup_svg_elt_token((const char*)svg->elt, svg->elt_len);                \
-    svg->curEltType = (res != NULL) ? res->id : SVG_TOK_UNKNOWN;                                           \
+    svg->curEltType = (res != NULL) ? res->id : SVG_TOK_UNKNOWN;                                                \
     switch (svg->curEltType) {
 
 #define SVG_ELT_LUT_FUNC_FOOTER                                                                                 \
     case SVG_TOK_UNKNOWN:                                                                                       \
     default:                                                                                                    \
-        printf("Unidentify element: %.*s\n", svg->elt_len, svg->elt);                                           \
+        printf("Unidentify element: %.*s\n", (int)svg->elt_len, svg->elt);                                      \
         PARSE_ELEMENT                                                                                           \
         break;                                                                                                  \
     }                                                                                                           \
