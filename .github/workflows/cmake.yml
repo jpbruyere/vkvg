@@ -53,9 +53,11 @@ jobs:
           persist-credentials: false
           submodules: "true"
       - run: mkdir -p source/build
-      - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} -G "Unix Makefiles" .. -DVKVG_RECORDING=false -DVKVG_SVG=false
+      - name: Conifgure cmake
+        run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} -G "Unix Makefiles" .. -DVKVG_RECORDING=false -DVKVG_SVG=false
         working-directory: source/build
-      - run: cmake --build . --config ${{ matrix.build_config }} -j $(nproc)
+      - name: Build
+        run: cmake --build . --config ${{ matrix.build_config }} --parallel
         working-directory: source/build
   mac_jorb:
     runs-on: macos-latest
