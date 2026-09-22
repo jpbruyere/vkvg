@@ -12,7 +12,7 @@
 #include "vkvg.h"
 
 
-//#define DEBUG_LOG
+#define DEBUG_LOG
 #ifdef LOG
 #undef LOG
 #endif
@@ -49,7 +49,6 @@ typedef enum {
     svg_element_type_line,
     svg_element_type_ellipse,
     svg_element_type_polygon,
-    svg_element_type_polyline,
     svg_element_type_path,
     svg_element_type_linear_gradient,
     svg_element_type_radial_gradient
@@ -126,11 +125,10 @@ typedef struct {
 
 typedef struct {
     svg_element_header id;
+    const uint8_t     *points;
+    size_t             points_len;
+    bool               closed;
 } svg_element_polygon;
-
-typedef struct {
-    svg_element_header id;
-} svg_element_polyline;
 
 typedef struct {
     svg_element_header id;
@@ -212,14 +210,15 @@ typedef struct {
     svg_paint_type       solid_type;
     svg_paint_type       color_type;
 
-    uint32_t             fill_opacity      : 8;  // 0-255 -> 0.0-1.0
-    uint32_t             stroke_opacity    : 8;
-    uint32_t             solid_opacity     : 8;
-    uint32_t             opacity           : 8;
+    float                fill_opacity;
+    float                stroke_opacity;
+    float                solid_opacity;
+    float                opacity;
+
+    svg_length_or_percentage stroke_width;
+    //line cap and join to do
 
     uint32_t             stroke_miterlimit : 6;  // Step 0.25 (0.0 to 15.75)
-    uint32_t             stroke_width      : 16; // Scaled by 100
-
     SvgFontStyle         font_style        : 2;
     SvgFontVariant       font_variant      : 1;
     SvgFontWeight        font_weight       : 4;
@@ -323,6 +322,7 @@ CREATE_CTOR_ELT(circle)
 CREATE_CTOR_ELT(line)
 CREATE_CTOR_ELT(ellipse)
 CREATE_CTOR_ELT(path)
+CREATE_CTOR_ELT(polygon)
 
 #define CASTELT(var, type, data) svg_element_##type *var = (svg_element_##type *)data
 #define CAST(type) ((svg_element_##type *)parentData)
@@ -338,7 +338,8 @@ int try_parse_attibute(svg_context *const svg);
 
 bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, svg_paint_type *isEnabled, uint32_t *colorValue);
 bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percentage *const lop);
-bool parse_viewbox(svg_context *const svg);
+bool try_parse_viewbox(svg_context *const svg);
+float parse_opacity(svg_context *const svg);
 void  _process_element(svg_context *svg, SvgPresentationAttributes *const attribs, void *elt, bool use);
 void apply_transform(svg_context *svg);
 
@@ -354,9 +355,7 @@ int elt_lut_func(SVG_SIG_STACK_ATTRIB) {                                        
 #define SVG_ELT_LUT_FUNC_FOOTER                                                                                 \
     case SVG_TOK_UNKNOWN:                                                                                       \
     default:                                                                                                    \
-        printf("Unidentify element: ");                                                                         \
-        fwrite(svg->elt, sizeof(uint8_t), svg->elt_len, stdout);                                                \
-        printf("\n");                                                                                           \
+        printf("Unidentify element: %.*s\n", svg->elt_len, svg->elt);                                           \
         PARSE_ELEMENT                                                                                           \
         break;                                                                                                  \
     }                                                                                                           \

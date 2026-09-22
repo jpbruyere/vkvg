@@ -1,6 +1,6 @@
 /* ANSI-C code produced by gperf version 3.2.1 */
 /* Command-line: gperf --output-file=build/svg_colors_gperf.h src/svg_colors_names.gperf  */
-/* Computed positions: -k'3-4,6-8,12-13' */
+/* Computed positions: -k'1,3,6-8,12-13' */
 
 #if !((' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \
       && ('%' == 37) && ('&' == 38) && ('\'' == 39) && ('(' == 40) \
@@ -32,11 +32,12 @@
 #line 1 "src/svg_colors_names.gperf"
 
 #include <string.h>
+#include <stdint.h>
 
 /* Enum representing our supported SVG elements and attributes */
 typedef enum {
-    SVG_COLOR_UNKNOWN,
-    SVG_COLOR_ALICEBLUE,
+    	SVG_COLOR_UNKNOWN,
+	SVG_COLOR_ALICEBLUE,
 	SVG_COLOR_ANTIQUEWHITE,
 	SVG_COLOR_AQUA,
 	SVG_COLOR_AQUAMARINE,
@@ -191,15 +192,15 @@ struct SvgColorName {
     SvgColorTokId id;
     uint32_t      value;
 };
-#line 174 "src/svg_colors_names.gperf"
+#line 175 "src/svg_colors_names.gperf"
 struct SvgColorName;
 
 #define SVG_COL__TOTAL_KEYWORDS 147
-#define SVG_COL__MIN_WORD_LENGTH 28
-#define SVG_COL__MAX_WORD_LENGTH 62
-#define SVG_COL__MIN_HASH_VALUE 83
-#define SVG_COL__MAX_HASH_VALUE 531
-/* maximum key range = 449, duplicates = 0 */
+#define SVG_COL__MIN_WORD_LENGTH 3
+#define SVG_COL__MAX_WORD_LENGTH 20
+#define SVG_COL__MIN_HASH_VALUE 4
+#define SVG_COL__MAX_HASH_VALUE 565
+/* maximum key range = 562, duplicates = 0 */
 
 #ifndef GPERF_DOWNCASE
 #define GPERF_DOWNCASE 1
@@ -254,34 +255,96 @@ hash_svg_color (register const char *str, register size_t len)
 {
   static const unsigned short asso_values[] =
     {
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532,   5,   5, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532,   5,  60,  60,  55,   0,
-      100,  25,   5,  35,  20, 100,  10,  95,  50,   0,
-       50, 130,  10,  30,   0, 105,  10, 185, 170, 210,
-       30, 532, 532, 532, 532,   0, 532,   5,  60,  60,
-       55,   0, 100,  25,   5,  35,  20, 100,  10,  95,
-       50,   0,  50, 130,  10,  30,   0, 105,  10, 185,
-      170, 210,  30, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532, 532, 532, 532,
-      532, 532, 532, 532, 532, 532, 532
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566,   5,  55,   0,  35,   0,
+       75,  10,   5,   0, 566, 250,  10,  40,  85,  60,
+       70, 144,   0,  20,  45,  10,  30, 185,  95, 195,
+      566,   0, 566, 566, 566, 566, 566,   5,  55,   0,
+       35,   0,  75,  10,   5,   0, 566, 250,  10,  40,
+       85,  60,  70, 144,   0,  20,  45,  10,  30, 185,
+       95, 195, 566,   0, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566, 566, 566,
+      566, 566, 566, 566, 566, 566, 566, 566
     };
-  return len + asso_values[(unsigned char)str[12]] + asso_values[(unsigned char)str[11]] + asso_values[(unsigned char)str[7]] + asso_values[(unsigned char)str[6]] + asso_values[(unsigned char)str[5]+1] + asso_values[(unsigned char)str[3]] + asso_values[(unsigned char)str[2]];
+  register unsigned int hval = len;
+
+  switch (hval)
+    {
+      default:
+        hval += asso_values[(unsigned char)str[12]];
+#if (defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang__ && __clang_major__ + (__clang_minor__ >= 9) > 3))) || (defined __STDC_VERSION__ && __STDC_VERSION__ >= 202000L && ((defined __GNUC__ && __GNUC__ >= 10) || (defined __clang__ && __clang_major__ >= 9)))
+      [[fallthrough]];
+#elif (defined __GNUC__ && __GNUC__ >= 7) || (defined __clang__ && __clang_major__ >= 10)
+      __attribute__ ((__fallthrough__));
+#endif
+      /*FALLTHROUGH*/
+      case 12:
+        hval += asso_values[(unsigned char)str[11]];
+#if (defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang__ && __clang_major__ + (__clang_minor__ >= 9) > 3))) || (defined __STDC_VERSION__ && __STDC_VERSION__ >= 202000L && ((defined __GNUC__ && __GNUC__ >= 10) || (defined __clang__ && __clang_major__ >= 9)))
+      [[fallthrough]];
+#elif (defined __GNUC__ && __GNUC__ >= 7) || (defined __clang__ && __clang_major__ >= 10)
+      __attribute__ ((__fallthrough__));
+#endif
+      /*FALLTHROUGH*/
+      case 11:
+      case 10:
+      case 9:
+      case 8:
+        hval += asso_values[(unsigned char)str[7]];
+#if (defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang__ && __clang_major__ + (__clang_minor__ >= 9) > 3))) || (defined __STDC_VERSION__ && __STDC_VERSION__ >= 202000L && ((defined __GNUC__ && __GNUC__ >= 10) || (defined __clang__ && __clang_major__ >= 9)))
+      [[fallthrough]];
+#elif (defined __GNUC__ && __GNUC__ >= 7) || (defined __clang__ && __clang_major__ >= 10)
+      __attribute__ ((__fallthrough__));
+#endif
+      /*FALLTHROUGH*/
+      case 7:
+        hval += asso_values[(unsigned char)str[6]];
+#if (defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang__ && __clang_major__ + (__clang_minor__ >= 9) > 3))) || (defined __STDC_VERSION__ && __STDC_VERSION__ >= 202000L && ((defined __GNUC__ && __GNUC__ >= 10) || (defined __clang__ && __clang_major__ >= 9)))
+      [[fallthrough]];
+#elif (defined __GNUC__ && __GNUC__ >= 7) || (defined __clang__ && __clang_major__ >= 10)
+      __attribute__ ((__fallthrough__));
+#endif
+      /*FALLTHROUGH*/
+      case 6:
+        hval += asso_values[(unsigned char)str[5]];
+#if (defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang__ && __clang_major__ + (__clang_minor__ >= 9) > 3))) || (defined __STDC_VERSION__ && __STDC_VERSION__ >= 202000L && ((defined __GNUC__ && __GNUC__ >= 10) || (defined __clang__ && __clang_major__ >= 9)))
+      [[fallthrough]];
+#elif (defined __GNUC__ && __GNUC__ >= 7) || (defined __clang__ && __clang_major__ >= 10)
+      __attribute__ ((__fallthrough__));
+#endif
+      /*FALLTHROUGH*/
+      case 5:
+      case 4:
+      case 3:
+        hval += asso_values[(unsigned char)str[2]+2];
+#if (defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang__ && __clang_major__ + (__clang_minor__ >= 9) > 3))) || (defined __STDC_VERSION__ && __STDC_VERSION__ >= 202000L && ((defined __GNUC__ && __GNUC__ >= 10) || (defined __clang__ && __clang_major__ >= 9)))
+      [[fallthrough]];
+#elif (defined __GNUC__ && __GNUC__ >= 7) || (defined __clang__ && __clang_major__ >= 10)
+      __attribute__ ((__fallthrough__));
+#endif
+      /*FALLTHROUGH*/
+      case 2:
+      case 1:
+        hval += asso_values[(unsigned char)str[0]];
+        break;
+    }
+  return hval;
 }
 
 #if (defined __GNUC__ && __GNUC__ + (__GNUC_MINOR__ >= 6) > 4) || (defined __clang__ && __clang_major__ >= 3)
@@ -290,422 +353,420 @@ hash_svg_color (register const char *str, register size_t len)
 #endif
 static const struct SvgColorName svg_color_wordlist[] =
   {
+    {""}, {""}, {""}, {""},
+#line 198 "src/svg_colors_names.gperf"
+    {"cyan", SVG_COLOR_CYAN, 0xffffff00},
     {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""},
-#line 240 "src/svg_colors_names.gperf"
-    {"lavender SVG_COLOR_LAVENDER 0xe6e6faff"},
-    {""}, {""}, {""},
 #line 231 "src/svg_colors_names.gperf"
-    {"green SVG_COLOR_GREEN 0x008000ff"},
-    {""}, {""},
-#line 314 "src/svg_colors_names.gperf"
-    {"teal SVG_COLOR_TEAL 0x008080ff"},
-    {""},
-#line 319 "src/svg_colors_names.gperf"
-    {"wheat SVG_COLOR_WHEAT 0xf5deb3ff"},
-    {""}, {""},
-#line 309 "src/svg_colors_names.gperf"
-    {"slategrey SVG_COLOR_SLATEGREY 0x708090ff"},
-    {""},
-#line 238 "src/svg_colors_names.gperf"
-    {"ivory SVG_COLOR_IVORY 0xfffff0ff"},
-    {""}, {""},
-#line 308 "src/svg_colors_names.gperf"
-    {"slategray SVG_COLOR_SLATEGRAY 0x708090ff"},
-    {""},
-#line 193 "src/svg_colors_names.gperf"
-    {"coral SVG_COLOR_CORAL 0xff7f50ff"},
-#line 241 "src/svg_colors_names.gperf"
-    {"lavenderblush SVG_COLOR_LAVENDERBLUSH 0xfff0f5ff"},
-    {""},
-#line 256 "src/svg_colors_names.gperf"
-    {"lightslategrey SVG_COLOR_LIGHTSLATEGREY 0x778899ff"},
-    {""}, {""}, {""}, {""},
-#line 255 "src/svg_colors_names.gperf"
-    {"lightslategray SVG_COLOR_LIGHTSLATEGRAY 0x778899ff"},
-    {""}, {""}, {""}, {""},
-#line 286 "src/svg_colors_names.gperf"
-    {"palegreen SVG_COLOR_PALEGREEN 0x98fb98ff"},
-    {""},
-#line 247 "src/svg_colors_names.gperf"
-    {"lightgoldenrodyellow SVG_COLOR_LIGHTGOLDENRODYELLOW 0xfafad2ff"},
-    {""},
-#line 232 "src/svg_colors_names.gperf"
-    {"greenyellow SVG_COLOR_GREENYELLOW 0xadff2fff"},
-#line 250 "src/svg_colors_names.gperf"
-    {"lightgrey SVG_COLOR_LIGHTGREY 0xd3d3d3ff"},
-    {""},
-#line 320 "src/svg_colors_names.gperf"
-    {"white SVG_COLOR_WHITE 0xffffffff"},
-    {""},
-#line 252 "src/svg_colors_names.gperf"
-    {"lightsalmon SVG_COLOR_LIGHTSALMON 0xffa07aff"},
-#line 248 "src/svg_colors_names.gperf"
-    {"lightgray SVG_COLOR_LIGHTGRAY 0xd3d3d3ff"},
-    {""},
-#line 249 "src/svg_colors_names.gperf"
-    {"lightgreen SVG_COLOR_LIGHTGREEN 0x90ee90ff"},
-    {""}, {""},
-#line 197 "src/svg_colors_names.gperf"
-    {"cyan SVG_COLOR_CYAN 0x00ffffff"},
-    {""},
-#line 280 "src/svg_colors_names.gperf"
-    {"olive SVG_COLOR_OLIVE 0x808000ff"},
-#line 253 "src/svg_colors_names.gperf"
-    {"lightseagreen SVG_COLOR_LIGHTSEAGREEN 0x20b2aaff"},
-    {""},
-#line 281 "src/svg_colors_names.gperf"
-    {"olivedrab SVG_COLOR_OLIVEDRAB 0x6b8e23ff"},
-    {""},
-#line 261 "src/svg_colors_names.gperf"
-    {"linen SVG_COLOR_LINEN 0xfaf0e6ff"},
-    {""},
-#line 263 "src/svg_colors_names.gperf"
-    {"maroon SVG_COLOR_MAROON 0x800000ff"},
-#line 228 "src/svg_colors_names.gperf"
-    {"gold SVG_COLOR_GOLD 0xffd700ff"},
-    {""}, {""},
-#line 288 "src/svg_colors_names.gperf"
-    {"palevioletred SVG_COLOR_PALEVIOLETRED 0xdb7093ff"},
-    {""}, {""}, {""},
-#line 182 "src/svg_colors_names.gperf"
-    {"beige SVG_COLOR_BEIGE 0xf5f5dcff"},
-    {""},
-#line 258 "src/svg_colors_names.gperf"
-    {"lightyellow SVG_COLOR_LIGHTYELLOW 0xffffeeff"},
-#line 229 "src/svg_colors_names.gperf"
-    {"goldenrod SVG_COLOR_GOLDENROD 0xdaa520ff"},
-    {""},
-#line 184 "src/svg_colors_names.gperf"
-    {"black SVG_COLOR_BLACK 0x000000ff"},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""},
-#line 274 "src/svg_colors_names.gperf"
-    {"mintcream SVG_COLOR_MINTCREAM 0xf5fffaff"},
-    {""}, {""}, {""},
-#line 311 "src/svg_colors_names.gperf"
-    {"springgreen SVG_COLOR_SPRINGGREEN 0x00ff7fff"},
-#line 275 "src/svg_colors_names.gperf"
-    {"mistyrose SVG_COLOR_MISTYROSE 0xffe4e1ff"},
-#line 273 "src/svg_colors_names.gperf"
-    {"midnightblue SVG_COLOR_MIDNIGHTBLUE 0x191970ff"},
-    {""}, {""}, {""},
-#line 259 "src/svg_colors_names.gperf"
-    {"lime SVG_COLOR_LIME 0x00ff00ff"},
-    {""}, {""}, {""}, {""},
-#line 236 "src/svg_colors_names.gperf"
-    {"indianred SVG_COLOR_INDIANRED 0xcd5c5cff"},
-    {""},
-#line 245 "src/svg_colors_names.gperf"
-    {"lightcoral SVG_COLOR_LIGHTCORAL 0xf08080ff"},
-    {""},
-#line 305 "src/svg_colors_names.gperf"
-    {"silver SVG_COLOR_SILVER 0xc0c0c0ff"},
-#line 186 "src/svg_colors_names.gperf"
-    {"blue SVG_COLOR_BLUE 0x0000ffff"},
-    {""}, {""}, {""}, {""},
-#line 179 "src/svg_colors_names.gperf"
-    {"aqua SVG_COLOR_AQUA 0x00ffffff"},
-    {""}, {""}, {""}, {""},
-#line 291 "src/svg_colors_names.gperf"
-    {"peru SVG_COLOR_PERU 0xcd853fff"},
-#line 225 "src/svg_colors_names.gperf"
-    {"fuchsia SVG_COLOR_FUCHSIA 0xff00ffff"},
-#line 239 "src/svg_colors_names.gperf"
-    {"khaki SVG_COLOR_KHAKI 0xf0e68cff"},
-    {""},
-#line 284 "src/svg_colors_names.gperf"
-    {"orchid SVG_COLOR_ORCHID 0xda70d6ff"},
-#line 257 "src/svg_colors_names.gperf"
-    {"lightsteelblue SVG_COLOR_LIGHTSTEELBLUE 0xb0c4deff"},
-    {""}, {""}, {""}, {""},
-#line 260 "src/svg_colors_names.gperf"
-    {"limegreen SVG_COLOR_LIMEGREEN 0x32cd32ff"},
-    {""},
-#line 181 "src/svg_colors_names.gperf"
-    {"azure SVG_COLOR_AZURE 0xf0ffffff"},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""},
-#line 222 "src/svg_colors_names.gperf"
-    {"firebrick SVG_COLOR_FIREBRICK 0xb22222ff"},
-    {""},
-#line 321 "src/svg_colors_names.gperf"
-    {"whitesmoke SVG_COLOR_WHITESMOKE 0xf5f5f5ff"},
-    {""}, {""},
-#line 202 "src/svg_colors_names.gperf"
-    {"darkgreen SVG_COLOR_DARKGREEN 0x006400ff"},
-    {""},
-#line 187 "src/svg_colors_names.gperf"
-    {"blueviolet SVG_COLOR_BLUEVIOLET 0x8a2be2ff"},
-#line 303 "src/svg_colors_names.gperf"
-    {"seashell SVG_COLOR_SEASHELL 0xfff5eeff"},
-    {""},
-#line 268 "src/svg_colors_names.gperf"
-    {"mediumseagreen SVG_COLOR_MEDIUMSEAGREEN 0x3cb371ff"},
-#line 279 "src/svg_colors_names.gperf"
-    {"oldlace SVG_COLOR_OLDLACE 0xfdf5e6ff"},
-#line 216 "src/svg_colors_names.gperf"
-    {"darkviolet SVG_COLOR_DARKVIOLET 0x9400d3ff"},
-    {""}, {""},
-#line 292 "src/svg_colors_names.gperf"
-    {"pink SVG_COLOR_PINK 0xffc0cbff"},
-    {""}, {""},
-#line 285 "src/svg_colors_names.gperf"
-    {"palegoldenrod SVG_COLOR_PALEGOLDENROD 0xeee8aaff"},
-#line 224 "src/svg_colors_names.gperf"
-    {"forestgreen SVG_COLOR_FORESTGREEN 0x228b22ff"},
-#line 226 "src/svg_colors_names.gperf"
-    {"gainsboro SVG_COLOR_GAINSBORO 0xdcdcdcff"},
-    {""},
-#line 191 "src/svg_colors_names.gperf"
-    {"chartreuse SVG_COLOR_CHARTREUSE 0x7fff00ff"},
-    {""},
-#line 300 "src/svg_colors_names.gperf"
-    {"salmon SVG_COLOR_SALMON 0xfa8072ff"},
+    {"gray", SVG_COLOR_GRAY, 0xff808080},
+    {""}, {""}, {""}, {""}, {""},
 #line 192 "src/svg_colors_names.gperf"
-    {"chocolate SVG_COLOR_CHOCOLATE 0xd2691eff"},
-#line 262 "src/svg_colors_names.gperf"
-    {"magenta SVG_COLOR_MAGENTA 0xff00ffff"},
-    {""},
-#line 287 "src/svg_colors_names.gperf"
-    {"paleturquoise SVG_COLOR_PALETURQUOISE 0xafeeeeff"},
-#line 304 "src/svg_colors_names.gperf"
-    {"sienna SVG_COLOR_SIENNA 0xa0522dff"},
-#line 283 "src/svg_colors_names.gperf"
-    {"orangered SVG_COLOR_ORANGERED 0xff4500ff"},
+    {"chartreuse", SVG_COLOR_CHARTREUSE, 0xff00ff7f},
+    {""}, {""}, {""},
+#line 234 "src/svg_colors_names.gperf"
+    {"grey", SVG_COLOR_GREY, 0xff808080},
+#line 232 "src/svg_colors_names.gperf"
+    {"green", SVG_COLOR_GREEN, 0xff008000},
+    {""}, {""}, {""},
+#line 251 "src/svg_colors_names.gperf"
+    {"lightgrey", SVG_COLOR_LIGHTGREY, 0xffd3d3d3},
+#line 250 "src/svg_colors_names.gperf"
+    {"lightgreen", SVG_COLOR_LIGHTGREEN, 0xff90ee90},
+    {""}, {""}, {""},
+#line 249 "src/svg_colors_names.gperf"
+    {"lightgray", SVG_COLOR_LIGHTGRAY, 0xffd3d3d3},
     {""}, {""},
-#line 302 "src/svg_colors_names.gperf"
-    {"seagreen SVG_COLOR_SEAGREEN 0x2e8b57ff"},
-#line 318 "src/svg_colors_names.gperf"
-    {"violet SVG_COLOR_VIOLET 0xee82eeff"},
-#line 185 "src/svg_colors_names.gperf"
-    {"blanchedalmond SVG_COLOR_BLANCHEDALMOND 0xffebcdff"},
-    {""},
-#line 272 "src/svg_colors_names.gperf"
-    {"mediumvioletred SVG_COLOR_MEDIUMVIOLETRED 0xc71585ff"},
-    {""}, {""},
-#line 312 "src/svg_colors_names.gperf"
-    {"steelblue SVG_COLOR_STEELBLUE 0x4682b4ff"},
-#line 235 "src/svg_colors_names.gperf"
-    {"hotpink SVG_COLOR_HOTPINK 0xff69b4ff"},
-    {""},
-#line 195 "src/svg_colors_names.gperf"
-    {"cornsilk SVG_COLOR_CORNSILK 0xfff8dcff"},
-    {""},
 #line 307 "src/svg_colors_names.gperf"
-    {"slateblue SVG_COLOR_SLATEBLUE 0x6a5acdff"},
-#line 266 "src/svg_colors_names.gperf"
-    {"mediumorchid SVG_COLOR_MEDIUMORCHID 0xba55d3ff"},
-#line 301 "src/svg_colors_names.gperf"
-    {"sandybrown SVG_COLOR_SANDYBROWN 0xf4a460ff"},
-#line 199 "src/svg_colors_names.gperf"
-    {"darkcyan SVG_COLOR_DARKCYAN 0x008b8bff"},
+    {"skyblue", SVG_COLOR_SKYBLUE, 0xffebce87},
     {""},
 #line 310 "src/svg_colors_names.gperf"
-    {"snow SVG_COLOR_SNOW 0xfffafaff"},
+    {"slategrey", SVG_COLOR_SLATEGREY, 0xff908070},
+    {""},
+#line 305 "src/svg_colors_names.gperf"
+    {"sienna", SVG_COLOR_SIENNA, 0xff2d52a0},
+    {""}, {""},
+#line 309 "src/svg_colors_names.gperf"
+    {"slategray", SVG_COLOR_SLATEGRAY, 0xff908070},
+    {""}, {""}, {""},
+#line 304 "src/svg_colors_names.gperf"
+    {"seashell", SVG_COLOR_SEASHELL, 0xffeef5ff},
 #line 315 "src/svg_colors_names.gperf"
-    {"thistle SVG_COLOR_THISTLE 0xd8bfd8ff"},
-#line 221 "src/svg_colors_names.gperf"
-    {"dodgerblue SVG_COLOR_DODGERBLUE 0x1e90ffff"},
+    {"teal", SVG_COLOR_TEAL, 0xff808000},
+#line 194 "src/svg_colors_names.gperf"
+    {"coral", SVG_COLOR_CORAL, 0xff507fff},
+    {""}, {""}, {""}, {""}, {""},
+#line 253 "src/svg_colors_names.gperf"
+    {"lightsalmon", SVG_COLOR_LIGHTSALMON, 0xff7aa0ff},
     {""}, {""},
-#line 189 "src/svg_colors_names.gperf"
-    {"burlywood SVG_COLOR_BURLYWOOD 0xdeb887ff"},
+#line 257 "src/svg_colors_names.gperf"
+    {"lightslategrey", SVG_COLOR_LIGHTSLATEGREY, 0xff998877},
+#line 185 "src/svg_colors_names.gperf"
+    {"black", SVG_COLOR_BLACK, 0xff000000},
+    {""}, {""}, {""},
+#line 256 "src/svg_colors_names.gperf"
+    {"lightslategray", SVG_COLOR_LIGHTSLATEGRAY, 0xff998877},
+    {""},
+#line 283 "src/svg_colors_names.gperf"
+    {"orange", SVG_COLOR_ORANGE, 0xff00a5ff},
     {""}, {""},
-#line 276 "src/svg_colors_names.gperf"
-    {"moccasin SVG_COLOR_MOCCASIN 0xffe4b5ff"},
-#line 237 "src/svg_colors_names.gperf"
-    {"indigo SVG_COLOR_INDIGO 0x4b0082ff"},
+#line 284 "src/svg_colors_names.gperf"
+    {"orangered", SVG_COLOR_ORANGERED, 0xff0045ff},
+    {""},
+#line 184 "src/svg_colors_names.gperf"
+    {"bisque", SVG_COLOR_BISQUE, 0xffc4e4ff},
     {""}, {""},
-#line 188 "src/svg_colors_names.gperf"
-    {"brown SVG_COLOR_BROWN 0xa52a2aff"},
+#line 260 "src/svg_colors_names.gperf"
+    {"lime", SVG_COLOR_LIME, 0xff00ff00},
+    {""}, {""}, {""},
+#line 297 "src/svg_colors_names.gperf"
+    {"red", SVG_COLOR_RED, 0xff0000ff},
+#line 261 "src/svg_colors_names.gperf"
+    {"limegreen", SVG_COLOR_LIMEGREEN, 0xff32cd32},
+#line 246 "src/svg_colors_names.gperf"
+    {"lightcoral", SVG_COLOR_LIGHTCORAL, 0xff8080f0},
+    {""}, {""}, {""},
+#line 299 "src/svg_colors_names.gperf"
+    {"royalblue", SVG_COLOR_ROYALBLUE, 0xffe16941},
+#line 262 "src/svg_colors_names.gperf"
+    {"linen", SVG_COLOR_LINEN, 0xffe6f0fa},
     {""},
-#line 205 "src/svg_colors_names.gperf"
-    {"darkmagenta SVG_COLOR_DARKMAGENTA 0x8b008bff"},
-#line 293 "src/svg_colors_names.gperf"
-    {"plum SVG_COLOR_PLUM 0xdda0ddff"},
+#line 226 "src/svg_colors_names.gperf"
+    {"fuchsia", SVG_COLOR_FUCHSIA, 0xffff00ff},
     {""},
-#line 207 "src/svg_colors_names.gperf"
-    {"darkorange SVG_COLOR_DARKORANGE 0xff8c00ff"},
+#line 203 "src/svg_colors_names.gperf"
+    {"darkgreen", SVG_COLOR_DARKGREEN, 0xff006400},
+    {""}, {""}, {""}, {""},
+#line 245 "src/svg_colors_names.gperf"
+    {"lightblue", SVG_COLOR_LIGHTBLUE, 0xffe6d8ad},
+#line 209 "src/svg_colors_names.gperf"
+    {"darkorchid", SVG_COLOR_DARKORCHID, 0xffcc3299},
+#line 312 "src/svg_colors_names.gperf"
+    {"springgreen", SVG_COLOR_SPRINGGREEN, 0xff7fff00},
+#line 263 "src/svg_colors_names.gperf"
+    {"magenta", SVG_COLOR_MAGENTA, 0xffff00ff},
     {""},
-#line 316 "src/svg_colors_names.gperf"
-    {"tomato SVG_COLOR_TOMATO 0xff6347ff"},
-#line 244 "src/svg_colors_names.gperf"
-    {"lightblue SVG_COLOR_LIGHTBLUE 0xadd8e6ff"},
-#line 178 "src/svg_colors_names.gperf"
-    {"antiquewhite SVG_COLOR_ANTIQUEWHITE 0xfaebd7ff"},
+#line 229 "src/svg_colors_names.gperf"
+    {"gold", SVG_COLOR_GOLD, 0xff00d7ff},
     {""},
-#line 217 "src/svg_colors_names.gperf"
-    {"deeppink SVG_COLOR_DEEPPINK 0xff1493ff"},
-#line 282 "src/svg_colors_names.gperf"
-    {"orange SVG_COLOR_ORANGE 0xffa500ff"},
-#line 233 "src/svg_colors_names.gperf"
-    {"grey SVG_COLOR_GREY 0x808080ff"},
-    {""},
-#line 208 "src/svg_colors_names.gperf"
-    {"darkorchid SVG_COLOR_DARKORCHID 0x9932ccff"},
-    {""},
-#line 295 "src/svg_colors_names.gperf"
-    {"purple SVG_COLOR_PURPLE 0x800080ff"},
-#line 230 "src/svg_colors_names.gperf"
-    {"gray SVG_COLOR_GRAY 0x808080ff"},
-#line 243 "src/svg_colors_names.gperf"
-    {"lemonchiffon SVG_COLOR_LEMONCHIFFON 0xfffacdff"},
-#line 265 "src/svg_colors_names.gperf"
-    {"mediumblue SVG_COLOR_MEDIUMBLUE 0x0000cdff"},
+#line 285 "src/svg_colors_names.gperf"
+    {"orchid", SVG_COLOR_ORCHID, 0xffd670da},
     {""}, {""},
-#line 278 "src/svg_colors_names.gperf"
-    {"navy SVG_COLOR_NAVY 0x000080ff"},
-    {""},
-#line 180 "src/svg_colors_names.gperf"
-    {"aquamarine SVG_COLOR_AQUAMARINE 0x7fffd4ff"},
-#line 234 "src/svg_colors_names.gperf"
-    {"honeydew SVG_COLOR_HONEYDEW 0xf0fff0ff"},
+#line 308 "src/svg_colors_names.gperf"
+    {"slateblue", SVG_COLOR_SLATEBLUE, 0xffcd5a6a},
     {""},
 #line 206 "src/svg_colors_names.gperf"
-    {"darkolivegreen SVG_COLOR_DARKOLIVEGREEN 0x556b2fff"},
+    {"darkmagenta", SVG_COLOR_DARKMAGENTA, 0xff8b008b},
     {""},
-#line 269 "src/svg_colors_names.gperf"
-    {"mediumslateblue SVG_COLOR_MEDIUMSLATEBLUE 0x7b68eeff"},
+#line 199 "src/svg_colors_names.gperf"
+    {"darkblue", SVG_COLOR_DARKBLUE, 0xff8b0000},
+#line 258 "src/svg_colors_names.gperf"
+    {"lightsteelblue", SVG_COLOR_LIGHTSTEELBLUE, 0xffdec4b0},
+    {""},
+#line 306 "src/svg_colors_names.gperf"
+    {"silver", SVG_COLOR_SILVER, 0xffc0c0c0},
+    {""},
+#line 303 "src/svg_colors_names.gperf"
+    {"seagreen", SVG_COLOR_SEAGREEN, 0xff578b2e},
 #line 313 "src/svg_colors_names.gperf"
-    {"tan SVG_COLOR_TAN 0xd2b48cff"},
-#line 323 "src/svg_colors_names.gperf"
-    {"yellowgreen SVG_COLOR_YELLOWGREEN 0x9acd32ff"},
-#line 190 "src/svg_colors_names.gperf"
-    {"cadetblue SVG_COLOR_CADETBLUE 0x5f9ea0ff"},
-    {""}, {""},
-#line 296 "src/svg_colors_names.gperf"
-    {"red SVG_COLOR_RED 0xff0000ff"},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""},
-#line 322 "src/svg_colors_names.gperf"
-    {"yellow SVG_COLOR_YELLOW 0xffff00ff"},
-#line 251 "src/svg_colors_names.gperf"
-    {"lightpink SVG_COLOR_LIGHTPINK 0xffb6c1ff"},
-    {""},
-#line 227 "src/svg_colors_names.gperf"
-    {"ghostwhite SVG_COLOR_GHOSTWHITE 0xf8f8ffff"},
-    {""}, {""},
-#line 204 "src/svg_colors_names.gperf"
-    {"darkkhaki SVG_COLOR_DARKKHAKI 0xbdb76bff"},
-#line 270 "src/svg_colors_names.gperf"
-    {"mediumspringgreen SVG_COLOR_MEDIUMSPRINGGREEN 0x00fa9aff"},
-    {""},
-#line 200 "src/svg_colors_names.gperf"
-    {"darkgoldenrod SVG_COLOR_DARKGOLDENROD 0xb8860bff"},
-    {""},
-#line 317 "src/svg_colors_names.gperf"
-    {"turquoise SVG_COLOR_TURQUOISE 0x40e0d0ff"},
-#line 196 "src/svg_colors_names.gperf"
-    {"crimson SVG_COLOR_CRIMSON 0xdc143cff"},
-#line 271 "src/svg_colors_names.gperf"
-    {"mediumturquoise SVG_COLOR_MEDIUMTURQUOISE 0x48d1ccff"},
-    {""},
-#line 277 "src/svg_colors_names.gperf"
-    {"navajowhite SVG_COLOR_NAVAJOWHITE 0xffdeadff"},
+    {"steelblue", SVG_COLOR_STEELBLUE, 0xffb48246},
     {""}, {""}, {""},
-#line 215 "src/svg_colors_names.gperf"
-    {"darkturquoise SVG_COLOR_DARKTURQUOISE 0x00ced1ff"},
+#line 314 "src/svg_colors_names.gperf"
+    {"tan", SVG_COLOR_TAN, 0xff8cb4d2},
+#line 292 "src/svg_colors_names.gperf"
+    {"peru", SVG_COLOR_PERU, 0xff3f85cd},
+    {""},
+#line 296 "src/svg_colors_names.gperf"
+    {"purple", SVG_COLOR_PURPLE, 0xff800080},
+#line 210 "src/svg_colors_names.gperf"
+    {"darkred", SVG_COLOR_DARKRED, 0xff00008b},
+    {""},
+#line 275 "src/svg_colors_names.gperf"
+    {"mintcream", SVG_COLOR_MINTCREAM, 0xfffafff5},
+    {""}, {""}, {""}, {""},
+#line 223 "src/svg_colors_names.gperf"
+    {"firebrick", SVG_COLOR_FIREBRICK, 0xff2222b2},
+    {""}, {""}, {""},
+#line 254 "src/svg_colors_names.gperf"
+    {"lightseagreen", SVG_COLOR_LIGHTSEAGREEN, 0xffaab220},
+#line 207 "src/svg_colors_names.gperf"
+    {"darkolivegreen", SVG_COLOR_DARKOLIVEGREEN, 0xff2f6b55},
+    {""}, {""}, {""}, {""},
+#line 276 "src/svg_colors_names.gperf"
+    {"mistyrose", SVG_COLOR_MISTYROSE, 0xffe1e4ff},
+    {""},
+#line 238 "src/svg_colors_names.gperf"
+    {"indigo", SVG_COLOR_INDIGO, 0xff82004b},
+#line 280 "src/svg_colors_names.gperf"
+    {"oldlace", SVG_COLOR_OLDLACE, 0xffe6f5fd},
+    {""},
+#line 293 "src/svg_colors_names.gperf"
+    {"pink", SVG_COLOR_PINK, 0xffcbc0ff},
+#line 211 "src/svg_colors_names.gperf"
+    {"darksalmon", SVG_COLOR_DARKSALMON, 0xff7a96e9},
+    {""}, {""},
+#line 241 "src/svg_colors_names.gperf"
+    {"lavender", SVG_COLOR_LAVENDER, 0xfffae6e6},
+#line 239 "src/svg_colors_names.gperf"
+    {"ivory", SVG_COLOR_IVORY, 0xfff0ffff},
+    {""}, {""}, {""},
+#line 277 "src/svg_colors_names.gperf"
+    {"moccasin", SVG_COLOR_MOCCASIN, 0xffb5e4ff},
+    {""}, {""}, {""}, {""}, {""},
+#line 191 "src/svg_colors_names.gperf"
+    {"cadetblue", SVG_COLOR_CADETBLUE, 0xffa09e5f},
+#line 217 "src/svg_colors_names.gperf"
+    {"darkviolet", SVG_COLOR_DARKVIOLET, 0xffd30094},
+#line 300 "src/svg_colors_names.gperf"
+    {"saddlebrown", SVG_COLOR_SADDLEBROWN, 0xff13458b},
+    {""},
+#line 213 "src/svg_colors_names.gperf"
+    {"darkslateblue", SVG_COLOR_DARKSLATEBLUE, 0xff8b3d48},
+#line 287 "src/svg_colors_names.gperf"
+    {"palegreen", SVG_COLOR_PALEGREEN, 0xff98fb98},
+    {""}, {""}, {""},
+#line 311 "src/svg_colors_names.gperf"
+    {"snow", SVG_COLOR_SNOW, 0xfffafaff},
+#line 237 "src/svg_colors_names.gperf"
+    {"indianred", SVG_COLOR_INDIANRED, 0xff5c5ccd},
+#line 248 "src/svg_colors_names.gperf"
+    {"lightgoldenrodyellow", SVG_COLOR_LIGHTGOLDENRODYELLOW, 0xffd2fafa},
+#line 317 "src/svg_colors_names.gperf"
+    {"tomato", SVG_COLOR_TOMATO, 0xff4763ff},
+#line 244 "src/svg_colors_names.gperf"
+    {"lemonchiffon", SVG_COLOR_LEMONCHIFFON, 0xffcdfaff},
+    {""},
+#line 252 "src/svg_colors_names.gperf"
+    {"lightpink", SVG_COLOR_LIGHTPINK, 0xffc1b6ff},
+    {""},
+#line 264 "src/svg_colors_names.gperf"
+    {"maroon", SVG_COLOR_MAROON, 0xff000080},
     {""},
 #line 242 "src/svg_colors_names.gperf"
-    {"lawngreen SVG_COLOR_LAWNGREEN 0x7cfc00ff"},
-#line 211 "src/svg_colors_names.gperf"
-    {"darkseagreen SVG_COLOR_DARKSEAGREEN 0x8fbc8fff"},
-    {""}, {""},
-#line 264 "src/svg_colors_names.gperf"
-    {"mediumaquamarine SVG_COLOR_MEDIUMAQUAMARINE 0x66cdaaff"},
-#line 177 "src/svg_colors_names.gperf"
-    {"aliceblue SVG_COLOR_ALICEBLUE 0xf0f8ffff"},
-#line 267 "src/svg_colors_names.gperf"
-    {"mediumpurple SVG_COLOR_MEDIUMPURPLE 0x9370dbff"},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""},
-#line 210 "src/svg_colors_names.gperf"
-    {"darksalmon SVG_COLOR_DARKSALMON 0xe9967aff"},
-    {""},
-#line 299 "src/svg_colors_names.gperf"
-    {"saddlebrown SVG_COLOR_SADDLEBROWN 0x8b4513ff"},
+    {"lavenderblush", SVG_COLOR_LAVENDERBLUSH, 0xfff5f0ff},
+#line 318 "src/svg_colors_names.gperf"
+    {"turquoise", SVG_COLOR_TURQUOISE, 0xffd0e040},
+#line 208 "src/svg_colors_names.gperf"
+    {"darkorange", SVG_COLOR_DARKORANGE, 0xff008cff},
     {""}, {""}, {""},
+#line 279 "src/svg_colors_names.gperf"
+    {"navy", SVG_COLOR_NAVY, 0xff800000},
+#line 222 "src/svg_colors_names.gperf"
+    {"dodgerblue", SVG_COLOR_DODGERBLUE, 0xffff901e},
+#line 225 "src/svg_colors_names.gperf"
+    {"forestgreen", SVG_COLOR_FORESTGREEN, 0xff228b22},
+#line 274 "src/svg_colors_names.gperf"
+    {"midnightblue", SVG_COLOR_MIDNIGHTBLUE, 0xff701919},
+    {""},
+#line 269 "src/svg_colors_names.gperf"
+    {"mediumseagreen", SVG_COLOR_MEDIUMSEAGREEN, 0xff71b33c},
+    {""}, {""},
 #line 212 "src/svg_colors_names.gperf"
-    {"darkslateblue SVG_COLOR_DARKSLATEBLUE 0x483d8bff"},
-    {""}, {""},
-#line 209 "src/svg_colors_names.gperf"
-    {"darkred SVG_COLOR_DARKRED 0x8b0000ff"},
-    {""}, {""}, {""}, {""}, {""}, {""},
-#line 198 "src/svg_colors_names.gperf"
-    {"darkblue SVG_COLOR_DARKBLUE 0x00008bff"},
-#line 223 "src/svg_colors_names.gperf"
-    {"floralwhite SVG_COLOR_FLORALWHITE 0xfffaf0ff"},
-#line 246 "src/svg_colors_names.gperf"
-    {"lightcyan SVG_COLOR_LIGHTCYAN 0xe0ffffff"},
-    {""}, {""}, {""}, {""}, {""},
-#line 306 "src/svg_colors_names.gperf"
-    {"skyblue SVG_COLOR_SKYBLUE 0x87ceebff"},
-    {""}, {""}, {""}, {""}, {""},
-#line 289 "src/svg_colors_names.gperf"
-    {"papayawhip SVG_COLOR_PAPAYAWHIP 0xffefd5ff"},
+    {"darkseagreen", SVG_COLOR_DARKSEAGREEN, 0xff8fbc8f},
     {""},
-#line 183 "src/svg_colors_names.gperf"
-    {"bisque SVG_COLOR_BISQUE 0xffe4c4ff"},
-    {""},
-#line 254 "src/svg_colors_names.gperf"
-    {"lightskyblue SVG_COLOR_LIGHTSKYBLUE 0x87cefaff"},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-#line 218 "src/svg_colors_names.gperf"
-    {"deepskyblue SVG_COLOR_DEEPSKYBLUE 0x00bfffff"},
+#line 180 "src/svg_colors_names.gperf"
+    {"aqua", SVG_COLOR_AQUA, 0xffffff00},
+#line 182 "src/svg_colors_names.gperf"
+    {"azure", SVG_COLOR_AZURE, 0xfffffff0},
+#line 301 "src/svg_colors_names.gperf"
+    {"salmon", SVG_COLOR_SALMON, 0xff7280fa},
     {""}, {""}, {""},
-#line 203 "src/svg_colors_names.gperf"
-    {"darkgrey SVG_COLOR_DARKGREY 0xa9a9a9ff"},
+#line 320 "src/svg_colors_names.gperf"
+    {"wheat", SVG_COLOR_WHEAT, 0xffb3def5},
+    {""}, {""}, {""},
+#line 189 "src/svg_colors_names.gperf"
+    {"brown", SVG_COLOR_BROWN, 0xff2a2aa5},
+#line 181 "src/svg_colors_names.gperf"
+    {"aquamarine", SVG_COLOR_AQUAMARINE, 0xffd4ff7f},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""},
+#line 193 "src/svg_colors_names.gperf"
+    {"chocolate", SVG_COLOR_CHOCOLATE, 0xff1e69d2},
+#line 243 "src/svg_colors_names.gperf"
+    {"lawngreen", SVG_COLOR_LAWNGREEN, 0xff00fc7c},
+#line 302 "src/svg_colors_names.gperf"
+    {"sandybrown", SVG_COLOR_SANDYBROWN, 0xff60a4f4},
+    {""}, {""}, {""},
+#line 247 "src/svg_colors_names.gperf"
+    {"lightcyan", SVG_COLOR_LIGHTCYAN, 0xffffffe0},
+    {""}, {""}, {""}, {""}, {""},
+#line 319 "src/svg_colors_names.gperf"
+    {"violet", SVG_COLOR_VIOLET, 0xffee82ee},
+#line 259 "src/svg_colors_names.gperf"
+    {"lightyellow", SVG_COLOR_LIGHTYELLOW, 0xffeeffff},
+    {""}, {""}, {""},
+#line 266 "src/svg_colors_names.gperf"
+    {"mediumblue", SVG_COLOR_MEDIUMBLUE, 0xffcd0000},
+    {""}, {""}, {""},
+#line 291 "src/svg_colors_names.gperf"
+    {"peachpuff", SVG_COLOR_PEACHPUFF, 0xffb9daff},
+    {""},
+#line 233 "src/svg_colors_names.gperf"
+    {"greenyellow", SVG_COLOR_GREENYELLOW, 0xff2fffad},
+    {""}, {""}, {""}, {""}, {""},
+#line 179 "src/svg_colors_names.gperf"
+    {"antiquewhite", SVG_COLOR_ANTIQUEWHITE, 0xffd7ebfa},
+    {""},
+#line 187 "src/svg_colors_names.gperf"
+    {"blue", SVG_COLOR_BLUE, 0xffff0000},
+#line 273 "src/svg_colors_names.gperf"
+    {"mediumvioletred", SVG_COLOR_MEDIUMVIOLETRED, 0xff8515c7},
+    {""},
+#line 268 "src/svg_colors_names.gperf"
+    {"mediumpurple", SVG_COLOR_MEDIUMPURPLE, 0xffdb7093},
+    {""},
+#line 230 "src/svg_colors_names.gperf"
+    {"goldenrod", SVG_COLOR_GOLDENROD, 0xff20a5da},
     {""}, {""}, {""}, {""},
-#line 201 "src/svg_colors_names.gperf"
-    {"darkgray SVG_COLOR_DARKGRAY 0xa9a9a9ff"},
+#line 186 "src/svg_colors_names.gperf"
+    {"blanchedalmond", SVG_COLOR_BLANCHEDALMOND, 0xffcdebff},
+#line 240 "src/svg_colors_names.gperf"
+    {"khaki", SVG_COLOR_KHAKI, 0xff8ce6f0},
     {""}, {""}, {""},
 #line 294 "src/svg_colors_names.gperf"
-    {"powderblue SVG_COLOR_POWDERBLUE 0xb0e0e6ff"},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-    {""}, {""}, {""}, {""}, {""}, {""},
-#line 298 "src/svg_colors_names.gperf"
-    {"royalblue SVG_COLOR_ROYALBLUE 0x4169e1ff"},
+    {"plum", SVG_COLOR_PLUM, 0xffdda0dd},
     {""}, {""},
-#line 214 "src/svg_colors_names.gperf"
-    {"darkslategrey SVG_COLOR_DARKSLATEGREY 0x2f4f4fff"},
-    {""}, {""}, {""}, {""},
-#line 213 "src/svg_colors_names.gperf"
-    {"darkslategray SVG_COLOR_DARKSLATEGRAY 0x2f4f4fff"},
+#line 267 "src/svg_colors_names.gperf"
+    {"mediumorchid", SVG_COLOR_MEDIUMORCHID, 0xffd355ba},
+    {""},
+#line 298 "src/svg_colors_names.gperf"
+    {"rosybrown", SVG_COLOR_ROSYBROWN, 0xff8f8fbc},
+#line 270 "src/svg_colors_names.gperf"
+    {"mediumslateblue", SVG_COLOR_MEDIUMSLATEBLUE, 0xffee687b},
+    {""},
+#line 216 "src/svg_colors_names.gperf"
+    {"darkturquoise", SVG_COLOR_DARKTURQUOISE, 0xffd1ce00},
+    {""}, {""}, {""}, {""}, {""},
+#line 289 "src/svg_colors_names.gperf"
+    {"palevioletred", SVG_COLOR_PALEVIOLETRED, 0xff9370db},
     {""},
 #line 290 "src/svg_colors_names.gperf"
-    {"peachpuff SVG_COLOR_PEACHPUFF 0xffdab9ff"},
-    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {"papayawhip", SVG_COLOR_PAPAYAWHIP, 0xffd5efff},
     {""}, {""}, {""}, {""}, {""}, {""},
-#line 219 "src/svg_colors_names.gperf"
-    {"dimgray SVG_COLOR_DIMGRAY 0x696969ff"},
+#line 271 "src/svg_colors_names.gperf"
+    {"mediumspringgreen", SVG_COLOR_MEDIUMSPRINGGREEN, 0xff9afa00},
+#line 204 "src/svg_colors_names.gperf"
+    {"darkgrey", SVG_COLOR_DARKGREY, 0xffa9a9a9},
+    {""},
+#line 272 "src/svg_colors_names.gperf"
+    {"mediumturquoise", SVG_COLOR_MEDIUMTURQUOISE, 0xffccd148},
+    {""}, {""},
+#line 202 "src/svg_colors_names.gperf"
+    {"darkgray", SVG_COLOR_DARKGRAY, 0xffa9a9a9},
+    {""}, {""}, {""}, {""},
+#line 201 "src/svg_colors_names.gperf"
+    {"darkgoldenrod", SVG_COLOR_DARKGOLDENROD, 0xff0b86b8},
+    {""}, {""}, {""},
+#line 221 "src/svg_colors_names.gperf"
+    {"dimgrey", SVG_COLOR_DIMGREY, 0xff696969},
+    {""}, {""}, {""}, {""},
+#line 220 "src/svg_colors_names.gperf"
+    {"dimgray", SVG_COLOR_DIMGRAY, 0xff696969},
+#line 235 "src/svg_colors_names.gperf"
+    {"honeydew", SVG_COLOR_HONEYDEW, 0xfff0fff0},
+    {""}, {""}, {""}, {""}, {""}, {""},
+#line 183 "src/svg_colors_names.gperf"
+    {"beige", SVG_COLOR_BEIGE, 0xffdcf5f5},
+    {""},
+#line 316 "src/svg_colors_names.gperf"
+    {"thistle", SVG_COLOR_THISTLE, 0xffd8bfd8},
+#line 196 "src/svg_colors_names.gperf"
+    {"cornsilk", SVG_COLOR_CORNSILK, 0xffdcf8ff},
+    {""},
+#line 281 "src/svg_colors_names.gperf"
+    {"olive", SVG_COLOR_OLIVE, 0xff008080},
+    {""}, {""}, {""}, {""},
+#line 188 "src/svg_colors_names.gperf"
+    {"blueviolet", SVG_COLOR_BLUEVIOLET, 0xffe22b8a},
+    {""}, {""}, {""}, {""},
+#line 265 "src/svg_colors_names.gperf"
+    {"mediumaquamarine", SVG_COLOR_MEDIUMAQUAMARINE, 0xffaacd66},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+#line 195 "src/svg_colors_names.gperf"
+    {"cornflowerblue", SVG_COLOR_CORNFLOWERBLUE, 0xffed9564},
+    {""}, {""}, {""}, {""},
+#line 178 "src/svg_colors_names.gperf"
+    {"aliceblue", SVG_COLOR_ALICEBLUE, 0xfffff8f0},
+#line 295 "src/svg_colors_names.gperf"
+    {"powderblue", SVG_COLOR_POWDERBLUE, 0xffe6e0b0},
+    {""},
+#line 288 "src/svg_colors_names.gperf"
+    {"paleturquoise", SVG_COLOR_PALETURQUOISE, 0xffeeeeaf},
+    {""}, {""}, {""}, {""}, {""},
+#line 215 "src/svg_colors_names.gperf"
+    {"darkslategrey", SVG_COLOR_DARKSLATEGREY, 0xff4f4f2f},
+#line 205 "src/svg_colors_names.gperf"
+    {"darkkhaki", SVG_COLOR_DARKKHAKI, 0xff6bb7bd},
+    {""}, {""}, {""},
+#line 214 "src/svg_colors_names.gperf"
+    {"darkslategray", SVG_COLOR_DARKSLATEGRAY, 0xff4f4f2f},
+#line 228 "src/svg_colors_names.gperf"
+    {"ghostwhite", SVG_COLOR_GHOSTWHITE, 0xfffff8f8},
+    {""}, {""}, {""}, {""},
+#line 282 "src/svg_colors_names.gperf"
+    {"olivedrab", SVG_COLOR_OLIVEDRAB, 0xff238e6b},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+#line 286 "src/svg_colors_names.gperf"
+    {"palegoldenrod", SVG_COLOR_PALEGOLDENROD, 0xffaae8ee},
+    {""}, {""}, {""}, {""},
+#line 200 "src/svg_colors_names.gperf"
+    {"darkcyan", SVG_COLOR_DARKCYAN, 0xff8b8b00},
+    {""}, {""}, {""},
+#line 236 "src/svg_colors_names.gperf"
+    {"hotpink", SVG_COLOR_HOTPINK, 0xffb469ff},
+    {""}, {""}, {""}, {""}, {""}, {""},
+#line 227 "src/svg_colors_names.gperf"
+    {"gainsboro", SVG_COLOR_GAINSBORO, 0xffdcdcdc},
+    {""}, {""}, {""},
+#line 218 "src/svg_colors_names.gperf"
+    {"deeppink", SVG_COLOR_DEEPPINK, 0xff9314ff},
     {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
     {""}, {""}, {""}, {""},
-#line 194 "src/svg_colors_names.gperf"
-    {"cornflowerblue SVG_COLOR_CORNFLOWERBLUE 0x6495edff"},
+#line 197 "src/svg_colors_names.gperf"
+    {"crimson", SVG_COLOR_CRIMSON, 0xff3c14dc},
     {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""},
+#line 190 "src/svg_colors_names.gperf"
+    {"burlywood", SVG_COLOR_BURLYWOOD, 0xff87b8de},
     {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
     {""}, {""}, {""}, {""}, {""}, {""},
-#line 297 "src/svg_colors_names.gperf"
-    {"rosybrown SVG_COLOR_ROSYBROWN 0xbc8f8fff"},
-#line 220 "src/svg_colors_names.gperf"
-    {"dimgrey SVG_COLOR_DIMGREY 0x696969ff"}
+#line 224 "src/svg_colors_names.gperf"
+    {"floralwhite", SVG_COLOR_FLORALWHITE, 0xfff0faff},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+#line 321 "src/svg_colors_names.gperf"
+    {"white", SVG_COLOR_WHITE, 0xffffffff},
+#line 278 "src/svg_colors_names.gperf"
+    {"navajowhite", SVG_COLOR_NAVAJOWHITE, 0xffaddeff},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""},
+#line 323 "src/svg_colors_names.gperf"
+    {"yellow", SVG_COLOR_YELLOW, 0xff00ffff},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""},
+#line 324 "src/svg_colors_names.gperf"
+    {"yellowgreen", SVG_COLOR_YELLOWGREEN, 0xff32cd9a},
+#line 255 "src/svg_colors_names.gperf"
+    {"lightskyblue", SVG_COLOR_LIGHTSKYBLUE, 0xffface87},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+    {""}, {""}, {""}, {""}, {""},
+#line 219 "src/svg_colors_names.gperf"
+    {"deepskyblue", SVG_COLOR_DEEPSKYBLUE, 0xffffbf00},
+    {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+#line 322 "src/svg_colors_names.gperf"
+    {"whitesmoke", SVG_COLOR_WHITESMOKE, 0xfff5f5f5}
   };
 #if (defined __GNUC__ && __GNUC__ + (__GNUC_MINOR__ >= 6) > 4) || (defined __clang__ && __clang_major__ >= 3)
 #pragma GCC diagnostic pop
 #endif
 
 const struct SvgColorName *
-lookup_svg_color_names (register const char *str, register size_t len)
+lookup_svg_color_names_default (register const char *str, register size_t len)
 {
   if (len <= SVG_COL__MAX_WORD_LENGTH && len >= SVG_COL__MIN_WORD_LENGTH)
     {
@@ -721,5 +782,22 @@ lookup_svg_color_names (register const char *str, register size_t len)
     }
   return (struct SvgColorName *) 0;
 }
-#line 324 "src/svg_colors_names.gperf"
+#line 325 "src/svg_colors_names.gperf"
 
+const struct SvgColorName *
+lookup_svg_color_names (register const char *str, register size_t len)
+{
+  if (len <= SVG_COL__MAX_WORD_LENGTH && len >= SVG_COL__MIN_WORD_LENGTH)
+    {
+      register unsigned int key = hash_svg_color (str, len);
+
+      if (key <= SVG_COL__MAX_HASH_VALUE)
+        {
+          register const char *s = svg_color_wordlist[key].name;
+
+          if (s && !strncasecmp (str, s, len) && s[len] == '\0')
+            return &svg_color_wordlist[key];
+        }
+    }
+  return (struct SvgColorName *) 0;
+}
