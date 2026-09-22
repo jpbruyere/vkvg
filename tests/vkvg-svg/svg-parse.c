@@ -169,6 +169,88 @@
     p->d_len = svg->value_len;
 //============
 
+//= LINEAR GRADIENT =
+#define PREPROC_LINEARGRADIENT                                                                                         \
+    parentData = _new_linear_gradient();
+
+#define PROCESS_LINEARGRADIENT                                                                                         \
+    CASTELT(rg,linear_gradient,parentData);                                                                            \
+    rg->pattern      = vkvg_pattern_create_linear(rg->x1.number, rg->y1.number, rg->x2.number, rg->y2.number);         \
+    rg->id.hash      = svg->currentIdHash;                                                                             \
+    rg->id.xlinkHref = svg->currentXlinkHref;                                                                          \
+    LOG("SVG: store pattern id:%u href:%u\n", rg->id.hash, rg->id.xlinkHref);                                          \
+    if (rg->hasTransform)                                                                                                  \
+        vkvg_pattern_set_matrix(rg->pattern, &rg->transform);                                                              \
+    array_add(svg->idList, rg);
+
+#define SVG_ATT_LINEARGRADIENT_X1                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->x1));
+#define SVG_ATT_LINEARGRADIENT_Y1                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->y1));
+#define SVG_ATT_LINEARGRADIENT_X2                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->x2));
+#define SVG_ATT_LINEARGRADIENT_Y2                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->y2));
+#define SVG_ATT_LINEARGRADIENT_GRADIENTUNITS                                        \
+    if (!strncasecmp ((char*)svg->value, "userspaceonuse", svg->value_len))         \
+        CAST(linear_gradient)->gradientUnits = svg_gradient_unit_userSpaceOnUse;    \
+    else if (!strncasecmp ((char*)svg->value, "objectboundingbox", svg->value_len)) \
+        CAST(linear_gradient)->gradientUnits = svg_gradient_unit_objectBoundingBox; \
+    else {                                                                          \
+        LOG("Unrecognized gradient units: %.*s", (int)svg->value_len, svg->value);  \
+}
+#define SVG_ATT_LINEARGRADIENT_GRADIENTTRANSFORM                \
+    CASTELT(rg,linear_gradient,parentData);                     \
+    if (!rg->hasTransform)                                      \
+        rg->transform = VKVG_IDENTITY_MATRIX;                   \
+    rg->hasTransform = try_parse_transform(svg, &rg->transform);
+//===================
+
+//= RADIAL GRADIENT =
+#define PREPROC_RADIALGRADIENT                                                                                         \
+    parentData = _new_radial_gradient();
+#define PROCESS_RADIALGRADIENT                                                                             \
+    CASTELT(rg,radial_gradient,parentData);                                                                            \
+    rg->pattern =                                                                                                      \
+    vkvg_pattern_create_radial(rg->fx.number, rg->fy.number, 0, rg->cx.number, rg->cy.number, rg->r.number);       \
+    rg->id.hash      = svg->currentIdHash;                                                                             \
+    rg->id.xlinkHref = svg->currentXlinkHref;                                                                          \
+    LOG("store pattern id:%u href:%u\n", rg->id.hash, rg->id.xlinkHref);                                               \
+    if (rg->hasTransform)                                                                                                  \
+        vkvg_pattern_set_matrix(rg->pattern, &rg->transform);                                                              \
+    array_add(svg->idList, rg);
+
+#define SVG_ATT_RADIALGRADIENT_CX                              try_parse_length_or_percentage(svg, &(CAST(radial_gradient)->cx));
+#define SVG_ATT_RADIALGRADIENT_CY                              try_parse_length_or_percentage(svg, &(CAST(radial_gradient)->cy));
+#define SVG_ATT_RADIALGRADIENT_R                               try_parse_length_or_percentage(svg, &(CAST(radial_gradient)->r));
+#define SVG_ATT_RADIALGRADIENT_FX                              try_parse_length_or_percentage(svg, &(CAST(radial_gradient)->fx));
+#define SVG_ATT_RADIALGRADIENT_FY                              try_parse_length_or_percentage(svg, &(CAST(radial_gradient)->fy));
+#define SVG_ATT_RADIALGRADIENT_GRADIENTUNITS                   SVG_ATT_LINEARGRADIENT_GRADIENTUNITS
+#define SVG_ATT_RADIALGRADIENT_GRADIENTTRANSFORM               SVG_ATT_LINEARGRADIENT_GRADIENTTRANSFORM
+//===================
+
+//=== STOP ===
+
+#define PREPROC_STOP                                                                                                    \
+    VkvgPattern pat = ((svg_class_gradient*)parentData)->pattern;                                                                   \
+    svg_element_gradient_stop *stop = _new_gradient_stop();                                                             \
+    stop->color = 0xFF000000;                                                                                           \
+    stop->opacity = 1.f;                                                                                                \
+    parentData = stop;
+// todo multiple compress/decompress of colors
+#define POSTPROC_STOP                                                                                                   \
+    float a = (float)((stop->color & 0xff000000) >> 24) / 255.0f;                                                       \
+    float b = (float)((stop->color & 0x00ff0000) >> 16) / 255.0f;                                                       \
+    float g = (float)((stop->color & 0x0000ff00) >> 8) / 255.0f;                                                        \
+    float r = (float)(stop->color & 0x000000ff) / 255.0f;                                                               \
+    vkvg_pattern_add_color_stop(pat, stop->offset, r, g, b, a * stop->opacity);
+
+#define SVG_ATT_STOP_COLOR                                                          \
+    svg_paint_type enabled;                                                         \
+    uint32_t color;                                                                 \
+    if (try_parse_color(&svg->value, svg->value + svg->value_len, &enabled, &color))\
+        CAST(gradient_stop)->color = color;
+#define SVG_ATT_STOP_OPACITY    CAST(gradient_stop)->opacity = parse_ratio(svg);
+#define SVG_ATT_OFFSET          CAST(gradient_stop)->offset = parse_ratio(svg);
+
+//============
+
 //=== DEFS ===
 #define PREPROC_DEFS    svg->inDefs = true;
 #define POSTPROC_DEFS   svg->inDefs = false;
@@ -188,38 +270,38 @@
 #define SVG_ATT_STROKE      try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->stroke_type, &attribs->stroke);
 #define SVG_ATT_FILL        try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->fill_type, &attribs->fill);
 #define SVG_ATT_FILL_RULE                                               \
-    if (!strncasecmp (svg->value, "evenodd", svg->value_len))           \
+    if (!strncasecmp ((char*)svg->value, "evenodd", svg->value_len))           \
         vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_EVEN_ODD);          \
-    else if (!strncasecmp (svg->value, "nonzero", svg->value_len))      \
+    else if (!strncasecmp ((char*)svg->value, "nonzero", svg->value_len))      \
         vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_NON_ZERO);          \
     else {                                                              \
-        LOG("Unrecognized fill-rule: %.*s", svg->value_len, svg->value);\
+        LOG("Unrecognized fill-rule: %.*s", (int)svg->value_len, svg->value);\
     }
 #define SVG_ATT_STROKE_LINECAP                                                  \
-    if (!strncasecmp (svg->value, "butt", svg->value_len))                      \
+    if (!strncasecmp ((char*)svg->value, "butt", svg->value_len))                      \
         vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_BUTT);                        \
-    else if (!strncasecmp (svg->value, "round", svg->value_len))                \
+    else if (!strncasecmp ((char*)svg->value, "round", svg->value_len))                \
         vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_ROUND);                       \
-    else if (!strncasecmp (svg->value, "square", svg->value_len))               \
+    else if (!strncasecmp ((char*)svg->value, "square", svg->value_len))               \
         vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_SQUARE);                      \
     else {                                                                      \
-        LOG("Unrecognized stroke-linecap: %.*s", svg->value_len, svg->value);   \
+        LOG("Unrecognized stroke-linecap: %.*s", (int)svg->value_len, svg->value);   \
     }
 #define SVG_ATT_STROKE_LINEJOIN                                                 \
-    if (!strncasecmp (svg->value, "miter", svg->value_len))                     \
+    if (!strncasecmp ((char*)svg->value, "miter", svg->value_len))                     \
         vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_MITER);                     \
-    else if (!strncasecmp (svg->value, "round", svg->value_len))                \
+    else if (!strncasecmp ((char*)svg->value, "round", svg->value_len))                \
         vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_ROUND);                     \
-    else if (!strncasecmp (svg->value, "bevel", svg->value_len))                \
+    else if (!strncasecmp ((char*)svg->value, "bevel", svg->value_len))                \
         vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_BEVEL);                     \
     else {                                                                      \
-        LOG("Unrecognized stroke-linejoin: %.*s", svg->value_len, svg->value);  \
+        LOG("Unrecognized linejoin: %.*s", (int)svg->value_len, svg->value);    \
     }
 #define SVG_ATT_STROKE_WIDTH try_parse_length_or_percentage(svg, &attribs->stroke_width);
 
-#define SVG_ATT_OPACITY         attribs->opacity = parse_opacity(svg);
-#define SVG_ATT_FILL_OPACITY    attribs->fill_opacity = parse_opacity(svg);
-#define SVG_ATT_STROKE_OPACITY  attribs->stroke_opacity = parse_opacity(svg);
+#define SVG_ATT_OPACITY         attribs->opacity = parse_ratio(svg);
+#define SVG_ATT_FILL_OPACITY    attribs->fill_opacity = parse_ratio(svg);
+#define SVG_ATT_STROKE_OPACITY  attribs->stroke_opacity = parse_ratio(svg);
 
 
 #define SVG_ATT_SVG_WIDTH   try_parse_length_or_percentage(svg, &svg->width);
@@ -228,6 +310,27 @@
 #define SVG_ATT_TRANSFORM   apply_transform(svg);
 
 #include "parser_gen.h"
+
+svg_element_linear_gradient *_new_linear_gradient() {
+    svg_element_linear_gradient *g = (svg_element_linear_gradient *)calloc(1, sizeof(svg_element_linear_gradient));
+    g->id.type                     = svg_element_type_linear_gradient;
+    g->x1                          = (svg_length_or_percentage){0, svg_unit_percentage};
+    g->y1                          = (svg_length_or_percentage){0, svg_unit_percentage};
+    g->x2                          = (svg_length_or_percentage){100, svg_unit_percentage};
+    g->y2                          = (svg_length_or_percentage){0, svg_unit_percentage};
+    return g;
+}
+svg_element_radial_gradient *_new_radial_gradient() {
+    svg_element_radial_gradient *g = (svg_element_radial_gradient *)calloc(1, sizeof(svg_element_radial_gradient));
+    g->id.type                     = svg_element_type_radial_gradient;
+    g->gradientUnits               = svg_gradient_unit_objectBoundingBox;
+    g->cx                          = (svg_length_or_percentage){50, svg_unit_percentage};
+    g->cy                          = (svg_length_or_percentage){50, svg_unit_percentage};
+    g->fx                          = (svg_length_or_percentage){50, svg_unit_percentage};
+    g->fy                          = (svg_length_or_percentage){50, svg_unit_percentage};
+    g->r                           = (svg_length_or_percentage){50, svg_unit_percentage};
+    return g;
+}
 
 // A perfectly optimized, branchless UTF-8 length lookup table
 static const uint8_t utf8_len_table[256] = {
@@ -470,9 +573,12 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
     *colorValue = 0;
     *isEnabled = svg_paint_type_none;
 
-    if (ptr >= buff_end) return false;
+    if (ptr >= buff_end) {
+        LOG("Unexpected end of file while parsing color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
+        return false;
+    }
 
-           // 1. Handle Hexadecimal Formats (#FFF or #FFFFFF)
+    // 1. Handle Hexadecimal Formats (#FFF or #FFFFFF)
     if (*ptr == '#') {
         ptr++;
         const uint8_t *hex_start = ptr;
@@ -495,6 +601,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
             uint32_t b = (digits[4] << 4) | digits[5];
             *colorValue = 0xFF000000 | (b << 16) | (g << 8) | r;
         } else {
+            LOG("Malformed hex string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
             return false; // Malformed hex string
         }
 
@@ -523,6 +630,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
             *buff_ptr = ptr;
             return true;
         }
+        LOG("Malformed url string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
         return false;
     }
 
@@ -536,13 +644,17 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
         if (!parse_rgb_channel(&ptr, buff_end, &r) ||
             !parse_rgb_channel(&ptr, buff_end, &g) ||
             !parse_rgb_channel(&ptr, buff_end, &b)) {
+            LOG("Malformed rgb string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
             return false;
         }
 
         if (is_rgba) {
             // Note: Simplification for demo assuming integer alpha channel.
             // If handling floats (e.g. 0.5), tie try_parse_float right here.
-            if (!parse_rgb_channel(&ptr, buff_end, &a)) return false;
+            if (!parse_rgb_channel(&ptr, buff_end, &a)) {
+                LOG("Malformed hex string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
+                return false;
+            }
         }
 
         while (ptr < buff_end && *ptr != ')') ptr++;
@@ -586,7 +698,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
         *buff_ptr = word_end;
         return true;
     }
-
+    LOG("Unknown color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
     return false; // Unknown token format
 }
 // Fast branchless helper to map 2-character unit suffix bytes to their enum IDs
@@ -654,7 +766,7 @@ bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percen
     lop->units = svg_unit_px;
     return true;
 }
-bool try_parse_transform(svg_context *svg, vkvg_matrix_t *mat) {
+bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat) {
     const uint8_t *buff = svg->value;
     const uint8_t *const buff_end = svg->value + svg->value_len;
 
@@ -754,17 +866,6 @@ bool try_parse_transform(svg_context *svg, vkvg_matrix_t *mat) {
 
     return true;
 }
-float parse_opacity(svg_context *const svg) {
-    svg_length_or_percentage opacity;
-    if (!try_parse_length_or_percentage(svg, &opacity)) {
-        LOG("error parsing opacity: %.*s\n", (int)svg->value_len, svg->value);
-        return 1.f;
-    }
-    if (opacity.units == svg_unit_percentage)
-        return opacity.number / 100.0f;
-    else
-        return opacity.number;
-}
 
 bool try_parse_viewbox(svg_context *const svg) {
     // 1. Establish the text boundaries based on your isolated attribute value
@@ -832,8 +933,7 @@ void set_pattern(svg_context *svg, uint32_t patternHash) {
     if (try_find_by_id(svg, patternHash, &elt)) {
         switch (_get_element_type(elt)) {
         case svg_element_type_linear_gradient: {
-            svg_element_linear_gradient *g = (svg_element_linear_gradient *)elt;
-
+            CASTELT(g,linear_gradient,elt);
             _resolve_pattern_href(svg, elt, g->pattern);
 
             pat = g->pattern;
@@ -863,7 +963,7 @@ void set_pattern(svg_context *svg, uint32_t patternHash) {
 
         break;
         case svg_element_type_radial_gradient: {
-            svg_element_radial_gradient *g = (svg_element_radial_gradient *)elt;
+            CASTELT(g,radial_gradient,elt);
 
             _resolve_pattern_href(svg, elt, g->pattern);
 
@@ -888,7 +988,7 @@ void set_pattern(svg_context *svg, uint32_t patternHash) {
             fy = _get_pixel_coord(h, &g->fy) + y0;
             r  = _get_pixel_coord(w, &g->r);
 
-            vkvg_pattern_edit_radial(g->pattern, cx, cy, 0, cx, cy, r);
+            vkvg_pattern_edit_radial(g->pattern, cx, cy, 0, fx, fy, r);
             vkvg_set_source(svg->ctx, g->pattern);
         } break;
         }
@@ -1612,6 +1712,7 @@ void  _process_element(svg_context *svg, SvgPresentationAttributes *const attrib
     }
     if (!use)
         _store_or_throw(svg, elt);
+    svg->currentIdHash = 0;
 }
 void apply_transform(svg_context *svg) {
     vkvg_matrix_t current;
@@ -1624,7 +1725,7 @@ int parse_children(SVG_COMMON_SIG);
 int try_parse_attibute(svg_context *const svg) {
     const uint8_t *buff = svg->buff_ptr;
     const uint8_t *const buff_end = svg->buff_end;
-
+    uint8_t val_delim;
     while (buff < buff_end) {
         if (*buff > 64) {
             svg->att = buff;
@@ -1647,12 +1748,14 @@ int try_parse_attibute(svg_context *const svg) {
                         }
                     }
                     while (++buff < buff_end) {
-                        if (*buff == '"' || *buff == '\'')
+                        if (*buff == '"' || *buff == '\'') {
+                            val_delim = *buff;
                             break;
+                        }
                     }
                     svg->value = buff + 1;
                     while (++buff < buff_end) {
-                        if (*buff == '"' || *buff == '\'')
+                        if (*buff == val_delim)
                             break;
                     }
                     svg->value_len = buff - svg->value;
@@ -1777,7 +1880,7 @@ int parse_children(SVG_COMMON_SIG) {
                 }
             } else if (c == '/'){
                 //closing tag
-                if ((++buff)+elt_len < buff_end && !memcmp (buff, elt, elt_len)) {
+                if ((++buff) + elt_len < buff_end && !memcmp (buff, elt, elt_len)) {
                     svg->buff_ptr = buff + 1;
                     return 0;
                 }
@@ -1794,7 +1897,7 @@ int parse_children(SVG_COMMON_SIG) {
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <filename.svg>\n", argv[0]);
+        printf("Usage: %s <filename.svg>\n", argv[0]);
         return 1;
     }
 
