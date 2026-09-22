@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['width_442',['width',['../structvkvg__text__extents__t_ae426f00e82704fa09578f5446e22d915.html#ae426f00e82704fa09578f5446e22d915',1,'vkvg_text_extents_t']]]
+  ['phy_0',['phy',['../structvkvg__device__create__info__t_af504bf037ac40ec1597e18e0dd242321.html#af504bf037ac40ec1597e18e0dd242321',1,'vkvg_device_create_info_t']]]
 ];

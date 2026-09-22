@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['context_538',['Context',['../group__context.html',1,'']]]
+  ['and_20manipulation_20reference_0',['Path creation and manipulation reference.',['../group__path.html',1,'']]]
 ];

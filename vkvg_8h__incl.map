@@ -1,6 +1,11 @@
-<map id="/mnt/devel/vkvg&#45;master/include/vkvg.h" name="/mnt/devel/vkvg&#45;master/include/vkvg.h">
-<area shape="rect" id="node1" title="The header of the VKVG library." alt="" coords="98,5,277,47"/>
-<area shape="rect" id="node2" title=" " alt="" coords="5,95,129,121"/>
-<area shape="rect" id="node3" title=" " alt="" coords="153,95,221,121"/>
-<area shape="rect" id="node4" title=" " alt="" coords="246,95,329,121"/>
+<map id="/home/runner/work/vkvg/vkvg/include/vkvg.h" name="/home/runner/work/vkvg/vkvg/include/vkvg.h">
+<area shape="rect" id="Node000001" title="Main header of the VKVG library." alt="" coords="109,5,290,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,76,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,48,77,90,75,85,160,43"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="101,93,175,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,47,158,84,153,81,182,44"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="200,93,324,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="217,44,246,81,242,84,212,47"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="349,93,431,119"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="246,43,350,86,348,91,244,48"/>
 </map>

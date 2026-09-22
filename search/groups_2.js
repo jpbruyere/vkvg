@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['matrices_540',['Matrices',['../group__matrix.html',1,'']]]
+  ['device_0',['Device',['../group__device.html',1,'']]]
 ];
