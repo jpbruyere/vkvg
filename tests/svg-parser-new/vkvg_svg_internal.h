@@ -300,6 +300,8 @@ typedef struct {
     const uint8_t *elt;
     const uint8_t *att;
     const uint8_t *value;
+    const uint8_t *style;
+    const uint8_t *style_end;
     size_t         ns_len;
     size_t         elt_len;
     size_t         att_len;
@@ -318,7 +320,6 @@ typedef struct {
     svg_length_or_percentage height;
 
     //-- flags --
-    uint32_t    is_in_defs          : 1;
     uint32_t    queryDimensions     : 1;
     uint32_t    preserveAspectRatio : 1;
     uint32_t    skip                : 1; // skip tag and children

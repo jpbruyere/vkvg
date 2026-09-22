@@ -264,7 +264,8 @@
 #define PROCESS_USE_WIDTH
 #define PROCESS_USE_HEIGHT*/
 //============
-
+#define SVG_ATT_STYLE       svg->style      = svg->value;                   \
+                            svg->style_end  = svg->value + svg->value_len;
 #define SVG_ATT_ID          svg->currentIdHash = hash_svg_id(svg->value, svg->value_len);
 #define SVG_ATT_COLOR       try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->color_type, &attribs->color);
 #define SVG_ATT_STROKE      try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->stroke_type, &attribs->stroke);
@@ -1601,8 +1602,8 @@ void apply_transform(svg_context *svg) {
 int parse_children(SVG_COMMON_SIG);
 
 int try_parse_attibute(svg_context *const svg) {
-    const uint8_t *buff = svg->buff_ptr;
-    const uint8_t *const buff_end = svg->buff_end;
+    const uint8_t *buff = svg->style ? svg->style : svg->buff_ptr;
+    const uint8_t *const buff_end = svg->style ? svg->style_end : svg->buff_end;
     uint8_t val_delim;
     while (buff < buff_end) {
         if (*buff > 64) {
@@ -1612,12 +1613,25 @@ int try_parse_attibute(svg_context *const svg) {
                     if (*buff == '-')
                         continue;
                     if (*buff == ':') {
-                        svg->ns = svg->att;
-                        svg->ns_len = buff - 1 - svg->ns;
-                        svg->att = buff + 1;
-                        continue;
+                        if (svg->style) {
+                            svg->att_len = buff - svg->att;
+                            svg->value = buff + 1;
+                            while (++buff < buff_end) {
+                                if (*buff == ';')
+                                    break;
+                            }
+                            svg->value_len = buff - svg->value;
+                            svg->style = buff + 1;
+                            return 1;
+                        } else {
+                            svg->ns = svg->att;
+                            svg->ns_len = buff - 1 - svg->ns;
+                            svg->att = buff + 1;
+                            continue;
+                        }
                     }
                     svg->att_len = buff - svg->att;
+
                     //expecting '=' or white space
                     while (*buff != '=') {
                         if (++buff == buff_end) {
@@ -1647,6 +1661,8 @@ int try_parse_attibute(svg_context *const svg) {
         }
         buff++;
     }
+    if (svg->style)
+        svg->style = 0;
     return 0;
 }
 
