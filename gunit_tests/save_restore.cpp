@@ -1,5 +1,7 @@
 #include "drawTestBase.h"
-#include <math.h>
+
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 class SaveRestoreTest : public DrawTestBase {
 
@@ -24,7 +26,7 @@ class SaveRestoreTest : public DrawTestBase {
         vkvg_clip(ctx);
         vkvg_set_source_rgb(ctx, depthRatio, depthRatio, 1.f);
         vkvg_paint(ctx);
-        vkvg_arc(ctx, 256, 256, 256.f - gap * depth, 0, 2.f*M_PI);
+        vkvg_arc(ctx, 256, 256, 256.f - gap * depth, 0, 2.f * M_PI);
         vkvg_clip(ctx);
         vkvg_set_source_surface(ctx, imgSurf, 0, 0);
         vkvg_paint(ctx);
@@ -52,7 +54,7 @@ class SaveRestoreTest : public DrawTestBase {
 
 TEST_F(SaveRestoreTest, RestoreClip1) {
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_arc(ctx, 140, 140, 100, 0, 2.f*M_PI);
+    vkvg_arc(ctx, 140, 140, 100, 0, 2.f * M_PI);
     vkvg_clip(ctx);
     vkvg_save(ctx);
     vkvg_reset_clip(ctx);
