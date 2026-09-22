@@ -12,7 +12,7 @@
 #include "vkvg.h"
 
 
-#define DEBUG_LOG
+//#define DEBUG_LOG
 #ifdef LOG
 #undef LOG
 #endif
@@ -396,7 +396,7 @@ int elt_lut_func(SVG_SIG_STACK_ATTRIB) {                                        
 #define SVG_ELT_LUT_FUNC_FOOTER                                                                                 \
     case SVG_TOK_UNKNOWN:                                                                                       \
     default:                                                                                                    \
-        printf("Unidentify element: %.*s\n", (int)svg->elt_len, svg->elt);                                      \
+        LOG("Unidentify element: %.*s\n", (int)svg->elt_len, svg->elt);                                      \
         PARSE_ELEMENT                                                                                           \
         break;                                                                                                  \
     }                                                                                                           \
@@ -411,9 +411,7 @@ void parse_attributes(SVG_COMMON_SIG) {                                         
 #define SVG_ATT_LUT_FUNC_FOOTER                                                                                 \
         case SVG_ATT_TOK_UNKNOWN:                                                                               \
         default:                                                                                                \
-            printf("Unprocess Attribute: ");                                                                    \
-            fwrite(svg->att, sizeof(uint8_t), svg->att_len, stdout);                                            \
-            printf("\n");                                                                                       \
+            LOG("Unprocess Attribute: %.*s\n", (int)svg->att_len, svg->att);                                    \
             break;                                                                                              \
         }                                                                                                       \
     }                                                                                                           \
