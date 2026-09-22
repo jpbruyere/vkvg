@@ -1,5 +1,5 @@
 #include "drawTestBase.h"
-#include <math.h>
+#include <cmath>
 
 class ImageDrawTest : public DrawTestBase {
 
@@ -148,7 +148,7 @@ TEST_F(ImageDrawTest, PaintImageOnImage) {
 
 TEST_F(ImageDrawTest, PaintImageClipped) {
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_arc(ctx, 140, 140, 100, 0, 2.f*M_PI);
+    vkvg_arc(ctx, 140, 140, 100, 0, 2.f * M_PI);
     vkvg_clip(ctx);
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
     vkvg_paint(ctx);
@@ -160,8 +160,8 @@ TEST_F(ImageDrawTest, PaintImageClipped) {
 }
 TEST_F(ImageDrawTest, PaintImageClipped2) {
     VkvgContext ctx = vkvg_create(surf);
-    vkvg_rectangle(ctx, 100,100, 200, 200);
-    vkvg_arc(ctx, 140, 140, 100, 0, 2.f*M_PI);
+    vkvg_rectangle(ctx, 100, 100, 200, 200);
+    vkvg_arc(ctx, 140, 140, 100, 0, 2.f * M_PI);
     vkvg_clip(ctx);
     vkvg_set_source_surface(ctx, imgSurf, 0, 0);
     vkvg_paint(ctx);
