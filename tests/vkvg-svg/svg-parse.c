@@ -86,10 +86,22 @@
 
 #define PRE_PROC_DEFS   svg->inDefs = true;
 #define POST_PROC_DEFS  svg->inDefs = false;
+//=== LINE ===
+#define PREPROC_LINE    vkvg_save(svg->ctx);        \
+                        parentData = _new_line();
 
-#define PREPROC_RECT    vkvg_save(svg->ctx);                                                                                               \
-                        parentData = _new_rect();
+#define PROCESS_LINE  _process_element(svg, &attribs, parentData, false);
+#define POSTPROC_LINE vkvg_restore(svg->ctx);
+
+#define SVG_ATT_LINE_X1           try_parse_length_or_percentage(svg, &(CAST(line)->x1));
+#define SVG_ATT_LINE_Y1           try_parse_length_or_percentage(svg, &(CAST(line)->y1));
+#define SVG_ATT_LINE_X2           try_parse_length_or_percentage(svg, &(CAST(line)->x2));
+#define SVG_ATT_LINE_Y2           try_parse_length_or_percentage(svg, &(CAST(line)->y2));
+//============
+
 //=== RECT ===
+#define PREPROC_RECT    vkvg_save(svg->ctx);        \
+                        parentData = _new_rect();
 #define PROCESS_RECT    _process_element(svg, &attribs, parentData, false);
 #define POSTPROC_RECT   vkvg_restore(svg->ctx);
 #define SVG_ATT_RECT_X            try_parse_length_or_percentage(svg, &(CAST(rect)->x));
@@ -98,9 +110,55 @@
 #define SVG_ATT_RECT_HEIGHT       try_parse_length_or_percentage(svg, &(CAST(rect)->h));
 #define SVG_ATT_RECT_RX           try_parse_length_or_percentage(svg, &(CAST(rect)->rx));
 #define SVG_ATT_RECT_RY           try_parse_length_or_percentage(svg, &(CAST(rect)->ry));
+//============
+
+//== CIRCLE ==
+#define PREPROC_CIRCLE      vkvg_save(svg->ctx);        \
+                            parentData = _new_circle();
+#define PROCESS_CIRCLE      _process_element(svg, &attribs, parentData, false);
+#define POSTPROC_CIRCLE     vkvg_restore(svg->ctx);
+#define SVG_ATT_CIRCLE_CX   try_parse_length_or_percentage(svg, &(CAST(circle)->cx));
+#define SVG_ATT_CIRCLE_CY   try_parse_length_or_percentage(svg, &(CAST(circle)->cy));
+#define SVG_ATT_CIRCLE_R    try_parse_length_or_percentage(svg, &(CAST(circle)->r));
+//============
+
+//= ELLIPSE ==
+#define PREPROC_ELLIPSE     vkvg_save(svg->ctx);        \
+                            parentData = _new_ellipse();
+#define PROCESS_ELLIPSE     _process_element(svg, &attribs, parentData, false);
+#define POSTPROC_ELLIPSE    vkvg_restore(svg->ctx);
+#define SVG_ATT_ELLIPSE_CX  try_parse_length_or_percentage(svg, &(CAST(ellipse)->cx));
+#define SVG_ATT_ELLIPSE_CY  try_parse_length_or_percentage(svg, &(CAST(ellipse)->cy));
+#define SVG_ATT_ELLIPSE_RX  try_parse_length_or_percentage(svg, &(CAST(ellipse)->rx));
+#define SVG_ATT_ELLIPSE_RY  try_parse_length_or_percentage(svg, &(CAST(ellipse)->ry));
+//============
+
+//= POLYLINE =
+#define PREPROC_POLYLINE        vkvg_save(svg->ctx);        \
+                                parentData = _new_polygon();
+#define PROCESS_POLYLINE        _process_element(svg, &attribs, parentData, false);
+#define POSTPROC_POLYLINE       vkvg_restore(svg->ctx);
+#define SVG_ATT_POLYLINE_POINTS    \
+    CASTELT(p,polygon,parentData); \
+    p->points = svg->value;        \
+    p->points_len = svg->value_len;
+
+//===========
+
+//= POLYGON =
+#define PREPROC_POLYGON         vkvg_save(svg->ctx);         \
+                                parentData = _new_polygon(); \
+                                CAST(polygon)->closed = true;
+#define PROCESS_POLYGON         _process_element(svg, &attribs, parentData, false);
+#define POSTPROC_POLYGON        vkvg_restore(svg->ctx);
+#define SVG_ATT_POLYGON_POINTS     \
+    CASTELT(p,polygon,parentData); \
+    p->points = svg->value;        \
+    p->points_len = svg->value_len;
+//============
 
 //=== PATH ===
-#define PREPROC_PATH    vkvg_save(svg->ctx);                                                                    \
+#define PREPROC_PATH    vkvg_save(svg->ctx);        \
                         parentData = _new_path();
 
 #define PROCESS_PATH    _process_element(svg, &attribs, parentData, false);
@@ -109,17 +167,64 @@
     CASTELT(p,path,parentData); \
     p->d = svg->value;          \
     p->d_len = svg->value_len;
+//============
 
+//=== DEFS ===
+#define PREPROC_DEFS    svg->inDefs = true;
+#define POSTPROC_DEFS   svg->inDefs = false;
+//============
+
+//=== USES ===
+//#define PREPROC_USE     _process_use(svg, &attribs);
+//#define POSTPROC_USE
+/*#define PROCESS_USE_X
+#define PROCESS_USE_Y
+#define PROCESS_USE_WIDTH
+#define PROCESS_USE_HEIGHT*/
+//============
 
 #define SVG_ATT_ID          svg->currentIdHash = hash_svg_id(svg->value, svg->value_len);
 #define SVG_ATT_COLOR       try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->color_type, &attribs->color);
 #define SVG_ATT_STROKE      try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->stroke_type, &attribs->stroke);
 #define SVG_ATT_FILL        try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->fill_type, &attribs->fill);
+#define SVG_ATT_FILL_RULE                                               \
+    if (!strncasecmp (svg->value, "evenodd", svg->value_len))           \
+        vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_EVEN_ODD);          \
+    else if (!strncasecmp (svg->value, "nonzero", svg->value_len))      \
+        vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_NON_ZERO);          \
+    else {                                                              \
+        LOG("Unrecognized fill-rule: %.*s", svg->value_len, svg->value);\
+    }
+#define SVG_ATT_STROKE_LINECAP                                                  \
+    if (!strncasecmp (svg->value, "butt", svg->value_len))                      \
+        vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_BUTT);                        \
+    else if (!strncasecmp (svg->value, "round", svg->value_len))                \
+        vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_ROUND);                       \
+    else if (!strncasecmp (svg->value, "square", svg->value_len))               \
+        vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_SQUARE);                      \
+    else {                                                                      \
+        LOG("Unrecognized stroke-linecap: %.*s", svg->value_len, svg->value);   \
+    }
+#define SVG_ATT_STROKE_LINEJOIN                                                 \
+    if (!strncasecmp (svg->value, "miter", svg->value_len))                     \
+        vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_MITER);                     \
+    else if (!strncasecmp (svg->value, "round", svg->value_len))                \
+        vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_ROUND);                     \
+    else if (!strncasecmp (svg->value, "bevel", svg->value_len))                \
+        vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_BEVEL);                     \
+    else {                                                                      \
+        LOG("Unrecognized stroke-linejoin: %.*s", svg->value_len, svg->value);  \
+    }
+#define SVG_ATT_STROKE_WIDTH try_parse_length_or_percentage(svg, &attribs->stroke_width);
+
+#define SVG_ATT_OPACITY         attribs->opacity = parse_opacity(svg);
+#define SVG_ATT_FILL_OPACITY    attribs->fill_opacity = parse_opacity(svg);
+#define SVG_ATT_STROKE_OPACITY  attribs->stroke_opacity = parse_opacity(svg);
 
 
 #define SVG_ATT_SVG_WIDTH   try_parse_length_or_percentage(svg, &svg->width);
 #define SVG_ATT_SVG_HEIGHT  try_parse_length_or_percentage(svg, &svg->height);
-#define SVG_ATT_SVG_VIEWBOX svg->hasViewBox = parse_viewbox(svg);
+#define SVG_ATT_SVG_VIEWBOX svg->hasViewBox = try_parse_viewbox(svg);
 #define SVG_ATT_TRANSFORM   apply_transform(svg);
 
 #include "parser_gen.h"
@@ -197,7 +302,7 @@ bool try_parse_float(const uint8_t **buff_ptr, const uint8_t *const restrict buf
 
     if (buff >= buff_end) return false;
 
-           // 1. Process optional sign token
+    // 1. Process optional sign token
     bool negative = false;
     if (*buff == '-') {
         negative = true;
@@ -206,12 +311,12 @@ bool try_parse_float(const uint8_t **buff_ptr, const uint8_t *const restrict buf
         buff++;
     }
 
-           // Check if we have at least one digit or a decimal dot ahead to validate structure
+    // Check if we have at least one digit or a decimal dot ahead to validate structure
     if (buff >= buff_end || !((*buff >= '0' && *buff <= '9') || *buff == '.')) {
         return false;
     }
 
-           // 2. Accumulate whole integer component
+    // 2. Accumulate whole integer component
     double value = 0.0;
     bool has_digits = false;
     while (buff < buff_end && *buff >= '0' && *buff <= '9') {
@@ -450,8 +555,8 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
         return true;
     }
 
-           // 3. Fallback: Named keyword parsing ("none", "currentColor", "red")
-           // Find the word boundary boundary block
+   // 3. Fallback: Named keyword parsing ("none", "currentColor", "red")
+   // Find the word boundary boundary block
     const uint8_t *word_end = ptr;
     while (word_end < buff_end && *word_end != ' ' && *word_end != '\t' && *word_end != ';' && *word_end != ')') {
         word_end++;
@@ -649,9 +754,19 @@ bool try_parse_transform(svg_context *svg, vkvg_matrix_t *mat) {
 
     return true;
 }
+float parse_opacity(svg_context *const svg) {
+    svg_length_or_percentage opacity;
+    if (!try_parse_length_or_percentage(svg, &opacity)) {
+        LOG("error parsing opacity: %.*s\n", (int)svg->value_len, svg->value);
+        return 1.f;
+    }
+    if (opacity.units == svg_unit_percentage)
+        return opacity.number / 100.0f;
+    else
+        return opacity.number;
+}
 
-
-bool parse_viewbox(svg_context *const svg) {
+bool try_parse_viewbox(svg_context *const svg) {
     // 1. Establish the text boundaries based on your isolated attribute value
     const uint8_t *buff           = svg->value;
     const uint8_t *const buff_end = svg->value + svg->value_len;
@@ -779,6 +894,16 @@ void set_pattern(svg_context *svg, uint32_t patternHash) {
         }
     } else
         LOG("pattern hash not resolved: %d\n", patternHash);
+}
+void parse_point_list(svg_context *const svg, const uint8_t *const restrict buff_ptr, const uint8_t *const restrict buff_end) {
+    const uint8_t *buff = buff_ptr;
+    float x, y;
+    if (try_parse_floats (&buff, buff_end, 2, &x, &y)) {
+        vkvg_move_to(svg->ctx, x, y);
+        while (try_parse_floats (&buff, buff_end, 2, &x, &y)) {
+            vkvg_line_to(svg->ctx, x, y);
+        }
+    }
 }
 void _parse_path_d_attribute(svg_context *const svg, const uint8_t *const restrict buff_ptr, const uint8_t *const restrict buff_end) {
     const uint8_t *buff = buff_ptr;
@@ -1383,8 +1508,8 @@ malformed:
 }
 
 static inline float _normalized_diagonal(float w, float h) { return sqrtf(powf(w, 2) + powf(h, 2)) / sqrtf(2); }
-int draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
-    LOG("SVG Draw: %s\n", svg->elt);
+void draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
+    LOG("SVG Draw: %.*s\n", (int)svg->elt_len, svg->elt);
     if (attribs->fill_type) {
         vkvg_set_opacity(svg->ctx, attribs->opacity * attribs->fill_opacity);
         if (attribs->fill_type == svg_paint_type_pattern)
@@ -1393,26 +1518,25 @@ int draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
             vkvg_set_source_color(svg->ctx, attribs->fill);
         if (attribs->stroke_type) {
             vkvg_fill_preserve(svg->ctx);
-            vkvg_set_opacity(svg->ctx, attribs->opacity * attribs->stroke_opacity);
-            if (attribs->stroke_type == svg_paint_type_pattern)
-                set_pattern(svg, attribs->stroke);
-            else
-                vkvg_set_source_color(svg->ctx, attribs->stroke);
-            vkvg_stroke(svg->ctx);
-        } else
+        } else {
             vkvg_fill(svg->ctx);
-    } else if (attribs->stroke_type) {
-        vkvg_set_opacity(svg->ctx, attribs->opacity * attribs->fill_opacity);
+            return;
+        }
+    }
+    if (attribs->stroke_type) {
+        vkvg_set_opacity(svg->ctx, attribs->opacity * attribs->stroke_opacity);
         if (attribs->stroke_type == svg_paint_type_pattern)
             set_pattern(svg, attribs->stroke);
         else
             vkvg_set_source_color(svg->ctx, attribs->stroke);
+        vkvg_set_line_width(svg->ctx, attribs->stroke_width.number);
+        //vkvg_set_line_cap(svg->ctx, attribs->);
         vkvg_stroke(svg->ctx);
     }
 }
 void  _process_element(svg_context *svg, SvgPresentationAttributes *const attribs, void *elt, bool use) {
     if (!(svg->inDefs || svg->skipDraw)) {
-        LOG("process element: %s \n", svg->elt);
+        LOG("process element: %.*s \n", (int)svg->elt_len, svg->elt);
         switch (_get_element_type(elt)) {
         case svg_element_type_rect: {
             CASTELT(r, rect, elt);
@@ -1474,6 +1598,13 @@ void  _process_element(svg_context *svg, SvgPresentationAttributes *const attrib
             _parse_path_d_attribute(svg, p->d, p->d + p->d_len);
             draw(svg, attribs);
         } break;
+        case svg_element_type_polygon: {
+            CASTELT(p, polygon, elt);
+            parse_point_list(svg, p->points, p->points + p->points_len);
+            if (p->closed)
+                vkvg_close_path(svg->ctx);
+            draw(svg, attribs);
+        } break;
         default:
             LOG("Unprocessed element type: %d\n", _get_element_type(elt));
             return;
@@ -1499,6 +1630,8 @@ int try_parse_attibute(svg_context *const svg) {
             svg->att = buff;
             while (++buff < buff_end) {
                 if (*buff < 65) {
+                    if (*buff == '-')
+                        continue;
                     if (*buff == ':') {
                         svg->ns = svg->att;
                         svg->ns_len = buff - 1 - svg->ns;
@@ -1514,12 +1647,12 @@ int try_parse_attibute(svg_context *const svg) {
                         }
                     }
                     while (++buff < buff_end) {
-                        if (*buff == '"')
+                        if (*buff == '"' || *buff == '\'')
                             break;
                     }
                     svg->value = buff + 1;
                     while (++buff < buff_end) {
-                        if (*buff == '"')
+                        if (*buff == '"' || *buff == '\'')
                             break;
                     }
                     svg->value_len = buff - svg->value;
@@ -1627,6 +1760,20 @@ int parse_children(SVG_COMMON_SIG) {
                         }
                     }
                     continue;
+                } else if (buff + 7 < buff_end && !memcmp (buff, "DOCTYPE", 7)) {
+                    buff+=7;
+                    const uint8_t* doctypeStart = buff;
+                    while (++buff < buff_end) {
+                        if (*buff == '>') {
+                            printf("doctype: ");
+                            fwrite(doctypeStart, sizeof(uint8_t), buff - doctypeStart, stdout);
+                            printf("\n");
+                            fflush(stdout);
+                            buff++;
+                            break;
+                        }
+                    }
+                    continue;
                 }
             } else if (c == '/'){
                 //closing tag
@@ -1637,7 +1784,7 @@ int parse_children(SVG_COMMON_SIG) {
             } else if (c == '?') {
                 continue;
             }
-            perror("malformed xml\n");
+            printf("malformed xml\n");
             return -1;
         } else {
             buff++;
@@ -1681,6 +1828,8 @@ int main(int argc, char *argv[]) {
     svg.width   = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
     svg.height  = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
     svg.idList  = array_create();
+    svg.forced_width = 512;
+    svg.forced_height = 512;
 
     SvgPresentationAttributes attribs = {
         0xff000000,
@@ -1695,6 +1844,7 @@ int main(int argc, char *argv[]) {
         1.0f,
         1.0f,
         1.0f, // opacities
+        {1, svg_unit_px}
     };
     attribs.text_anchor = SVG_ANCHOR_START;
 
