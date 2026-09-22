@@ -2,7 +2,7 @@ name: Doxygen CI
 on:
   push:
     branches:
-      - test
+      - master
 
 jobs:
   deploy:
@@ -15,7 +15,7 @@ jobs:
             submodules: true
 
       - name: Install requirements
-        run: sudo apt install graphviz ninja doxygen cmake
+        run: sudo apt install graphviz ninja-build doxygen cmake libvulkan1 libvulkan-dev
 
       - name: Configure Cmake
         run: cmake -G Ninja -B build -S . -DVKVG_BUILD_DOCS=TRUE
@@ -23,7 +23,7 @@ jobs:
       - name: Build documentation
         run: cmake --build build -t doxygen
 
-      - name: Deploy
+      - name: Deploy to branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
