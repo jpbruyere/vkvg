@@ -101,11 +101,14 @@
 
 //=== PATH ===
 #define PREPROC_PATH    vkvg_save(svg->ctx);                                                                    \
-                        svg_element_path *p = _new_path();
+                        parentData = _new_path();
 
-#define PROCESS_PATH    _process_element(svg, &attribs, p, false);
+#define PROCESS_PATH    _process_element(svg, &attribs, parentData, false);
 #define POSTPROC_PATH   vkvg_restore(svg->ctx);
-#define SVG_ATT_D
+#define SVG_ATT_D               \
+    CASTELT(p,path,parentData); \
+    p->d = svg->value;          \
+    p->d_len = svg->value_len;
 
 
 #define SVG_ATT_ID          svg->currentIdHash = hash_svg_id(svg->value, svg->value_len);
@@ -116,7 +119,8 @@
 
 #define SVG_ATT_SVG_WIDTH   try_parse_length_or_percentage(svg, &svg->width);
 #define SVG_ATT_SVG_HEIGHT  try_parse_length_or_percentage(svg, &svg->height);
-#define SVG_ATT_VIEWBOX     svg->hasViewBox = parse_viewbox(svg);
+#define SVG_ATT_SVG_VIEWBOX svg->hasViewBox = parse_viewbox(svg);
+#define SVG_ATT_TRANSFORM   apply_transform(svg);
 
 #include "parser_gen.h"
 
@@ -170,6 +174,14 @@ static inline const uint8_t* skip_whitespaces(const uint8_t *buff, const uint8_t
         buff++;
     }
     return buff;
+}
+static inline bool try_skip_separators(const uint8_t **buff_ptr, const uint8_t *const restrict buff_end) {
+    const uint8_t *buff = *buff_ptr;
+    while (buff < buff_end && (*buff == ' ' || *buff == ',' || *buff == '\t' || *buff == '\r' || *buff == '\n')) {
+        buff++;
+    }
+    *buff_ptr = buff;
+    return buff < buff_end;
 }
 static inline bool try_skip_whitespaces(const uint8_t **buff_ptr, const uint8_t *const restrict buff_end) {
     const uint8_t *buff = *buff_ptr;
@@ -537,6 +549,107 @@ bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percen
     lop->units = svg_unit_px;
     return true;
 }
+bool try_parse_transform(svg_context *svg, vkvg_matrix_t *mat) {
+    const uint8_t *buff = svg->value;
+    const uint8_t *const buff_end = svg->value + svg->value_len;
+
+    while (buff < buff_end) {
+        // Skip leading whitespace or transform list separators (spaces, commas)
+        buff = skip_separators(buff, buff_end);
+        if (buff >= buff_end) break;
+
+               // 1. Identify the transform function name tokens
+        const uint8_t *name_start = buff;
+        while (buff < buff_end && *buff != '(' && *buff != ' ' && *buff != '\t') {
+            buff++;
+        }
+        size_t name_len = (size_t)(buff - name_start);
+
+               // Advance past any trailing spaces to find the opening bracket '('
+        buff = skip_whitespaces(buff, buff_end);
+        if (buff >= buff_end || *buff != '(') {
+            LOG("error parsing transform: missing opening parenthesis '(' in '%.*s'\n", (int)svg->value_len, svg->value);
+            return false;
+        }
+        buff++; // step over '('
+
+               // 2. Route tokens to appropriate transformation handlers
+        if (name_len == 4 && !memcmp(name_start, "none", 4)) {
+            break;
+        }
+        else if (name_len == 6 && !memcmp(name_start, "matrix", 6)) {
+            vkvg_matrix_t m, newMat;
+            if (!try_parse_floats(&buff, buff_end, 6, &m.xx, &m.yx, &m.xy, &m.yy, &m.x0, &m.y0)) {
+                LOG("error parsing transformation matrix values\n");
+                return false;
+            }
+            vkvg_matrix_multiply(&newMat, &m, mat);
+            *mat = newMat;
+        }
+        else if (name_len == 9 && !memcmp(name_start, "translate", 9)) {
+            float dx = 0.0f, dy = 0.0f;
+            if (!try_parse_floats(&buff, buff_end, 1, &dx)) {
+                LOG("error parsing translation component X\n");
+                return false;
+            }
+            // dy is optional in translation transforms; safely try parsing it
+            buff = skip_separators(buff, buff_end);
+            try_parse_float(&buff, buff_end, &dy);
+
+            vkvg_matrix_translate(mat, dx, dy);
+        }
+        else if (name_len == 5 && !memcmp(name_start, "scale", 5)) {
+            float sx = 0.0f, sy = 0.0f;
+            if (!try_parse_floats(&buff, buff_end, 1, &sx)) {
+                LOG("error parsing scale factor X\n");
+                return false;
+            }
+            // sy is optional; if missing, default to uniform scaling (sy = sx)
+            buff = skip_separators(buff, buff_end);
+            if (!try_parse_float(&buff, buff_end, &sy)) {
+                sy = sx;
+            }
+            vkvg_matrix_scale(mat, sx, sy);
+        }
+        else if (name_len == 6 && !memcmp(name_start, "rotate", 6)) {
+            float angle = 0.0f, cx = 0.0f, cy = 0.0f;
+            if (!try_parse_floats(&buff, buff_end, 1, &angle)) {
+                LOG("error parsing rotation angle component\n");
+                return false;
+            }
+
+            // Center parameters cx and cy are optionally provided as a pair
+            buff = skip_separators(buff, buff_end);
+            if (try_parse_float(&buff, buff_end, &cx)) {
+                if (!try_parse_floats(&buff, buff_end, 1, &cy)) {
+                    LOG("error parsing rotation center Y component\n");
+                    return false;
+                }
+                // Correct transformation order for pivot rotations
+                vkvg_matrix_translate(mat, cx, cy);
+                vkvg_matrix_rotate(mat, degToRad(angle));
+                vkvg_matrix_translate(mat, -cx, -cy);
+            } else {
+                vkvg_matrix_rotate(mat, degToRad(angle));
+            }
+        }
+        else {
+            LOG("unimplemented or unrecognized transform token: %.*s\n", (int)name_len, name_start);
+            return false;
+        }
+
+               // 3. Clear closing parenthesis structural markers
+        buff = skip_whitespaces(buff, buff_end);
+        if (buff >= buff_end || *buff != ')') {
+            LOG("error parsing transform string: expecting trailing ')'\n");
+            return false;
+        }
+        buff++; // step over ')'
+    }
+
+    return true;
+}
+
 
 bool parse_viewbox(svg_context *const svg) {
     // 1. Establish the text boundaries based on your isolated attribute value
@@ -1304,9 +1417,9 @@ void  _process_element(svg_context *svg, SvgPresentationAttributes *const attrib
         case svg_element_type_rect: {
             CASTELT(r, rect, elt);
             if (r->w.number && r->h.number && (attribs->fill_type || attribs->stroke_type)) {
-                float x = _get_pixel_coord(svg->viewBox.w, &r->x), y = _get_pixel_coord(svg->viewBox.h, &r->y),
-                    w = _get_pixel_coord(svg->viewBox.w, &r->w), h = _get_pixel_coord(svg->viewBox.h, &r->h),
-                    rx = _get_pixel_coord(svg->viewBox.w, &r->rx), ry = _get_pixel_coord(svg->viewBox.h, &r->ry);
+                float   x   = _get_pixel_coord(svg->viewBox.w, &r->x), y = _get_pixel_coord(svg->viewBox.h, &r->y),
+                        w   = _get_pixel_coord(svg->viewBox.w, &r->w), h = _get_pixel_coord(svg->viewBox.h, &r->h),
+                        rx  = _get_pixel_coord(svg->viewBox.w, &r->rx), ry = _get_pixel_coord(svg->viewBox.h, &r->ry);
 
                 if (rx > w / 2.0f)
                     rx = w / 2.0f;
@@ -1369,7 +1482,12 @@ void  _process_element(svg_context *svg, SvgPresentationAttributes *const attrib
     if (!use)
         _store_or_throw(svg, elt);
 }
-
+void apply_transform(svg_context *svg) {
+    vkvg_matrix_t current;
+    vkvg_get_matrix(svg->ctx, &current);
+    if (try_parse_transform(svg, &current))
+        vkvg_set_matrix(svg->ctx, &current);
+}
 int parse_children(SVG_COMMON_SIG);
 
 int try_parse_attibute(svg_context *const svg) {
