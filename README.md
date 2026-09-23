@@ -15,8 +15,8 @@
   <a href="https://www.paypal.me/GrandTetraSoftware">
     <img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square">
   </a>
-  <a href="https://gitter.im/CSharpRapidOpenWidgets?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
-    <img src="https://badges.gitter.im/CSharpRapidOpenWidgets.svg">
+  <a href="https://matrix.to/#/#vkvg:matrix.org">
+    <img src="https://matrix.to/img/matrix-badge.svg">
   </a>
 </p>
 <p align="center">
@@ -27,7 +27,6 @@
     <img src="https://img.shields.io/badge/mpr-v0.3.0--beta-blue">
   </a>
 </p>
-	
 </h1>
 
 **vkvg** is an open-source *2D graphics library* written in **C** using [Vulkan](https://www.khronos.org/vulkan/) as backend.
