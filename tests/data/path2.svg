@@ -1,0 +1,26 @@
+<svg viewBox="0 0 1000 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Unit Test Path encompassing all 20 path commands (M, m, L, l, H, h, V, v, C, c, S, s, Q, q, T, t, A, a, Z, z) -->
+  <path fill="none" stroke="yellow" stroke-width="30"
+    d="M 100 100 
+       L 200 100 
+       H 300 
+       V 200 
+       C 400 200, 450 100, 500 200 
+       S 600 300, 650 200 
+       Q 750 100, 800 200 
+       T 900 200 
+       A 50 50 0 0 1 950 250 
+       Z 
+       m 0 100 
+       l 100 0 
+       h 100 
+       v 100 
+       c 100 0, 150 -100, 200 0 
+       s 100 100, 150 0 
+       q 100 -100, 150 0 
+       t 100 0 
+       a 50 50 0 0 1 50 50 
+       z"
+
+ />
+</svg>

@@ -348,9 +348,10 @@ void _add_tri_indices_for_rect(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i) {
     inds[5]                   = i + 3;
     ctx->indCount += 6;
 
-    _check_index_cache_size(ctx);
     LOG(VKVG_LOG_INFO_IBO, "Rectangle IDX: %d %d %d | %d %d %d (count=%d)\n", inds[0], inds[1], inds[2], inds[3],
         inds[4], inds[5], ctx->indCount);
+
+    _check_index_cache_size(ctx);
 }
 void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2) {
     VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
@@ -359,8 +360,9 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
     inds[2]                   = i2;
     ctx->indCount += 3;
 
-    _check_index_cache_size(ctx);
     LOG(VKVG_LOG_INFO_IBO, "Triangle IDX: %d %d %d (indCount=%d)\n", i0, i1, i2, ctx->indCount);
+
+    _check_index_cache_size(ctx);
 }
 void _add_triangle_indices_unchecked(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1,
                                      VKVG_IBO_INDEX_TYPE i2) {

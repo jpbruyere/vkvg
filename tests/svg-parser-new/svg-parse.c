@@ -13,7 +13,7 @@
 #define ARRAY_INIT         8
 #define ARRAY_ELEMENT_TYPE void *
 
-#define ARRAY_IMPLEMENTATION<
+#define ARRAY_IMPLEMENTATION
 #include "array.h"
 
 //#define PREPROC_SVG
@@ -193,7 +193,7 @@
     else if (!strncasecmp ((char*)svg->value, "objectboundingbox", svg->value_len)) \
         CAST(linear_gradient)->gradientUnits = svg_gradient_unit_objectBoundingBox; \
     else {                                                                          \
-        LOG("Unrecognized gradient units: %.*s", (int)svg->value_len, svg->value);  \
+        LOGE("Unrecognized gradient units: %.*s", (int)svg->value_len, svg->value);  \
 }
 #define SVG_ATT_LINEARGRADIENT_GRADIENTTRANSFORM                \
     CASTELT(rg,linear_gradient,parentData);                     \
@@ -257,7 +257,7 @@
 //============
 
 //=== USES ===
-//#define PREPROC_USE     _process_use(svg, &attribs);
+#define PROCESS_USE     process_use(svg, &attribs);
 //#define POSTPROC_USE
 /*#define PROCESS_USE_X
 #define PROCESS_USE_Y
@@ -266,7 +266,21 @@
 //============
 #define SVG_ATT_STYLE       svg->style      = svg->value;                   \
                             svg->style_end  = svg->value + svg->value_len;
-#define SVG_ATT_ID          svg->currentIdHash = hash_svg_id(svg->value, svg->value_len);
+#define SVG_ATT_XLINK_HREF                                                                                      \
+    if (svg->value_len > 1 && svg->value[0] == '#') {                                                           \
+        svg->currentXlinkHref = hash_svg_id(svg->value+1, svg->value_len-1);                                    \
+        LOG("xlink:href %.*s -> %u\n", (int)svg->value_len, svg->value, svg->currentXlinkHref);                 \
+    } else                                                                                                      \
+        LOG("xlink:href type not handled %.*s\n", (int)svg->value_len, svg->value);
+#define SVG_ATT_IMAGE_HREF              SVG_ATT_XLINK_HREF
+#define SVG_ATT_LINEARGRADIENT_HREF     SVG_ATT_XLINK_HREF
+#define SVG_ATT_PATTERN_HREF            SVG_ATT_XLINK_HREF
+#define SVG_ATT_RADIALGRADIENT_HREF     SVG_ATT_XLINK_HREF
+#define SVG_ATT_TEXTPATH_HREF           SVG_ATT_XLINK_HREF
+#define SVG_ATT_USE_HREF                SVG_ATT_XLINK_HREF
+
+#define SVG_ATT_ID          svg->currentIdHash = hash_svg_id(svg->value, svg->value_len);   \
+                            LOG("currentId %.*s -> %u\n", (int)svg->value_len, svg->value, svg->currentIdHash);
 #define SVG_ATT_COLOR       try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->color_type, &attribs->color);
 #define SVG_ATT_STROKE      try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->stroke_type, &attribs->stroke);
 #define SVG_ATT_FILL        try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->fill_type, &attribs->fill);
@@ -276,7 +290,7 @@
     else if (!strncasecmp ((char*)svg->value, "nonzero", svg->value_len))      \
         vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_NON_ZERO);          \
     else {                                                              \
-        LOG("Unrecognized fill-rule: %.*s", (int)svg->value_len, svg->value);\
+        LOGE("Unrecognized fill-rule: %.*s", (int)svg->value_len, svg->value);\
     }
 #define SVG_ATT_STROKE_LINECAP                                                  \
     if (!strncasecmp ((char*)svg->value, "butt", svg->value_len))                      \
@@ -286,7 +300,7 @@
     else if (!strncasecmp ((char*)svg->value, "square", svg->value_len))               \
         vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_SQUARE);                      \
     else {                                                                      \
-        LOG("Unrecognized stroke-linecap: %.*s", (int)svg->value_len, svg->value);   \
+        LOGE("Unrecognized stroke-linecap: %.*s", (int)svg->value_len, svg->value);   \
     }
 #define SVG_ATT_STROKE_LINEJOIN                                                 \
     if (!strncasecmp ((char*)svg->value, "miter", svg->value_len))                     \
@@ -296,7 +310,7 @@
     else if (!strncasecmp ((char*)svg->value, "bevel", svg->value_len))                \
         vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_BEVEL);                     \
     else {                                                                      \
-        LOG("Unrecognized linejoin: %.*s", (int)svg->value_len, svg->value);    \
+        LOGE("Unrecognized linejoin: %.*s", (int)svg->value_len, svg->value);    \
     }
 #define SVG_ATT_STROKE_WIDTH try_parse_length_or_percentage(svg, &attribs->stroke_width);
 
@@ -522,7 +536,27 @@ bool try_parse_floats(const uint8_t **buff_ptr, const uint8_t *const restrict bu
     *buff_ptr = buff;
     return true;
 }
+bool try_parse_flags(const uint8_t **buff_ptr, const uint8_t *const restrict buff_end, int flagCount, ...) {
+    const uint8_t *buff = *buff_ptr;
+    va_list args;
+    va_start(args, flagCount);
 
+    for (int i = 0; i < flagCount; i++) {
+        bool *pF = va_arg(args, bool*);
+
+        buff = skip_whitespaces(buff, buff_end);
+        if (buff >= buff_end || (*buff != '0' && *buff != '1')) {
+            va_end(args);
+            *buff_ptr = buff;
+            return false;
+        }
+        *pF = *buff++ == '1';
+        buff = skip_separators(buff, buff_end);
+    }
+    va_end(args);
+    *buff_ptr = buff;
+    return true;
+}
 bool try_find_by_id(svg_context *const svg, uint32_t hash, void **elt) {
     *elt = NULL;
     for (uint32_t i = 0; i < svg->idList->count; i++) {
@@ -575,7 +609,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
     *isEnabled = svg_paint_type_none;
 
     if (ptr >= buff_end) {
-        LOG("Unexpected end of file while parsing color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
+        LOGE("Unexpected end of file while parsing color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
         return false;
     }
 
@@ -602,7 +636,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
             uint32_t b = (digits[4] << 4) | digits[5];
             *colorValue = 0xFF000000 | (b << 16) | (g << 8) | r;
         } else {
-            LOG("Malformed hex string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
+            LOGE("Malformed hex string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
             return false; // Malformed hex string
         }
 
@@ -631,7 +665,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
             *buff_ptr = ptr;
             return true;
         }
-        LOG("Malformed url string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
+        LOGE("Malformed url string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
         return false;
     }
 
@@ -645,7 +679,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
         if (!parse_rgb_channel(&ptr, buff_end, &r) ||
             !parse_rgb_channel(&ptr, buff_end, &g) ||
             !parse_rgb_channel(&ptr, buff_end, &b)) {
-            LOG("Malformed rgb string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
+            LOGE("Malformed rgb string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
             return false;
         }
 
@@ -653,7 +687,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
             // Note: Simplification for demo assuming integer alpha channel.
             // If handling floats (e.g. 0.5), tie try_parse_float right here.
             if (!parse_rgb_channel(&ptr, buff_end, &a)) {
-                LOG("Malformed hex string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
+                LOGE("Malformed hex string for color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
                 return false;
             }
         }
@@ -699,7 +733,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
         *buff_ptr = word_end;
         return true;
     }
-    LOG("Unknown color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
+    LOGE("Unknown color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
     return false; // Unknown token format
 }
 // Fast branchless helper to map 2-character unit suffix bytes to their enum IDs
@@ -786,7 +820,7 @@ bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat) {
                // Advance past any trailing spaces to find the opening bracket '('
         buff = skip_whitespaces(buff, buff_end);
         if (buff >= buff_end || *buff != '(') {
-            LOG("error parsing transform: missing opening parenthesis '(' in '%.*s'\n", (int)svg->value_len, svg->value);
+            LOGE("error parsing transform: missing opening parenthesis '(' in '%.*s'\n", (int)svg->value_len, svg->value);
             return false;
         }
         buff++; // step over '('
@@ -798,7 +832,7 @@ bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat) {
         else if (name_len == 6 && !memcmp(name_start, "matrix", 6)) {
             vkvg_matrix_t m, newMat;
             if (!try_parse_floats(&buff, buff_end, 6, &m.xx, &m.yx, &m.xy, &m.yy, &m.x0, &m.y0)) {
-                LOG("error parsing transformation matrix values\n");
+                LOGE("error parsing transformation matrix values\n");
                 return false;
             }
             vkvg_matrix_multiply(&newMat, &m, mat);
@@ -807,7 +841,7 @@ bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat) {
         else if (name_len == 9 && !memcmp(name_start, "translate", 9)) {
             float dx = 0.0f, dy = 0.0f;
             if (!try_parse_floats(&buff, buff_end, 1, &dx)) {
-                LOG("error parsing translation component X\n");
+                LOGE("error parsing translation component X\n");
                 return false;
             }
             // dy is optional in translation transforms; safely try parsing it
@@ -819,7 +853,7 @@ bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat) {
         else if (name_len == 5 && !memcmp(name_start, "scale", 5)) {
             float sx = 0.0f, sy = 0.0f;
             if (!try_parse_floats(&buff, buff_end, 1, &sx)) {
-                LOG("error parsing scale factor X\n");
+                LOGE("error parsing scale factor X\n");
                 return false;
             }
             // sy is optional; if missing, default to uniform scaling (sy = sx)
@@ -832,15 +866,16 @@ bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat) {
         else if (name_len == 6 && !memcmp(name_start, "rotate", 6)) {
             float angle = 0.0f, cx = 0.0f, cy = 0.0f;
             if (!try_parse_floats(&buff, buff_end, 1, &angle)) {
-                LOG("error parsing rotation angle component\n");
+                LOGE("error parsing rotation angle component\n");
                 return false;
             }
 
             // Center parameters cx and cy are optionally provided as a pair
             buff = skip_separators(buff, buff_end);
             if (try_parse_float(&buff, buff_end, &cx)) {
+                buff = skip_separators(buff, buff_end);
                 if (!try_parse_floats(&buff, buff_end, 1, &cy)) {
-                    LOG("error parsing rotation center Y component\n");
+                    LOGE("error parsing rotation center Y component\n");
                     return false;
                 }
                 // Correct transformation order for pivot rotations
@@ -852,14 +887,14 @@ bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat) {
             }
         }
         else {
-            LOG("unimplemented or unrecognized transform token: %.*s\n", (int)name_len, name_start);
+            LOGE("unimplemented or unrecognized transform token: %.*s\n", (int)name_len, name_start);
             return false;
         }
 
                // 3. Clear closing parenthesis structural markers
         buff = skip_whitespaces(buff, buff_end);
         if (buff >= buff_end || *buff != ')') {
-            LOG("error parsing transform string: expecting trailing ')'\n");
+            LOGE("error parsing transform string: expecting trailing ')'\n");
             return false;
         }
         buff++; // step over ')'
@@ -899,7 +934,7 @@ void _copy_pattern_color_stops(VkvgPattern const orig, VkvgPattern const dest) {
             vkvg_pattern_add_color_stop(dest, offset, r, g, b, a);
         }
     } else
-        LOG("Error processing referenced pattern\n");
+        LOGE("Error processing referenced pattern\n");
 }
 void _resolve_pattern_href(svg_context *svg, void *rootElt, VkvgPattern pat) {
     void               *elt = NULL;
@@ -909,7 +944,7 @@ void _resolve_pattern_href(svg_context *svg, void *rootElt, VkvgPattern pat) {
             id->xlinkHref = 0; // reset once resolved
             id            = (svg_element_header *)elt;
         } else {
-            LOG("xlink:href svg element error  %.*s\n", (int)svg->value_len, svg->value);
+            LOGE("xlink:href svg element error  %.*s\n", (int)svg->value_len, svg->value);
             return;
         }
     }
@@ -920,7 +955,7 @@ void _resolve_pattern_href(svg_context *svg, void *rootElt, VkvgPattern pat) {
         else if (_get_element_type(elt) == svg_element_type_linear_gradient)
             refPatter = (VkvgPattern)((svg_element_linear_gradient *)elt)->pattern;
         else {
-            LOG("xlink:href svg element error, expecting gradient%.*s\n", (int)svg->value_len, svg->value);
+            LOGE("xlink:href svg element error, expecting gradient%.*s\n", (int)svg->value_len, svg->value);
             return;
         }
         _copy_pattern_color_stops(refPatter, pat);
@@ -994,7 +1029,7 @@ void set_pattern(svg_context *svg, uint32_t patternHash) {
         } break;
         }
     } else
-        LOG("pattern hash not resolved: %d\n", patternHash);
+        LOGE("pattern hash not resolved: %d\n", patternHash);
 }
 void parse_point_list(svg_context *const svg, const uint8_t *const restrict buff_ptr, const uint8_t *const restrict buff_end) {
     const uint8_t *buff = buff_ptr;
@@ -1259,7 +1294,7 @@ void _parse_path_d_attribute(svg_context *const svg, const uint8_t *const restri
             else
                 result = try_parse_floats(&buff, buff_end, 3, &rx, &ry, &rotx);
             if (result) {
-                if (!try_parse_floats(&buff, buff_end, 2, &large, &sweep) || !try_parse_floats(&buff, buff_end, 2, &x, &y))
+                if (!try_parse_flags(&buff, buff_end, 2, &large, &sweep) || !try_parse_floats(&buff, buff_end, 2, &x, &y))
                     return;
                 rotx = rotx * M_PIF / 180.0f;
 
@@ -1276,7 +1311,7 @@ void _parse_path_d_attribute(svg_context *const svg, const uint8_t *const restri
                 result = try_parse_floats(&buff, buff_end, 3, &rx, &ry, &rotx);
 
             if (result) {
-                if (!try_parse_floats(&buff, buff_end, 2, &large, &sweep) || !try_parse_floats(&buff, buff_end, 2, &x, &y))
+                if (!try_parse_flags(&buff, buff_end, 2, &large, &sweep) || !try_parse_floats(&buff, buff_end, 2, &x, &y))
                     return;
                 rotx = degToRad(rotx);
 
@@ -1292,7 +1327,7 @@ void _parse_path_d_attribute(svg_context *const svg, const uint8_t *const restri
             vkvg_move_to(svg->ctx, subpathX, subpathY);
             break;
         default:
-            LOG("error parsing path: unexpected char: %c\n", c);
+            LOGE("error parsing path: unexpected char: %c\n", c);
             return;
         }
         prev = none;
@@ -1501,7 +1536,7 @@ void draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
         vkvg_stroke(svg->ctx);
     }
 }
-void  _process_element(svg_context *svg, SvgPresentationAttributes *const attribs, void *elt, bool use) {
+void  _process_element(svg_context *const svg, SvgPresentationAttributes *const attribs, void *elt, bool use) {
     if (!(svg->inDefs || svg->skipDraw)) {
         LOG("process element: %.*s \n", (int)svg->elt_len, svg->elt);
         switch (_get_element_type(elt)) {
@@ -1579,16 +1614,15 @@ void  _process_element(svg_context *svg, SvgPresentationAttributes *const attrib
     }
     if (!use)
         _store_or_throw(svg, elt);
-    svg->currentIdHash = 0;
 }
-void _process_use(svg_context *svg, SvgPresentationAttributes *const attribs) {
+void process_use(svg_context *const svg, SvgPresentationAttributes *const attribs) {
     if (!svg->currentXlinkHref) {
-        LOG("no xlink:href defined for use element\n");
+        LOGE("no xlink:href defined for use element\n");
         return;
     }
     void *elt;
     if (!try_find_by_id(svg, svg->currentXlinkHref, &elt)) {
-        LOG("xlink:href not resolved %.*s\n", (int)svg->value_len, svg->value);
+        LOGE("xlink:href not resolved %.*s\n", (int)svg->value_len, svg->value);
         return;
     }
     _process_element(svg, attribs, elt, true);
@@ -1622,6 +1656,8 @@ int try_parse_attibute(svg_context *const svg) {
                             }
                             svg->value_len = buff - svg->value;
                             svg->style = buff + 1;
+                            if (svg->style >= buff_end)
+                                svg->style = 0;
                             return 1;
                         } else {
                             svg->ns = svg->att;
@@ -1726,6 +1762,8 @@ int parse_children(SVG_COMMON_SIG) {
                 svg->buff_ptr = buff;
                 elt_lut_func(svg, *attribs, parentData);
                 buff = svg->buff_ptr;
+                svg->currentIdHash = 0;
+                svg->currentXlinkHref = 0;
                 continue;
             } else if (c == '!') {
                 if (++buff == buff_end)
@@ -1781,7 +1819,7 @@ int parse_children(SVG_COMMON_SIG) {
             } else if (c == '?') {
                 continue;
             }
-            printf("malformed xml\n");
+            LOGE("malformed xml\n");
             return -1;
         } else {
             buff++;
@@ -1853,9 +1891,10 @@ VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width
     return NULL;
 }
 VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_t height, const char *svgFilePath) {
+    LOG("Processing file: %s\n", svgFilePath);
     FILE *file = fopen(svgFilePath, "r");
     if (!file) {
-        LOG("[SVG]Error opening file");
+        LOGE("Error opening file");
         return NULL;
     }
     fseek(file, 0, SEEK_END);
@@ -1867,7 +1906,7 @@ VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_
     fseek(file, 0, SEEK_SET);
     uint8_t *const file_buffer = malloc((size_t)size);
     if (!file_buffer) {
-        LOG("[SVG]Memory allocation failed");
+        LOGE("Memory allocation failed");
         fclose(file);
         return NULL;
     }

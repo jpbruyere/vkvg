@@ -11,6 +11,12 @@
 #include "array.h"
 #include "vkvg.h"
 
+// 1. Define ANSI Color Codes
+#define CLR_RESET   "\x1b[0m"
+#define CLR_RED     "\x1b[31m"
+#define CLR_GREEN   "\x1b[32m"
+#define CLR_YELLOW  "\x1b[33m"
+#define CLR_BLUE    "\x1b[34m"
 
 //#define DEBUG_LOG
 #ifdef LOG
@@ -18,11 +24,11 @@
 #endif
 
 #ifdef DEBUG_LOG
-#define LOG(...) fprintf(stdout, "[SVG] " __VA_ARGS__)
+#define LOG(...) fprintf(stdout, CLR_RESET "[SVG] " __VA_ARGS__)
 #else
 #define LOG
 #endif
-
+#define LOGE(...) fprintf(stdout, CLR_RED "[SVG] " __VA_ARGS__)
 
 #ifndef M_PIF
 #define M_PIF ((float)3.14159265358979323846)
@@ -371,7 +377,8 @@ bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat);
 bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percentage *const lop);
 bool try_parse_viewbox(svg_context *const svg);
 float parse_opacity(svg_context *const svg);
-void  _process_element(svg_context *svg, SvgPresentationAttributes *const attribs, void *elt, bool use);
+void  _process_element(svg_context * const svg, SvgPresentationAttributes *const attribs, void *elt, bool use);
+void process_use(svg_context *const svg, SvgPresentationAttributes *const attribs);
 void apply_transform(svg_context *svg);
 static inline float parse_ratio(svg_context *const svg) {
     svg_length_or_percentage ratio;
