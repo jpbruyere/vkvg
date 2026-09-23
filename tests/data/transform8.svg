@@ -1,0 +1,55 @@
+<svg xmlns="http://w3.org" viewBox="0 0 800 600" width="100%" height="100%" style="background: #111216;">
+  
+  <!-- Global Axis Lines for visual tracking -->
+  <line x1="0" y1="0" x2="800" y2="0" stroke="#22252a" stroke-width="2" />
+  <line x1="0" y1="0" x2="0" y2="600" stroke="#22252a" stroke-width="2" />
+
+  <!-- Global Origin Reference Marker (0,0) -->
+  <circle cx="0" cy="0" r="8" fill="#ff3366" />
+
+  <!-- ========================================== -->
+  <!-- LEVEL 1: ROOT TRANSFORMATION               -->
+  <!-- Translate to center-ish and uniform scale -->
+  <!-- ========================================== -->
+  <g id="level-1-root" transform="translate(200, 150) scale(1.2)">
+    
+    <!-- Level 1 Origin Visual Anchor (Local 0,0) -->
+    <circle cx="0" cy="0" r="6" fill="#00ffcc" />
+    <rect x="10" y="10" width="80" height="40" fill="#00ffcc" fill-opacity="0.2" stroke="#00ffcc" stroke-width="2" />
+
+    <!-- ======================================== -->
+    <!-- LEVEL 2: NESTED TRANSFORMATION           -->
+    <!-- Shift and Rotate                         -->
+    <!-- ======================================== -->
+    <g id="level-2-child" transform="translate(100, 50) rotate(30)">
+      
+      <!-- Level 2 Origin Visual Anchor (Local 0,0) -->
+      <circle cx="0" cy="0" r="5" fill="#ffcc00" />
+      <line x1="0" y1="0" x2="100" y2="0" stroke="#ffcc00" stroke-width="2" stroke-dasharray="4 4" />
+
+      <!-- ====================================== -->
+      <!-- LEVEL 3: DEEPLY NESTED TRANSFORMATION  -->
+      <!-- Non-uniform scale and translation      -->
+      <!-- No skew transforms used here           -->
+      <!-- ====================================== -->
+      <g id="level-3-leaf" transform="scale(1.5, 0.8) translate(50, -20)">
+        
+        <!-- Level 3 Origin Visual Anchor (Local 0,0) -->
+        <circle cx="0" cy="0" r="4" fill="#ff33cc" />
+
+        <!-- TARGET TEST SHAPES -->
+        <!-- Asymmetric triangle to catch mirroring/inversion bugs -->
+        <polygon points="0,0 60,0 20,40" fill="#ff33cc" fill-opacity="0.7" stroke="#ffffff" stroke-width="2" />
+        
+        <!-- Small offset circle to check precise translation stack -->
+        <circle cx="40" cy="20" r="10" fill="#ffffff" />
+        
+      </g>
+      <!-- /LEVEL 3 -->
+
+    </g>
+    <!-- /LEVEL 2 -->
+
+  </g>
+  <!-- /LEVEL 1 -->
+</svg>

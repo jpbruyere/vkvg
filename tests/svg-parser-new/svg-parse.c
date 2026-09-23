@@ -29,7 +29,7 @@
         if (svg->hasViewBox)                                                                                                \
             surfW = _get_pixel_coord(svg->viewBox.w, &svg->width);                                                          \
         else                                                                                                           \
-            return 0;                                                                                                  \
+            return;                                                                                                    \
     } else                                                                                                             \
         surfW = svg->width.number;                                                                                          \
     if (svg->forced_height) {                                                                                                 \
@@ -41,7 +41,7 @@
         if (svg->hasViewBox)                                                                                                \
             surfH = _get_pixel_coord(svg->viewBox.h, &svg->height);                                                         \
         else                                                                                                           \
-            return 0;                                                                                                  \
+            return;                                                                                                    \
     } else                                                                                                             \
         surfH = svg->height.number;                                                                                         \
     if (!svg->hasViewBox) {                                                                                                 \
@@ -57,7 +57,7 @@
     if (svg->queryDimensions) {                                                                                        \
         svg->width  = (svg_length_or_percentage){surfW, svg_unit_px};                                                                                           \
         svg->height = (svg_length_or_percentage){surfH, svg_unit_px};                                                                                           \
-        return 0;                                                                                                      \
+        return;                                                                                                        \
     }                                                                                                                  \
     if (!svg->ctx) {                                                                                                   \
         svg->surf = vkvg_surface_create(svg->dev, surfW, surfH);                                                       \
@@ -228,7 +228,8 @@
 //=== STOP ===
 
 #define PREPROC_STOP                                                                                                    \
-    VkvgPattern pat = ((svg_class_gradient*)parentData)->pattern;                                                                   \
+    VkvgPattern pat = _get_element_type(parentData) == svg_element_type_linear_gradient ?                               \
+        CAST(linear_gradient)->pattern : CAST(radial_gradient)->pattern;                                                \
     svg_element_gradient_stop *stop = _new_gradient_stop();                                                             \
     stop->color = 0xFF000000;                                                                                           \
     stop->opacity = 1.f;                                                                                                \
@@ -719,7 +720,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
 
     if (word_len == 12 && !memcmp(ptr, "currentColor", 12)) {
         // Handle via current inherit status tracker injection flags
-        *colorValue = 0xFFFFFFFF; // Fallback white or inherit
+        *colorValue = 0xFF000000;
         *isEnabled = svg_paint_type_solid;
         *buff_ptr = word_end;
         return true;
@@ -825,7 +826,7 @@ bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat) {
         }
         buff++; // step over '('
 
-               // 2. Route tokens to appropriate transformation handlers
+        // 2. Route tokens to appropriate transformation handlers
         if (name_len == 4 && !memcmp(name_start, "none", 4)) {
             break;
         }
@@ -1661,7 +1662,7 @@ int try_parse_attibute(svg_context *const svg) {
                             return 1;
                         } else {
                             svg->ns = svg->att;
-                            svg->ns_len = buff - 1 - svg->ns;
+                            svg->ns_len = buff - svg->ns;
                             svg->att = buff + 1;
                             continue;
                         }
@@ -1671,7 +1672,7 @@ int try_parse_attibute(svg_context *const svg) {
                     //expecting '=' or white space
                     while (*buff != '=') {
                         if (++buff == buff_end) {
-                            perror("malformed xml, expecting '=' or white space.\n");
+                            LOGE("malformed xml, expecting '=' or white space, having: '%c'.\n", *buff);
                             return 0;
                         }
                     }
@@ -1719,10 +1720,10 @@ int parse_element(SVG_COMMON_SIG) {
                 svg->buff_ptr = ++buff;
                 return 1;
             }
-            perror("malformed xml, expecting '>'\n");
+            LOGE("Malformed xml, expecting '>', having '%c'\n", *buff);
             return 0;
         } else if (*buff == '<') {
-            perror("malformed xml, unexpected '<', expecting '>'\n");
+            LOGE("Malformed xml, unexpected '<', expecting '>'\n");
             return 0;
         } else
             buff++;
@@ -1735,9 +1736,10 @@ int parse_children(SVG_COMMON_SIG) {
     const uint8_t *const buff_end = svg->buff_end;
     //store current element name
     const uint8_t *const ns = svg->ns;
-    const uint8_t *const elt = svg->elt;
+    const uint8_t *elt = svg->elt;
     const size_t ns_len = svg->ns_len;
-    const size_t elt_len = svg->elt_len;
+    size_t elt_len = svg->elt_len;
+    svg->ns_len = 0;
     uint8_t c = 0;
 
     while (buff < buff_end) {
@@ -1751,7 +1753,7 @@ int parse_children(SVG_COMMON_SIG) {
                     if (*buff < 65) {
                         if (*buff == ':') {
                             svg->ns = svg->elt;
-                            svg->ns_len = buff - 1 - svg->ns;
+                            svg->ns_len = buff - svg->ns;
                             svg->elt = buff + 1;
                             continue;
                         }
@@ -1772,10 +1774,7 @@ int parse_children(SVG_COMMON_SIG) {
                     const uint8_t* commentStart = buff + 1;
                     while (++buff + 2 < buff_end) {
                         if (*buff == '-' && *(buff+1) == '-' && *(buff+2) == '>') {
-                            printf("comment: ");
-                            fwrite(commentStart, sizeof(uint8_t), buff - commentStart, stdout);
-                            printf("\n");
-                            fflush(stdout);
+                            LOG("comment: %.*s\n", (int)(buff - commentStart), commentStart);
                             buff+=3;
                             break;
                         }
@@ -1786,10 +1785,7 @@ int parse_children(SVG_COMMON_SIG) {
                     const uint8_t* cdataStart = buff;
                     while (++buff + 2 < buff_end) {
                         if (*buff == ']' && *(buff+1) == ']' && *(buff+2) == '>') {
-                            printf("cdata: ");
-                            fwrite(cdataStart, sizeof(uint8_t), buff - cdataStart, stdout);
-                            printf("\n");
-                            fflush(stdout);
+                            LOG("cdata: %.*s\n", (int)(buff - cdataStart), cdataStart);
                             buff+=3;
                             break;
                         }
@@ -1800,10 +1796,7 @@ int parse_children(SVG_COMMON_SIG) {
                     const uint8_t* doctypeStart = buff;
                     while (++buff < buff_end) {
                         if (*buff == '>') {
-                            printf("doctype: ");
-                            fwrite(doctypeStart, sizeof(uint8_t), buff - doctypeStart, stdout);
-                            printf("\n");
-                            fflush(stdout);
+                            LOG("doctype: %.*s\n", (int)(buff - doctypeStart), doctypeStart);
                             buff++;
                             break;
                         }
@@ -1812,19 +1805,32 @@ int parse_children(SVG_COMMON_SIG) {
                 }
             } else if (c == '/'){
                 //closing tag
-                if ((++buff) + elt_len < buff_end && !memcmp (buff, elt, elt_len)) {
-                    svg->buff_ptr = buff + 1;
+                if (ns_len > 0) {//check namespace:eltname
+                    elt_len += ns_len + 1;
+                    elt = ns;
+                }
+                if ((++buff) + elt_len  + 1 < buff_end && !memcmp (buff, elt, elt_len) && buff[elt_len] == '>') {
+                    svg->buff_ptr = buff + elt_len + 1;
                     return 0;
+                } else {
+                    if (buff + elt_len  + 1 < buff_end) {
+                        LOGE("Closing tag mismatch: expecting %.*s, having %.*s.\n", (int)elt_len, elt, (int)elt_len, buff);
+                    } else {
+                        LOGE("Closing tag mismatch, unexpected end of file.\n");
+                    }
+                    return -1;
                 }
             } else if (c == '?') {
                 continue;
             }
-            LOGE("malformed xml\n");
+            LOGE("parse_children: malformed xml\n");
             return -1;
         } else {
             buff++;
         }
     }
+    svg->buff_ptr = buff + 1;
+    return 0;
 }
 
 void vkvg_svg_get_dimensions(VkvgSvg svg, uint32_t *width, uint32_t *height) {

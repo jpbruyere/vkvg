@@ -18,17 +18,17 @@
 #define CLR_YELLOW  "\x1b[33m"
 #define CLR_BLUE    "\x1b[34m"
 
-//#define DEBUG_LOG
+#define DEBUG_LOG
 #ifdef LOG
 #undef LOG
 #endif
 
 #ifdef DEBUG_LOG
-#define LOG(...) fprintf(stdout, CLR_RESET "[SVG] " __VA_ARGS__)
+#define LOG(...) { fprintf(stdout, CLR_RESET "[SVG] " __VA_ARGS__); fflush(stdout); }
 #else
 #define LOG
 #endif
-#define LOGE(...) fprintf(stdout, CLR_RED "[SVG] " __VA_ARGS__)
+#define LOGE(...) { fprintf(stdout, CLR_RED "[SVG] " __VA_ARGS__); fflush(stdout); }
 
 #ifndef M_PIF
 #define M_PIF ((float)3.14159265358979323846)
@@ -392,11 +392,23 @@ static inline float parse_ratio(svg_context *const svg) {
         return ratio.number;
 }
 
-#define PARSE_ATTRIBUTES parse_attributes(svg, &attribs, parentData);
+#define PARSE_ATTRIBUTES                            \
+    parse_attributes(svg, &attribs, parentData);    \
+    svg->ns_len = ns_len;                           \
+    svg->ns = ns;//restore svg->ns to root element after attrib parsing.
 #define PARSE_ELEMENT parse_element(svg, &attribs, parentData);
+#define SKIP_TAG_AND_CHILDREN                                                                               \
+    PARSE_ATTRIBUTES                                                                                        \
+    PARSE_ELEMENT
 
 #define SVG_ELT_LUT_FUNC_HEAD                                                                                   \
-int elt_lut_func(SVG_SIG_STACK_ATTRIB) {                                                                        \
+void elt_lut_func(SVG_SIG_STACK_ATTRIB) {                                                                       \
+    const uint8_t *const ns = svg->ns;                                                                          \
+    const size_t ns_len = svg->ns_len;                                                                          \
+    if (svg->skip) {                                                                                            \
+        SKIP_TAG_AND_CHILDREN                                                                                   \
+        return;                                                                                                 \
+    }                                                                                                           \
     const struct SvgEltKeyword *res = lookup_svg_elt_token((const char*)svg->elt, svg->elt_len);                \
     svg->curEltType = (res != NULL) ? res->id : SVG_TOK_UNKNOWN;                                                \
     switch (svg->curEltType) {
@@ -404,8 +416,10 @@ int elt_lut_func(SVG_SIG_STACK_ATTRIB) {                                        
 #define SVG_ELT_LUT_FUNC_FOOTER                                                                                 \
     case SVG_TOK_UNKNOWN:                                                                                       \
     default:                                                                                                    \
-        LOG("Unidentify element: %.*s\n", (int)svg->elt_len, svg->elt);                                      \
-        PARSE_ELEMENT                                                                                           \
+        LOG("Unidentify element: %.*s\n", (int)svg->elt_len, svg->elt);                                         \
+        svg->skip = true;                                                                                       \
+        SKIP_TAG_AND_CHILDREN                                                                                   \
+        svg->skip = false;                                                                                      \
         break;                                                                                                  \
     }                                                                                                           \
 }
@@ -413,9 +427,14 @@ int elt_lut_func(SVG_SIG_STACK_ATTRIB) {                                        
 #define SVG_ATT_LUT_FUNC_HEAD                                                                                   \
 void parse_attributes(SVG_COMMON_SIG) {                                                                         \
     while (try_parse_attibute(svg)) {                                                                           \
+        if (svg->skip) {                                                                                        \
+            LOG("Skipped Attribute: %.*s\n", (int)svg->att_len, svg->att);                                      \
+            continue;                                                                                           \
+        }                                                                                                       \
         const struct SvgAttKeyword *res = lookup_svg_att_token((const char*)svg->att, svg->att_len);            \
         SvgAttTokId token_id = (res != NULL) ? res->id : SVG_ATT_TOK_UNKNOWN;                                   \
         switch (token_id) {
+
 #define SVG_ATT_LUT_FUNC_FOOTER                                                                                 \
         case SVG_ATT_TOK_UNKNOWN:                                                                               \
         default:                                                                                                \
