@@ -98,6 +98,14 @@ cd build
 # Run CMake configuration
 cmake ..
 ```
+If you work on your own fork of vkvg, due to the relative paths in `.gitmodules`, you may ends with remote not found if you
+didn't fork the submodules as well. To overcome the problem, you may set a fallback url for submodules with the following command:
+
+```bash
+git config submodule.vkh.url https://github.com/jpbruyere/vkhelpers.git
+git config submodule.glutess.url https://github.com/jpbruyere/glutess.git
+git config submodule.vkvg-svg.url https://github.com/jpbruyere/vkvg-svg.git
+```
 
 ### CMake configure options
 
@@ -148,7 +156,7 @@ Append the `-h` option to see available command line parameters.
 
 See the [contribution guide](https://github.com/jpbruyere/vkvg/blob/master/CONTRIBUTING.md) for more information.
 
-Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
+Join us on [matrix](https://matrix.to/#/#vkvg:matrix.org) for any question.
 
 ## Addtitional Credits
 
