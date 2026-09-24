@@ -1755,6 +1755,8 @@ int parse_children(SVG_COMMON_SIG) {
             if (c > 64) {//element name
                 svg->elt = buff;
                 while (++buff < buff_end) {
+                    if (*buff == '-' || (*buff > 47 && *buff < 58))
+                        continue;
                     if (*buff < 65) {
                         if (*buff == ':') {
                             svg->ns = svg->elt;
