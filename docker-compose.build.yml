@@ -1,0 +1,33 @@
+version: '3.8'
+
+x-base-config: &base-config
+  user: "${CURRENT_UID}:${CURRENT_GID}"
+  volumes:
+    - .:/usr/src/app
+    - /var/lib/git-builds/vkvg:/usr/src/reference-images
+  working_dir: /usr/src/app
+  command: >
+    bash -c "
+      echo ${REF_IMGS_PATH}
+      echo '=== Starting Build for ${DISTRO} ==='
+      cmake -B build_$${DISTRO} -DCMAKE_BUILD_TYPE=Release -DGTEST_PNG_ROOT=/usr/src/reference-images && cmake --build build_$${DISTRO}
+      build_$${DISTRO}/gunit_tests/unit_tests
+    " 
+
+services:
+  debian:
+    <<: *base-config
+    image: debian-c-builder:trixie
+    environment:
+      - DISTRO=debian
+  archlinux:
+    <<: *base-config
+    image: arch-c-builder:latest
+    environment:
+      - DISTRO=archlinux
+  fedora:
+    <<: *base-config
+    image: fedora-c-builder:44
+    environment:
+      - DISTRO=fedora
+
