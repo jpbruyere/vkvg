@@ -17,62 +17,7 @@
 #include "array.h"
 
 //#define PREPROC_SVG
-#define PROCESS_SVG                                                                                        \
-    int   surfW = 0, surfH = 0;                                                                                        \
-    float xScale = 1, yScale = 1;                                                                                      \
-    if (svg->forced_width) {                                                                                           \
-        if (svg->width.units == svg_unit_percentage)                                                                        \
-            surfW = _get_pixel_coord(svg->forced_width, &svg->width);                                                              \
-        else                                                                                                           \
-            surfW = svg->forced_width;                                                                                        \
-    } else if (svg->width.units == svg_unit_percentage) {                                                                   \
-        if (svg->hasViewBox)                                                                                                \
-            surfW = _get_pixel_coord(svg->viewBox.w, &svg->width);                                                          \
-        else                                                                                                           \
-            return;                                                                                                    \
-    } else                                                                                                             \
-        surfW = svg->width.number;                                                                                          \
-    if (svg->forced_height) {                                                                                                 \
-        if (svg->height.units == svg_unit_percentage)                                                                       \
-            surfH = _get_pixel_coord(svg->forced_height, &svg->height);                                                            \
-        else                                                                                                           \
-            surfH = svg->forced_height;                                                                                       \
-    } else if (svg->height.units == svg_unit_percentage) {                                                                  \
-        if (svg->hasViewBox)                                                                                                \
-            surfH = _get_pixel_coord(svg->viewBox.h, &svg->height);                                                         \
-        else                                                                                                           \
-            return;                                                                                                    \
-    } else                                                                                                             \
-        surfH = svg->height.number;                                                                                         \
-    if (!svg->hasViewBox) {                                                                                                 \
-        svg->viewBox = (svg_viewbox){0, 0, surfW, surfH};                                                              \
-        if (svg->width.units != svg_unit_percentage)                                                                        \
-            svg->viewBox.w = svg->width.number;                                                                             \
-        if (svg->height.units != svg_unit_percentage)                                                                       \
-            svg->viewBox.h = svg->height.number;                                                                            \
-    }                                                                                                                  \
-    \
-    xScale = (float)surfW / svg->viewBox.w;                                                                            \
-    yScale = (float)surfH / svg->viewBox.h;                                                                            \
-    if (svg->queryDimensions) {                                                                                        \
-        svg->width  = (svg_length_or_percentage){surfW, svg_unit_px};                                                                                           \
-        svg->height = (svg_length_or_percentage){surfH, svg_unit_px};                                                                                           \
-        return;                                                                                                        \
-    }                                                                                                                  \
-    if (!svg->ctx) {                                                                                                   \
-        svg->surf = vkvg_surface_create(svg->dev, surfW, surfH);                                                       \
-        svg->ctx  = vkvg_create(svg->surf);                                                                            \
-        vkvg_clear (svg->ctx);                                                                                         \
-        svg->ownContext = true;                                                                                        \
-    }                                                                                                                  \
-    vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_NON_ZERO);                                                             \
-    if (svg->preserveAspectRatio) {                                                                                    \
-        if (xScale < yScale)                                                                                           \
-            vkvg_scale(svg->ctx, xScale, xScale);                                                                      \
-        else                                                                                                           \
-            vkvg_scale(svg->ctx, yScale, yScale);                                                                      \
-    } else                                                                                                             \
-        vkvg_scale(svg->ctx, xScale, yScale);
+#define PROCESS_SVG process_svg(svg);
 
 #define POSTPROC_SVG                                                                                                   \
 {                                                                                                                      \
@@ -1637,7 +1582,64 @@ void apply_transform(svg_context *svg) {
     if (try_parse_transform(svg, &current))
         vkvg_set_matrix(svg->ctx, &current);
 }
-int parse_children(SVG_COMMON_SIG);
+void process_svg(svg_context *const svg) {
+    int   surfW = 0, surfH = 0;
+    float xScale = 1, yScale = 1;
+    if (svg->forced_width) {
+        if (svg->width.units == svg_unit_percentage)
+            surfW = _get_pixel_coord(svg->forced_width, &svg->width);
+        else
+            surfW = svg->forced_width;
+    } else if (svg->width.units == svg_unit_percentage) {
+        if (svg->hasViewBox)
+            surfW = _get_pixel_coord(svg->viewBox.w, &svg->width);
+        else
+            return;
+    } else
+        surfW = svg->width.number;
+
+    if (svg->forced_height) {
+        if (svg->height.units == svg_unit_percentage)
+            surfH = _get_pixel_coord(svg->forced_height, &svg->height);
+        else
+            surfH = svg->forced_height;
+    } else if (svg->height.units == svg_unit_percentage) {
+        if (svg->hasViewBox)
+            surfH = _get_pixel_coord(svg->viewBox.h, &svg->height);
+        else
+            return;
+    } else
+        surfH = svg->height.number;
+
+    if (!svg->hasViewBox) {
+        svg->viewBox = (svg_viewbox){0, 0, surfW, surfH};
+        if (svg->width.units != svg_unit_percentage)
+            svg->viewBox.w = svg->width.number;
+        if (svg->height.units != svg_unit_percentage)
+            svg->viewBox.h = svg->height.number;
+    }
+    xScale = (float)surfW / svg->viewBox.w;
+    yScale = (float)surfH / svg->viewBox.h;
+    if (svg->queryDimensions) {
+        svg->width  = (svg_length_or_percentage){surfW, svg_unit_px};
+        svg->height = (svg_length_or_percentage){surfH, svg_unit_px};
+        return;
+    }
+    if (!svg->ctx) {
+        svg->surf = vkvg_surface_create(svg->dev, surfW, surfH);
+        svg->ctx  = vkvg_create(svg->surf);
+        vkvg_clear (svg->ctx);
+        svg->ownContext = true;
+    }
+    vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_NON_ZERO);
+    if (svg->preserveAspectRatio) {
+        if (xScale < yScale)
+            vkvg_scale(svg->ctx, xScale, xScale);
+        else
+            vkvg_scale(svg->ctx, yScale, yScale);
+    } else
+        vkvg_scale(svg->ctx, xScale, yScale);
+}
 
 int try_parse_attibute(svg_context *const svg) {
     const uint8_t *buff = svg->style ? svg->style : svg->buff_ptr;
