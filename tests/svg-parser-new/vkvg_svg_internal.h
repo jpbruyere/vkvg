@@ -370,6 +370,7 @@ svg_element_radial_gradient *_new_radial_gradient();
 
 int parse_element(SVG_COMMON_SIG);
 void parse_attributes(SVG_COMMON_SIG);
+int parse_children(SVG_COMMON_SIG);
 int try_parse_attibute(svg_context *const svg);
 
 bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, svg_paint_type *isEnabled, uint32_t *colorValue);
@@ -380,6 +381,7 @@ float parse_opacity(svg_context *const svg);
 void  _process_element(svg_context * const svg, SvgPresentationAttributes *const attribs, void *elt, bool use);
 void process_use(svg_context *const svg, SvgPresentationAttributes *const attribs);
 void apply_transform(svg_context *svg);
+void process_svg(svg_context *const svg);
 static inline float parse_ratio(svg_context *const svg) {
     svg_length_or_percentage ratio;
     if (!try_parse_length_or_percentage(svg, &ratio)) {
