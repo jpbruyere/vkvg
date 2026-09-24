@@ -2134,7 +2134,7 @@ SVG_ATT_LUT_FUNC_HEAD
 			}
 		} break;
 	#endif
-	#if defined(SVG_ATT_LINE_Y2) || defined(SVG_ATT_LINEARGRADIENT_Y2)
+    #if defined(SVG_ATT_LINE_Y2) || defined(SVG_ATT_LINEARGRADIENT_Y2)
 		case SVG_ATT_TOK_Y2: {
 			switch (svg->curEltType) {
 				#if defined(SVG_ATT_LINE_Y2)

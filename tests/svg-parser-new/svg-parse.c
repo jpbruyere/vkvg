@@ -258,8 +258,10 @@
 //============
 
 //=== USES ===
+#define PREPROC_USE     vkvg_save(svg->ctx);
 #define PROCESS_USE     process_use(svg, &attribs);
-//#define POSTPROC_USE
+#define POSTPROC_USE    vkvg_restore(svg->ctx);
+//
 /*#define PROCESS_USE_X
 #define PROCESS_USE_Y
 #define PROCESS_USE_WIDTH
@@ -330,6 +332,7 @@
 svg_element_linear_gradient *_new_linear_gradient() {
     svg_element_linear_gradient *g = (svg_element_linear_gradient *)calloc(1, sizeof(svg_element_linear_gradient));
     g->id.type                     = svg_element_type_linear_gradient;
+    g->gradientUnits               = svg_gradient_unit_objectBoundingBox;
     g->x1                          = (svg_length_or_percentage){0, svg_unit_percentage};
     g->y1                          = (svg_length_or_percentage){0, svg_unit_percentage};
     g->x2                          = (svg_length_or_percentage){100, svg_unit_percentage};
@@ -1512,7 +1515,7 @@ void _parse_path_d_attribute(svg_context *const svg, const uint8_t *const restri
 
 static inline float _normalized_diagonal(float w, float h) { return sqrtf(powf(w, 2) + powf(h, 2)) / sqrtf(2); }
 void draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
-    LOG("SVG Draw: %.*s\n", (int)svg->elt_len, svg->elt);
+    //LOG("SVG Draw: %.*s\n", (int)svg->elt_len, svg->elt);
     if (attribs->fill_type) {
         vkvg_set_opacity(svg->ctx, attribs->opacity * attribs->fill_opacity);
         if (attribs->fill_type == svg_paint_type_pattern)
@@ -1645,7 +1648,7 @@ int try_parse_attibute(svg_context *const svg) {
             svg->att = buff;
             while (++buff < buff_end) {
                 if (*buff < 65) {
-                    if (*buff == '-')
+                    if (*buff == '-' || (*buff > 47 && *buff < 58))
                         continue;
                     if (*buff == ':') {
                         if (svg->style) {
@@ -1809,11 +1812,11 @@ int parse_children(SVG_COMMON_SIG) {
                     elt_len += ns_len + 1;
                     elt = ns;
                 }
-                if ((++buff) + elt_len  + 1 < buff_end && !memcmp (buff, elt, elt_len) && buff[elt_len] == '>') {
+                if ((++buff) + elt_len < buff_end && !memcmp (buff, elt, elt_len) && buff[elt_len] == '>') {
                     svg->buff_ptr = buff + elt_len + 1;
                     return 0;
                 } else {
-                    if (buff + elt_len  + 1 < buff_end) {
+                    if (buff + elt_len < buff_end) {
                         LOGE("Closing tag mismatch: expecting %.*s, having %.*s.\n", (int)elt_len, elt, (int)elt_len, buff);
                     } else {
                         LOGE("Closing tag mismatch, unexpected end of file.\n");

@@ -1,0 +1,11 @@
+<svg
+  viewBox="0 0 100 100"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g fill="blue" transform="scale(0.2,2)">
+    <g fill="green" transform="rotate(40,50,50)">
+      <rect x="20" y="30" width="50" height="30" id="heart"  />
+    </g>
+  </g>
+  <use href="#heart" fill="none" stroke="red" />
+</svg>
