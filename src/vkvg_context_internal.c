@@ -228,7 +228,7 @@ void _add_point(VkvgContext ctx, float x, float y) {
     vec2 v = {x, y};
     /*if (!_current_path_is_empty(ctx) && vec2_length(vec2_sub(ctx->points[ctx->pointCount-1], v))<1.f)
         return;*/
-    LOG(VKVG_LOG_INFO_PTS, "_add_point: (%f, %f)\n", x, y);
+    LOG(VKVG_LOG_INFO_PTS, "_add_point %d: (%f, %f)\n", ctx->pointCount, x, y);
 
     ctx->points[ctx->pointCount] = v;
     ctx->pointCount++;           // total point count of pathes, (for array bounds check)
@@ -287,7 +287,7 @@ void _add_vertexf(VkvgContext ctx, float x, float y) {
     pVert->pos.y  = y;
     pVert->color  = ctx->curColor;
     pVert->uv.z   = -1;
-    LOG(VKVG_LOG_INFO_VBO, "Add Vertexf %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
+    LOG(VKVG_LOG_INFO_VBO, "Add VertexF %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
         ctx->vertCount, pVert->pos.x, pVert->pos.y, pVert->uv.x, pVert->uv.y, pVert->uv.z, pVert->color);
     ctx->vertCount++;
     _check_vertex_cache_size(ctx);
@@ -298,13 +298,13 @@ void _add_vertexf_unchecked(VkvgContext ctx, float x, float y) {
     pVert->pos.y  = y;
     pVert->color  = ctx->curColor;
     pVert->uv.z   = -1;
-    LOG(VKVG_LOG_INFO_VBO, "Add Vertexf %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
+    LOG(VKVG_LOG_INFO_VBO, "Add VertexU %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
         ctx->vertCount, pVert->pos.x, pVert->pos.y, pVert->uv.x, pVert->uv.y, pVert->uv.z, pVert->color);
     ctx->vertCount++;
 }
 void _add_vertex(VkvgContext ctx, Vertex v) {
     ctx->vertexCache[ctx->vertCount] = v;
-    LOG(VKVG_LOG_INFO_VBO, "Add Vertex  %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
+    LOG(VKVG_LOG_INFO_VBO, "Add VertexV  %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
         ctx->vertCount, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.uv.z, v.color);
     ctx->vertCount++;
     _check_vertex_cache_size(ctx);
@@ -800,8 +800,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
         vkvg_matrix_t mat;
         if (pat->hasMatrix) {
             vkvg_pattern_get_matrix(pat, &mat);
-            if (vkvg_matrix_invert(&mat) != VKVG_STATUS_SUCCESS)
-                mat = VKVG_IDENTITY_MATRIX;
+            /*if (vkvg_matrix_invert(&mat) != VKVG_STATUS_SUCCESS)
+                mat = VKVG_IDENTITY_MATRIX;*/
             vkvg_matrix_transform_point(&mat, &grad.cp[0].x, &grad.cp[0].y);
         }
 
