@@ -75,7 +75,7 @@ ENDIF()
 OPTION(ENABLE_GTESTS "enable google unit tests" ON)
 
 IF(ENABLE_GTESTS)
-    ADD_SUBDIRECTORY (gunit_tests)
+    ADD_SUBDIRECTORY (tests/gunit_tests)
 ENDIF()
 
 
