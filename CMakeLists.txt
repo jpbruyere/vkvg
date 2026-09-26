@@ -98,7 +98,7 @@ OPTION(VKVG_USE_GLUTESS "Fill non-zero with glu tesselator" ON)
 CMAKE_DEPENDENT_OPTION(VKVG_SVG "render svg with vkvg-svg library" OFF "UNIX" OFF)
 
 IF (NOT TARGET vkh)
-    ADD_SUBDIRECTORY (vkh)
+    ADD_SUBDIRECTORY (subprojects/vkh)
 ENDIF()
 
 #use c++ vulkan memory allocator library (https://gpuopen.com/vulkan-memory-allocator/)
@@ -227,7 +227,7 @@ ENDIF()
 
 IF (VKVG_USE_GLUTESS)
     ADD_DEFINITIONS (-DVKVG_FILL_NZ_GLUTESS)
-    ADD_SUBDIRECTORY (external/glutess)
+    ADD_SUBDIRECTORY (subprojects/glutess)
 ENDIF ()
 
 FILE(GLOB VKVG_SRC src/*.c src/deps/*.c)
@@ -236,7 +236,7 @@ SET (VKVG_PUBLIC_HEADERS "include/vkvg.h;include/vkvg-svg.h")
 
 IF (VKVG_SVG)
     ADD_DEFINITIONS (-DVKVG_SVG)
-    FILE(GLOB SVG_SRC external/vkvg-svg/src/*.c)
+    FILE(GLOB SVG_SRC subprojects/vkvg-svg/src/*.c)
 ELSE()
     FILE(GLOB SVG_SRC src/nsvg/*.c)
 ENDIF()
@@ -281,12 +281,12 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
 TARGET_INCLUDE_DIRECTORIES("${PROJECT_NAME}"
 	PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/src
-		${CMAKE_CURRENT_SOURCE_DIR}/vkh/src
+		${CMAKE_CURRENT_SOURCE_DIR}/subprojects/vkh/src
 		$<$<BOOL:${VKVG_USE_FREETYPE}>:${FREETYPE_INCLUDE_DIRS}>
 		$<$<BOOL:${VKVG_USE_HARFBUZZ}>:${HarfBuzz_INCLUDE_DIRS}>
 		$<$<BOOL:${VKVG_USE_FONTCONFIG}>:${Fontconfig_INCLUDE_DIRS}>
 		$<$<NOT:$<BOOL:${VKVG_SVG}>>:${CMAKE_CURRENT_SOURCE_DIR}/src/nsvg>
-                ${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
+                ${CMAKE_CURRENT_SOURCE_DIR}/subprojects/vkh/include
         PUBLIC
 		${Vulkan_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/include

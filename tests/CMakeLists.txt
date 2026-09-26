@@ -28,8 +28,8 @@ FUNCTION (buildtest TEST_FILE)
 			"${CMAKE_CURRENT_SOURCE_DIR}/../include"
 			"${CMAKE_CURRENT_SOURCE_DIR}/../src"
 			"${CMAKE_CURRENT_SOURCE_DIR}/common"
-			"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/include"
-			"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/src"
+			"${CMAKE_CURRENT_SOURCE_DIR}/../subprojects/vkh/include"
+			"${CMAKE_CURRENT_SOURCE_DIR}/../subprojects/vkh/src"
 	)
 	TARGET_LINK_LIBRARIES(${TEST_NAME}
 		PRIVATE
@@ -54,8 +54,8 @@ TARGET_INCLUDE_DIRECTORIES(tests_common
  		"${CMAKE_CURRENT_SOURCE_DIR}/../include"
  		#"${CMAKE_CURRENT_SOURCE_DIR}/../src"
  		"${CMAKE_CURRENT_SOURCE_DIR}/common"
- 		"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/include"
- 		"${CMAKE_CURRENT_SOURCE_DIR}/../vkh/src"
+ 		"${CMAKE_CURRENT_SOURCE_DIR}/../subprojects/vkh/include"
+ 		"${CMAKE_CURRENT_SOURCE_DIR}/../subprojects/vkh/src"
 )
 
 file(GLOB_RECURSE DATAS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "data/*")
