@@ -1722,6 +1722,7 @@ int parse_element(SVG_COMMON_SIG) {
         } else if (*buff == '/') {
             //self closing tag
             if (++buff < buff_end && *buff == '>') {
+                LOG("Self closing tag: %.*s\n", (int)svg->elt_len, svg->elt);
                 svg->buff_ptr = ++buff;
                 return 1;
             }
@@ -1744,7 +1745,7 @@ int parse_children(SVG_COMMON_SIG) {
     const uint8_t *elt = svg->elt;
     const size_t ns_len = svg->ns_len;
     size_t elt_len = svg->elt_len;
-    svg->ns_len = 0;
+    //svg->ns_len = 0;
     uint8_t c = 0;
 
     while (buff < buff_end) {
@@ -1753,6 +1754,7 @@ int parse_children(SVG_COMMON_SIG) {
                 return -1;
             c = *buff;
             if (c > 64) {//element name
+                svg->ns_len = 0;
                 svg->elt = buff;
                 while (++buff < buff_end) {
                     if (*buff == '-' || (*buff > 47 && *buff < 58))
@@ -1769,6 +1771,7 @@ int parse_children(SVG_COMMON_SIG) {
                 }
                 svg->elt_len = buff - svg->elt;
                 svg->buff_ptr = buff;
+                LOG("Element: %.*s:%.*s\n", (int)svg->ns_len, svg->ns, (int)svg->elt_len, svg->elt);
                 elt_lut_func(svg, *attribs, parentData);
                 buff = svg->buff_ptr;
                 svg->currentIdHash = 0;
@@ -1817,6 +1820,7 @@ int parse_children(SVG_COMMON_SIG) {
                     elt = ns;
                 }
                 if ((++buff) + elt_len < buff_end && !memcmp (buff, elt, elt_len) && buff[elt_len] == '>') {
+                    LOG("Closing tag: %.*s\n", (int)elt_len, elt);
                     svg->buff_ptr = buff + elt_len + 1;
                     return 0;
                 } else {
