@@ -93,7 +93,7 @@ static const uint8_t utf8d[] = {
  * @param byte The raw next byte from the UTF-8 stream.
  * @return uint32_t Returns UTF8_ACCEPT when a character is fully decoded.
  */
-inline uint32_t decode_utf8_byte(uint32_t *const restrict state, uint32_t *const restrict codep, uint8_t byte) {
+static inline uint32_t decode_utf8_byte(uint32_t *const restrict state, uint32_t *const restrict codep, uint8_t byte) {
     uint32_t type = utf8d[byte];
 
     *codep = (*state != UTF8_ACCEPT) ?
@@ -178,7 +178,7 @@ typedef struct {
 /* Font identification structure */
 typedef struct {
     uint64_t       names[5];    /* Resolved Input names to this font by fontConfig or custom name set by @ref vkvg_load_from_path. Maximum count is 5.*/
-    uint32_t namesCount;        /* Count of resolved names by fontConfig */
+    uint32_t       namesCount;        /* Count of resolved names by fontConfig */
     unsigned char* fontBuffer;  /* stb_truetype in memory buffer */
     long           fontBufSize; /* */
     char*          fontFile;    /* Font file full path*/
@@ -202,20 +202,20 @@ typedef struct {
     FcConfig* config; /* Font config, used to find font files by font names*/
 #endif
 
-    int      stagingX; /* x pen in host buffer */
-    uint8_t* hostBuff; /* host memory where bitmaps are first loaded */
+    int             stagingX; /* x pen in host buffer */
+    uint8_t*        hostBuff; /* host memory where bitmaps are first loaded */
 
     VkCommandBuffer cmd;          /* vulkan command buffer for font textures upload */
     vkh_buffer_t    buff;         /* stagin buffer */
     VkhImage        texture;      /* 2d array texture used by contexts to draw characteres */
     VkFormat        texFormat;    /* Format of the fonts texture array */
     uint8_t         texPixelSize; /* Size in byte of a single pixel in a font texture */
-    uint8_t texLength;   /* layer count of 2d array texture, starts with FONT_CACHE_INIT_LAYERS count and increased when
-                            needed */
-    int*    pensY;       /* array of current y pen positions for each texture in cache 2d array */
-    VkFence uploadFence; /* Signaled when upload is finished */
-    mtx_t   mutex;       /* font cache global mutex, used only if device is in thread aware mode (see:
-                            vkvg_device_set_thread_aware) */
+    uint8_t         texLength;    /* layer count of 2d array texture, starts with FONT_CACHE_INIT_LAYERS count and increased when
+                                     needed */
+    int*            pensY;        /* array of current y pen positions for each texture in cache 2d array */
+    VkFence         uploadFence;  /* Signaled when upload is finished */
+    mtx_t           mutex;        /* font cache global mutex, used only if device is in thread aware mode (see:
+                                     vkvg_device_set_thread_aware) */
 
     _vkvg_font_identity_t* fonts;      /* Loaded fonts structure array */
     int32_t                fontsCount; /* Loaded fonts array count*/

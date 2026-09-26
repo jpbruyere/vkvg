@@ -1,7 +1,7 @@
 <h1 align="center">
   <br>
-  <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg.svg">
-	<img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg.svg?sanitize=true" alt="vkvg" width="140">
+  <a href="vkvg.svg">
+	<img src="vkvg.svg?sanitize=true" alt="vkvg" width="140">
   </a>
   <br>
 	<br>
@@ -37,22 +37,22 @@ The **API** follows the same pattern as [Cairo](https://www.cairographics.org/),
 In progress API documentation is available online at http://vkvg.org.
 
 <p align="center">
-  <a href="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png">
-	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/vkvg-tiger.png" height="260"></kbd>
+  <a href="vkvg-tiger.png">
+	<img src="vkvg-tiger.png" height="260">
   </a>
-  <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot3.png">
-	<kbd><img src="https://raw.githubusercontent.com/jpbruyere/vkvg/master/screenshot3.png" height="260"></kbd>
+  <a href="screenshot3.png">
+	<img src="screenshot3.png" height="260">
   </a>
-  <a href="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png">
-	<kbd><img src="https://github.com/jpbruyere/vkvg/blob/master/screenshot1.png" height="260"></kbd>
+  <a href="screenshot1.png">
+	<img src="screenshot1.png" height="260">
   </a>
 </p>
 
 ## Performance comparison
 
 <p align="center">
-  <a href="https://github.com/jpbruyere/vgperf/blob/master/vgperf.png">
-	<kbd><img src="https://raw.githubusercontent.com/jpbruyere/vgperf/master/vgperf.png" height="300"></kbd>
+  <a href="vgperf.png">
+	<kbd><img src="vgperf.png" height="300"></kbd>
   </a>
    <br>major libs perf comparison</br>
 </p>

@@ -478,7 +478,7 @@ vkvg_public void vkvg_matrix_rotate(vkvg_matrix_t* matrix, float radians);
  * @param a first operand of the multiplication
  * @param b second operand of the multiplication
  */
-vkvg_public void vkvg_matrix_multiply(vkvg_matrix_t* result, const vkvg_matrix_t* a, const vkvg_matrix_t* b);
+vkvg_public void vkvg_matrix_multiply(vkvg_matrix_t* result, const vkvg_matrix_t * const a, const vkvg_matrix_t * const b);
 /**
  * @brief transform distances
  *
