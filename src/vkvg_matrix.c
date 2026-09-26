@@ -190,7 +190,7 @@ void vkvg_matrix_rotate(vkvg_matrix_t* matrix, float radians) {
 
     vkvg_matrix_multiply(matrix, &tmp, matrix);
 }
-void vkvg_matrix_multiply(vkvg_matrix_t* result, const vkvg_matrix_t* a, const vkvg_matrix_t* b) {
+void vkvg_matrix_multiply(vkvg_matrix_t* result, const vkvg_matrix_t *const a, const vkvg_matrix_t *const b) {
     vkvg_matrix_t r;
 
     r.xx = a->xx * b->xx + a->yx * b->xy;

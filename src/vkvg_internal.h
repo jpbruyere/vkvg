@@ -59,7 +59,7 @@
  * @param str Pointer to the start of the null terminated ascii string to hash.
  * @return uint64_t The 64-bit hash value.
  */
-inline uint64_t fnv1a_64_str(const char *const restrict str) {
+static inline uint64_t fnv1a_64_str(const char *const restrict str) {
     uint64_t hash = 0xcbf29ce484222325ULL;
     const uint8_t *restrict data = (const uint8_t *)str;
 

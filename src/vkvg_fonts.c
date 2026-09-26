@@ -371,12 +371,12 @@ _char_ref* _prepare_char(VkvgDevice dev, VkvgText tr, uint32_t gindex) {
     return cr;
 }
 void _font_add_name(_vkvg_font_identity_t* font, const char* name) {
-    if (++font->namesCount == 1)
+    /*if (++font->namesCount == 1)
         font->names = (char**)malloc(sizeof(char*));
     else
         font->names = (char**)realloc(font->names, font->namesCount * sizeof(char*));
     font->names[font->namesCount - 1] = (char*)calloc(strlen(name) + 1, sizeof(char));
-    strcpy(font->names[font->namesCount - 1], name);
+    strcpy(font->names[font->namesCount - 1], name);*/
 }
 bool _font_cache_load_font_file_in_memory(_vkvg_font_identity_t* fontId) {
     FILE* fontFile = fopen(fontId->fontFile, "rb");
@@ -482,7 +482,7 @@ bool _tryResolveFontNameWithFontConfig(VkvgContext ctx, _vkvg_font_identity_t** 
     _font_cache_t* cache    = (_font_cache_t*)ctx->dev->fontCache;
     char*          fontFile = NULL;
 
-    FcPattern* pat = FcNameParse((const FcChar8*)ctx->selectedFontName);
+    /*FcPattern* pat = FcNameParse((const FcChar8*)ctx->selectedFontName);
     FcConfigSubstitute(cache->config, pat, FcMatchPattern);
     FcDefaultSubstitute(pat);
     FcResult   result;
@@ -508,7 +508,7 @@ bool _tryResolveFontNameWithFontConfig(VkvgContext ctx, _vkvg_font_identity_t** 
     }
 
     FcPatternDestroy(pat);
-    FcPatternDestroy(font);
+    FcPatternDestroy(font);*/
 
     return (fontFile != NULL);
 }
@@ -516,7 +516,7 @@ bool _tryResolveFontNameWithFontConfig(VkvgContext ctx, _vkvg_font_identity_t** 
 
 // try to find corresponding font in cache (defined by context selectedFont) and create a new font entry if not found.
 void _update_current_font(VkvgContext ctx) {
-    if (ctx->currentFont == NULL) {
+    /*if (ctx->currentFont == NULL) {
         LOCK_FONTCACHE(ctx->dev)
         if (ctx->selectedFontName[0] == 0)
             _select_font_face(ctx, "sans");
@@ -534,7 +534,7 @@ void _update_current_font(VkvgContext ctx) {
 
         ctx->currentFontSize = _find_or_create_font_size(ctx);
         UNLOCK_FONTCACHE(ctx->dev)
-    }
+    }*/
 }
 
 #ifdef VKVG_USE_HARFBUZZ
