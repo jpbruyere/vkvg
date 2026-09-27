@@ -25,7 +25,8 @@
 #if defined(_WIN32) || defined(_WIN64)
 // disable warning on iostream functions on windows
 #define _CRT_SECURE_NO_WARNINGS
-#include "windows.h"
+#include <windows.h>
+#include <direct.h>
 #if defined(_WIN64)
 #ifndef isnan
 #define isnan _isnanf
@@ -41,7 +42,9 @@
 #define reset_warning   (warn)
 #elif __unix__
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/types.h>
+#include <errno.h>
 #include <pwd.h>
 #define vkvg_inline     static inline __attribute((always_inline))
 #define disable_warning (warn) #pragma GCC diagnostic ignored "-W" #warn
@@ -52,3 +55,5 @@ void _linux_register_error_handler();
 #endif
 
 const char* getUserDir();
+int create_dir(const char* path);
+int create_dir_tree(const char* path);
