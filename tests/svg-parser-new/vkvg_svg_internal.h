@@ -18,7 +18,7 @@
 #define CLR_YELLOW  "\x1b[33m"
 #define CLR_BLUE    "\x1b[34m"
 
-#define DEBUG_LOG
+//#define DEBUG_LOG
 #ifdef LOG
 #undef LOG
 #endif

@@ -4,14 +4,17 @@ x-base-config: &base-config
   user: "${CURRENT_UID}:${CURRENT_GID}"
   volumes:
     - .:/usr/src/app
-    - /var/lib/git-builds/vkvg:/usr/src/reference-images
+    - /var/lib/git-builds/vkvg:/usr/src
   working_dir: /usr/src/app
   command: >
     bash -c "
       echo ${REF_IMGS_PATH}
       echo '=== Starting Build for ${DISTRO} ==='
-      cmake -B build_$${DISTRO} -DCMAKE_BUILD_TYPE=Release -DGTEST_PNG_ROOT=/usr/src/reference-images && cmake --build build_$${DISTRO}
+      cmake -B build_$${DISTRO} -DCMAKE_BUILD_TYPE=Release -DVKVG_SVG=on -DVKVG_BUILD_DOCS=on -DGTEST_PNG_ROOT=/usr/src/reference-images && cmake --build build_$${DISTRO}
       build_$${DISTRO}/gunit_tests/unit_tests
+      if [ -d build_$${DISTRO}/doc/html ]; then
+        cp -v -R build_$${DISTRO}/doc/html /usr/src/documentation
+      fi
     " 
 
 services:
