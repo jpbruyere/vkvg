@@ -5,13 +5,15 @@ x-base-config: &base-config
   volumes:
     - .:/usr/src/app
     - /var/lib/git-builds/vkvg:/usr/src
+    - /var/log/git-builds/vkvg:/var/log
   working_dir: /usr/src/app
   command: >
     bash -c "
       echo ${REF_IMGS_PATH}
       echo '=== Starting Build for ${DISTRO} ==='
       cmake -B build_$${DISTRO} -DCMAKE_BUILD_TYPE=Release -DVKVG_SVG=on -DVKVG_BUILD_DOCS=on -DGTEST_PNG_ROOT=/usr/src/reference-images && cmake --build build_$${DISTRO}
-      build_$${DISTRO}/gunit_tests/unit_tests
+      CURRENT_COMMIT=$(git rev-parse HEAD)
+      build_$${DISTRO}/gunit_tests/unit_tests --gtest_output=xml:/var/log/unit_tests_$${DISTRO}/${CURRENT_COMMIT}.xml --gtest_brief
       if [ -d build_$${DISTRO}/doc/html ]; then
         cp -v -R build_$${DISTRO}/doc/html /usr/src/documentation
       fi
