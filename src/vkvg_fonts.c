@@ -411,7 +411,7 @@ _vkvg_font_identity_t* _font_cache_add_font_identity(VkvgContext ctx, const char
 }
 // select current font for context
 _vkvg_font_t* _find_or_create_font_size(VkvgContext ctx) {
-    _vkvg_font_identity_t* font = ctx->currentFont;
+    _vkvg_font_identity_t* font;// = ctx->currentFont;
 
     for (uint32_t i = 0; i < font->sizeCount; ++i) {
         if (font->sizes[i].charSize == ctx->selectedCharSize)
@@ -465,7 +465,7 @@ _vkvg_font_t* _find_or_create_font_size(VkvgContext ctx) {
 
 // try find font already resolved with fontconfig by font name
 bool _tryFindFontByName(VkvgContext ctx, _vkvg_font_identity_t** font) {
-    _font_cache_t* cache = ctx->dev->fontCache;
+    /*_font_cache_t* cache = ctx->dev->fontCache;
     for (int i = 0; i < cache->fontsCount; ++i) {
         for (uint32_t j = 0; j < cache->fonts[i].namesCount; j++) {
             if (cache->fonts[i].names[j] == ctx->selectedFontName) {
@@ -473,7 +473,7 @@ bool _tryFindFontByName(VkvgContext ctx, _vkvg_font_identity_t** font) {
                 return true;
             }
         }
-    }
+    }*/
     return false;
 }
 
@@ -562,7 +562,7 @@ hb_buffer_t* _get_hb_buffer(_vkvg_font_t* font, const char* text, int length) {
 
 // retrieve global font extends of context's current font as defined by FreeType
 void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
-    _update_current_font(ctx);
+    /*_update_current_font(ctx);
 
     if (ctx->status)
         return;
@@ -585,7 +585,7 @@ void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
         roundf(font->scale * (ctx->currentFont->ascent - ctx->currentFont->descent + ctx->currentFont->lineGap));
     extents->max_x_advance = 0; // TODO
     extents->max_y_advance = 0;
-#endif
+#endif*/
 }
 // compute text extends for provided string.
 void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkvg_text_extents_t* extents) {
@@ -613,14 +613,14 @@ void _font_cache_create_text_run(VkvgContext ctx, const char* text, int length, 
     if (ctx->status)
         return;
 
-    textRun->fontId = ctx->currentFont;
-    textRun->font   = ctx->currentFontSize;
+    //textRun->fontId = ctx->currentFont;
+    //textRun->font   = ctx->currentFontSize;
     textRun->dev    = ctx->dev;
 
     LOCK_FONTCACHE(ctx->dev)
 
 #ifdef VKVG_USE_HARFBUZZ
-    textRun->hbBuf  = _get_hb_buffer(ctx->currentFontSize, text, length);
+    //textRun->hbBuf  = _get_hb_buffer(ctx->currentFontSize, text, length);
     textRun->glyphs = hb_buffer_get_glyph_positions(textRun->hbBuf, &textRun->glyph_count);
 #else
 
@@ -658,9 +658,9 @@ void _font_cache_create_text_run(VkvgContext ctx, const char* text, int length, 
     for (uint32_t i = 0; i < textRun->glyph_count; ++i)
         string_width_in_pixels += textRun->glyphs[i].x_advance >> 6;
 #ifdef VKVG_USE_FREETYPE
-    FT_Size_Metrics* metrics = &ctx->currentFontSize->face->size->metrics;
+    /*FT_Size_Metrics* metrics = &ctx->currentFontSize->face->size->metrics;
     textRun->extents.height  = (float)(FT_MulFix(ctx->currentFontSize->face->height, metrics->y_scale) >>
-                                      6); // (metrics->ascender + metrics->descender) >> 6;
+                                      6); // (metrics->ascender + metrics->descender) >> 6;*/
 #else
     textRun->extents.height = textRun->font->ascent - textRun->font->descent + textRun->font->lineGap;
 #endif

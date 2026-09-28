@@ -16,7 +16,7 @@ const float DBG_LAB_COLOR_SAV[4]  = {1, 0, 1, 1};
 const float DBG_LAB_COLOR_CLIP[4] = {0, 1, 1, 1};
 #endif
 #endif
-
+#define CTX_SAVE_SIZE_INI 10
 // todo:this could be used to define a default background
 static VkClearValue clearValues[3] = {
     {.color.float32 = {0, 0, 0, 0}}, {.depthStencil = {1.0f, 0}}, {.color.float32 = {0, 0, 0, 0}}};
@@ -55,8 +55,8 @@ void _init_ctx(VkvgContext ctx) {
     ctx->renderPassBeginInfo.clearValueCount = ctx->dev->samples == VK_SAMPLE_COUNT_1_BIT ? 2 : 3;
 
     ctx->selectedCharSize    = 10 << 6;
-    ctx->currentFont         = NULL;
-    ctx->selectedFontName    = 0;
+    //ctx->currentFont         = NULL;
+    ctx->selectedFont        = 0;
     ctx->pattern             = NULL;
     ctx->curColor            = 0xff000000; // opaque black
     ctx->cmdStarted          = false;
@@ -100,13 +100,13 @@ VkvgContext vkvg_create(VkvgSurface surf) {
     LOG(VKVG_LOG_INFO, "CREATE Context: ctx = %p; surf = %p\n", ctx, surf);
     ctx->pSurf = surf;
 
-    ctx->sizePoints   = VKVG_PTS_SIZE;
-    ctx->sizeVertices = ctx->sizeVBO = VKVG_VBO_SIZE;
-    ctx->sizeIndices = ctx->sizeIBO = VKVG_IBO_SIZE;
+    ctx->sizePoints                 = VKVG_PTS_SIZE;
+    ctx->sizeVertices               = ctx->sizeVBO = VKVG_VBO_SIZE;
+    ctx->sizeIndices                = ctx->sizeIBO = VKVG_IBO_SIZE;
     ctx->sizePathes                 = VKVG_PATHES_SIZE;
     ctx->renderPassBeginInfo.sType  = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 
-    ctx->dev = surf->dev;
+    ctx->dev                        = surf->dev;
 
     ctx->points      = (vec2*)malloc(VKVG_VBO_SIZE * sizeof(vec2));
     ctx->pathes      = (uint32_t*)malloc(VKVG_PATHES_SIZE * sizeof(uint32_t));
@@ -206,14 +206,16 @@ void vkvg_flush(VkvgContext ctx) {
 }
 
 void _clear_context(VkvgContext ctx) {
+    VkvgPattern pat = NULL;
+
     // free saved context stack elmt
-    vkvg_context_save_t* next = ctx->pSavedCtxs;
-    ctx->pSavedCtxs           = NULL;
-    while (next != NULL) {
-        vkvg_context_save_t* cur = next;
-        next                     = cur->pNext;
-        _free_ctx_save(cur);
+    while (ctx->ctxSaveCount > 0) {
+        ctx->ctxSaveCount--;
+        pat = ctx->pSavedCtxs[ctx->ctxSaveCount].pattern;
+        if (pat)
+            vkvg_pattern_destroy(pat);
     }
+
     // free additional stencil use in save/restore process
     if (ctx->savedStencils) {
         uint8_t curSaveStencil = ctx->curSavBit / 6;
@@ -222,23 +224,6 @@ void _clear_context(VkvgContext ctx) {
         free(ctx->savedStencils);
         ctx->savedStencils = NULL;
         ctx->curSavBit     = 0;
-    }
-
-    // remove context from double linked list of context in device
-    /*if (ctx->dev->lastCtx == ctx){
-        ctx->dev->lastCtx = ctx->pPrev;
-        if (ctx->pPrev != NULL)
-            ctx->pPrev->pNext = NULL;
-    }else if (ctx->pPrev == NULL){
-        //first elmt, and it's not last one so pnext is not null
-        ctx->pNext->pPrev = NULL;
-    }else{
-        ctx->pPrev->pNext = ctx->pNext;
-        ctx->pNext->pPrev = ctx->pPrev;
-    }*/
-    if (ctx->dashCount > 0) {
-        free(ctx->dashes);
-        ctx->dashCount = 0;
     }
 }
 
@@ -390,6 +375,45 @@ void vkvg_line_to(VkvgContext ctx, float x, float y) {
     LOG(VKVG_LOG_INFO_CMD, "\tCMD: line_to: %f, %f\n", x, y);
     _line_to(ctx, x, y);
 }
+
+
+/*static inline float getArcStep(VkvgContext ctx,float radius, float arcAngle) {
+    float sx, sy;
+    vkvg_matrix_get_scale(&ctx->pushConsts.mat, &sx, &sy);
+    const float delta = 0.5f;
+    float r = radius * fabsf(fmaxf(sx, sy));
+    float res = arcAngle / (acos(1.f - (delta / r)) * M_PI * 2.f);
+    printf("r:%f alpha:%f step:%f\n", r, arcAngle, res);
+    return res;
+}*/
+/*float getArcStep(VkvgContext ctx, float radius, float angular_length) {
+    // 1. Establish geometric error tolerance (in screen pixels)
+    // 0.5 means a segment vertex will never deviate more than half a pixel from the ideal curve.
+    // Increase slightly (e.g., 0.75 or 1.0) for a massive speed boost with imperceptible visual change.
+    const float error_tolerance = 0.25f;
+    float sx, sy;
+    vkvg_matrix_get_scale(&ctx->pushConsts.mat, &sx, &sy);
+    float r = radius * fabsf(fmaxf(sx, sy));
+    if (r <= 0.1f)
+        return angular_length * .25f;
+    float full_circle_segments = M_PI * sqrtf(r / (2.0f * error_tolerance));
+    float arc_fraction = fabsf(angular_length) / (2.0f * M_PI);
+    int optimal_steps = (int)ceilf(full_circle_segments * arc_fraction);
+
+    if (optimal_steps < 4) optimal_steps = 4;
+
+    return angular_length / (float)optimal_steps;
+}*/
+float getArcStep(VkvgContext ctx, float radius, float angular_length) {
+    const float error_tolerance = 0.25f;
+    float sx, sy;
+    vkvg_matrix_get_scale(&ctx->pushConsts.mat, &sx, &sy);
+    float local_tolerance = error_tolerance / fabsf(fmaxf(sx, sy));
+    if (radius <= local_tolerance) {
+        return 1.5707963f;
+    }
+    return 2.0f * sqrtf((2.0f * local_tolerance) / radius);
+}
 void vkvg_arc(VkvgContext ctx, float xc, float yc, float radius, float a1, float a2) {
     if (vkvg_status(ctx))
         return;
@@ -405,7 +429,8 @@ void vkvg_arc(VkvgContext ctx, float xc, float yc, float radius, float a1, float
 
     vec2 v = {cosf(a1) * radius + xc, sinf(a1) * radius + yc};
 
-    float step = _get_arc_step(ctx, radius);
+    //float step = _get_arc_step(ctx, radius);
+    float step = getArcStep(ctx, radius, a2 - a1);
     float a    = a1;
 
     if (_current_path_is_empty(ctx)) {
@@ -458,7 +483,7 @@ void vkvg_arc_negative(VkvgContext ctx, float xc, float yc, float radius, float 
 
     vec2 v = {cosf(a1) * radius + xc, sinf(a1) * radius + yc};
 
-    float step = _get_arc_step(ctx, radius);
+    float step = getArcStep(ctx, radius, a1 - a2);
     float a    = a1;
 
     if (_current_path_is_empty(ctx)) {
@@ -1100,16 +1125,13 @@ float vkvg_get_miter_limit(VkvgContext ctx) {
     return ctx->miterLimit;
 }
 void vkvg_set_dash(VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset) {
-    if (vkvg_status(ctx))
+    if (vkvg_status(ctx) || num_dashes > VKVG_MAX_DASH_COUNT)
         return;
-    if (ctx->dashCount > 0)
-        free(ctx->dashes);
     RECORD(ctx, VKVG_CMD_SET_DASH, num_dashes, offset, dashes);
     ctx->dashCount  = num_dashes;
     ctx->dashOffset = offset;
     if (ctx->dashCount == 0)
         return;
-    ctx->dashes = (float*)malloc(sizeof(float) * ctx->dashCount);
     memcpy(ctx->dashes, dashes, sizeof(float) * ctx->dashCount);
 }
 void vkvg_get_dash(VkvgContext ctx, const float* dashes, uint32_t* num_dashes, float* offset) {
@@ -1176,15 +1198,15 @@ void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_SIZE, size);
 #ifdef VKVG_USE_FREETYPE
-    long newSize = size << 6;
+    uint32_t newSize = size << 6;
 #else
-    long newSize = size;
+    uint32_t newSize = size;
 #endif
     if (ctx->selectedCharSize == newSize)
         return;
     ctx->selectedCharSize = newSize;
-    ctx->currentFont      = NULL;
-    ctx->currentFontSize  = NULL;
+    //ctx->currentFont      = NULL;
+    //ctx->currentFontSize  = NULL;
 }
 
 void vkvg_set_text_direction(vkvg_context* ctx, vkvg_direction_t direction) {}
@@ -1253,8 +1275,21 @@ void vkvg_save(VkvgContext ctx) {
     RECORD(ctx, VKVG_CMD_SAVE);
     LOG(VKVG_LOG_INFO, "SAVE CONTEXT: ctx = %p\n", ctx);
 
+    if (ctx->ctxSaveCount >= ctx->sizeCtxSave) {
+        size_t newSize = ctx->sizeCtxSave + CTX_SAVE_SIZE_INI;
+        vkvg_context_save_t* tmp = (vkvg_context_save_t*)realloc(
+            ctx->pSavedCtxs, newSize * sizeof(vkvg_context_save_t));
+        if (tmp == NULL) {
+            ctx->status = VKVG_STATUS_NO_MEMORY;
+            LOG(VKVG_LOG_ERR, "resize context save stack failed.\n");
+            return;
+        }
+        ctx->pSavedCtxs = tmp;
+        ctx->sizeCtxSave = newSize;
+    }
+
     VkvgDevice           dev = ctx->dev;
-    vkvg_context_save_t* sav = (vkvg_context_save_t*)calloc(1, sizeof(vkvg_context_save_t));
+    vkvg_context_save_t* sav = &ctx->pSavedCtxs[ctx->ctxSaveCount];
 
     _flush_cmd_buff(ctx);
 
@@ -1345,33 +1380,12 @@ void vkvg_save(VkvgContext ctx) {
     else
         sav->clippingState = vkvg_clip_state_clear;
 
-    sav->dashOffset = ctx->dashOffset;
-    sav->dashCount  = ctx->dashCount;
-    if (ctx->dashCount > 0) {
-        sav->dashes = (float*)malloc(sizeof(float) * ctx->dashCount);
-        memcpy(sav->dashes, ctx->dashes, sizeof(float) * ctx->dashCount);
-    }
-    sav->lineWidth   = ctx->lineWidth;
-    sav->miterLimit  = ctx->miterLimit;
-    sav->curOperator = ctx->curOperator;
-    sav->lineCap     = ctx->lineCap;
-    sav->lineWidth   = ctx->lineWidth;
-    sav->curFillRule = ctx->curFillRule;
+    memcpy((void*)sav, (void*)&(ctx->curColor), (void*)&(ctx->indCount) - (void*)&(ctx->curColor));
 
-    sav->selectedCharSize = ctx->selectedCharSize;
-    sav->selectedFontName =ctx->selectedFontName;
-
-    sav->currentFont   = ctx->currentFont;
-    sav->textDirection = ctx->textDirection;
-    sav->pushConsts    = ctx->pushConsts;
-    if (ctx->pattern) {
-        sav->pattern = ctx->pattern; // TODO:pattern sav must be imutable (copy?)
+    if (ctx->pattern)
         vkvg_pattern_reference(ctx->pattern);
-    } else
-        sav->curColor = ctx->curColor;
 
-    sav->pNext      = ctx->pSavedCtxs;
-    ctx->pSavedCtxs = sav;
+    ctx->ctxSaveCount++;
 }
 void vkvg_restore(VkvgContext ctx) {
     if (vkvg_status(ctx))
@@ -1379,15 +1393,14 @@ void vkvg_restore(VkvgContext ctx) {
 
     RECORD(ctx, VKVG_CMD_RESTORE);
 
-    if (ctx->pSavedCtxs == NULL) {
+    if (!ctx->ctxSaveCount) {
         ctx->status = VKVG_STATUS_INVALID_RESTORE;
         return;
     }
 
     LOG(VKVG_LOG_INFO, "RESTORE CONTEXT: ctx = %p\n", ctx);
 
-    vkvg_context_save_t* sav = ctx->pSavedCtxs;
-    ctx->pSavedCtxs          = sav->pNext;
+    vkvg_context_save_t* sav = &ctx->pSavedCtxs[ctx->ctxSaveCount-1];
 
     _flush_cmd_buff(ctx);
 
@@ -1474,44 +1487,40 @@ void vkvg_restore(VkvgContext ctx) {
         }
     }
 
-    ctx->pushConsts   = sav->pushConsts;
-    ctx->pushCstDirty = true;
-
     ctx->curClipState = vkvg_clip_state_none;
 
-    ctx->dashOffset = sav->dashOffset;
-    if (ctx->dashCount > 0)
-        free(ctx->dashes);
+    memcpy((void*)&(ctx->curColor), (void*)sav, (void*)&(ctx->pattern) - (void*)&(ctx->curColor));
+
+    /*ctx->curColor = sav->curColor;
+    ctx->lineWidth   = sav->lineWidth;
+    ctx->miterLimit  = sav->miterLimit;
     ctx->dashCount = sav->dashCount;
+    ctx->dashOffset = sav->dashOffset;
     if (ctx->dashCount > 0) {
-        ctx->dashes = (float*)malloc(sizeof(float) * ctx->dashCount);
         memcpy(ctx->dashes, sav->dashes, sizeof(float) * ctx->dashCount);
     }
 
-    ctx->lineWidth   = sav->lineWidth;
-    ctx->miterLimit  = sav->miterLimit;
     ctx->curOperator = sav->curOperator;
     ctx->lineCap     = sav->lineCap;
     ctx->lineJoin    = sav->lineJoint;
     ctx->curFillRule = sav->curFillRule;
-
-    ctx->selectedCharSize = sav->selectedCharSize;
-    ctx->selectedFontName = sav->selectedFontName;
-
-    ctx->currentFont   = sav->currentFont;
     ctx->textDirection = sav->textDirection;
+    ctx->selectedCharSize = sav->selectedCharSize;
+    ctx->selectedFont = sav->selectedFont;
+    ctx->pushConsts   = sav->pushConsts;*/
+
+    ctx->pushCstDirty = true;
 
     if (sav->pattern) {
         if (sav->pattern != ctx->pattern) {
             _update_cur_pattern(ctx, sav->pattern);
-            vkvg_pattern_reference(ctx->pattern);
-        }
+        } else
+            vkvg_pattern_destroy(ctx->pattern);
     } else {
-        ctx->curColor = sav->curColor;
         _update_cur_pattern(ctx, NULL);
     }
 
-    _free_ctx_save(sav);
+    ctx->ctxSaveCount--;
 }
 
 void vkvg_translate(VkvgContext ctx, float dx, float dy) {

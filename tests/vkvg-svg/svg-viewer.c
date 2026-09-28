@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
 
         if (iconSize > 0 && pCurrentDir) {
             if (update) {
-
+                queryUpdate();
                 vkengine_set_title(e, path);
                 double x = 0;
                 double y = (lineToSkip * cellSize) - scrollY;
@@ -387,4 +387,5 @@ int main(int argc, char* argv[]) {
     vkvg_device_destroy(dev);
     vkengine_destroy(e);
 
+    exit(0);
 }

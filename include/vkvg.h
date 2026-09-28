@@ -117,6 +117,8 @@ vkvg_public extern vkvg_wired_debug_mode vkvg_wired_debug;
 #endif
 #endif
 
+#define VKVG_MAX_DASH_COUNT 5
+
 /**
  * @brief vkvg operation status.
  *
