@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stddef.h>
 
 #include "svg_elt_gperf.h"
 #include "svg_att_gperf.h"
