@@ -225,6 +225,7 @@ vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const ch
     if (!scalarBlockLayoutSupport.scalarBlockLayout) {
         LOG(VKVG_LOG_ERR, "CREATE Device failed, vkvg compiled with VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT and feature is "
                           "not implemented for physical device.\n");
+        free(pExtensionProperties);
         return VKVG_STATUS_DEVICE_ERROR;
     }
     _CHECK_DEV_EXT(VK_EXT_scalar_block_layout)
@@ -232,12 +233,14 @@ vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const ch
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     if (!timelineSemaphoreSupport.timelineSemaphore) {
         LOG(VKVG_LOG_ERR, "CREATE Device failed, VK_SEMAPHORE_TYPE_TIMELINE not supported.\n");
+        free(pExtensionProperties);
         return VKVG_STATUS_DEVICE_ERROR;
     }
     _CHECK_DEV_EXT(VK_KHR_timeline_semaphore)
 #endif
     _CHECK_DEV_EXT(VK_EXT_extended_dynamic_state)
 
+    free(pExtensionProperties);
     return VKVG_STATUS_SUCCESS;
 }
 

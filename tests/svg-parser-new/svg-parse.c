@@ -185,7 +185,8 @@
     float b = (float)((stop->color & 0x00ff0000) >> 16) / 255.0f;                                                       \
     float g = (float)((stop->color & 0x0000ff00) >> 8) / 255.0f;                                                        \
     float r = (float)(stop->color & 0x000000ff) / 255.0f;                                                               \
-    vkvg_pattern_add_color_stop(pat, stop->offset, r, g, b, a * stop->opacity);
+    vkvg_pattern_add_color_stop(pat, stop->offset, r, g, b, a * stop->opacity);                                         \
+    free(stop);
 
 #define SVG_ATT_STOP_COLOR                                                          \
     svg_paint_type enabled;                                                         \
