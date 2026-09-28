@@ -80,7 +80,7 @@ void _check_vertex_cache_size(VkvgContext ctx) {
     assert(ctx->sizeVertices > ctx->vertCount);
     if (ctx->sizeVertices - VKVG_ARRAY_THRESHOLD > ctx->vertCount)
         return;
-    _resize_vertex_cache(ctx, ctx->sizeVertices + VKVG_VBO_SIZE);
+    _resize_vertex_cache(ctx, ctx->sizeVertices * 2);
 }
 void _ensure_index_cache_size(VkvgContext ctx, uint32_t addedIndicesCount) {
     assert(ctx->sizeIndices > ctx->indCount);
@@ -95,7 +95,7 @@ void _ensure_index_cache_size(VkvgContext ctx, uint32_t addedIndicesCount) {
 void _check_index_cache_size(VkvgContext ctx) {
     if (ctx->sizeIndices - VKVG_ARRAY_THRESHOLD > ctx->indCount)
         return;
-    _resize_index_cache(ctx, ctx->sizeIndices + VKVG_IBO_SIZE);
+    _resize_index_cache(ctx, ctx->sizeIndices * 2);
 }
 // check host path array size, return true if error. pathPtr is already incremented
 bool _check_pathes_array(VkvgContext ctx) {
@@ -911,15 +911,17 @@ void _release_context_ressources(VkvgContext ctx) {
     vkh_buffer_reset(&ctx->indices);
     vkh_buffer_reset(&ctx->vertices);
 
-    free(ctx->vertexCache);
-    free(ctx->indexCache);
-
     vkh_image_destroy(ctx->fontCacheImg);
     // TODO:check this for source counter
     // vkh_image_destroy	  (ctx->source);
 
+    free(ctx->vertexCache);
+    free(ctx->indexCache);
+
     free(ctx->pathes);
     free(ctx->points);
+
+    free(ctx->pSavedCtxs);
 
     free(ctx);
 }
@@ -1297,14 +1299,6 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
     return (s >= 0) && (t >= 0) && (s + t <= D);
 }
 
-void _free_ctx_save(vkvg_context_save_t* sav) {
-    if (sav->dashCount > 0)
-        free(sav->dashes);
-    if (sav->pattern)
-        vkvg_pattern_destroy(sav->pattern);
-    free(sav);
-}
-
 #define M_APPROXIMATION_SCALE         1.0
 #define M_ANGLE_TOLERANCE             0.01
 #define M_CUSP_LIMIT                  0.01
@@ -1539,7 +1533,7 @@ void _elliptic_arc(VkvgContext ctx, float x1, float y1, float x2, float y2, bool
     double theta = sa;
     double ea    = sa + delta_theta;
 
-    float step = fmaxf(0.001f, fminf(M_PIF, _get_arc_step(ctx, fminf(rx, ry)) * 0.1f));
+    float step = fmaxf(0.001f, fminf(M_PIF, _get_arc_step(ctx, fminf(rx, ry)) * 1.0f));
 
     p       = (vec2){rx * cosf(theta), ry * sinf(theta)};
     vec2 xy = vec2_add(mat2_mult_vec2(m, p), c);
@@ -1956,9 +1950,9 @@ void _draw_full_screen_quad(VkvgContext ctx, vec4* scissor) {
 
 void _select_font_face(VkvgContext ctx, const char* name) {
     uint64_t h = fnv1a_64_str(name);
-    if (ctx->selectedFontName == h)
+    if (ctx->selectedFont == h)
         return;
-    ctx->selectedFontName = h;
-    ctx->currentFont     = NULL;
-    ctx->currentFontSize = NULL;
+    ctx->selectedFont = h;
+    /*ctx->currentFont     = NULL;
+    ctx->currentFontSize = NULL;*/
 }
