@@ -1491,24 +1491,6 @@ void vkvg_restore(VkvgContext ctx) {
 
     memcpy((void*)&(ctx->curColor), (void*)sav, (void*)&(ctx->pattern) - (void*)&(ctx->curColor));
 
-    /*ctx->curColor = sav->curColor;
-    ctx->lineWidth   = sav->lineWidth;
-    ctx->miterLimit  = sav->miterLimit;
-    ctx->dashCount = sav->dashCount;
-    ctx->dashOffset = sav->dashOffset;
-    if (ctx->dashCount > 0) {
-        memcpy(ctx->dashes, sav->dashes, sizeof(float) * ctx->dashCount);
-    }
-
-    ctx->curOperator = sav->curOperator;
-    ctx->lineCap     = sav->lineCap;
-    ctx->lineJoin    = sav->lineJoint;
-    ctx->curFillRule = sav->curFillRule;
-    ctx->textDirection = sav->textDirection;
-    ctx->selectedCharSize = sav->selectedCharSize;
-    ctx->selectedFont = sav->selectedFont;
-    ctx->pushConsts   = sav->pushConsts;*/
-
     ctx->pushCstDirty = true;
 
     if (sav->pattern) {

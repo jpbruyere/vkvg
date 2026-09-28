@@ -21,6 +21,8 @@
  */
 #pragma once
 
+#include <stddef.h>
+
 // cross platform os helpers
 #if defined(_WIN32) || defined(_WIN64)
 // disable warning on iostream functions on windows
@@ -53,6 +55,28 @@
 void _linux_register_error_handler();
 #endif
 #endif
+
+
+
+// 1. Check if we are in a POSIX environment that supports strncasecmp
+#if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L)
+#include <strings.h> /* Provides the native strncasecmp */
+#else
+/* 2. Fallback: Implement our own C11-compliant version */
+#include <ctype.h>
+
+static inline int strncasecmp(const char *s1, const char *s2, size_t n) {
+    while (n-- > 0) {
+        unsigned char u1 = (unsigned char)*s1;
+        unsigned char u2 = (unsigned char)*s2;
+        int diff = tolower(u1) - tolower(u2);
+        if (diff != 0 || u1 == '\0') return diff;
+        s1++; s2++;
+    }
+    return 0;
+}
+#endif
+
 
 const char* getUserDir();
 int create_dir(const char* path);
