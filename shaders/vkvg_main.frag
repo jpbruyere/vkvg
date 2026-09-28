@@ -72,7 +72,7 @@ void main()
 	case SURFACE:
 		vec2 p = (gl_FragCoord.xy - inSrc.xy);
 		vec2 uv = vec2(
-			inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
+		        inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
 			inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
 		);
                 uv /= inSrc.zw;
