@@ -217,10 +217,7 @@ if(VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
 endif()
 
 option(VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-	"Enable
-		vulkan
-		TimelineSemaphore
-		support."
+	"Enable vulkan TimelineSemaphore support."
 	OFF
 )
 if(VKVG_ENABLE_VK_TIMELINE_SEMAPHORE)
@@ -244,63 +241,70 @@ if(VKVG_LCD_FONT_FILTER)
 endif()
 
 ## SHADER COMPILATION
-## if vulkan is found glslvalidator is also found, Additonal checks not necessary.
+
 set(SHADERS_H "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders.h")
-set(SHADER_DIR "shaders")
-set(SHADER_FILES
-	${SHADER_DIR}/*.frag
-	${SHADER_DIR}/*.vert
-	${SHADER_DIR}/*.geom
-	${SHADER_DIR}/*.comp
-)
 
-file(GLOB_RECURSE SHADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SHADER_FILES})
+if(Vulkan_glslangValidator_FOUND AND Python_FOUND)
+	message(STATUS "Compiling shaders")
+	set(SHADER_DIR "shaders")
+	set(SHADER_FILES
+		${SHADER_DIR}/*.frag
+		${SHADER_DIR}/*.vert
+		${SHADER_DIR}/*.geom
+		${SHADER_DIR}/*.comp
+	)
 
-foreach(SHADER ${SHADERS})
-	set(shader-input ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER})
-	set(shader-output ${CMAKE_CURRENT_BINARY_DIR}/${SHADER}.spv.h)
-	get_filename_component(SPV ${SHADER} NAME)
+	file(GLOB_RECURSE SHADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SHADER_FILES})
+
+	foreach(SHADER ${SHADERS})
+		set(shader-input ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER})
+		set(shader-output ${CMAKE_CURRENT_BINARY_DIR}/${SHADER}.spv.h)
+		get_filename_component(SPV ${SHADER} NAME)
+		add_custom_command(
+			OUTPUT ${shader-output}
+			COMMAND ${CMAKE_COMMAND} -E make_directory
+				"${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}"
+			COMMAND ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} ${GLSLDEFS} -V --vn ${SPV}
+				${shader-input} -o ${shader-output}
+			COMMENT "Compiling ${shader-input}"
+			DEPENDS ${SHADER}
+		)
+		set(SHADER_OUTPUTS ${SHADER_OUTPUTS} ${shader-output})
+	endforeach()
+
+	add_custom_target(BuildShaders ALL DEPENDS ${SHADER_OUTPUTS})
+
+	if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.17.0")
+		add_custom_target(ClearShadersHeader
+			COMMAND ${CMAKE_COMMAND} -E rm -f ${SHADERS_H}
+		)
+	else()
+		add_custom_target(ClearShadersHeader
+			COMMAND ${CMAKE_COMMAND} -E remove -f ${SHADERS_H}
+		)
+	endif()
+
+	add_custom_target(BuildShadersHeader
+		DEPENDS
+			ClearShadersHeader
+			${SHADER_OUTPUTS}
+	)
+
 	add_custom_command(
-		OUTPUT ${shader-output}
-		COMMAND ${CMAKE_COMMAND} -E make_directory
-			"${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}"
-		COMMAND glslangValidator ${GLSLDEFS} -V --vn ${SPV} ${shader-input} -o
-			${shader-output}
-		COMMENT "Compiling
-		${shader-input}"
-		DEPENDS ${SHADER}
+		TARGET BuildShadersHeader
+		PRE_BUILD
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}
+		COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/headerconcat.py
+			--replace-dots -o ${SHADERS_H} ${SHADER_OUTPUTS}
 	)
-	set(SHADER_OUTPUTS ${SHADER_OUTPUTS} ${shader-output})
-endforeach()
 
-add_custom_target(BuildShaders ALL DEPENDS ${SHADER_OUTPUTS})
-
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.17.0")
-	add_custom_target(ClearShadersHeader
-		COMMAND ${CMAKE_COMMAND} -E rm -f ${SHADERS_H}
-	)
+	set_source_files_properties(${SHADERS_H} PROPERTIES GENERATED 1)
+	# add_definitions( -DDEBUG_VK_PERF=true )
 else()
-	add_custom_target(ClearShadersHeader
-		COMMAND ${CMAKE_COMMAND} -E remove -f ${SHADERS_H}
+	message(STATUS
+		"glslangvalidator or python was not found, using shader from git tree"
 	)
 endif()
-
-add_custom_target(BuildShadersHeader
-	DEPENDS
-		ClearShadersHeader
-		${SHADER_OUTPUTS}
-)
-
-add_custom_command(
-	TARGET BuildShadersHeader
-	PRE_BUILD
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}
-	COMMAND ${Python} ${CMAKE_SOURCE_DIR}/scripts/headerconcat.py --replace-dots -o
-		${SHADERS_H} ${SHADER_OUTPUTS}
-)
-
-set_source_files_properties(${SHADERS_H} PROPERTIES GENERATED 1)
-# add_definitions( -DDEBUG_VK_PERF=true )
 
 if(VKVG_USE_GLUTESS)
 	add_definitions(-DVKVG_FILL_NZ_GLUTESS)
@@ -448,8 +452,7 @@ if(VKVG_BUILD_DOCS)
 		COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
 		MAIN_DEPENDENCY ${DOXYFILE_OUT}
 		${DOXYFILE_IN}
-		COMMENT "Generating
-		docs"
+		COMMENT "Generating docs"
 	)
 	add_custom_target(doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
 
@@ -473,10 +476,7 @@ if(VKVG_BUILD_DOCS)
 				${SPHINX_SOURCE}/index.rst
 				${DOXYGEN_INDEX_FILE}
 			MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
-			COMMENT "Generating
-		documentation
-		with
-		Sphinx"
+			COMMENT "Generating documentation with Sphinx"
 		)
 
 		add_custom_target(sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
@@ -486,20 +486,11 @@ endif()
 if(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 	set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 
-	set(CPACK_PACKAGE_DESCRIPTION "Vulkan
-		vector
-		graphic
-		library")
+	set(CPACK_PACKAGE_DESCRIPTION "Vulkan vector graphic library")
 	set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
-		"2d
-		vector
-		drawing
-		library
-		using
-		vulkan"
+		"2d vector drawing library using vulkan"
 	)
-	set(CPACK_PACKAGE_VENDOR "jp
-		Bruyere")
+	set(CPACK_PACKAGE_VENDOR "jp Bruyere")
 	set(CPACK_PACKAGE_CONTACT "jp_bruyere@hotmail.com")
 
 	set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
@@ -521,13 +512,7 @@ if(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 		set(CPACK_SET_DESTDIR "on")
 		set(CPACK_ADD_LDCONFIG_CALL 1)
 		set(CPACK_DEBIAN_PACKAGE_DEPENDS
-			"
-		libharfbuzz-gobject0
-		,
-		libfontconfig1
-		,
-		libfreetype6
-		"
+			"libharfbuzz-gobject0, libfontconfig1, libfreetype6"
 		)
 		set(CPACK_GENERATOR "DEB")
 
