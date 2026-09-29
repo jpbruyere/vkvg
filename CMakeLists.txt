@@ -15,6 +15,15 @@ include(CheckSymbolExists)
 include(CheckIncludeFile)
 include(GNUInstallDirs)
 include(CMakeDependentOption)
+include(CheckIPOSupported)
+check_ipo_supported(RESULT IPO_SUPPORT OUTPUT ipo_err)
+
+if(IPO_SUPPORT)
+	message(STATUS "IPO enabled.")
+	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+else()
+	message(STATUS "IPO not supported compilation might be slow... <${ipo_err}>")
+endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
