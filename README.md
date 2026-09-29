@@ -139,7 +139,7 @@ If vkvg is compiled with `CMAKE_BUILD_TYPE=Debug`, several additional options ar
 - `-DVKVG_DBG_STATS=true`: store various context statistics fetchable with `vkvg_device_get_stats()`
 
 ```bash
-cmake --build .
+cmake --build . --parallel
 ```
 
 A [detailed tutorial](doc/windows_build_tutorial.md) is available for Windows.
