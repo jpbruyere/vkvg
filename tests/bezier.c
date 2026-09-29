@@ -11,10 +11,10 @@ bool                      isClosed = false, isFilled = false;
 int  ptsCount     = 4;
 int  initPtsCount = 4;
 vec2 pts[]        = {
-    {150, 150},
-    {500, 340},
-    {470, 150},
-    {160, 350},
+    {1000, 1000},
+    {50, 50},
+    {2000, 50},
+    {1200, 1000},
 };
 /*vec2 pts[] = {
     {150,150},
@@ -33,6 +33,8 @@ void draw() {
 
     VkvgContext ctx = vkvg_create(surf);
     vkvg_clear(ctx);
+
+    vkvg_scale(ctx, zoom, zoom);
 
 #ifdef VKVG_WIRED_DEBUG
     vkvg_wired_debug = _wired_debug;
@@ -62,7 +64,7 @@ void draw() {
     vkvg_wired_debug = vkvg_wired_debug_mode_normal;
 #endif
 
-    vkvg_set_line_width(ctx, 1);
+    vkvg_set_line_width(ctx, 1.f / zoom);
     vkvg_set_source_rgba(ctx, 0.5, 0.5, 0.5, 0.6);
     for (int i = 0; i < ptsCount; i++) {
 
@@ -81,10 +83,10 @@ void draw() {
     if (hoverPt >= 0) {
         vkvg_stroke_preserve(ctx);
         vkvg_set_dash(ctx, NULL, 0, 0);
-        vkvg_set_line_width(ctx, 2);
-        vkvg_set_source_rgba(ctx, 0, 0, 0, 1);
+        vkvg_set_line_width(ctx, 2.f / zoom);
+        vkvg_set_source_rgba(ctx, 0, 1, 0, 1);
         vkvg_stroke(ctx);
-        vkvg_set_source_rgba(ctx, 0.5f, 0.5f, 1.0f, 0.7f);
+        vkvg_set_source_rgba(ctx, 0.2f, 0.2f, 1.0f, 0.7f);
         vkvg_arc(ctx, pts[hoverPt].x, pts[hoverPt].y, pointSize, 0, M_PIF * 2);
         vkvg_fill_preserve(ctx);
         vkvg_stroke(ctx);
@@ -139,6 +141,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 static void mouse_move_callback(GLFWwindow* window, double x, double y) {
+    x /= zoom;
+    y /= zoom;
     if (mouseDown) {
         if (hoverPt < 0)
             return;
@@ -156,10 +160,19 @@ static void mouse_move_callback(GLFWwindow* window, double x, double y) {
     }
 }
 static void scroll_callback(GLFWwindow* window, double x, double y) {
-    if (y < 0.f)
-        zoom *= 0.5f;
-    else
-        zoom *= 2.0f;
+    float mult = y < 0.f ? 0.5f : 2.0f;
+    if ((y < 0 && zoom < 0.000001f) || (y > 0 && zoom > 70000.f))
+        return;
+    zoom *= mult;
+    for (int i = 0; i < ptsCount; ++i) {
+        pts[i].x /= mult;
+        pts[i].y /= mult;
+    }
+    hoverPointSize /= mult;
+    pointSize /= mult;
+    lineWidth /= mult;
+    printf("zoom = %f\n", zoom);
+    fflush(stdout);
 }
 static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif) {
     if (but != GLFW_MOUSE_BUTTON_1)

@@ -21,11 +21,31 @@ const float DBG_LAB_COLOR_CLIP[4] = {0, 1, 1, 1};
 static VkClearValue clearValues[3] = {
     {.color.float32 = {0, 0, 0, 0}}, {.depthStencil = {1.0f, 0}}, {.color.float32 = {0, 0, 0, 0}}};
 
+static const vkvg_context_save_t CTX_INIT = {
+    0xff000000, // opaque black
+    1.f,
+    10.f,
+    0,
+    0.f,
+    {0},
+    VKVG_OPERATOR_OVER,
+    VKVG_LINE_CAP_BUTT,
+    VKVG_LINE_JOIN_MITER,
+    VKVG_FILL_RULE_NON_ZERO,
+    VKVG_HORIZONTAL,
+    10 << 6,
+    0,
+    {0},
+    NULL
+};
+
 void _init_ctx(VkvgContext ctx) {
-    ctx->lineWidth                       = 1.f;
-    ctx->miterLimit                      = 10.f;
-    ctx->curOperator                     = VKVG_OPERATOR_OVER;
-    ctx->curFillRule                     = VKVG_FILL_RULE_NON_ZERO;
+    memcpy((void*)&(ctx->curColor), (void*)&CTX_INIT, (void*)&(ctx->pattern) - (void*)&(ctx->curColor));
+
+    ctx->cmdStarted                = false;
+    ctx->curClipState              = vkvg_clip_state_none;
+    ctx->vertCount = ctx->indCount = 0;
+
     ctx->bounds                          = (VkRect2D){{0, 0}, {ctx->pSurf->width, ctx->pSurf->height}};
     ctx->pushConsts                      = (push_constants){{.a = 1},
                                                             {(float)ctx->pSurf->width, (float)ctx->pSurf->height},
@@ -54,15 +74,6 @@ void _init_ctx(VkvgContext ctx) {
 
     ctx->renderPassBeginInfo.clearValueCount = ctx->dev->samples == VK_SAMPLE_COUNT_1_BIT ? 2 : 3;
 
-    ctx->selectedCharSize    = 10 << 6;
-    //ctx->currentFont         = NULL;
-    ctx->selectedFont        = 0;
-    ctx->pattern             = NULL;
-    ctx->curColor            = 0xff000000; // opaque black
-    ctx->cmdStarted          = false;
-    ctx->curClipState        = vkvg_clip_state_none;
-
-    ctx->vertCount = ctx->indCount = 0;
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     ctx->timelineStep = 0;
 #endif
