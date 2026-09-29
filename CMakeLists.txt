@@ -103,9 +103,10 @@ endif()
 option(VKVG_RECORDING "enable experimental recording functions" OFF)
 
 option(VKVG_PREMULT_ALPHA "use premultiplied alpha for internal rendering" ON)
+
 if(VKVG_PREMULT_ALPHA)
 	add_definitions(-DVKVG_PREMULT_ALPHA)
-	set(GLSLDEFS ${GLSLDEFS} -DVKVG_PREMULT_ALPHA)
+	set(GLSLDEFS -DVKVG_PREMULT_ALPHA)
 endif()
 
 option(VKVG_DBG_STATS "record contexts statistics in the device" OFF)
@@ -144,6 +145,7 @@ if(VKVG_WIRED_FILL)
 endif()
 
 find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
+find_package(Python REQUIRED)
 
 find_package(Freetype QUIET)
 find_package(Fontconfig QUIET)
@@ -208,7 +210,9 @@ option(VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
 )
 if(VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
 	add_definitions(-DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
-	set(GLSLDEFS ${GLSLDEFS} -DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
+	list(APPEND GLSLDEFS
+		-DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
+	)
 endif()
 
 option(VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
