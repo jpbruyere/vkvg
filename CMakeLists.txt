@@ -117,7 +117,7 @@ IF (VKVG_WIRED_FILL)
     ADD_DEFINITIONS (-DVKVG_WIRED_DEBUG)
 ENDIF ()
 
-FIND_PACKAGE(Vulkan REQUIRED)
+FIND_PACKAGE(Vulkan REQUIRED COMPONENTS glslangValidator)
 
 FIND_PACKAGE(Freetype QUIET)
 FIND_PACKAGE(Fontconfig QUIET)
@@ -168,17 +168,7 @@ IF (VKVG_LCD_FONT_FILTER)
     ADD_DEFINITIONS (-DVKVG_LCD_FONT_FILTER)
 ENDIF ()
 
-# Find glslc shader compiler.
-# On Android, the NDK includes the binary, so no external dependency.
-IF(ANDROID)
-  FILE(GLOB glslc-folders ${ANDROID_NDK}/shader-tools/*)
-ELSE()
-  FILE(GLOB glslc-folders ${VULKAN_SDK}/bin)
-ENDIF()
-FIND_PROGRAM(GLSLC glslc HINTS ${glslc-folders})
-FIND_PROGRAM(XXD xxd)
-
-IF(GLSLC AND XXD)
+IF(GLSLANGVALIDATOR)
     SET(SHADERS_H "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders.h")
     SET(SHADER_DIR "shaders")
     SET(SHADER_FILES ${SHADER_DIR}/*.frag ${SHADER_DIR}/*.vert ${SHADER_DIR}/*.geom  ${SHADER_DIR}/*.comp)
@@ -189,7 +179,7 @@ IF(GLSLC AND XXD)
         ADD_CUSTOM_COMMAND (
           OUTPUT ${shader-output}
           COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}"
-          COMMAND ${GLSLC} ${GLSLDEFS} ${shader-input} -o ${shader-output}# --target-env=vulkan1.2
+          COMMAND ${GLSLC} ${GLSLDEFS} ${shader-input}  -o ${shader-output}
           COMMENT "Compiling ${shader-input}"
           DEPENDS ${SHADER}
           VERBATIM
@@ -223,6 +213,8 @@ IF(GLSLC AND XXD)
 	ENDFOREACH()
 	SET_SOURCE_FILES_PROPERTIES(${SHADERS_H} PROPERTIES GENERATED 1)
 	#add_definitions( -DDEBUG_VK_PERF=true )
+ELSE()
+    MESSAGE(FATAL_ERROR "Can't compile shaders, glslangValidator not present.")
 ENDIF()
 
 IF (VKVG_USE_GLUTESS)
