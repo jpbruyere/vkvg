@@ -226,30 +226,34 @@ if(VKVG_LCD_FONT_FILTER)
 	add_definitions(-DVKVG_LCD_FONT_FILTER)
 endif()
 
-if(GLSLANGVALIDATOR)
-	set(SHADERS_H "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders.h")
-	set(SHADER_DIR "shaders")
-	set(SHADER_FILES
-		${SHADER_DIR}/*.frag
-		${SHADER_DIR}/*.vert
-		${SHADER_DIR}/*.geom
-		${SHADER_DIR}/*.comp
+## SHADER COMPILATION
+## IF statement removed because if vulkan is found glslvalidator is also found
+set(SHADERS_H "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders.h")
+set(SHADER_DIR "shaders")
+set(SHADER_FILES
+	${SHADER_DIR}/*.frag
+	${SHADER_DIR}/*.vert
+	${SHADER_DIR}/*.geom
+	${SHADER_DIR}/*.comp
+)
+file(GLOB_RECURSE SHADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SHADER_FILES})
+foreach(SHADER ${SHADERS})
+	set(shader-input ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER})
+	set(shader-output ${CMAKE_CURRENT_BINARY_DIR}/${SHADER}.spv.h)
+	get_filename_component(SPV ${SHADER} NAME)
+
+	add_custom_command(
+		OUTPUT ${shader-output}
+		COMMAND ${CMAKE_COMMAND} -E make_directory
+			"${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}"
+		COMMAND ${glslangValidator} ${GLSLDEFS} -V --vn ${SPV} ${shader-input} -o
+			${shader-output}
+		COMMENT "Compiling ${shader-input}"
+		DEPENDS ${SHADER}
+		VERBATIM
 	)
-	file(GLOB_RECURSE SHADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SHADER_FILES})
-	foreach(SHADER ${SHADERS})
-		set(shader-input ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER})
-		set(shader-output ${CMAKE_CURRENT_BINARY_DIR}/${SHADER}.spv)
-		add_custom_command(
-			OUTPUT ${shader-output}
-			COMMAND ${CMAKE_COMMAND} -E make_directory
-				"${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}"
-			COMMAND ${GLSLC} ${GLSLDEFS} ${shader-input} -o ${shader-output}
-			COMMENT "Compiling ${shader-input}"
-			DEPENDS ${SHADER}
-			VERBATIM
-		)
-		set(SHADER_OUTPUTS ${SHADER_OUTPUTS} ${shader-output})
-	endforeach()
+	set(SHADER_OUTPUTS ${SHADER_OUTPUTS} ${shader-output})
+endforeach()
 
 	add_custom_target(BuildShaders ALL DEPENDS ${SHADER_OUTPUTS})
 
