@@ -8,43 +8,58 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
 
 FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        b514bdc898e2951020cbdca1304b75f5950d1f59 #v1.15.2
+	googletest
+	GIT_REPOSITORY
+	https://github.com/google/googletest.git
+	GIT_TAG
+	b514bdc898e2951020cbdca1304b75f5950d1f59
+	#v1.15.2
 )
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(googletest)
 
-set(GTEST_PNG_ROOT "${CMAKE_SOURCE_DIR}/ReferenceImages" CACHE STRING "Reference png root path")
-set(GTEST_DATA_ROOT "${CMAKE_SOURCE_DIR}/tests/data" CACHE STRING "Data path for unit tests")
+set(
+	GTEST_PNG_ROOT
+	"${CMAKE_SOURCE_DIR}/ReferenceImages"
+	CACHE
+		STRING
+		"Reference png root path"
+)
+set(
+	GTEST_DATA_ROOT
+	"${CMAKE_SOURCE_DIR}/tests/data"
+	CACHE
+		STRING
+		"Data path for unit tests"
+)
 
 add_executable("${PROJECT_NAME}"
-  main.cpp
-  device.cpp
-  surface.cpp
-  context.cpp
-  basicDraw.cpp
-  drawTestBase.cpp
-  drawTestBase.h
-  imageDraw.cpp
-  matrices.cpp
-  patternDraw.cpp
-  save_restore.cpp
-  unitTest.h
+	main.cpp
+	device.cpp
+	surface.cpp
+	context.cpp
+	basicDraw.cpp
+	drawTestBase.cpp
+	drawTestBase.h
+	imageDraw.cpp
+	matrices.cpp
+	patternDraw.cpp
+	save_restore.cpp
+	unitTest.h
 )
-target_compile_definitions("${PROJECT_NAME}" PUBLIC
-    GTEST_PNG_ROOT="${GTEST_PNG_ROOT}"
-    GTEST_DATA_ROOT="${GTEST_DATA_ROOT}"
+target_compile_definitions("${PROJECT_NAME}"
+	PUBLIC
+		GTEST_PNG_ROOT="${GTEST_PNG_ROOT}"
+		GTEST_DATA_ROOT="${GTEST_DATA_ROOT}"
 )
-target_include_directories("${PROJECT_NAME}" PUBLIC
-  "${CMAKE_SOURCE_DIR}/include"
+target_include_directories("${PROJECT_NAME}"
+	PUBLIC "${CMAKE_SOURCE_DIR}/include"
 )
-target_link_libraries(
-  "${PROJECT_NAME}"
-  GTest::gtest_main
-  vkvg
+target_link_libraries("${PROJECT_NAME}"
+	GTest::gtest_main
+	vkvg
 )
 
 include(GoogleTest)
