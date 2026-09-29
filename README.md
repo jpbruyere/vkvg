@@ -78,11 +78,11 @@ In progress API documentation is available online at http://vkvg.org.
 - [FontConfig](https://www.freedesktop.org/wiki/Software/fontconfig/): optional, without fontconfig, use `vkvg_load_font_from_path`.
 - [Freetype](https://www.freetype.org/): optional, stb_truetype as alternative.
 - [Harfbuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/): optional, without complex text shaping may be wrong.
-- GLSLC: spirv compiler, included in [LunarG SDK](https://www.lunarg.com/vulkan-sdk/): compile shader to spir-V (building only, optional)
-- [xxd](https://linux.die.net/man/1/xxd): generate headers with precompiled shaders (building only, optional)
+- [glslang](https://github.com/KhronosGroup/glslang): spirv compiler, included in [LunarG SDK](https://www.lunarg.com/vulkan-sdk/): compile shader to spir-V (build only, optional)
+- [Python](https://python.org) cross platform interpreted programming langauge (build only, optional)
 - [GLFW](http://www.glfw.org/): optional, if present tests are built.
 
-if `glslc` or `xxd` are not present, a precompiled version of the shaders is stored in the git tree.
+if `glslang` or `python` are not present, a precompiled version of the shaders is stored in the git tree.
 
 ## Building
 
