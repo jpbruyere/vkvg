@@ -10,7 +10,7 @@ x-base-config: &base-config
   command: >
     bash -c "
       echo Starting CI =$${DISTRO}=
-      echo ${REF_IMGS_PATH} ${CURRENT_UID} ${CURRENT_GID} ${USER}
+      echo ${REF_IMGS_PATH} ${CURRENT_UID} ${CURRENT_GID} ${USER} ${DISTRO}
       cmake -B build_$${DISTRO} -DCMAKE_BUILD_TYPE=Release -DVKVG_SVG=on -DVKVG_BUILD_DOCS=$${BUILD_DOC} -DGTEST_PNG_ROOT=/usr/src/reference-images && cmake --build build_$${DISTRO}
       CURRENT_COMMIT=$$(git rev-parse HEAD)
       build_$${DISTRO}/gunit_tests/unit_tests --gtest_output=xml:/var/log/unit_tests_$${DISTRO}/$${CURRENT_COMMIT}.xml --gtest_brief
@@ -30,7 +30,7 @@ services:
       resources:
         limits:
           cpus: '1.0'
-          memory: 4096M
+          memory: 2046M
   archlinux:
     <<: *base-config
     image: arch-c-builder:latest
@@ -40,8 +40,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.2'
-          memory: 2048M
+          cpus: '1.0'
+          memory: 1024M
   fedora:
     <<: *base-config
     image: fedora-c-builder:44
@@ -51,6 +51,6 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.2'
-          memory: 2048M
+          cpus: '1.0'
+          memory: 1024M
 
