@@ -151,6 +151,7 @@ find_package(Freetype QUIET)
 find_package(Fontconfig QUIET)
 find_package(HarfBuzz QUIET)
 find_package(glfw3 CONFIG QUIET)
+
 if(glfw3_FOUND)
 	set(GLFW3_FOUND TRUE)
 	set(GLFW3_LIBRARY glfw)
@@ -216,7 +217,10 @@ if(VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
 endif()
 
 option(VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-	"Enable vulkan TimelineSemaphore support."
+	"Enable
+		vulkan
+		TimelineSemaphore
+		support."
 	OFF
 )
 if(VKVG_ENABLE_VK_TIMELINE_SEMAPHORE)
@@ -250,6 +254,7 @@ set(SHADER_FILES
 	${SHADER_DIR}/*.comp
 )
 file(GLOB_RECURSE SHADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SHADER_FILES})
+
 foreach(SHADER ${SHADERS})
 	set(shader-input ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER})
 	set(shader-output ${CMAKE_CURRENT_BINARY_DIR}/${SHADER}.spv.h)
