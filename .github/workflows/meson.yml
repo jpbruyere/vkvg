@@ -20,3 +20,4 @@ jobs:
         with:
           action: build
           setup-options: -DVKVG_RECORDING=false -DVKVG_SVG=false
+          meson-version: "1.12.1"
