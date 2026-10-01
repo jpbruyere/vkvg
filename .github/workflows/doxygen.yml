@@ -1,0 +1,31 @@
+name: Doxygen CI
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+            submodules: true
+
+      - name: Install requirements
+        run: sudo apt install graphviz ninja-build doxygen cmake libvulkan1 libvulkan-dev
+
+      - name: Configure Cmake
+        run: cmake -G Ninja -B build -S . -DVKVG_BUILD_DOCS=TRUE
+      
+      - name: Build documentation
+        run: cmake --build build -t doxygen
+
+      - name: Deploy to branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/doc/html
+

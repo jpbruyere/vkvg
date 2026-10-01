@@ -15,8 +15,8 @@
   <a href="https://www.paypal.me/GrandTetraSoftware">
     <img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=flat-square">
   </a>
-  <a href="https://gitter.im/CSharpRapidOpenWidgets?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
-    <img src="https://badges.gitter.im/CSharpRapidOpenWidgets.svg">
+  <a href="https://matrix.to/#/#vkvg:matrix.org">
+    <img src="https://matrix.to/img/matrix-badge.svg">
   </a>
 </p>
 <p align="center">
@@ -27,7 +27,6 @@
     <img src="https://img.shields.io/badge/mpr-v0.3.0--beta-blue">
   </a>
 </p>
-	
 </h1>
 
 **vkvg** is an open-source _2D graphics library_ written in **C** using [Vulkan](https://www.khronos.org/vulkan/) as backend.
@@ -99,6 +98,14 @@ cd build
 # Run CMake configuration
 cmake ..
 ```
+If you work on your own fork of vkvg, due to the relative paths in `.gitmodules`, you may ends with remote not found if you
+didn't fork the submodules as well. To overcome the problem, you may set a fallback url for submodules with the following command:
+
+```bash
+git config submodule.vkh.url https://github.com/jpbruyere/vkhelpers.git
+git config submodule.glutess.url https://github.com/jpbruyere/glutess.git
+git config submodule.vkvg-svg.url https://github.com/jpbruyere/vkvg-svg.git
+```
 
 ### CMake configure options
 
@@ -152,7 +159,7 @@ Append the `-h` option to see available command line parameters.
 
 See the [contribution guide](https://github.com/jpbruyere/vkvg/blob/master/CONTRIBUTING.md) for more information.
 
-Join us on [gitter](https://gitter.im/CSharpRapidOpenWidgets) for any question.
+Join us on [matrix](https://matrix.to/#/#vkvg:matrix.org) for any question.
 
 ## Addtitional Credits
 
