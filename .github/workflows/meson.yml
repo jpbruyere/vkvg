@@ -14,9 +14,16 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-      - uses: BSFishy/meson-build@v1.0.3
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Python
+        uses: actions/setup-python@v7
+      - name: Setup Vulkan SDK
+        uses: humbletim/setup-vulkan-sdk@v1.2.1
+        with:
+          vulkan-components: Vulkan-headers, Vulkan-loader, Glslang
+      - name: Build using meson
+        uses: BSFishy/meson-build@v1.0.3
         with:
           action: build
           setup-options: -DVKVG_RECORDING=false # -DVKVG_SVG=false
