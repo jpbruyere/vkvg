@@ -293,15 +293,15 @@ void _device_setupPipelines(VkvgDevice dev) {
     VkShaderModule modVert, modFrag;
 #endif
     VkShaderModuleCreateInfo createInfo = {.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                                           .pCode    = (uint32_t*)vkvg_main_vert_spv,
-                                           .codeSize = vkvg_main_vert_spv_len};
+                                           .pCode    = vkvg_main_vert,
+                                           .codeSize = sizeof(vkvg_main_vert) / sizeof(uint32_t)};
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modVert));
 #if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
-    createInfo.pCode    = (uint32_t*)vkvg_main_lcd_frag_spv;
-    createInfo.codeSize = vkvg_main_lcd_frag_spv_len;
+    createInfo.pCode    = vkvg_main_lcd_frag;
+    createInfo.codeSize = sizeof(vkvg_main_lcd_frag) / sizeof(uint32_t);
 #else
-    createInfo.pCode    = (uint32_t*)vkvg_main_frag_spv;
-    createInfo.codeSize = vkvg_main_frag_spv_len;
+    createInfo.pCode    = vkvg_main_frag;
+    createInfo.codeSize = sizeof(vkvg_main_frag) / sizeof(uint32_t);
 #endif
     VK_CHECK_RESULT(vkCreateShaderModule(dev->vkDev, &createInfo, NULL, &modFrag));
 
