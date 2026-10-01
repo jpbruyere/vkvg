@@ -21,8 +21,9 @@ jobs:
       - name: Setup Vulkan SDK
         uses: humbletim/setup-vulkan-sdk@v1.2.1
         with:
+          vulkan-use-cache: true
           vulkan-query-version: 1.4.304.1
-          vulkan-components: Vulkan-Headers, Vulkan-Loader, Glslang
+          vulkan-components: Vulkan-Headers, Vulkan-Loader, SPIRV-Cross, SPIRV-Tools, SPIRV-Headers, SPIRV-Reflect, Glslang
       - name: Build using meson
         uses: BSFishy/meson-build@v1.0.3
         with:
