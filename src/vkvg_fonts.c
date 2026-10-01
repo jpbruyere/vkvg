@@ -38,14 +38,20 @@
 
 static int defaultFontCharSize = 12 << 6;
 
-void _fonts_cache_create(VkvgDevice dev) {
+void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
     _font_cache_t* cache = (_font_cache_t*)calloc(1, sizeof(_font_cache_t));
 
     if (dev->threadAware)
         mtx_init(&cache->mutex, mtx_plain);
 
 #ifdef VKVG_USE_FONTCONFIG
-    cache->config = FcInitLoadConfigAndFonts();
+    if (!FcInit()) {
+        LOG(VKVG_LOG_ERR, "Font config initialisation failed\n");
+        dev->status = VKVG_STATUS_DEVICE_ERROR;
+        free(cache);
+        return;
+    }
+    cache->config = FcConfigGetCurrent();
     if (!cache->config) {
         LOG(VKVG_LOG_DEBUG,
             "Font config initialisation failed, consider using 'FONTCONFIG_PATH' and 'FONTCONFIG_FILE' environmane\

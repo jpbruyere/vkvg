@@ -112,8 +112,9 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     dev->cmd     = vkh_cmd_buff_create(vkhd, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
     dev->fence   = vkh_fence_create_signaled(vkhd);
 
-    _device_create_pipeline_cache(dev);
-    _fonts_cache_create(dev);
+    //_device_create_pipeline_cache(dev);
+    _fonts_cache_create(dev, info->fontsDirectories);
+
     if (dev->deferredResolve || dev->samples == VK_SAMPLE_COUNT_1_BIT) {
         dev->renderPass =
             _device_createRenderPassNoResolve(dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);

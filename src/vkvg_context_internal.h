@@ -176,6 +176,8 @@ typedef struct _vkvg_context_t {
 
     VkvgDevice    dev;
     VkvgSurface   pSurf; // surface bound to context, set on creation of ctx
+
+
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     uint64_t timelineStep; // context cmd last submission timeline id.
 #else
@@ -195,6 +197,7 @@ typedef struct _vkvg_context_t {
     vkh_buffer_t     uboGrad;        // uniform buff obj holdings gradient infos
     vkh_buffer_t     indices;        // index buffer with persistent map memory
     vkh_buffer_t     vertices;       // vertex buffer with persistent mapped memory
+
     Vertex*              vertexCache;
     VKVG_IBO_INDEX_TYPE* indexCache;
     vec2*                points;     // points array

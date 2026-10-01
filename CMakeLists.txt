@@ -343,11 +343,13 @@ IF (VKVG_BUILD_TESTS)
         ${HarfBuzz_INCLUDE_DIRS}
         ${Vulkan_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${Fontconfig_INCLUDE_DIRS}
     )
     TARGET_LINK_LIBRARIES(fonts_test PUBLIC
         #vkvg
         ${HarfBuzz_LIBRARIES}
         ${FREETYPE_LIBRARY}
+        ${Fontconfig_LIBRARIES}
         ${Vulkan_LIBRARIES}
     )
 

@@ -565,7 +565,10 @@ typedef struct {
     VkDevice           vkdev;
     uint32_t           qFamIdx;
     uint32_t           qIndex;
-    bool               threadAware; /**< if true, mutex is created and guard device queue and caches access */
+    bool               threadAware;         /**< if true, mutex is created and guard device queue and caches access */
+    const char*        fontsDirectories;    /**< Coma sepparated list of font directories to scan.
+                                                 With font-config, leave empty for default system configuration.
+                                                 Set FONTCONFIG_SYSROOT env variable if font-config complaints.*/
 } vkvg_device_create_info_t;
 
 vkvg_public

@@ -7,6 +7,7 @@
 #include FT_MULTIPLE_MASTERS_H
 
 
+#include <fontconfig/fontconfig.h>
 
 /*
  serif          Liberation Serif, DejaVu Serif, Times
@@ -19,6 +20,162 @@
  emoji          noto color emoji
  math
  fangsong       traditional chinese
+*/
+typedef enum {
+
+    OldstyleSerifs                      = 0x0100,
+    NoClassification                    = 0x0100,
+    IBMRoundedLegibility                = 0x0101,
+    Garalde                             = 0x0102,
+    Venetian                            = 0x0103,
+    ModifiedGaralde                     = 0x0104,
+    DutchModern                         = 0x0105,
+    Centaur                             = 0x0106,
+    NoStyle                             = 0x0107,
+    Contemporary                        = 0x0108,
+    TransitionalSerifs                  = 0x0200,
+    DirectLine                          = 0x0201,
+    ScriptStyle                         = 0x0202,
+    Neoclassical                        = 0x0203,
+    Modern                              = 0x0204,
+    Clarendon                           = 0x0205,
+    SlabSerif                           = 0x0206,
+    Typewriter                          = 0x0207,
+    ModernSerifs                        = 0x0300,
+    Italian                             = 0x0301,
+    ModernSerifsScriptStyle             = 0x0302,
+    ClarendonSerifs                     = 0x0400,
+    ModernSerifsClarendon               = 0x0401,
+    ModernClarendon                     = 0x0402,
+    TraditionalClarendon                = 0x0403,
+    NewspaperClarendon                  = 0x0404,
+    StubSerif                           = 0x0405,
+    Monospaced                          = 0x0406,
+    FreeformSerifs                      = 0x0500,
+    FreeformSerifsModern                = 0x0501,
+    Traditional                         = 0x0502,
+    SansSerif                           = 0x0700,
+    IBMNeogrotesqueGothic               = 0x0701,
+    Humanist                            = 0x0702,
+    LowcontrastGrotesque                = 0x0703,
+    HighcontrastGrotesque               = 0x0704,
+    NeogrotesqueGothic                  = 0x0705,
+    ModifiedNeogrotesqueGothic          = 0x0706,
+    GeometricGrotesque                  = 0x0707,
+    GeometricHumanist                   = 0x0708,
+    GrotesqueGothic                     = 0x0709,
+    Ornamentals                         = 0x0800,
+
+    Engraved                            = 0x0801,
+    Novelty                             = 0x0802,
+    Retro                               = 0x0803,
+    Synthetic                           = 0x0804,
+
+    Scripts                             = 0x0900,
+    Uncial                              = 0x0901,
+    BrushCalligraphy                    = 0x0902,
+    FormalCalligraphy                   = 0x0903,
+    MonolineCalligraphy                 = 0x0904,
+    TraditionalCalligraphy              = 0x0905,
+    ContemporaryCalligraphy             = 0x0906,
+    Cursive                             = 0x0907,
+    Calligraphic                        = 0x0908,
+    InlineOutline                       = 0x0909,
+    Symbolic                            = 0x0A00,
+    MixedSerif                          = 0x0A01,
+    OldstyleSerif                       = 0x0A02,
+    NeoclassicalSerif                   = 0x0A03,
+    ModernSerif                         = 0x0A04,
+    ClarendonSerif                      = 0x0A05,
+    SymbolicSansSerif                   = 0x0A07,
+    Ornamental                          = 0x0A08,
+    Script                              = 0x0A09,
+    Texture                             = 0x0A0A,
+} font_class;
+
+/*
+Class 0x01 — Oldstyle Serifs
+ 0x0100 (Subclass 0x00): No Classification
+ 0x0101 (Subclass 0x01): IBM Rounded Legibility
+ 0x0102 (Subclass 0x02): Garalde
+ 0x0103 (Subclass 0x03): Venetian
+ 0x0104 (Subclass 0x04): Modified Garalde
+ 0x0105 (Subclass 0x05): Dutch Modern
+ 0x0106 (Subclass 0x06): Centaur
+ 0x0107 (Subclass 0x07): No Style
+ 0x0108 (Subclass 0x08): Contemporary
+
+Class 0x02 — Transitional Serifs
+ 0x0200 (Subclass 0x00): No Classification
+ 0x0201 (Subclass 0x01): Direct Line
+ 0x0202 (Subclass 0x02): Script Style
+ 0x0203 (Subclass 0x03): Neo-classical
+ 0x0204 (Subclass 0x04): Modern
+ 0x0205 (Subclass 0x05): Clarendon
+ 0x0206 (Subclass 0x06): Slab Serif
+ 0x0207 (Subclass 0x07): Typewriter
+
+Class 0x03 — Modern Serifs
+ 0x0300 (Subclass 0x00): No Classification
+ 0x0301 (Subclass 0x01): Italian
+ 0x0302 (Subclass 0x02): Script Style
+
+Class 0x04 — Clarendon Serifs
+ 0x0400 (Subclass 0x00): No Classification
+ 0x0401 (Subclass 0x01): Clarendon
+ 0x0402 (Subclass 0x02): Modern Clarendon
+ 0x0403 (Subclass 0x03): Traditional Clarendon
+ 0x0404 (Subclass 0x04): Newspaper Clarendon
+ 0x0405 (Subclass 0x05): Stub Serif
+ 0x0406 (Subclass 0x06): Monospaced
+
+Class 0x05 — Freeform Serifs
+ 0x0500 (Subclass 0x00): No Classification
+ 0x0501 (Subclass 0x01): Modern
+ 0x0502 (Subclass 0x02): Traditional
+
+Class 0x07 — Sans Serif
+ 0x0700 (Subclass 0x00): No Classification
+ 0x0701 (Subclass 0x01): IBM Neo-grotesque Gothic
+ 0x0702 (Subclass 0x02): Humanist
+ 0x0703 (Subclass 0x03): Low-contrast Grotesque
+ 0x0704 (Subclass 0x04): High-contrast Grotesque
+ 0x0705 (Subclass 0x05): Neo-grotesque Gothic
+ 0x0706 (Subclass 0x06): Modified Neo-grotesque Gothic
+ 0x0707 (Subclass 0x07): Geometric Grotesque
+ 0x0708 (Subclass 0x08): Geometric Humanist
+ 0x0709 (Subclass 0x09): Grotesque Gothic
+
+Class 0x08 — Ornamentals
+ 0x0800 (Subclass 0x00): No Classification
+ 0x0801 (Subclass 0x01): Engraved
+ 0x0802 (Subclass 0x02): Novelty
+ 0x0803 (Subclass 0x03): Retro
+ 0x0804 (Subclass 0x04): Synthetic
+
+Class 0x09 — Scripts
+ 0x0900 (Subclass 0x00): No Classification
+ 0x0901 (Subclass 0x01): Uncial
+ 0x0902 (Subclass 0x02): Brush Calligraphy
+ 0x0903 (Subclass 0x03): Formal Calligraphy
+ 0x0904 (Subclass 0x04): Monoline Calligraphy
+ 0x0905 (Subclass 0x05): Traditional Calligraphy
+ 0x0906 (Subclass 0x06): Contemporary Calligraphy
+ 0x0907 (Subclass 0x07): Cursive
+ 0x0908 (Subclass 0x08): Calligraphic
+ 0x0909 (Subclass 0x09): Inline / Outline
+
+Class 0x0A — Symbolic
+ 0x0A00 (Subclass 0x00): No Classification
+ 0x0A01 (Subclass 0x01): Mixed Serif
+ 0x0A02 (Subclass 0x02): Oldstyle Serif
+ 0x0A03 (Subclass 0x03): Neo-classical Serif
+ 0x0A04 (Subclass 0x04): Modern Serif
+ 0x0A05 (Subclass 0x05): Clarendon Serif
+ 0x0A07 (Subclass 0x07): Sans Serif
+ 0x0A08 (Subclass 0x08): Ornamental
+ 0x0A09 (Subclass 0x09): Script
+ 0x0A0A (Subclass 0x0A): Texture
 */
 
 #include <sys/types.h>
@@ -286,6 +443,7 @@ void process_font_file (const char* const fontDir, const char* fontFile) {
     font_weight weight = font_weight_normal;
     font_width  width  = font_width_normal;
     font_slant  slant  = font_slant_regular;
+    FT_Int16  fntClass = 0;
 
     FT_Error error = FT_New_Face(library, path, 0, &face );
     if (error) {
@@ -316,9 +474,10 @@ void process_font_file (const char* const fontDir, const char* fontFile) {
         weight = os2_table->usWeightClass;
         width = os2_table->usWidthClass;
         slant = os2_table->fsSelection;
+        fntClass = os2_table->sFamilyClass;
     }
 
-    printf("\tWeight: %4d width: %4d slant: %4d\n", weight, width, slant);
+    printf("\tClass %04x Weight: %4d width: %4d slant: %4d\n",fntClass, weight, width, slant);
 
 
     FT_UInt sfntCount = FT_Get_Sfnt_Name_Count(face);
@@ -349,15 +508,17 @@ void process_font_file (const char* const fontDir, const char* fontFile) {
             name.name_id == TT_NAME_ID_FULL_NAME ||
             name.name_id == TT_NAME_ID_TYPOGRAPHIC_FAMILY ||
             name.name_id == TT_NAME_ID_TYPOGRAPHIC_SUBFAMILY ||
+            //name.name_id == TT_NAME_ID_WWS_FAMILY ||
+            //name.name_id == TT_NAME_ID_WWS_SUBFAMILY ||
             name.name_id == TT_NAME_ID_UNIQUE_ID) {
 
-            fprintf(stdout, "sfntName(%1d:%3d:%4d:%6d): %-20s = ", name.platform_id, name.encoding_id, name.language_id, name.name_id, sfnt_nameid_to_string(name.name_id));
+            /*fprintf(stdout, "sfntName(%1d:%3d:%4d:%6d): %-20s = ", name.platform_id, name.encoding_id, name.language_id, name.name_id, sfnt_nameid_to_string(name.name_id));
             if (name.platform_id == 3) {
                 convert_utf16be_to_ascii(name.string, name.string_len, stringAscii, 1024);
                 fprintf(stdout, "%s\n", stringAscii);
             } else {
                 fprintf(stdout, "%.*s\n", name.string_len, name.string);
-            }
+            }*/
 
             fflush(stdout);
         } else
@@ -575,6 +736,152 @@ void radix_sort_structs(font_id_t *array, size_t n) {
     free(dst);
 }
 
+void font_config_tests () {
+    if (!FcInit()) {
+        fprintf(stderr, "Fatal Error: Failed to initialize Fontconfig.\n");
+        return;
+    }
+
+           // Load the system configuration and default user fonts
+    FcConfig* config = FcConfigGetCurrent();
+
+           // 2. Create an empty pattern filter (empty means "Match everything")
+    FcPattern* blank_pattern = FcPatternCreate();
+
+           // 3. Declare exactly what metadata elements you want to extract
+           // Passing trailing 0/NULL tells the builder array arguments are complete
+    FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, (char *)0);
+
+           // 4. Generate the sorted unique array list of matching fonts
+    FcFontSet* font_database = FcFontList(config, blank_pattern, requested_elements);
+
+    if (font_database) {
+        printf("Successfully indexed %d font variants.\n\n", font_database->nfont);
+
+        for (int i = 0; i < font_database->nfont; i++) {
+            FcPattern* font_entry = font_database->fonts[i];
+
+            FcChar8* family_name = NULL;
+            FcChar8* style_variant = NULL;
+            FcChar8* file_path = NULL;
+
+                   // Extract the strings cleanly out of the font structure
+            if (FcPatternGetString(font_entry, FC_FAMILY, 0, &family_name) == FcResultMatch &&
+                FcPatternGetString(font_entry, FC_STYLE, 0, &style_variant) == FcResultMatch) {
+
+                // Optional: Also fetch the file system location if you need to open it in FreeType
+                FcPatternGetString(font_entry, FC_FILE, 0, &file_path);
+
+                printf("[%d] Family: %s \n    Style:  %s\n    Path:   %s\n\n",
+                       i + 1, family_name, style_variant, file_path ? (char*)file_path : "Unknown");
+            }
+        }
+
+               // 5. Always free memory assets to prevent memory leaks
+        FcFontSetDestroy(font_database);
+    }
+
+    FcObjectSetDestroy(requested_elements);
+    FcPatternDestroy(blank_pattern);
+    FcFini(); // Clean up environment space
+}
+
+void font_config_sandboxing() {
+    setenv("FONTCONFIG_SYSROOT", "/tmp", 1);
+
+    // 1. Create a brand new, completely blank configuration instance
+    FcConfig* local_config = FcConfigCreate();
+    if (!local_config) {
+        fprintf(stderr, "Failed to create custom Fontconfig configuration.\n");
+        return;
+    }
+
+           // 2. Define your local asset path
+    const FcChar8* font_dir = (const FcChar8*)"/usr/local/share/fonts";
+
+           // 3. Force Fontconfig to scan this directory and add it to the local config instance
+           // This parses the font binaries in this directory into memory.
+    if (!FcConfigAppFontAddDir(local_config, font_dir)) {
+        fprintf(stderr, "Failed to register application font directory: %s\n", font_dir);
+        FcConfigDestroy(local_config);
+        return;
+    }
+
+           // 4. (Optional but Recommended) Bind this config as the active thread configuration.
+           // This ensures subsequent generic Fc calls use your lightweight sandbox.
+    FcConfigSetCurrent(local_config);
+
+    printf("Fontconfig sandboxed successfully. Scanning only: %s\n\n", font_dir);
+
+           // =========================================================================
+           // Example: Let's query our sandbox for a font to prove it works
+           // =========================================================================
+
+    // Create a request pattern
+    FcPattern* request = FcPatternCreate();
+    FcPatternAddString(request, FC_FAMILY, (const FcChar8*)"sans-serif");
+
+           // Apply substitutions using our custom config object instead of NULL (system default)
+    FcConfigSubstitute(local_config, request, FcMatchPattern);
+    FcDefaultSubstitute(request);
+
+    FcResult result;
+    // Match against our clean, local configuration file list
+    FcPattern* matched_font = FcFontMatch(local_config, request, &result);
+
+    if (matched_font) {
+        FcChar8* file_path = NULL;
+        FcChar8* family_name = NULL;
+
+        if (FcPatternGetString(matched_font, FC_FILE, 0, &file_path) == FcResultMatch &&
+            FcPatternGetString(matched_font, FC_FAMILY, 0, &family_name) == FcResultMatch) {
+
+            printf("Successfully matched!\n");
+            printf("Family: %s\n", family_name);
+            printf("File Path: %s\n", file_path);
+        }
+        FcPatternDestroy(matched_font);
+    } else {
+        printf("No matching font found in the local asset folder.\n");
+    }
+
+           // 5. Cleanup
+    FcPatternDestroy(request);
+
+    // This unloads the memory assets allocated by FcConfigCreate
+    FcConfigDestroy(local_config);
+
+    // Clean up global libraries state
+    FcFini();
+}
+
+/* requesting variable font
+ *
+FcPattern* request = FcPatternCreate();
+FcPatternAddString(request, FC_FAMILY, (const FcChar8*)"Roboto Flex");
+FcPatternAddString(request, FC_FONT_VARIATIONS, (const FcChar8*)"wght=625,wdth=80");
+*/
+
+void setup_variable_font(FcPattern* matched_font) {
+    // 1. Verify if the font handles open vector variables
+    FcBool is_variable = FcFalse;
+    if (FcPatternGetBool(matched_font, FC_VARIABLE, 0, &is_variable) == FcResultMatch && is_variable) {
+        printf("This matched font file is variable-capable!\n");
+    }
+
+           // 2. Extract specific axis configuration parameters requested by a pattern string
+           // This returns a string formatted exactly like CSS: "wght=525.0,wdth=85.5"
+    FcChar8* variations_string = NULL;
+    if (FcPatternGetString(matched_font, FC_FONT_VARIATIONS, 0, &variations_string) == FcResultMatch) {
+        printf("Requested layout coordinates: %s\n", variations_string);
+
+        // 3. You can pass this string directly to your rendering subsystem.
+        // Inside FreeType, you convert this string into an array of FT_Fixed coordinates
+        // and apply it directly via:
+        // FT_Set_Var_Design_Coordinates(face, num_coords, coords);
+    }
+}
+
 int main(int argc, char* argv[]) {
     int   i      = 1;
     char* output = NULL;
@@ -608,7 +915,15 @@ int main(int argc, char* argv[]) {
         exit(-1);
     }
 
+    //font_config_tests();
+    font_config_sandboxing();
+
+
+
+
     //font_id_cache = array_create();
+
+/*
     font_names = array_create();
     font_sub_names = array_create();
 
@@ -616,9 +931,9 @@ int main(int argc, char* argv[]) {
         parse_font_dir(directory);
     }
     printf("Total font files: %d\n", fontIndex);
-
-
     radix_sort_structs(font_id_cache, fontIndex);
+*/
+
 
     /*for (int i = 0; i < fontIndex; ++i) {
         printf("%lu %u %u\n", font_id_cache[i].pathHash, font_id_cache[i].nameHash, font_id_cache[i].styleHash);
@@ -639,7 +954,7 @@ int main(int argc, char* argv[]) {
     }
     printf("==============================\n");*/
 
-    array_destroy(font_names);
-    array_destroy(font_sub_names);
+ //   array_destroy(font_names);
+ //   array_destroy(font_sub_names);
 
 }
