@@ -168,8 +168,8 @@ static void mouse_button_callback(GLFWwindow* window, int but, int state, int mo
 int main(int argc, char* argv[]) {
 
     _parse_args(argc, argv);
-    VkEngine e;
-    e = vkengine_create(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
+    VkEngine e = vkengine_create (
+        VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, test_width, test_height);
 
     VkhPresenter r = e->renderer;
     vkengine_set_key_callback(e, key_callback);
@@ -177,9 +177,16 @@ int main(int argc, char* argv[]) {
     vkengine_set_cursor_pos_callback(e, mouse_move_callback);
     vkengine_set_scroll_callback(e, scroll_callback);
 
-    vkvg_device_create_info_t info = {samples, false, vkh_app_get_inst(e->app), r->dev->phy, r->dev->dev, r->qFam, 0};
-    device                         = vkvg_device_create(&info);
-    surf                           = vkvg_surface_create(device, test_width, test_height);
+    vkvg_device_create_info_t info = {
+                                      samples, false,
+                                      vkh_app_get_inst(e->app),
+                                      vkh_device_get_phy(e->dev),
+                                      vkh_device_get_vkdev(e->dev),
+                                      e->gQFamIdx, 0};
+
+    device = vkvg_device_create(&info);
+
+    surf = vkvg_surface_create(device, test_width, test_height);
 
     vkh_presenter_build_blit_cmd(r, vkvg_surface_get_vk_image(surf), test_width, test_height);
 
@@ -193,11 +200,11 @@ int main(int argc, char* argv[]) {
             vkvg_surface_destroy(surf);
             surf = vkvg_surface_create(device, test_width, test_height);
             vkh_presenter_build_blit_cmd(r, vkvg_surface_get_vk_image(surf), test_width, test_height);
-            vkDeviceWaitIdle(r->dev->dev);
+            vkengine_wait_idle(e);
             continue;
         }
     }
-    vkDeviceWaitIdle(e->dev->dev);
+    vkengine_wait_idle(e);
 
     vkvg_surface_destroy(surf);
 
