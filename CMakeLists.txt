@@ -242,9 +242,9 @@ endif()
 
 ## SHADER COMPILATION
 
-set(SHADERS_H "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders.h")
-
 if(Vulkan_glslangValidator_FOUND AND Python_FOUND)
+	set(SHADERS_H "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders.h")
+
 	message(STATUS "Compiling shaders")
 	set(SHADER_DIR "shaders")
 	set(SHADER_FILES
