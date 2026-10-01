@@ -14,8 +14,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
       - uses: BSFishy/meson-build@v1.0.3
         with:
           action: build
