@@ -1,4 +1,4 @@
-name: Build meson
+name: Meson
 
 on:
   push:
