@@ -86,5 +86,5 @@ jobs:
       - run: mkdir -p source/build
       - run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_config }} .. -DVKVG_RECORDING=false -DVKVG_SVG=false
         working-directory: source/build
-      - run: cmake --build . --config ${{ matrix.build_config }}
+      - run: cmake --build . --config ${{ matrix.build_config }} --parallel
         working-directory: source/build
