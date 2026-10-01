@@ -1,0 +1,10 @@
+  project('samples', 'c', 'cpp', default_options : ['default_library=static'])
+  # fetchcontent_declare(['argparse', 'GIT_REPOSITORY', 'https://github.com/p-ranav/argparse', 'GIT_TAG', '3eda91b2e1ce7d569f84ba295507c4cd8fd96910'])
+  # fetchcontent_makeavailable('argparse')
+  samples_data_root = ['${CMAKE_SOURCE_DIR}/tests/data', 'CACHE', 'STRING', 'Data path for samples']
+  # file(['GLOB', 'SAMPLES_SRC', '*.cpp', 'tests/*.cpp'])
+  ${PROJECT_NAME}_exe = executable('${PROJECT_NAME}', samples_src)
+  # set_target_properties(['${PROJECT_NAME}', 'PROPERTIES', 'CXX_STANDARD', '17', 'CXX_STANDARD_REQUIRED', 'ON'])
+  # target_compile_definitions(['${PROJECT_NAME}', 'PUBLIC', 'SAMPLES_DATA_ROOT=', '${GTEST_DATA_ROOT}'])
+  # target_include_directories(['${PROJECT_NAME}', 'PRIVATE', '${CMAKE_CURRENT_SOURCE_DIR}', '${CMAKE_SOURCE_DIR}/include', glfw3_include_dir, vulkan_include_dirs, '${CMAKE_SOURCE_DIR}/subprojects/vkh/include', '${CMAKE_SOURCE_DIR}/subprojects/vkh/src'])
+  # target_link_libraries(['${PROJECT_NAME}', 'PRIVATE', 'vkvg', 'vkh', vulkan_libraries, glfw3_library, 'argparse'])
