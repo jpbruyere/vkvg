@@ -1,0 +1,104 @@
+option(
+    'ENABLE_PROFILING',
+    type: 'boolean',
+    value: false,
+    description: 'compile with the -pg options...',
+)
+
+option(
+    'ENABLE_VALIDATION',
+    type: 'boolean',
+    value: true,
+    description: 'enable vulkan validation layer',
+)
+
+option(
+    'ENABLE_DBG_UTILS',
+    type: 'boolean',
+    value: true,
+    description: 'enable VK_EXT_debug_utils extension',
+)
+
+option(
+    'VKVG_WIRED_FILL',
+    type: 'boolean',
+    value: false,
+    description: 'enable wired polygon draw to check vertices and primitives',
+)
+
+option(
+    'ENABLE_GTESTS',
+    type: 'boolean',
+    value: true,
+    description: 'enable google unit tests',
+)
+
+option(
+    'ENABLE_RENDERDOC',
+    type: 'boolean',
+    value: false,
+    description: 'enable renderdoc',
+)
+
+option(
+    'VKVG_USE_MESA_OVERLAY',
+    type: 'boolean',
+    value: false,
+    description: 'enable VK_LAYER_MESA_overlay if present.',
+)
+
+option(
+    'VKVG_RECORDING',
+    type: 'boolean',
+    value: false,
+    description: 'enable experimental recording functions',
+)
+
+option(
+    'VKVG_PREMULT_ALPHA',
+    type: 'boolean',
+    value: true,
+    description: 'use premultiplied alpha for internal rendering',
+)
+
+option(
+    'VKVG_DBG_STATS',
+    type: 'boolean',
+    value: false,
+    description: 'record contexts statistics in the device',
+)
+
+option(
+    'VKVG_USE_GLUTESS',
+    type: 'boolean',
+    value: true,
+    description: 'Fill non-zero with glu tesselator',
+)
+
+option(
+    'VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT',
+    type: 'boolean',
+    value: true,
+    description: 'Enable scalar block layout support.',
+)
+
+option(
+    'VKVG_ENABLE_VK_TIMELINE_SEMAPHORE',
+    type: 'boolean',
+    value: false,
+    description: 'Enable vulkan TimelineSemaphore support.',
+)
+
+option(
+    'VKVG_TEST_DIRECT_DRAW',
+    type: 'boolean',
+    value: false,
+    description: '(Experimental)Draw directly on backend surface, if off surface is blitted.',
+)
+
+option(
+    'VKVG_TEST_OFFSCREEN',
+    type: 'boolean',
+    value: false,
+    description: 'Draw offscreen without presenting result.',
+)
