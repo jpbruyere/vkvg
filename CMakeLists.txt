@@ -144,8 +144,8 @@ if(VKVG_WIRED_FILL)
 	add_definitions(-DVKVG_WIRED_DEBUG)
 endif()
 
-find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
-find_package(Python REQUIRED)
+find_package(Vulkan REQUIRED OPTIONAL_COMPONENTS glslangValidator)
+find_package(Python OPTIONAL)
 
 find_package(Freetype QUIET)
 find_package(Fontconfig QUIET)
