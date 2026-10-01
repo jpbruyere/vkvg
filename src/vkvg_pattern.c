@@ -28,7 +28,6 @@
 VkvgPattern vkvg_pattern_create_solid(float r, float g, float b, float a) {
     VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
     if (!pat) {
-        LOG(VKVG_LOG_ERR, "CREATE Pattern failed, no memory\n");
         return (VkvgPattern)&_vkvg_status_no_memory;
     }
     pat->type   = VKVG_PATTERN_TYPE_SOLID;
@@ -38,12 +37,10 @@ VkvgPattern vkvg_pattern_create_solid(float r, float g, float b, float a) {
 }
 VkvgPattern vkvg_pattern_create_for_surface(VkvgSurface surf) {
     if (!surf) {
-        LOG(VKVG_LOG_ERR, "CREATE Pattern failed, invalid surface\n");
         return (VkvgPattern)&_vkvg_status_null_pointer;
     }
     VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
     if (!pat) {
-        LOG(VKVG_LOG_ERR, "CREATE Pattern failed, no memory\n");
         return (VkvgPattern)&_vkvg_status_no_memory;
     }
 
@@ -86,7 +83,6 @@ vkvg_status_t vkvg_pattern_edit_linear(VkvgPattern pat, float x0, float y0, floa
 VkvgPattern vkvg_pattern_create_linear(float x0, float y0, float x1, float y1) {
     VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
     if (!pat) {
-        LOG(VKVG_LOG_ERR, "CREATE Pattern failed, no memory\n");
         return (VkvgPattern)&_vkvg_status_no_memory;
     }
     pat->type   = VKVG_PATTERN_TYPE_LINEAR;
@@ -126,12 +122,14 @@ vkvg_status_t vkvg_pattern_edit_radial(VkvgPattern pat, float cx0, float cy0, fl
 
     grad->cp[0] = (vec4){{c0.x}, {c0.y}, {radius0}, {0}};
     grad->cp[1] = (vec4){{c1.x}, {c1.y}, {radius1}, {0}};
+
+    LOG(VKVG_LOG_INFO, "vkvg_pattern_edit_radial: %p data: %p status: %d\n", pat, pat->data, pat->status);
+
     return VKVG_STATUS_SUCCESS;
 }
 VkvgPattern vkvg_pattern_create_radial(float cx0, float cy0, float radius0, float cx1, float cy1, float radius1) {
     VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
     if (!pat) {
-        LOG(VKVG_LOG_ERR, "CREATE Pattern failed, no memory\n");
         return (VkvgPattern)&_vkvg_status_no_memory;
     }
     pat->type   = VKVG_PATTERN_TYPE_RADIAL;
@@ -259,7 +257,7 @@ void vkvg_pattern_destroy(VkvgPattern pat) {
     if (pat->type == VKVG_PATTERN_TYPE_SURFACE) {
         VkvgSurface surf = (VkvgSurface)pat->data;
         vkvg_surface_destroy(surf);
-    } else if (pat->type != VKVG_PATTERN_TYPE_SOLID)
+    } else// if (pat->type != VKVG_PATTERN_TYPE_SOLID)
         free(pat->data);
 
     free(pat);

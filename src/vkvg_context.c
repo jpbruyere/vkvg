@@ -1502,10 +1502,10 @@ void vkvg_restore(VkvgContext ctx) {
     ctx->textDirection = sav->textDirection;
 
     if (sav->pattern) {
-        if (sav->pattern != ctx->pattern)
+        if (sav->pattern != ctx->pattern) {
             _update_cur_pattern(ctx, sav->pattern);
-        else
-            vkvg_pattern_destroy(sav->pattern);
+            vkvg_pattern_reference(ctx->pattern);
+        }
     } else {
         ctx->curColor = sav->curColor;
         _update_cur_pattern(ctx, NULL);

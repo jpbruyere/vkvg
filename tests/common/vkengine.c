@@ -22,11 +22,6 @@
 
 #include "vkh.h"
 #include "vkengine.h"
-#include "vkh_app.h"
-#include "vkh_phyinfo.h"
-#include "vkh_presenter.h"
-#include "vkh_image.h"
-#include "vkh_device.h"
 
 #include "vkvg.h"
 
@@ -109,7 +104,7 @@ void vkengine_dump_available_layers() {
 }
 bool vkengine_try_get_phyinfo(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
     for (uint32_t i = 0; i < phyCount; i++) {
-        if (phys[i]->properties.deviceType == gpuType) {
+        if (vkh_phyinfo_get_properties(phys[i]).deviceType == gpuType) {
             *phy = phys[i];
             return true;
         }
@@ -194,10 +189,9 @@ vk_engine_t* vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
 
     e->window = glfwCreateWindow((int)width, (int)height, "Window Title", NULL, NULL);
 
-    VkSurfaceKHR surf;
-    VK_CHECK_RESULT(glfwCreateWindowSurface(e->app->inst, e->window, NULL, &surf))
+    glfwCreateWindowSurface(vkh_app_get_inst(e->app), e->window, NULL, &e->surface);
 
-    VkhPhyInfo* phys = vkh_app_get_phyinfos(e->app, &phyCount, surf);
+    VkhPhyInfo* phys = vkh_app_get_phyinfos(e->app, &phyCount, e->surface);
 
     VkhPhyInfo pi = 0;
     if (!vkengine_try_get_phyinfo(phys, phyCount, preferedGPU, &pi) &&
@@ -206,8 +200,8 @@ vk_engine_t* vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
         pi = phys[0];
     assert(pi && "No vulkan physical device found.");
 
-    e->memory_properties = pi->memProps;
-    e->gpu_props         = pi->properties;
+    e->memory_properties = vkh_phyinfo_get_memory_properties(pi);
+    e->gpu_props         = vkh_phyinfo_get_properties(pi);
 
     uint32_t qCount        = 0;
     float    qPriorities[] = {0.0};
@@ -222,7 +216,8 @@ vk_engine_t* vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
 
     enabledExtsCount = 0;
 
-    if (vkvg_get_required_device_extensions(pi->phy, enabledExts, &enabledExtsCount) != VKVG_STATUS_SUCCESS) {
+    VkPhysicalDevice* ptrPhy = (VkPhysicalDevice*)pi;
+    if (vkvg_get_required_device_extensions(*ptrPhy, enabledExts, &enabledExtsCount) != VKVG_STATUS_SUCCESS) {
         perror("vkvg_get_required_device_extensions failed, enable log for details.\n");
         exit(-1);
     }
@@ -241,8 +236,10 @@ vk_engine_t* vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
 
     e->dev = vkh_device_create(e->app, pi, &device_info);
 
+    vkh_phyinfo_get_queue_fam_indices(pi, &e->gQFamIdx, NULL, NULL, NULL);
+
     e->renderer =
-        vkh_presenter_create(e->dev, (uint32_t)pi->pQueue, surf, width, height, VK_FORMAT_B8G8R8A8_SRGB, presentMode);
+        vkh_presenter_create(e->dev, (uint32_t)e->gQFamIdx, e->surface, width, height, VK_FORMAT_B8G8R8A8_UNORM, presentMode);
 
     vkh_app_free_phyinfos(phyCount, phys);
 
@@ -252,10 +249,10 @@ vk_engine_t* vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
 void vkengine_destroy(VkEngine e) {
     // vkDeviceWaitIdle(e->dev->dev);
 
-    VkSurfaceKHR surf = e->renderer->surface;
+    VkSurfaceKHR surf = e->surface;
 
     vkh_presenter_destroy(e->renderer);
-    vkDestroySurfaceKHR(e->app->inst, surf, NULL);
+    vkDestroySurfaceKHR(vkh_app_get_inst(e->app), surf, NULL);
 
     vkh_device_destroy(e->dev);
 
@@ -279,12 +276,11 @@ void vkengine_blitter_run(VkEngine e, VkImage img, uint32_t width, uint32_t heig
 }
 bool             vkengine_should_close(VkEngine e) { return glfwWindowShouldClose(e->window); }
 void             vkengine_set_title(VkEngine e, const char* title) { glfwSetWindowTitle(e->window, title); }
-VkInstance       vkengine_get_instance(VkEngine e) { return e->dev->instance; }
-VkDevice         vkengine_get_device(VkEngine e) { return e->dev->dev; }
-VkPhysicalDevice vkengine_get_physical_device(VkEngine e) { return e->dev->phy; }
-VkQueue          vkengine_get_queue(VkEngine e) { return e->renderer->queue; }
-uint32_t         vkengine_get_queue_fam_idx(VkEngine e) { return e->renderer->qFam; }
-void             vkengine_wait_idle(VkEngine e) { vkDeviceWaitIdle(e->dev->dev); }
+VkDevice         vkengine_get_device(VkEngine e) { return vkh_device_get_vkdev(e->dev); }
+VkPhysicalDevice vkengine_get_physical_device(VkEngine e) { return vkh_device_get_phy(e->dev); }
+//VkQueue          vkengine_get_queue(VkEngine e) { return e->renderer->queue; }
+uint32_t         vkengine_get_queue_fam_idx(VkEngine e) { return e->gQFamIdx; }
+void             vkengine_wait_idle(VkEngine e) { vkDeviceWaitIdle(vkh_device_get_vkdev(e->dev)); }
 
 void vkengine_set_key_callback(VkEngine e, GLFWkeyfun key_callback) { glfwSetKeyCallback(e->window, key_callback); }
 void vkengine_set_mouse_but_callback(VkEngine e, GLFWmousebuttonfun onMouseBut) {

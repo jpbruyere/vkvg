@@ -681,17 +681,18 @@ void _update_push_constants(VkvgContext ctx) {
 }
 void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
     VkvgPattern lastPat = ctx->pattern;
-    ctx->pattern        = pat;
-
     uint32_t newPatternType = VKVG_PATTERN_TYPE_SOLID;
-
-    LOG(VKVG_LOG_INFO, "CTX: _update_cur_pattern: %p -> %p\n", lastPat, pat);
 
     if (pat == NULL) {       // solid color
         if (lastPat == NULL) // solid
             return;          // solid to solid transition, no extra action requested
+    } else if (pat->status) {
+        LOG(VKVG_LOG_ERR, "Error: Update pattern fails, pattern status: %d\n", pat->status);
+        return;
     } else
         newPatternType = pat->type;
+
+    ctx->pattern = pat;
 
     switch (newPatternType) {
     case VKVG_PATTERN_TYPE_SOLID:

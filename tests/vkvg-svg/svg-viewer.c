@@ -12,6 +12,8 @@
 
 #include <stdarg.h>
 #include <ctype.h>
+#include <string.h>
+#include <math.h>
 
 static VkvgDevice  dev;
 static VkvgSurface svgSurf = NULL;
@@ -270,25 +272,31 @@ int main(int argc, char* argv[]) {
     if (!filename && !directory)
         print_help_and_exit();
 
-    VkEngine e = vkengine_create(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
-    vkengine_set_key_callback(e, key_callback);
-    vkengine_set_scroll_callback(e, scroll_callback);
-    vkvg_device_create_info_t info = {samples,
-                                      false,
-                                      vkh_app_get_inst(e->app),
-                                      vkengine_get_physical_device(e),
-                                      vkengine_get_device(e),
-                                      vkengine_get_queue_fam_idx(e),
-                                      0};
-    dev                            = vkvg_device_create(&info);
+    //vkh_log_level = VKVG_LOG_INFO;
 
     VkvgSurface surf = NULL;
 
     if (output) {
+        vkvg_device_create_info_t info = {0};
+        dev = vkvg_device_create(&info);
         surf = vkvg_surface_create_from_svg(dev, width, height, filename);
         vkvg_surface_write_to_png(surf, output);
+        if (svgSurf)
+            vkvg_surface_destroy(svgSurf);
+        vkvg_surface_destroy(surf);
+        vkvg_device_destroy(dev);
     } else {
-
+        VkEngine e = vkengine_create(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
+        vkengine_set_key_callback(e, key_callback);
+        vkengine_set_scroll_callback(e, scroll_callback);
+        vkvg_device_create_info_t info = {samples,
+                                          false,
+                                          vkh_app_get_inst(e->app),
+                                          vkengine_get_physical_device(e),
+                                          vkengine_get_device(e),
+                                          vkengine_get_queue_fam_idx(e),
+                                          0};
+        dev                            = vkvg_device_create(&info);
         surf = vkvg_surface_create(dev, width, height);
 
         vkh_presenter_build_blit_cmd(e->renderer, vkvg_surface_get_vk_image(surf), width, height);
@@ -316,9 +324,9 @@ int main(int argc, char* argv[]) {
         }
 
         while (!vkengine_should_close(e)) {
-            // vkvg_log_level = VKVG_LOG_INFO_CMD;
+            //vkh_log_level = VKVG_LOG_INFO | VKVG_LOG_DEBUG | VKVG_LOG_ERR;
             readSVG(e);
-            // vkvg_log_level = VKVG_LOG_ERR;
+            //vkh_log_level = VKVG_LOG_ERR;
 
             VkvgContext ctx = vkvg_create(surf);
             vkvg_set_source_rgb(ctx, 0.1, 0.1, 0.1);
@@ -352,13 +360,14 @@ int main(int argc, char* argv[]) {
         }
 
         vkengine_wait_idle(e);
+
+        if (svgSurf)
+            vkvg_surface_destroy(svgSurf);
+        vkvg_surface_destroy(surf);
+        vkvg_device_destroy(dev);
+        vkengine_destroy(e);
     }
 
-    if (svgSurf)
-        vkvg_surface_destroy(svgSurf);
-    vkvg_surface_destroy(surf);
-    vkvg_device_destroy(dev);
-    vkengine_destroy(e);
 
     if (pCurrentDir)
         closedir(pCurrentDir);

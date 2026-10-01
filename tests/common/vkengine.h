@@ -45,6 +45,8 @@ typedef struct _vk_engine_t {
     VkhDevice                        dev;
     GLFWwindow*                      window;
     VkhPresenter                     renderer;
+    VkSurfaceKHR                     surface;
+    int                              gQFamIdx;
 } vk_engine_t;
 
 vk_engine_t* vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR presentMode, uint32_t width,
