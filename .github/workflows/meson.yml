@@ -21,6 +21,7 @@ jobs:
       - name: Setup Vulkan SDK
         uses: humbletim/setup-vulkan-sdk@v1.2.1
         with:
+          vulkan-query-version: 1.4.304.1
           vulkan-components: Vulkan-headers, Vulkan-loader, Glslang
       - name: Build using meson
         uses: BSFishy/meson-build@v1.0.3
