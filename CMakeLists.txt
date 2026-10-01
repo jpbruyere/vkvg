@@ -145,7 +145,7 @@ if(VKVG_WIRED_FILL)
 endif()
 
 find_package(Vulkan REQUIRED OPTIONAL_COMPONENTS glslangValidator)
-find_package(Python OPTIONAL)
+find_package(Python QUIET)
 
 find_package(Freetype QUIET)
 find_package(Fontconfig QUIET)
