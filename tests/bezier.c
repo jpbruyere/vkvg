@@ -1,5 +1,4 @@
 #include "test.h"
-#include "vectors.h"
 
 vkvg_fill_rule_t          fillrule  = VKVG_FILL_RULE_NON_ZERO;
 static VkSampleCountFlags samples   = VK_SAMPLE_COUNT_8_BIT;
@@ -10,7 +9,13 @@ bool                      isClosed = false, isFilled = false;
 
 int  ptsCount     = 4;
 int  initPtsCount = 4;
-vec2 pts[]        = {
+
+typedef struct {
+    float x;
+    float y;
+} point;
+
+point pts[] = {
     {1000, 1000},
     {50, 50},
     {2000, 50},
