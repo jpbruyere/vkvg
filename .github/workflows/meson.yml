@@ -18,12 +18,12 @@ jobs:
         uses: actions/checkout@v7
       - name: Setup Python
         uses: actions/setup-python@v7
-      - name: Setup Vulkan SDK
-        uses: humbletim/setup-vulkan-sdk@v1.2.1
+      - name: Install Vulkan SDK
+        uses: humbletim/install-vulkan-sdk@v1.2
         with:
-          vulkan-use-cache: true
-          vulkan-query-version: 1.4.304.1
-          vulkan-components: Vulkan-Headers, Vulkan-Loader, SPIRV-Cross, SPIRV-Tools, SPIRV-Headers, SPIRV-Reflect, Glslang
+          quiet: true
+          cache: true
+          version: 1.4.309.0
       - name: Build using meson
         uses: BSFishy/meson-build@v1.0.3
         with:
