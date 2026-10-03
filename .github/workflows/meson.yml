@@ -1,0 +1,33 @@
+name: Meson
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Python
+        uses: actions/setup-python@v7
+      - name: Install Vulkan SDK
+        uses: humbletim/install-vulkan-sdk@v1.2
+        with:
+          quiet: true
+          cache: true
+          version: 1.4.309.0
+      - name: Build using meson
+        uses: BSFishy/meson-build@v1.0.3
+        with:
+          action: build
+          setup-options: -DVKVG_RECORDING=false # -DVKVG_SVG=false
+          meson-version: "1.12.1"
+          ninja-version: "1.13.2"

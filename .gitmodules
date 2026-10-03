@@ -1,9 +1,9 @@
 [submodule "vkh"]
-	path = vkh
+	path = subprojects/vkh
 	url = ../vkhelpers
 [submodule "external/glutess"]
-	path = external/glutess
+	path = subprojects/glutess
 	url = ../glutess
 [submodule "external/vkvg-svg"]
-	path = external/vkvg-svg
+	path = subprojects/vkvg-svg
 	url = ../vkvg-svg

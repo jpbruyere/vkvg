@@ -29,7 +29,7 @@
 </p>
 </h1>
 
-**vkvg** is an open-source *2D graphics library* written in **C** using [Vulkan](https://www.khronos.org/vulkan/) as backend.
+**vkvg** is an open-source _2D graphics library_ written in **C** using [Vulkan](https://www.khronos.org/vulkan/) as backend.
 The **API** follows the same pattern as [Cairo](https://www.cairographics.org/), but new functions and original drawing mechanics may be added.
 
 **vkvg** is in alpha development stage and the core api is mostly stabilized. All contributions are welcome.
@@ -77,11 +77,11 @@ In progress API documentation is available online at http://vkvg.org.
 - [FontConfig](https://www.freedesktop.org/wiki/Software/fontconfig/): optional, without fontconfig, use `vkvg_load_font_from_path`.
 - [Freetype](https://www.freetype.org/): optional, stb_truetype as alternative.
 - [Harfbuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/): optional, without complex text shaping may be wrong.
-- GLSLC: spirv compiler, included in [LunarG SDK](https://www.lunarg.com/vulkan-sdk/): compile shader to spir-V (building only, optional)
-- [xxd](https://linux.die.net/man/1/xxd): generate headers with precompiled shaders (building only, optional)
+- [glslang](https://github.com/KhronosGroup/glslang): spirv compiler, included in [LunarG SDK](https://www.lunarg.com/vulkan-sdk/): compile shader to spir-V (build only, optional)
+- [Python](https://python.org) cross platform interpreted programming langauge (build only, optional)
 - [GLFW](http://www.glfw.org/): optional, if present tests are built.
 
-if `glslc` or `xxd` are not present, a precompiled version of the shaders is stored in the git tree.
+if `glslang` or `python` are not present, a precompiled version of the shaders is stored in the git tree.
 
 ## Building
 
@@ -111,41 +111,44 @@ git config submodule.vkvg-svg.url https://github.com/jpbruyere/vkvg-svg.git
 
 ##### Core library options:
 
-* `-DVKVG_USE_GLUTESS=true`: Use embedded glu tesselator to fill polygones in NON-ZERO mode. If false, a simple ear clipping algorithm is used.
-* `-DVKVG_SVG=true`: Enable experimental svg renderer. If false, use nanoSVG.
-* `-DVKVG_RECORDING=true`: Enable experimental draw commands recording infrastructure.
-* `-DVKVG_BUILD_DOCS=true`: Build documentation if doxygen is found.
+- `-DVKVG_USE_GLUTESS=true`: Use embedded glu tesselator to fill polygones in NON-ZERO mode. If false, a simple ear clipping algorithm is used.
+- `-DVKVG_SVG=true`: Enable experimental svg renderer. If false, use nanoSVG.
+- `-DVKVG_RECORDING=true`: Enable experimental draw commands recording infrastructure.
+- `-DVKVG_BUILD_DOCS=true`: Build documentation if doxygen is found.
 
 ##### Vulkan Features:
 
-* `-DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT=true`: Enable `VK_EXT_scalar_block_layout` that reduce structure padding for gpu.
-* `-VKVG_ENABLE_VK_TIMELINE_SEMAPHORE=true`: Enable experimental work syncing with `VK_KHR_timeline_semaphore` instead of Fences.
+- `-DVKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT=true`: Enable `VK_EXT_scalar_block_layout` that reduce structure padding for gpu.
+- `-VKVG_ENABLE_VK_TIMELINE_SEMAPHORE=true`: Enable experimental work syncing with `VK_KHR_timeline_semaphore` instead of Fences.
 
 ##### Text rendering libraries:
 
 Those libraries are enabled by default, but disabled if not found.
-* `-DVKVG_USE_FONTCONFIG=true`: enable FontConfig to resolve font's names.
-* `-DVKVG_USE_FREETYPE=true`: enable FreeType to render glyphs, if false glyphs are rendered with stb_truetype.
-* `-DVKVG_USE_HARFBUZZ=true`: enable harfbuzz for text shaping.
+
+- `-DVKVG_USE_FONTCONFIG=true`: enable FontConfig to resolve font's names.
+- `-DVKVG_USE_FREETYPE=true`: enable FreeType to render glyphs, if false glyphs are rendered with stb_truetype.
+- `-DVKVG_USE_HARFBUZZ=true`: enable harfbuzz for text shaping.
 
 ##### Tests options:
 
-* `-DVKVG_BUILD_TESTS=true`: build all tests in the tests forlder.
-* `-DVKVG_TEST_DIRECT_DRAW=true`: enable drawing directly on the swapchain images.
+- `-DVKVG_BUILD_TESTS=true`: build all tests in the tests forlder.
+- `-DVKVG_TEST_DIRECT_DRAW=true`: enable drawing directly on the swapchain images.
 
 ##### Debugging options:
 
 If vkvg is compiled with `CMAKE_BUILD_TYPE=Debug`, several additional options are made available to help debugging:
-* `-DENABLE_VALIDATION=true`: enable vulkan validation layer.
-* `-DENABLE_DBG_UTILS=true`: enable various vulkan debug utils extensions features.
-* `-DENABLE_RENDERDOC=true`: enable renderdoc layer.
-* `-DENABLE_WIRED_FILL=true`: enable rendering in wired mode, current mode is controled with the global variable `vkvg_wired_debug`.
-* `-DENABLE_PROFILING=true`: add -pg to the compile options.
-* `-DVKVG_DBG_STATS=true`: store various context statistics fetchable with `vkvg_device_get_stats()`
+
+- `-DENABLE_VALIDATION=true`: enable vulkan validation layer.
+- `-DENABLE_DBG_UTILS=true`: enable various vulkan debug utils extensions features.
+- `-DENABLE_RENDERDOC=true`: enable renderdoc layer.
+- `-DENABLE_WIRED_FILL=true`: enable rendering in wired mode, current mode is controled with the global variable `vkvg_wired_debug`.
+- `-DENABLE_PROFILING=true`: add -pg to the compile options.
+- `-DVKVG_DBG_STATS=true`: store various context statistics fetchable with `vkvg_device_get_stats()`
 
 ```bash
-cmake --build .
+cmake --build . --parallel
 ```
+
 A [detailed tutorial](doc/windows_build_tutorial.md) is available for Windows.
 
 ## Running tests
@@ -166,11 +169,11 @@ Join us on [matrix](https://matrix.to/#/#vkvg:matrix.org) for any question.
 
 ## Change log
 
-* v0.2.0
-	- radial gradients.
-	- better stroke joins handling.
-	- png saved in srgb format.
-	- doxygen cmake target and style
+- v0.2.0
+  - radial gradients.
+  - better stroke joins handling.
+  - png saved in srgb format.
+  - doxygen cmake target and style
 
 ## To Do
 

@@ -30,8 +30,8 @@ target_include_directories("${PROJECT_NAME}" PRIVATE
   "${CMAKE_SOURCE_DIR}/include"
   ${GLFW3_INCLUDE_DIR}
   ${Vulkan_INCLUDE_DIRS}
-  "${CMAKE_SOURCE_DIR}/vkh/include"
-  "${CMAKE_SOURCE_DIR}/vkh/src"
+  "${CMAKE_SOURCE_DIR}/subprojects/vkh/include"
+  "${CMAKE_SOURCE_DIR}/subprojects/vkh/src"
 )
 target_link_libraries("${PROJECT_NAME}" PRIVATE
   vkvg
