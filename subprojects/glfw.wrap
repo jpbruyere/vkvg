@@ -1,0 +1,14 @@
+[wrap-file]
+directory = glfw-3.4
+source_url = https://github.com/glfw/glfw/archive/refs/tags/3.4.tar.gz
+source_filename = glfw-3.4.tar.gz
+source_hash = c038d34200234d071fae9345bc455e4a8f2f544ab60150765d7704e08f3dac01
+source_fallback_url = https://wrapdb.mesonbuild.com/v2/glfw_3.4-2/get_source/glfw-3.4.tar.gz
+patch_filename = glfw_3.4-2_patch.zip
+patch_url = https://wrapdb.mesonbuild.com/v2/glfw_3.4-2/get_patch
+patch_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/glfw_3.4-2/glfw_3.4-2_patch.zip
+patch_hash = c722d2983acaea2b2ed68570cc7958a10485d8362547cff67713ed4859aa2bc8
+wrapdb_version = 3.4-2
+
+[provide]
+dependency_names = glfw3
