@@ -102,3 +102,9 @@ option(
     value: false,
     description: 'Draw offscreen without presenting result.',
 )
+option(
+    'VKVG_BUILD_TESTS',
+    type: 'boolean',
+    value: false,
+    description: 'Build tests for VKVG'
+)
