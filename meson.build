@@ -1,18 +1,18 @@
 project(
   'vkvg',
   'c',
-  'cpp',
   version: '0.3.0',
   default_options: ['c_std=c11', 'cpp_std=c++11'],
 )
-
-compile_options = []
-glsl_defs = ['-DVKVG_PREMULT_ALPHA']
 
 subproject('vkh')
 
 deps = [
   dependency('vkh', fallback: ['vkh', 'vkh_dep']),
+  dependency('threads'),
+  dependency('harfbuzz', required: false),
+  dependency('freetype', required: false),
+  dependency('vulkan', optional_modules: ['glslangValidator']),
 ]
 
 src = [
@@ -60,8 +60,14 @@ incdir = include_directories(
   ],
 )
 
+c_args = [
+  '-DVKVG_VERSION_MAJOR=@0@'.format(meson.project_version().split('.')[0]),
+  '-DVKVG_VERSION_MINOR=@0@'.format(meson.project_version().split('.')[1]),
+  '-DVKVG_VERSION_REVISION=@0@'.format(meson.project_version().split('.')[2]),
+]
+
 if get_option('ENABLE_PROFILING')
-  compile_options += [
+  c_args += [
     '-pg',
     '-fno-reorder-functions',
     '-fno-inline',
@@ -73,9 +79,11 @@ if get_option('ENABLE_PROFILING')
   ]
 endif
 
-if get_option('buildtype') == 'debug'
+if get_option('buildtype').startswith('debug')
+  c_args += '-DDebug'
 endif
 
+glsl_defs = ['-DVKVG_PREMULT_ALPHA']
 glslang_validator = find_program('glslangValidator')
 python = find_program('python3')
 
@@ -102,12 +110,6 @@ spv_h_generator = generator(
   ],
 )
 
-shader_var_names = []
-
-foreach shader : shaders
-  shader_var_names += shader.split('/')[-1].replace('.', '_')
-endforeach
-
 shaders_h = custom_target(
   'shaders',
   output: 'shaders.h',
@@ -124,6 +126,19 @@ shaders_h = custom_target(
 
 src += [shaders_h]
 
-vkvg_libs = both_libraries('vkvg', shaders_h, include_directories: incdir, dependencies: deps)
-vkvg_dep = declare_dependency(include_directories: incdir, link_with: vkvg_libs.get_static_lib())
-subdir('tests')
+vkvg_lib = library(
+  'vkvg',
+  src + shaders_h,
+  include_directories: incdir,
+  dependencies: deps,
+  c_args: c_args,
+)
+
+vkvg_dep = declare_dependency(
+  include_directories: include_directories('include'),
+  link_with: vkvg_lib,
+)
+
+if get_option('VKVG_BUILD_TESTS')
+  subdir('tests')
+endif
