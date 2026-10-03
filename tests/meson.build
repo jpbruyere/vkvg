@@ -35,8 +35,14 @@ test_src = [
     'transform.c',
 ]
 
+deps = [
+    vkvg_dep,
+    dependency('vkh', fallback: ['vkh', 'vkh_dep']),
+    dependency('glfw', fallback: [ 'glfw','glfw_dep',])
+]
+
 test_include = include_directories(['common', ''])
-test_common = files(
+common_src = files(
     'common/nanosvg.h',
     'common/rnd.c',
     'common/test.c',
@@ -44,18 +50,24 @@ test_common = files(
     'common/vkengine.c',
 )
 
-deps = [
-    vkvg_dep,
-    dependency('vkh', fallback: ['vkh', 'vkh_dep']),
-]
+test_common = static_library(
+    'test_common',
+    common_src,
+    dependencies: deps,
+    include_directories: test_include,
+)
 
-foreach source : test_src
-    test_name = source.split('.')[0]
+c_args = ['-DTESTS_DATA_ROOT="@0@/data"'.format(meson.current_source_dir())]
+
+foreach src : test_src
+    test_name = src.split('.')[0]
     t = executable(
         test_name,
-        test_common + source,
+        src,
         dependencies: deps,
+        link_with: test_common,
         include_directories: test_include,
+        c_args: c_args,
     )
 
     test(test_name, t)
