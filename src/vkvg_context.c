@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
 //
 // This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 
@@ -33,10 +33,9 @@ static const vkvg_context_save_t CTX_INIT = {
     VKVG_LINE_JOIN_MITER,
     VKVG_FILL_RULE_NON_ZERO,
     VKVG_HORIZONTAL,
-    10 << 6,
-    0,
     {0},
-    NULL
+    NULL,
+    NULL,
 };
 
 void _init_ctx(VkvgContext ctx) {
@@ -161,8 +160,8 @@ VkvgContext vkvg_create(VkvgSurface surf) {
 
     ctx->cmd = ctx->cmdBuffers[0]; // current recording buffer
 
-    ctx->references = 1;
-    ctx->status     = VKVG_STATUS_SUCCESS;
+    ctx->status = VKVG_STATUS_SUCCESS;
+    atomic_init (&ctx->references, 1);
 
     LOG(VKVG_LOG_DBG_ARRAYS, "INIT\tctx = %p; pathes:%ju pts:%ju vch:%d vbo:%d ich:%d ibo:%d\n", ctx,
         (uint64_t)ctx->sizePathes, (uint64_t)ctx->sizePoints, ctx->sizeVertices, ctx->sizeVBO, ctx->sizeIndices,
@@ -242,8 +241,7 @@ void vkvg_destroy(VkvgContext ctx) {
     if (vkvg_status(ctx))
         return;
 
-    ctx->references--;
-    if (ctx->references > 0)
+    if (atomic_fetch_sub_explicit(&ctx->references, 1, memory_order_acq_rel) != 1)
         return;
 
     LOG(VKVG_LOG_INFO, "DESTROY Context: ctx = %p (status:%d); surf = %p\n", ctx, ctx->status, ctx->pSurf);
@@ -315,14 +313,14 @@ float vkvg_get_opacity(VkvgContext ctx) {
 }
 vkvg_status_t vkvg_status(VkvgContext ctx) { return !ctx ? VKVG_STATUS_NULL_POINTER : ctx->status; }
 VkvgContext   vkvg_reference(VkvgContext ctx) {
-    if (!ctx->status)
-        ctx->references++;
+    if (!vkvg_status(ctx))
+        atomic_fetch_add_explicit(&ctx->references, 1, memory_order_relaxed);
     return ctx;
 }
 uint32_t vkvg_get_reference_count(VkvgContext ctx) {
     if (vkvg_status(ctx))
         return 0;
-    return ctx->references;
+    return atomic_load_explicit(&ctx->references, memory_order_relaxed);
 }
 void vkvg_new_sub_path(VkvgContext ctx) {
     if (vkvg_status(ctx))
@@ -1177,6 +1175,14 @@ VkvgPattern vkvg_get_source(VkvgContext ctx) {
     return ctx->pattern;
 }
 
+void vkvg_set_font (VkvgContext ctx, VkvgFont font) {
+    if (ctx->currentFont == font)
+        return;
+    if (ctx->currentFont)
+        vkvg_font_destroy(ctx->currentFont);
+    ctx->currentFont = font;
+    vkvg_font_reference (font);
+}
 void vkvg_select_font_face(VkvgContext ctx, const char* name) {
     if (vkvg_status(ctx))
         return;
@@ -1187,20 +1193,20 @@ void vkvg_load_font_from_path(VkvgContext ctx, const char* path, const char* nam
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-    _vkvg_font_identity_t* fid = _font_cache_add_font_identity(ctx, path, name);
+    /*vkvg_font_face_t* fid = _font_cache_add_font_identity(ctx, path, name);
     if (!_font_cache_load_font_file_in_memory(fid)) {
         ctx->status = VKVG_STATUS_FILE_NOT_FOUND;
         return;
     }
-    _select_font_face(ctx, name);
+    _select_font_face(ctx, name);*/
 }
 void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize, const char* name) {
     if (vkvg_status(ctx))
         return;
     // RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-    _vkvg_font_identity_t* fid = _font_cache_add_font_identity(ctx, NULL, name);
+    /*vkvg_font_face_t* fid = _font_cache_add_font_identity(ctx, NULL, name);
     fid->fontBuffer            = fontBuffer;
-    fid->fontBufSize           = fontBufferByteSize;
+    fid->fontBufSize           = fontBufferByteSize;*/
 
     _select_font_face(ctx, name);
 }
@@ -1213,14 +1219,16 @@ void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
 #else
     uint32_t newSize = size;
 #endif
-    if (ctx->selectedCharSize == newSize)
-        return;
-    ctx->selectedCharSize = newSize;
+    //if (ctx->selectedCharSize == newSize)
+    //    return;
+    //ctx->selectedCharSize = newSize;
     //ctx->currentFont      = NULL;
     //ctx->currentFontSize  = NULL;
 }
 
-void vkvg_set_text_direction(vkvg_context* ctx, vkvg_direction_t direction) {}
+void vkvg_set_text_direction(vkvg_context* ctx, vkvg_direction_t direction) {
+
+}
 
 void vkvg_show_text(VkvgContext ctx, const char* text) {
     if (vkvg_status(ctx))
@@ -1236,14 +1244,14 @@ VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text) {
     if (vkvg_status(ctx))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    _font_cache_create_text_run(ctx, text, -1, tr);
+    _font_cache_init_text_run(ctx, text, -1, tr);
     return tr;
 }
 VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
     if (vkvg_status(ctx))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    _font_cache_create_text_run(ctx, text, length, tr);
+    _font_cache_init_text_run(ctx, text, length, tr);
     return tr;
 }
 uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun) { return textRun->glyph_count; }
@@ -1259,7 +1267,7 @@ void     vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg
 #endif
 }
 void vkvg_text_run_destroy(VkvgText textRun) {
-    _font_cache_destroy_text_run(textRun);
+    _font_cache_term_text_run(textRun);
     free(textRun);
 }
 void vkvg_show_text_run(VkvgContext ctx, VkvgText textRun) {
@@ -1395,6 +1403,8 @@ void vkvg_save(VkvgContext ctx) {
 
     if (ctx->pattern)
         vkvg_pattern_reference(ctx->pattern);
+    if (ctx->currentFont)
+        vkvg_font_reference(ctx->currentFont);
 
     ctx->ctxSaveCount++;
 }
@@ -1511,6 +1521,15 @@ void vkvg_restore(VkvgContext ctx) {
             vkvg_pattern_destroy(ctx->pattern);
     } else {
         _update_cur_pattern(ctx, NULL);
+    }
+    if (sav->currentFont) {
+        if (sav->currentFont == ctx->currentFont) {
+            vkvg_font_destroy(sav->currentFont);
+        } else {
+            if (ctx->currentFont)
+                vkvg_font_destroy(ctx->currentFont);
+            ctx->currentFont = sav->currentFont;
+        }
     }
 
     ctx->ctxSaveCount--;

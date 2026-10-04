@@ -22,8 +22,8 @@
 #ifndef VKVG_CONTEXT_INTERNAL_H
 #define VKVG_CONTEXT_INTERNAL_H
 
-#include "vkvg_internal.h"
 #include "vkvg_fonts.h"
+#include "vkvg_internal.h"
 
 #if VKVG_RECORDING
 #include "recording/vkvg_record_internal.h"
@@ -112,18 +112,17 @@ typedef struct _vkvg_context_save_t {
     vkvg_line_join_t        lineJoint;
     vkvg_fill_rule_t        curFillRule;
     vkvg_direction_t        textDirection;
-    uint32_t                selectedCharSize; /* Font size*/
-    uint64_t                selectedFont;
-    //_vkvg_font_identity_t   selectedFont; // hold current face and size before cache addition
-    //_vkvg_font_identity_t*  currentFont;  // font ready for lookup
+    //vkvg_font_face_t   selectedFont; // hold current face and size before cache addition
+    //vkvg_font_face_t*  currentFont;  // font ready for lookup
     push_constants          pushConsts;
     VkvgPattern             pattern;
+    VkvgFont                currentFont;
     vkvg_clip_state_t       clippingState;
 } vkvg_context_save_t;
 
 typedef struct _vkvg_context_t {
-    vkvg_status_t status;
-    uint32_t      references; // reference count
+    vkvg_status_t    status;
+    atomic_int       references; // reference count
 
     uint32_t         curColor;
     float            lineWidth;
@@ -137,14 +136,13 @@ typedef struct _vkvg_context_t {
     vkvg_line_join_t lineJoin;
     vkvg_fill_rule_t curFillRule;
     vkvg_direction_t textDirection;
-    uint32_t         selectedCharSize; /* Font size*/
-    uint64_t         selectedFont;
-    //    _vkvg_font_identity_t* currentFont;     // font pointing to cached fonts identity
+    //    vkvg_font_face_t* currentFont;     // font pointing to cached fonts identity
     /****************************/
-                                   //_vkvg_font_t		  selectedFont;		//hold current face and size before cache addition
-                                   //_vkvg_font_t*          currentFontSize; // font structure by size ready for lookup
+                                   //vkvg_font_t		  selectedFont;		//hold current face and size before cache addition
+                                   //vkvg_font_t*          currentFontSize; // font structure by size ready for lookup
     push_constants    pushConsts;
     VkvgPattern       pattern;
+    VkvgFont          currentFont;
 
     //--------------------------------------------------------------------------------
     uint32_t         indCount;       // current indice count

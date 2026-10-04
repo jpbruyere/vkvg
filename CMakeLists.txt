@@ -135,7 +135,7 @@ endif()
 FIND_PACKAGE(Doxygen QUIET)
 
 CMAKE_DEPENDENT_OPTION(VKVG_USE_FREETYPE	"use freetype to load and render font glyphs" ON "Freetype_FOUND" OFF)
-CMAKE_DEPENDENT_OPTION(VKVG_USE_FONTCONFIG	"use FontConfig to resolve font names" OFF "Fontconfig_FOUND" OFF)
+CMAKE_DEPENDENT_OPTION(VKVG_USE_FONTCONFIG	"use FontConfig to resolve font names" ON "Fontconfig_FOUND" OFF)
 CMAKE_DEPENDENT_OPTION(VKVG_USE_HARFBUZZ	"use Harbuzz for text layouting" ON "HarfBuzz_FOUND" OFF)
 CMAKE_DEPENDENT_OPTION(VKVG_BUILD_TESTS		"build tests with glfw" ON "GLFW3_FOUND" OFF)
 CMAKE_DEPENDENT_OPTION(VKVG_BUILD_DOCS		"build documentation" OFF "DOXYGEN_FOUND" OFF)
@@ -217,9 +217,7 @@ IF(GLSLC AND XXD)
 
 	FOREACH(shad_spv ${SHADER_OUTPUTS})
 		GET_FILENAME_COMPONENT(SPV ${shad_spv} NAME)
-		ADD_CUSTOM_COMMAND (
-			TARGET BuildShadersHeader
-                        PRE_BUILD
+        ADD_CUSTOM_COMMAND (TARGET BuildShadersHeader PRE_BUILD
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}
 			COMMAND ${XXD} -i ${SPV} >> ${SHADERS_H}
 		)

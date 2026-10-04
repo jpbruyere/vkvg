@@ -22,8 +22,8 @@
 #ifndef VKVG_DEVICE_INTERNAL_H
 #define VKVG_DEVICE_INTERNAL_H
 
-#include "vkvg_internal.h"
 #include "vkvg_fonts.h"
+#include "vkvg_internal.h"
 
 #define STENCIL_FILL_BIT              0x1
 #define STENCIL_CLIP_BIT              0x2

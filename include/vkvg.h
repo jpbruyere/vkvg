@@ -286,20 +286,6 @@ typedef struct _glyph_info_t {
 } vkvg_glyph_info_t;
 
 /**
- * @brief Opaque pointer on a vkvg text run.
- *
- * A VkvgText is an intermediate representation of a text to be drawn.
- * It contains the measurements computed for character positioning.
- *
- * This object is used to speed up the rendering of the same text with the same font multiple times
- * by storing typographic computations.
- *
- * Drawing text with @ref vkvg_show_text() implicitly create such intermediate structure
- * that is destroyed imediatly after the function call.
- */
-typedef struct _vkvg_text_run_t* VkvgText;
-
-/**
  * @brief The Vkvg drawing Context.
  * @ingroup context
  *
@@ -333,7 +319,33 @@ typedef struct _vkvg_device_t* VkvgDevice;
  * configurable parameters such as the wrap mode, the filtering, etc...
  */
 typedef struct _vkvg_pattern_t* VkvgPattern;
+/**
+ * @brief Opaque pointer on a vkvg text run.
+ *
+ * A VkvgText is an intermediate representation of a text to be drawn.
+ * It contains the measurements computed for character positioning.
+ *
+ * This object is used to speed up the rendering of the same text with the same font multiple times
+ * by storing typographic computations.
+ *
+ * Drawing text with @ref vkvg_show_text() implicitly create such intermediate structure
+ * that is destroyed imediatly after the function call.
+ */
+typedef struct _vkvg_text_run_t* VkvgText;
 
+/**
+ * @brief Opaque pointer on a vkvg font.
+ *
+ * VkvgFont
+ *
+ */
+typedef struct _vkvg_font_t* VkvgFont;
+
+vkvg_public VkvgFont        vkvg_font_create (VkvgDevice dev, const char* queryString, float pointSize);
+vkvg_public VkvgFont        vkvg_font_reference (VkvgFont font);
+vkvg_public uint32_t        vkvg_font_get_reference_count (VkvgFont font);
+vkvg_public vkvg_status_t   vkvg_font_status (VkvgFont font);
+vkvg_public void            vkvg_font_destroy (VkvgFont font);
 #if VKVG_DBG_STATS
 /**
  * @brief vkvg memory and vulkan statistiques.
@@ -1676,6 +1688,13 @@ vkvg_public void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char* font
  * @param size
  */
 vkvg_public void vkvg_set_font_size(VkvgContext ctx, uint32_t size);
+/**
+ * @brief set current font for context, see @ref vkvg_font_create to create fonts.
+ *
+ * @param ctx a valid vkvg @ref context
+ * @param font a valid @ref VkvgFont object.
+ */
+vkvg_public void vkvg_set_font (VkvgContext ctx, VkvgFont font);
 /**
  * @brief Show a string of text.
  *

@@ -861,6 +861,29 @@ FcPattern* request = FcPatternCreate();
 FcPatternAddString(request, FC_FAMILY, (const FcChar8*)"Roboto Flex");
 FcPatternAddString(request, FC_FONT_VARIATIONS, (const FcChar8*)"wght=625,wdth=80");
 */
+/* Fallback chain
+ // 1. Initialize Fontconfig library and load system configuration
+    FcConfig* config = FcInitLoadConfigAndFonts();
+    if (!config) return 1;
+
+ // 2. Create an empty pattern
+ FcPattern* pat = FcPatternCreate();
+
+ // 3. Programmatically define the fallback chain (Order: Highest -> Lowest)
+ // The last argument 'FcTrue' appends the font to the end of the list
+ FcPatternAddString(pat, FC_FAMILY, (const FcChar8*)"CustomWebFont", FcTrue);
+ FcPatternAddString(pat, FC_FAMILY, (const FcChar8*)"Liberation Sans", FcTrue);
+ FcPatternAddString(pat, FC_FAMILY, (const FcChar8*)"DejaVu Sans", FcTrue);
+ FcPatternAddString(pat, FC_FAMILY, (const FcChar8*)"sans-serif", FcTrue); // Generic system fallback
+
+ // Add other attributes if needed (e.g., matching bold)
+ FcPatternAddInteger(pat, FC_WEIGHT, FC_WEIGHT_BOLD);
+
+ // 4. Perform standard configuration-defined substitutions
+ // This hooks into system/user XML configurations (~/.config/fontconfig/fonts.conf)
+ // to fill in missing properties or alias maps.
+ FcConfigSubstitute(config, pat,
+*/
 
 void setup_variable_font(FcPattern* matched_font) {
     // 1. Verify if the font handles open vector variables

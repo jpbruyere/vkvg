@@ -39,6 +39,7 @@
 #include <stdint.h>
 #include <stdio.h> // needed before stdarg.h on Windows
 #include <stdarg.h>
+#include <stdatomic.h>
 
 // should be supported by c11
 // #include <threads.h>
@@ -52,6 +53,32 @@
 #define M_PIF_2 1.57079632679489661923f
 #define M_2_PIF 0.63661977236758134308f // 2/pi
 #endif
+
+#define CTOR_ARRAY(type)                                            \
+typedef struct {                                                    \
+    uint32_t    count;                                              \
+    uint32_t    size;                                               \
+    type       *elements;                                           \
+} array_##type;                                                     \
+static array_##type array_create_##type (uint32_t reservedSize) {   \
+    type *elts = (type*)malloc(reservedSize * sizeof(type));        \
+    return (array_##type) {0, reservedSize, elts};                  \
+}                                                                   \
+static int array_add_##type (array_##type* arr, type elt) {         \
+    if (arr->size <= arr->count) {                                  \
+        uint32_t newSize = arr->size * 2;                           \
+        type *elts = (type*)realloc(arr->elements, newSize * sizeof(type)); \
+        if (elts == NULL)                                           \
+        return 0;                                                   \
+        arr->elements = elts;                                       \
+        arr->size = newSize;                                        \
+    }                                                               \
+    arr->elements[arr->count++] = elt;                              \
+    return 1;                                                       \
+}                                                                   \
+static void array_destroy_##type (array_##type* arr) {              \
+    free(arr->elements);                                            \
+}
 
 /**
  * @brief Computes the 64-bit FNV-1a hash of a ascii string lowering case.
