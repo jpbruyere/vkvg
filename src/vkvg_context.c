@@ -258,6 +258,8 @@ void vkvg_destroy(VkvgContext ctx) {
 
     if (ctx->pattern)
         vkvg_pattern_destroy(ctx->pattern);
+    if (ctx->currentFont)
+        vkvg_font_destroy(ctx->currentFont);
 
     _clear_context(ctx);
 

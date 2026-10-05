@@ -334,22 +334,22 @@ IF (VKVG_BUILD_TESTS)
 
     #font tests
 
-    ADD_EXECUTABLE(fonts_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/font_tests/font_tests.c")
+    # ADD_EXECUTABLE(fonts_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/font_tests/font_tests.c")
 
-    TARGET_INCLUDE_DIRECTORIES(fonts_test PRIVATE
-        ${FREETYPE_INCLUDE_DIRS}
-        ${HarfBuzz_INCLUDE_DIRS}
-        ${Vulkan_INCLUDE_DIRS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${Fontconfig_INCLUDE_DIRS}
-    )
-    TARGET_LINK_LIBRARIES(fonts_test PUBLIC
-        #vkvg
-        ${HarfBuzz_LIBRARIES}
-        ${FREETYPE_LIBRARY}
-        ${Fontconfig_LIBRARIES}
-        ${Vulkan_LIBRARIES}
-    )
+    # TARGET_INCLUDE_DIRECTORIES(fonts_test PRIVATE
+    #     ${FREETYPE_INCLUDE_DIRS}
+    #     ${HarfBuzz_INCLUDE_DIRS}
+    #     ${Vulkan_INCLUDE_DIRS}
+    #     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    #     ${Fontconfig_INCLUDE_DIRS}
+    # )
+    # TARGET_LINK_LIBRARIES(fonts_test PUBLIC
+    #     #vkvg
+    #     ${HarfBuzz_LIBRARIES}
+    #     ${FREETYPE_LIBRARY}
+    #     ${Fontconfig_LIBRARIES}
+    #     ${Vulkan_LIBRARIES}
+    # )
 
     ###################
 

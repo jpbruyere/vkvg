@@ -332,6 +332,7 @@ void ft_face_flags_to_string(FT_Long face_flags, char* out_str, size_t max_len) 
 #define AXIS_TAG_ITAL  FT_MAKE_TAG('i', 't', 'a', 'l')
 
 typedef enum {
+    font_weight_unset       = 0,
     font_weight_thin        = 100,
     font_weight_extra_light = 200,
     font_weight_light       = 300,
@@ -344,6 +345,7 @@ typedef enum {
 } font_weight;
 
 typedef enum {
+    font_width_unset            = 0,
     font_width_ultra_condensed  = 1,//50%
     font_width_extra_condensed  = 2,
     font_width_condensed        = 3,
@@ -356,6 +358,7 @@ typedef enum {
 } font_width;
 
 typedef enum {
+    font_slant_unset    = 0,
     font_slant_italic   = 0b0000000000000001,
     font_slant_regular  = 0b0000000001000000,
     font_slant_oblic    = 0b0000001000000000
@@ -370,6 +373,15 @@ typedef struct {
     uint32_t    styleHash;
 } font_id_t;
 
+typedef struct {
+    const char *txtFontPattern; // font config textual representation of pattern
+    const char *family;
+    const char *style;
+    font_weight weight;
+    font_width  width;
+    font_slant  slant;
+    uint32_t    flags;
+} vkvg_font_create_info_t;
 
 font_id_t font_id_cache[7000];
 array_t* font_names;

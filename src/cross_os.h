@@ -56,7 +56,22 @@ void _linux_register_error_handler();
 #endif
 #endif
 
-
+#if defined(__clang__)
+#define DIAGNOSTIC_DISABLE_UNUSED _Pragma("clang diagnostic push") \
+_Pragma("clang diagnostic ignored \"-Wunused-function\"")
+#define DIAGNOSTIC_RESTORE_UNUSED  _Pragma("clang diagnostic pop")
+#elif defined(__GNUC__)
+#define DIAGNOSTIC_DISABLE_UNUSED _Pragma("GCC diagnostic push") \
+_Pragma("GCC diagnostic ignored \"-Wunused-function\"")
+#define DIAGNOSTIC_RESTORE_UNUSED  _Pragma("GCC diagnostic pop")
+#elif defined(_MSC_VER)
+#define DIAGNOSTIC_DISABLE_UNUSED __pragma(warning(push)) \
+__pragma(warning(disable : 4505))
+#define DIAGNOSTIC_RESTORE_UNUSED  __pragma(warning(pop))
+#else
+#define DIAGNOSTIC_DISABLE_UNUSED
+#define DIAGNOSTIC_RESTORE_UNUSED
+#endif
 
 // 1. Check if we are in a POSIX environment that supports strncasecmp
 #if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L)

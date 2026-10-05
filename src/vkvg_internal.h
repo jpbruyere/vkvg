@@ -54,32 +54,6 @@
 #define M_2_PIF 0.63661977236758134308f // 2/pi
 #endif
 
-#define CTOR_ARRAY(type)                                            \
-typedef struct {                                                    \
-    uint32_t    count;                                              \
-    uint32_t    size;                                               \
-    type       *elements;                                           \
-} array_##type;                                                     \
-static array_##type array_create_##type (uint32_t reservedSize) {   \
-    type *elts = (type*)malloc(reservedSize * sizeof(type));        \
-    return (array_##type) {0, reservedSize, elts};                  \
-}                                                                   \
-static int array_add_##type (array_##type* arr, type elt) {         \
-    if (arr->size <= arr->count) {                                  \
-        uint32_t newSize = arr->size * 2;                           \
-        type *elts = (type*)realloc(arr->elements, newSize * sizeof(type)); \
-        if (elts == NULL)                                           \
-        return 0;                                                   \
-        arr->elements = elts;                                       \
-        arr->size = newSize;                                        \
-    }                                                               \
-    arr->elements[arr->count++] = elt;                              \
-    return 1;                                                       \
-}                                                                   \
-static void array_destroy_##type (array_##type* arr) {              \
-    free(arr->elements);                                            \
-}
-
 /**
  * @brief Computes the 64-bit FNV-1a hash of a ascii string lowering case.
  *
@@ -159,6 +133,46 @@ static inline uint64_t fnv1a_64_str(const char *const restrict str) {
 // 30 seconds fence timeout
 #define VKVG_FENCE_TIMEOUT 30000000000
 // #define VKVG_FENCE_TIMEOUT 10000
+
+#define CTOR_ARRAY(type)                                            \
+typedef struct {                                                    \
+    uint32_t    count;                                              \
+    uint32_t    size;                                               \
+    type       *elements;                                           \
+} array_##type;                                                     \
+static array_##type array_create_##type (uint32_t reservedSize) {   \
+    type *elts = (type*)malloc(reservedSize * sizeof(type));        \
+    return (array_##type) {0, reservedSize, elts};                  \
+}                                                                   \
+static int array_add_##type (array_##type* arr, type elt) {         \
+    if (arr->size <= arr->count) {                                  \
+        uint32_t newSize = arr->size * 2;                           \
+        type *elts = (type*)realloc(arr->elements, newSize * sizeof(type)); \
+        if (elts == NULL)                                           \
+            return -1;                                              \
+        arr->elements = elts;                                       \
+        arr->size = newSize;                                        \
+    }                                                               \
+    arr->elements[arr->count++] = elt;                              \
+    return arr->count - 1;                                          \
+}                                                                   \
+static type* array_last_##type (array_##type* arr) {                \
+    if (!arr->count)                                                \
+        return NULL;                                                \
+    return &arr->elements[arr->count - 1];                          \
+}                                                                   \
+static void array_destroy_##type (array_##type* arr) {              \
+    free(arr->elements);                                            \
+    arr->count = 0;                                                 \
+    arr->size = 0;                                                  \
+}                                                                   \
+static void array_del_##type (array_##type* arr, uint32_t index) {  \
+    if (index >= arr->count)                                        \
+        return;                                                     \
+    if (index < arr->count - 1)                                     \
+        memcpy (&arr->elements[index], &arr->elements[index + 1], arr->count - index - 1); \
+    arr->count--;                                                   \
+}
 
 #include "vectors.h"
 

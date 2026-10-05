@@ -60,7 +60,7 @@
 #endif
 
 #define FONT_PAGE_SIZE          1024
-#define FONT_CACHE_INIT_LAYERS  1
+#define FONT_CACHE_INIT_LAYERS  2
 #define FONT_FILE_NAME_MAX_SIZE 1024
 #define FONT_NAME_MAX_SIZE      128
 
@@ -176,19 +176,25 @@ typedef struct {
 
 // Current location in font cache texture array for new character addition. Each font holds such structure to locate
 // where to upload new chars.
-typedef struct {
+typedef struct _tex_ref_t{
     uint8_t pageIdx; /* Current page number in font cache */
     int     penX;    /* Current X in cache for next char addition */
     int     penY;    /* Current Y in cache for next char addition */
     int     height;  /* Height of current line pointed by this structure */
-} _tex_ref_t;
+} tex_ref_t;
 
+DIAGNOSTIC_DISABLE_UNUSED
 
+CTOR_ARRAY(tex_ref_t)
 CTOR_ARRAY(uint64_t)
 CTOR_ARRAY(VkvgFont)
 
+typedef struct _vkvg_font_buffer_t vkvg_font_buffer_t;
+
 /* Font identification structure */
 typedef struct {
+    uint32_t        index;    /* index in face list of containing font buffer */
+    vkvg_font_buffer_t* fontBuffer;
     array_uint64_t  queryHashes;
 #ifdef VKVG_USE_FREETYPE
     FT_Face         face;     /* FreeType face*/
@@ -206,8 +212,7 @@ typedef struct {
 
 CTOR_ARRAY(vkvg_font_face_t)
 
-typedef struct
-{
+typedef struct _vkvg_font_buffer_t {
     uint64_t    fontPathHash;
     size_t      bufferSize;
     unsigned char*          buffer;
@@ -216,11 +221,14 @@ typedef struct
 
 CTOR_ARRAY(vkvg_font_buffer_t)
 
+DIAGNOSTIC_RESTORE_UNUSED
+
 typedef struct _vkvg_font_t {
     vkvg_status_t   status;
     atomic_int      references; // reference count
 
-    vkvg_font_face_t* face;
+    vkvg_font_face_t *face;
+    uint32_t          eltIndex; // index in face->sizes[] array
 #ifdef VKVG_USE_FREETYPE
     FT_F26Dot6      charSize; /* Font size in Point as fixed float 26.6 */
     FT_Size         ftSize;   /* FT size rec */
@@ -236,7 +244,7 @@ typedef struct _vkvg_font_t {
     hb_font_t*      hb_font; /* HarfBuzz font instance*/
 #endif
     _char_ref*      charLookup; /* Lookup table of characteres in cache, if not found, upload is queued*/
-    _tex_ref_t      curLine; /* texture reference where to add new glyph bmp's in cache*/
+    array_tex_ref_t texLines;    /* texture reference where to add new glyph bmp's in cache */
 } vkvg_font_t;
 
 

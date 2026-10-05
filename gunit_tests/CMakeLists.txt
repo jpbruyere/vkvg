@@ -32,6 +32,7 @@ add_executable("${PROJECT_NAME}"
   imageDraw.cpp
   matrices.cpp
   patternDraw.cpp
+  textDraw.cpp
   save_restore.cpp
   unitTest.h
 )
