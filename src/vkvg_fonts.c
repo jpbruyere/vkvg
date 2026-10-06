@@ -236,6 +236,19 @@ void _init_next_line_in_tex_cache(VkvgDevice dev, vkvg_font_t* f) {
 
     for (int i = 0; i < cache->texPages.count; ++i) {
         tex_page_t* page = &cache->texPages.elements[i];
+        //search free lines
+        for (int j = 0; j < page->lines.count; ++j) {
+            if (page->lines.elements[j]->released &&
+                page->lines.elements[j]->height == l->height) {
+                // reuse freed line
+                l->pageIdx = (unsigned char)i;
+                l->penY    = page->lines.elements[j]->penY;
+                f->penX    = 0;
+                free(page->lines.elements[j]);
+                page->lines.elements[j] = l;
+                return;
+            }
+        }
         if (page->penY + l->height >= FONT_PAGE_SIZE)
             continue;
         l->pageIdx = (unsigned char)i;
@@ -286,8 +299,10 @@ void _font_cache_destroy(VkvgDevice dev) {
     }
     array_destroy_vkvg_font_buffer_t(&cache->fontBuffers);
 
+    LOG(VKVG_LOG_INFO, "Font pages in cache: %d\n", cache->texPages.count);
     for (int i = 0; i < cache->texPages.count; ++i) {
         tex_page_t *p = &cache->texPages.elements[i];
+        LOG(VKVG_LOG_INFO, "\t%d: lines: %d \tpenY: %f\n", i, p->lines.count, p->penY);
         for (int j = 0; j < p->lines.count; ++j) {
             free(p->lines.elements[j]);
         }
@@ -486,6 +501,7 @@ bool tryGetFontBufferFromPathHash(_font_cache_t* cache, uint64_t pathHash, vkvg_
 bool _tryResolveFontNameWithFontConfig(VkvgDevice dev, const char* fontString, vkvg_font_face_t **const face) {
     _font_cache_t* cache = dev->fontCache;
     uint64_t queryHash = fnv1a_64_str(fontString);
+    *face = NULL;
 
     if (tryGetFontFaceFromQueryHash(cache, queryHash, face))
         return true;
@@ -515,6 +531,7 @@ bool _tryResolveFontNameWithFontConfig(VkvgDevice dev, const char* fontString, v
                     return true;
                 }
             }
+            LOG(VKVG_LOG_INFO, "Font buffer without a face\n");
         } else {
             vkvg_font_buffer_t buff = {fontFileHash};
             FILE *file = fopen(fontFile, "rb");
@@ -531,8 +548,13 @@ bool _tryResolveFontNameWithFontConfig(VkvgDevice dev, const char* fontString, v
                 fclose(file);
                 return false;
             }
-            size_t bytes_read = fread(buff.buffer, 1, buff.bufferSize, file);
+            unsigned long readBytes = fread(buff.buffer, 1, buff.bufferSize, file);
             fclose(file);
+            if (readBytes != buff.bufferSize) {
+                return false;
+
+            }
+
             buff.faces = array_create_vkvg_font_face_t(2);
             buffPtr = &cache->fontBuffers.elements[cache->fontBuffers.count];
             array_add_vkvg_font_buffer_t(&cache->fontBuffers, buff);
@@ -545,7 +567,11 @@ bool _tryResolveFontNameWithFontConfig(VkvgDevice dev, const char* fontString, v
             mtx_init(&newFace.mutex, mtx_plain);
 
 #ifdef VKVG_USE_FREETYPE
-        FT_CHECK_RESULT(FT_New_Memory_Face(cache->library, buffPtr->buffer, buffPtr->bufferSize, index, &newFace.face));
+        FT_Error res = FT_New_Memory_Face(cache->library, buffPtr->buffer, buffPtr->bufferSize, index, &newFace.face);
+        if (res) {
+            LOG(VKVG_LOG_ERR, "FreeType error 0x%x creating memory face in %s at line %d\n", res, __FILE__, __LINE__);
+            return false;
+        }
 #else
         int result = stbtt_InitFont(&font->stbInfo, font->fontBuffer, 0);
         assert(result && "stbtt_initFont failed");
@@ -878,6 +904,8 @@ VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
             return font;
         }
     }
+    if (!face)
+        return NULL;
 
     font = (vkvg_font_t*)calloc(1, sizeof(vkvg_font_t));
     if (!font) {
@@ -887,15 +915,13 @@ VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
     font->charSize = pt26_6;
     font->face = face;
 
-    _font_cache_t* cache = dev->fontCache;
-
 #ifdef VKVG_USE_FREETYPE
-    if (face->sizes.size) {
-        FT_CHECK_RESULT(FT_New_Size (face->face, &font->ftSize));
-        FT_Activate_Size(font->ftSize);
-    } else {
-        face->sizes = array_create_VkvgFont(5);
-    }
+    if (!face->sizes.size)
+        face->sizes = array_create_VkvgFont(5);//new face,
+
+    FT_CHECK_RESULT(FT_New_Size (face->face, &font->ftSize));
+    FT_Activate_Size(font->ftSize);
+
     font->eltIndex = array_add_VkvgFont(&face->sizes, font);
     FT_CHECK_RESULT(FT_Set_Char_Size(face->face, 0, font->charSize, dev->hdpi, dev->vdpi));
 
