@@ -1,24 +1,6 @@
-/*
- * Copyright (c) 2018-2019 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 #ifndef VKVG_FONTS_H
 #define VKVG_FONTS_H
 
@@ -163,32 +145,43 @@ inline int get_utf8_char_length(uint8_t first_byte) {
 }
 
 typedef struct _tex_ref_t tex_ref_t;
+typedef struct _tex_ref_t* TexRef;
 // texture coordinates of one character in font cache array texture.
 typedef struct _char_ref {
+    TexRef      texRef;    /* glyph bitmap ref */
     uint32_t    index;      /* stored here only to detect empty char_ref */
-    vec4        bounds;     /* normalized float bounds of character bitmap in font cache texture. */
     vec2i16     bmpDiff;    /* Difference in pixel between char bitmap top left corner and char glyph*/
+    vec4        bounds;     /* normalized float bounds of character bitmap in font cache texture. */
 #ifdef VKVG_USE_FREETYPE
     FT_Vector   advance;    /* horizontal or vertical advance */
 #else
     vec2 advance;
 #endif
-    uint32_t    texRefIdx;   /* glyph bitmap ref in texture array */
 } char_ref;
 
 // Current location in font cache texture array for new character addition. Each font holds such structure to locate
 // where to upload new chars.
-typedef struct _tex_ref_t{
-    uint8_t pageIdx; /* Current page number in font cache */
-    int     penY;    /* Current Y in cache for next char addition */
-    int     height;  /* Height of current line pointed by this structure */
+typedef struct _tex_ref_t {
+    uint8_t pageIdx;  /* Current page number in font cache */
+    int     penY;     /* Current Y in cache for next char addition */
+    int     height;   /* Height of current line pointed by this structure */
+    bool    released; /* True after font destroy, may be reused for another font */
 } tex_ref_t;
+//typedef struct _tex_ref_t* TexRef;
 
 DIAGNOSTIC_DISABLE_UNUSED
 
-CTOR_ARRAY(tex_ref_t)
+//CTOR_ARRAY(tex_ref_t)
+CTOR_ARRAY(TexRef)
 CTOR_ARRAY(uint64_t)
 CTOR_ARRAY(VkvgFont)
+
+typedef struct _tex_page_t {
+    array_TexRef    lines;
+    float           penY;
+} tex_page_t;
+
+CTOR_ARRAY(tex_page_t)
 
 typedef struct _vkvg_font_buffer_t vkvg_font_buffer_t;
 
@@ -245,7 +238,7 @@ typedef struct _vkvg_font_t {
     hb_font_t*      hb_font; /* HarfBuzz font instance*/
 #endif
     char_ref*       charLookup;/* Lookup table of characteres in cache, if not found, upload is queued*/
-    array_tex_ref_t texLines;  /* texture reference where to add new glyph bmp's in cache */
+    array_TexRef    texLines;  /* texture reference where to add new glyph bmp's in cache */
     int             penX;      /* Current X in cache for next char addition */
 } vkvg_font_t;
 
@@ -270,13 +263,11 @@ typedef struct {
     VkhImage        texture;      /* 2d array texture used by contexts to draw characteres */
     VkFormat        texFormat;    /* Format of the fonts texture array */
     uint8_t         texPixelSize; /* Size in byte of a single pixel in a font texture */
-    uint8_t         texLength;    /* layer count of 2d array texture, starts with FONT_CACHE_INIT_LAYERS count and increased when
-                                     needed */
-    int*            pensY;        /* array of current y pen positions for each texture in cache 2d array */
     VkFence         uploadFence;  /* Signaled when upload is finished */
     mtx_t           mutex;        /* font cache global mutex, used only if device is in thread aware mode (see:
                                      vkvg_device_set_thread_aware) */
     array_vkvg_font_buffer_t fontBuffers;
+    array_tex_page_t texPages;
 } _font_cache_t;
 
 #define LOCK_FONTCACHE(dev)                                                                                            \

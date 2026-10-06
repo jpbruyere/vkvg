@@ -134,7 +134,7 @@ static inline uint64_t fnv1a_64_str(const char *const restrict str) {
 #define VKVG_FENCE_TIMEOUT 30000000000
 // #define VKVG_FENCE_TIMEOUT 10000
 
-#define CTOR_ARRAY(type)                                            \
+#define CTOR_ARRAY_EXP(type, expansion)                             \
 typedef struct {                                                    \
     uint32_t    count;                                              \
     uint32_t    size;                                               \
@@ -146,7 +146,7 @@ static array_##type array_create_##type (uint32_t reservedSize) {   \
 }                                                                   \
 static int array_add_##type (array_##type* arr, type elt) {         \
     if (arr->size <= arr->count) {                                  \
-        uint32_t newSize = arr->size * 2;                           \
+        uint32_t newSize = arr->size expansion;                     \
         type *elts = (type*)realloc(arr->elements, newSize * sizeof(type)); \
         if (elts == NULL)                                           \
             return -1;                                              \
@@ -173,6 +173,7 @@ static void array_del_##type (array_##type* arr, uint32_t index) {  \
         memcpy (&arr->elements[index], &arr->elements[index + 1], arr->count - index - 1); \
     arr->count--;                                                   \
 }
+#define CTOR_ARRAY(type) CTOR_ARRAY_EXP(type,* 2)
 
 #include "vectors.h"
 
