@@ -161,8 +161,10 @@ static inline uint32_t decode_unicode_codepoint(const uint8_t* text) {
 inline int get_utf8_char_length(uint8_t first_byte) {
     return utf8_len_table[first_byte];
 }
+
+typedef struct _tex_ref_t tex_ref_t;
 // texture coordinates of one character in font cache array texture.
-typedef struct {
+typedef struct _char_ref {
     uint32_t    index;      /* stored here only to detect empty char_ref */
     vec4        bounds;     /* normalized float bounds of character bitmap in font cache texture. */
     vec2i16     bmpDiff;    /* Difference in pixel between char bitmap top left corner and char glyph*/
@@ -171,14 +173,13 @@ typedef struct {
 #else
     vec2 advance;
 #endif
-    uint8_t     pageIdx;    /* Page index in font cache texture array */
-} _char_ref;
+    uint32_t    texRefIdx;   /* glyph bitmap ref in texture array */
+} char_ref;
 
 // Current location in font cache texture array for new character addition. Each font holds such structure to locate
 // where to upload new chars.
 typedef struct _tex_ref_t{
     uint8_t pageIdx; /* Current page number in font cache */
-    int     penX;    /* Current X in cache for next char addition */
     int     penY;    /* Current Y in cache for next char addition */
     int     height;  /* Height of current line pointed by this structure */
 } tex_ref_t;
@@ -243,8 +244,9 @@ typedef struct _vkvg_font_t {
 #ifdef VKVG_USE_HARFBUZZ
     hb_font_t*      hb_font; /* HarfBuzz font instance*/
 #endif
-    _char_ref*      charLookup; /* Lookup table of characteres in cache, if not found, upload is queued*/
-    array_tex_ref_t texLines;    /* texture reference where to add new glyph bmp's in cache */
+    char_ref*       charLookup;/* Lookup table of characteres in cache, if not found, upload is queued*/
+    array_tex_ref_t texLines;  /* texture reference where to add new glyph bmp's in cache */
+    int             penX;      /* Current X in cache for next char addition */
 } vkvg_font_t;
 
 

@@ -205,7 +205,7 @@ void _flush_chars_to_tex(VkvgDevice dev, vkvg_font_t* f) {
         return;
     tex_ref_t l = f->texLines.elements[f->texLines.count - 1];
 
-    LOG(VKVG_LOG_INFO, "_flush_chars_to_tex pen(%d, %d)\n", l.penX, l.penY);
+    LOG(VKVG_LOG_INFO, "_flush_chars_to_tex pen(%d, %d)\n", f->penX, l.penY);
     vkWaitForFences(dev->vkDev, 1, &cache->uploadFence, VK_TRUE, UINT64_MAX);
     ResetFences(dev->vkDev, 1, &cache->uploadFence);
 
@@ -224,7 +224,7 @@ void _flush_chars_to_tex(VkvgDevice dev, vkvg_font_t* f) {
     VkBufferImageCopy bufferCopyRegion = {.imageSubresource  = {VK_IMAGE_ASPECT_COLOR_BIT, 0, l.pageIdx, 1},
                                           .bufferRowLength   = FONT_PAGE_SIZE,
                                           .bufferImageHeight = l.height,
-                                          .imageOffset       = {l.penX, l.penY, 0},
+                                          .imageOffset       = {f->penX, l.penY, 0},
                                           .imageExtent = {cache->stagingX, l.height, 1}};
 
     vkCmdCopyBufferToImage(cache->cmd, cache->buff.buffer, vkh_image_get_vkimage(cache->texture),
@@ -238,7 +238,7 @@ void _flush_chars_to_tex(VkvgDevice dev, vkvg_font_t* f) {
 
     _device_submit_cmd(dev, &cache->cmd, cache->uploadFence);
 
-    l.penX += cache->stagingX;
+    f->penX += cache->stagingX;
     f->texLines.elements[f->texLines.count - 1] = l;
 
     cache->stagingX = 0;
@@ -253,7 +253,7 @@ void _init_next_line_in_tex_cache(VkvgDevice dev, vkvg_font_t* f) {
         if (cache->pensY[i] + l->height >= FONT_PAGE_SIZE)
             continue;
         l->pageIdx = (unsigned char)i;
-        l->penX    = 0;
+        f->penX    = 0;
         l->penY    = cache->pensY[i];
         cache->pensY[i] += l->height;
         return;
@@ -363,7 +363,7 @@ void _font_cache_update_context_descset(VkvgContext ctx) {
     UNLOCK_FONTCACHE(ctx->dev)
 }
 // create a new char entry and put glyph in stagging buffer, ready for upload.
-_char_ref _prepare_char(VkvgDevice dev, VkvgText tr, uint32_t gindex) {
+char_ref _prepare_char(VkvgDevice dev, VkvgText tr, uint32_t gindex) {
     VkvgFont f = tr->font;
 #ifdef VKVG_USE_FREETYPE
     #if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
@@ -393,13 +393,13 @@ _char_ref _prepare_char(VkvgDevice dev, VkvgText tr, uint32_t gindex) {
 #endif
     uint8_t* data = dev->fontCache->hostBuff;
     tex_ref_t l = f->texLines.elements[f->texLines.count - 1];
-    if (dev->fontCache->stagingX + l.penX + bmpPixelWidth > FONT_PAGE_SIZE) {
+    if (dev->fontCache->stagingX + f->penX + bmpPixelWidth > FONT_PAGE_SIZE) {
         _flush_chars_to_tex(dev, f);
         _init_next_line_in_tex_cache(dev, f);
     }
 
-    _char_ref  cr   = {slot->glyph_index};
-    int        penX = dev->fontCache->stagingX;
+    char_ref  cr   = {slot->glyph_index};
+    int       penX = dev->fontCache->stagingX;
 
 #ifdef VKVG_USE_FREETYPE
     for (uint32_t y = 0; y < bmpRows; y++) {
@@ -430,12 +430,12 @@ _char_ref _prepare_char(VkvgDevice dev, VkvgText tr, uint32_t gindex) {
     cr.bmpDiff.y = (int16_t)-c_y1;
     cr.advance   = (vec2){(uint32_t)roundf(f->scale * advance) << 6, 0};
 #endif
-    vec4 uvBounds = {{(float)(penX + l.penX) / (float)FONT_PAGE_SIZE},
-                     {(float)l.penY / (float)FONT_PAGE_SIZE},
+    vec4 uvBounds = {{(float)(penX + f->penX) / (float)FONT_PAGE_SIZE},
+                     {0.f},
                      {(float)bmpPixelWidth},
                      {(float)bmpRows}};
     cr.bounds    = uvBounds;
-    cr.pageIdx   = l.pageIdx;
+    cr.texRefIdx = f->texLines.count - 1;
 
     f->charLookup[gindex] = cr;
     dev->fontCache->stagingX += bmpPixelWidth;
@@ -517,6 +517,7 @@ bool tryGetFontBufferFromPathHash(_font_cache_t* cache, uint64_t pathHash, vkvg_
     }
     return false;
 }
+
 #ifdef VKVG_USE_FONTCONFIG
 bool _tryResolveFontNameWithFontConfig(VkvgDevice dev, const char* fontString, vkvg_font_face_t **const face) {
     _font_cache_t* cache = dev->fontCache;
@@ -770,6 +771,8 @@ void _font_cache_show_text_run(VkvgContext ctx, VkvgText tr) {
     glyph_count                   = tr->glyph_count;
 #endif
 
+    VkvgFont f = tr->font;
+
     Vertex v   = {{0}, ctx->curColor, {0, 0, -1}};
     vec2   pen = {0, 0};
 
@@ -779,7 +782,7 @@ void _font_cache_show_text_run(VkvgContext ctx, VkvgText tr) {
     LOCK_FONTCACHE(ctx->dev)
 
     for (uint32_t i = 0; i < glyph_count; ++i) {
-        _char_ref cr = tr->font->charLookup[glyph_info[i].codepoint];
+        char_ref cr = tr->font->charLookup[glyph_info[i].codepoint];
 
 #ifdef VKVG_USE_HARFBUZZ
         if (!cr.index)
@@ -794,9 +797,12 @@ void _font_cache_show_text_run(VkvgContext ctx, VkvgText tr) {
 
         VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
+        tex_ref_t texRef = f->texLines.elements[cr.texRefIdx];
+        float yOffset = (float)texRef.penY / (float)FONT_PAGE_SIZE;
+
         v.uv.x = cr.bounds.x;
-        v.uv.y = cr.bounds.y;
-        v.uv.z = cr.pageIdx;
+        v.uv.y = yOffset; // + cr.bounds.y
+        v.uv.z = texRef.pageIdx;
         _add_vertex(ctx, v);
 
         v.pos.y += cr.bounds.height;
@@ -806,7 +812,7 @@ void _font_cache_show_text_run(VkvgContext ctx, VkvgText tr) {
         v.pos.x += cr.bounds.width;
         v.pos.y = p0.y;
         v.uv.x += uvWidth;
-        v.uv.y = cr.bounds.y;
+        v.uv.y = yOffset; // + cr.bounds.y;
         _add_vertex(ctx, v);
 
         v.pos.y += cr.bounds.height;
@@ -930,9 +936,9 @@ VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
     FT_CHECK_RESULT(FT_Set_Char_Size(face->face, 0, font->charSize, dev->hdpi, dev->vdpi));
 
     font->ftSize = face->face->size;
-    font->charLookup = (_char_ref*)calloc(face->face->num_glyphs, sizeof(_char_ref));
+    font->charLookup = (char_ref*)calloc(face->face->num_glyphs, sizeof(char_ref));
 
-    tex_ref_t l = {0};//pageIdx??
+    tex_ref_t l = {0};
 
     if (FT_IS_SCALABLE(face->face))
         l.height = face->face->size->metrics.height >> 6;
