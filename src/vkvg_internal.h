@@ -166,14 +166,22 @@ static void array_destroy_##type (array_##type* arr) {              \
     arr->elements = NULL;                                           \
     arr->count = 0;                                                 \
     arr->size = 0;                                                  \
-}                                                                   \
-static void array_del_##type (array_##type* arr, uint32_t index) {  \
-    if (index >= arr->count)                                        \
+}
+#define ARRAY_DEL_ELT(type)                                         \
+static void array_del_##type (array_##type* arr, type elt) {        \
+    uint32_t i;                                                     \
+    for (i = 0; i < arr->count; i++) {                              \
+        if (arr->elements[i] == elt)                                \
+            break;                                                  \
+    }                                                               \
+    if (i == arr->count) {                                          \
         return;                                                     \
-    if (index < arr->count - 1)                                     \
-        memcpy (&arr->elements[index], &arr->elements[index + 1], arr->count - index - 1); \
+    }                                                               \
+    if (i < arr->count - 1)                                         \
+        memmove (&arr->elements[i], &arr->elements[i + 1], (arr->count - i - 1) * sizeof(type)); \
     arr->count--;                                                   \
 }
+
 #define CTOR_ARRAY(type) CTOR_ARRAY_EXP(type,* 2)
 
 #include "vectors.h"

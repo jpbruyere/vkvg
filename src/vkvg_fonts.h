@@ -174,6 +174,7 @@ DIAGNOSTIC_DISABLE_UNUSED
 CTOR_ARRAY(TexRef)
 CTOR_ARRAY(uint64_t)
 CTOR_ARRAY(VkvgFont)
+ARRAY_DEL_ELT(VkvgFont)
 
 typedef struct _tex_page_t {
     array_TexRef    lines;
@@ -187,7 +188,6 @@ typedef struct _vkvg_font_face_t* FontFace;
 
 /* Font identification structure */
 typedef struct _vkvg_font_face_t{
-    uint32_t        index;    /* index in face list of containing font buffer */
     FontBuffer      fontBuffer;
     array_uint64_t  queryHashes;
 #ifdef VKVG_USE_FREETYPE
@@ -205,6 +205,7 @@ typedef struct _vkvg_font_face_t{
 } vkvg_font_face_t;
 
 CTOR_ARRAY(FontFace)
+ARRAY_DEL_ELT(FontFace)
 
 typedef struct _vkvg_font_buffer_t {
     uint64_t    fontPathHash;
@@ -222,7 +223,6 @@ typedef struct _vkvg_font_t {
     atomic_int      references; // reference count
 
     FontFace        face;
-    uint32_t        eltIndex; // index in face->sizes[] array
 #ifdef VKVG_USE_FREETYPE
     FT_F26Dot6      charSize; /* Font size in Point as fixed float 26.6 */
     FT_Size         ftSize;   /* FT size rec */

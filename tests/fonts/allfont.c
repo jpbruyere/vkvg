@@ -34,7 +34,7 @@ static const LocaleSample script_samples[] = {
     { "th",    "เป็นมนุษย์สุดประเสริฐเลิศคุณค่า" },                      // Thai
     { "hy",    "Ֆիզիկոս Մկրտիչը օճառաջուր ցողելով բժշկում է գնդապետ Հայկի փքված ձախ թևը։" }, // Armenian
     { "agr",   "Agatjai juuk tusha numpanum ijuaku jintanum pujawai" }, // Aguaruna (Latin script variation)
-    { "aa",    "Afari fanta asat darih doro dahanik xisbisa" },         // Afar (Latin script variation)
+    //{ "aa",    "Afari fanta asat darih doro dahanik xisbisa" },         // Afar (Latin script variation)
     { "bem",   "Abantu bonse bafyalwa abalubuka no kulingana mu mucinshi" }, // Bemba (Bantu Latin script)
     { "pa",    "ਘੁਮਿਆਰ ਨੇ ਮਿੱਟੀ ਚੁੱਕ ਕੇ ਇੱਕ ਬਹੁਤ ਹੀ ਸੁੰਦਰ ਘੜਾ ਬਣਾਇਆ।" },    // Punjabi (Gurmukhi script)
     { "te",    "కచ్ఛపము మందగమనముతో చెరువు వైపు వెళుతోంది." },            // Telugu (Telugu script)
@@ -65,7 +65,7 @@ static const LocaleSample script_samples[] = {
 void get_sample_by_fc_lang(const char* fc_lang, char* str) {
     const char* sample = NULL;
     if (fc_lang) {
-        for (int i = 1; i < 38; i++) {
+        for (int i = 1; i < 37; i++) {
             if (strncmp(fc_lang, script_samples[i].lang_code, strlen(script_samples[i].lang_code)) == 0) {
                 sample = script_samples[i].sample_text;
                 break;
@@ -249,7 +249,7 @@ static void mouse_button_callback(GLFWwindow* window, int but, int state, int mo
 }
 
 int main(int argc, char* argv[]) {
-    vkh_log_level = VKVG_LOG_ERR;
+    vkh_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN | VKVG_LOG_FONT;
 
     _parse_args(argc, argv);
     VkEngine e = vkengine_create (
@@ -262,7 +262,7 @@ int main(int argc, char* argv[]) {
     vkengine_set_scroll_callback(e, scroll_callback);
 
     vkvg_device_create_info_t info = {
-                                      4, false,
+                                      1, false,
                                       vkh_app_get_inst(e->app),
                                       vkh_device_get_phy(e->dev),
                                       vkh_device_get_vkdev(e->dev),
