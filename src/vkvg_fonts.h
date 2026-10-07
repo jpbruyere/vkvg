@@ -183,12 +183,13 @@ typedef struct _tex_page_t {
 
 CTOR_ARRAY(tex_page_t)
 
-typedef struct _vkvg_font_buffer_t vkvg_font_buffer_t;
+typedef struct _vkvg_font_buffer_t* FontBuffer;
+typedef struct _vkvg_font_face_t* FontFace;
 
 /* Font identification structure */
-typedef struct {
+typedef struct _vkvg_font_face_t{
     uint32_t        index;    /* index in face list of containing font buffer */
-    vkvg_font_buffer_t* fontBuffer;
+    FontBuffer      fontBuffer;
     array_uint64_t  queryHashes;
 #ifdef VKVG_USE_FREETYPE
     FT_Face         face;     /* FreeType face*/
@@ -204,16 +205,16 @@ typedef struct {
 #endif
 } vkvg_font_face_t;
 
-CTOR_ARRAY(vkvg_font_face_t)
+CTOR_ARRAY(FontFace)
 
 typedef struct _vkvg_font_buffer_t {
     uint64_t    fontPathHash;
     size_t      bufferSize;
-    unsigned char*          buffer;
-    array_vkvg_font_face_t  faces;
+    unsigned char*  buffer;
+    array_FontFace  faces;
 } vkvg_font_buffer_t;
 
-CTOR_ARRAY(vkvg_font_buffer_t)
+CTOR_ARRAY(FontBuffer)
 
 DIAGNOSTIC_RESTORE_UNUSED
 
@@ -221,8 +222,8 @@ typedef struct _vkvg_font_t {
     vkvg_status_t   status;
     atomic_int      references; // reference count
 
-    vkvg_font_face_t *face;
-    uint32_t          eltIndex; // index in face->sizes[] array
+    FontFace        face;
+    uint32_t        eltIndex; // index in face->sizes[] array
 #ifdef VKVG_USE_FREETYPE
     FT_F26Dot6      charSize; /* Font size in Point as fixed float 26.6 */
     FT_Size         ftSize;   /* FT size rec */
@@ -267,7 +268,7 @@ typedef struct {
     VkFence         uploadFence;  /* Signaled when upload is finished */
     mtx_t           mutex;        /* font cache global mutex, used only if device is in thread aware mode (see:
                                      vkvg_device_set_thread_aware) */
-    array_vkvg_font_buffer_t fontBuffers;
+    array_FontBuffer fontBuffers;
     array_tex_page_t texPages;
 } _font_cache_t;
 
