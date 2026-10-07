@@ -164,7 +164,7 @@ typedef struct _char_ref {
 typedef struct _tex_ref_t {
     uint8_t pageIdx;  /* Current page number in font cache */
     int     penY;     /* Current Y in cache for next char addition */
-    int     height;   /* Height of current line pointed by this structure */
+    int     height;   /* Height of current line pointed by this structure in pixel */
     bool    released; /* True after font destroy, may be reused for another font */
 } tex_ref_t;
 //typedef struct _tex_ref_t* TexRef;
@@ -240,6 +240,7 @@ typedef struct _vkvg_font_t {
     char_ref*       charLookup;/* Lookup table of characteres in cache, if not found, upload is queued*/
     array_TexRef    texLines;  /* texture reference where to add new glyph bmp's in cache */
     int             penX;      /* Current X in cache for next char addition */
+    float           height;    /* Height in pixel */
 } vkvg_font_t;
 
 

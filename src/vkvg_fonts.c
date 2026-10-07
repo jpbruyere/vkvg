@@ -232,30 +232,33 @@ void _flush_chars_to_tex(VkvgDevice dev, vkvg_font_t* f) {
 /// Start a new line in font cache, increase texture layer count if needed.
 void _init_next_line_in_tex_cache(VkvgDevice dev, vkvg_font_t* f) {
     _font_cache_t* cache = dev->fontCache;
-    TexRef l = f->texLines.elements[f->texLines.count - 1];
+    //TexRef l = f->texLines.elements[f->texLines.count - 1];
+
 
     for (int i = 0; i < cache->texPages.count; ++i) {
         tex_page_t* page = &cache->texPages.elements[i];
         //search free lines
         for (int j = 0; j < page->lines.count; ++j) {
             if (page->lines.elements[j]->released &&
-                page->lines.elements[j]->height == l->height) {
+                page->lines.elements[j]->height == f->height) {
                 // reuse freed line
-                l->pageIdx = (unsigned char)i;
-                l->penY    = page->lines.elements[j]->penY;
-                f->penX    = 0;
-                free(page->lines.elements[j]);
-                page->lines.elements[j] = l;
+                TexRef lp = page->lines.elements[j];
+                lp->released = false;
+                array_add_TexRef(&f->texLines, lp);
                 return;
             }
         }
-        if (page->penY + l->height >= FONT_PAGE_SIZE)
+        if (page->penY + f->height >= FONT_PAGE_SIZE)
             continue;
+
+        TexRef l = (TexRef)calloc(1, sizeof(tex_ref_t));
+        l->height = f->height;
         l->pageIdx = (unsigned char)i;
         l->penY    = page->penY;
+        array_add_TexRef(&f->texLines, l);
         array_add_TexRef(&page->lines, l);
         f->penX    = 0;
-        page->penY += l->height;
+        page->penY += f->height;
         return;
     }
     _flush_chars_to_tex(dev, f);
@@ -275,8 +278,6 @@ void _font_face_destroy (vkvg_font_face_t* face) {
     mtx_destroy(&face->mutex);
 
     array_del_vkvg_font_face_t(&face->fontBuffer->faces, face->index);
-//    if (face->fontBuffer->faces.count == 0)
-//        _font_face_destroy(font->face);
 }
 void _font_cache_destroy(VkvgDevice dev) {
     _font_cache_t* cache = (_font_cache_t*)dev->fontCache;
@@ -293,9 +294,8 @@ void _font_cache_destroy(VkvgDevice dev) {
             }
            // _font_face_destroy(&faces[j]);
         }
-        vkvg_font_buffer_t* buff = &buffs[i];
-        free(buff->buffer);
-        array_destroy_vkvg_font_face_t(&buff->faces);
+        free(buffs[i].buffer);
+        array_destroy_vkvg_font_face_t(&buffs[i].faces);
     }
     array_destroy_vkvg_font_buffer_t(&cache->fontBuffers);
 
@@ -304,6 +304,8 @@ void _font_cache_destroy(VkvgDevice dev) {
         tex_page_t *p = &cache->texPages.elements[i];
         LOG(VKVG_LOG_INFO, "\t%d: lines: %d \tpenY: %f\n", i, p->lines.count, p->penY);
         for (int j = 0; j < p->lines.count; ++j) {
+            /*printf("\t\tfree line %d, %p\n", j, p->lines.elements[j]);
+            fflush(stdout);*/
             free(p->lines.elements[j]);
         }
         array_destroy_TexRef(&p->lines);
@@ -556,8 +558,8 @@ bool _tryResolveFontNameWithFontConfig(VkvgDevice dev, const char* fontString, v
             }
 
             buff.faces = array_create_vkvg_font_face_t(2);
-            buffPtr = &cache->fontBuffers.elements[cache->fontBuffers.count];
             array_add_vkvg_font_buffer_t(&cache->fontBuffers, buff);
+            buffPtr = &cache->fontBuffers.elements[cache->fontBuffers.count - 1];
         }
 
         vkvg_font_face_t newFace = { buffPtr->faces.count, buffPtr };
@@ -588,8 +590,8 @@ bool _tryResolveFontNameWithFontConfig(VkvgDevice dev, const char* fontString, v
         newSize.descent        = roundf(newSize.scale * font->descent);
         newSize.lineGap        = roundf(newSize.scale * font->lineGap);
 #endif
-        *face = &buffPtr->faces.elements[buffPtr->faces.count];
         array_add_vkvg_font_face_t(&buffPtr->faces, newFace);
+        *face = &buffPtr->faces.elements[buffPtr->faces.count - 1];
         return true;
     }
     FcPatternDestroy(request);
@@ -928,15 +930,12 @@ VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
     font->ftSize = face->face->size;
     font->charLookup = (char_ref*)calloc(face->face->num_glyphs, sizeof(char_ref));
 
-    TexRef l = (TexRef)calloc(1, sizeof(tex_ref_t));
-
     if (FT_IS_SCALABLE(face->face))
-        l->height = face->face->size->metrics.height >> 6;
+        font->height = face->face->size->metrics.height >> 6;
     else
-        l->height = face->face->height >> 6;
+        font->height = face->face->height >> 6;
 
     font->texLines = array_create_TexRef(2);
-    array_add_TexRef(&font->texLines, l);
 #else
     stbtt_GetFontVMetrics(&font->stbInfo, &font->ascent, &font->descent, &font->lineGap);
     font->charLookup = (_char_ref**)calloc(font->stbInfo.numGlyphs, sizeof(_char_ref*));
@@ -986,6 +985,7 @@ void vkvg_font_destroy(VkvgFont font) {
     array_destroy_TexRef(&font->texLines);
 
     array_del_VkvgFont(&font->face->sizes , font->eltIndex);
+
     if (font->face->sizes.count == 0)
         _font_face_destroy(font->face);
     free(font->charLookup);
