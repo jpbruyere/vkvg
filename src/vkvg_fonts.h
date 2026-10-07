@@ -149,7 +149,6 @@ typedef struct _tex_ref_t* TexRef;
 // texture coordinates of one character in font cache array texture.
 typedef struct _char_ref {
     TexRef      texRef;    /* glyph bitmap ref */
-    uint32_t    index;      /* stored here only to detect empty char_ref */
     vec2i16     bmpDiff;    /* Difference in pixel between char bitmap top left corner and char glyph*/
     vec4        bounds;     /* normalized float bounds of character bitmap in font cache texture. */
 #ifdef VKVG_USE_FREETYPE

@@ -163,6 +163,7 @@ static type* array_last_##type (array_##type* arr) {                \
 }                                                                   \
 static void array_destroy_##type (array_##type* arr) {              \
     free(arr->elements);                                            \
+    arr->elements = NULL;                                           \
     arr->count = 0;                                                 \
     arr->size = 0;                                                  \
 }                                                                   \
