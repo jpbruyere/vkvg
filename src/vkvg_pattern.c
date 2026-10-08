@@ -174,6 +174,7 @@ vkvg_status_t vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r
     grad->stops[grad->count].r = offset;
 #endif
     grad->count++;
+    return VKVG_STATUS_SUCCESS;
 }
 void vkvg_pattern_set_extend(VkvgPattern pat, vkvg_extend_t extend) {
     if (vkvg_pattern_status(pat))

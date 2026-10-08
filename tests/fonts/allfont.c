@@ -212,11 +212,19 @@ void draw(VkvgSurface surfFont) {
             vkvg_move_to (ctx, penX, penY);
             vkvg_set_source_rgb(ctx,1,1,1);
             vkvg_show_text_run(ctx,tr);
+
             vkvg_flush(ctx);
-            vkvg_font_destroy(font);
-            vkvg_text_run_destroy(tr);
 
             penY += fontSize * 1.5f;
+
+            if (vkvg_font_status(font)) {
+                printf("Font in error %s\n", file_path);
+                fflush(stdout);
+                continue;
+            }
+
+            vkvg_font_destroy(font);
+            vkvg_text_run_destroy(tr);
         }
         if (penY > test_height - 100)
             break;

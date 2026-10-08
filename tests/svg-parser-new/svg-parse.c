@@ -915,14 +915,11 @@ void _resolve_pattern_href(svg_context *svg, void *rootElt, VkvgPattern pat) {
 }
 void set_pattern(svg_context *svg, uint32_t patternHash) {
     void       *elt;
-    VkvgPattern pat;
     if (try_find_by_id(svg, patternHash, &elt)) {
         switch (_get_element_type(elt)) {
         case svg_element_type_linear_gradient: {
             CASTELT(g,linear_gradient,elt);
             _resolve_pattern_href(svg, elt, g->pattern);
-
-            pat = g->pattern;
 
             float x0 = 0, y0 = 0, x1, y1;
             if (g->gradientUnits == svg_gradient_unit_objectBoundingBox)
@@ -953,7 +950,6 @@ void set_pattern(svg_context *svg, uint32_t patternHash) {
 
             _resolve_pattern_href(svg, elt, g->pattern);
 
-            pat      = g->pattern;
             float x0 = 0, y0 = 0, x1, y1;
             if (g->gradientUnits == svg_gradient_unit_objectBoundingBox)
                 vkvg_path_extents(svg->ctx, &x0, &y0, &x1, &y1);

@@ -84,7 +84,7 @@ static inline uint32_t decode_utf8_byte(uint32_t *const restrict state, uint32_t
     *state = utf8d[256 + *state * 16 + type];
     return *state;
 }
-uint32_t inline decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
+static uint32_t inline decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
     uint32_t type = utf8d[byte];
     *codep = (*state != UTF8_ACCEPT) ?
                  (byte & 0x3fu) | (*codep << 6) :
@@ -147,7 +147,7 @@ static inline uint32_t decode_unicode_codepoint(const uint8_t* text) {
     return 0;
 }
 
-inline int get_utf8_char_length(uint8_t first_byte) {
+static inline int get_utf8_char_length(uint8_t first_byte) {
     return utf8_len_table[first_byte];
 }
 
@@ -173,11 +173,9 @@ typedef struct _tex_ref_t {
     int     height;   /* Height of current line pointed by this structure in pixel */
     bool    released; /* True after font destroy, may be reused for another font */
 } tex_ref_t;
-//typedef struct _tex_ref_t* TexRef;
 
 DIAGNOSTIC_DISABLE_UNUSED
 
-//CTOR_ARRAY(tex_ref_t)
 CTOR_ARRAY(TexRef)
 CTOR_ARRAY(uint64_t)
 CTOR_ARRAY(VkvgFont)
@@ -190,8 +188,8 @@ typedef struct _tex_page_t {
 
 CTOR_ARRAY(tex_page_t)
 
-typedef struct _vkvg_font_buffer_t* FontBuffer;
-typedef struct _vkvg_font_face_t* FontFace;
+typedef struct _vkvg_font_buffer_t *FontBuffer;
+typedef struct _vkvg_font_face_t   *FontFace;
 
 /* Font identification structure */
 typedef struct _vkvg_font_face_t{
@@ -225,6 +223,7 @@ typedef struct _vkvg_font_buffer_t {
 } vkvg_font_buffer_t;
 
 CTOR_ARRAY(FontBuffer)
+ARRAY_DEL_ELT(FontBuffer)
 
 DIAGNOSTIC_RESTORE_UNUSED
 
@@ -233,6 +232,7 @@ typedef struct _vkvg_font_t {
     atomic_int      references; // reference count
 
     FontFace        face;
+    VkvgDevice      dev;        // to access font cache when required
 #ifdef VKVG_USE_FREETYPE
     FT_F26Dot6      charSize; /* Font size in Point as fixed float 26.6 */
     FT_Size         ftSize;   /* FT size rec */
@@ -244,7 +244,7 @@ typedef struct _vkvg_font_t {
     int             lineGap;
 #endif
 
-    glyph_ref*       charLookup;/* Lookup table of characteres in cache, if not found, upload is queued*/
+    glyph_ref*      charLookup;/* Lookup table of characteres in cache, if not found, upload is queued*/
     array_TexRef    texLines;  /* texture reference where to add new glyph bmp's in cache */
     int             penX;      /* Current X in cache for next char addition */
     float           height;    /* Height in pixel */

@@ -1,11 +1,10 @@
 // Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
 //
 // This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
-
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
 #include "vkvg_surface_internal.h"
-#include "vkvg_pattern.h"
+//#include "vkvg_pattern.h"
 #include "vkh_queue.h"
 
 #ifdef DEBUG

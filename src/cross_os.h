@@ -46,7 +46,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <errno.h>
 #include <pwd.h>
 #define vkvg_inline     static inline __attribute((always_inline))
 #define disable_warning (warn) #pragma GCC diagnostic ignored "-W" #warn

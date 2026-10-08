@@ -27,12 +27,11 @@
 //		Contact: mcseem@antigrain.com
 //				 mcseemagg@yahoo.com
 //				 http://antigrain.com
-
 #include "vkvg_surface_internal.h"
 #include "vkvg_context_internal.h"
 #include "vkvg_device_internal.h"
 #include "vkvg_pattern.h"
-#include "vkh_queue.h"
+//#include "vkh_queue.h"
 #include "vkh_image.h"
 
 #ifdef VKVG_FILL_NZ_GLUTESS

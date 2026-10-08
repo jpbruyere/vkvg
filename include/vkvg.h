@@ -346,6 +346,7 @@ typedef struct _vkvg_font_t* VkvgFont;
  * @brief Create a new VkvgFont.
  */
 vkvg_public VkvgFont        vkvg_font_create (VkvgDevice dev, const char* queryString, float pointSize);
+vkvg_public VkvgFont        vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, int faceIndex, float pointSize);
 /*
  * @brief Get underlying font face object pointer, if freetype is enable, the FT_Face will be returned.
  */
