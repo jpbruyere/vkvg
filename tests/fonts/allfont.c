@@ -7,7 +7,7 @@
 #include FT_TRUETYPE_IDS_H
 #include FT_MULTIPLE_MASTERS_H
 
-float fontSize = 32.0f;
+float fontSize = 28.0f;
 int   curFontStartIdx = 0;
 bool  redraw = true;
 
@@ -190,7 +190,6 @@ void draw(VkvgSurface surfFont) {
             }
             vkvg_set_font (ctx, font);
 
-
             FT_Face face = (FT_Face)vkvg_font_get_face(font);
             if (!try_get_sample_string(font_entry, face, tmp))
                 sprintf(tmp, "%s : %s", family_name, style_variant);
@@ -215,6 +214,7 @@ void draw(VkvgSurface surfFont) {
             vkvg_show_text_run(ctx,tr);
             vkvg_flush(ctx);
             vkvg_font_destroy(font);
+            vkvg_text_run_destroy(tr);
 
             penY += fontSize * 1.5f;
         }
@@ -268,7 +268,7 @@ static void mouse_button_callback(GLFWwindow* window, int but, int state, int mo
 
 int main(int argc, char* argv[]) {
     vkh_log_level = VKH_LOG_FULL;
-    vkvg_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN;// | VKVG_LOG_FONT;
+    vkvg_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN | VKVG_LOG_FONT;
 
     _parse_args(argc, argv);
     VkEngine e = vkengine_create (

@@ -120,7 +120,7 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
 }
 /// increase layer count of 2d texture array used as font cache.
 void _increase_font_tex_array(VkvgDevice dev) {
-    LOG(VKVG_LOG_INFO, "_increase_font_tex_array\n");
+    LOG(VKVG_LOG_FONT, "_increase_font_tex_array\n");
 
     _font_cache_t* cache = dev->fontCache;
 
@@ -183,7 +183,6 @@ void _increase_font_tex_array(VkvgDevice dev) {
 // flush font stagging buffer to cache texture array
 // Trigger stagging buffer to be uploaded in font cache. Groupping upload improve performances.
 void _flush_chars_to_tex(VkvgDevice dev, vkvg_font_t* f) {
-
     _font_cache_t* cache = dev->fontCache;
     if (cache->stagingX == 0) // no char in stagging buff to flush
         return;
@@ -241,6 +240,7 @@ void _init_next_line_in_tex_cache(VkvgDevice dev, vkvg_font_t* f) {
                 lp->released = false;
                 array_add_TexRef(&f->texLines, lp);
                 f->penX    = 0;
+                LOG(VKVG_LOG_FONT, "Reusing page %d line %d for %s\n", i, j, f->face->face->family_name);
                 return;
             }
         }
@@ -255,6 +255,7 @@ void _init_next_line_in_tex_cache(VkvgDevice dev, vkvg_font_t* f) {
         array_add_TexRef(&page->lines, l);
         f->penX    = 0;
         page->penY += f->height;
+        LOG(VKVG_LOG_FONT, "Create new line %d on page %d for %s\n", page->lines.count -1, i, f->face->face->family_name);
         return;
     }
     _flush_chars_to_tex(dev, f);
@@ -270,6 +271,7 @@ void _font_buffer_destroy (vkvg_font_face_t* face) {
 #endif
 }
 void _font_face_destroy (FontFace face) {
+    LOG(VKVG_LOG_FONT, "FontFace destroy: %s\n", face->face->family_name);
     array_destroy_VkvgFont(&face->sizes);
     array_destroy_uint64_t(&face->queryHashes);
     array_del_FontFace(&face->fontBuffer->faces, face);
@@ -277,7 +279,7 @@ void _font_face_destroy (FontFace face) {
 #ifdef VKVG_USE_FREETYPE
     mtx_destroy(&face->mutex);
     if (face->fontBuffer->faces.count == 0) {
-        LOG(VKVG_LOG_FONT, "Done face: %s\n", face->face->family_name);
+        LOG(VKVG_LOG_FONT, "\tDone face: %s\n", face->face->family_name);
         #ifdef VKVG_USE_HARFBUZZ
         hb_font_destroy(face->hb_font);
         #endif
@@ -307,15 +309,18 @@ void _font_cache_destroy(VkvgDevice dev) {
     }
     array_destroy_FontBuffer(&cache->fontBuffers);
 
-    LOG(VKVG_LOG_INFO, "Font pages in cache: %d\n", cache->texPages.count);
+    LOG(VKVG_LOG_FONT, "Font pages in cache: %d\n", cache->texPages.count);
     for (int i = 0; i < cache->texPages.count; ++i) {
         tex_page_t *p = &cache->texPages.elements[i];
-        LOG(VKVG_LOG_INFO, "\t%d: lines: %d \tpenY: %f\n", i, p->lines.count, p->penY);
+        int freeLines = 0;
         for (int j = 0; j < p->lines.count; ++j) {
-            /*printf("\t\tfree line %d, %p\n", j, p->lines.elements[j]);
-            fflush(stdout);*/
+#if DEBUG
+            if (p->lines.elements[j]->released)
+                freeLines++;
+#endif
             free(p->lines.elements[j]);
         }
+        LOG(VKVG_LOG_FONT, "\t%d: lines: %d \tpenY: %f released lines: %d\n", i, p->lines.count, p->penY, freeLines);
         array_destroy_TexRef(&p->lines);
     }
     array_destroy_tex_page_t(&cache->texPages);
@@ -604,7 +609,9 @@ void _font_lock_size (VkvgContext ctx, VkvgFont font) {
             mtx_lock(&font->face->mutex);
         FT_CHECK_RESULT(FT_Activate_Size(font->ftSize));
 #ifdef VKVG_USE_HARFBUZZ
-        hb_ft_font_changed(font->face->hb_font);
+        hb_font_t* hbf = font->face->hb_font;
+        hb_ft_font_changed(hbf);
+        hb_font_set_ppem(hbf, font->ftSize->metrics.x_ppem, font->ftSize->metrics.y_ppem);
 #endif
     }
 #endif
@@ -663,6 +670,7 @@ void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkv
     text_run_term(&tr);
 }
 // text is expected as utf8 encoded
+
 // if length is < 0, text must be null terminated, else it contains glyph count
 void text_run_init(VkvgContext ctx, const char* text, int length, VkvgText textRun) {
     textRun->dev    = ctx->dev;
@@ -905,9 +913,6 @@ void _clear_cache() {
 
 }
 
-void* vkvg_font_get_face(VkvgFont font) {
-    return font->face->face;
-}
 
 #ifdef VKVG_USE_FREETYPE
 #define CHECK_FACE_FLAG(flags, flag, buffer) \
@@ -958,6 +963,9 @@ void ft_face_flags_to_string(FT_Long face_flags, char* out_str, size_t max_len) 
 }
 #endif
 
+void* vkvg_font_get_face(VkvgFont font) {
+    return font->face->face;
+}
 VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
     uint32_t pt26_6 = (uint32_t)(pointSize * 64.f);
     VkvgFont font = NULL;
@@ -1043,11 +1051,13 @@ void vkvg_font_destroy(VkvgFont font) {
         return;
     if (atomic_fetch_sub_explicit(&font->references, 1, memory_order_acq_rel) != 1)
         return;
+    LOG(VKVG_LOG_FONT, "Font destroy: %s\n", font->face->face->family_name);
 #ifdef VKVG_USE_FREETYPE
     FT_Done_Size(font->ftSize);
 #endif
 
     for (int i = 0; i < font->texLines.count; ++i) {
+        LOG(VKVG_LOG_FONT, "\treleased line %d of page %d\n", i, font->texLines.elements[i]->pageIdx);
         font->texLines.elements[i]->released = true;
     }
     array_destroy_TexRef(&font->texLines);
