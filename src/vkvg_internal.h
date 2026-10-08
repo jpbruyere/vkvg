@@ -30,6 +30,8 @@
 #endif
 
 #include <assert.h>
+#include <stdio.h> // needed before stdarg.h on Windows
+#include <stdatomic.h>
 
 #include "vkh.h"
 #include "vkvg.h"
@@ -37,9 +39,10 @@
 #include <float.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h> // needed before stdarg.h on Windows
+
+#include <stdlib.h>
 #include <stdarg.h>
-#include <stdatomic.h>
+#include <string.h>
 
 // should be supported by c11
 // #include <threads.h>
@@ -81,6 +84,14 @@ static inline uint64_t fnv1a_64_str(const char *const restrict str) {
     #define M_2_PI		0.63661977236758134308	// 2/pi
 #endif*/
 
+// 1. Define ANSI Color Codes
+#define CLR_RESET   "\x1b[0m"
+#define CLR_RED     "\x1b[31m"
+#define CLR_GREEN   "\x1b[32m"
+#define CLR_YELLOW  "\x1b[33m"
+#define CLR_BLUE    "\x1b[34m"
+
+
 /*#ifdef DEBUG
 #define LOG(level, ...)                                                                                                \
     {                                                                                                                  \
@@ -121,6 +132,21 @@ static inline uint64_t fnv1a_64_str(const char *const restrict str) {
 
 #include "deps/tinycthread.h"
 #include "cross_os.h"
+
+#ifdef LOG
+#undef LOG
+#endif
+
+#define DEBUG_LOG
+
+#ifdef DEBUG_LOG
+#define LOG(level, ...) { if (vkvg_unlikely(vkvg_log_level & level)) { fprintf(stdout, CLR_RESET "[VKVG] " __VA_ARGS__); fflush(stdout); }}
+#else
+#define LOG
+#endif
+#define LOGE(...) { fprintf(stdout, CLR_RED "[VKVG] " __VA_ARGS__); fflush(stdout); }
+#define LOGW(...) { fprintf(stdout, CLR_YELLOW "[VKVG] " __VA_ARGS__); fflush(stdout); }
+
 // width of the stencil buffer will determine the number of context saving/restore layers
 // the two first bits of the stencil are the FILL and the CLIP bits, all other bits are
 // used to store clipping bit on context saving. 8 bit stencil will allow 6 save/restore layer

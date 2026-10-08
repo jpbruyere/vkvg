@@ -224,7 +224,7 @@ vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const ch
 
 #ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
     if (!scalarBlockLayoutSupport.scalarBlockLayout) {
-        LOG(VKVG_LOG_ERR, "CREATE Device failed, vkvg compiled with VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT and feature is "
+        LOGE("CREATE Device failed, vkvg compiled with VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT and feature is "
                           "not implemented for physical device.\n");
         free(pExtensionProperties);
         return VKVG_STATUS_DEVICE_ERROR;
@@ -233,7 +233,7 @@ vkvg_status_t vkvg_get_required_device_extensions(VkPhysicalDevice phy, const ch
 #endif
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     if (!timelineSemaphoreSupport.timelineSemaphore) {
-        LOG(VKVG_LOG_ERR, "CREATE Device failed, VK_SEMAPHORE_TYPE_TIMELINE not supported.\n");
+        LOGE("CREATE Device failed, VK_SEMAPHORE_TYPE_TIMELINE not supported.\n");
         free(pExtensionProperties);
         return VKVG_STATUS_DEVICE_ERROR;
     }
@@ -289,12 +289,12 @@ const void* vkvg_get_device_requirements(VkPhysicalDeviceFeatures* pEnabledFeatu
 VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
     LOG(VKVG_LOG_INFO, "CREATE Device\n");
     if (!info) {
-        LOG(VKVG_LOG_ERR, "CREATE Device failed, provided vkvg_device_create_info_t is null\n");
+        LOGE("CREATE Device failed, provided vkvg_device_create_info_t is null\n");
         return (VkvgDevice)&_vkvg_status_invalid_dev_ci;
     }
     VkvgDevice dev = (vkvg_device*)calloc(1, sizeof(vkvg_device));
     if (!dev) {
-        LOG(VKVG_LOG_ERR, "CREATE Device failed, no memory\n");
+        LOGE("CREATE Device failed, no memory\n");
         return (VkvgDevice)&_vkvg_status_no_memory;
     }
 
@@ -354,7 +354,7 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
             info->samples = VK_SAMPLE_COUNT_1_BIT;
 
         if (!(pi->properties.limits.framebufferColorSampleCounts & info->samples)) {
-            LOG(VKVG_LOG_ERR, "CREATE Device failed: sample count not supported: %d\n", info->samples);
+            LOGE("CREATE Device failed: sample count not supported: %d\n", info->samples);
             dev->status = VKVG_STATUS_DEVICE_ERROR;
             vkh_app_free_phyinfos(phyCount, phys);
             vkh_app_destroy(app);
@@ -405,7 +405,7 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
 
 void vkvg_device_destroy(VkvgDevice dev) {
     if (vkvg_device_status(dev)) {
-        LOG(VKVG_LOG_ERR, "DESTROY Device failed, see Status for info");
+        LOGE("DESTROY Device failed, see Status for info");
         return;
     }
     LOCK_DEVICE

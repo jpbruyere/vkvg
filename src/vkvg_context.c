@@ -81,12 +81,12 @@ void _init_ctx(VkvgContext ctx) {
 VkvgContext vkvg_create(VkvgSurface surf) {
     LOG(VKVG_LOG_INFO, "CREATE Context\n");
     if (vkvg_surface_status(surf)) {
-        LOG(VKVG_LOG_ERR, "CREATE Context failed, invalid surface\n");
+        LOGE("CREATE Context failed, invalid surface\n");
         return (VkvgContext)&_vkvg_status_invalid_surface;
     }
     VkvgDevice dev = surf->dev;
     if (vkvg_device_status(dev)) {
-        LOG(VKVG_LOG_ERR, "CREATE Context failed, invalid device\n");
+        LOGE("CREATE Context failed, invalid device\n");
         return (VkvgContext)&_vkvg_status_device_error;
     }
     VkvgContext ctx = NULL;
@@ -103,7 +103,7 @@ VkvgContext vkvg_create(VkvgSurface surf) {
     ctx = (vkvg_context*)calloc(1, sizeof(vkvg_context));
 
     if (!ctx) {
-        LOG(VKVG_LOG_ERR, "CREATE context failed, no memory\n");
+        LOGE("CREATE context failed, no memory\n");
         return (VkvgContext)&_vkvg_status_no_memory;
     }
 
@@ -133,7 +133,7 @@ VkvgContext vkvg_create(VkvgSurface surf) {
         if (ctx->indexCache)
             free(ctx->indexCache);
         free(ctx);
-        LOG(VKVG_LOG_ERR, "CREATE context failed, no memory\n");
+        LOGE("CREATE context failed, no memory\n");
         return (VkvgContext)&_vkvg_status_no_memory;
     }
 
@@ -1246,14 +1246,14 @@ VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text) {
     if (vkvg_status(ctx))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    _font_cache_init_text_run(ctx, text, -1, tr);
+    text_run_init(ctx, text, -1, tr);
     return tr;
 }
 VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
     if (vkvg_status(ctx))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    _font_cache_init_text_run(ctx, text, length, tr);
+    text_run_init(ctx, text, length, tr);
     return tr;
 }
 uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun) { return textRun->glyph_count; }
@@ -1269,13 +1269,13 @@ void     vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg
 #endif
 }
 void vkvg_text_run_destroy(VkvgText textRun) {
-    _font_cache_term_text_run(textRun);
+    text_run_term(textRun);
     free(textRun);
 }
 void vkvg_show_text_run(VkvgContext ctx, VkvgText textRun) {
     if (vkvg_status(ctx))
         return;
-    _font_cache_show_text_run(ctx, textRun);
+    text_run_show_text(ctx, textRun);
 }
 void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents) { *extents = textRun->extents; }
 
@@ -1302,7 +1302,7 @@ void vkvg_save(VkvgContext ctx) {
             ctx->pSavedCtxs, newSize * sizeof(vkvg_context_save_t));
         if (tmp == NULL) {
             ctx->status = VKVG_STATUS_NO_MEMORY;
-            LOG(VKVG_LOG_ERR, "resize context save stack failed.\n");
+            LOGE("resize context save stack failed.\n");
             return;
         }
         ctx->pSavedCtxs = tmp;

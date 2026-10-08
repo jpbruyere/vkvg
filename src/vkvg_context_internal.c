@@ -46,7 +46,7 @@ void _resize_vertex_cache(VkvgContext ctx, uint32_t newSize) {
         ctx->vertCount, ctx->sizeVertices, newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
     if (tmp == NULL) {
         ctx->status = VKVG_STATUS_NO_MEMORY;
-        LOG(VKVG_LOG_ERR, "resize vertex cache failed: vert count: %u byte size: %zu\n", newSize,
+        LOGE("resize vertex cache failed: vert count: %u byte size: %zu\n", newSize,
             newSize * sizeof(Vertex));
         return;
     }
@@ -60,7 +60,7 @@ void _resize_index_cache(VkvgContext ctx, uint32_t newSize) {
         ctx->indexCache, tmp);
     if (tmp == NULL) {
         ctx->status = VKVG_STATUS_NO_MEMORY;
-        LOG(VKVG_LOG_ERR, "resize IBO failed: idx count: %u size(byte): %zu\n", newSize,
+        LOGE("resize IBO failed: idx count: %u size(byte): %zu\n", newSize,
             (size_t)newSize * sizeof(VKVG_IBO_INDEX_TYPE));
         return;
     }
@@ -106,7 +106,7 @@ bool _check_pathes_array(VkvgContext ctx) {
     LOG(VKVG_LOG_DBG_ARRAYS, "resize PATH: new size: %u Ptr: %p -> %p\n", ctx->sizePathes, ctx->pathes, tmp);
     if (tmp == NULL) {
         ctx->status = VKVG_STATUS_NO_MEMORY;
-        LOG(VKVG_LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePathes * sizeof(uint32_t));
+        LOGE("resize PATH failed: new size(byte): %zu\n", ctx->sizePathes * sizeof(uint32_t));
         _clear_path(ctx);
         return true;
     }
@@ -122,7 +122,7 @@ bool _check_point_array(VkvgContext ctx) {
     LOG(VKVG_LOG_DBG_ARRAYS, "resize Points: new size(point): %u Ptr: %p -> %p\n", ctx->sizePoints, ctx->points, tmp);
     if (tmp == NULL) {
         ctx->status = VKVG_STATUS_NO_MEMORY;
-        LOG(VKVG_LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePoints * sizeof(vec2));
+        LOGE("resize PATH failed: new size(byte): %zu\n", ctx->sizePoints * sizeof(vec2));
         _clear_path(ctx);
         return true;
     }
@@ -689,7 +689,7 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
         if (lastPat == NULL) // solid
             return;          // solid to solid transition, no extra action requested
     } else if (pat->status) {
-        LOG(VKVG_LOG_ERR, "Error: Update pattern fails, pattern status: %d\n", pat->status);
+        LOGE("Error: Update pattern fails, pattern status: %d\n", pat->status);
         return;
     } else
         newPatternType = pat->type;

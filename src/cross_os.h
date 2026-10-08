@@ -73,6 +73,23 @@ __pragma(warning(disable : 4505))
 #define DIAGNOSTIC_RESTORE_UNUSED
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+/* GCC and Clang (Linux, macOS, MinGW) */
+#define vkvg_likely(x)   __builtin_expect(!!(x), 1)
+#define vkvg_unlikely(x) __builtin_expect(!!(x), 0)
+#elif defined(_MSC_VER)
+/* MSVC (Windows)                                                 */
+/* MSVC does not have a static branch predictor builtin.          */
+/* We fall back to standard evaluation. MSVC relies on PGO        */
+/* (Profile-Guided Optimization) to sort branches at link time.  */
+#define vkvg_likely(x)   (!!(x))
+#define vkvg_unlikely(x) (!!(x))
+#else
+/* Fallback for any other exotic compiler */
+#define vkvg_likely(x)   (!!(x))
+#define vkvg_unlikely(x) (!!(x))
+#endif
+
 // 1. Check if we are in a POSIX environment that supports strncasecmp
 #if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L)
 #include <strings.h> /* Provides the native strncasecmp */

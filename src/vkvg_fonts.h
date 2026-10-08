@@ -60,13 +60,11 @@ static const uint8_t utf8d[] = {
     8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
     0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
     0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
-    0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s7
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,2,1,1,1,1,1,1,1,1,1,1, // s8..s9
-    1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // sA..sB
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1, // sC..sD
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1,1, // sE..sF
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // sG..sH
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1, // sI..sJ
+    0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
+    1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
+    1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
+    1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
 };
 
 /**
@@ -84,6 +82,15 @@ static inline uint32_t decode_utf8_byte(uint32_t *const restrict state, uint32_t
                  (0xffu >> type) & (byte);
 
     *state = utf8d[256 + *state * 16 + type];
+    return *state;
+}
+uint32_t inline decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
+    uint32_t type = utf8d[byte];
+    *codep = (*state != UTF8_ACCEPT) ?
+                 (byte & 0x3fu) | (*codep << 6) :
+                 (0xff >> type) & (byte);
+
+    *state = utf8d[256 + *state*16 + type];
     return *state;
 }
 
@@ -156,7 +163,7 @@ typedef struct _char_ref {
 #else
     vec2 advance;
 #endif
-} char_ref;
+} glyph_ref;
 
 // Current location in font cache texture array for new character addition. Each font holds such structure to locate
 // where to upload new chars.
@@ -193,6 +200,9 @@ typedef struct _vkvg_font_face_t{
 #ifdef VKVG_USE_FREETYPE
     FT_Face         face;     /* FreeType face*/
     mtx_t           mutex;    /* Only one font size at a time may use this face */
+#endif
+#ifdef VKVG_USE_HARFBUZZ
+    hb_font_t*      hb_font; /* HarfBuzz font instance*/
 #endif
     array_VkvgFont  sizes;    /* loaded font size array */
 
@@ -234,10 +244,7 @@ typedef struct _vkvg_font_t {
     int             lineGap;
 #endif
 
-#ifdef VKVG_USE_HARFBUZZ
-    hb_font_t*      hb_font; /* HarfBuzz font instance*/
-#endif
-    char_ref*       charLookup;/* Lookup table of characteres in cache, if not found, upload is queued*/
+    glyph_ref*       charLookup;/* Lookup table of characteres in cache, if not found, upload is queued*/
     array_TexRef    texLines;  /* texture reference where to add new glyph bmp's in cache */
     int             penX;      /* Current X in cache for next char addition */
     float           height;    /* Height in pixel */
@@ -293,24 +300,16 @@ typedef struct _vkvg_text_run_t {
 #endif
 } vkvg_text_run_t;
 
-// Create font cache.
+
 void _fonts_cache_create(VkvgDevice dev, const char *fontDirs);
-// Release all ressources of font cache.
-void                   _font_cache_destroy(VkvgDevice dev);
-vkvg_font_face_t* _font_cache_add_font_identity(VkvgContext ctx, const char* fontFile, const char* name);
-bool                   _font_cache_load_font_file_in_memory(vkvg_font_face_t* fontId);
-// Draw text
+void _font_cache_destroy(VkvgDevice dev);
+bool _font_cache_load_font_file_in_memory(vkvg_font_face_t* fontId);
 void _font_cache_show_text(VkvgContext ctx, const char* text);
-// Get text dimmensions
 void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkvg_text_extents_t* extents);
-// Get font global dimmensions
 void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents);
-// Create text object that could be drawn multiple times minimizing harfbuzz and compute processing.
-void _font_cache_init_text_run(VkvgContext ctx, const char* text, int length, VkvgText textRun);
-// Release ressources held by a text run.
-void _font_cache_term_text_run(VkvgText textRun);
-// Draw text run
-void _font_cache_show_text_run(VkvgContext ctx, VkvgText tr);
-// update context font cache descriptor set
 void _font_cache_update_context_descset(VkvgContext ctx);
+
+void text_run_init(VkvgContext ctx, const char* text, int length, VkvgText textRun);
+void text_run_term(VkvgText textRun);
+void text_run_show_text(VkvgContext ctx, VkvgText tr); // Draw text run
 #endif

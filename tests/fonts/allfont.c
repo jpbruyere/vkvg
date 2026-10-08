@@ -7,7 +7,7 @@
 #include FT_TRUETYPE_IDS_H
 #include FT_MULTIPLE_MASTERS_H
 
-float fontSize = 16.0f;
+float fontSize = 32.0f;
 int   curFontStartIdx = 0;
 bool  redraw = true;
 
@@ -31,7 +31,7 @@ static const LocaleSample script_samples[] = {
     { "he",    "דג אכל גזר באשחט" },                                    // Hebrew
     { "hi",    "ऋषियों को तपस्या करते देख, दुष्टों के मन में डर पैदा हुआ।" }, // Hindi / Devanagari
     { "el",    "διαφυλάξτε γενικά τη ζωή σας από τον φόβο" },           // Greek
-    { "th",    "เป็นมนุษย์สุดประเสริฐเลิศคุณค่า" },                      // Thai
+    { "th",    "เป็นมนุษย์สุดประเสริฐเลิIศคุณค่า" },                      // Thai
     { "hy",    "Ֆիզիկոս Մկրտիչը օճառաջուր ցողելով բժշկում է գնդապետ Հայկի փքված ձախ թևը։" }, // Armenian
     { "agr",   "Agatjai juuk tusha numpanum ijuaku jintanum pujawai" }, // Aguaruna (Latin script variation)
     //{ "aa",    "Afari fanta asat darih doro dahanik xisbisa" },         // Afar (Latin script variation)
@@ -62,7 +62,7 @@ static const LocaleSample script_samples[] = {
     { "mn-cn", "Хүн бүр төрөхDiscussion эрх чөлөөтэй, нэр төр, эрхийн хувьд адилхан." }, // Mongolian - Inner Mongolia (Cyrillic fallback)
 };
 
-void get_sample_by_fc_lang(const char* fc_lang, char* str) {
+bool try_get_sample_by_fc_lang(const char* fc_lang, char* str) {
     const char* sample = NULL;
     if (fc_lang) {
         for (int i = 1; i < 37; i++) {
@@ -73,12 +73,12 @@ void get_sample_by_fc_lang(const char* fc_lang, char* str) {
         }
         if (!sample) {
             sample = script_samples[0].sample_text;
-            printf("missing lang sample: %s\n", fc_lang);
+            return false;
         }
     }
 
-    // Check if the fontconfig language string starts with a known code
     strncpy(str, sample, strlen(sample)+1);
+    return true;
 }
 
 
@@ -143,12 +143,12 @@ bool try_get_sample_string(FcPattern* font_entry, FT_Face face, char* str) {
         if (!lang_list)
             return false;
 
-        lang = FcStrListNext(lang_list);
-
-        if (!lang)
-            return false;
-        //printf("lang: %s\n", str);
-        get_sample_by_fc_lang((char*)lang, str);
+        while ((lang = FcStrListNext(lang_list))) {
+            if (!lang)
+                continue;
+            if (try_get_sample_by_fc_lang((char*)lang, str))
+                break;
+        }
 
         FcStrListDone(lang_list);
         return true;
@@ -162,7 +162,6 @@ void draw(VkvgSurface surfFont) {
         return;
     VkvgContext ctx = vkvg_create(surfFont);
     vkvg_clear(ctx);
-    vkvg_set_source_rgb(ctx,1,1,1);
 
     float penX = 10.f;
     float penY = 50.f;
@@ -190,13 +189,30 @@ void draw(VkvgSurface surfFont) {
                 continue;
             }
             vkvg_set_font (ctx, font);
-            vkvg_move_to (ctx, penX, penY);
+
 
             FT_Face face = (FT_Face)vkvg_font_get_face(font);
             if (!try_get_sample_string(font_entry, face, tmp))
                 sprintf(tmp, "%s : %s", family_name, style_variant);
 
-            vkvg_show_text (ctx,tmp);
+            vkvg_font_extents_t fe = {0};
+            vkvg_font_extents(ctx, &fe);
+            VkvgText tr = vkvg_text_run_create(ctx, tmp);
+            vkvg_text_extents_t extents = {0};
+            vkvg_text_run_get_extents(tr, &extents);
+            vkvg_rectangle(ctx, penX, penY - fe.ascent, extents.width, extents.height);
+            vkvg_set_line_width(ctx, 1);
+            vkvg_set_source_rgba(ctx,0.5f,0.5f,1, 0.7f);
+            vkvg_stroke(ctx);
+
+            vkvg_move_to (ctx, penX, penY);
+            vkvg_set_source_rgba(ctx,1,0,0,0.5f);
+            vkvg_arc(ctx, penX, penY, 3, 0, 2 * M_PI);
+            vkvg_fill(ctx);
+
+            vkvg_move_to (ctx, penX, penY);
+            vkvg_set_source_rgb(ctx,1,1,1);
+            vkvg_show_text_run(ctx,tr);
             vkvg_flush(ctx);
             vkvg_font_destroy(font);
 
@@ -229,12 +245,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 static void mouse_move_callback(GLFWwindow* window, double x, double y) {
 }
 static void scroll_callback(GLFWwindow* window, double x, double y) {
+    const int step = 5;
     if (y > 0.f) {
         if (curFontStartIdx > 0)
-            curFontStartIdx --;
+            curFontStartIdx -= 5;
+        curFontStartIdx = MAX(curFontStartIdx, 0);
     } else if (font_database) {
         if (curFontStartIdx < font_database->nfont)
-        curFontStartIdx ++;
+            curFontStartIdx +=5;
     }
     redraw = true;
 }
@@ -249,7 +267,8 @@ static void mouse_button_callback(GLFWwindow* window, int but, int state, int mo
 }
 
 int main(int argc, char* argv[]) {
-    vkh_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN | VKVG_LOG_FONT;
+    vkh_log_level = VKH_LOG_FULL;
+    vkvg_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN;// | VKVG_LOG_FONT;
 
     _parse_args(argc, argv);
     VkEngine e = vkengine_create (
@@ -279,9 +298,12 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     FcConfig* config = FcConfigGetCurrent();
-    FcPattern* blank_pattern = FcPatternCreate();
+    FcPattern* request = FcPatternCreate();
     FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, (char *)0);
-    font_database = FcFontList(config, blank_pattern, requested_elements);
+    FcPatternAddBool(request, FC_SCALABLE, FcTrue);
+    FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
+
+    font_database = FcFontList(config, request, requested_elements);
 
     while (!vkengine_should_close(e)) {
         glfwPollEvents();
@@ -319,7 +341,7 @@ int main(int argc, char* argv[]) {
 
     FcFontSetDestroy(font_database);
     FcObjectSetDestroy(requested_elements);
-    FcPatternDestroy(blank_pattern);
+    FcPatternDestroy(request);
     FcFini();
 
     return 0;

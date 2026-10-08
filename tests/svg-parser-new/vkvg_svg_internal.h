@@ -30,6 +30,7 @@
 #define LOG
 #endif
 #define LOGE(...) { fprintf(stdout, CLR_RED "[SVG] " __VA_ARGS__); fflush(stdout); }
+#define LOGW(...) { fprintf(stdout, CLR_YELLOW "[SVG] " __VA_ARGS__); fflush(stdout); }
 
 #ifndef M_PIF
 #define M_PIF ((float)3.14159265358979323846)
