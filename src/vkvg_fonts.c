@@ -152,18 +152,18 @@ void _font_face_destroy (VkvgFont font) {
     array_destroy_uint64_t(&face->queryHashes);
     array_del_FontFace(&face->fontBuffer->faces, face);
 
+#ifdef VKVG_USE_HARFBUZZ
+    hb_font_destroy(face->hb_font);
+#endif
+
 #ifdef VKVG_USE_FREETYPE
     mtx_destroy(&face->mutex);
-    if (face->fontBuffer->faces.count == 0) {
-        LOG(VKVG_LOG_FONT, "\tDone face: %s\n", face->face->family_name);
-#ifdef VKVG_USE_HARFBUZZ
-        hb_font_destroy(face->hb_font);
+    FT_Done_Face(face->face);
 #endif
-        FT_Done_Face(face->face);
 
+    if (face->fontBuffer->faces.count == 0) {
         _font_buffer_destroy(font->dev->fontCache, face->fontBuffer);
     }
-#endif
     free(face);
 }
 void _font_cache_destroy(VkvgDevice dev) {
