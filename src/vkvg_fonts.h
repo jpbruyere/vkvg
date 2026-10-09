@@ -195,21 +195,20 @@ typedef struct _vkvg_font_face_t   *FontFace;
 typedef struct _vkvg_font_face_t{
     FontBuffer      fontBuffer;
     array_uint64_t  queryHashes;
+    int             faceIndex;
 #ifdef VKVG_USE_FREETYPE
     FT_Face         face;     /* FreeType face*/
     mtx_t           mutex;    /* Only one font size at a time may use this face */
+#else
+    stbtt_fontinfo  stbInfo; /* stb_truetype structure */
+    int             ascent;  /* unscalled stb font metrics */
+    int             descent;
+    int             lineGap;
 #endif
 #ifdef VKVG_USE_HARFBUZZ
     hb_font_t*      hb_font; /* HarfBuzz font instance*/
 #endif
     array_VkvgFont  sizes;    /* loaded font size array */
-
-#ifndef VKVG_USE_FREETYPE
-    stbtt_fontinfo stbInfo; /* stb_truetype structure */
-    int            ascent;  /* unscalled stb font metrics */
-    int            descent;
-    int            lineGap;
-#endif
 } vkvg_font_face_t;
 
 CTOR_ARRAY(FontFace)
@@ -237,7 +236,7 @@ typedef struct _vkvg_font_t {
     FT_F26Dot6      charSize; /* Font size in Point as fixed float 26.6 */
     FT_Size         ftSize;   /* FT size rec */
 #else
-    uint32_t        charSize; /* Font size in pixel */
+    float           charSize; /* Font size in pixel */
     float           scale;    /* scale factor for the given size */
     int             ascent;   /* unscalled stb font metrics */
     int             descent;

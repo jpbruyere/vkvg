@@ -1,11 +1,16 @@
 #include "test.h"
 #include <fontconfig/fontconfig.h>
+
+#ifdef VKVG_USE_FREETYPE
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_SFNT_NAMES_H
 #include FT_TRUETYPE_TABLES_H
 #include FT_TRUETYPE_IDS_H
 #include FT_MULTIPLE_MASTERS_H
+#endif
+
+#include <string.h>
 
 float fontSize = 28.0f;
 int   curFontStartIdx = 0;
@@ -81,7 +86,7 @@ bool try_get_sample_by_fc_lang(const char* fc_lang, char* str) {
     return true;
 }
 
-
+#ifdef VKVG_USE_FREETYPE
 void convert_utf16be_to_utf8(const FT_Byte* src, FT_UInt src_len, char* dest, FT_UInt dest_max_len) {
     FT_UInt d_idx = 0;
 
@@ -140,8 +145,10 @@ bool try_get_sample_string(FcPattern* font_entry, FT_Face face, char* str) {
         if (!lang_set)
             return false;
         FcStrList *lang_list = FcStrListCreate(lang_set);
-        if (!lang_list)
+        if (!lang_list) {
+            FcStrListDone(lang_list);
             return false;
+        }
 
         while ((lang = FcStrListNext(lang_list))) {
             if (!lang)
@@ -151,11 +158,12 @@ bool try_get_sample_string(FcPattern* font_entry, FT_Face face, char* str) {
         }
 
         FcStrListDone(lang_list);
+        FcStrSetDestroy(lang_set);
         return true;
     }
     return false;
 }
-
+#endif
 
 void draw(VkvgSurface surfFont) {
     if (!font_database)
@@ -190,9 +198,13 @@ void draw(VkvgSurface surfFont) {
             }
             vkvg_set_font (ctx, font);
 
+#ifdef VKVG_USE_FREETYPE
             FT_Face face = (FT_Face)vkvg_font_get_face(font);
             if (!try_get_sample_string(font_entry, face, tmp))
                 sprintf(tmp, "%s : %s", family_name, style_variant);
+#else
+            sprintf(tmp, "%s : %s", family_name, style_variant);
+#endif
 
             vkvg_font_extents_t fe = {0};
             vkvg_font_extents(ctx, &fe);
@@ -220,6 +232,8 @@ void draw(VkvgSurface surfFont) {
             if (vkvg_font_status(font)) {
                 printf("Font in error %s\n", file_path);
                 fflush(stdout);
+                //clear font->dev ref to have clean vulkan termination
+                vkvg_device_destroy(device);
                 continue;
             }
 

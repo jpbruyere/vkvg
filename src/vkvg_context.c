@@ -38,7 +38,7 @@ static const vkvg_context_save_t CTX_INIT = {
 };
 
 void _init_ctx(VkvgContext ctx) {
-    memcpy((void*)&(ctx->curColor), (void*)&CTX_INIT, (void*)&(ctx->pattern) - (void*)&(ctx->curColor));
+    memcpy((void*)&(ctx->curColor), (void*)&CTX_INIT, (void*)&(ctx->indCount) - (void*)&(ctx->curColor));
 
     ctx->cmdStarted                = false;
     ctx->curClipState              = vkvg_clip_state_none;
