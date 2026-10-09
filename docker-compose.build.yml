@@ -1,0 +1,56 @@
+version: '3.8'
+
+x-base-config: &base-config
+  user: "${CURRENT_UID}:${CURRENT_GID}"
+  volumes:
+    - .:/usr/src/app
+    - /var/lib/git-builds/vkvg:/usr/src
+    - /var/log/git-builds/vkvg:/var/log
+  working_dir: /usr/src/app
+  command: >
+    bash -c "
+      echo Starting CI =$${DISTRO}=
+      echo ${REF_IMGS_PATH} ${CURRENT_UID} ${CURRENT_GID} ${USER} ${DISTRO}
+      cmake -B build_$${DISTRO} -DCMAKE_BUILD_TYPE=Release -DVKVG_SVG=on -DVKVG_BUILD_DOCS=$${BUILD_DOC} -DGTEST_PNG_ROOT=/usr/src/reference-images && cmake --build build_$${DISTRO}
+      CURRENT_COMMIT=$$(git rev-parse HEAD)
+      build_$${DISTRO}/gunit_tests/unit_tests --gtest_output=xml:/var/log/unit_tests_$${DISTRO}/$${CURRENT_COMMIT}.xml --gtest_brief
+      if [ -d build_$${DISTRO}/doc/html ]; then
+        cp -v -R build_$${DISTRO}/doc/html /usr/src/documentation
+      fi
+    " 
+
+services:
+  debian:
+    <<: *base-config
+    image: debian-c-builder:trixie
+    environment:
+      - DISTRO=debian
+      - BUILD_DOC=off
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2046M
+  archlinux:
+    <<: *base-config
+    image: arch-c-builder:latest
+    environment:
+      - DISTRO=archlinux
+      - BUILD_DOC=off
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+  fedora:
+    <<: *base-config
+    image: fedora-c-builder:44
+    environment:
+      - DISTRO=fedora
+      - BUILD_DOC=off
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+

@@ -26,11 +26,13 @@ add_executable("${PROJECT_NAME}"
   surface.cpp
   context.cpp
   basicDraw.cpp
+  pathDraw.cpp
   drawTestBase.cpp
   drawTestBase.h
   imageDraw.cpp
   matrices.cpp
   patternDraw.cpp
+  textDraw.cpp
   save_restore.cpp
   unitTest.h
 )

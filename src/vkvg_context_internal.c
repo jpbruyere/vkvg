@@ -27,12 +27,11 @@
 //		Contact: mcseem@antigrain.com
 //				 mcseemagg@yahoo.com
 //				 http://antigrain.com
-
 #include "vkvg_surface_internal.h"
 #include "vkvg_context_internal.h"
 #include "vkvg_device_internal.h"
 #include "vkvg_pattern.h"
-#include "vkh_queue.h"
+//#include "vkh_queue.h"
 #include "vkh_image.h"
 
 #ifdef VKVG_FILL_NZ_GLUTESS
@@ -46,7 +45,7 @@ void _resize_vertex_cache(VkvgContext ctx, uint32_t newSize) {
         ctx->vertCount, ctx->sizeVertices, newSize, (size_t)newSize * sizeof(Vertex), ctx->vertexCache, tmp);
     if (tmp == NULL) {
         ctx->status = VKVG_STATUS_NO_MEMORY;
-        LOG(VKVG_LOG_ERR, "resize vertex cache failed: vert count: %u byte size: %zu\n", newSize,
+        LOGE("resize vertex cache failed: vert count: %u byte size: %zu\n", newSize,
             newSize * sizeof(Vertex));
         return;
     }
@@ -60,7 +59,7 @@ void _resize_index_cache(VkvgContext ctx, uint32_t newSize) {
         ctx->indexCache, tmp);
     if (tmp == NULL) {
         ctx->status = VKVG_STATUS_NO_MEMORY;
-        LOG(VKVG_LOG_ERR, "resize IBO failed: idx count: %u size(byte): %zu\n", newSize,
+        LOGE("resize IBO failed: idx count: %u size(byte): %zu\n", newSize,
             (size_t)newSize * sizeof(VKVG_IBO_INDEX_TYPE));
         return;
     }
@@ -80,7 +79,7 @@ void _check_vertex_cache_size(VkvgContext ctx) {
     assert(ctx->sizeVertices > ctx->vertCount);
     if (ctx->sizeVertices - VKVG_ARRAY_THRESHOLD > ctx->vertCount)
         return;
-    _resize_vertex_cache(ctx, ctx->sizeVertices + VKVG_VBO_SIZE);
+    _resize_vertex_cache(ctx, ctx->sizeVertices * 2);
 }
 void _ensure_index_cache_size(VkvgContext ctx, uint32_t addedIndicesCount) {
     assert(ctx->sizeIndices > ctx->indCount);
@@ -95,7 +94,7 @@ void _ensure_index_cache_size(VkvgContext ctx, uint32_t addedIndicesCount) {
 void _check_index_cache_size(VkvgContext ctx) {
     if (ctx->sizeIndices - VKVG_ARRAY_THRESHOLD > ctx->indCount)
         return;
-    _resize_index_cache(ctx, ctx->sizeIndices + VKVG_IBO_SIZE);
+    _resize_index_cache(ctx, ctx->sizeIndices * 2);
 }
 // check host path array size, return true if error. pathPtr is already incremented
 bool _check_pathes_array(VkvgContext ctx) {
@@ -106,7 +105,7 @@ bool _check_pathes_array(VkvgContext ctx) {
     LOG(VKVG_LOG_DBG_ARRAYS, "resize PATH: new size: %u Ptr: %p -> %p\n", ctx->sizePathes, ctx->pathes, tmp);
     if (tmp == NULL) {
         ctx->status = VKVG_STATUS_NO_MEMORY;
-        LOG(VKVG_LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePathes * sizeof(uint32_t));
+        LOGE("resize PATH failed: new size(byte): %zu\n", ctx->sizePathes * sizeof(uint32_t));
         _clear_path(ctx);
         return true;
     }
@@ -122,7 +121,7 @@ bool _check_point_array(VkvgContext ctx) {
     LOG(VKVG_LOG_DBG_ARRAYS, "resize Points: new size(point): %u Ptr: %p -> %p\n", ctx->sizePoints, ctx->points, tmp);
     if (tmp == NULL) {
         ctx->status = VKVG_STATUS_NO_MEMORY;
-        LOG(VKVG_LOG_ERR, "resize PATH failed: new size(byte): %zu\n", ctx->sizePoints * sizeof(vec2));
+        LOGE("resize PATH failed: new size(byte): %zu\n", ctx->sizePoints * sizeof(vec2));
         _clear_path(ctx);
         return true;
     }
@@ -228,7 +227,7 @@ void _add_point(VkvgContext ctx, float x, float y) {
     vec2 v = {x, y};
     /*if (!_current_path_is_empty(ctx) && vec2_length(vec2_sub(ctx->points[ctx->pointCount-1], v))<1.f)
         return;*/
-    LOG(VKVG_LOG_INFO_PTS, "_add_point: (%f, %f)\n", x, y);
+    LOG(VKVG_LOG_INFO_PTS, "_add_point %d: (%f, %f)\n", ctx->pointCount, x, y);
 
     ctx->points[ctx->pointCount] = v;
     ctx->pointCount++;           // total point count of pathes, (for array bounds check)
@@ -287,7 +286,7 @@ void _add_vertexf(VkvgContext ctx, float x, float y) {
     pVert->pos.y  = y;
     pVert->color  = ctx->curColor;
     pVert->uv.z   = -1;
-    LOG(VKVG_LOG_INFO_VBO, "Add Vertexf %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
+    LOG(VKVG_LOG_INFO_VBO, "Add VertexF %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
         ctx->vertCount, pVert->pos.x, pVert->pos.y, pVert->uv.x, pVert->uv.y, pVert->uv.z, pVert->color);
     ctx->vertCount++;
     _check_vertex_cache_size(ctx);
@@ -298,13 +297,13 @@ void _add_vertexf_unchecked(VkvgContext ctx, float x, float y) {
     pVert->pos.y  = y;
     pVert->color  = ctx->curColor;
     pVert->uv.z   = -1;
-    LOG(VKVG_LOG_INFO_VBO, "Add Vertexf %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
+    LOG(VKVG_LOG_INFO_VBO, "Add VertexU %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
         ctx->vertCount, pVert->pos.x, pVert->pos.y, pVert->uv.x, pVert->uv.y, pVert->uv.z, pVert->color);
     ctx->vertCount++;
 }
 void _add_vertex(VkvgContext ctx, Vertex v) {
     ctx->vertexCache[ctx->vertCount] = v;
-    LOG(VKVG_LOG_INFO_VBO, "Add Vertex  %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
+    LOG(VKVG_LOG_INFO_VBO, "Add VertexV  %10d: pos:(%10.4f, %10.4f) uv:(%10.4f,%10.4f,%10.4f) color:0x%.8x \n",
         ctx->vertCount, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.uv.z, v.color);
     ctx->vertCount++;
     _check_vertex_cache_size(ctx);
@@ -348,9 +347,10 @@ void _add_tri_indices_for_rect(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i) {
     inds[5]                   = i + 3;
     ctx->indCount += 6;
 
-    _check_index_cache_size(ctx);
     LOG(VKVG_LOG_INFO_IBO, "Rectangle IDX: %d %d %d | %d %d %d (count=%d)\n", inds[0], inds[1], inds[2], inds[3],
         inds[4], inds[5], ctx->indCount);
+
+    _check_index_cache_size(ctx);
 }
 void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1, VKVG_IBO_INDEX_TYPE i2) {
     VKVG_IBO_INDEX_TYPE* inds = &ctx->indexCache[ctx->indCount];
@@ -359,8 +359,9 @@ void _add_triangle_indices(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_IND
     inds[2]                   = i2;
     ctx->indCount += 3;
 
-    _check_index_cache_size(ctx);
     LOG(VKVG_LOG_INFO_IBO, "Triangle IDX: %d %d %d (indCount=%d)\n", i0, i1, i2, ctx->indCount);
+
+    _check_index_cache_size(ctx);
 }
 void _add_triangle_indices_unchecked(VkvgContext ctx, VKVG_IBO_INDEX_TYPE i0, VKVG_IBO_INDEX_TYPE i1,
                                      VKVG_IBO_INDEX_TYPE i2) {
@@ -687,7 +688,7 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
         if (lastPat == NULL) // solid
             return;          // solid to solid transition, no extra action requested
     } else if (pat->status) {
-        LOG(VKVG_LOG_ERR, "Error: Update pattern fails, pattern status: %d\n", pat->status);
+        LOGE("Error: Update pattern fails, pattern status: %d\n", pat->status);
         return;
     } else
         newPatternType = pat->type;
@@ -798,8 +799,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
         vkvg_matrix_t mat;
         if (pat->hasMatrix) {
             vkvg_pattern_get_matrix(pat, &mat);
-            if (vkvg_matrix_invert(&mat) != VKVG_STATUS_SUCCESS)
-                mat = VKVG_IDENTITY_MATRIX;
+            /*if (vkvg_matrix_invert(&mat) != VKVG_STATUS_SUCCESS)
+                mat = VKVG_IDENTITY_MATRIX;*/
             vkvg_matrix_transform_point(&mat, &grad.cp[0].x, &grad.cp[0].y);
         }
 
@@ -909,15 +910,17 @@ void _release_context_ressources(VkvgContext ctx) {
     vkh_buffer_reset(&ctx->indices);
     vkh_buffer_reset(&ctx->vertices);
 
-    free(ctx->vertexCache);
-    free(ctx->indexCache);
-
     vkh_image_destroy(ctx->fontCacheImg);
     // TODO:check this for source counter
     // vkh_image_destroy	  (ctx->source);
 
+    free(ctx->vertexCache);
+    free(ctx->indexCache);
+
     free(ctx->pathes);
     free(ctx->points);
+
+    free(ctx->pSavedCtxs);
 
     free(ctx);
 }
@@ -1295,14 +1298,6 @@ bool ptInTriangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
     return (s >= 0) && (t >= 0) && (s + t <= D);
 }
 
-void _free_ctx_save(vkvg_context_save_t* sav) {
-    if (sav->dashCount > 0)
-        free(sav->dashes);
-    if (sav->pattern)
-        vkvg_pattern_destroy(sav->pattern);
-    free(sav);
-}
-
 #define M_APPROXIMATION_SCALE         1.0
 #define M_ANGLE_TOLERANCE             0.01
 #define M_CUSP_LIMIT                  0.01
@@ -1537,7 +1532,7 @@ void _elliptic_arc(VkvgContext ctx, float x1, float y1, float x2, float y2, bool
     double theta = sa;
     double ea    = sa + delta_theta;
 
-    float step = fmaxf(0.001f, fminf(M_PIF, _get_arc_step(ctx, fminf(rx, ry)) * 0.1f));
+    float step = fmaxf(0.001f, fminf(M_PIF, _get_arc_step(ctx, fminf(rx, ry)) * 1.0f));
 
     p       = (vec2){rx * cosf(theta), ry * sinf(theta)};
     vec2 xy = vec2_add(mat2_mult_vec2(m, p), c);
@@ -1953,9 +1948,10 @@ void _draw_full_screen_quad(VkvgContext ctx, vec4* scissor) {
 }
 
 void _select_font_face(VkvgContext ctx, const char* name) {
-    if (strcmp(ctx->selectedFontName, name) == 0)
+    uint64_t h = fnv1a_64_str(name);
+    /*if (ctx->selectedFont == h)
         return;
-    strcpy(ctx->selectedFontName, name);
-    ctx->currentFont     = NULL;
-    ctx->currentFontSize = NULL;
+    ctx->selectedFont = h;*/
+    /*ctx->currentFont     = NULL;
+    ctx->currentFontSize = NULL;*/
 }

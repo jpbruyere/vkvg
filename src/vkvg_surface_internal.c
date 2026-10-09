@@ -214,13 +214,13 @@ void _create_surface_images(VkvgSurface surf) {
 VkvgSurface _create_surface(VkvgDevice dev, VkFormat format) {
     LOG(VKVG_LOG_INFO, "CREATE Surface\n");
     if (vkvg_device_status(dev)) {
-        LOG(VKVG_LOG_ERR, "CREATE Surface failed, invalid Device\n");
+        LOGE("CREATE Surface failed, invalid Device\n");
         return (VkvgSurface)&_vkvg_status_device_error;
     }
 
     VkvgSurface surf = (vkvg_surface*)calloc(1, sizeof(vkvg_surface));
     if (!surf) {
-        LOG(VKVG_LOG_ERR, "CREATE Surface failed, no memory\n");
+        LOGE("CREATE Surface failed, no memory\n");
         return (VkvgSurface)&_vkvg_status_no_memory;
     }
 

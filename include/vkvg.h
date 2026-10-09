@@ -88,23 +88,25 @@ extern "C" {
 #endif
 
 #define VKVG_LOG_ERR        0x00000001
-#define VKVG_LOG_DEBUG      0x00000002
+#define VKVG_LOG_WARN       0x00000002
+#define VKVG_LOG_DEBUG      0x00000004
 
-#define VKVG_LOG_INFO_PTS   0x00000004
-#define VKVG_LOG_INFO_PATH  0x00000008
-#define VKVG_LOG_INFO_CMD   0x00000010
-#define VKVG_LOG_INFO_VBO   0x00000020
-#define VKVG_LOG_INFO_IBO   0x00000040
+#define VKVG_LOG_INFO_PTS   0x00000008
+#define VKVG_LOG_INFO_PATH  0x00000010
+#define VKVG_LOG_INFO_CMD   0x00000020
+#define VKVG_LOG_INFO_VBO   0x00000040
+#define VKVG_LOG_INFO_IBO   0x00000080
 #define VKVG_LOG_INFO_VAO   (VKVG_LOG_INFO_VBO | VKVG_LOG_INFO_IBO)
-#define VKVG_LOG_THREAD     0x00000080
+#define VKVG_LOG_THREAD     0x00000100
 #define VKVG_LOG_DBG_ARRAYS 0x00001000
 #define VKVG_LOG_STROKE     0x00010000
+#define VKVG_LOG_FONT       0x00100000
 #define VKVG_LOG_FULL       0xffffffff
 
 #define VKVG_LOG_INFO       0x00008000 //(VKVG_LOG_INFO_PTS|VKVG_LOG_INFO_PATH|VKVG_LOG_INFO_CMD|VKVG_LOG_INFO_VAO)
 
-#ifdef DEBUG
 vkvg_public extern uint32_t vkvg_log_level;
+#ifdef DEBUG
 #ifdef VKVG_WIRED_DEBUG
 typedef enum {
     vkvg_wired_debug_mode_normal = 0x01,
@@ -116,6 +118,8 @@ typedef enum {
 vkvg_public extern vkvg_wired_debug_mode vkvg_wired_debug;
 #endif
 #endif
+
+#define VKVG_MAX_DASH_COUNT 5
 
 /**
  * @brief vkvg operation status.
@@ -284,20 +288,6 @@ typedef struct _glyph_info_t {
 } vkvg_glyph_info_t;
 
 /**
- * @brief Opaque pointer on a vkvg text run.
- *
- * A VkvgText is an intermediate representation of a text to be drawn.
- * It contains the measurements computed for character positioning.
- *
- * This object is used to speed up the rendering of the same text with the same font multiple times
- * by storing typographic computations.
- *
- * Drawing text with @ref vkvg_show_text() implicitly create such intermediate structure
- * that is destroyed imediatly after the function call.
- */
-typedef struct _vkvg_text_run_t* VkvgText;
-
-/**
  * @brief The Vkvg drawing Context.
  * @ingroup context
  *
@@ -331,7 +321,40 @@ typedef struct _vkvg_device_t* VkvgDevice;
  * configurable parameters such as the wrap mode, the filtering, etc...
  */
 typedef struct _vkvg_pattern_t* VkvgPattern;
+/**
+ * @brief Opaque pointer on a vkvg text run.
+ *
+ * A VkvgText is an intermediate representation of a text to be drawn.
+ * It contains the measurements computed for character positioning.
+ *
+ * This object is used to speed up the rendering of the same text with the same font multiple times
+ * by storing typographic computations.
+ *
+ * Drawing text with @ref vkvg_show_text() implicitly create such intermediate structure
+ * that is destroyed imediatly after the function call.
+ */
+typedef struct _vkvg_text_run_t* VkvgText;
 
+/**
+ * @brief Opaque pointer on a vkvg font.
+ *
+ * VkvgFont
+ *
+ */
+typedef struct _vkvg_font_t* VkvgFont;
+/*
+ * @brief Create a new VkvgFont.
+ */
+vkvg_public VkvgFont        vkvg_font_create (VkvgDevice dev, const char* queryString, float pointSize);
+vkvg_public VkvgFont        vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, int faceIndex, float pointSize);
+/*
+ * @brief Get underlying font face object pointer, if freetype is enable, the FT_Face will be returned.
+ */
+vkvg_public void*           vkvg_font_get_face (VkvgFont font);
+vkvg_public VkvgFont        vkvg_font_reference (VkvgFont font);
+vkvg_public uint32_t        vkvg_font_get_reference_count (VkvgFont font);
+vkvg_public vkvg_status_t   vkvg_font_status (VkvgFont font);
+vkvg_public void            vkvg_font_destroy (VkvgFont font);
 #if VKVG_DBG_STATS
 /**
  * @brief vkvg memory and vulkan statistiques.
@@ -478,7 +501,7 @@ vkvg_public void vkvg_matrix_rotate(vkvg_matrix_t* matrix, float radians);
  * @param a first operand of the multiplication
  * @param b second operand of the multiplication
  */
-vkvg_public void vkvg_matrix_multiply(vkvg_matrix_t* result, const vkvg_matrix_t* a, const vkvg_matrix_t* b);
+vkvg_public void vkvg_matrix_multiply(vkvg_matrix_t* result, const vkvg_matrix_t * const a, const vkvg_matrix_t * const b);
 /**
  * @brief transform distances
  *
@@ -563,7 +586,10 @@ typedef struct {
     VkDevice           vkdev;
     uint32_t           qFamIdx;
     uint32_t           qIndex;
-    bool               threadAware; /**< if true, mutex is created and guard device queue and caches access */
+    bool               threadAware;         /**< if true, mutex is created and guard device queue and caches access */
+    const char*        fontsDirectories;    /**< Coma sepparated list of font directories to scan.
+                                                 With font-config, leave empty for default system configuration.
+                                                 Set FONTCONFIG_SYSROOT env variable if font-config complaints.*/
 } vkvg_device_create_info_t;
 
 vkvg_public
@@ -1671,6 +1697,13 @@ vkvg_public void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char* font
  * @param size
  */
 vkvg_public void vkvg_set_font_size(VkvgContext ctx, uint32_t size);
+/**
+ * @brief set current font for context, see @ref vkvg_font_create to create fonts.
+ *
+ * @param ctx a valid vkvg @ref context
+ * @param font a valid @ref VkvgFont object.
+ */
+vkvg_public void vkvg_set_font (VkvgContext ctx, VkvgFont font);
 /**
  * @brief Show a string of text.
  *

@@ -30,6 +30,8 @@
 #endif
 
 #include <assert.h>
+#include <stdio.h> // needed before stdarg.h on Windows
+#include <stdatomic.h>
 
 #include "vkh.h"
 #include "vkvg.h"
@@ -37,8 +39,10 @@
 #include <float.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h> // needed before stdarg.h on Windows
+
+#include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 // should be supported by c11
 // #include <threads.h>
@@ -53,9 +57,40 @@
 #define M_2_PIF 0.63661977236758134308f // 2/pi
 #endif
 
+/**
+ * @brief Computes the 64-bit FNV-1a hash of a ascii string lowering case.
+ *
+ * @param str Pointer to the start of the null terminated ascii string to hash.
+ * @return uint64_t The 64-bit hash value.
+ */
+static inline uint64_t fnv1a_64_str(const char *const restrict str) {
+    uint64_t hash = 0xcbf29ce484222325ULL;
+    const uint8_t *restrict data = (const uint8_t *)str;
+
+    while (*data) {
+        uint8_t c = *data;
+        // Fast branchless lowercase for ASCII font names/paths
+        if (c >= 'A' && c <= 'Z') {
+            c |= 0x20;
+        }
+        hash ^= c;
+        hash *= 0x00000100000001B3ULL;
+        data++;
+    }
+
+    return hash;
+}
 /*#ifndef M_2_PI
     #define M_2_PI		0.63661977236758134308	// 2/pi
 #endif*/
+
+// 1. Define ANSI Color Codes
+#define CLR_RESET   "\x1b[0m"
+#define CLR_RED     "\x1b[31m"
+#define CLR_GREEN   "\x1b[32m"
+#define CLR_YELLOW  "\x1b[33m"
+#define CLR_BLUE    "\x1b[34m"
+
 
 /*#ifdef DEBUG
 #define LOG(level, ...)                                                                                                \
@@ -97,6 +132,21 @@
 
 #include "deps/tinycthread.h"
 #include "cross_os.h"
+
+#ifdef LOG
+#undef LOG
+#endif
+
+#define DEBUG_LOG
+
+#ifdef DEBUG_LOG
+#define LOG(level, ...) { if (vkvg_unlikely(vkvg_log_level & level)) { fprintf(stdout, CLR_RESET "[VKVG] " __VA_ARGS__); fflush(stdout); }}
+#else
+#define LOG
+#endif
+#define LOGE(...) { fprintf(stdout, CLR_RED "[VKVG] " __VA_ARGS__); fflush(stdout); }
+#define LOGW(...) { fprintf(stdout, CLR_YELLOW "[VKVG] " __VA_ARGS__); fflush(stdout); }
+
 // width of the stencil buffer will determine the number of context saving/restore layers
 // the two first bits of the stencil are the FILL and the CLIP bits, all other bits are
 // used to store clipping bit on context saving. 8 bit stencil will allow 6 save/restore layer
@@ -109,6 +159,56 @@
 // 30 seconds fence timeout
 #define VKVG_FENCE_TIMEOUT 30000000000
 // #define VKVG_FENCE_TIMEOUT 10000
+
+#define CTOR_ARRAY_EXP(type, expansion)                             \
+typedef struct {                                                    \
+    uint32_t    count;                                              \
+    uint32_t    size;                                               \
+    type       *elements;                                           \
+} array_##type;                                                     \
+static array_##type array_create_##type (uint32_t reservedSize) {   \
+    type *elts = (type*)malloc(reservedSize * sizeof(type));        \
+    return (array_##type) {0, reservedSize, elts};                  \
+}                                                                   \
+static int array_add_##type (array_##type* arr, type elt) {         \
+    if (arr->size <= arr->count) {                                  \
+        uint32_t newSize = arr->size expansion;                     \
+        type *elts = (type*)realloc(arr->elements, newSize * sizeof(type)); \
+        if (elts == NULL)                                           \
+            return -1;                                              \
+        arr->elements = elts;                                       \
+        arr->size = newSize;                                        \
+    }                                                               \
+    arr->elements[arr->count++] = elt;                              \
+    return arr->count - 1;                                          \
+}                                                                   \
+static type* array_last_##type (array_##type* arr) {                \
+    if (!arr->count)                                                \
+        return NULL;                                                \
+    return &arr->elements[arr->count - 1];                          \
+}                                                                   \
+static void array_destroy_##type (array_##type* arr) {              \
+    free(arr->elements);                                            \
+    arr->elements = NULL;                                           \
+    arr->count = 0;                                                 \
+    arr->size = 0;                                                  \
+}
+#define ARRAY_DEL_ELT(type)                                         \
+static void array_del_##type (array_##type* arr, type elt) {        \
+    uint32_t i;                                                     \
+    for (i = 0; i < arr->count; i++) {                              \
+        if (arr->elements[i] == elt)                                \
+            break;                                                  \
+    }                                                               \
+    if (i == arr->count) {                                          \
+        return;                                                     \
+    }                                                               \
+    if (i < arr->count - 1)                                         \
+        memmove (&arr->elements[i], &arr->elements[i + 1], (arr->count - i - 1) * sizeof(type)); \
+    arr->count--;                                                   \
+}
+
+#define CTOR_ARRAY(type) CTOR_ARRAY_EXP(type,* 2)
 
 #include "vectors.h"
 

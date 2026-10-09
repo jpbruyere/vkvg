@@ -30,11 +30,14 @@ ENDIF()
 OPTION(ENABLE_PROFILING "compile with the -pg options..." OFF)
 IF (ENABLE_PROFILING)
     ADD_COMPILE_OPTIONS(
-        -pg -fno-reorder-functions -fno-inline
-        -O1
-        -fthread-jumps
-        -falign-functions  -falign-jumps
-        -falign-loops  -falign-labels)
+        -pg
+    #    -fno-reorder-functions -fno-inline
+        -O2
+    #    -fthread-jumps
+    #    -falign-functions  -falign-jumps
+    #    -falign-loops  -falign-labels
+    )
+    ADD_LINK_OPTIONS(-pg)
 ENDIF()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -214,9 +217,7 @@ IF(GLSLC AND XXD)
 
 	FOREACH(shad_spv ${SHADER_OUTPUTS})
 		GET_FILENAME_COMPONENT(SPV ${shad_spv} NAME)
-		ADD_CUSTOM_COMMAND (
-			TARGET BuildShadersHeader
-                        PRE_BUILD
+        ADD_CUSTOM_COMMAND (TARGET BuildShadersHeader PRE_BUILD
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${SHADER_DIR}
 			COMMAND ${XXD} -i ${SPV} >> ${SHADERS_H}
 		)
@@ -236,7 +237,7 @@ SET (VKVG_PUBLIC_HEADERS "include/vkvg.h;include/vkvg-svg.h")
 
 IF (VKVG_SVG)
     ADD_DEFINITIONS (-DVKVG_SVG)
-    FILE(GLOB SVG_SRC external/vkvg-svg/src/*.c)
+    FILE(GLOB SVG_SRC tests/svg-parser-new/*.c tests/svg-parser-new/*.h)
 ELSE()
     FILE(GLOB SVG_SRC src/nsvg/*.c)
 ENDIF()
@@ -263,19 +264,19 @@ SOURCE_GROUP(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${VKVG_SRC})
 ADD_LIBRARY("${PROJECT_NAME}" ${VKVG_SRC} ${VKVG_HEADERS})
 
 SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
-		OUTPUT_NAME ${PROJECT_NAME}
-		VERSION ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}
-		SOVERSION ${vkvg_VERSION_MAJOR}
-		C_STANDARD 11
-                C_STANDARD_REQUIRED ON
-                C_EXTENSIONS OFF
+	OUTPUT_NAME ${PROJECT_NAME}
+	VERSION ${vkvg_VERSION_MAJOR}.${vkvg_VERSION_MINOR}
+	SOVERSION ${vkvg_VERSION_MAJOR}
+	C_STANDARD 11
+    C_STANDARD_REQUIRED ON
+    C_EXTENSIONS OFF
 
-                POSITION_INDEPENDENT_CODE "${BUILD_SHARED_LIBS}"
+    POSITION_INDEPENDENT_CODE "${BUILD_SHARED_LIBS}"
 
-		PUBLIC_HEADER "${VKVG_PUBLIC_HEADERS}"
+	PUBLIC_HEADER "${VKVG_PUBLIC_HEADERS}"
 
-                C_VISIBILITY_PRESET hidden
-                VISIBILITY_INLINES_HIDDEN ON
+    C_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
 )
 
 TARGET_INCLUDE_DIRECTORIES("${PROJECT_NAME}"
@@ -286,7 +287,7 @@ TARGET_INCLUDE_DIRECTORIES("${PROJECT_NAME}"
 		$<$<BOOL:${VKVG_USE_HARFBUZZ}>:${HarfBuzz_INCLUDE_DIRS}>
 		$<$<BOOL:${VKVG_USE_FONTCONFIG}>:${Fontconfig_INCLUDE_DIRS}>
 		$<$<NOT:$<BOOL:${VKVG_SVG}>>:${CMAKE_CURRENT_SOURCE_DIR}/src/nsvg>
-                ${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/vkh/include
         PUBLIC
 		${Vulkan_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -330,6 +331,28 @@ INSTALL(TARGETS "${PROJECT_NAME}" "${PROJECT_NAME}"
 IF (VKVG_BUILD_TESTS)
     ADD_SUBDIRECTORY(tests)
     ADD_SUBDIRECTORY(samples)
+
+    #font tests
+
+    # ADD_EXECUTABLE(fonts_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/font_tests/font_tests.c")
+
+    # TARGET_INCLUDE_DIRECTORIES(fonts_test PRIVATE
+    #     ${FREETYPE_INCLUDE_DIRS}
+    #     ${HarfBuzz_INCLUDE_DIRS}
+    #     ${Vulkan_INCLUDE_DIRS}
+    #     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    #     ${Fontconfig_INCLUDE_DIRS}
+    # )
+    # TARGET_LINK_LIBRARIES(fonts_test PUBLIC
+    #     #vkvg
+    #     ${HarfBuzz_LIBRARIES}
+    #     ${FREETYPE_LIBRARY}
+    #     ${Fontconfig_LIBRARIES}
+    #     ${Vulkan_LIBRARIES}
+    # )
+
+    ###################
+
 ELSEIF (VKVG_BUILD_OFFSCREEN_TEST)
     ADD_EXECUTABLE(test_offscreen "${CMAKE_CURRENT_SOURCE_DIR}/tests/offscreen.c")
     TARGET_INCLUDE_DIRECTORIES(test_offscreen PRIVATE
