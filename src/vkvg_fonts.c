@@ -474,7 +474,6 @@ vkvg_inline glyph_ref get_cached_glyph (VkvgDevice dev, VkvgFont font, uint32_t 
     return font->charLookup[gIndex];
 }
 
-
 bool try_get_font_face_from_query_hash(_font_cache_t* cache, uint64_t queryHash, FontFace *const face) {
     *face = NULL;
     FontBuffer* buffs = cache->fontBuffers.elements;
@@ -567,8 +566,8 @@ bool try_create_font_face_from_path (VkvgDevice dev, const char *fontFile, int f
 #endif
 #else
     int font_count = stbtt_GetNumberOfFonts(buffPtr->buffer);
-    int offset = stbtt_GetFontOffsetForIndex(buffPtr->buffer, faceIndex);
-    int result = stbtt_InitFont(&newFace->stbInfo, buffPtr->buffer, offset);
+    int offset = stbtt_GetFontOffsetForIndex(buffPtr->buffer, faceIndex & 0xFFFF);//variable font not handled by stbtt
+    int result = stbtt_InitFont(&newFace->stbInfo, buffPtr->buffer, offset < 0 ? 0 : offset);
     if (!result) {
         LOGE("stbtt_InitFont error 0x%x creating face in %s at line %d\n", result, __FILE__, __LINE__);
         return false;
@@ -662,8 +661,6 @@ void _font_lock_size (VkvgContext ctx, VkvgFont font) {
 
 // retrieve global font extends of context's current font as defined by FreeType
 void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
-
-    // TODO: ensure correct metrics are returned (scalled/unscalled, etc..)
     VkvgFont font = ctx->currentFont;
 #ifdef VKVG_USE_FREETYPE
     FT_Face face = font->face->face;
@@ -687,10 +684,9 @@ void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
     /*if (ctx->dev->threadAware)
         mtx_unlock(&font->face->mutex);*/
 #else
-    extents->ascent  = roundf(font->scale * ctx->currentFont->ascent);
-    extents->descent = -roundf(font->scale * ctx->currentFont->descent);
-    extents->height =
-        roundf(font->scale * (ctx->currentFont->ascent - ctx->currentFont->descent + ctx->currentFont->lineGap));
+    extents->ascent  = font->ascent;
+    extents->descent = font->descent;
+    extents->height = font->ascent - font->descent + font->lineGap;
     extents->max_x_advance = 0; // TODO
     extents->max_y_advance = 0;
 #endif
@@ -748,16 +744,14 @@ void text_run_init(VkvgContext ctx, const char* text, int length, VkvgText textR
     textRun->glyphs      = (vkvg_glyph_info_t*)malloc(textRun->glyph_count * sizeof(vkvg_glyph_info_t));
     for (unsigned int i = 0; i < textRun->glyph_count; i++) {
 #ifdef VKVG_USE_FREETYPE
-        uint32_t gindex = FT_Get_Char_Index(textRun->font->face, tmp[i]);
+        uint32_t gIndex = FT_Get_Char_Index(textRun->font->face->face, tmp[i]);
 #else
-        uint32_t gindex = stbtt_FindGlyphIndex(&textRun->fontId->stbInfo, tmp[i]);
+        uint32_t gIndex = stbtt_FindGlyphIndex(&textRun->font->face->stbInfo, tmp[i]);
 #endif
-        _char_ref* cr = textRun->font->charLookup[gindex];
-        if (cr == NULL)
-            cr = _prepare_char(textRun->dev, textRun, gindex);
-        textRun->glyphs[i].codepoint = gindex;
-        textRun->glyphs[i].x_advance = cr->advance.x;
-        textRun->glyphs[i].y_advance = cr->advance.y;
+        glyph_ref cr = get_cached_glyph(textRun->dev, textRun->font, gIndex);
+        textRun->glyphs[i].codepoint = gIndex;
+        textRun->glyphs[i].x_advance = cr.advance.x;
+        textRun->glyphs[i].y_advance = cr.advance.y;
         textRun->glyphs[i].x_offset  = 0;
         textRun->glyphs[i].y_offset  = 0;
         /*textRun->glyphs[i].x_offset	 = cr->bmpDiff.x;
@@ -1010,7 +1004,6 @@ VkvgFont vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, i
     }
     return _create_font_from_face(dev, face, pointSize);
 }
-
 VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
 
     uint32_t pt26_6 = (uint32_t)(pointSize * 64.f);
@@ -1027,8 +1020,6 @@ VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
 
     return _create_font_from_face(dev, face, pointSize);
 }
-
-
 VkvgFont vkvg_font_reference(VkvgFont font) {
     if (!vkvg_font_status(font))
         atomic_fetch_add_explicit(&font->references, 1, memory_order_relaxed);
@@ -1040,9 +1031,7 @@ uint32_t vkvg_font_get_reference_count(VkvgFont font) {
         return 0;
     return atomic_load_explicit(&font->references, memory_order_relaxed);
 }
-
 vkvg_status_t vkvg_font_status(VkvgFont font) { return !font ? VKVG_STATUS_NULL_POINTER : font->status; }
-
 void vkvg_font_destroy(VkvgFont font) {
     if (vkvg_font_status(font))
         return;

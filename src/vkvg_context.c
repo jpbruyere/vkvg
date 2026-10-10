@@ -1188,7 +1188,7 @@ void vkvg_select_font_face(VkvgContext ctx, const char* name) {
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_FACE, name);
-    _select_font_face(ctx, name);
+    vkvg_set_font(ctx, vkvg_font_create(ctx->dev, name, 12));
 }
 void vkvg_load_font_from_path(VkvgContext ctx, const char* path, const char* name) {
     if (vkvg_status(ctx))

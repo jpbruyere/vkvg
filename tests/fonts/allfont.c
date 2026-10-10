@@ -1,5 +1,7 @@
 #include "test.h"
+#ifdef VKVG_USE_FONTCONFIG
 #include <fontconfig/fontconfig.h>
+#endif
 
 #ifdef VKVG_USE_FREETYPE
 #include <ft2build.h>
@@ -18,6 +20,7 @@ bool  redraw = true;
 
 #define MAX_STRING_LEN 1024
 
+#ifdef VKVG_USE_FONTCONFIG
 FcFontSet* font_database = NULL;
 
 typedef struct {
@@ -247,6 +250,14 @@ void draw(VkvgSurface surfFont) {
 
     vkvg_destroy(ctx);
 }
+#else
+void draw(VkvgSurface surfFont) {
+    VkvgContext ctx = vkvg_create(surfFont);
+    vkvg_clear(ctx);
+    vkvg_destroy(ctx);
+}
+#endif
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action == GLFW_RELEASE)
         return;
@@ -267,6 +278,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 static void mouse_move_callback(GLFWwindow* window, double x, double y) {
 }
 static void scroll_callback(GLFWwindow* window, double x, double y) {
+#ifdef VKVG_USE_FONTCONFIG
+
     const int step = 5;
     if (y > 0.f) {
         if (curFontStartIdx > 0)
@@ -276,6 +289,7 @@ static void scroll_callback(GLFWwindow* window, double x, double y) {
         if (curFontStartIdx < font_database->nfont)
             curFontStartIdx +=5;
     }
+#endif
     redraw = true;
 }
 static void mouse_button_callback(GLFWwindow* window, int but, int state, int modif) {
@@ -290,7 +304,7 @@ static void mouse_button_callback(GLFWwindow* window, int but, int state, int mo
 
 int main(int argc, char* argv[]) {
     vkh_log_level = VKH_LOG_FULL;
-    vkvg_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN | VKVG_LOG_FONT;
+    vkvg_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN | VKVG_LOG_FONT ;
 
     _parse_args(argc, argv);
     VkEngine e = vkengine_create (
@@ -315,6 +329,8 @@ int main(int argc, char* argv[]) {
 
     vkh_presenter_build_blit_cmd(r, vkvg_surface_get_vk_image(surf), test_width, test_height);
 
+#ifdef VKVG_USE_FONTCONFIG
+
     if (!FcInit()) {
         fprintf(stderr, "Fatal Error: Failed to initialize Fontconfig.\n");
         return -1;
@@ -326,6 +342,7 @@ int main(int argc, char* argv[]) {
     FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
 
     font_database = FcFontList(config, request, requested_elements);
+#endif
 
     while (!vkengine_should_close(e)) {
         glfwPollEvents();
@@ -361,10 +378,12 @@ int main(int argc, char* argv[]) {
 
     vkengine_destroy(e);
 
+#ifdef VKVG_USE_FONTCONFIG
     FcFontSetDestroy(font_database);
     FcObjectSetDestroy(requested_elements);
     FcPatternDestroy(request);
     FcFini();
+#endif
 
     return 0;
 }
