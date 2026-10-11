@@ -1698,6 +1698,12 @@ vkvg_public void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char* font
  */
 vkvg_public void vkvg_set_font_size(VkvgContext ctx, uint32_t size);
 /**
+ * @brief vkvg_set_text_direction
+ * @param ctx
+ * @param direction
+ */
+vkvg_public void vkvg_set_text_direction(VkvgContext ctx, vkvg_direction_t direction);
+/**
  * @brief set current font for context, see @ref vkvg_font_create to create fonts.
  *
  * @param ctx a valid vkvg @ref context

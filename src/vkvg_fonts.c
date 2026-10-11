@@ -631,10 +631,15 @@ bool try_get_font_size (FontFace face, uint32_t pt26_6, VkvgFont *font) {
 
 #ifdef VKVG_USE_HARFBUZZ
 // Get harfBuzz buffer for provided text.
-hb_buffer_t* _get_hb_buffer(VkvgFont font, const char* text, int length) {
+hb_buffer_t* _get_hb_buffer(VkvgText textRun, const char* text, int length) {
+    VkvgFont font = textRun->font;
     hb_buffer_t* buf = hb_buffer_create();
     hb_buffer_add_utf8 (buf, text, length, 0, length);
     hb_buffer_guess_segment_properties (buf);
+
+    if (textRun->textDirection == VKVG_VERTICAL)
+        hb_buffer_set_direction(buf, HB_DIRECTION_TTB);
+
     hb_shape(font->face->hb_font, buf, NULL, 0);
 
     if (hb_buffer_get_content_type(buf) != HB_BUFFER_CONTENT_TYPE_GLYPHS) {
@@ -725,12 +730,13 @@ void _font_cache_show_text(VkvgContext ctx, const char* text) {
 void text_run_init(VkvgContext ctx, const char* text, int length, VkvgText textRun) {
     textRun->dev    = ctx->dev;
     textRun->font   = ctx->currentFont;
+    textRun->textDirection = ctx->textDirection;
     vkvg_font_reference (textRun->font);
 
     _font_lock_size(ctx, textRun->font);
 
 #ifdef VKVG_USE_HARFBUZZ
-    textRun->hbBuf  = _get_hb_buffer(textRun->font, text, length);
+    textRun->hbBuf  = _get_hb_buffer(textRun, text, length);
     textRun->glyphs = hb_buffer_get_glyph_positions(textRun->hbBuf, &textRun->glyph_count);
 #else
 

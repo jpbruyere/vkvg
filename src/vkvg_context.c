@@ -1228,7 +1228,10 @@ void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
 }
 
 void vkvg_set_text_direction(vkvg_context* ctx, vkvg_direction_t direction) {
-
+    if (vkvg_status(ctx))
+        return;
+    RECORD(ctx, VKVG_CMD_SET_TEXT_DIRECTION, size);
+    ctx->textDirection = direction;
 }
 
 void vkvg_show_text(VkvgContext ctx, const char* text) {

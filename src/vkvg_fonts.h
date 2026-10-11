@@ -288,6 +288,7 @@ typedef struct {
 typedef struct _vkvg_text_run_t {
     VkvgFont                font;       /* vkvg font structure pointer */
     VkvgDevice              dev;        /* vkvg device associated with this text run */
+    vkvg_direction_t        textDirection; /* horizontal or vertical */
     vkvg_text_extents_t     extents;    /* store computed text extends */
     const char*             text;       /* utf8 char array of text*/
     unsigned int            glyph_count;/* Total glyph count */

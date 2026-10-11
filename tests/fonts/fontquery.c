@@ -172,6 +172,7 @@ bool try_get_sample_string(FcPattern* font_entry, FT_Face face, char* str) {
 VkvgFont sans16 = NULL;
 char txtBuffer[MAX_TXT_LEN];
 int txtBuffPtr = 0;
+bool vertical = false;
 
 float uiFontSize = 18.f;
 
@@ -197,13 +198,14 @@ void draw(VkvgSurface surfFont) {
     vkvg_move_to(ctx, xQ, yQ);
     vkvg_show_text(ctx, txtBuffer);
 
-    char tmp[1024];
-    strcpy(tmp,txtBuffer);
+    char txtBuffCopy[MAX_TXT_LEN];
+    char tmp[MAX_TXT_LEN];
+    strcpy(txtBuffCopy,txtBuffer);
 
     FcPattern* request = FcPatternCreate();
     FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, (char *)0);
 
-    char *style = strstr(tmp, ":");
+    char *style = strstr(txtBuffCopy, ":");
     if (style) {
         *style='\0';
         style++;
@@ -213,7 +215,7 @@ void draw(VkvgSurface surfFont) {
             style = NULL;
         }
     }
-    FcPatternAddString(request, FC_FAMILY, (const FcChar8 *)tmp);
+    FcPatternAddString(request, FC_FAMILY, (const FcChar8 *)txtBuffCopy);
     FcPatternAddBool(request, FC_SCALABLE, FcTrue);
     FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
 
@@ -240,19 +242,21 @@ void draw(VkvgSurface surfFont) {
         FcPatternGetString (font, FC_STYLE, 0, &style_variant);
         VkvgFont f = vkvg_font_create_from_file(device, (char*)fontFile, index, fontSize);
         if (vkvg_font_status(f)) {
-            printf("Error trying to load %s, from %s\n", tmp, fontFile);
+            printf("Error trying to load %s, from %s\n", txtBuffCopy, fontFile);
             fflush(stdout);
             goto clean_exit;
         }
         vkvg_set_font (ctx, f);
+        if (vertical)
+            vkvg_set_text_direction (ctx, VKVG_VERTICAL);
 
         penX = 200;
         penY = 200;
-        sprintf(tmp, "%s : %s", family_name, style_variant);
+        sprintf(txtBuffCopy, "%s : %s", family_name, style_variant);
 
         vkvg_font_extents_t fe = {0};
         vkvg_font_extents(ctx, &fe);
-        VkvgText tr = vkvg_text_run_create(ctx, tmp);
+        VkvgText tr = vkvg_text_run_create(ctx, txtBuffCopy);
         vkvg_text_extents_t extents = {0};
         vkvg_text_run_get_extents(tr, &extents);
         vkvg_rectangle(ctx, penX, penY - fe.ascent, extents.width, extents.height);
@@ -280,7 +284,7 @@ void draw(VkvgSurface surfFont) {
             FcPatternGetString (font, FC_FAMILY, 0, &family_name);
             FcPatternGetString (font, FC_STYLE, 0, &style_variant);
 
-            if (family_name && strstr((char*)family_name, tmp)) {
+            if (family_name && strstr((char*)family_name, (char*)txtBuffCopy)) {
                 if (!style || (style && style_variant && strstr((char*)style_variant, style))) {
                     sprintf(tmp, "%s:%s", family_name,style_variant);
                     vkvg_move_to(ctx, penX, penY);
@@ -291,7 +295,6 @@ void draw(VkvgSurface surfFont) {
                         break;
                 }
             }
-
         }
     }
 clean_exit:
@@ -328,6 +331,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
             txtBuffPtr--;
         }
         txtBuffer[txtBuffPtr]='\0';
+        break;
+    case GLFW_KEY_F4:
+        vertical = !vertical;
         break;
     /*case GLFW_KEY_DELETE:
         if (txtBuffPtr > 0 && txtBuffPtr < MAX_TXT_LEN - 2) {
