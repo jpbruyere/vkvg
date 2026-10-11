@@ -35,7 +35,7 @@
 #define PREPROC_LINE    vkvg_save(svg->ctx);        \
                         parentData = _new_line();
 
-#define PROCESS_LINE  _process_element(svg, &attribs, parentData, false);
+#define PROCESS_LINE  process_element(svg, &attribs, parentData, false);
 #define POSTPROC_LINE vkvg_restore(svg->ctx);
 
 #define SVG_ATT_LINE_X1           try_parse_length_or_percentage(svg, &(CAST(line)->x1));
@@ -47,7 +47,7 @@
 //=== RECT ===
 #define PREPROC_RECT    vkvg_save(svg->ctx);        \
                         parentData = _new_rect();
-#define PROCESS_RECT    _process_element(svg, &attribs, parentData, false);
+#define PROCESS_RECT    process_element(svg, &attribs, parentData, false);
 #define POSTPROC_RECT   vkvg_restore(svg->ctx);
 #define SVG_ATT_RECT_X            try_parse_length_or_percentage(svg, &(CAST(rect)->x));
 #define SVG_ATT_RECT_Y            try_parse_length_or_percentage(svg, &(CAST(rect)->y));
@@ -60,7 +60,7 @@
 //== CIRCLE ==
 #define PREPROC_CIRCLE      vkvg_save(svg->ctx);        \
                             parentData = _new_circle();
-#define PROCESS_CIRCLE      _process_element(svg, &attribs, parentData, false);
+#define PROCESS_CIRCLE      process_element(svg, &attribs, parentData, false);
 #define POSTPROC_CIRCLE     vkvg_restore(svg->ctx);
 #define SVG_ATT_CIRCLE_CX   try_parse_length_or_percentage(svg, &(CAST(circle)->cx));
 #define SVG_ATT_CIRCLE_CY   try_parse_length_or_percentage(svg, &(CAST(circle)->cy));
@@ -70,7 +70,7 @@
 //= ELLIPSE ==
 #define PREPROC_ELLIPSE     vkvg_save(svg->ctx);        \
                             parentData = _new_ellipse();
-#define PROCESS_ELLIPSE     _process_element(svg, &attribs, parentData, false);
+#define PROCESS_ELLIPSE     process_element(svg, &attribs, parentData, false);
 #define POSTPROC_ELLIPSE    vkvg_restore(svg->ctx);
 #define SVG_ATT_ELLIPSE_CX  try_parse_length_or_percentage(svg, &(CAST(ellipse)->cx));
 #define SVG_ATT_ELLIPSE_CY  try_parse_length_or_percentage(svg, &(CAST(ellipse)->cy));
@@ -81,7 +81,7 @@
 //= POLYLINE =
 #define PREPROC_POLYLINE        vkvg_save(svg->ctx);        \
                                 parentData = _new_polygon();
-#define PROCESS_POLYLINE        _process_element(svg, &attribs, parentData, false);
+#define PROCESS_POLYLINE        process_element(svg, &attribs, parentData, false);
 #define POSTPROC_POLYLINE       vkvg_restore(svg->ctx);
 #define SVG_ATT_POLYLINE_POINTS    \
     CASTELT(p,polygon,parentData); \
@@ -94,7 +94,7 @@
 #define PREPROC_POLYGON         vkvg_save(svg->ctx);         \
                                 parentData = _new_polygon(); \
                                 CAST(polygon)->closed = true;
-#define PROCESS_POLYGON         _process_element(svg, &attribs, parentData, false);
+#define PROCESS_POLYGON         process_element(svg, &attribs, parentData, false);
 #define POSTPROC_POLYGON        vkvg_restore(svg->ctx);
 #define SVG_ATT_POLYGON_POINTS     \
     CASTELT(p,polygon,parentData); \
@@ -106,7 +106,7 @@
 #define PREPROC_PATH    vkvg_save(svg->ctx);        \
                         parentData = _new_path();
 
-#define PROCESS_PATH    _process_element(svg, &attribs, parentData, false);
+#define PROCESS_PATH    process_element(svg, &attribs, parentData, false);
 #define POSTPROC_PATH   vkvg_restore(svg->ctx);
 #define SVG_ATT_D               \
     CASTELT(p,path,parentData); \
@@ -266,7 +266,7 @@
 #define SVG_ATT_OPACITY         attribs->opacity = parse_ratio(svg);
 #define SVG_ATT_FILL_OPACITY    attribs->fill_opacity = parse_ratio(svg);
 #define SVG_ATT_STROKE_OPACITY  attribs->stroke_opacity = parse_ratio(svg);
-
+#define SVG_ATT_FONT_SIZE       parse_font_size(svg, attribs);
 
 #define SVG_ATT_SVG_WIDTH   try_parse_length_or_percentage(svg, &svg->width);
 #define SVG_ATT_SVG_HEIGHT  try_parse_length_or_percentage(svg, &svg->height);
@@ -348,14 +348,14 @@ static inline const uint8_t* skip_whitespaces(const uint8_t *buff, const uint8_t
     }
     return buff;
 }
-static inline bool try_skip_separators(const uint8_t **buff_ptr, const uint8_t *const restrict buff_end) {
+/*static inline bool try_skip_separators(const uint8_t **buff_ptr, const uint8_t *const restrict buff_end) {
     const uint8_t *buff = *buff_ptr;
     while (buff < buff_end && (*buff == ' ' || *buff == ',' || *buff == '\t' || *buff == '\r' || *buff == '\n')) {
         buff++;
     }
     *buff_ptr = buff;
     return buff < buff_end;
-}
+}*/
 static inline bool try_skip_whitespaces(const uint8_t **buff_ptr, const uint8_t *const restrict buff_end) {
     const uint8_t *buff = *buff_ptr;
     while (buff < buff_end && (*buff == ' ' || *buff == '\t' || *buff == '\r' || *buff == '\n')) {
@@ -687,23 +687,42 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
     return false; // Unknown token format
 }
 // Fast branchless helper to map 2-character unit suffix bytes to their enum IDs
-static inline bool parse_two_char_unit(uint8_t c0, uint8_t c1, svg_unit *const out_unit) {
-    // Convert to lowercase via bit manipulation (works perfectly for standard ASCII)
-    uint32_t u0 = c0 | 0x20;
-    uint32_t u1 = c1 | 0x20;
-    uint32_t packed = (u0 << 8) | u1;
+
+#define PACK_UNIT(c0, c1, c2, c3) \
+(((uint64_t)(c0) << 24) | ((uint64_t)(c1) << 16) | ((uint64_t)(c2) << 8) | (uint64_t)(c3))
+
+static inline bool parse_multi_char_unit(const uint8_t *str, size_t len, svg_unit *const out_unit) {
+    // Basic bounds check: this function handles 2 to 4 character units
+    if (len < 2 || len > 4) return false;
+
+           // Load up to 4 bytes safely, applying lowercase bit-mask directly.
+           // Unused trailing bytes are padded safely with 0x00.
+    uint64_t u0 = str[0] | 0x20;
+    uint64_t u1 = str[1] | 0x20;
+    uint64_t u2 = (len > 2) ? (str[2] | 0x20) : 0;
+    uint64_t u3 = (len > 3) ? (str[3] | 0x20) : 0;
+
+    uint64_t packed = (u0 << 24) | (u1 << 16) | (u2 << 8) | u3;
 
     switch (packed) {
-    case (('p' << 8) | 'x'): *out_unit = svg_unit_px;  return true;
-    case (('p' << 8) | 't'): *out_unit = svg_unit_pt;  return true;
-    case (('p' << 8) | 'c'): *out_unit = svg_unit_pc;  return true;
-    case (('i' << 8) | 'n'): *out_unit = svg_unit_in;  return true;
-    case (('m' << 8) | 'm'): *out_unit = svg_unit_mm;  return true;
-    case (('c' << 8) | 'm'): *out_unit = svg_unit_cm;  return true;
-    // Extended SVG units if encountered in layout rules:
-    case (('e' << 8) | 'm'): *out_unit = svg_unit_px;  return true; // Fallback mapping
-    case (('e' << 8) | 'x'): *out_unit = svg_unit_px;  return true;
+    // 2-Character Units (padded with trailing 0s)
+    case PACK_UNIT('p', 'x', 0, 0): *out_unit = svg_unit_px;  return true;
+    case PACK_UNIT('p', 't', 0, 0): *out_unit = svg_unit_pt;  return true;
+    case PACK_UNIT('p', 'c', 0, 0): *out_unit = svg_unit_pc;  return true;
+    case PACK_UNIT('i', 'n', 0, 0): *out_unit = svg_unit_in;  return true;
+    case PACK_UNIT('m', 'm', 0, 0): *out_unit = svg_unit_mm;  return true;
+    case PACK_UNIT('c', 'm', 0, 0): *out_unit = svg_unit_cm;  return true;
+    case PACK_UNIT('e', 'm', 0, 0): *out_unit = svg_unit_em;  return true;
+
+               // 3-Character Units (padded with a trailing 0)
+    case PACK_UNIT('r', 'e', 'm', 0): *out_unit = svg_unit_rem; return true;
+    case PACK_UNIT('d', 'e', 'g', 0): *out_unit = svg_unit_deg; return true;
+    case PACK_UNIT('r', 'a', 'd', 0): *out_unit = svg_unit_rad; return true;
+
+               // 4-Character Units
+    case PACK_UNIT('g', 'r', 'a', 'd'): *out_unit = svg_unit_grad; return true;
     }
+
     return false;
 }
 
@@ -737,10 +756,9 @@ bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percen
 
     // Check if we have at least 2 remaining characters to parse a double unit token
     if (ptr + 1 < buff_end) {
-        uint8_t c1 = *(ptr + 1);
         svg_unit parsed_unit;
 
-        if (parse_two_char_unit(c0, c1, &parsed_unit)) {
+        if (parse_multi_char_unit(ptr, buff_end - ptr, &parsed_unit)) {
             lop->units = parsed_unit;
             return true;
         }
@@ -987,7 +1005,7 @@ void parse_point_list(svg_context *const svg, const uint8_t *const restrict buff
         }
     }
 }
-void _parse_path_d_attribute(svg_context *const svg, const uint8_t *const restrict buff_ptr, const uint8_t *const restrict buff_end) {
+void parse_path_d_attribute(svg_context *const svg, const uint8_t *const restrict buff_ptr, const uint8_t *const restrict buff_end) {
     const uint8_t *buff = buff_ptr;
     float        x, y, c1x, c1y, c2x, c2y, cpX, cpY, rx, ry, rotx;
     bool         large, sweep;
@@ -1279,181 +1297,91 @@ void _parse_path_d_attribute(svg_context *const svg, const uint8_t *const restri
         prev = none;
     }
 }
+void parse_font_size(svg_context *const svg, SvgPresentationAttributes *attribs) {
+    const uint8_t *buff           = svg->value;
+    const uint8_t *const buff_end = svg->value + svg->value_len;
 
-/*void _parse_path_d_attribute2(svg_context *const svg, const uint8_t *const restrict buff_ptr, const uint8_t *const restrict buff_end) {
-    const uint8_t *buff = buff_ptr;
-    float        x, y, c1x, c1y, c2x, c2y, cpX, cpY, rx, ry, rotx;
-    bool         large, sweep;
-    enum prevCmd prev     = none;
-    float        subpathX = 0, subpathY = 0;
-    char         c;
+    const float size_mult[] = { 0.6f, 0.75f, 0.89f, 1.f, 1.2f, 1.5f, 2.f, 3.f};
+    svg_length_or_percentage lop = {0};
 
-    while (try_skip_whitespaces(&buff, buff_end)) {
+    buff = skip_whitespaces (buff, buff_end);
+    if (buff >= buff_end) false;
 
-        c = *buff++;
+    int xCount = 0;
+    while (buff < buff_end && *buff == 'x') {
+        buff++;
+        xCount++;
+    }
+    if (xCount > 0 && '-' != *buff++) {
+        LOGE("marlform font-size\n");
+        return;
+    }
 
-        switch (c) {
-        case 'M':
-            if (try_parse_floats(&buff, buff_end, 2, &x, &y)) {
-                vkvg_move_to(svg->ctx, x, y);
-                subpathX = x;
-                subpathY = y;
-                while (try_parse_floats(&buff, buff_end, 2, &x, &y))
-                    vkvg_line_to(svg->ctx, x, y);
+    if (!xCount) {
+        if (!strncasecmp ((char*)buff, "smaller", buff_end - buff)) {
+            if (attribs->font_size_type > svg_font_size_xx_small)
+                attribs->font_size_type--;
+        } else if (!strncasecmp ((char*)buff, "larger", buff_end - buff)) {
+            if (attribs->font_size_type < svg_font_size_xxx_large)
+                attribs->font_size_type++;
+        } else if (!strncasecmp ((char*)buff, "medium", buff_end - buff)) {
+            attribs->font_size_type = svg_font_size_medium;
+        } else if (try_parse_length_or_percentage(svg, &lop)) {
+            if (lop.units == svg_unit_pt) {
+                attribs->font_size_pt = lop.number;
+            } else if (lop.units == svg_unit_percentage) {
+                attribs->font_size_pt *= lop.number * 0.01f;
+            } else if (lop.units == svg_unit_px) {
+                int hdpy, vdpy;
+                vkvg_device_get_dpy(svg->dev, &hdpy, &vdpy);
+                attribs->font_size_pt =  lop.number * (72.f / (float)vdpy);
+            } else if (lop.units == svg_unit_em) {
+                attribs->font_size_pt *= lop.number;
+            } else {
+                LOGE("unhandle font-size units\n");
             }
-            break;
-        case 'm':
-            if (try_parse_floats(&buff, buff_end, 2, &x, &y)){
-                vkvg_rel_move_to(svg->ctx, x, y);
-                vkvg_get_current_point(svg->ctx, &subpathX, &subpathY);
-                while (try_parse_floats(&buff, buff_end, 2, &x, &y))
-                    vkvg_rel_line_to(svg->ctx, x, y);
-            }
-            break;
-        case 'L':
-            while (try_parse_floats(&buff, buff_end, 2, &x, &y))
-                vkvg_line_to(svg->ctx, x, y);
-            break;
-        case 'l':
-            while (try_parse_floats(&buff, buff_end, 2, &x, &y))
-                vkvg_rel_line_to(svg->ctx, x, y);
-            break;
-        case 'H':
-            while (try_parse_floats(&buff, buff_end, 1, &x)) {
-                vkvg_get_current_point(svg->ctx, &c1x, &c1y);
-                vkvg_line_to(svg->ctx, x, c1y);
-            }
-            break;
-        case 'h':
-            while (try_parse_floats(&buff, buff_end, 1, &x))
-                vkvg_rel_line_to(svg->ctx, x, 0);
-            break;
-        case 'V':
-            while (try_parse_floats(&buff, buff_end, 1, &y)) {
-                vkvg_get_current_point(svg->ctx, &c1x, &c1y);
-                vkvg_line_to(svg->ctx, c1x, y);
-            }
-            break;
-        case 'v':
-            while (try_parse_floats(&buff, buff_end, 1, &y))
-                vkvg_rel_line_to(svg->ctx, 0, y);
-            break;
-        case 'Q':
-            while (try_parse_floats(&buff, buff_end, 4, &c1x, &c1y, &x, &y)) {
-                vkvg_quadratic_to(svg->ctx, c1x, c1y, x, y);
-                prev   = quad;
-            }
-            break;
-        case 'q':
-            while (try_parse_floats(&buff, buff_end, 4, &c1x, &c1y, &x, &y)) {
-                vkvg_get_current_point(svg->ctx, &cpX, &cpY);
-                vkvg_rel_quadratic_to(svg->ctx, c1x, c1y, x, y);
-                prev = quad;
-                c1x += cpX;
-                c1y += cpY;
-            }
-            break;
-        case 'T':
-            while (try_parse_floats(&buff, buff_end, 2, &x, &y)) {
-                vkvg_get_current_point(svg->ctx, &cpX, &cpY);
-                if (prev == quad) {
-                    c1x = 2.0 * cpX - c1x;
-                    c1y = 2.0 * cpY - c1y;
-                } else {
-                    c1x = x;
-                    c1y = y;
-                }
-                vkvg_quadratic_to(svg->ctx, c1x, c1y, x, y);
-                prev   = quad;
-            }
-            break;
-        case 't':
-            while (try_parse_floats(&buff, buff_end, 2, &x, &y)) {
-                vkvg_get_current_point(svg->ctx, &cpX, &cpY);
-                if (prev == quad) {
-                    c1x = (cpX - c1x);
-                    c1y = (cpY - c1y);
-                } else {
-                    c1x = x;
-                    c1y = y;
-                }
-                vkvg_rel_quadratic_to(svg->ctx, c1x, c1y, x, y);
-                prev = quad;
-                c1x += cpX;
-                c1y += cpY;
-            }
-            break;
-        case 'C':
-            while (try_parse_floats(&buff, buff_end, 6, &c1x, &c1y, &c2x, &c2y, &x, &y)) {
-                vkvg_curve_to(svg->ctx, c1x, c1y, c2x, c2y, x, y);
-                prev   = cubic;
-            }
-            break;
-        case 'c':
-            while (try_parse_floats(&buff, buff_end, 6, &c1x, &c1y, &c2x, &c2y, &x, &y)) {
-                vkvg_get_current_point(svg->ctx, &cpX, &cpY);
-                vkvg_rel_curve_to(svg->ctx, c1x, c1y, c2x, c2y, x, y);
-                c2x += cpX;
-                c2y += cpY;
-                prev   = cubic;
-            }
-            break;
-        case 'S':
-            while (try_parse_floats(&buff, buff_end, 4, &c1x, &c1y, &x, &y)) {
-                vkvg_get_current_point(svg->ctx, &cpX, &cpY);
-                if (prev == cubic)
-                    vkvg_curve_to(svg->ctx, 2.0 * cpX - c2x, 2.0 * cpY - c2y, c1x, c1y, x, y);
-                else
-                    vkvg_curve_to(svg->ctx, cpX, cpY, c1x, c1y, x, y);
-
-                c2x    = c1x;
-                c2y    = c1y;
-                prev   = cubic;
-            }
-            break;
-        case 's':
-            while (try_parse_floats(&buff, buff_end, 4, &c1x, &c1y, &x, &y)) {
-                vkvg_get_current_point(svg->ctx, &cpX, &cpY);
-                if (prev == cubic)
-                    vkvg_rel_curve_to(svg->ctx, cpX - c2x, cpY - c2y, c1x, c1y, x, y);
-                else
-                    vkvg_rel_curve_to(svg->ctx, 0, 0, c1x, c1y, x, y);
-
-                c2x    = cpX + c1x;
-                c2y    = cpY + c1y;
-                prev   = cubic;
-            }
-            break;
-        case 'A': // rx ry x-axis-rotation large-arc-flag sweep-flag x y
-            while (try_parse_floats(&buff, buff_end, 3, &rx, &ry, &rotx)) {
-                if (!try_parse_floats(&buff, buff_end, 2, &large, &sweep) || !try_parse_floats(&buff, buff_end, 2, &x, &y))
-                    return;
-                rotx = rotx * M_PIF / 180.0f;
-
-                vkvg_elliptic_arc_to(svg->ctx, x, y, large, sweep, rx, ry, rotx);
-            }
-            break;
-        case 'a': // rx ry x-axis-rotation large-arc-flag sweep-flag x y
-            while (try_parse_floats(&buff, buff_end, 3, &rx, &ry, &rotx)) {
-                if (!try_parse_floats(&buff, buff_end, 2, &large, &sweep) || !try_parse_floats(&buff, buff_end, 2, &x, &y))
-                    return;
-                rotx = degToRad(rotx);
-
-                vkvg_rel_elliptic_arc_to(svg->ctx, x, y, large, sweep, rx, ry, rotx);
-            }
-            break;
-        case 'z':
-        case 'Z':
-            vkvg_close_path(svg->ctx);
-            vkvg_move_to(svg->ctx, subpathX, subpathY);
-            break;
-        default:
-            LOG("error parsing path: unexpected char: %c\n", c);
+            return;
+        } else {
+            LOGE("marlform font-size\n");
             return;
         }
+    } else if (!strncasecmp ((char*)buff, "small", buff_end - buff)) {
+        switch (xCount) {
+        case 0:
+            attribs->font_size_type = svg_font_size_small;
+            break;
+        case 1:
+            attribs->font_size_type = svg_font_size_x_small;
+            break;
+        case 2:
+            attribs->font_size_type = svg_font_size_xx_small;
+            break;
+        default:
+            return;
+        }
+    } else if (!strncasecmp ((char*)buff, "large", buff_end - buff)) {
+        switch (xCount) {
+        case 0:
+            attribs->font_size_type = svg_font_size_large;
+            break;
+        case 1:
+            attribs->font_size_type = svg_font_size_x_large;
+            break;
+        case 2:
+            attribs->font_size_type = svg_font_size_xx_large;
+            break;
+        case 3:
+            attribs->font_size_type = svg_font_size_xxx_large;
+            break;
+        default:
+            return;
+        }
+    } else {
+        LOGE("marlform font-size\n");
+        return;
     }
+    attribs->font_size_pt = svg->defaultFontSize * size_mult[attribs->font_size_type];
 }
-*/
 
 static inline float _normalized_diagonal(float w, float h) { return sqrtf(powf(w, 2) + powf(h, 2)) / sqrtf(2); }
 void draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
@@ -1482,7 +1410,7 @@ void draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
         vkvg_stroke(svg->ctx);
     }
 }
-void  _process_element(svg_context *const svg, SvgPresentationAttributes *const attribs, void *elt, bool use) {
+void process_element(svg_context *const svg, SvgPresentationAttributes *const attribs, void *elt, bool use) {
     if (!(svg->inDefs || svg->skipDraw)) {
         LOG("process element: %.*s \n", (int)svg->elt_len, svg->elt);
         switch (_get_element_type(elt)) {
@@ -1543,7 +1471,7 @@ void  _process_element(svg_context *const svg, SvgPresentationAttributes *const 
         } break;
         case svg_element_type_path: {
             CASTELT(p, path, elt);
-            _parse_path_d_attribute(svg, p->d, p->d + p->d_len);
+            parse_path_d_attribute(svg, p->d, p->d + p->d_len);
             draw(svg, attribs);
         } break;
         case svg_element_type_polygon: {
@@ -1571,7 +1499,7 @@ void process_use(svg_context *const svg, SvgPresentationAttributes *const attrib
         LOGE("xlink:href not resolved %.*s\n", (int)svg->value_len, svg->value);
         return;
     }
-    _process_element(svg, attribs, elt, true);
+    process_element(svg, attribs, elt, true);
 }
 void apply_transform(svg_context *svg) {
     vkvg_matrix_t current;
@@ -1936,6 +1864,7 @@ VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_
     svg.idList  = array_create();
     svg.forced_width = width;
     svg.forced_height = height;
+    svg.defaultFontSize = 12.f;
 
     SvgPresentationAttributes attribs = {
         0xff000000,
@@ -1953,6 +1882,8 @@ VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_
         {1, svg_unit_px}
     };
     attribs.text_anchor = SVG_ANCHOR_START;
+    attribs.font_size_pt = svg.defaultFontSize;
+    attribs.font_family = "sans";
 
     parse_children (&svg, &attribs, NULL);
 

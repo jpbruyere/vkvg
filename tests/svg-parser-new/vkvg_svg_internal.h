@@ -81,9 +81,23 @@ typedef enum {
     svg_unit_percentage,
     svg_unit_deg,
     svg_unit_grad,
-    svg_unit_rad
+    svg_unit_rad,
+    svg_unit_em,
+    svg_unit_rem
 } svg_unit;
 
+typedef enum {
+    svg_font_size_larger,
+    svg_font_size_smaller,
+    svg_font_size_xx_small,
+    svg_font_size_x_small,
+    svg_font_size_small,
+    svg_font_size_medium,
+    svg_font_size_large,
+    svg_font_size_x_large,
+    svg_font_size_xx_large,
+    svg_font_size_xxx_large,
+} svg_font_size;
 typedef enum { svg_gradient_unit_objectBoundingBox, svg_gradient_unit_userSpaceOnUse } svg_gradient_unit;
 
 typedef enum { svg_text_anchor_start, svg_text_anchor_middle, svg_text_anchor_end } svg_text_anchor;
@@ -254,8 +268,9 @@ typedef struct {
     SvgUnicodeBidi       unicode_bidi      : 2;
     SvgTextAnchor        text_anchor       : 2;
     SvgTextRendering     text_rendering    : 2;
-    uint32_t             font_size         : 16; // Scaled by 100
-    uint16_t             font_family_id;
+    float                font_size_pt;           // font size in point units
+    svg_font_size        font_size_type;
+    const char*          font_family;
 
     SvgVectorEffect      vector_effect     : 1;
     SvgDisplay           display           : 1;
@@ -327,6 +342,8 @@ typedef struct {
     svg_length_or_percentage width;
     svg_length_or_percentage height;
 
+    float       defaultFontSize; //medium size in pt
+
     //-- flags --
     uint32_t    queryDimensions     : 1;
     uint32_t    preserveAspectRatio : 1;
@@ -380,10 +397,11 @@ bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat);
 bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percentage *const lop);
 bool try_parse_viewbox(svg_context *const svg);
 float parse_opacity(svg_context *const svg);
-void  _process_element(svg_context * const svg, SvgPresentationAttributes *const attribs, void *elt, bool use);
+void process_element(svg_context * const svg, SvgPresentationAttributes *const attribs, void *elt, bool use);
 void process_use(svg_context *const svg, SvgPresentationAttributes *const attribs);
 void apply_transform(svg_context *svg);
 void process_svg(svg_context *const svg);
+void parse_font_size(svg_context *const svg, SvgPresentationAttributes *attribs);
 static inline float parse_ratio(svg_context *const svg) {
     svg_length_or_percentage ratio;
     if (!try_parse_length_or_percentage(svg, &ratio)) {
