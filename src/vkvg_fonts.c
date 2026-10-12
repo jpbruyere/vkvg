@@ -798,7 +798,7 @@ void text_run_init(VkvgFont font, vkvg_direction_t textDirection, const char* te
 #else
         uint32_t gIndex = stbtt_FindGlyphIndex(&textRun->font->face->stbInfo, tmp[i]);
 #endif
-        glyph_ref cr = get_cached_glyph(textRun->dev, textRun->font, gIndex);
+        glyph_ref cr = get_cached_glyph(textRun->font->dev, textRun->font, gIndex);
         textRun->glyphs[i].codepoint = gIndex;
         textRun->glyphs[i].x_advance = cr.advance.x;
         textRun->glyphs[i].y_advance = cr.advance.y;
