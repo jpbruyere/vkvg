@@ -643,7 +643,7 @@ hb_buffer_t* _get_hb_buffer(VkvgText textRun, const char* text, int length) {
     hb_shape(font->face->hb_font, buf, NULL, 0);
 
     if (hb_buffer_get_content_type(buf) != HB_BUFFER_CONTENT_TYPE_GLYPHS) {
-        LOGW("HarfBuzz shaping failed: Buffer was not converted to glyphs.");
+        LOGW("HarfBuzz shaping failed: Buffer was not converted to glyphs.\n");
     }
     return buf;
 }

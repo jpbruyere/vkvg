@@ -58,6 +58,8 @@ typedef enum {
     svg_element_type_ellipse,
     svg_element_type_polygon,
     svg_element_type_path,
+    svg_element_type_text,
+    svg_element_type_span,
     svg_element_type_linear_gradient,
     svg_element_type_radial_gradient,
     svg_element_type_gradient_stop
@@ -158,6 +160,14 @@ typedef struct {
     const uint8_t     *d;
     size_t             d_len;
 } svg_element_path;
+
+typedef struct {
+    svg_element_header id;
+} svg_element_text;
+
+typedef struct {
+    svg_element_header id;
+} svg_element_span;
 
 typedef struct {
     svg_element_header       id;
@@ -271,6 +281,7 @@ typedef struct {
     float                font_size_pt;           // font size in point units
     svg_font_size        font_size_type;
     const char*          font_family;
+    int                  font_family_len;
 
     SvgVectorEffect      vector_effect     : 1;
     SvgDisplay           display           : 1;
@@ -315,7 +326,7 @@ typedef struct {
 
 enum prevCmd { none, quad, cubic };
 
-typedef struct {
+typedef struct _svg_context {
     const uint8_t *buff_ptr;
     const uint8_t *buff_end;
 
@@ -323,6 +334,7 @@ typedef struct {
     const uint8_t *elt;
     const uint8_t *att;
     const uint8_t *value;
+    const uint8_t *text;
     const uint8_t *style;
     const uint8_t *style_end;
     size_t         ns_len;
@@ -363,6 +375,13 @@ typedef struct {
     SvgEltTokId curEltType;
 } svg_context;
 
+typedef struct _vkvg_svg_t {
+    uint8_t *buff;
+    uint8_t *buff_end;
+    uint32_t width;
+    uint32_t height;
+} vkvg_svg_t;
+
 #define CREATE_CTOR_ELT(elt)                                                                                           \
 svg_element_##elt *_new_##elt() {                                                                                      \
         svg_element_##elt *c = (svg_element_##elt *)calloc(1, sizeof(svg_element_##elt));                              \
@@ -375,8 +394,11 @@ CREATE_CTOR_ELT(circle)
 CREATE_CTOR_ELT(line)
 CREATE_CTOR_ELT(ellipse)
 CREATE_CTOR_ELT(path)
+CREATE_CTOR_ELT(text)
+CREATE_CTOR_ELT(span)
 CREATE_CTOR_ELT(polygon)
 CREATE_CTOR_ELT(gradient_stop)
+
 #define CASTELT(var, type, data) svg_element_##type *var = (svg_element_##type *)data
 #define CAST(type) ((svg_element_##type *)parentData)
 

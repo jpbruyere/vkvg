@@ -17,12 +17,15 @@
 #include "array.h"
 
 //#define PREPROC_SVG
-#define PROCESS_SVG process_svg(svg);
+#define PROCESS_SVG             \
+    process_svg(svg);           \
+    if (svg->queryDimensions)   \
+        return;
 
-#define POSTPROC_SVG                                                                                                   \
-{                                                                                                                      \
-    if (svg->ownContext)                                                                                               \
-        vkvg_destroy(svg->ctx);                                                                                        \
+#define POSTPROC_SVG                    \
+{                                       \
+    if (svg->ownContext)                \
+        vkvg_destroy(svg->ctx);         \
 }
 
 
@@ -112,6 +115,14 @@
     CASTELT(p,path,parentData); \
     p->d = svg->value;          \
     p->d_len = svg->value_len;
+//============
+
+//=== TEXT ===
+#define PREPROC_TEXT    vkvg_save(svg->ctx);        \
+    parentData = _new_path();
+
+#define PROCESS_TEXT    process_element(svg, &attribs, parentData, false);
+#define POSTPROC_TEXT   vkvg_restore(svg->ctx);
 //============
 
 //= LINEAR GRADIENT =
@@ -228,7 +239,9 @@
 #define SVG_ATT_TEXTPATH_HREF           SVG_ATT_XLINK_HREF
 #define SVG_ATT_USE_HREF                SVG_ATT_XLINK_HREF
 
-#define SVG_ATT_ID          svg->currentIdHash = hash_svg_id(svg->value, svg->value_len);   \
+#define SVG_ATT_ID          svg->currentIdHash = hash_svg_id(svg->value, svg->value_len);                       \
+                            if (svg->renderOnlyIdHash == svg->currentIdHash && !attribs->visibility)            \
+                                attribs->visibility = SVG_VISIBILITY_VISIBLE;                                   \
                             LOG("currentId %.*s -> %u\n", (int)svg->value_len, svg->value, svg->currentIdHash);
 #define SVG_ATT_COLOR       try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->color_type, &attribs->color);
 #define SVG_ATT_STROKE      try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->stroke_type, &attribs->stroke);
@@ -267,6 +280,8 @@
 #define SVG_ATT_FILL_OPACITY    attribs->fill_opacity = parse_ratio(svg);
 #define SVG_ATT_STROKE_OPACITY  attribs->stroke_opacity = parse_ratio(svg);
 #define SVG_ATT_FONT_SIZE       parse_font_size(svg, attribs);
+#define SVG_ATT_FONT_FAMILY     attribs->font_family = svg->value;              \
+                                attribs->font_family_len = svg->value_len;
 
 #define SVG_ATT_SVG_WIDTH   try_parse_length_or_percentage(svg, &svg->width);
 #define SVG_ATT_SVG_HEIGHT  try_parse_length_or_percentage(svg, &svg->height);
@@ -1411,7 +1426,7 @@ void draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
     }
 }
 void process_element(svg_context *const svg, SvgPresentationAttributes *const attribs, void *elt, bool use) {
-    if (!(svg->inDefs || svg->skipDraw)) {
+    if (!(svg->inDefs || !attribs->visibility)) {
         LOG("process element: %.*s \n", (int)svg->elt_len, svg->elt);
         switch (_get_element_type(elt)) {
         case svg_element_type_rect: {
@@ -1641,6 +1656,7 @@ int parse_element(SVG_COMMON_SIG) {
         if (*buff == '>') {
             //read element childrens
             svg->buff_ptr = ++buff;
+            svg->text = svg->buff_ptr;//if innerText, it starts here
             parse_children(svg, attribs, parentData);
             buff = svg->buff_ptr;
             return 1;
@@ -1675,6 +1691,8 @@ int parse_children(SVG_COMMON_SIG) {
 
     while (buff < buff_end) {
         if (*buff == '<') {
+            //handle inner text
+            size_t txt_len = svg->text - buff;
             if (++buff == buff_end)
                 return -1;
             c = *buff;
@@ -1698,6 +1716,8 @@ int parse_children(SVG_COMMON_SIG) {
                 svg->buff_ptr = buff;
                 LOG("Element: %.*s:%.*s\n", (int)svg->ns_len, svg->ns, (int)svg->elt_len, svg->elt);
                 elt_lut_func(svg, *attribs, parentData);
+                if (svg->queryDimensions)
+                    return 0;
                 buff = svg->buff_ptr;
                 svg->currentIdHash = 0;
                 svg->currentXlinkHref = 0;
@@ -1762,6 +1782,7 @@ int parse_children(SVG_COMMON_SIG) {
             LOGE("parse_children: malformed xml\n");
             return -1;
         } else {
+
             buff++;
         }
     }
@@ -1770,67 +1791,149 @@ int parse_children(SVG_COMMON_SIG) {
 }
 
 void vkvg_svg_get_dimensions(VkvgSvg svg, uint32_t *width, uint32_t *height) {
-    /*if (!svg) {
+    if (!svg) {
         *width = *height = 0;
         return;
     }
     *width  = svg->width;
-    *height = svg->height;*/
+    *height = svg->height;
 }
+
+bool try_parse_svg (svg_context *svg) {
+    svg->idList  = array_create();
+    svg->preserveAspectRatio = true;
+    svg->width   = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
+    svg->height  = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
+    svg->defaultFontSize = 12.f;
+
+    SvgPresentationAttributes attribs = {
+        0xff000000,
+        0xff000000,
+        0xff000000,
+        0xff000000,
+        svg_paint_type_solid,
+        svg_paint_type_none,
+        svg_paint_type_none,
+        svg_paint_type_none,
+        1.0f,
+        1.0f,
+        1.0f,
+        1.0f, // opacities
+        {1, svg_unit_px}
+    };
+    attribs.text_anchor = SVG_ANCHOR_START;
+    attribs.font_size_pt = svg->defaultFontSize;
+    attribs.font_family = "sans";
+    attribs.visibility = svg->renderOnlyIdHash ? SVG_VISIBILITY_HIDDEN : SVG_VISIBILITY_VISIBLE;
+
+    parse_children (svg, &attribs, NULL);
+
+    for (uint32_t i = 0; i < svg->idList->count; i++) {
+        switch (_get_element_type(svg->idList->elements[i])) {
+        case svg_element_type_linear_gradient:
+            vkvg_pattern_destroy((VkvgPattern)((svg_element_linear_gradient *)svg->idList->elements[i])->pattern);
+            break;
+        case svg_element_type_radial_gradient:
+            vkvg_pattern_destroy((VkvgPattern)((svg_element_radial_gradient *)svg->idList->elements[i])->pattern);
+            break;
+        }
+        free(svg->idList->elements[i]);
+    }
+    array_destroy(svg->idList);
+
+    return true;
+}
+
 void vkvg_svg_render(VkvgSvg svg, VkvgContext ctx, const char *id) {
-    /*if (!svg || !ctx || vkvg_status(ctx))
+    if (!svg || vkvg_status(ctx))
         return;
-    _create_from_file_handle(NULL, svg->width, svg->height, svg->fileHandle, ctx, id);
-    rewind(svg->fileHandle);*/
+    svg_context svgctx = {svg->buff, svg->buff_end};
+    svgctx.preserveAspectRatio = true;
+    svgctx.ctx = ctx;
+    if (id && id[0] == '#')
+        svgctx.renderOnlyIdHash = hash_svg_id((uint8_t*)&id[1], strlen(id) - 1);
+
+    try_parse_svg (&svgctx);
 }
 VkvgSvg vkvg_svg_load(const char *svgFilePath) {
-    /*vkvg_svg_t *svg = (vkvg_svg_t *)calloc(1, sizeof(vkvg_svg_t));
-    if (!svg)
+    FILE *file = fopen(svgFilePath, "r");
+    if (!file) {
+        LOGE("Error opening file");
         return NULL;
-    FILE *f = fopen(svgFilePath, "r");
-    if (f) {
-        fseek(f, 0, SEEK_END);
-        svg->size = ftell(f);
-        rewind(f);
-
-        svg->buffer = (char *)malloc(sizeof(char) * svg->size);
-        fread(svg->buffer, 1, svg->size, f);
-
-        fclose(f);
-
-        svg->fileHandle = fmemopen((void *)svg->buffer, svg->size, "r");
     }
-    _query_dimensions(svg);
-    return svg;*/
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    if (size <= 0) {
+        fclose(file);
+        return NULL;
+    }
+    fseek(file, 0, SEEK_SET);
+    vkvg_svg_t *svg = (vkvg_svg_t *)calloc(1, sizeof(vkvg_svg_t));
+    if (!svg) {
+        fclose(file);
+        return NULL;
+    }
+    svg->buff = malloc((size_t)size);
+    if (!svg->buff) {
+        LOGE("Memory allocation failed");
+        fclose(file);
+        free(svg);
+        return NULL;
+    }
+    size_t bytes_read = fread(svg->buff, 1, (size_t)size, file);
+    fclose(file);
+    svg->buff_end = svg->buff + bytes_read;
+
+    svg_context svgctx = {svg->buff, svg->buff_end};
+    svgctx.preserveAspectRatio = true;
+    svgctx.queryDimensions = true;
+
+    try_parse_svg (&svgctx);
+
+    svg->width = svgctx.width.number;
+    svg->height = svgctx.height.number;
+
+    return svg;
 }
 VkvgSvg vkvg_svg_load_fragment(char *svgFragment) {
-    /*if (!svgFragment)
+    if (!svgFragment)
         return NULL;
     vkvg_svg_t *svg = (vkvg_svg_t *)calloc(1, sizeof(vkvg_svg_t));
     if (!svg)
         return NULL;
-    svg->size   = strlen(svgFragment);
-    svg->buffer = (char *)malloc(sizeof(char) * svg->size);
-    memcpy(svg->buffer, svgFragment, svg->size);
-    svg->fileHandle = fmemopen((void *)svg->buffer, svg->size, "r");
-    _query_dimensions(svg);
-    return svg;*/
+    size_t len = strlen(svgFragment);
+    svg->buff = (uint8_t*)malloc(sizeof(uint8_t) * len);
+    memcpy(svg->buff, svgFragment, sizeof(uint8_t) * len);
+    svg->buff_end = svg->buff + len;
+
+    svg_context svgctx = {svg->buff, svg->buff_end};
+    svgctx.preserveAspectRatio = true;
+    svgctx.queryDimensions = true;
+
+    try_parse_svg (&svgctx);
+
+    svg->width = svgctx.width.number;
+    svg->height = svgctx.height.number;
+
+    return svg;
 }
 
 void vkvg_svg_destroy(VkvgSvg svg) {
-    /*if (!svg)
+    if (!svg)
         return;
-    fclose(svg->fileHandle);
-    free(svg->buffer);
-    free(svg);*/
+    free(svg->buff);
+    free(svg);
 }
 
-VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width, uint32_t height, char *svgFragment) {
- /*   FILE       *f    = fmemopen((void *)svgFragment, strlen(svgFragment), "r");
-    VkvgSurface surf = _create_from_file_handle(dev, width, height, f, NULL, NULL);
-    fclose(f);
-    return surf;*/
-    return NULL;
+VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width, uint32_t height, const char *const svgFragment) {
+    svg_context svg = {(const uint8_t*)svgFragment, (const uint8_t*)svgFragment + strlen(svgFragment)};
+    svg.dev = dev;
+    svg.forced_width = width;
+    svg.forced_height = height;
+
+    try_parse_svg (&svg);
+
+    return svg.surf;
 }
 VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_t height, const char *svgFilePath) {
     LOG("Processing file: %s\n", svgFilePath);
@@ -1856,51 +1959,14 @@ VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_
     fclose(file);
 
     svg_context svg = {file_buffer, file_buffer + bytes_read};
-    vkvg_device_create_info_t dev_info = {0};
     svg.preserveAspectRatio = true;
-    svg.dev     = dev;
-    svg.width   = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
-    svg.height  = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
-    svg.idList  = array_create();
+    svg.dev = dev;
     svg.forced_width = width;
     svg.forced_height = height;
-    svg.defaultFontSize = 12.f;
 
-    SvgPresentationAttributes attribs = {
-        0xff000000,
-        0xff000000,
-        0xff000000,
-        0xff000000,
-        svg_paint_type_solid,
-        svg_paint_type_none,
-        svg_paint_type_none,
-        svg_paint_type_none,
-        1.0f,
-        1.0f,
-        1.0f,
-        1.0f, // opacities
-        {1, svg_unit_px}
-    };
-    attribs.text_anchor = SVG_ANCHOR_START;
-    attribs.font_size_pt = svg.defaultFontSize;
-    attribs.font_family = "sans";
-
-    parse_children (&svg, &attribs, NULL);
+    try_parse_svg (&svg);
 
     free(file_buffer);
-
-    for (uint32_t i = 0; i < svg.idList->count; i++) {
-        switch (_get_element_type(svg.idList->elements[i])) {
-        case svg_element_type_linear_gradient:
-            vkvg_pattern_destroy((VkvgPattern)((svg_element_linear_gradient *)svg.idList->elements[i])->pattern);
-            break;
-        case svg_element_type_radial_gradient:
-            vkvg_pattern_destroy((VkvgPattern)((svg_element_radial_gradient *)svg.idList->elements[i])->pattern);
-            break;
-        }
-        free(svg.idList->elements[i]);
-    }
-    array_destroy(svg.idList);
 
     return svg.surf;
 }

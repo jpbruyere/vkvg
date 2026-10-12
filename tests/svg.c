@@ -9,7 +9,7 @@ static const char* svgSubPath = TESTS_DATA_ROOT "checkbox.svg";
 void svg_surface() {
     VkvgSurface svgSurf = vkvg_surface_create_from_svg(device, test_width, test_height, path);
 
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
 
     vkvg_set_source_rgb(ctx, 1, 1, 1);
     vkvg_paint(ctx);
@@ -24,7 +24,7 @@ void vkvg_svg() {
     VkvgSvg  svg = vkvg_svg_load(path);
     uint32_t w, h;
     vkvg_svg_get_dimensions(svg, &w, &h);
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     vkvg_clear(ctx);
 
     vkvg_svg_render(svg, ctx, NULL);
@@ -36,7 +36,7 @@ void vkvg_svg_sub() {
     VkvgSvg  svg = vkvg_svg_load(svgSubPath);
     uint32_t w, h;
     vkvg_svg_get_dimensions(svg, &w, &h);
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     vkvg_clear(ctx);
 
     vkvg_svg_render(svg, ctx, "#True");

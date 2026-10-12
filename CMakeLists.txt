@@ -81,8 +81,6 @@ IF(ENABLE_GTESTS)
     ADD_SUBDIRECTORY (gunit_tests)
 ENDIF()
 
-
-
 OPTION(VKVG_RECORDING "enable experimental recording functions" OFF)
 
 OPTION(VKVG_PREMULT_ALPHA "use premultiplied alpha for internal rendering" ON)
@@ -233,13 +231,13 @@ ENDIF ()
 
 FILE(GLOB VKVG_SRC src/*.c src/deps/*.c)
 FILE(GLOB VKVG_HEADERS src/*.h)
-SET (VKVG_PUBLIC_HEADERS "include/vkvg.h;include/vkvg-svg.h")
 
 IF (VKVG_SVG)
     ADD_DEFINITIONS (-DVKVG_SVG)
-    FILE(GLOB SVG_SRC tests/svg-parser-new/*.c tests/svg-parser-new/*.h)
+    FILE(GLOB SVG_SRC src/svg/*.c src/svg/*.h)
+    SET (VKVG_PUBLIC_HEADERS "include/vkvg.h;include/vkvg-svg.h")
 ELSE()
-    FILE(GLOB SVG_SRC src/nsvg/*.c)
+    SET (VKVG_PUBLIC_HEADERS "include/vkvg.h")
 ENDIF()
 
 LIST (APPEND VKVG_SRC ${SVG_SRC})
@@ -331,28 +329,6 @@ INSTALL(TARGETS "${PROJECT_NAME}" "${PROJECT_NAME}"
 IF (VKVG_BUILD_TESTS)
     ADD_SUBDIRECTORY(tests)
     ADD_SUBDIRECTORY(samples)
-
-    #font tests
-
-    # ADD_EXECUTABLE(fonts_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/font_tests/font_tests.c")
-
-    # TARGET_INCLUDE_DIRECTORIES(fonts_test PRIVATE
-    #     ${FREETYPE_INCLUDE_DIRS}
-    #     ${HarfBuzz_INCLUDE_DIRS}
-    #     ${Vulkan_INCLUDE_DIRS}
-    #     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    #     ${Fontconfig_INCLUDE_DIRS}
-    # )
-    # TARGET_LINK_LIBRARIES(fonts_test PUBLIC
-    #     #vkvg
-    #     ${HarfBuzz_LIBRARIES}
-    #     ${FREETYPE_LIBRARY}
-    #     ${Fontconfig_LIBRARIES}
-    #     ${Vulkan_LIBRARIES}
-    # )
-
-    ###################
-
 ELSEIF (VKVG_BUILD_OFFSCREEN_TEST)
     ADD_EXECUTABLE(test_offscreen "${CMAKE_CURRENT_SOURCE_DIR}/tests/offscreen.c")
     TARGET_INCLUDE_DIRECTORIES(test_offscreen PRIVATE
