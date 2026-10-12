@@ -134,6 +134,12 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
 
     _device_create_empty_texture(dev, format, dev->supportedTiling);
 
+    if (dev->threadAware) {
+        mtx_init(&dev->mutex, mtx_plain);
+        mtx_init(&dev->fontCache->mutex, mtx_plain);
+        dev->threadAware = true;
+    }
+
 #ifdef DEBUG
 #if defined(__linux__) && defined(__GLIBC__)
     _linux_register_error_handler();
@@ -301,11 +307,6 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
     dev->references = 1;
 
     dev->threadAware = info->threadAware;
-    if (dev->threadAware) {
-        mtx_init(&dev->mutex, mtx_plain);
-        mtx_init(&dev->fontCache->mutex, mtx_plain);
-        dev->threadAware = true;
-    }
 
     if (!info->vkdev) {
         const char* enabledExts[10];
