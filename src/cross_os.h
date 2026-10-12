@@ -38,6 +38,9 @@
 #define disable_warning (warn)
 #define reset_warning   (warn)
 #elif __APPLE__
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
 #include <math.h>
 #define vkvg_inline     static
 #define disable_warning (warn)

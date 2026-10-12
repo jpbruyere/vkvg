@@ -40,6 +40,10 @@ IF (ENABLE_PROFILING)
     ADD_LINK_OPTIONS(-pg)
 ENDIF()
 
+if (MSVC)
+    ADD_COMPILE_OPTIONS(/experimental:c11atomics)
+endif()
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     ADD_DEFINITIONS (-DDEBUG)
     OPTION(ENABLE_VALIDATION "enable vulkan validation layer" ON)
