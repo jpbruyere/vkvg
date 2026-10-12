@@ -1,5 +1,6 @@
 #include "VkvgTest.hpp"
 
+#ifdef VKVG_SVG
 #include "vkvg-svg.h"
 
 static float       rotation   = 0.f;
@@ -43,3 +44,4 @@ TEST(svg_load_render_sub) {
     vkvg_destroy(ctx);
     vkvg_svg_destroy(svg);
 }
+#endif
