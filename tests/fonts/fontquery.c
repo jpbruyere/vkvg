@@ -14,7 +14,7 @@
 
 #include <string.h>
 
-float fontSize = 28.0f;
+float fontSize = 24.0f;
 int   curFontStartIdx = 0;
 bool  redraw = true;
 
@@ -73,9 +73,11 @@ static const LocaleSample script_samples[] = {
 bool try_get_sample_by_fc_lang(const char* fc_lang, char* str) {
     const char* sample = NULL;
     if (fc_lang) {
-        for (int i = 1; i < 37; i++) {
-            if (strncmp(fc_lang, script_samples[i].lang_code, strlen(script_samples[i].lang_code)) == 0) {
+        for (int i = 0; i < 37; i++) {
+            if (!strncmp(fc_lang, script_samples[i].lang_code, strlen(script_samples[i].lang_code)) &&
+                strlen(script_samples[i].lang_code) == strlen(fc_lang)) {
                 sample = script_samples[i].sample_text;
+                printf("sample found for %s->%s\n", fc_lang, script_samples[i].lang_code);
                 break;
             }
         }
@@ -173,8 +175,42 @@ VkvgFont sans16 = NULL;
 char txtBuffer[MAX_TXT_LEN];
 int txtBuffPtr = 0;
 bool vertical = false;
+bool variable = false;
 
 float uiFontSize = 18.f;
+
+void encode_utf8(uint64_t cp, char* buffer) {
+    // 1. Filter out invalid Unicode code points
+    if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) {
+        buffer[0] = '\0'; // Return an empty string for invalid code points
+        return;
+    }
+
+           // 2. Encode based on the value range of the code point
+    if (cp <= 0x7F) {
+        // 1 byte sequence
+        buffer[0] = (char)cp;
+        buffer[1] = '\0';
+    } else if (cp <= 0x7FF) {
+        // 2 byte sequence
+        buffer[0] = (char)(0xC0 | (cp >> 6));
+        buffer[1] = (char)(0x80 | (cp & 0x3F));
+        buffer[2] = '\0';
+    } else if (cp <= 0xFFFF) {
+        // 3 byte sequence
+        buffer[0] = (char)(0xE0 | (cp >> 12));
+        buffer[1] = (char)(0x80 | ((cp >> 6) & 0x3F));
+        buffer[2] = (char)(0x80 | (cp & 0x3F));
+        buffer[3] = '\0';
+    } else {
+        // 4 byte sequence
+        buffer[0] = (char)(0xF0 | (cp >> 18));
+        buffer[1] = (char)(0x80 | ((cp >> 12) & 0x3F));
+        buffer[2] = (char)(0x80 | ((cp >> 6) & 0x3F));
+        buffer[3] = (char)(0x80 | (cp & 0x3F));
+        buffer[4] = '\0';
+    }
+}
 
 void draw(VkvgSurface surfFont) {
     if (!font_database)
@@ -203,7 +239,7 @@ void draw(VkvgSurface surfFont) {
     strcpy(txtBuffCopy,txtBuffer);
 
     FcPattern* request = FcPatternCreate();
-    FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, (char *)0);
+    FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, FC_VARIABLE, (char *)0);
 
     char *style = strstr(txtBuffCopy, ":");
     if (style) {
@@ -216,21 +252,26 @@ void draw(VkvgSurface surfFont) {
         }
     }
     FcPatternAddString(request, FC_FAMILY, (const FcChar8 *)txtBuffCopy);
-    FcPatternAddBool(request, FC_SCALABLE, FcTrue);
-    FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
+    if (variable)
+        FcPatternAddBool(request, FC_VARIABLE, FcTrue);
+    //FcPatternAddBool(request, FC_SCALABLE, FcTrue);
+    //FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
 
-    //FcConfigSubstitute(config, request, FcMatchPattern);
-    //FcDefaultSubstitute(request);
+    FcConfigSubstitute(config, request, FcMatchPattern);
+    FcDefaultSubstitute(request);
 
     FcFontSet* fonts = FcFontList(config, request, requested_elements);
 
     FcChar8* family_name = NULL;
     FcChar8* style_variant = NULL;
     FcChar8* fontFile = NULL;
+    FcBool var = false;
     int index = 0;
 
     float penX = 10;
     float penY = 50;
+
+
 
     FcPattern* font = NULL;
     if (fonts && fonts->nfont == 1) {
@@ -240,6 +281,7 @@ void draw(VkvgSurface surfFont) {
         FcPatternGetInteger (font, FC_INDEX, 0, &index);
         FcPatternGetString (font, FC_FAMILY, 0, &family_name);
         FcPatternGetString (font, FC_STYLE, 0, &style_variant);
+        FcPatternGetBool(font, FC_VARIABLE, 0, &var);
         VkvgFont f = vkvg_font_create_from_file(device, (char*)fontFile, index, fontSize);
         if (vkvg_font_status(f)) {
             printf("Error trying to load %s, from %s\n", txtBuffCopy, fontFile);
@@ -251,7 +293,7 @@ void draw(VkvgSurface surfFont) {
             vkvg_set_text_direction (ctx, VKVG_VERTICAL);
 
         penX = 200;
-        penY = 200;
+        penY = 100;
         sprintf(txtBuffCopy, "%s : %s", family_name, style_variant);
 
         vkvg_font_extents_t fe = {0};
@@ -273,6 +315,61 @@ void draw(VkvgSurface surfFont) {
         vkvg_set_source_rgb(ctx,1,1,1);
         vkvg_show_text_run(ctx,tr);
 
+        penX = 50;
+        penY = 150;
+
+        FcLangSet* langset = NULL;
+        FcChar8* lang = NULL;
+        if (FcPatternGetLangSet(font, FC_LANG, 0, &langset) == FcResultMatch) {
+            FcStrSet *lang_set = FcLangSetGetLangs(langset);
+            if (lang_set) {
+                FcStrList *lang_list = FcStrListCreate(lang_set);
+                if (lang_list) {
+                    while ((lang = FcStrListNext(lang_list))) {
+                        if (!lang)
+                            continue;
+                        if (try_get_sample_by_fc_lang((char*)lang, tmp)) {
+                            vkvg_move_to (ctx, penX, penY);
+                            vkvg_show_text(ctx, tmp);
+                            penY += fe.height;
+                        }
+                    }
+                }
+                FcStrListDone(lang_list);
+            }
+            FcStrSetDestroy(lang_set);
+        }
+
+        /*int charPerLine = (test_width - 100) / fe.max_x_advance;
+        int visibleLines = (test_height - 150) / fe.height;
+        int totLines = (double)0xffffffff / (double)charPerLine;
+
+        char buff[10];
+
+        int initI = curFontStartIdx * charPerLine;
+
+        for (uint64_t i = initI; i < 0xffffffff; ++i) {
+            encode_utf8(i, buff);
+            vkvg_move_to (ctx, penX, penY);
+            vkvg_show_text(ctx, buff);
+
+            penX += fe.max_x_advance;
+            if (penX > test_width - 50 - fe.max_x_advance) {
+                penY += fe.height;
+                penX = 50;
+            }
+            if (penY > test_height)
+                break;
+        }
+
+        vkvg_rectangle(ctx, test_width - 50, 150, 20, test_height - 170);
+        vkvg_stroke(ctx);
+
+        float lineH = (float)(test_height - 170) / (float)totLines;
+
+        vkvg_rectangle(ctx, test_width - 48, 150 + lineH * (float)initI, 16, 2);//lineH * visibleLines);
+        vkvg_fill(ctx);*/
+
         vkvg_flush(ctx);
         vkvg_text_run_destroy(tr);
         vkvg_font_destroy(f);
@@ -283,15 +380,19 @@ void draw(VkvgSurface surfFont) {
             FcPatternGetInteger (font, FC_INDEX, 0, &index);
             FcPatternGetString (font, FC_FAMILY, 0, &family_name);
             FcPatternGetString (font, FC_STYLE, 0, &style_variant);
+            FcPatternGetBool(font, FC_VARIABLE, 0, &var);
+
+            if (variable && !var)
+                continue;
 
             if (family_name && strstr((char*)family_name, (char*)txtBuffCopy)) {
                 if (!style || (style && style_variant && strstr((char*)style_variant, style))) {
-                    sprintf(tmp, "%s:%s", family_name,style_variant);
+                    sprintf(tmp, "%s:%s index=%d %s", family_name,style_variant, index, fontFile);
                     vkvg_move_to(ctx, penX, penY);
                     vkvg_show_text(ctx, tmp);
                     penY+=fe.height;
 
-                    if (penY > test_height)
+                    if (penY > test_height - 20)
                         break;
                 }
             }
@@ -332,6 +433,16 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         }
         txtBuffer[txtBuffPtr]='\0';
         break;
+    case GLFW_KEY_PAGE_DOWN:
+        curFontStartIdx += 0xff;
+        break;
+    case GLFW_KEY_PAGE_UP:
+        curFontStartIdx -= 0xff;
+        curFontStartIdx = MAX(curFontStartIdx, 0);
+        break;
+    case GLFW_KEY_F3:
+        variable = !variable;
+        break;
     case GLFW_KEY_F4:
         vertical = !vertical;
         break;
@@ -348,7 +459,7 @@ static void mouse_move_callback(GLFWwindow* window, double x, double y) {
 static void scroll_callback(GLFWwindow* window, double x, double y) {
 #ifdef VKVG_USE_FONTCONFIG
 
-    const int step = 5;
+    const int step = 10;
     if (y > 0.f) {
         if (curFontStartIdx > 0)
             curFontStartIdx -= step;
@@ -405,7 +516,7 @@ int main(int argc, char* argv[]) {
     }
     config = FcConfigGetCurrent();
     FcPattern* request = FcPatternCreate();
-    FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, (char *)0);
+    FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, FC_VARIABLE, (char *)0);
     FcPatternAddBool(request, FC_SCALABLE, FcTrue);
     FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
 

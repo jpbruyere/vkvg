@@ -287,7 +287,6 @@ typedef struct {
 // Precompute everything necessary to measure and draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
     VkvgFont                font;       /* vkvg font structure pointer */
-    VkvgDevice              dev;        /* vkvg device associated with this text run */
     vkvg_direction_t        textDirection; /* horizontal or vertical */
     vkvg_text_extents_t     extents;    /* store computed text extends */
     const char*             text;       /* utf8 char array of text*/
@@ -306,10 +305,10 @@ void _font_cache_destroy(VkvgDevice dev);
 bool _font_cache_load_font_file_in_memory(vkvg_font_face_t* fontId);
 void _font_cache_show_text(VkvgContext ctx, const char* text);
 void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkvg_text_extents_t* extents);
-void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents);
+void _font_cache_font_extents(VkvgFont font, vkvg_font_extents_t* extents);
 void _font_cache_update_context_descset(VkvgContext ctx);
 
-void text_run_init(VkvgContext ctx, const char* text, int length, VkvgText textRun);
+void text_run_init(VkvgFont font, vkvg_direction_t textDirection, const char* text, int length, VkvgText textRun);
 void text_run_term(VkvgText textRun);
 void text_run_show_text(VkvgContext ctx, VkvgText tr); // Draw text run
 #endif

@@ -1,24 +1,6 @@
-/*
- * Copyright (c) 2018-2025 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 #ifndef VKVG_H
 #define VKVG_H
 
@@ -146,14 +128,14 @@ typedef enum {
     VKVG_STATUS_FILE_NOT_FOUND,           /*!< */
     VKVG_STATUS_INVALID_DASH,             /*!< invalid value for a dash setting */
     VKVG_STATUS_INVALID_RECT,             /*!< rectangle with height or width equal to 0. */
-    VKVG_STATUS_TIMEOUT,      /*!< waiting for a vulkan operation to finish resulted in a fence timeout (5 seconds)*/
-    VKVG_STATUS_DEVICE_ERROR, /*!< vkvg device initialization error */
+    VKVG_STATUS_TIMEOUT,                  /*!< waiting for a vulkan operation to finish resulted in a fence timeout (5 seconds)*/
+    VKVG_STATUS_DEVICE_ERROR,             /*!< vkvg device initialization error */
     VKVG_STATUS_INVALID_DEVICE_CREATE_INFO, /*!< vkvg device initialization error */
-    VKVG_STATUS_INVALID_IMAGE,              /*!< */
-    VKVG_STATUS_INVALID_SURFACE,            /*!< */
-    VKVG_STATUS_INVALID_FONT,               /*!< Unresolved font name*/
-    VKVG_STATUS_IN_CACHE, /*!< This is not an error, context is stored in cache, not usable until recovered for another
-                             context creation. */
+    VKVG_STATUS_INVALID_IMAGE,            /*!< */
+    VKVG_STATUS_INVALID_SURFACE,          /*!< */
+    VKVG_STATUS_INVALID_FONT,             /*!< Unresolved font name*/
+    VKVG_STATUS_IN_CACHE,                 /*!< This is not an error, context is stored in cache, not usable until recovered for another
+                                               context creation. */
     VKVG_STATUS_ENUM_MAX = 0x7FFFFFFF
 } vkvg_status_t;
 
@@ -338,22 +320,64 @@ typedef struct _vkvg_text_run_t* VkvgText;
 /**
  * @brief Opaque pointer on a vkvg font.
  *
- * VkvgFont
- *
+ * VkvgFont holds a single type face at a specific size. Creating multiple size for the same type face will share
+ * underlying font resources. See @ref vkvg_font_create and @ref vkvg_font_create_from_file.
+ * VkvgFont object control font caching lifecycle. Keeping a reference to a VkvgFont ensure all caching are kept.
+ * When done with a font, call @ref vkvg_font_destroy to release all associated resources and cache entries.
+ * Font cache and all other font resources are released on device destroy.
  */
 typedef struct _vkvg_font_t* VkvgFont;
-/*
- * @brief Create a new VkvgFont.
+/**
+ * @brief Create a new @ref VkvgFont at the specified size from the provided query string.
+ *
+ * If fontconfig is enable, query strings with be parsed with fontconfig textural representation engine:
+ *   <families>-<point sizes>:<name1>=<values1>:<name2>=<values2>...
+ *
+ * @param dev Each font instance will be bound to a @ref VkvgDevice which holds the font cache.
+ * @param queryString
+ * @param pointSize The font size in point unit, 1/72 of an inch.
+ * @return A new VkvgFont or null if an error occured.
  */
 vkvg_public VkvgFont        vkvg_font_create (VkvgDevice dev, const char* queryString, float pointSize);
+/**
+ * @brief Create a new @ref VkvgFont from the provided font file, face index and size.
+ * @param dev VkvgDevice holding the font cache.
+ * @param fontFilePath a valid font file path.
+ * @param faceIndex Usually 0, except for variable fonts or font file with multiple faces.
+ * @param pointSize The font size in point unit, 1/72 of an inch.
+ * @return
+ */
 vkvg_public VkvgFont        vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, int faceIndex, float pointSize);
-/*
+/**
  * @brief Get underlying font face object pointer, if freetype is enable, the FT_Face will be returned.
+ * @param font a valid VkvgFont.
+ * @return the underlying native face object.
  */
 vkvg_public void*           vkvg_font_get_face (VkvgFont font);
+/**
+ * @brief Increment reference counter of font
+ * @param font a valid VkvgFont.
+ * @return
+ */
 vkvg_public VkvgFont        vkvg_font_reference (VkvgFont font);
+/**
+ * @brief Query current reference count from font.
+ * @param font a valid VkvgFont.
+ * @return The current reference count of the font.
+ */
 vkvg_public uint32_t        vkvg_font_get_reference_count (VkvgFont font);
+/**
+ * @brief Query the current status of the font, VKVG_STATUS_SUCCESS means no error.
+ * @param font a valid VkvgFont.
+ * @return the current @ref vkvg_status_t of the font.
+ */
 vkvg_public vkvg_status_t   vkvg_font_status (VkvgFont font);
+/**
+ * @brief Release resources associated with that font.
+ * This will release cached glyph entries, but not the native buffer of face if other fonts
+ * have been created with them. On device destroy, all remaining font resources will be released.
+ * @param font a valid VkvgFont.
+ */
 vkvg_public void            vkvg_font_destroy (VkvgFont font);
 #if VKVG_DBG_STATS
 /**
@@ -1711,6 +1735,15 @@ vkvg_public void vkvg_set_text_direction(VkvgContext ctx, vkvg_direction_t direc
  */
 vkvg_public void vkvg_set_font (VkvgContext ctx, VkvgFont font);
 /**
+ * @brief Get active font for provided context.
+ *
+ * Returned font will have its reference count increased by one. Once done with it,
+ * @ref vkvg_font_destroy must be called.
+ * @param ctx a valid vkvg @ref context
+ * @return the currently active font of the context.
+ */
+vkvg_public VkvgFont vkvg_get_font (VkvgContext ctx);
+/**
  * @brief Show a string of text.
  *
  * Show the provided null-terminated utf8 string of text a the current position using the
@@ -1723,23 +1756,26 @@ vkvg_public void vkvg_show_text(VkvgContext ctx, const char* utf8);
 /**
  * @brief Gets the extents for a string of text.
  *
+ * Gets the extents for a string of text as drawn with the active font of the provided context.
  * @param ctx a valid vkvg @ref context
  * @param utf8 A null-terminated utf8 encoded string of text.
  * @param extents
  */
 vkvg_public void vkvg_text_extents(VkvgContext ctx, const char* utf8, vkvg_text_extents_t* extents);
 /**
- * @brief Gets the font extents for the currently selected font.
+ * @brief Gets the font extents.
  *
+ * Gets the font extents for the currently active font for the provided context.
  * @param ctx a valid vkvg @ref context
  * @param extents A valid #vkvg_font_extents_t handle to be filled with current font extents.
  */
 vkvg_public void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents);
 
-// text run holds harfbuz datas, and prevent recreating them multiple times for the same line of text.
+//
 /**
  * @brief Create a new text run.
  *
+ * Text run holds harfbuz datas, and prevent recreating them multiple times for the same line of text.
  * @param ctx a valid vkvg @ref context
  * @param text Null terminated utf8 string.
  * @return VkvgText

@@ -17,6 +17,7 @@
 float fontSize = 28.0f;
 int   curFontStartIdx = 0;
 bool  redraw = true;
+bool onlyVariable = false;
 
 #define MAX_STRING_LEN 1024
 
@@ -73,9 +74,11 @@ static const LocaleSample script_samples[] = {
 bool try_get_sample_by_fc_lang(const char* fc_lang, char* str) {
     const char* sample = NULL;
     if (fc_lang) {
-        for (int i = 1; i < 37; i++) {
-            if (strncmp(fc_lang, script_samples[i].lang_code, strlen(script_samples[i].lang_code)) == 0) {
+        for (int i = 0; i < 37; i++) {
+            if (!strncmp(fc_lang, script_samples[i].lang_code, strlen(script_samples[i].lang_code)) &&
+                strlen(script_samples[i].lang_code) == strlen(fc_lang)) {
                 sample = script_samples[i].sample_text;
+
                 break;
             }
         }
@@ -157,7 +160,7 @@ bool try_get_sample_string(FcPattern* font_entry, FT_Face face, char* str) {
             if (!lang)
                 continue;
             if (try_get_sample_by_fc_lang((char*)lang, str))
-                break;
+                printf("sample found for %s\n", lang);
         }
 
         FcStrListDone(lang_list);
@@ -174,10 +177,12 @@ void draw(VkvgSurface surfFont) {
     VkvgContext ctx = vkvg_create(surfFont);
     vkvg_clear(ctx);
 
-    float penX = 10.f;
+
     float penY = 50.f;
 
     char tmp[1024];
+
+    VkvgFont mono = vkvg_font_create(device, "mono", 12);
 
     for (int i = curFontStartIdx; i < font_database->nfont; i++) {
         FcPattern* font_entry = font_database->fonts[i];
@@ -185,69 +190,80 @@ void draw(VkvgSurface surfFont) {
         FcChar8* family_name = NULL;
         FcChar8* style_variant = NULL;
         FcChar8* file_path = NULL;
+        FcBool variable = false;
+        float penX = 10.f;
 
-        if (FcPatternGetString(font_entry, FC_FAMILY, 0, &family_name) == FcResultMatch &&
-            FcPatternGetString(font_entry, FC_STYLE, 0, &style_variant) == FcResultMatch) {
+        FcPatternGetString(font_entry, FC_FAMILY, 0, &family_name);
+        FcPatternGetString(font_entry, FC_STYLE, 0, &style_variant);
+        FcPatternGetBool(font_entry, FC_VARIABLE, 0, &variable);
+        FcPatternGetString(font_entry, FC_FILE, 0, &file_path);
+        sprintf(tmp, "%s", family_name);
 
-            FcPatternGetString(font_entry, FC_FILE, 0, &file_path);
-            sprintf(tmp, "%s", family_name);
-
-
-            VkvgFont font = vkvg_font_create (device, tmp, fontSize);
-            if (vkvg_font_status(font)) {
-                printf("Error trying to load %s, from %s\n", tmp, file_path);
-                fflush(stdout);
+        if (onlyVariable && !variable)
                 continue;
-            }
-            vkvg_set_font (ctx, font);
+
+        VkvgFont font = vkvg_font_create (device, tmp, fontSize);
+        if (vkvg_font_status(font)) {
+            printf("Error trying to load %s, from %s\n", tmp, file_path);
+            fflush(stdout);
+            continue;
+        }
+        sprintf(tmp, "%s : %s", family_name, style_variant);
+        vkvg_set_font (ctx, mono);
+        vkvg_move_to (ctx, penX, penY);
+        vkvg_set_source_rgb(ctx,0.8f,0.8f,0.8f);
+        vkvg_show_text(ctx, tmp);
+        penX += 350;
+
+        vkvg_set_font (ctx, font);
 
 #ifdef VKVG_USE_FREETYPE
-            FT_Face face = (FT_Face)vkvg_font_get_face(font);
-            if (!try_get_sample_string(font_entry, face, tmp))
-                sprintf(tmp, "%s : %s", family_name, style_variant);
-#else
+        FT_Face face = (FT_Face)vkvg_font_get_face(font);
+        if (!try_get_sample_string(font_entry, face, tmp))
             sprintf(tmp, "%s : %s", family_name, style_variant);
+#else
+        sprintf(tmp, "%s : %s", family_name, style_variant);
 #endif
 
-            vkvg_font_extents_t fe = {0};
-            vkvg_font_extents(ctx, &fe);
-            VkvgText tr = vkvg_text_run_create(ctx, tmp);
-            vkvg_text_extents_t extents = {0};
-            vkvg_text_run_get_extents(tr, &extents);
-            vkvg_rectangle(ctx, penX, penY - fe.ascent, extents.width, extents.height);
-            vkvg_set_line_width(ctx, 1);
-            vkvg_set_source_rgba(ctx,0.5f,0.5f,1, 0.7f);
-            vkvg_stroke(ctx);
+        vkvg_font_extents_t fe = {0};
+        vkvg_font_extents(ctx, &fe);
+        VkvgText tr = vkvg_text_run_create(ctx, tmp);
+        vkvg_text_extents_t extents = {0};
+        vkvg_text_run_get_extents(tr, &extents);
+        vkvg_rectangle(ctx, penX, penY - fe.ascent, extents.width, extents.height);
+        vkvg_set_line_width(ctx, 1);
+        vkvg_set_source_rgba(ctx,0.5f,0.5f,1, 0.7f);
+        vkvg_stroke(ctx);
 
-            vkvg_move_to (ctx, penX, penY);
-            vkvg_set_source_rgba(ctx,1,0,0,0.5f);
-            vkvg_arc(ctx, penX, penY, 3, 0, 2 * M_PI);
-            vkvg_fill(ctx);
+        vkvg_move_to (ctx, penX, penY);
+        vkvg_set_source_rgba(ctx,1,0,0,0.5f);
+        vkvg_arc(ctx, penX, penY, 3, 0, 2 * M_PI);
+        vkvg_fill(ctx);
 
-            vkvg_move_to (ctx, penX, penY);
-            vkvg_set_source_rgb(ctx,1,1,1);
-            vkvg_show_text_run(ctx,tr);
+        vkvg_move_to (ctx, penX, penY);
+        vkvg_set_source_rgb(ctx,1,1,1);
+        vkvg_show_text_run(ctx,tr);
 
-            vkvg_flush(ctx);
+        vkvg_flush(ctx);
 
-            penY += fontSize * 1.5f;
+        penY += fe.height;
 
-            if (vkvg_font_status(font)) {
-                printf("Font in error %s\n", file_path);
-                fflush(stdout);
-                //clear font->dev ref to have clean vulkan termination
-                vkvg_device_destroy(device);
-                continue;
-            }
-
-            vkvg_font_destroy(font);
-            vkvg_text_run_destroy(tr);
+        if (vkvg_font_status(font)) {
+            printf("Font in error %s\n", file_path);
+            fflush(stdout);
+            //clear font->dev ref to have clean vulkan termination
+            vkvg_device_destroy(device);
+            continue;
         }
+
+        vkvg_font_destroy(font);
+        vkvg_text_run_destroy(tr);
+
         if (penY > test_height - 100)
             break;
         tmp[0] = '\0';
     }
-
+    vkvg_font_destroy(mono);
     vkvg_destroy(ctx);
 }
 #else
@@ -271,6 +287,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     case GLFW_KEY_KP_SUBTRACT:
         if (fontSize > 5.f)
             fontSize--;
+        break;
+    case GLFW_KEY_F4:
+        onlyVariable = !onlyVariable;
         break;
     }
     redraw = true;
@@ -321,7 +340,7 @@ int main(int argc, char* argv[]) {
                                       vkh_app_get_inst(e->app),
                                       vkh_device_get_phy(e->dev),
                                       vkh_device_get_vkdev(e->dev),
-                                      e->gQFamIdx, 0};
+                                      e->gQFamIdx, 0, false};
 
     device = vkvg_device_create(&info);
     surf = vkvg_surface_create(device, test_width, test_height);
@@ -337,9 +356,10 @@ int main(int argc, char* argv[]) {
     }
     FcConfig* config = FcConfigGetCurrent();
     FcPattern* request = FcPatternCreate();
-    FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, (char *)0);
-    FcPatternAddBool(request, FC_SCALABLE, FcTrue);
-    FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
+    FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, FC_VARIABLE, (char *)0);
+    //FcPatternAddBool(request, FC_VARIABLE, FcTrue);
+    //FcPatternAddBool(request, FC_SCALABLE, FcTrue);
+    //FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
 
     font_database = FcFontList(config, request, requested_elements);
 #endif

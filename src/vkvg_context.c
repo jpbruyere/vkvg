@@ -1184,6 +1184,11 @@ void vkvg_set_font (VkvgContext ctx, VkvgFont font) {
     ctx->currentFont = font;
     vkvg_font_reference (font);
 }
+VkvgFont vkvg_get_font (VkvgContext ctx) {
+    if (vkvg_status(ctx))
+        return NULL;
+    return vkvg_font_reference(ctx->currentFont);
+}
 void vkvg_select_font_face(VkvgContext ctx, const char* name) {
     if (vkvg_status(ctx))
         return;
@@ -1248,18 +1253,18 @@ VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text) {
     if (vkvg_status(ctx))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    text_run_init(ctx, text, -1, tr);
+    text_run_init(ctx->currentFont, ctx->textDirection, text, -1, tr);
     return tr;
 }
 VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
     if (vkvg_status(ctx))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    text_run_init(ctx, text, length, tr);
+    text_run_init(ctx->currentFont, ctx->textDirection, text, length, tr);
     return tr;
 }
 uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun) { return textRun->glyph_count; }
-void     vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg_glyph_info_t* pGlyphInfo) {
+void vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg_glyph_info_t* pGlyphInfo) {
     if (index >= textRun->glyph_count) {
         *pGlyphInfo = (vkvg_glyph_info_t){0};
         return;
@@ -1287,9 +1292,9 @@ void vkvg_text_extents(VkvgContext ctx, const char* text, vkvg_text_extents_t* e
     _font_cache_text_extents(ctx, text, -1, extents);
 }
 void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
-    if (vkvg_status(ctx))
+    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
         return;
-    _font_cache_font_extents(ctx, extents);
+    _font_cache_font_extents(ctx->currentFont, extents);
 }
 
 void vkvg_save(VkvgContext ctx) {

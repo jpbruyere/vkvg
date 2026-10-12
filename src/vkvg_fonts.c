@@ -10,9 +10,55 @@
 #include <locale.h>
 #include <string.h>
 #include <wchar.h>
-//#include <stdio.h>
 
-#ifndef VKVG_USE_FREETYPE
+#ifdef VKVG_USE_FREETYPE
+#define CHECK_FACE_FLAG(flags, flag, buffer) \
+do { \
+        if ((flags) & (flag)) { \
+            if (buffer[0] != '\0') strcat(buffer, " | "); \
+            strcat(buffer, #flag); \
+    } \
+} while (0)
+
+    /**
+     * Converts face_flags bitmask to a human-readable string.
+     * Make sure the output buffer is large enough (e.g., 512 bytes).
+     */
+    void ft_face_flags_to_string(FT_Long face_flags, char* out_str, size_t max_len) {
+    if (!out_str || max_len == 0) return;
+    out_str[0] = '\0';
+
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_SCALABLE, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_FIXED_SIZES, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_FIXED_WIDTH, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_SFNT, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_HORIZONTAL, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_VERTICAL, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_KERNING, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_MULTIPLE_MASTERS, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_GLYPH_NAMES, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_EXTERNAL_STREAM, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_HINTER, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_CID_KEYED, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_TRICKY, out_str);
+    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_COLOR, out_str);
+
+    if (out_str[0] == '\0') {
+        strncpy(out_str, "NONE", max_len);
+    }
+}
+#define FT_CHECK_RES(f)                                                             \
+{                                                                                   \
+        FT_Error res = (f);                                                             \
+        if (res) {                                                                      \
+            char tmp[1024];                                                             \
+            ft_face_flags_to_string (face->face->face_flags, tmp, 1024);                \
+            LOGE("FreeType error is 0x%x in %s at line %d, flags: %s\n", res, __FILE__, __LINE__, tmp);\
+            free(font);                                                                 \
+            return (VkvgFont)&_vkvg_status_null_pointer;                                \
+    }                                                                               \
+}
+#else
 #define STBTT_assert(x) ((void)0)
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
@@ -648,11 +694,11 @@ hb_buffer_t* _get_hb_buffer(VkvgText textRun, const char* text, int length) {
     return buf;
 }
 #endif
-void _font_lock_size (VkvgContext ctx, VkvgFont font) {
+void _font_lock_size (VkvgFont font) {
 #ifdef VKVG_USE_FREETYPE
     FT_Face face = font->face->face;
     if (face->size != font->ftSize) {
-        if (ctx->dev->threadAware)
+        if (font->dev->threadAware)
             mtx_lock(&font->face->mutex);
         FT_CHECK_RESULT(FT_Activate_Size(font->ftSize));
 #ifdef VKVG_USE_HARFBUZZ
@@ -665,8 +711,7 @@ void _font_lock_size (VkvgContext ctx, VkvgFont font) {
 }
 
 // retrieve global font extends of context's current font as defined by FreeType
-void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
-    VkvgFont font = ctx->currentFont;
+void _font_cache_font_extents(VkvgFont font, vkvg_font_extents_t* extents) {
 #ifdef VKVG_USE_FREETYPE
     FT_Face face = font->face->face;
     /*_font_lock_size(ctx, font);
@@ -704,7 +749,7 @@ void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkv
     }
 
     vkvg_text_run_t tr = {0};
-    text_run_init(ctx, text, length, &tr);
+    text_run_init(ctx->currentFont, ctx->textDirection, text, length, &tr);
 
     if (ctx->status)
         return;
@@ -716,7 +761,7 @@ void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkv
 // text is expected as utf8 encoded
 void _font_cache_show_text(VkvgContext ctx, const char* text) {
     vkvg_text_run_t tr = {0};
-    text_run_init(ctx, text, -1, &tr);
+    text_run_init(ctx->currentFont, ctx->textDirection, text, -1, &tr);
 
     if (ctx->status)
         return;
@@ -727,13 +772,12 @@ void _font_cache_show_text(VkvgContext ctx, const char* text) {
 }
 
 // if length is < 0, text must be null terminated, else it contains glyph count
-void text_run_init(VkvgContext ctx, const char* text, int length, VkvgText textRun) {
-    textRun->dev    = ctx->dev;
-    textRun->font   = ctx->currentFont;
-    textRun->textDirection = ctx->textDirection;
+void text_run_init(VkvgFont font, vkvg_direction_t textDirection, const char* text, int length, VkvgText textRun) {
+    textRun->font   = font;
+    textRun->textDirection = textDirection;
     vkvg_font_reference (textRun->font);
 
-    _font_lock_size(ctx, textRun->font);
+    _font_lock_size(textRun->font);
 
 #ifdef VKVG_USE_HARFBUZZ
     textRun->hbBuf  = _get_hb_buffer(textRun, text, length);
@@ -767,7 +811,7 @@ void text_run_init(VkvgContext ctx, const char* text, int length, VkvgText textR
 #endif
 
 #ifdef VKVG_USE_FREETYPE
-    if (ctx->dev->threadAware)
+    if (font->dev->threadAware)
         mtx_unlock(&textRun->font->face->mutex);
 #endif
 
@@ -816,8 +860,9 @@ void text_run_show_text(VkvgContext ctx, VkvgText tr) {
 
     LOCK_FONTCACHE(ctx->dev)
 
+    VkvgDevice dev = tr->font->dev;
     for (uint32_t i = 0; i < glyph_count; ++i) {
-        glyph_ref cr = get_cached_glyph(tr->dev, f, glyph_info[i].codepoint);
+        glyph_ref cr = get_cached_glyph(dev, f, glyph_info[i].codepoint);
 
         if (vkvg_unlikely (f->status))
             break;
@@ -885,55 +930,6 @@ void _show_texture(vkvg_context* ctx) {
     _check_vertex_cache_size(ctx);
 
     _add_tri_indices_for_rect(ctx, firstIdx);
-}
-#endif
-
-#ifdef VKVG_USE_FREETYPE
-#define CHECK_FACE_FLAG(flags, flag, buffer) \
-do { \
-        if ((flags) & (flag)) { \
-            if (buffer[0] != '\0') strcat(buffer, " | "); \
-            strcat(buffer, #flag); \
-    } \
-} while (0)
-
-/**
- * Converts face_flags bitmask to a human-readable string.
- * Make sure the output buffer is large enough (e.g., 512 bytes).
- */
-void ft_face_flags_to_string(FT_Long face_flags, char* out_str, size_t max_len) {
-    if (!out_str || max_len == 0) return;
-    out_str[0] = '\0';
-
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_SCALABLE, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_FIXED_SIZES, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_FIXED_WIDTH, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_SFNT, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_HORIZONTAL, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_VERTICAL, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_KERNING, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_MULTIPLE_MASTERS, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_GLYPH_NAMES, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_EXTERNAL_STREAM, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_HINTER, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_CID_KEYED, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_TRICKY, out_str);
-    CHECK_FACE_FLAG(face_flags, FT_FACE_FLAG_COLOR, out_str);
-
-    if (out_str[0] == '\0') {
-        strncpy(out_str, "NONE", max_len);
-    }
-}
-#define FT_CHECK_RES(f)                                                             \
-{                                                                                   \
-    FT_Error res = (f);                                                             \
-    if (res) {                                                                      \
-        char tmp[1024];                                                             \
-        ft_face_flags_to_string (face->face->face_flags, tmp, 1024);                \
-        LOGE("FreeType error is 0x%x in %s at line %d, flags: %s\n", res, __FILE__, __LINE__, tmp);\
-        free(font);                                                                 \
-        return (VkvgFont)&_vkvg_status_null_pointer;                                \
-    }                                                                               \
 }
 #endif
 
@@ -1029,7 +1025,6 @@ VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
 VkvgFont vkvg_font_reference(VkvgFont font) {
     if (!vkvg_font_status(font))
         atomic_fetch_add_explicit(&font->references, 1, memory_order_relaxed);
-
     return font;
 }
 uint32_t vkvg_font_get_reference_count(VkvgFont font) {
