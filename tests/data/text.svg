@@ -1,0 +1,57 @@
+<svg xmlns="http://w3.org" width="800" height="600" viewBox="0 0 800 600">
+  <!-- Visual grid lines for debugging alignments -->
+  <g stroke="#e0e0e0" stroke-width="1">
+    <line x1="50" y1="0" x2="50" y2="600" />
+    <line x1="100" y1="0" x2="100" y2="600" />
+    <line x1="150" y1="0" x2="150" y2="600" />
+    <line x1="200" y1="0" x2="200" y2="600" />
+    <line x1="250" y1="0" x2="250" y2="600" />
+    <line x1="0" y1="100" x2="800" y2="100" />
+    <line x1="0" y1="200" x2="800" y2="200" />
+    <line x1="0" y1="300" x2="800" y2="300" />
+  </g>
+
+  <!-- Reference point markers -->
+  <circle cx="50" cy="100" r="3" fill="red" />
+  <circle cx="100" cy="100" r="3" fill="red" />
+  <circle cx="150" cy="100" r="3" fill="red" />
+  <circle cx="200" cy="100" r="3" fill="red" />
+  <circle cx="50" cy="200" r="3" fill="blue" />
+  <circle cx="50" cy="300" r="3" fill="green" />
+
+  <!-- TEST 1: Comma/Space Separators & List Exhaustion -->
+  <!-- 'S' at 50, 'P' at 100, 'A' at 150, 'C' at 200. 'E' and 'S' should rely on default font advances. -->
+  <text x="50, 100   150,200" y="100" font-family="sans-serif" font-size="24" fill="black">
+    SPACES
+  </text>
+
+  <!-- TEST 2: Absolute Shadowing vs Return-to-Parent -->
+  <!-- Parent has 3 coordinates. Child has its own 2 coordinates. -->
+  <!-- 'A' and 'B' use parent (50, 100). -->
+  <!-- 'C' and 'D' shadow with child (180, 220). -->
+  <!-- 'E' MUST return to parent's 3rd coordinate (150)! -->
+  <!-- 'F' has no list items left anywhere, uses standard font advance. -->
+  <text x="50 100 150" y="200" font-family="sans-serif" font-size="24" fill="darkblue">
+    AB<tspan x="180 220" fill="darkorange">CD</tspan>EF
+  </text>
+
+  <!-- TEST 3: Cumulative Relative Shifts (dx / dy) -->
+  <!-- Parent starts at absolute (50, 300). -->
+  <!-- '1' gets pushed +10x, +10y. -->
+  <!-- '2' gets pushed another +20x, -20y. -->
+  <!-- '3' has no more list items, stays on normal advance trajectory. -->
+  <!-- Child '4' shadows with an absolute X override (250) but keeps running on the parent's baseline y trajectory. -->
+  <text x="50" y="300" dx="10 20" dy="10 -20" font-family="sans-serif" font-size="24" fill="darkgreen">
+    123<tspan x="250" fill="purple">4</tspan>
+  </text>
+
+  <!-- TEST 4: The Ultimate Chaos Mix -->
+  <!-- Tests empty space text segments, newlines inside attributes, and severe nested shadowing -->
+  <text x="
+    50 
+    100 
+    150
+  " y="400" font-family="sans-serif" font-size="24" fill="black">
+    XO<tspan dx="15,15" dy="-10,-10" fill="crimson">XX<tspan x="300" dx="0" dy="0" fill="teal">OO</tspan>XX</tspan>
+  </text>
+</svg>

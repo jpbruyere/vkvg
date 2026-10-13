@@ -1074,7 +1074,6 @@ VkvgFont vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, i
     return _create_font_from_face(dev, face, pointSize, NULL);
 }
 VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
-
     uint32_t pt26_6 = (uint32_t)(pointSize * 64.f);
     VkvgFont font = NULL;
     FontFace face = NULL;

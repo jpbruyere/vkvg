@@ -1250,7 +1250,7 @@ void vkvg_show_text(VkvgContext ctx, const char* text) {
 }
 
 VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text) {
-    if (vkvg_status(ctx))
+    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
     text_run_init(ctx->currentFont, ctx->textDirection, text, -1, tr);

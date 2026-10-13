@@ -113,10 +113,13 @@ typedef struct {
     svg_unit units;
 } svg_length_or_percentage;
 
+typedef void (*f_finish) (void*);
+
 typedef struct _svg_element_header{
     uint32_t         hash;
     svg_element_type type;
     uint32_t         xlinkHref; // 0 if unused
+    f_finish         finish;    // dispose method or null if none.
 } svg_element_header;
 
 typedef struct {
@@ -165,8 +168,14 @@ typedef struct {
     size_t             d_len;
 } svg_element_path;
 
+CTOR_ARRAY(float)
+
 typedef struct {
     svg_element_header id;
+    array_float         x;
+    array_float         y;
+    array_float         dx;
+    array_float         dy;
 } svg_element_text;
 
 typedef struct {
@@ -426,6 +435,7 @@ int try_parse_attibute(svg_context *const svg);
 bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, svg_paint_type *isEnabled, uint32_t *colorValue);
 bool try_parse_transform(svg_context *const svg, vkvg_matrix_t *const mat);
 bool try_parse_length_or_percentage(svg_context *const svg, svg_length_or_percentage *const lop);
+void parse_coordinate_list(const uint8_t *buff, const uint8_t *const restrict buff_end, array_float *arr);
 bool try_parse_viewbox(svg_context *const svg);
 float parse_opacity(svg_context *const svg);
 void process_element(svg_context * const svg, SvgPresentationAttributes *const attribs, void *elt, bool use);

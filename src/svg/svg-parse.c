@@ -114,11 +114,16 @@
 //============
 
 //=== TEXT ===
-#define PREPROC_TEXT    vkvg_save(svg->ctx);        \
+#define PREPROC_TEXT                \
+    vkvg_save(svg->ctx);            \
     parentData = _new_text();
 
 #define PROCESS_TEXT    process_element(svg, &attribs, parentData, false);
 #define POSTPROC_TEXT   vkvg_restore(svg->ctx);
+#define SVG_ATT_TEXT_X  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->x));
+#define SVG_ATT_TEXT_Y  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->y));
+#define SVG_ATT_TEXT_DX parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->dx));
+#define SVG_ATT_TEXT_DY parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->dy));
 //============
 
 //= LINEAR GRADIENT =
@@ -134,10 +139,10 @@
     if (rg->hasTransform)                                                                                              \
         vkvg_pattern_set_matrix(rg->pattern, &rg->transform);                                                          \
     array_add_SvgElt(&svg->idList, rg);
-#define SVG_ATT_LINEARGRADIENT_X1                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->x1));
-#define SVG_ATT_LINEARGRADIENT_Y1                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->y1));
-#define SVG_ATT_LINEARGRADIENT_X2                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->x2));
-#define SVG_ATT_LINEARGRADIENT_Y2                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->y2));
+#define SVG_ATT_LINEARGRADIENT_X1                   try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->x1));
+#define SVG_ATT_LINEARGRADIENT_Y1                   try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->y1));
+#define SVG_ATT_LINEARGRADIENT_X2                   try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->x2));
+#define SVG_ATT_LINEARGRADIENT_Y2                   try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->y2));
 #define SVG_ATT_LINEARGRADIENT_GRADIENTUNITS                                        \
     if (!strncasecmp ((char*)svg->value, "userspaceonuse", svg->value_len))         \
         CAST(linear_gradient)->gradientUnits = svg_gradient_unit_userSpaceOnUse;    \
@@ -496,6 +501,18 @@ bool try_parse_floats(const uint8_t **buff_ptr, const uint8_t *const restrict bu
     *buff_ptr = buff;
     return true;
 }
+void parse_coordinate_list(const uint8_t *buff, const uint8_t *const restrict buff_end, array_float *arr) {
+    *arr = array_create_float(10);
+    float f;
+    while (buff < buff_end) {
+        buff = skip_whitespaces (buff, buff_end);
+        if (!try_parse_float(&buff, buff_end, &f))
+            return;
+        array_add_float(arr, f);
+        buff = skip_separators(buff, buff_end);
+    }
+}
+
 bool try_parse_flags(const uint8_t **buff_ptr, const uint8_t *const restrict buff_end, int flagCount, ...) {
     const uint8_t *buff = *buff_ptr;
     va_list args;
@@ -1491,6 +1508,17 @@ void process_element(svg_context *const svg, SvgPresentationAttributes *const at
                 vkvg_close_path(svg->ctx);
             draw(svg, attribs);
         } break;
+        case svg_element_type_text: {
+            CASTELT(txt, text, elt);
+            VkvgFont font = NULL;
+            if (attribs->font_family_len > 0) {
+                char fam[1024];
+                sprintf(fam, "%.*s", attribs->font_family_len, attribs->font_family);
+                font = vkvg_font_create(svg->dev, fam, attribs->font_size_pt);
+                vkvg_set_font(svg->ctx, font);
+                vkvg_font_destroy(font);
+            }
+        } break;
         default:
             LOG("Unprocessed element type: %d\n", _get_element_type(elt));
             return;
@@ -1585,6 +1613,22 @@ void process_innerText(SVG_COMMON_SIG, const uint8_t * innerText, size_t txt_len
 
     svg_element_type eltType = _get_element_type(parentData);
     if (eltType == svg_element_type_text) {
+        CASTELT(txt, text, parentData);
+        VkvgText tr = vkvg_text_run_create_with_length(svg->ctx, attribs->font_family, attribs->font_family_len);
+
+        if (txt->x.count && txt->y.count) {
+            vkvg_move_to(svg->ctx, txt->x.elements[0], txt->y.elements[0]);
+        }
+        if (attribs->fill_type) {
+            vkvg_set_opacity(svg->ctx, attribs->opacity * attribs->fill_opacity);
+            if (attribs->fill_type == svg_paint_type_pattern)
+                set_pattern(svg, attribs->fill);
+            else
+                vkvg_set_source_color(svg->ctx, attribs->fill);
+        }
+
+        vkvg_show_text_run(svg->ctx, tr);
+        vkvg_text_run_destroy(tr);
         LOG("Text innerText: %.*s\n", (int)(buff_end - innerText), innerText);
     }
 }
