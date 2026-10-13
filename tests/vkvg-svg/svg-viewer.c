@@ -58,9 +58,6 @@ static int    drawnIcons   = 0;
 #define DT_DIR 4
 #endif
 
-
-
-
 uint32_t count_svg_files(DIR* pDir) {
     rewinddir(pDir);
     struct dirent* de;

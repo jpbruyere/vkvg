@@ -19,7 +19,7 @@
 #define CLR_YELLOW  "\x1b[33m"
 #define CLR_BLUE    "\x1b[34m"
 
-//#define DEBUG_LOG
+#define DEBUG_LOG
 #ifdef LOG
 #undef LOG
 #endif
@@ -334,7 +334,7 @@ typedef struct _svg_context {
     const uint8_t *elt;
     const uint8_t *att;
     const uint8_t *value;
-    const uint8_t *text;
+    //const uint8_t *text;
     const uint8_t *style;
     const uint8_t *style_end;
     size_t         ns_len;
@@ -405,10 +405,10 @@ CREATE_CTOR_ELT(gradient_stop)
 svg_element_linear_gradient *_new_linear_gradient();
 svg_element_radial_gradient *_new_radial_gradient();
 
-
 #define SVG_COMMON_SIG svg_context *const svg, SvgPresentationAttributes *const attribs, void *parentData
 #define SVG_SIG_STACK_ATTRIB svg_context *const svg, SvgPresentationAttributes attribs, void *parentData
 
+void process_innerText(SVG_COMMON_SIG, const uint8_t * innerText, size_t txt_len);
 int parse_element(SVG_COMMON_SIG);
 void parse_attributes(SVG_COMMON_SIG);
 int parse_children(SVG_COMMON_SIG);

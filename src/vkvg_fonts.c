@@ -659,10 +659,10 @@ bool try_get_or_create_font_face_from_query (VkvgDevice dev, const char* querySt
         FT_Face ftface = (*face)->face;
         FT_MM_Var* mm_var = NULL;
         if (!FT_Get_MM_Var(ftface, &mm_var)) {
-            FT_Fixed* coords = (FT_Fixed*)malloc(sizeof(FT_Fixed) * mm_var->num_axis);
             int num_axes_retrieved = 0;
             FcChar8* var_string = NULL;
             if (FcPatternGetString(font, FC_FONT_VARIATIONS, 0, &var_string) == FcResultMatch) {
+                FT_Fixed* coords = (FT_Fixed*)malloc(sizeof(FT_Fixed) * mm_var->num_axis);
                 for (FT_UInt i = 0; i < mm_var->num_axis; i++) {
                     coords[i] = mm_var->axis[i].def;
                 }
@@ -689,9 +689,8 @@ bool try_get_or_create_font_face_from_query (VkvgDevice dev, const char* querySt
                 }
                 *pCoords = coords;
                 (*face)->numAxis = mm_var->num_axis;
-                FT_Done_MM_Var(cache->library, mm_var);
             }
-
+            FT_Done_MM_Var(cache->library, mm_var);
         }
 
 #endif
@@ -718,6 +717,7 @@ bool try_get_font_size (FontFace face, uint32_t pt26_6, signed long* coords, Vkv
                 if (f->coords[axe] != coords[axe])
                     return false;
             }
+            free(coords);//coords matche, free new coords
             *font = f;
             return true;
         }
@@ -1007,15 +1007,16 @@ VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize,
 #ifdef VKVG_USE_FREETYPE
     if (dev->threadAware)
         mtx_lock(&font->face->mutex);
-    font->coords = coords;
+    if (face->numAxis && coords)
+        font->coords = coords;
     font->charSize = (uint32_t)(pointSize * 64.f);;
     if (!(face->face->face_flags & FT_FACE_FLAG_SCALABLE) || !(face->face->face_flags & FT_FACE_FLAG_SFNT)) {
         char tmp[1024];
         ft_face_flags_to_string (face->face->face_flags, tmp, 1024);
         LOGW("Unsuported font flags: %s\n", tmp);
-        free(font);
         if (dev->threadAware)
             mtx_lock(&font->face->mutex);
+        free(font);
         return (VkvgFont)&_vkvg_status_null_pointer;
     } else {
         char tmp[1024];
@@ -1077,8 +1078,8 @@ VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
     uint32_t pt26_6 = (uint32_t)(pointSize * 64.f);
     VkvgFont font = NULL;
     FontFace face = NULL;
-    signed long* coords;
-    unsigned int numAxis;
+    signed long* coords = NULL;
+    unsigned int numAxis = 0;
     if (try_get_or_create_font_face_from_query(dev, query, &face, &coords)) {
         if (try_get_font_size(face, pt26_6, coords, &font)) {
             vkvg_font_reference(font);

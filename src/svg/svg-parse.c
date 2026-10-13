@@ -119,7 +119,7 @@
 
 //=== TEXT ===
 #define PREPROC_TEXT    vkvg_save(svg->ctx);        \
-    parentData = _new_path();
+    parentData = _new_text();
 
 #define PROCESS_TEXT    process_element(svg, &attribs, parentData, false);
 #define POSTPROC_TEXT   vkvg_restore(svg->ctx);
@@ -1581,6 +1581,22 @@ void process_svg(svg_context *const svg) {
         vkvg_scale(svg->ctx, xScale, yScale);
 }
 
+void process_innerText(SVG_COMMON_SIG, const uint8_t * innerText, size_t txt_len) {
+    if (!parentData)
+        return;
+    const uint8_t *const buff_end = innerText + txt_len;
+
+    innerText = skip_whitespaces(innerText, buff_end);
+
+    /*if (innerText < buff_end)
+        LOG("%p innerText: %.*s\n",parentData, (int)(buff_end - innerText), innerText);*/
+
+    svg_element_type eltType = _get_element_type(parentData);
+    if (eltType == svg_element_type_text) {
+        LOG("Text innerText: %.*s\n", (int)(buff_end - innerText), innerText);
+    }
+}
+
 int try_parse_attibute(svg_context *const svg) {
     const uint8_t *buff = svg->style ? svg->style : svg->buff_ptr;
     const uint8_t *const buff_end = svg->style ? svg->style_end : svg->buff_end;
@@ -1656,7 +1672,6 @@ int parse_element(SVG_COMMON_SIG) {
         if (*buff == '>') {
             //read element childrens
             svg->buff_ptr = ++buff;
-            svg->text = svg->buff_ptr;//if innerText, it starts here
             parse_children(svg, attribs, parentData);
             buff = svg->buff_ptr;
             return 1;
@@ -1685,6 +1700,7 @@ int parse_children(SVG_COMMON_SIG) {
     const uint8_t *const ns = svg->ns;
     const uint8_t *elt = svg->elt;
     const size_t ns_len = svg->ns_len;
+    const uint8_t *innerText = buff;
     size_t elt_len = svg->elt_len;
     //svg->ns_len = 0;
     uint8_t c = 0;
@@ -1692,7 +1708,10 @@ int parse_children(SVG_COMMON_SIG) {
     while (buff < buff_end) {
         if (*buff == '<') {
             //handle inner text
-            size_t txt_len = svg->text - buff;
+            size_t txt_len = buff - innerText;
+            if (txt_len > 0) {
+                process_innerText(svg, attribs, parentData, innerText, txt_len);
+            }
             if (++buff == buff_end)
                 return -1;
             c = *buff;
@@ -1721,6 +1740,7 @@ int parse_children(SVG_COMMON_SIG) {
                 buff = svg->buff_ptr;
                 svg->currentIdHash = 0;
                 svg->currentXlinkHref = 0;
+                innerText = buff;
                 continue;
             } else if (c == '!') {
                 if (++buff == buff_end)
@@ -1782,8 +1802,7 @@ int parse_children(SVG_COMMON_SIG) {
             LOGE("parse_children: malformed xml\n");
             return -1;
         } else {
-
-            buff++;
+            buff++;//inner text
         }
     }
     svg->buff_ptr = buff + 1;
