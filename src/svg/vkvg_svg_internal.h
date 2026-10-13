@@ -4,13 +4,17 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "svg_elt_gperf.h"
 #include "svg_att_gperf.h"
 #include "svg_colors_gperf.h"
 
 #include "array.h"
+
 #include "vkvg.h"
+
 
 // 1. Define ANSI Color Codes
 #define CLR_RESET   "\x1b[0m"
@@ -19,7 +23,7 @@
 #define CLR_YELLOW  "\x1b[33m"
 #define CLR_BLUE    "\x1b[34m"
 
-#define DEBUG_LOG
+//#define DEBUG_LOG
 #ifdef LOG
 #undef LOG
 #endif
@@ -109,7 +113,7 @@ typedef struct {
     svg_unit units;
 } svg_length_or_percentage;
 
-typedef struct {
+typedef struct _svg_element_header{
     uint32_t         hash;
     svg_element_type type;
     uint32_t         xlinkHref; // 0 if unused
@@ -326,6 +330,10 @@ typedef struct {
 
 enum prevCmd { none, quad, cubic };
 
+typedef void* SvgElt;
+
+CTOR_ARRAY(SvgElt)
+
 typedef struct _svg_context {
     const uint8_t *buff_ptr;
     const uint8_t *buff_end;
@@ -370,7 +378,8 @@ typedef struct _svg_context {
     uint32_t    renderOnlyIdHash;
     uint32_t    currentIdHash;
     uint32_t    currentXlinkHref;
-    array_t    *idList;
+
+    array_SvgElt idList;
     /*long		currentTagStartPos;*/
     SvgEltTokId curEltType;
 } svg_context;

@@ -10,11 +10,7 @@
 
 #include <immintrin.h>
 
-#define ARRAY_INIT         8
-#define ARRAY_ELEMENT_TYPE void *
 
-#define ARRAY_IMPLEMENTATION
-#include "array.h"
 
 //#define PREPROC_SVG
 #define PROCESS_SVG             \
@@ -135,10 +131,9 @@
     rg->id.hash      = svg->currentIdHash;                                                                             \
     rg->id.xlinkHref = svg->currentXlinkHref;                                                                          \
     LOG("SVG: store pattern id:%u href:%u\n", rg->id.hash, rg->id.xlinkHref);                                          \
-    if (rg->hasTransform)                                                                                                  \
-        vkvg_pattern_set_matrix(rg->pattern, &rg->transform);                                                              \
-    array_add(svg->idList, rg);
-
+    if (rg->hasTransform)                                                                                              \
+        vkvg_pattern_set_matrix(rg->pattern, &rg->transform);                                                          \
+    array_add_SvgElt(&svg->idList, rg);
 #define SVG_ATT_LINEARGRADIENT_X1                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->x1));
 #define SVG_ATT_LINEARGRADIENT_Y1                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->y1));
 #define SVG_ATT_LINEARGRADIENT_X2                              try_parse_length_or_percentage(svg, &(CAST(linear_gradient)->x2));
@@ -161,16 +156,16 @@
 //= RADIAL GRADIENT =
 #define PREPROC_RADIALGRADIENT                                                                                         \
     parentData = _new_radial_gradient();
-#define PROCESS_RADIALGRADIENT                                                                             \
+#define PROCESS_RADIALGRADIENT                                                                                         \
     CASTELT(rg,radial_gradient,parentData);                                                                            \
     rg->pattern =                                                                                                      \
-    vkvg_pattern_create_radial(rg->fx.number, rg->fy.number, 0, rg->cx.number, rg->cy.number, rg->r.number);       \
+    vkvg_pattern_create_radial(rg->fx.number, rg->fy.number, 0, rg->cx.number, rg->cy.number, rg->r.number);           \
     rg->id.hash      = svg->currentIdHash;                                                                             \
     rg->id.xlinkHref = svg->currentXlinkHref;                                                                          \
     LOG("store pattern id:%u href:%u\n", rg->id.hash, rg->id.xlinkHref);                                               \
-    if (rg->hasTransform)                                                                                                  \
-        vkvg_pattern_set_matrix(rg->pattern, &rg->transform);                                                              \
-    array_add(svg->idList, rg);
+    if (rg->hasTransform)                                                                                              \
+        vkvg_pattern_set_matrix(rg->pattern, &rg->transform);                                                          \
+    array_add_SvgElt(&svg->idList, rg);
 
 #define SVG_ATT_RADIALGRADIENT_CX                              try_parse_length_or_percentage(svg, &(CAST(radial_gradient)->cx));
 #define SVG_ATT_RADIALGRADIENT_CY                              try_parse_length_or_percentage(svg, &(CAST(radial_gradient)->cy));
@@ -524,9 +519,9 @@ bool try_parse_flags(const uint8_t **buff_ptr, const uint8_t *const restrict buf
 }
 bool try_find_by_id(svg_context *const svg, uint32_t hash, void **elt) {
     *elt = NULL;
-    for (uint32_t i = 0; i < svg->idList->count; i++) {
-        if (_get_element_hash(svg->idList->elements[i]) == hash) {
-            *elt = svg->idList->elements[i];
+    for (uint32_t i = 0; i < svg->idList.count; i++) {
+        if (_get_element_hash(svg->idList.elements[i]) == hash) {
+            *elt = svg->idList.elements[i];
             return true;
         }
     }
@@ -536,7 +531,7 @@ void _store_or_throw(svg_context *const svg, void *elt) {
     if (svg->currentIdHash) {
         svg_element_header *id = (svg_element_header *)elt;
         id->hash               = svg->currentIdHash;
-        array_add(svg->idList, elt);
+        array_add_SvgElt(&svg->idList, elt);
         LOG("SVG: store elemnt: %u type:%u\n", id->hash, id->type);
     } else {
         free(elt);
@@ -1588,9 +1583,6 @@ void process_innerText(SVG_COMMON_SIG, const uint8_t * innerText, size_t txt_len
 
     innerText = skip_whitespaces(innerText, buff_end);
 
-    /*if (innerText < buff_end)
-        LOG("%p innerText: %.*s\n",parentData, (int)(buff_end - innerText), innerText);*/
-
     svg_element_type eltType = _get_element_type(parentData);
     if (eltType == svg_element_type_text) {
         LOG("Text innerText: %.*s\n", (int)(buff_end - innerText), innerText);
@@ -1819,7 +1811,7 @@ void vkvg_svg_get_dimensions(VkvgSvg svg, uint32_t *width, uint32_t *height) {
 }
 
 bool try_parse_svg (svg_context *svg) {
-    svg->idList  = array_create();
+    svg->idList  = array_create_SvgElt(10);
     svg->preserveAspectRatio = true;
     svg->width   = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
     svg->height  = (svg_length_or_percentage) {100.0f, svg_unit_percentage};
@@ -1847,18 +1839,18 @@ bool try_parse_svg (svg_context *svg) {
 
     parse_children (svg, &attribs, NULL);
 
-    for (uint32_t i = 0; i < svg->idList->count; i++) {
-        switch (_get_element_type(svg->idList->elements[i])) {
+    for (uint32_t i = 0; i < svg->idList.count; i++) {
+        switch (_get_element_type(svg->idList.elements[i])) {
         case svg_element_type_linear_gradient:
-            vkvg_pattern_destroy((VkvgPattern)((svg_element_linear_gradient *)svg->idList->elements[i])->pattern);
+            vkvg_pattern_destroy((VkvgPattern)((svg_element_linear_gradient *)svg->idList.elements[i])->pattern);
             break;
         case svg_element_type_radial_gradient:
-            vkvg_pattern_destroy((VkvgPattern)((svg_element_radial_gradient *)svg->idList->elements[i])->pattern);
+            vkvg_pattern_destroy((VkvgPattern)((svg_element_radial_gradient *)svg->idList.elements[i])->pattern);
             break;
         }
-        free(svg->idList->elements[i]);
+        free(svg->idList.elements[i]);
     }
-    array_destroy(svg->idList);
+    array_destroy_SvgElt(&svg->idList);
 
     return true;
 }
