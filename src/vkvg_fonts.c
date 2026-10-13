@@ -623,22 +623,23 @@ bool try_create_font_face_from_path (VkvgDevice dev, const char *fontFile, int f
     *face = newFace;
     return true;
 }
-bool try_get_or_create_font_face_from_query (VkvgDevice dev, const char* queryString, FontFace *const face) {
+
+bool try_get_or_create_font_face_from_query (VkvgDevice dev, const char* queryString, FontFace *const face,
+                                            signed long** pCoords) {
     _font_cache_t* cache = dev->fontCache;
     uint64_t queryHash = fnv1a_64_str(queryString);
     *face = NULL;
 
-    if (try_get_font_face_from_query_hash(cache, queryHash, face))
+#ifdef VKVG_USE_FONTCONFIG
+    if (try_get_font_face_from_query_hash(cache, queryHash, face) && (*face)->numAxis > 0)
         return true;
 
-#ifdef VKVG_USE_FONTCONFIG
     FcPattern* request = FcNameParse((const FcChar8*)queryString);
 
-    FcPatternAddBool(request, FC_SCALABLE, FcTrue);
-    FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
-
-    FcConfigSubstitute(cache->config, request, FcMatchPattern);
-    FcDefaultSubstitute(request);
+    //FcPatternAddBool(request, FC_SCALABLE, FcTrue);
+    //FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
+    //FcConfigSubstitute(cache->config, request, FcMatchPattern);
+    //FcDefaultSubstitute(request);
 
     FcResult   result;
     FcPattern* font = FcFontMatch(cache->config, request, &result);
@@ -649,10 +650,51 @@ bool try_get_or_create_font_face_from_query (VkvgDevice dev, const char* querySt
         FcPatternGetString (font, FC_FILE, 0, (FcChar8**)&fontFile);
         FcPatternGetInteger (font, FC_INDEX, 0, &index);
 
-        if (!try_create_font_face_from_path(dev, fontFile, index, face)) {
+        if (!*face && !try_create_font_face_from_path(dev, fontFile, index, face))
             goto exit_failed;
-        }
+
         array_add_uint64_t (&(*face)->queryHashes, queryHash);
+
+#if VKVG_USE_FREETYPE
+        FT_Face ftface = (*face)->face;
+        FT_MM_Var* mm_var = NULL;
+        if (!FT_Get_MM_Var(ftface, &mm_var)) {
+            FT_Fixed* coords = (FT_Fixed*)malloc(sizeof(FT_Fixed) * mm_var->num_axis);
+            int num_axes_retrieved = 0;
+            FcChar8* var_string = NULL;
+            if (FcPatternGetString(font, FC_FONT_VARIATIONS, 0, &var_string) == FcResultMatch) {
+                for (FT_UInt i = 0; i < mm_var->num_axis; i++) {
+                    coords[i] = mm_var->axis[i].def;
+                }
+                char* token = strtok((char*)var_string, ",");
+                while (token != NULL) {
+                    char axis_name[5] = {0};
+                    float axis_val = 0.0f;
+
+                    // Parse out the 4-character tag and its companion numerical scalar value
+                    if (sscanf(token, "%4[^=]=%f", axis_name, &axis_val) == 2) {
+                        // Convert tag string directly to a 32-bit OpenType Tag integer
+                        FT_Long target_tag = FT_MAKE_TAG(axis_name[0], axis_name[1], axis_name[2], axis_name[3]);
+
+                               // Match our parsed tag against the axes array exposed by FreeType
+                        for (FT_UInt i = 0; i < mm_var->num_axis; i++) {
+                            if (mm_var->axis[i].tag == target_tag) {
+                                // FreeType handles design positions in 16.16 Fixed Point formats
+                                coords[i] = (FT_Fixed)(axis_val * 65536.0f);
+                                break;
+                            }
+                        }
+                    }
+                    token = strtok(NULL, ",");
+                }
+                *pCoords = coords;
+                (*face)->numAxis = mm_var->num_axis;
+                FT_Done_MM_Var(cache->library, mm_var);
+            }
+
+        }
+
+#endif
 
         FcPatternDestroy(request);
         FcPatternDestroy(font);
@@ -661,14 +703,22 @@ bool try_get_or_create_font_face_from_query (VkvgDevice dev, const char* querySt
 exit_failed:
     FcPatternDestroy(request);
     FcPatternDestroy(font);
+#else
+    if (try_get_font_face_from_query_hash(cache, queryHash, face))
+        return true;
 #endif
     return false;
 }
-bool try_get_font_size (FontFace face, uint32_t pt26_6, VkvgFont *font) {
+bool try_get_font_size (FontFace face, uint32_t pt26_6, signed long* coords, VkvgFont *font) {
     *font = NULL;
     for (int i = 0; i < face->sizes.count; ++i) {
-        if (face->sizes.elements[i]->charSize == pt26_6) {
-            *font = face->sizes.elements[i];
+        VkvgFont f = face->sizes.elements[i];
+        if (f->charSize == pt26_6) {
+            for (int axe = 0; axe < face->numAxis; ++axe) {
+                if (f->coords[axe] != coords[axe])
+                    return false;
+            }
+            *font = f;
             return true;
         }
     }
@@ -697,9 +747,13 @@ hb_buffer_t* _get_hb_buffer(VkvgText textRun, const char* text, int length) {
 void _font_lock_size (VkvgFont font) {
 #ifdef VKVG_USE_FREETYPE
     FT_Face face = font->face->face;
-    if (face->size != font->ftSize) {
+    if (face->size != font->ftSize || font->face->coords != font->coords) {
         if (font->dev->threadAware)
             mtx_lock(&font->face->mutex);
+        if (font->coords && font->face->coords != font->coords) {
+            FT_Set_Var_Design_Coordinates(face, font->face->numAxis, font->coords);
+            font->face->coords = font->coords;
+        }
         FT_CHECK_RESULT(FT_Activate_Size(font->ftSize));
 #ifdef VKVG_USE_HARFBUZZ
         hb_font_t* hbf = font->face->hb_font;
@@ -941,7 +995,7 @@ void* vkvg_font_get_face(VkvgFont font) {
 #endif
 }
 
-VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize) {
+VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize, signed long* coords) {
     VkvgFont font = (VkvgFont)calloc(1, sizeof(vkvg_font_t));
     if (!font) {
         LOGE("Create font failed, no memory\n");
@@ -951,12 +1005,17 @@ VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize)
     font->face = face;
 
 #ifdef VKVG_USE_FREETYPE
+    if (dev->threadAware)
+        mtx_lock(&font->face->mutex);
+    font->coords = coords;
     font->charSize = (uint32_t)(pointSize * 64.f);;
     if (!(face->face->face_flags & FT_FACE_FLAG_SCALABLE) || !(face->face->face_flags & FT_FACE_FLAG_SFNT)) {
         char tmp[1024];
         ft_face_flags_to_string (face->face->face_flags, tmp, 1024);
         LOGW("Unsuported font flags: %s\n", tmp);
         free(font);
+        if (dev->threadAware)
+            mtx_lock(&font->face->mutex);
         return (VkvgFont)&_vkvg_status_null_pointer;
     } else {
         char tmp[1024];
@@ -969,6 +1028,10 @@ VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize)
     FT_CHECK_RES(FT_New_Size (face->face, &font->ftSize));
     FT_CHECK_RES(FT_Activate_Size(font->ftSize));
     FT_CHECK_RES(FT_Set_Char_Size(face->face, 0, font->charSize, dev->hdpi, dev->vdpi));
+    if (font->coords) {
+        FT_Set_Var_Design_Coordinates(face->face, font->face->numAxis, font->coords);
+        font->face->coords = font->coords;
+    }
 
     font->charLookup = (glyph_ref*)calloc(face->face->num_glyphs, sizeof(glyph_ref));
 
@@ -978,6 +1041,9 @@ VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize)
         font->height = face->face->height >> 6;
 
     font->texLines = array_create_TexRef(2);
+
+    if (dev->threadAware)
+        mtx_lock(&font->face->mutex);
 #else
     font->charSize       = pointSize;
     stbtt_GetFontVMetrics(&face->stbInfo, &font->ascent, &font->descent, &font->lineGap);
@@ -1004,15 +1070,17 @@ VkvgFont vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, i
     if (!try_create_font_face_from_path(dev, fontFilePath, faceIndex, &face) || !face) {
         return NULL;
     }
-    return _create_font_from_face(dev, face, pointSize);
+    return _create_font_from_face(dev, face, pointSize, NULL);
 }
 VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
 
     uint32_t pt26_6 = (uint32_t)(pointSize * 64.f);
     VkvgFont font = NULL;
     FontFace face = NULL;
-    if (try_get_or_create_font_face_from_query(dev, query, &face)) {
-        if (try_get_font_size(face, pt26_6, &font)) {
+    signed long* coords;
+    unsigned int numAxis;
+    if (try_get_or_create_font_face_from_query(dev, query, &face, &coords)) {
+        if (try_get_font_size(face, pt26_6, coords, &font)) {
             vkvg_font_reference(font);
             return font;
         }
@@ -1020,7 +1088,7 @@ VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
     if (!face)
         return NULL;
 
-    return _create_font_from_face(dev, face, pointSize);
+    return _create_font_from_face(dev, face, pointSize, coords);
 }
 VkvgFont vkvg_font_reference(VkvgFont font) {
     if (!vkvg_font_status(font))
@@ -1041,6 +1109,8 @@ void vkvg_font_destroy(VkvgFont font) {
     LOG(VKVG_LOG_FONT, "Font destroy: %s\n", get_face_family_name(font->face));
 #ifdef VKVG_USE_FREETYPE
     FT_Done_Size(font->ftSize);
+    if (font->coords)
+        free(font->coords);
 #endif
 
     for (int i = 0; i < font->texLines.count; ++i) {

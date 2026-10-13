@@ -14,6 +14,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_SIZES_H
+#include FT_MULTIPLE_MASTERS_H
 #if defined(VKVG_LCD_FONT_FILTER) && defined(FT_CONFIG_OPTION_SUBPIXEL_RENDERING)
 #include <freetype/ftlcdfil.h>
 #endif
@@ -199,6 +200,8 @@ typedef struct _vkvg_font_face_t{
 #ifdef VKVG_USE_FREETYPE
     FT_Face         face;     /* FreeType face*/
     mtx_t           mutex;    /* Only one font size at a time may use this face */
+    signed long*    coords;   /* Active coordinates for variable fonts */
+    unsigned int    numAxis;  /* face axis count */
 #else
     stbtt_fontinfo  stbInfo; /* stb_truetype structure */
     int             ascent;  /* unscalled stb font metrics */
@@ -235,6 +238,7 @@ typedef struct _vkvg_font_t {
 #ifdef VKVG_USE_FREETYPE
     FT_F26Dot6      charSize; /* Font size in Point as fixed float 26.6 */
     FT_Size         ftSize;   /* FT size rec */
+    signed long*    coords;   /* Variable fonts axes coordinates */
 #else
     float           charSize; /* Font size in pixel */
     float           scale;    /* scale factor for the given size */

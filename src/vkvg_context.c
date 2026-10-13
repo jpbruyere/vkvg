@@ -1240,7 +1240,7 @@ void vkvg_set_text_direction(vkvg_context* ctx, vkvg_direction_t direction) {
 }
 
 void vkvg_show_text(VkvgContext ctx, const char* text) {
-    if (vkvg_status(ctx))
+    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
         return;
     RECORD(ctx, VKVG_CMD_SHOW_TEXT, text);
     LOG(VKVG_LOG_INFO_CMD, "CMD: show_text:\n");
