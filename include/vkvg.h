@@ -1802,7 +1802,7 @@ vkvg_public void vkvg_text_run_destroy(VkvgText textRun);
  * @param ctx a valid vkvg @ref context
  * @param textRun
  */
-vkvg_public void vkvg_show_text_run(VkvgContext ctx, VkvgText textRun);
+vkvg_public void vkvg_text_run_render(VkvgContext ctx, VkvgText textRun);
 /**
  * @brief
  *
@@ -1817,10 +1817,12 @@ vkvg_public void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t
  */
 vkvg_public uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun);
 /**
- * @brief retrieve glyph positions.
- *
+ * @brief Get glyph position at the provided index
+ * @param textRun A valid @ref VkvgText
+ * @param index index of the glyph to get position for.
+ * @return the glyph structure with position and glyph index.
  */
-vkvg_public void vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg_glyph_info_t* pGlyphInfo);
+vkvg_public vkvg_glyph_info_t vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index);
 /** @}*/
 
 /**

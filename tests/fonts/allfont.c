@@ -199,8 +199,15 @@ void draw(VkvgSurface surfFont) {
         FcPatternGetString(font_entry, FC_FILE, 0, &file_path);
         sprintf(tmp, "%s", family_name);
 
+        if (!variable) {
+            FcChar8* axes_blueprint = NULL;
+            if (FcPatternGetString(font_entry, FC_FONT_VARIATIONS, 0, &axes_blueprint) == FcResultMatch) {
+                variable = true;
+            }
+        }
+
         if (onlyVariable && !variable)
-                continue;
+            continue;
 
         VkvgFont font = vkvg_font_create (device, tmp, fontSize);
         if (vkvg_font_status(font)) {
@@ -208,7 +215,7 @@ void draw(VkvgSurface surfFont) {
             fflush(stdout);
             continue;
         }
-        sprintf(tmp, "%s : %s", family_name, style_variant);
+        sprintf(tmp, "%s : %s var:%d", family_name, style_variant,variable);
         vkvg_set_font (ctx, mono);
         vkvg_move_to (ctx, penX, penY);
         vkvg_set_source_rgb(ctx,0.8f,0.8f,0.8f);
@@ -242,7 +249,7 @@ void draw(VkvgSurface surfFont) {
 
         vkvg_move_to (ctx, penX, penY);
         vkvg_set_source_rgb(ctx,1,1,1);
-        vkvg_show_text_run(ctx,tr);
+        vkvg_text_run_render(ctx,tr);
 
         vkvg_flush(ctx);
 
@@ -340,9 +347,10 @@ int main(int argc, char* argv[]) {
                                       vkh_app_get_inst(e->app),
                                       vkh_device_get_phy(e->dev),
                                       vkh_device_get_vkdev(e->dev),
-                                      e->gQFamIdx, 0, false};
+                                      e->gQFamIdx, 0, false };//, TESTS_DATA_ROOT "/fonts"};
 
     device = vkvg_device_create(&info);
+    vkvg_device_set_dpy(device, 140,140);
     surf = vkvg_surface_create(device, test_width, test_height);
     VkvgSurface surfFont = vkvg_surface_create(device, test_width, test_height);
 
@@ -356,10 +364,11 @@ int main(int argc, char* argv[]) {
     }
     FcConfig* config = FcConfigGetCurrent();
     FcPattern* request = FcPatternCreate();
-    FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, FC_VARIABLE, (char *)0);
+    FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, FC_VARIABLE, FC_FONT_VARIATIONS,(char *)0);
     //FcPatternAddBool(request, FC_VARIABLE, FcTrue);
     //FcPatternAddBool(request, FC_SCALABLE, FcTrue);
     //FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
+    //FcPatternAddBool(request, FC_VARIABLE, FcDontCare);
 
     font_database = FcFontList(config, request, requested_elements);
 #endif

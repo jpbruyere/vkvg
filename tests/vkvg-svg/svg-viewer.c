@@ -342,6 +342,7 @@ int main(int argc, char* argv[]) {
                     nextSvgFile = false;
                 }
                 sprintf(tmp, "%s/%s", path, de->d_name);
+                vkengine_set_title(e,tmp);
             } else {
                 sprintf(tmp, "%s", path);
             }

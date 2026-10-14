@@ -120,10 +120,24 @@
 
 #define PROCESS_TEXT    process_element(svg, &attribs, parentData, false);
 #define POSTPROC_TEXT   vkvg_restore(svg->ctx);
-#define SVG_ATT_TEXT_X  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->x));
-#define SVG_ATT_TEXT_Y  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->y));
-#define SVG_ATT_TEXT_DX parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->dx));
-#define SVG_ATT_TEXT_DY parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->dy));
+#define SVG_ATT_TEXT_X  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->coords.x));
+#define SVG_ATT_TEXT_Y  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->coords.y));
+#define SVG_ATT_TEXT_DX parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->coords.dx));
+#define SVG_ATT_TEXT_DY parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->coords.dy));
+//============
+//== TSPAN ===
+#define PREPROC_TSPAN                   \
+    vkvg_save(svg->ctx);                \
+    void* tspanParent = parentData;     \
+    parentData = _new_tspan();          \
+    CAST(tspan)->parent = tspanParent;
+
+#define PROCESS_TSPAN    process_element(svg, &attribs, parentData, false);
+#define POSTPROC_TSPAN   vkvg_restore(svg->ctx);
+#define SVG_ATT_TSPAN_X  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(tspan)->coords.x));
+#define SVG_ATT_TSPAN_Y  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(tspan)->coords.y));
+#define SVG_ATT_TSPAN_DX parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(tspan)->coords.dx));
+#define SVG_ATT_TSPAN_DY parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(tspan)->coords.dy));
 //============
 
 //= LINEAR GRADIENT =
@@ -287,6 +301,13 @@
 #define SVG_ATT_SVG_HEIGHT  try_parse_length_or_percentage(svg, &svg->height);
 #define SVG_ATT_SVG_VIEWBOX svg->hasViewBox = try_parse_viewbox(svg);
 #define SVG_ATT_TRANSFORM   apply_transform(svg);
+
+#define SVG_ATT_XML_SPACE                                                   \
+    if (!strncasecmp ((char*)svg->value, "default", svg->value_len))        \
+        attribs->space = XML_SPACE_DEFAULT;                                 \
+    else if (!strncasecmp ((char*)svg->value, "preserve", svg->value_len))  \
+        attribs->space = XML_SPACE_PRESERVE;
+
 
 #include "parser_gen.h"
 
@@ -1508,8 +1529,8 @@ void process_element(svg_context *const svg, SvgPresentationAttributes *const at
                 vkvg_close_path(svg->ctx);
             draw(svg, attribs);
         } break;
-        case svg_element_type_text: {
-            CASTELT(txt, text, elt);
+        case svg_element_type_text:
+        case svg_element_type_tspan: {
             VkvgFont font = NULL;
             if (attribs->font_family_len > 0) {
                 char fam[1024];
@@ -1518,6 +1539,7 @@ void process_element(svg_context *const svg, SvgPresentationAttributes *const at
                 vkvg_set_font(svg->ctx, font);
                 vkvg_font_destroy(font);
             }
+            return;
         } break;
         default:
             LOG("Unprocessed element type: %d\n", _get_element_type(elt));
@@ -1604,32 +1626,86 @@ void process_svg(svg_context *const svg) {
         vkvg_scale(svg->ctx, xScale, yScale);
 }
 
-void process_innerText(SVG_COMMON_SIG, const uint8_t * innerText, size_t txt_len) {
+void draw_text(SVG_COMMON_SIG, svg_text_coords* coords, const uint8_t *buff, const uint8_t *const buff_end) {
+    if (attribs->fill_type) {
+        vkvg_set_opacity(svg->ctx, attribs->opacity * attribs->fill_opacity);
+        if (attribs->fill_type == svg_paint_type_pattern)
+            set_pattern(svg, attribs->fill);
+        else
+            vkvg_set_source_color(svg->ctx, attribs->fill);
+    }
+    VkvgText tr = NULL;
+
+    int charI = coords->charIndex;
+    int len = 0;
+    while (buff < buff_end) {
+        float x  = 0,
+            y  = 0,
+            dx = 0,
+            dy = 0;
+        bool singleChar = false;
+        int r = coords->x.count - charI;
+        if (r > 0) {
+            vkvg_get_current_point(svg->ctx, &x, &y);
+            x = coords->x.elements[charI];
+            vkvg_move_to(svg->ctx, x, y);
+            singleChar |= (r > 1);
+        }
+        r = coords->y.count - charI;
+        if (r > 0) {
+            vkvg_get_current_point(svg->ctx, &x, &y);
+            y = coords->y.elements[charI];
+            vkvg_move_to(svg->ctx, x, y);
+            singleChar |= (r > 1);
+        }
+        r = coords->dx.count - charI;
+        if (r > 0) {
+            vkvg_rel_move_to(svg->ctx, coords->dx.elements[charI], 0);
+            singleChar |= (r > 1);
+        }
+        r = coords->dy.count - charI;
+        if (r > 0) {
+            vkvg_rel_move_to(svg->ctx, 0, coords->dy.elements[charI]);
+            singleChar |= (r > 1);
+        }
+        if (singleChar)
+            len = get_utf8_char_length(buff[0]);
+        else
+            len = buff_end - buff;
+
+        tr = vkvg_text_run_create_with_length(svg->ctx, (char*)buff, len);
+        vkvg_text_run_render(svg->ctx, tr);
+        charI += vkvg_text_run_get_glyph_count(tr);
+        vkvg_text_run_destroy(tr);
+
+        buff += len;
+    }
+    coords->charIndex = charI;
+}
+
+
+void process_innerText(SVG_COMMON_SIG, const uint8_t *innerText, size_t txt_len) {
     if (!parentData)
         return;
     const uint8_t *const buff_end = innerText + txt_len;
 
-    innerText = skip_whitespaces(innerText, buff_end);
+    if (attribs->space == XML_SPACE_DEFAULT) {
+        innerText = skip_whitespaces(innerText, buff_end);
+        //should trim trailing white space
+    }
 
     svg_element_type eltType = _get_element_type(parentData);
     if (eltType == svg_element_type_text) {
+        LOG("text innerText: %.*s\n", (int)(buff_end - innerText), innerText);
         CASTELT(txt, text, parentData);
-        VkvgText tr = vkvg_text_run_create_with_length(svg->ctx, attribs->font_family, attribs->font_family_len);
 
-        if (txt->x.count && txt->y.count) {
-            vkvg_move_to(svg->ctx, txt->x.elements[0], txt->y.elements[0]);
-        }
-        if (attribs->fill_type) {
-            vkvg_set_opacity(svg->ctx, attribs->opacity * attribs->fill_opacity);
-            if (attribs->fill_type == svg_paint_type_pattern)
-                set_pattern(svg, attribs->fill);
-            else
-                vkvg_set_source_color(svg->ctx, attribs->fill);
-        }
+        draw_text(svg, attribs, parentData, &txt->coords, innerText, buff_end);
 
-        vkvg_show_text_run(svg->ctx, tr);
-        vkvg_text_run_destroy(tr);
-        LOG("Text innerText: %.*s\n", (int)(buff_end - innerText), innerText);
+    } else if (eltType == svg_element_type_tspan) {
+        LOG("tspan innerText: %.*s\n", (int)(buff_end - innerText), innerText);
+        CASTELT(txt, tspan, parentData);
+
+        draw_text(svg, attribs, parentData, &txt->coords, innerText, buff_end);
     }
 }
 

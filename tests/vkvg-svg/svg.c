@@ -59,7 +59,7 @@ void svg_text() {
     vkvg_surface_destroy(svgSurf);
 }
 void svg_text_frag() {
-    const char* txt = {"<svg><text id='txt' font-size='50' font-family='sans' x='50' y='50'>The crow jumed on the fox</text></svg>"};
+    const char* txt = {"<svg><text id='txt' font-size='20' font-family='sans' x='50' y='50 60 70'>The crow jumed on the fox</text></svg>"};
     VkvgSurface svgSurf = vkvg_surface_create_from_svg_fragment(device, test_width, test_height, txt);
     VkvgContext ctx = _initCtx();
 

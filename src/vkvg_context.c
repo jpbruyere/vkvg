@@ -1257,32 +1257,34 @@ VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text) {
     return tr;
 }
 VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
-    if (vkvg_status(ctx))
+    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
     text_run_init(ctx->currentFont, ctx->textDirection, text, length, tr);
     return tr;
 }
-uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun) { return textRun->glyph_count; }
-void vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index, vkvg_glyph_info_t* pGlyphInfo) {
+uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun) { return textRun ? textRun->glyph_count : 0; }
+vkvg_glyph_info_t vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index) {
     if (index >= textRun->glyph_count) {
-        *pGlyphInfo = (vkvg_glyph_info_t){0};
-        return;
+        return (vkvg_glyph_info_t){0};
     }
 #if VKVG_USE_HARFBUZZ
-    memcpy(pGlyphInfo, &textRun->glyphs[index], sizeof(vkvg_glyph_info_t));
+    vkvg_glyph_info_t* tmp = (vkvg_glyph_info_t*)&textRun->glyphs[index];
+    return *tmp;
 #else
-    *pGlyphInfo = textRun->glyphs[index];
+    return textRun->glyphs[index];
 #endif
 }
 void vkvg_text_run_destroy(VkvgText textRun) {
+    if (!textRun)
+        return;
     text_run_term(textRun);
     free(textRun);
 }
-void vkvg_show_text_run(VkvgContext ctx, VkvgText textRun) {
-    if (vkvg_status(ctx))
+void vkvg_text_run_render(VkvgContext ctx, VkvgText textRun) {
+    if (vkvg_status(ctx) || !textRun)
         return;
-    text_run_show_text(ctx, textRun);
+    text_run_render(ctx, textRun);
 }
 void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents) { *extents = textRun->extents; }
 

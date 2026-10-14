@@ -160,8 +160,6 @@ static inline uint64_t fnv1a_64_str(const char *const restrict str) {
 #define VKVG_FENCE_TIMEOUT 30000000000
 // #define VKVG_FENCE_TIMEOUT 10000
 
-
-
 #include "vectors.h"
 
 /*typedef struct {

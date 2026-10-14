@@ -174,7 +174,7 @@ TEST_F(ContextTest, CtxDrawBasicNullContext) {
     vkvg_text_run_create_with_length(ctx, NULL, 10);
 
     // vkvg_text_run_destroy(NULL);
-    vkvg_show_text_run(ctx, NULL);
+    vkvg_text_run_render(ctx, NULL);
 }
 
 

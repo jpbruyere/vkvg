@@ -14,7 +14,7 @@
 
 #include <string.h>
 
-float fontSize = 24.0f;
+float fontSize = 50.0f;
 int   curFontStartIdx = 0;
 bool  redraw = true;
 
@@ -257,8 +257,8 @@ void draw(VkvgSurface surfFont) {
     //FcPatternAddBool(request, FC_SCALABLE, FcTrue);
     //FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
 
-    FcConfigSubstitute(config, request, FcMatchPattern);
-    FcDefaultSubstitute(request);
+    //FcConfigSubstitute(config, request, FcMatchPattern);
+    //FcDefaultSubstitute(request);
 
     FcFontSet* fonts = FcFontList(config, request, requested_elements);
 
@@ -313,7 +313,7 @@ void draw(VkvgSurface surfFont) {
 
         vkvg_move_to (ctx, penX, penY);
         vkvg_set_source_rgb(ctx,1,1,1);
-        vkvg_show_text_run(ctx,tr);
+        vkvg_text_run_render(ctx,tr);
 
         penX = 50;
         penY = 150;
@@ -434,11 +434,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         txtBuffer[txtBuffPtr]='\0';
         break;
     case GLFW_KEY_PAGE_DOWN:
-        curFontStartIdx += 0xff;
+        //curFontStartIdx += 0xff;
+        if (fontSize > 5.f)
+            fontSize--;
         break;
     case GLFW_KEY_PAGE_UP:
-        curFontStartIdx -= 0xff;
-        curFontStartIdx = MAX(curFontStartIdx, 0);
+        //curFontStartIdx -= 0xff;
+        //curFontStartIdx = MAX(curFontStartIdx, 0);
+        fontSize++;
         break;
     case GLFW_KEY_F3:
         variable = !variable;
@@ -500,7 +503,7 @@ int main(int argc, char* argv[]) {
                                       vkh_app_get_inst(e->app),
                                       vkh_device_get_phy(e->dev),
                                       vkh_device_get_vkdev(e->dev),
-                                      e->gQFamIdx, 0};
+                                      e->gQFamIdx, 0, false};//, TESTS_DATA_ROOT "/fonts"};
 
     device = vkvg_device_create(&info);
     surf = vkvg_surface_create(device, test_width, test_height);
@@ -517,8 +520,8 @@ int main(int argc, char* argv[]) {
     config = FcConfigGetCurrent();
     FcPattern* request = FcPatternCreate();
     FcObjectSet* requested_elements = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_LANG, FC_VARIABLE, (char *)0);
-    FcPatternAddBool(request, FC_SCALABLE, FcTrue);
-    FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
+    //FcPatternAddBool(request, FC_SCALABLE, FcTrue);
+    //FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
 
     font_database = FcFontList(config, request, requested_elements);
 #endif

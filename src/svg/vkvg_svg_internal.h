@@ -63,7 +63,7 @@ typedef enum {
     svg_element_type_polygon,
     svg_element_type_path,
     svg_element_type_text,
-    svg_element_type_span,
+    svg_element_type_tspan,
     svg_element_type_linear_gradient,
     svg_element_type_radial_gradient,
     svg_element_type_gradient_stop
@@ -171,16 +171,23 @@ typedef struct {
 CTOR_ARRAY(float)
 
 typedef struct {
-    svg_element_header id;
     array_float         x;
     array_float         y;
     array_float         dx;
     array_float         dy;
+    int                 charIndex;
+} svg_text_coords;
+
+typedef struct {
+    svg_element_header  id;
+    svg_text_coords     coords;
 } svg_element_text;
 
 typedef struct {
-    svg_element_header id;
-} svg_element_span;
+    svg_element_header  id;
+    svg_text_coords     coords;
+    svg_element_header *parent;
+} svg_element_tspan;
 
 typedef struct {
     svg_element_header       id;
@@ -243,6 +250,7 @@ typedef enum { SVG_IMG_REND_AUTO = 0, SVG_IMG_REND_SPEED, SVG_IMG_REND_QUALITY }
 typedef enum { SVG_SHAPE_REND_AUTO = 0, SVG_SHAPE_REND_SPEED, SVG_SHAPE_REND_CRISP, SVG_SHAPE_REND_GEOMETRIC } SvgShapeRendering;
 typedef enum { SVG_OVERFLOW_VISIBLE = 0, SVG_OVERFLOW_HIDDEN, SVG_OVERFLOW_SCROLL, SVG_OVERFLOW_AUTO } SvgOverflow;
 typedef enum { SVG_BUFFER_AUTO = 0, SVG_BUFFER_STATIC, SVG_BUFFER_DYNAMIC } SvgBufferedRendering;
+typedef enum { XML_SPACE_DEFAULT = 0, XML_SPACE_PRESERVE } XmlSpace;
 
 typedef struct {
     uint8_t r;
@@ -299,6 +307,7 @@ typedef struct {
     SvgVectorEffect      vector_effect     : 1;
     SvgDisplay           display           : 1;
     SvgVisibility        visibility        : 1;
+    XmlSpace             space             : 1;
     SvgImageRendering    image_rendering   : 2;
     SvgShapeRendering    shape_rendering   : 2;
 
@@ -413,7 +422,7 @@ CREATE_CTOR_ELT(line)
 CREATE_CTOR_ELT(ellipse)
 CREATE_CTOR_ELT(path)
 CREATE_CTOR_ELT(text)
-CREATE_CTOR_ELT(span)
+CREATE_CTOR_ELT(tspan)
 CREATE_CTOR_ELT(polygon)
 CREATE_CTOR_ELT(gradient_stop)
 

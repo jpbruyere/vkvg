@@ -314,5 +314,5 @@ void _font_cache_update_context_descset(VkvgContext ctx);
 
 void text_run_init(VkvgFont font, vkvg_direction_t textDirection, const char* text, int length, VkvgText textRun);
 void text_run_term(VkvgText textRun);
-void text_run_show_text(VkvgContext ctx, VkvgText tr); // Draw text run
+void text_run_render(VkvgContext ctx, VkvgText tr); // Draw text run
 #endif

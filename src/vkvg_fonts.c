@@ -83,7 +83,6 @@ static inline uint32_t get_face_glyph_count (FontFace face) {
 #endif
 }
 
-
 void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
     _font_cache_t* cache = (_font_cache_t*)calloc(1, sizeof(_font_cache_t));
 
@@ -820,7 +819,7 @@ void _font_cache_show_text(VkvgContext ctx, const char* text) {
     if (ctx->status)
         return;
 
-    text_run_show_text(ctx, &tr);
+    text_run_render(ctx, &tr);
     text_run_term(&tr);
     //_show_texture(ctx); return;
 }
@@ -869,9 +868,9 @@ void text_run_init(VkvgFont font, vkvg_direction_t textDirection, const char* te
         mtx_unlock(&textRun->font->face->mutex);
 #endif
 
-    unsigned int string_width_in_pixels = 0;
+    float string_width_in_pixels = 0;
     for (uint32_t i = 0; i < textRun->glyph_count; ++i)
-        string_width_in_pixels += textRun->glyphs[i].x_advance >> 6;
+        string_width_in_pixels += (float)textRun->glyphs[i].x_advance / 64.f;
 #ifdef VKVG_USE_FREETYPE
     FT_Size_Metrics* metrics = &textRun->font->ftSize->metrics;
     textRun->extents.height  = (float)(FT_MulFix(textRun->font->face->face->height, metrics->y_scale) >>
@@ -879,11 +878,11 @@ void text_run_init(VkvgFont font, vkvg_direction_t textDirection, const char* te
 #else
     textRun->extents.height = textRun->font->ascent - textRun->font->descent + textRun->font->lineGap;
 #endif
-    textRun->extents.x_advance = (float)string_width_in_pixels;
+    textRun->extents.x_advance = string_width_in_pixels;
     if (textRun->glyph_count > 0) {
-        textRun->extents.y_advance = (float)(textRun->glyphs[textRun->glyph_count - 1].y_advance >> 6);
-        textRun->extents.x_bearing = -(float)(textRun->glyphs[0].x_offset >> 6);
-        textRun->extents.y_bearing = -(float)(textRun->glyphs[0].y_offset >> 6);
+        textRun->extents.y_advance = (float)textRun->glyphs[textRun->glyph_count - 1].y_advance / 64.f;
+        textRun->extents.x_bearing = -(float)textRun->glyphs[0].x_offset / 64.f;
+        textRun->extents.y_bearing = -(float)textRun->glyphs[0].y_offset / 64.f;
     }
 
     textRun->extents.width = textRun->extents.x_advance;
@@ -897,7 +896,8 @@ void text_run_term(VkvgText textRun) {
 #endif
     vkvg_font_destroy(textRun->font);
 }
-void text_run_show_text(VkvgContext ctx, VkvgText tr) {
+
+void text_run_render(VkvgContext ctx, VkvgText tr) {
     unsigned int glyph_count;
 #ifdef VKVG_USE_HARFBUZZ
     hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos(tr->hbBuf, &glyph_count);
@@ -930,10 +930,10 @@ void text_run_show_text(VkvgContext ctx, VkvgText tr) {
         VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
         TexRef l = cr.texRef;
-        float yOffset = (float)l->penY / (float)FONT_PAGE_SIZE;
+        float uvY = (float)l->penY / (float)FONT_PAGE_SIZE;
 
         v.uv.x = cr.bounds.x;
-        v.uv.y = yOffset; // + cr.bounds.y
+        v.uv.y = uvY; // + cr.bounds.y
         v.uv.z = l->pageIdx;
         _add_vertex(ctx, v);
 
@@ -944,7 +944,7 @@ void text_run_show_text(VkvgContext ctx, VkvgText tr) {
         v.pos.x += cr.bounds.width;
         v.pos.y = p0.y;
         v.uv.x += uvWidth;
-        v.uv.y = yOffset; // + cr.bounds.y;
+        v.uv.y = uvY; // + cr.bounds.y;
         _add_vertex(ctx, v);
 
         v.pos.y += cr.bounds.height;
@@ -957,7 +957,6 @@ void text_run_show_text(VkvgContext ctx, VkvgText tr) {
         pen.y -= (tr->glyphs[i].y_advance >> 6);
     }
 
-           // equivalent to a moveto
     _finish_path(ctx);
     _add_point(ctx, pen.x, pen.y);
     _flush_chars_to_tex(tr->font);
@@ -1033,6 +1032,11 @@ VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize,
         FT_Set_Var_Design_Coordinates(face->face, font->face->numAxis, font->coords);
         font->face->coords = font->coords;
     }
+#ifdef VKVG_USE_HARFBUZZ
+    hb_font_t* hbf = font->face->hb_font;
+    hb_ft_font_changed(hbf);
+    hb_font_set_ppem(hbf, font->ftSize->metrics.x_ppem, font->ftSize->metrics.y_ppem);
+#endif
 
     font->charLookup = (glyph_ref*)calloc(face->face->num_glyphs, sizeof(glyph_ref));
 
