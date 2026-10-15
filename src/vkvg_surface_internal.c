@@ -224,7 +224,7 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format) {
         return (VkvgSurface)&_vkvg_status_no_memory;
     }
 
-    surf->references = 1;
+    atomic_init(&surf->references, 1);
     surf->dev        = dev;
     surf->format     = format;
 

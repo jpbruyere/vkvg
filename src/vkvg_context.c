@@ -216,6 +216,7 @@ void vkvg_flush(VkvgContext ctx) {
 
 void _clear_context(VkvgContext ctx) {
     VkvgPattern pat = NULL;
+    VkvgFont font = NULL;
 
     // free saved context stack elmt
     while (ctx->ctxSaveCount > 0) {
@@ -223,6 +224,9 @@ void _clear_context(VkvgContext ctx) {
         pat = ctx->pSavedCtxs[ctx->ctxSaveCount].pattern;
         if (pat)
             vkvg_pattern_destroy(pat);
+        font = ctx->pSavedCtxs[ctx->ctxSaveCount].currentFont;
+        if (font)
+            vkvg_font_destroy(font);
     }
 
     // free additional stencil use in save/restore process
@@ -1239,7 +1243,7 @@ void vkvg_set_text_direction(vkvg_context* ctx, vkvg_direction_t direction) {
     ctx->textDirection = direction;
 }
 void vkvg_text_extents(VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
-    if (vkvg_status(ctx))
+    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
         return;
     _font_cache_text_extents(ctx, text, -1, extents);
 }

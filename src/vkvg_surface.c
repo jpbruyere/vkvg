@@ -207,13 +207,8 @@ void vkvg_surface_destroy(VkvgSurface surf) {
         return;
     }
 
-    LOCK_SURFACE(surf)
-    surf->references--;
-    if (surf->references > 0) {
-        UNLOCK_SURFACE(surf)
+    if (atomic_fetch_sub_explicit(&surf->references, 1, memory_order_acq_rel) != 1)
         return;
-    }
-    UNLOCK_SURFACE(surf)
 
     LOG(VKVG_LOG_INFO, "DESTROY Surface\n");
 
@@ -243,17 +238,14 @@ void vkvg_surface_destroy(VkvgSurface surf) {
 vkvg_status_t vkvg_surface_status(VkvgSurface surf) { return !surf ? VKVG_STATUS_NULL_POINTER : surf->status; }
 
 VkvgSurface vkvg_surface_reference(VkvgSurface surf) {
-    if (!vkvg_surface_status(surf)) {
-        LOCK_SURFACE(surf)
-        surf->references++;
-        UNLOCK_SURFACE(surf)
-    }
+    if (!vkvg_surface_status(surf))
+        atomic_fetch_add_explicit(&surf->references, 1, memory_order_relaxed);
     return surf;
 }
 uint32_t vkvg_surface_get_reference_count(VkvgSurface surf) {
     if (vkvg_surface_status(surf))
         return 0;
-    return surf->references;
+    return atomic_load_explicit(&surf->references, memory_order_relaxed);
 }
 
 VkImage vkvg_surface_get_vk_image(VkvgSurface surf) {

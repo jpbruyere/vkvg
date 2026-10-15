@@ -47,7 +47,7 @@ VkvgPattern vkvg_pattern_create_for_surface(VkvgSurface surf) {
     pat->type       = VKVG_PATTERN_TYPE_SURFACE;
     pat->extend     = VKVG_EXTEND_NONE;
     pat->data       = surf;
-    pat->references = 1;
+    atomic_init(&pat->references, 1);
 
     vkvg_surface_reference(surf);
     if (vkvg_surface_status(surf))
@@ -92,7 +92,7 @@ VkvgPattern vkvg_pattern_create_linear(float x0, float y0, float x1, float y1) {
 
     if (pat->data) {
         vkvg_pattern_edit_linear(pat, x0, y0, x1, y1);
-        pat->references = 1;
+        atomic_init(&pat->references, 1);
     } else {
         pat->status = VKVG_STATUS_PATTERN_INVALID_GRADIENT;
     }
@@ -139,7 +139,7 @@ VkvgPattern vkvg_pattern_create_radial(float cx0, float cy0, float radius0, floa
 
     if (pat->data) {
         vkvg_pattern_edit_radial(pat, cx0, cy0, radius0, cx1, cy1, radius1);
-        pat->references = 1;
+        atomic_init(&pat->references, 1);
     } else
         pat->status = VKVG_STATUS_NO_MEMORY;
 
@@ -147,13 +147,13 @@ VkvgPattern vkvg_pattern_create_radial(float cx0, float cy0, float radius0, floa
 }
 VkvgPattern vkvg_pattern_reference(VkvgPattern pat) {
     if (!vkvg_pattern_status(pat))
-        pat->references++;
+        atomic_fetch_add_explicit(&pat->references, 1, memory_order_relaxed);
     return pat;
 }
 uint32_t vkvg_pattern_get_reference_count(VkvgPattern pat) {
     if (vkvg_pattern_status(pat))
         return 0;
-    return pat->references;
+    return atomic_load_explicit(&pat->references, memory_order_relaxed);
 }
 vkvg_status_t vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r, float g, float b, float a) {
     if (vkvg_pattern_status(pat))
@@ -246,13 +246,14 @@ void vkvg_pattern_get_matrix(VkvgPattern pat, vkvg_matrix_t* matrix) {
     else
         *matrix = VKVG_IDENTITY_MATRIX;
 }
-vkvg_status_t vkvg_pattern_status(VkvgPattern pat) { return !pat ? VKVG_STATUS_NULL_POINTER : pat->status; }
-
+vkvg_status_t vkvg_pattern_status(VkvgPattern pat) {
+    return !pat ? VKVG_STATUS_NULL_POINTER : pat->status;
+}
 void vkvg_pattern_destroy(VkvgPattern pat) {
     if (vkvg_pattern_status(pat))
         return;
-    pat->references--;
-    if (pat->references > 0)
+
+    if (atomic_fetch_sub_explicit(&pat->references, 1, memory_order_acq_rel) != 1)
         return;
 
     if (pat->type == VKVG_PATTERN_TYPE_SURFACE) {

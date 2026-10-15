@@ -28,7 +28,7 @@
 
 typedef struct _vkvg_surface_t {
     vkvg_status_t   status; /**< Current status of surface, affected by last operation */
-    uint32_t        references;
+    atomic_int      references;
     VkvgDevice      dev;
     uint32_t        width;
     uint32_t        height;
