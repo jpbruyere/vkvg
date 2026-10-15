@@ -113,13 +113,10 @@ typedef struct {
     svg_unit units;
 } svg_length_or_percentage;
 
-typedef void (*f_finish) (void*);
-
 typedef struct _svg_element_header{
-    uint32_t         hash;
     svg_element_type type;
+    uint32_t         hash;
     uint32_t         xlinkHref; // 0 if unused
-    f_finish         finish;    // dispose method or null if none.
 } svg_element_header;
 
 typedef struct {
@@ -435,6 +432,7 @@ svg_element_radial_gradient *_new_radial_gradient();
 #define SVG_COMMON_SIG svg_context *const svg, SvgPresentationAttributes *const attribs, void *parentData
 #define SVG_SIG_STACK_ATTRIB svg_context *const svg, SvgPresentationAttributes attribs, void *parentData
 
+void finalize_elt (void *elt);
 void process_innerText(SVG_COMMON_SIG, const uint8_t * innerText, size_t txt_len);
 int parse_element(SVG_COMMON_SIG);
 void parse_attributes(SVG_COMMON_SIG);

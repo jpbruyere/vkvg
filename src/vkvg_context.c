@@ -390,7 +390,6 @@ void vkvg_line_to(VkvgContext ctx, float x, float y) {
     _line_to(ctx, x, y);
 }
 
-
 /*static inline float getArcStep(VkvgContext ctx,float radius, float arcAngle) {
     float sx, sy;
     vkvg_matrix_get_scale(&ctx->pushConsts.mat, &sx, &sy);
@@ -1218,7 +1217,7 @@ void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char* fontBuffer, long
     fid->fontBuffer            = fontBuffer;
     fid->fontBufSize           = fontBufferByteSize;*/
 
-    _select_font_face(ctx, name);
+    //_select_font_face(ctx, name);
 }
 void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
     if (vkvg_status(ctx))

@@ -119,12 +119,15 @@
     parentData = _new_text();
 
 #define PROCESS_TEXT    process_element(svg, &attribs, parentData, false);
-#define POSTPROC_TEXT   vkvg_restore(svg->ctx);
+#define POSTPROC_TEXT           \
+    finalize_elt(parentData);   \
+    vkvg_restore(svg->ctx);
 #define SVG_ATT_TEXT_X  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->coords.x));
 #define SVG_ATT_TEXT_Y  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->coords.y));
 #define SVG_ATT_TEXT_DX parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->coords.dx));
 #define SVG_ATT_TEXT_DY parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(text)->coords.dy));
 //============
+
 //== TSPAN ===
 #define PREPROC_TSPAN                   \
     vkvg_save(svg->ctx);                \
@@ -133,7 +136,10 @@
     CAST(tspan)->parent = tspanParent;
 
 #define PROCESS_TSPAN    process_element(svg, &attribs, parentData, false);
-#define POSTPROC_TSPAN   vkvg_restore(svg->ctx);
+#define POSTPROC_TSPAN          \
+    finalize_elt(parentData);   \
+    vkvg_restore(svg->ctx);
+
 #define SVG_ATT_TSPAN_X  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(tspan)->coords.x));
 #define SVG_ATT_TSPAN_Y  parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(tspan)->coords.y));
 #define SVG_ATT_TSPAN_DX parse_coordinate_list(svg->value, svg->value + svg->value_len, &(CAST(tspan)->coords.dx));
@@ -565,6 +571,34 @@ bool try_find_by_id(svg_context *const svg, uint32_t hash, void **elt) {
     }
     return false;
 }
+
+void finalize_text_coords (svg_text_coords* coords) {
+    if (coords->x.size)
+        array_destroy_float(&coords->x);
+    if (coords->y.size)
+        array_destroy_float(&coords->y);
+    if (coords->dx.size)
+        array_destroy_float(&coords->dx);
+    if (coords->dy.size)
+        array_destroy_float(&coords->dy);
+}
+void finalize_elt (void *elt) {
+    switch (_get_element_type(elt)) {
+    case svg_element_type_linear_gradient:
+        vkvg_pattern_destroy((VkvgPattern)((svg_element_linear_gradient *)elt)->pattern);
+        break;
+    case svg_element_type_radial_gradient:
+        vkvg_pattern_destroy((VkvgPattern)((svg_element_radial_gradient *)elt)->pattern);
+        break;
+    case svg_element_type_text:
+        finalize_text_coords(&((svg_element_text*)elt)->coords);
+    case svg_element_type_tspan:
+        finalize_text_coords(&((svg_element_tspan*)elt)->coords);
+        break;
+    }
+    free(elt);
+}
+
 void _store_or_throw(svg_context *const svg, void *elt) {
     if (svg->currentIdHash) {
         svg_element_header *id = (svg_element_header *)elt;
@@ -572,7 +606,7 @@ void _store_or_throw(svg_context *const svg, void *elt) {
         array_add_SvgElt(&svg->idList, elt);
         LOG("SVG: store elemnt: %u type:%u\n", id->hash, id->type);
     } else {
-        free(elt);
+        finalize_elt(elt);
     }
 }
 
@@ -1959,17 +1993,9 @@ bool try_parse_svg (svg_context *svg) {
 
     parse_children (svg, &attribs, NULL);
 
-    for (uint32_t i = 0; i < svg->idList.count; i++) {
-        switch (_get_element_type(svg->idList.elements[i])) {
-        case svg_element_type_linear_gradient:
-            vkvg_pattern_destroy((VkvgPattern)((svg_element_linear_gradient *)svg->idList.elements[i])->pattern);
-            break;
-        case svg_element_type_radial_gradient:
-            vkvg_pattern_destroy((VkvgPattern)((svg_element_radial_gradient *)svg->idList.elements[i])->pattern);
-            break;
-        }
-        free(svg->idList.elements[i]);
-    }
+    for (uint32_t i = 0; i < svg->idList.count; i++)
+        finalize_elt(svg->idList.elements[i]);
+
     array_destroy_SvgElt(&svg->idList);
 
     return true;
