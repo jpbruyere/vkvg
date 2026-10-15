@@ -1,0 +1,197 @@
+%{
+#include <string.h>
+
+/* Enum representing our supported SVG elements and attributes */
+typedef enum {
+    SVG_TOK_UNKNOWN,
+    SVG_TOK_SVG,
+    SVG_TOK_G,
+    SVG_TOK_DEFS,
+    SVG_TOK_DESC,
+    SVG_TOK_TITLE,
+    SVG_TOK_SYMBOL,
+    SVG_TOK_USE,
+    SVG_TOK_SWITCH,
+    SVG_TOK_IMAGE,
+    SVG_TOK_STYLE,
+    SVG_TOK_PATH,
+    SVG_TOK_RECT,
+    SVG_TOK_CIRCLE,
+    SVG_TOK_LINE,
+    SVG_TOK_ELLIPSE,
+    SVG_TOK_POLYLINE,
+    SVG_TOK_POLYGON,
+    SVG_TOK_TEXT,
+    SVG_TOK_TSPAN,
+    SVG_TOK_TREF,
+    SVG_TOK_TEXTPATH,
+    SVG_TOK_ALTGLYPH,
+    SVG_TOK_GLYPHREF,
+    SVG_TOK_MARKER,
+    SVG_TOK_COLOR_PROFILE,
+    SVG_TOK_LINEARGRADIENT,
+    SVG_TOK_RADIALGRADIENT,
+    SVG_TOK_STOP,
+    SVG_TOK_PATTERN,
+    SVG_TOK_CLIPPATH,
+    SVG_TOK_MASK,
+    SVG_TOK_FILTER,
+    SVG_TOK_CURSOR,
+    SVG_TOK_A,
+    SVG_TOK_VIEW,
+    SVG_TOK_SCRIPT,
+    SVG_TOK_ANIMATE,
+    SVG_TOK_SET,
+    SVG_TOK_ANIMATEMOTION,
+    SVG_TOK_ANIMATECOLOR,
+    SVG_TOK_ANIMATETRANSFORM,
+    SVG_TOK_MPATH,
+    SVG_TOK_FONT,
+    SVG_TOK_FONT_FACE,
+    SVG_TOK_GLYPH,
+    SVG_TOK_MISSING_GLYPH,
+    SVG_TOK_HKERN,
+    SVG_TOK_VKERN,
+    SVG_TOK_FONT_FACE_URI,
+    SVG_TOK_FONT_FACE_FORMAT,
+    SVG_TOK_FONT_FACE_NAME,
+    SVG_TOK_FOREIGNOBJECT,
+    SVG_TOK_FEBLEND,
+    SVG_TOK_FECOLORMATRIX,
+    SVG_TOK_FECOMPONENTTRANSFER,
+    SVG_TOK_FECOMPOSITE,
+    SVG_TOK_FECONVOLVEMATRIX,
+    SVG_TOK_FEDIFFUSELIGHTING,
+    SVG_TOK_FEDISPLACEMENTMAP,
+    SVG_TOK_FEFLOOD,
+    SVG_TOK_FEGAUSSIANBLUR,
+    SVG_TOK_FEIMAGE,
+    SVG_TOK_FEMERGE,
+    SVG_TOK_FEMERGENODE,
+    SVG_TOK_FEMORPHOLOGY,
+    SVG_TOK_FEOFFSET,
+    SVG_TOK_FESPECULARLIGHTING,
+    SVG_TOK_FETILE,
+    SVG_TOK_FETURBULENCE,
+    SVG_TOK_FEDISTANTLIGHT,
+    SVG_TOK_FEPOINTLIGHT,
+    SVG_TOK_FESPOTLIGHT,
+    SVG_TOK_FEFUNCR,
+    SVG_TOK_FEFUNCG,
+    SVG_TOK_FEFUNCB,
+    SVG_TOK_FEFUNCA,
+} SvgEltTokId;
+
+/* Structure returned by gperf */
+struct SvgEltKeyword {
+    const char *name;
+    SvgEltTokId id;
+};
+%}
+
+%struct-type
+%language=ANSI-C
+%readonly-tables
+%global-table
+%define lookup-function-name lookup_svg_elt_token_default
+%define hash-function-name hash_svg_elt
+%define constants-prefix ELT_
+%define word-array-name svg_elt_wordlist
+
+struct SvgEltKeyword;
+%%
+# Elements
+svg, SVG_TOK_SVG
+g, SVG_TOK_G
+defs, SVG_TOK_DEFS
+desc, SVG_TOK_DESC
+title, SVG_TOK_TITLE
+symbol, SVG_TOK_SYMBOL
+use, SVG_TOK_USE
+switch, SVG_TOK_SWITCH
+image, SVG_TOK_IMAGE
+style, SVG_TOK_STYLE
+path, SVG_TOK_PATH
+rect, SVG_TOK_RECT
+circle, SVG_TOK_CIRCLE
+line, SVG_TOK_LINE
+ellipse, SVG_TOK_ELLIPSE
+polyline, SVG_TOK_POLYLINE
+polygon, SVG_TOK_POLYGON
+text, SVG_TOK_TEXT
+tspan, SVG_TOK_TSPAN
+tref, SVG_TOK_TREF
+textPath, SVG_TOK_TEXTPATH
+altGlyph, SVG_TOK_ALTGLYPH
+glyphRef, SVG_TOK_GLYPHREF
+marker, SVG_TOK_MARKER
+color-profile, SVG_TOK_COLOR_PROFILE
+linearGradient, SVG_TOK_LINEARGRADIENT
+radialGradient, SVG_TOK_RADIALGRADIENT
+stop, SVG_TOK_STOP
+pattern, SVG_TOK_PATTERN
+clipPath, SVG_TOK_CLIPPATH
+mask, SVG_TOK_MASK
+filter, SVG_TOK_FILTER
+feBlend, SVG_TOK_FEBLEND
+feColorMatrix, SVG_TOK_FECOLORMATRIX
+feComponentTransfer, SVG_TOK_FECOMPONENTTRANSFER
+feComposite, SVG_TOK_FECOMPOSITE
+feConvolveMatrix, SVG_TOK_FECONVOLVEMATRIX
+feDiffuseLighting, SVG_TOK_FEDIFFUSELIGHTING
+feDisplacementMap, SVG_TOK_FEDISPLACEMENTMAP
+feFlood, SVG_TOK_FEFLOOD
+feGaussianBlur, SVG_TOK_FEGAUSSIANBLUR
+feImage, SVG_TOK_FEIMAGE
+feMerge, SVG_TOK_FEMERGE
+feMergeNode, SVG_TOK_FEMERGENODE
+feMorphology, SVG_TOK_FEMORPHOLOGY
+feOffset, SVG_TOK_FEOFFSET
+feSpecularLighting, SVG_TOK_FESPECULARLIGHTING
+feTile, SVG_TOK_FETILE
+feTurbulence, SVG_TOK_FETURBULENCE
+feDistantLight, SVG_TOK_FEDISTANTLIGHT
+fePointLight, SVG_TOK_FEPOINTLIGHT
+feSpotLight, SVG_TOK_FESPOTLIGHT
+feFuncR, SVG_TOK_FEFUNCR
+feFuncG, SVG_TOK_FEFUNCG
+feFuncB, SVG_TOK_FEFUNCB
+feFuncA, SVG_TOK_FEFUNCA
+cursor, SVG_TOK_CURSOR
+a, SVG_TOK_A
+view, SVG_TOK_VIEW
+script, SVG_TOK_SCRIPT
+animate, SVG_TOK_ANIMATE
+set, SVG_TOK_SET
+animateMotion, SVG_TOK_ANIMATEMOTION
+animateColor, SVG_TOK_ANIMATECOLOR
+animateTransform, SVG_TOK_ANIMATETRANSFORM
+mpath, SVG_TOK_MPATH
+font, SVG_TOK_FONT
+font-face, SVG_TOK_FONT_FACE
+glyph, SVG_TOK_GLYPH
+missing-glyph, SVG_TOK_MISSING_GLYPH
+hkern, SVG_TOK_HKERN
+vkern, SVG_TOK_VKERN
+font-face-uri, SVG_TOK_FONT_FACE_URI
+font-face-format, SVG_TOK_FONT_FACE_FORMAT
+font-face-name, SVG_TOK_FONT_FACE_NAME
+foreignObject, SVG_TOK_FOREIGNOBJECT
+%%
+const struct SvgEltKeyword*
+lookup_svg_elt_token (register const char *str, register size_t len)
+{
+    if (len <= ELT_MAX_WORD_LENGTH && len >= ELT_MIN_WORD_LENGTH)
+    {
+        register unsigned int key = hash_svg_elt (str, len);
+
+        if (key <= ELT_MAX_HASH_VALUE)
+        {
+            register const char *s = svg_elt_wordlist[key].name;
+
+            if (*str == *s && !memcmp (str + 1, s + 1, len -1) && s[len] == '\0')
+                return &svg_elt_wordlist[key];
+        }
+    }
+    return (struct SvgEltKeyword *) 0;
+}

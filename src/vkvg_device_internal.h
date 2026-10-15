@@ -22,8 +22,8 @@
 #ifndef VKVG_DEVICE_INTERNAL_H
 #define VKVG_DEVICE_INTERNAL_H
 
-#include "vkvg_internal.h"
 #include "vkvg_fonts.h"
+#include "vkvg_internal.h"
 
 #define STENCIL_FILL_BIT              0x1
 #define STENCIL_CLIP_BIT              0x2
@@ -72,22 +72,21 @@ typedef struct _vkvg_device_t {
     VkFormat           stencilFormat;     /**< Supported vulkan image format for stencil */
     VkImageAspectFlags stencilAspectFlag; /**< stencil only or depth stencil, could be solved by
                                              VK_KHR_separate_depth_stencil_layouts*/
-    VkFormat      pngStagFormat;          /**< Supported vulkan image format png write staging img */
-    VkImageTiling pngStagTiling;          /**< tiling for the blit operation */
+    VkFormat        pngStagFormat;          /**< Supported vulkan image format png write staging img */
+    VkImageTiling   pngStagTiling;          /**< tiling for the blit operation */
 
-    mtx_t    mutex;       /**< protect device access (queue, cahes, ...)from ctxs in separate threads */
-    bool     threadAware; /**< if true, mutex is created and guard device queue and caches access */
-    VkhQueue gQueue;      /**< Vulkan Queue with Graphic flag */
+    mtx_t           mutex;       /**< protect device access (queue, cahes, ...)from ctxs in separate threads */
+    bool            threadAware; /**< if true, mutex is created and guard device queue and caches access */
+    VkhQueue        gQueue;      /**< Vulkan Queue with Graphic flag */
 
-    VkRenderPass renderPass; /**< Vulkan render pass, common for all surfaces */
-    VkRenderPass
-        renderPass_ClearStencil;      /**< Vulkan render pass for first draw with context, stencil has to be cleared */
-    VkRenderPass renderPass_ClearAll; /**< Vulkan render pass for new surface, clear all attacments*/
+    VkRenderPass renderPass;                /**< Vulkan render pass, common for all surfaces */
+    VkRenderPass renderPass_ClearStencil;   /**< Vulkan render pass for first draw with context, stencil has to be cleared */
+    VkRenderPass renderPass_ClearAll;       /**< Vulkan render pass for new surface, clear all attacments*/
 
     uint32_t        references; /**< Reference count, prevent destroying device if still in use */
     VkCommandPool   cmdPool;    /**< Global command pool for processing on surfaces without context */
     VkCommandBuffer cmd;        /**< Global command buffer */
-    VkFence fence; /**< this fence is kept signaled when idle, wait and reset are called before each recording. */
+    VkFence         fence; /**< this fence is kept signaled when idle, wait and reset are called before each recording. */
 
     VkPipeline pipe_OVER; /**< default operator */
     VkPipeline pipe_SUB;
@@ -107,11 +106,11 @@ typedef struct _vkvg_device_t {
 
     VkhDevice vkhDev; /**< old VkhDev created during vulkan context creation by @ref vkvg_device_create. */
 
-    VkhImage           emptyImg;        /**< prevent unbound descriptor to trigger Validation error 61 */
-    VkSampleCountFlags samples;         /**< samples count common to all surfaces */
-    bool               deferredResolve; /**< if true, resolve only on context destruction and set as source */
+    VkhImage            emptyImg;        /**< prevent unbound descriptor to trigger Validation error 61 */
+    VkSampleCountFlags  samples;         /**< samples count common to all surfaces */
+    bool                deferredResolve; /**< if true, resolve only on context destruction and set as source */
 
-    _font_cache_t* fontCache; /**< Store everything relative to common font caching system */
+    _font_cache_t*      fontCache; /**< Store everything relative to common font caching system */
 
     VkvgContext lastCtx; /**< last element of double linked list of context, used to trigger font caching system update
                             on all contexts*/

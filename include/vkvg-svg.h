@@ -11,17 +11,17 @@
 extern "C" {
 #endif
 
-typedef struct _svg_placeholder* VkvgSvg;
+typedef struct _vkvg_svg_t* VkvgSvg;
 
 /**
- * @brief load svg file into @ref surface
+ * @brief render svg file into @ref surface
  *
- * Create a new vkvg surface by loading a SVG file.
+ * Create a new vkvg surface by rendering a SVG file onto it.
  * @param dev The vkvg @ref device used for creating the surface.
  * @param svgFilePath The path of the SVG file to load.
  * @param width force the rendering width, if 0 autosize from svg.
  * @param height force the rendering height, if 0 autosize from svg.
- * @return The new vkvg surface with the loaded SVG drawing as content, or null if an error occured.
+ * @return The new vkvg surface with the rendered SVG drawing as content, or null if an error occured.
  */
 vkvg_public VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t width, uint32_t height,
                                                      const char* svgFilePath);
@@ -36,12 +36,12 @@ vkvg_public VkvgSurface vkvg_surface_create_from_svg(VkvgDevice dev, uint32_t wi
  * @return The new vkvg surface with the parsed SVG fragment as content, or null if an error occured.
  */
 vkvg_public VkvgSurface vkvg_surface_create_from_svg_fragment(VkvgDevice dev, uint32_t width, uint32_t height,
-                                                              char* svgFragment);
+                                                              const char *const svgFragment);
 /**
  * @brief get svg dimensions.
  *
  * retrieve dimensions from svg parsing.
- * @param svg a valid VkvgSvg handle.
+ * @param svg a valid @ref VkvgSvg handle.
  * @param width pointer to a valid integer to receive the svg width.
  * @param height pointer to a valid integer to receive the svg height.
  */
@@ -52,19 +52,19 @@ vkvg_public void vkvg_svg_get_dimensions(VkvgSvg svg, uint32_t* width, uint32_t*
  *
  * Open a svg file and store source in memory, head is parsed to query the svg dimensions.
  * @param svgFilePath a valid file path to the svg to load.
- * @return a VkvgSvg pointer.
+ * @return a @ref VkvgSvg pointer or null if an error occured.
  */
 vkvg_public VkvgSvg vkvg_svg_load(const char* svgFilePath);
 
 /**
  * @brief Load svg from an svg source fragment.
  * @param svgFragment A valid svg code fragment.
- * @return a VkvgSvg pointer.
+ * @return a @ref VkvgSvg pointer or null if an error occured.
  */
 vkvg_public VkvgSvg vkvg_svg_load_fragment(char* svgFragment);
 
 /**
- * @brief render svg on a context.
+ * @brief render svg on a @ref context.
  * @param svg a valid VkvgSvg handle.
  * @param ctx a valid vkvg context.
  * @param id an optional id to limit rendering to specific `<g>` elemnt.

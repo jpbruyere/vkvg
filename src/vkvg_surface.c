@@ -186,7 +186,7 @@ VkvgSurface vkvg_surface_create_from_image(VkvgDevice dev, const char* filePath)
     int            w = 0, h = 0, channels = 0;
     unsigned char* img = stbi_load(filePath, &w, &h, &channels, 4); // force 4 components per pixel
     if (!img) {
-        LOG(VKVG_LOG_ERR, "Could not load texture from %s, %s\n", filePath, stbi_failure_reason());
+        LOGE("Could not load texture from %s, %s\n", filePath, stbi_failure_reason());
         return (VkvgSurface)&_vkvg_status_null_pointer;
     }
 
@@ -199,21 +199,16 @@ VkvgSurface vkvg_surface_create_from_image(VkvgDevice dev, const char* filePath)
 
 void vkvg_surface_destroy(VkvgSurface surf) {
     if (vkvg_surface_status(surf)) {
-        LOG(VKVG_LOG_ERR, "DESTROY surface failed, invalid surface\n");
+        LOGE("DESTROY surface failed, invalid surface\n");
         return;
     }
     if (vkvg_device_status(surf->dev)) {
-        LOG(VKVG_LOG_ERR, "DESTROY surface failed, device error\n");
+        LOGE("DESTROY surface failed, device error\n");
         return;
     }
 
-    LOCK_SURFACE(surf)
-    surf->references--;
-    if (surf->references > 0) {
-        UNLOCK_SURFACE(surf)
+    if (atomic_fetch_sub_explicit(&surf->references, 1, memory_order_acq_rel) != 1)
         return;
-    }
-    UNLOCK_SURFACE(surf)
 
     LOG(VKVG_LOG_INFO, "DESTROY Surface\n");
 
@@ -243,17 +238,14 @@ void vkvg_surface_destroy(VkvgSurface surf) {
 vkvg_status_t vkvg_surface_status(VkvgSurface surf) { return !surf ? VKVG_STATUS_NULL_POINTER : surf->status; }
 
 VkvgSurface vkvg_surface_reference(VkvgSurface surf) {
-    if (!vkvg_surface_status(surf)) {
-        LOCK_SURFACE(surf)
-        surf->references++;
-        UNLOCK_SURFACE(surf)
-    }
+    if (!vkvg_surface_status(surf))
+        atomic_fetch_add_explicit(&surf->references, 1, memory_order_relaxed);
     return surf;
 }
 uint32_t vkvg_surface_get_reference_count(VkvgSurface surf) {
     if (vkvg_surface_status(surf))
         return 0;
-    return surf->references;
+    return atomic_load_explicit(&surf->references, memory_order_relaxed);
 }
 
 VkImage vkvg_surface_get_vk_image(VkvgSurface surf) {
@@ -286,20 +278,20 @@ uint32_t vkvg_surface_get_height(VkvgSurface surf) {
 
 vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char* path) {
     if (vkvg_surface_status(surf)) {
-        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid status: %d\n", vkvg_surface_status(surf));
+        LOGE("vkvg_surface_write_to_png failed, invalid status: %d\n", vkvg_surface_status(surf));
         return VKVG_STATUS_INVALID_STATUS;
     }
     if (vkvg_device_status(surf->dev)) {
-        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, invalid device status: %d\n",
+        LOGE("vkvg_surface_write_to_png failed, invalid device status: %d\n",
             vkvg_device_status(surf->dev));
         return VKVG_STATUS_INVALID_STATUS;
     }
     if (surf->dev->pngStagFormat == VK_FORMAT_UNDEFINED) {
-        LOG(VKVG_LOG_ERR, "no suitable image format for png write\n");
+        LOGE("no suitable image format for png write\n");
         return VKVG_STATUS_INVALID_FORMAT;
     }
     if (!path) {
-        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_png failed, null path\n");
+        LOGE("vkvg_surface_write_to_png failed, null path\n");
         return VKVG_STATUS_WRITE_ERROR;
     }
     LOCK_SURFACE(surf)
@@ -397,11 +389,11 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char* path) {
 
 vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char* const bitmap) {
     if (vkvg_surface_status(surf)) {
-        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_memory failed, invalid status: %d\n", vkvg_surface_status(surf));
+        LOGE("vkvg_surface_write_to_memory failed, invalid status: %d\n", vkvg_surface_status(surf));
         return VKVG_STATUS_INVALID_STATUS;
     }
     if (!bitmap) {
-        LOG(VKVG_LOG_ERR, "vkvg_surface_write_to_memory failed, null path\n");
+        LOGE("vkvg_surface_write_to_memory failed, null path\n");
         return VKVG_STATUS_WRITE_ERROR;
     }
 

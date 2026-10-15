@@ -492,7 +492,7 @@ void _device_submit_cmd(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence) {
 bool _device_init_function_pointers(VkvgDevice dev) {
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     if (vkGetInstanceProcAddr(dev->instance, "vkSetDebugUtilsObjectNameEXT") == VK_NULL_HANDLE) {
-        LOG(VKVG_LOG_ERR, "vkvg create device failed: 'VK_EXT_debug_utils' has to be loaded for Debug build\n");
+        LOGE("vkvg create device failed: 'VK_EXT_debug_utils' has to be loaded for Debug build\n");
         return false;
     }
     vkh_device_init_debug_utils((VkhDevice)&dev->vkDev);
@@ -590,7 +590,7 @@ void _device_check_best_image_tiling(VkvgDevice dev, VkFormat format) {
         }
     }
     dev->status = VKVG_STATUS_INVALID_FORMAT;
-    LOG(VKVG_LOG_ERR, "vkvg create device failed: image format not supported: %d\n", format);
+    LOGE("vkvg create device failed: image format not supported: %d\n", format);
 }
 
 void _dump_image_format_properties(VkvgDevice dev, VkFormat format) {

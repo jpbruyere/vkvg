@@ -41,7 +41,7 @@ layout (location = 4) out mat3x2 outMat;
 layout(push_constant) uniform PushConsts {
 	vec4	source;
 	vec2	size;
-	int		fullScreenQuad_srcType;
+	int	fullScreenQuad_srcType;
 	float	opacity;
 	mat3x2	mat;
 	mat3x2	matInv;
@@ -72,8 +72,8 @@ void main()
 	outUV = inUV;
 
 	vec2 p = vec2(
-		pc.mat[0][0] * inPos.x + pc.mat[1][0] * inPos.y + pc.mat[2][0],
-		pc.mat[0][1] * inPos.x + pc.mat[1][1] * inPos.y + pc.mat[2][1]
+	        pc.mat[0][0] * inPos.x + pc.mat[1][0] * inPos.y + pc.mat[2][0],
+	        pc.mat[0][1] * inPos.x + pc.mat[1][1] * inPos.y + pc.mat[2][1]
 	);
 
 	gl_Position = vec4(p * vec2(2) / pc.size - vec2(1), 0.0, 1.0);

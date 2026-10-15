@@ -8,6 +8,67 @@ VkvgPattern create_grad(VkvgContext ctx, float x) {
     return pat;
 }
 
+
+void draw_gradient1(VkvgContext cr)
+{
+    VkvgPattern pat1;
+    pat1 = vkvg_pattern_create_linear(0.0, 0.0,  350.0, 350.0);
+
+    double j;
+    int count = 1;
+    for ( j = 0.1; j < 1; j += 0.1 ) {
+        if (( count % 2 ))  {
+            vkvg_pattern_add_color_stop(pat1, j, 0, 0, 0, 1);
+        } else {
+            vkvg_pattern_add_color_stop(pat1, j, 1, 0, 0, 1);
+        }
+        count++;
+    }
+
+    vkvg_rectangle(cr, 20, 20, 300, 100);
+    vkvg_set_source(cr, pat1);
+    vkvg_fill(cr);
+
+    vkvg_pattern_destroy(pat1);
+}
+void draw_gradient2(VkvgContext cr)
+{
+    VkvgPattern pat2;
+    pat2 = vkvg_pattern_create_linear(0.0, 0.0,  350.0, 0.0);
+
+    double i;
+    int count = 1;
+    for ( i = 0.05; i < 0.95; i += 0.075 ) {
+        if (( count % 2 ))  {
+            vkvg_pattern_add_color_stop(pat2, i, 0, 0, 0, 1);
+        } else {
+            vkvg_pattern_add_color_stop(pat2, i, 0, 0, 1, 1);
+        }
+        count++;
+    }
+
+    vkvg_rectangle(cr, 20, 140, 300, 100);
+    vkvg_set_source(cr, pat2);
+    vkvg_fill(cr);
+
+    vkvg_pattern_destroy(pat2);
+}
+void draw_gradient3(VkvgContext cr)
+{
+    VkvgPattern pat3;
+    pat3 = vkvg_pattern_create_linear(20.0, 260.0, 20.0, 360.0);
+
+    vkvg_pattern_add_color_stop(pat3, 0.1, 0, 0, 0, 1);
+    vkvg_pattern_add_color_stop(pat3, 0.5, 1, 1, 0, 1);
+    vkvg_pattern_add_color_stop(pat3, 0.9, 0, 0, 0, 1);
+
+    vkvg_rectangle(cr, 20, 260, 300, 100);
+    vkvg_set_source(cr, pat3);
+    vkvg_fill(cr);
+
+    vkvg_pattern_destroy(pat3);
+}
+
 TEST(gradient_paint) {
     VkvgContext ctx = vkvg_create(test->surf);
     vkvg_clear(ctx);
@@ -170,5 +231,16 @@ TEST(gradient_radial) {
     vkvg_paint(ctx);
     vkvg_pattern_destroy(radial);
 
+    vkvg_destroy(ctx);
+}
+
+TEST(gradient_cairo) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_set_source_rgb(ctx, 0.7f, 0.7f, 0.7f);
+    vkvg_paint(ctx);
+
+    draw_gradient1(ctx);
+    draw_gradient2(ctx);
+    draw_gradient3(ctx);
     vkvg_destroy(ctx);
 }

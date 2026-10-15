@@ -1,0 +1,17 @@
+<svg
+  viewBox="0 0 10 10"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="g" y2="100%">
+      <stop offset="0%" stop-color="black" />
+      <stop offset="45%" stop-color="red" />
+      <stop offset="55%" stop-color="green" />
+      <stop offset="100%" stop-color="blue" />
+    </linearGradient>
+  </defs>
+
+
+  <rect x="1" y="1" width="8" height="8" fill="url(#g)" /> 
+  
+</svg>

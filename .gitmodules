@@ -4,6 +4,3 @@
 [submodule "external/glutess"]
 	path = external/glutess
 	url = ../glutess
-[submodule "external/vkvg-svg"]
-	path = external/vkvg-svg
-	url = ../vkvg-svg

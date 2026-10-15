@@ -1,29 +1,11 @@
-/*
- * Copyright (c) 2018-2025 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 #ifndef VKVG_CONTEXT_INTERNAL_H
 #define VKVG_CONTEXT_INTERNAL_H
 
-#include "vkvg_internal.h"
 #include "vkvg_fonts.h"
+#include "vkvg_internal.h"
 
 #if VKVG_RECORDING
 #include "recording/vkvg_record_internal.h"
@@ -100,37 +82,82 @@ typedef enum {
 } vkvg_clip_state_t;
 
 typedef struct _vkvg_context_save_t {
-    struct _vkvg_context_save_t* pNext;
+    uint32_t                curColor;
+    float                   lineWidth;
+    float                   miterLimit;
+    uint32_t                dashCount;  // value count in dash array, 0 if dash not set.
+    float                   dashOffset; // an offset for dash
+    float                   dashes[VKVG_MAX_DASH_COUNT];// fixed array of alternate lengths of on and off stroke.
 
-    float    lineWidth;
-    float    miterLimit;
-    float    dashOffset; // an offset for dash
-    float*   dashes;     // an array of alternate lengths of on and off stroke.
-    uint32_t dashCount;  // value count in dash array, 0 if dash not set.
-
-    vkvg_operator_t  curOperator;
-    vkvg_line_cap_t  lineCap;
-    vkvg_line_join_t lineJoint;
-    vkvg_fill_rule_t curFillRule;
-
-    long                   selectedCharSize; /* Font size*/
-    char                   selectedFontName[FONT_NAME_MAX_SIZE];
-    _vkvg_font_identity_t  selectedFont; // hold current face and size before cache addition
-    _vkvg_font_identity_t* currentFont;  // font ready for lookup
-    vkvg_direction_t       textDirection;
-    push_constants         pushConsts;
-    uint32_t               curColor;
-    VkvgPattern            pattern;
-    vkvg_clip_state_t      clippingState;
-
+    vkvg_operator_t         curOperator;
+    vkvg_line_cap_t         lineCap;
+    vkvg_line_join_t        lineJoint;
+    vkvg_fill_rule_t        curFillRule;
+    vkvg_direction_t        textDirection;
+    //vkvg_font_face_t   selectedFont; // hold current face and size before cache addition
+    //vkvg_font_face_t*  currentFont;  // font ready for lookup
+    push_constants          pushConsts;
+    VkvgPattern             pattern;
+    VkvgFont                currentFont;
+    vkvg_clip_state_t       clippingState;
 } vkvg_context_save_t;
 
 typedef struct _vkvg_context_t {
-    vkvg_status_t status;
-    uint32_t      references; // reference count
+    vkvg_status_t    status;
+    atomic_int       references; // reference count
 
-    VkvgDevice  dev;
-    VkvgSurface pSurf; // surface bound to context, set on creation of ctx
+    uint32_t         curColor;
+    float            lineWidth;
+    float            miterLimit;
+    uint32_t         dashCount;      // value count in dash array, 0 if dash not set.
+    float            dashOffset;     // an offset for dash
+    float            dashes[VKVG_MAX_DASH_COUNT]; // fixed array of alternate lengths of on and off stroke.
+
+    vkvg_operator_t  curOperator;
+    vkvg_line_cap_t  lineCap;
+    vkvg_line_join_t lineJoin;
+    vkvg_fill_rule_t curFillRule;
+    vkvg_direction_t textDirection;
+    //    vkvg_font_face_t* currentFont;     // font pointing to cached fonts identity
+    /****************************/
+                                   //vkvg_font_t		  selectedFont;		//hold current face and size before cache addition
+                                   //vkvg_font_t*          currentFontSize; // font structure by size ready for lookup
+    push_constants    pushConsts;
+    VkvgPattern       pattern;
+    VkvgFont          currentFont;
+
+    //--------------------------------------------------------------------------------
+    uint32_t         indCount;       // current indice count
+    uint32_t         curIndStart;    // last index recorded in cmd buff
+    VKVG_IBO_INDEX_TYPE curVertOffset; // vertex offset in draw indexed command
+    uint32_t         vertCount;      // effective vertices count
+    // pathes, exists until stroke of fill
+    uint32_t         pointCount;     // effective points count
+    // pathes array is a list of point count per segment
+    uint32_t         pathPtr;        // pointer in the path array
+    uint32_t         segmentPtr;     // current segment count in current path having curves
+    uint32_t         subpathCount;   // store count of subpath, not straight forward to retrieve from segmented path array
+    uint8_t          simpleConvex:1; // true if path is single rect or concave closed curve.
+    uint8_t          cmdStarted:1;   // prevent flushing empty renderpass
+    uint8_t          pushCstDirty:1; // prevent pushing to gpu if not requested
+
+    VkRect2D         bounds;
+    VkClearRect      clearRect;
+
+#if VKVG_FILL_NZ_GLUTESS
+    void (*vertex_cb)(VKVG_IBO_INDEX_TYPE, VkvgContext); // tesselator vertex callback
+    VKVG_IBO_INDEX_TYPE tesselator_fan_start;
+    uint32_t            tesselator_idx_counter;
+#endif
+
+#if VKVG_RECORDING
+    vkvg_recording_t* recording;
+#endif
+
+    VkvgDevice    dev;
+    VkvgSurface   pSurf; // surface bound to context, set on creation of ctx
+
+
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     uint64_t timelineStep; // context cmd last submission timeline id.
 #else
@@ -145,88 +172,32 @@ typedef struct _vkvg_context_t {
     VkDescriptorSet  dsFont;         // fonts glyphs texture atlas descriptor (local for thread safety)
     VkDescriptorSet  dsSrc;          // source ds
     VkDescriptorSet  dsGrad;         // gradient uniform buffer
-
-    VkhImage fontCacheImg; // current font cache, may not be the last one, updated only if new glyphs are
-                           // uploaded by the current context
-
-    VkRect2D bounds;
-
-    uint32_t curColor;
-
-#if VKVG_FILL_NZ_GLUTESS
-    void (*vertex_cb)(VKVG_IBO_INDEX_TYPE, VkvgContext); // tesselator vertex callback
-    VKVG_IBO_INDEX_TYPE tesselator_fan_start;
-    uint32_t            tesselator_idx_counter;
-#endif
-
-#if VKVG_RECORDING
-    vkvg_recording_t* recording;
-#endif
-
-    vkh_buffer_t uboGrad; // uniform buff obj holdings gradient infos
-
+    VkhImage         fontCacheImg;   // current font cache, may not be the last one, updated only if new glyphs are uploaded by the current context
     // vk buffers, holds data until flush
-    vkh_buffer_t indices;     // index buffer with persistent map memory
-    uint32_t     sizeIBO;     // size of vk ibo
-    uint32_t     sizeIndices; // reserved size
-    uint32_t     indCount;    // current indice count
-
-    uint32_t            curIndStart;   // last index recorded in cmd buff
-    VKVG_IBO_INDEX_TYPE curVertOffset; // vertex offset in draw indexed command
-
-    vkh_buffer_t vertices;     // vertex buffer with persistent mapped memory
-    uint32_t     sizeVBO;      // size of vk vbo size
-    uint32_t     sizeVertices; // reserved size
-    uint32_t     vertCount;    // effective vertices count
+    vkh_buffer_t     uboGrad;        // uniform buff obj holdings gradient infos
+    vkh_buffer_t     indices;        // index buffer with persistent map memory
+    vkh_buffer_t     vertices;       // vertex buffer with persistent mapped memory
 
     Vertex*              vertexCache;
     VKVG_IBO_INDEX_TYPE* indexCache;
+    vec2*                points;     // points array
+    uint32_t*            pathes;
+    vkvg_context_save_t* pSavedCtxs; // saved ctx stack
 
-    // pathes, exists until stroke of fill
-    vec2*    points;     // points array
-    uint32_t sizePoints; // reserved size
-    uint32_t pointCount; // effective points count
 
-    // pathes array is a list of point count per segment
-    uint32_t  pathPtr; // pointer in the path array
-    uint32_t* pathes;
-    uint32_t  sizePathes;
+    uint32_t         sizeIBO;        // size of vk ibo
+    uint32_t         sizeIndices;    // reserved size
+    uint32_t         sizeVBO;        // size of vk vbo size
+    uint32_t         sizeVertices;   // reserved size
+    uint32_t         sizePoints;     // reserved size
+    uint32_t         sizePathes;
+    uint8_t          sizeCtxSave;    // allocated size for saved ctx stack
 
-    uint32_t segmentPtr;   // current segment count in current path having curves
-    uint32_t subpathCount; // store count of subpath, not straight forward to retrieve from segmented path array
-    bool     simpleConvex; // true if path is single rect or concave closed curve.
+    uint8_t              ctxSaveCount;// saved ctx count
+    uint8_t              curSavBit;    // current stencil bit used to save context, 6 bits used by stencil for save/restore
+    vkvg_clip_state_t    curClipState;    // current clipping status relative to the previous saved one or clear state if
 
-    bool cmdStarted;   // prevent flushing empty renderpass
-    bool pushCstDirty; // prevent pushing to gpu if not requested
-
-    float    lineWidth;
-    float    miterLimit;
-    uint32_t dashCount;  // value count in dash array, 0 if dash not set.
-    float    dashOffset; // an offset for dash
-    float*   dashes;     // an array of alternate lengths of on and off stroke.
-
-    vkvg_operator_t  curOperator;
-    vkvg_line_cap_t  lineCap;
-    vkvg_line_join_t lineJoin;
-    vkvg_fill_rule_t curFillRule;
-
-    long selectedCharSize; /* Font size*/
-    char selectedFontName[FONT_NAME_MAX_SIZE];
-    //_vkvg_font_t		  selectedFont;		//hold current face and size before cache addition
-    _vkvg_font_identity_t* currentFont;     // font pointing to cached fonts identity
-    _vkvg_font_t*          currentFontSize; // font structure by size ready for lookup
-    vkvg_direction_t       textDirection;
-
-    push_constants pushConsts;
-    VkvgPattern    pattern;
-
-    vkvg_context_save_t* pSavedCtxs; // last ctx saved ptr
-    uint8_t              curSavBit; // current stencil bit used to save context, 6 bits used by stencil for save/restore
-    VkhImage*         savedStencils; // additional image for saving contexes once more than 6 save/restore are reached
-    vkvg_clip_state_t curClipState;  // current clipping status relative to the previous saved one or clear state if
-                                     // none.
-
-    VkClearRect           clearRect;
+    VkhImage*            savedStencils;   // additional image for saving contexes once more than 6 save/restore are reached
     VkRenderPassBeginInfo renderPassBeginInfo;
 } vkvg_context;
 

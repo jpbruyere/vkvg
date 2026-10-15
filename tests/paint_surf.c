@@ -21,7 +21,7 @@ VkvgSurface createSurf(uint32_t width, uint32_t height) {
 
 void paint() {
     VkvgSurface src = createSurf(256, 256);
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     vkvg_set_source_surface(ctx, src, 0, 0);
     vkvg_paint(ctx);
     vkvg_destroy(ctx);
@@ -29,7 +29,7 @@ void paint() {
 }
 void paint_with_offset() {
     VkvgSurface src = createSurf(256, 256);
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     vkvg_set_source_rgba(ctx, 0, 1, 0, 0.5);
     vkvg_paint(ctx);
     vkvg_set_source_surface(ctx, src, 100, 100);
@@ -39,7 +39,7 @@ void paint_with_offset() {
 }
 void paint_multiple() {
     VkvgSurface src = createSurf(256, 256);
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     for (int i = 0; i < 10; i++) {
         vkvg_set_source_surface(ctx, src, i * 20, i * 20);
         vkvg_paint(ctx);
@@ -49,7 +49,7 @@ void paint_multiple() {
 }
 void paint_with_rotation() {
     VkvgSurface src = createSurf(256, 256);
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     vkvg_set_source_surface(ctx, src, 0, 0);
     vkvg_rotate(ctx, 45);
     vkvg_paint(ctx);
@@ -58,7 +58,7 @@ void paint_with_rotation() {
 }
 void paint_with_scale() {
     VkvgSurface src = createSurf(256, 256);
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     vkvg_set_source_surface(ctx, src, 0, 0);
     vkvg_scale(ctx, 0.2f, 0.2f);
     vkvg_paint(ctx);
@@ -67,7 +67,7 @@ void paint_with_scale() {
 }
 void paint_rect() {
     VkvgSurface src = createSurf(256, 256);
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     vkvg_set_source_surface(ctx, src, 0, 0);
     vkvg_rectangle(ctx, 100, 100, 300, 200);
     vkvg_paint(ctx);
@@ -76,7 +76,7 @@ void paint_rect() {
 }
 // TODO:test failed: full screen paint instead of rotated rect
 void paint_rect_with_rotation() {
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     vkvg_rotate(ctx, 45);
     vkvg_set_source_rgba(ctx, 1, 0, 0, 1);
     vkvg_rectangle(ctx, 100, 100, 300, 200);
@@ -84,7 +84,7 @@ void paint_rect_with_rotation() {
     vkvg_destroy(ctx);
 }
 void paint_rect_with_scale() {
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
     vkvg_scale(ctx, 0.2f, 0.2f);
     vkvg_set_source_rgba(ctx, 1, 0, 0, 1);
     vkvg_rectangle(ctx, 100, 100, 300, 200);
