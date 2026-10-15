@@ -1780,7 +1780,7 @@ vkvg_public void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents
  * @param text Null terminated utf8 string.
  * @return VkvgText
  */
-vkvg_public VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text);
+vkvg_public VkvgText vkvg_text_create(VkvgContext ctx, const char* text);
 /**
  * @brief Create a new text run for a non null terminated string.
  *
@@ -1789,40 +1789,40 @@ vkvg_public VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text);
  * @param length glyphs count, not to be confused with byte length.
  * @return VkvgText
  */
-vkvg_public VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char* text, uint32_t length);
+vkvg_public VkvgText vkvg_text_create_with_length(VkvgContext ctx, const char* text, uint32_t length);
 /**
  * @brief Release resources holded by the text run.
  *
  * @param VkvgtextRun A valid VkvgText pointer.
  */
-vkvg_public void vkvg_text_run_destroy(VkvgText textRun);
+vkvg_public void vkvg_text_destroy(VkvgText textRun);
 /**
  * @brief
  *
  * @param ctx a valid vkvg @ref context
  * @param textRun
  */
-vkvg_public void vkvg_text_run_render(VkvgContext ctx, VkvgText textRun);
+vkvg_public void vkvg_text_render(VkvgContext ctx, VkvgText textRun);
 /**
  * @brief
  *
  * @param textRun
  * @param extents
  */
-vkvg_public void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents);
+vkvg_public void vkvg_text_get_extents(VkvgText textRun, vkvg_text_extents_t* extents);
 /**
  * @brief Get glyph count of text run.
  *
  * @return glyph count
  */
-vkvg_public uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun);
+vkvg_public uint32_t vkvg_text_get_glyph_count(VkvgText textRun);
 /**
  * @brief Get glyph position at the provided index
  * @param textRun A valid @ref VkvgText
  * @param index index of the glyph to get position for.
  * @return the glyph structure with position and glyph index.
  */
-vkvg_public vkvg_glyph_info_t vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index);
+vkvg_public vkvg_glyph_info_t vkvg_text_get_glyph_position(VkvgText textRun, uint32_t index);
 /** @}*/
 
 /**

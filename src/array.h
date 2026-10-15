@@ -31,10 +31,12 @@ static type* array_last_##type (array_##type* arr) {                \
     return &arr->elements[arr->count - 1];                          \
 }                                                                   \
 static void array_destroy_##type (array_##type* arr) {              \
-    free(arr->elements);                                            \
-    arr->elements = NULL;                                           \
-    arr->count = 0;                                                 \
-    arr->size = 0;                                                  \
+    if (arr && arr->size > 0) {                                     \
+        free(arr->elements);                                        \
+        arr->elements = NULL;                                       \
+        arr->count = 0;                                             \
+        arr->size = 0;                                              \
+    }                                                               \
 }
 #define ARRAY_DEL_ELT(type)                                         \
 static void array_del_##type (array_##type* arr, type elt) {        \

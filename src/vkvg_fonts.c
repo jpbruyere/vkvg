@@ -802,7 +802,7 @@ void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkv
     }
 
     vkvg_text_run_t tr = {0};
-    text_run_init(ctx->currentFont, ctx->textDirection, text, length, &tr);
+    text_run_init(&tr, ctx->currentFont, ctx->textDirection, text, length);
 
     if (ctx->status)
         return;
@@ -814,18 +814,18 @@ void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkv
 // text is expected as utf8 encoded
 void _font_cache_show_text(VkvgContext ctx, const char* text) {
     vkvg_text_run_t tr = {0};
-    text_run_init(ctx->currentFont, ctx->textDirection, text, -1, &tr);
+    text_run_init(&tr, ctx->currentFont, ctx->textDirection, text, -1);
 
     if (ctx->status)
         return;
 
-    text_run_render(ctx, &tr);
+    text_run_render(&tr, ctx);
     text_run_term(&tr);
     //_show_texture(ctx); return;
 }
 
 // if length is < 0, text must be null terminated, else it contains glyph count
-void text_run_init(VkvgFont font, vkvg_direction_t textDirection, const char* text, int length, VkvgText textRun) {
+void text_run_init(VkvgText textRun, VkvgFont font, vkvg_direction_t textDirection, const char* text, int length) {
     textRun->font   = font;
     textRun->textDirection = textDirection;
     vkvg_font_reference (textRun->font);
@@ -897,7 +897,7 @@ void text_run_term(VkvgText textRun) {
     vkvg_font_destroy(textRun->font);
 }
 
-void text_run_render(VkvgContext ctx, VkvgText tr) {
+void text_run_render(VkvgText tr, VkvgContext ctx) {
     unsigned int glyph_count;
 #ifdef VKVG_USE_HARFBUZZ
     hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos(tr->hbBuf, &glyph_count);

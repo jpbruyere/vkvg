@@ -1,4 +1,4 @@
-<svg xmlns="http://w3.org" width="800" height="600" viewBox="0 0 800 600">
+<svg width="800" height="600" viewBox="0 0 800 600">
   <!-- Visual grid lines for debugging alignments -->
   <g stroke="#e0e0e0" stroke-width="1">
     <line x1="50" y1="0" x2="50" y2="600" />
@@ -21,7 +21,7 @@
 
   <!-- TEST 1: Comma/Space Separators & List Exhaustion -->
   <!-- 'S' at 50, 'P' at 100, 'A' at 150, 'C' at 200. 'E' and 'S' should rely on default font advances. -->
-  <text x="50, 100   150,200" y="100" font-family="sans-serif" font-size="24" fill="black">
+  <text x="50, 100   150,200" y="100" font-family="sans" font-size="52" fill="black">
     SPACES
   </text>
 

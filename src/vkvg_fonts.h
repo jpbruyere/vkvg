@@ -312,7 +312,7 @@ void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkv
 void _font_cache_font_extents(VkvgFont font, vkvg_font_extents_t* extents);
 void _font_cache_update_context_descset(VkvgContext ctx);
 
-void text_run_init(VkvgFont font, vkvg_direction_t textDirection, const char* text, int length, VkvgText textRun);
+void text_run_init(VkvgText textRun, VkvgFont font, vkvg_direction_t textDirection, const char* text, int length);
 void text_run_term(VkvgText textRun);
-void text_run_render(VkvgContext ctx, VkvgText tr); // Draw text run
+void text_run_render(VkvgText tr, VkvgContext ctx); // Draw text run
 #endif

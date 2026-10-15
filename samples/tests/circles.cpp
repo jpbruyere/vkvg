@@ -44,3 +44,20 @@ TEST(circles_sizes) {
 
     vkvg_destroy(ctx);
 }
+TEST(circles_stroke_larger_than_r) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_clear(ctx);
+
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+
+    vkvg_arc(ctx, test->app->width / 2, test->app->height / 2, 1.f, 0, M_PIF * 1.5f);
+    vkvg_fill_preserve(ctx);
+
+    vkvg_set_source_rgba(ctx, 0, 1, 0, 0.3f);
+    vkvg_set_line_width(ctx, 300);
+    vkvg_stroke(ctx);
+
+    vkvg_destroy(ctx);
+
+    vkvg_destroy(ctx);
+}

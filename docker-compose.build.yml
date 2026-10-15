@@ -25,7 +25,7 @@ services:
     image: debian-c-builder:trixie
     environment:
       - DISTRO=debian
-      - BUILD_DOC=off
+      - BUILD_DOC=on
     deploy:
       resources:
         limits:

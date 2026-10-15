@@ -31,7 +31,6 @@ typedef struct {
 
 // A localized library of pan-unicode text variations
 static const LocaleSample script_samples[] = {
-    { "en",    "The quick brown fox jumps over the lazy dog." },     // Latin Fallback
     { "ja",    "いろはにほへと ちりぬるを わかよたれそ つねならむ" },    // Japanese Hiragana
     { "zh",    "天地玄黃，宇宙洪荒。日月盈昃，辰宿列張。" },            // Chinese Hanzi
     { "ko",    "다람쥐 쳇바퀴에 타고파" },                            // Korean Hangul
@@ -42,14 +41,16 @@ static const LocaleSample script_samples[] = {
     { "el",    "διαφυλάξτε γενικά τη ζωή σας από τον φόβο" },           // Greek
     { "th",    "เป็นมนุษย์สุดประเสริฐเลิIศคุณค่า" },                      // Thai
     { "hy",    "Ֆիզիկոս Մկրտիչը օճառաջուր ցողելով բժշկում է գնդապետ Հայկի փքված ձախ թևը։" }, // Armenian
+    { "pa",    "ਘੁਮਿਆਰ ਨੇ ਮਿੱਟੀ ਚੁੱਕ ਕੇ ਇੱਕ ਬਹੁਤ ਹੀ ਸੁੰਦਰ ਘੜਾ ਬਣਾਇਆ।" },    // Punjabi (Gurmukhi script)
+    { "te",    "కచ్ఛపము మందగమనముతో చెరువు వైపు వెళుతోంది." },            // Telugu (Telugu script)
+    { "ta",    "தமிழ் மொழி உலகினில் மிக தொன்மையான மற்றும் அழகான மொழியாகும்." }, // Tamil (Tamil script)
+    { "ber-ma", "ⵎⴰⵕⵕⴰ ⵉⵎᏓⵏⵏ ⴷⴳ ⵓⵍⵉⴼ ⴷ ⵉⵣⵔⴼⴰⵏ ⴷ ⵍⵃⵇⵇ ⵜⵜⵍⴰⵍⴰⵏ ⴷ ⵉⵍⴻⵍⵍⵉⵢⵏ." }, // Moroccan Berber (Tifinagh script)
+    { "en",    "The quick brown fox jumps over the lazy dog." },     // Latin Fallback
     { "agr",   "Agatjai juuk tusha numpanum ijuaku jintanum pujawai" }, // Aguaruna (Latin script variation)
     //{ "aa",    "Afari fanta asat darih doro dahanik xisbisa" },         // Afar (Latin script variation)
     { "bem",   "Abantu bonse bafyalwa abalubuka no kulingana mu mucinshi" }, // Bemba (Bantu Latin script)
-    { "pa",    "ਘੁਮਿਆਰ ਨੇ ਮਿੱਟੀ ਚੁੱਕ ਕੇ ਇੱਕ ਬਹੁਤ ਹੀ ਸੁੰਦਰ ਘੜਾ ਬਣਾਇਆ।" },    // Punjabi (Gurmukhi script)
-    { "te",    "కచ్ఛపము మందగమనముతో చెరువు వైపు వెళుతోంది." },            // Telugu (Telugu script)
     { "km",    "ខ្យល់បក់បោកបបួលបក្សីហើរទៅកាន់ព្រៃព្រឹក្សាដ៏ស្ងប់ស្ងាត់។" }, // Khmer (Khmer script)
     { "lo",    "ນົກກາງແກບິນຂ້າມທົ່ງນາທີ່ກວ້າງໃຫຍ່ໄພສານຢ່າງສະຫງ່າງາມ." }, // Lao (Lao script)
-    { "ta",    "தமிழ் மொழி உலகினில் மிக தொன்மையான மற்றும் அழகான மொழியாகும்." }, // Tamil (Tamil script)
     { "or",    "ଋଷିମାନେ ଅରଣ୍ୟ ମଧ୍ୟରେ ଧ୍ୟାନ କରି ଶାନ୍ତି ଲାଭ କରନ୍ତି।" },      // Odia/Oriya (Odia script)
     { "ml",    "ഭൂമിയിലെ എല്ലാ മനുഷ്യരും തുല്യ അവകാശങ്ങളോടെ ജനിക്കുന്നു." },  // Malayalam (Malayalam script)
     { "as",    "শৰৎকালৰ স্নিগ্ধ জোনাক ৰাতি আকাশখন বৰ ধুনীয়া দেখায়।" },       // Assamese (Bengali-Assamese script)
@@ -63,34 +64,12 @@ static const LocaleSample script_samples[] = {
     { "mnw",   "မန်ဝံသဂမၠိုၚ် က္တဵုဒှ်ကၠုၚ် နကဵုဂုဏ်သိက္ခာ ညဳသၟဟ်ဂမၠိုၚ်။" }, // Mon (Mon-Burmese script)
     { "ii",    "ꊿꊪꉼꆹꊪꊪꊿꐊꐥꌋꅍꐛꐹꂿꆪꄮꄯꉼꆹꄮꄯꂿꆪꊨꏦꍏꆪꐥꌋꅍꐛꐹꏦꍏꅪꏦꍏꅪꐨꏦꍏꄮꄯꅪ" }, // Nuosu / Liangshan Yi (Yi syllabary)
     { "chr",   "ᏂᎦᏛ ᎠᏂᏰᎸᎢ ᎤᏂᎲᏓ ᏂᎨᏒᎾ ᎤᎾᏕᎲᎩ ᎢᏳᏍᏗᏉ ᎨᏒ ᎦᎸᏉᏗᏳ" },    // Cherokee (Cherokee syllabary)
-    { "ber-ma", "ⵎⴰⵕⵕⴰ ⵉⵎᏓⵏⵏ ⴷⴳ ⵓⵍⵉⴼ ⴷ ⵉⵣⵔⴼⴰⵏ ⴷ ⵍⵃⵇⵇ ⵜⵜⵍⴰⵍⴰⵏ ⴷ ⵉⵍⴻⵍⵍⵉⵢⵏ." }, // Moroccan Berber (Tifinagh script)
     { "ab",    "Дарбанზаалак ауаҩы дшоуп ихы ақәgenericуи иҳаgenericти." }, // Abkhaz (Cyrillic variation)
     { "syr",   "ܟܠ ܒܪܢܫܐ ܡܬܝܠܕ ܚܐܪܐ ܘܫܘܝܐ ܒܐܝܩܪܐ ܘܒܙܕܩܐ." },           // Syriac (Syriac script, right-to-left)
     { "iu",    "ᐃᓅᔪᓕᒫᑦ ᐊᓂᖅᑎᕆᔪᓕᒫᑦ ᐃᓅᕗᑦ ᐃᓱᒪᕐᓱᕐᖢᑎᒃ ᐊᒻᒪ ᐊᔾᔨᒌᒃᑐᒥᒃ" }, // Inuktitut (Canadian Aboriginal Syllabics)
     { "dv",    "ހުރިހާ އިންސާނުންވެސް އުފަންވަނީ މިނިވަންކަމާއި ޢިއްޒަތާއި" },   // Dhivehi / Maldivian (Thaana script, right-to-left)
     { "mn-cn", "Хүн бүр төрөхDiscussion эрх чөлөөтэй, нэр төр, эрхийн хувьд адилхан." }, // Mongolian - Inner Mongolia (Cyrillic fallback)
 };
-
-bool try_get_sample_by_fc_lang(const char* fc_lang, char* str) {
-    const char* sample = NULL;
-    if (fc_lang) {
-        for (int i = 0; i < 37; i++) {
-            if (!strncmp(fc_lang, script_samples[i].lang_code, strlen(script_samples[i].lang_code)) &&
-                strlen(script_samples[i].lang_code) == strlen(fc_lang)) {
-                sample = script_samples[i].sample_text;
-
-                break;
-            }
-        }
-        if (!sample) {
-            sample = script_samples[0].sample_text;
-            return false;
-        }
-    }
-
-    strncpy(str, sample, strlen(sample)+1);
-    return true;
-}
 
 #ifdef VKVG_USE_FREETYPE
 void convert_utf16be_to_utf8(const FT_Byte* src, FT_UInt src_len, char* dest, FT_UInt dest_max_len) {
@@ -146,6 +125,7 @@ bool try_get_sample_string(FcPattern* font_entry, FT_Face face, char* str) {
     }
     FcLangSet* langset = NULL;
     FcChar8* lang = NULL;
+    const char* sample = NULL;
     if (FcPatternGetLangSet(font_entry, FC_LANG, 0, &langset) == FcResultMatch) {
         FcStrSet *lang_set = FcLangSetGetLangs(langset);
         if (!lang_set)
@@ -155,13 +135,23 @@ bool try_get_sample_string(FcPattern* font_entry, FT_Face face, char* str) {
             FcStrListDone(lang_list);
             return false;
         }
-
-        while ((lang = FcStrListNext(lang_list))) {
-            if (!lang)
-                continue;
-            if (try_get_sample_by_fc_lang((char*)lang, str))
-                printf("sample found for %s\n", lang);
+        for (int i = 0; i < 37; i++) {
+            while ((lang = FcStrListNext(lang_list))) {
+                if (!lang)
+                    continue;
+                if (!strncmp((char*)lang, script_samples[i].lang_code, strlen(script_samples[i].lang_code)) &&
+                    strlen(script_samples[i].lang_code) == strlen((char*)lang)) {
+                    sample = (char*)script_samples[i].sample_text;
+                    break;
+                }
+            }
+            if (sample)
+                break;
+            FcStrListFirst(lang_list);
         }
+        if (!sample)
+            sample = (char*)script_samples[14].sample_text;
+        strncpy(str, sample, strlen(sample)+1);
 
         FcStrListDone(lang_list);
         FcStrSetDestroy(lang_set);
@@ -234,9 +224,9 @@ void draw(VkvgSurface surfFont) {
 
         vkvg_font_extents_t fe = {0};
         vkvg_font_extents(ctx, &fe);
-        VkvgText tr = vkvg_text_run_create(ctx, tmp);
+        VkvgText tr = vkvg_text_create(ctx, tmp);
         vkvg_text_extents_t extents = {0};
-        vkvg_text_run_get_extents(tr, &extents);
+        vkvg_text_get_extents(tr, &extents);
         vkvg_rectangle(ctx, penX, penY - fe.ascent, extents.width, extents.height);
         vkvg_set_line_width(ctx, 1);
         vkvg_set_source_rgba(ctx,0.5f,0.5f,1, 0.7f);
@@ -249,11 +239,11 @@ void draw(VkvgSurface surfFont) {
 
         vkvg_move_to (ctx, penX, penY);
         vkvg_set_source_rgb(ctx,1,1,1);
-        vkvg_text_run_render(ctx,tr);
+        vkvg_text_render(ctx,tr);
 
         vkvg_flush(ctx);
 
-        penY += fe.height;
+        penY += fe.height * 1.5f;
 
         if (vkvg_font_status(font)) {
             printf("Font in error %s\n", file_path);
@@ -264,7 +254,7 @@ void draw(VkvgSurface surfFont) {
         }
 
         vkvg_font_destroy(font);
-        vkvg_text_run_destroy(tr);
+        vkvg_text_destroy(tr);
 
         if (penY > test_height - 100)
             break;
@@ -350,7 +340,7 @@ int main(int argc, char* argv[]) {
                                       e->gQFamIdx, 0, false };//, TESTS_DATA_ROOT "/fonts"};
 
     device = vkvg_device_create(&info);
-    vkvg_device_set_dpy(device, 140,140);
+    vkvg_device_set_dpy(device, 96,96);
     surf = vkvg_surface_create(device, test_width, test_height);
     VkvgSurface surfFont = vkvg_surface_create(device, test_width, test_height);
 

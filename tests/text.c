@@ -1,6 +1,7 @@
 #include "test.h"
 
 static const char* txt = "The quick brown fox jumps over the lazy dog";
+static const char* txt2 = "いろはにほへと ちりぬるを わかよたれそ つねならむ";
 
 void print(VkvgContext ctx, float penY, uint32_t size) {
     vkvg_set_font_size(ctx, size);
@@ -193,12 +194,62 @@ void simple_text() {
     vkvg_paint(ctx);
     vkvg_set_source_rgb(ctx, 1, 1, 1);
 
-    vkvg_load_font_from_path(ctx, "data/DancingScript-Regular.ttf", "dancing");
+    VkvgFont mono = vkvg_font_create(device, "mono", 12);
+    VkvgFont norm = vkvg_font_create_from_file(device, "data/Proto-Sinaitic15.ttf", 0, 24);
+    vkvg_set_font (ctx, mono);
+    vkvg_move_to(ctx, 20, 50);
+    vkvg_show_text(ctx, "hwhy");
+
+    vkvg_move_to(ctx, 100, 50);
+    vkvg_show_text(ctx, "efgh");
+
+    vkvg_move_to(ctx, 180, 50);
+    vkvg_show_text(ctx, "ijkl");
+
+    vkvg_set_font (ctx, norm);
+    vkvg_move_to(ctx, 20, 100);
+    vkvg_show_text(ctx, "ABCD");
+
+    /*vkvg_load_font_from_path(ctx, "data/DancingScript-Regular.ttf", "dancing");
     print_boxed(ctx, "abcdefghijklmnopqrstuvwxyz", 20, 60, 20);
     print_boxed(ctx, "ABC", 20, 160, 60);
     vkvg_select_font_face(ctx, "mono");
     print_boxed(ctx, "This is a test string!", 20, 250, 20);
-    print_boxed(ctx, "ANOTHER ONE TO CHECK..", 20, 350, 20);
+    print_boxed(ctx, "ANOTHER ONE TO CHECK..", 20, 350, 20);*/
+
+    vkvg_flush(ctx);
+
+    vkvg_font_destroy(mono);
+    /*vkvg_font_destroy(norm);*/
+    vkvg_destroy(ctx);
+}
+void variable_text() {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont noto = vkvg_font_create(device, "Noto Sans JP:fontvariations=wght=150", 30);
+
+    vkvg_set_font (ctx, noto);
+    vkvg_move_to(ctx, 20, 50);
+    vkvg_show_text(ctx, txt2);
+
+    vkvg_font_destroy(noto);
+
+    noto = vkvg_font_create(device, "Noto Sans JP:fontvariations=wght=900", 30);
+    vkvg_set_font (ctx, noto);
+    vkvg_move_to(ctx, 20, 150);
+    vkvg_show_text(ctx, txt2);
+
+    vkvg_font_destroy(noto);
+
+    noto = vkvg_font_create(device, "Cantarell:fontvariations=wght=900", 30);
+    vkvg_set_font (ctx, noto);
+    vkvg_move_to(ctx, 20, 200);
+    vkvg_show_text(ctx, txt);
+
+    vkvg_font_destroy(noto);
+
 
     vkvg_destroy(ctx);
 }
@@ -266,15 +317,17 @@ void proto_sinaitic() {
 }
 int main(int argc, char* argv[]) {
     no_test_size = true;
-    PERFORM_TEST(simple_text, argc, argv);
-    PERFORM_TEST(font_file_path, argc, argv);
+    vkh_log_level = VKVG_LOG_INFO;
+    //PERFORM_TEST(simple_text, argc, argv);
+    PERFORM_TEST(variable_text, argc, argv);
+    /*PERFORM_TEST(font_file_path, argc, argv);
     PERFORM_TEST(single_font_and_size, argc, argv);
     PERFORM_TEST(random_size, argc, argv);
     PERFORM_TEST(random_font_and_size, argc, argv);
     PERFORM_TEST(test, argc, argv);
     PERFORM_TEST(test1, argc, argv);
     PERFORM_TEST(test2, argc, argv);
-    PERFORM_TEST(proto_sinaitic, argc, argv);
+    PERFORM_TEST(proto_sinaitic, argc, argv);*/
 
     return 0;
 }

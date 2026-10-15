@@ -1273,7 +1273,7 @@ void _draw_segment(VkvgContext ctx, stroke_context_t* str, dash_context_t* dc, b
     else
         _build_vb_step(ctx, str, isCurve);
     str->iL = str->cp++;
-    if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3) {
+    if (ctx->vertCount - ctx->curVertOffset > VKVG_IBO_MAX / 3) {//TODO:should unit test that case
         Vertex v0 = ctx->vertexCache[ctx->curVertOffset + str->firstIdx];
         Vertex v1 = ctx->vertexCache[ctx->curVertOffset + str->firstIdx + 1];
         _emit_draw_cmd_undrawn_vertices(ctx);

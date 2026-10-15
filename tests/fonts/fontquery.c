@@ -298,9 +298,9 @@ void draw(VkvgSurface surfFont) {
 
         vkvg_font_extents_t fe = {0};
         vkvg_font_extents(ctx, &fe);
-        VkvgText tr = vkvg_text_run_create(ctx, txtBuffCopy);
+        VkvgText tr = vkvg_text_create(ctx, txtBuffCopy);
         vkvg_text_extents_t extents = {0};
-        vkvg_text_run_get_extents(tr, &extents);
+        vkvg_text_get_extents(tr, &extents);
         vkvg_rectangle(ctx, penX, penY - fe.ascent, extents.width, extents.height);
         vkvg_set_line_width(ctx, 1);
         vkvg_set_source_rgba(ctx,0.5f,0.5f,1, 0.7f);
@@ -313,7 +313,7 @@ void draw(VkvgSurface surfFont) {
 
         vkvg_move_to (ctx, penX, penY);
         vkvg_set_source_rgb(ctx,1,1,1);
-        vkvg_text_run_render(ctx,tr);
+        vkvg_text_render(ctx,tr);
 
         penX = 50;
         penY = 150;
@@ -371,7 +371,7 @@ void draw(VkvgSurface surfFont) {
         vkvg_fill(ctx);*/
 
         vkvg_flush(ctx);
-        vkvg_text_run_destroy(tr);
+        vkvg_text_destroy(tr);
         vkvg_font_destroy(f);
     } else {
         for (int i = curFontStartIdx; i < font_database->nfont; i++) {

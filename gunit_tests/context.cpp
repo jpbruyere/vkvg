@@ -170,11 +170,11 @@ TEST_F(ContextTest, CtxDrawBasicNullContext) {
     EXPECT_NO_FATAL_FAILURE(vkvg_text_extents(ctx, NULL, NULL));
     EXPECT_NO_FATAL_FAILURE(vkvg_font_extents(ctx, NULL));
 
-    vkvg_text_run_create(ctx, NULL);
-    vkvg_text_run_create_with_length(ctx, NULL, 10);
+    vkvg_text_create(ctx, NULL);
+    vkvg_text_create_with_length(ctx, NULL, 10);
 
     // vkvg_text_run_destroy(NULL);
-    vkvg_text_run_render(ctx, NULL);
+    vkvg_text_render(ctx, NULL);
 }
 
 

@@ -1459,6 +1459,7 @@ void draw(svg_context *svg, SvgPresentationAttributes *const attribs) {
     }
 }
 void process_element(svg_context *const svg, SvgPresentationAttributes *const attribs, void *elt, bool use) {
+    vkvg_new_sub_path(svg->ctx);
     if (!(svg->inDefs || !attribs->visibility)) {
         LOG("process element: %.*s \n", (int)svg->elt_len, svg->elt);
         switch (_get_element_type(elt)) {
@@ -1673,16 +1674,15 @@ void draw_text(SVG_COMMON_SIG, svg_text_coords* coords, const uint8_t *buff, con
         else
             len = buff_end - buff;
 
-        tr = vkvg_text_run_create_with_length(svg->ctx, (char*)buff, len);
-        vkvg_text_run_render(svg->ctx, tr);
-        charI += vkvg_text_run_get_glyph_count(tr);
-        vkvg_text_run_destroy(tr);
+        tr = vkvg_text_create_with_length(svg->ctx, (char*)buff, len);
+        vkvg_text_render(svg->ctx, tr);
+        charI += vkvg_text_get_glyph_count(tr);
+        vkvg_text_destroy(tr);
 
         buff += len;
     }
     coords->charIndex = charI;
 }
-
 
 void process_innerText(SVG_COMMON_SIG, const uint8_t *innerText, size_t txt_len) {
     if (!parentData)

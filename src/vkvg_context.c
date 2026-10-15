@@ -1238,7 +1238,16 @@ void vkvg_set_text_direction(vkvg_context* ctx, vkvg_direction_t direction) {
     RECORD(ctx, VKVG_CMD_SET_TEXT_DIRECTION, size);
     ctx->textDirection = direction;
 }
-
+void vkvg_text_extents(VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
+    if (vkvg_status(ctx))
+        return;
+    _font_cache_text_extents(ctx, text, -1, extents);
+}
+void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
+    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
+        return;
+    _font_cache_font_extents(ctx->currentFont, extents);
+}
 void vkvg_show_text(VkvgContext ctx, const char* text) {
     if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
         return;
@@ -1249,23 +1258,33 @@ void vkvg_show_text(VkvgContext ctx, const char* text) {
     //_flush_undrawn_vertices (ctx);
 }
 
-VkvgText vkvg_text_run_create(VkvgContext ctx, const char* text) {
+VkvgText vkvg_text_create(VkvgContext ctx, const char* text) {
     if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    text_run_init(ctx->currentFont, ctx->textDirection, text, -1, tr);
+    if (!tr) {
+        LOGE("vkvg_text_create error, no memory\n");
+        return NULL;
+    }
+    text_run_init(tr, ctx->currentFont, ctx->textDirection, text, -1);
     return tr;
 }
-VkvgText vkvg_text_run_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
+VkvgText vkvg_text_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
     if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
         return NULL;
     VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    text_run_init(ctx->currentFont, ctx->textDirection, text, length, tr);
+    if (!tr) {
+        LOGE("vkvg_text_create error, no memory\n");
+        return NULL;
+    }
+    text_run_init(tr, ctx->currentFont, ctx->textDirection, text, length);
     return tr;
 }
-uint32_t vkvg_text_run_get_glyph_count(VkvgText textRun) { return textRun ? textRun->glyph_count : 0; }
-vkvg_glyph_info_t vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t index) {
-    if (index >= textRun->glyph_count) {
+uint32_t vkvg_text_get_glyph_count(VkvgText textRun) {
+    return textRun ? textRun->glyph_count : 0;
+}
+vkvg_glyph_info_t vkvg_text_get_glyph_position(VkvgText textRun, uint32_t index) {
+    if (!textRun || index >= textRun->glyph_count) {
         return (vkvg_glyph_info_t){0};
     }
 #if VKVG_USE_HARFBUZZ
@@ -1275,28 +1294,19 @@ vkvg_glyph_info_t vkvg_text_run_get_glyph_position(VkvgText textRun, uint32_t in
     return textRun->glyphs[index];
 #endif
 }
-void vkvg_text_run_destroy(VkvgText textRun) {
+void vkvg_text_destroy(VkvgText textRun) {
     if (!textRun)
         return;
     text_run_term(textRun);
     free(textRun);
 }
-void vkvg_text_run_render(VkvgContext ctx, VkvgText textRun) {
+void vkvg_text_render(VkvgContext ctx, VkvgText textRun) {
     if (vkvg_status(ctx) || !textRun)
         return;
-    text_run_render(ctx, textRun);
+    text_run_render(textRun, ctx);
 }
-void vkvg_text_run_get_extents(VkvgText textRun, vkvg_text_extents_t* extents) { *extents = textRun->extents; }
-
-void vkvg_text_extents(VkvgContext ctx, const char* text, vkvg_text_extents_t* extents) {
-    if (vkvg_status(ctx))
-        return;
-    _font_cache_text_extents(ctx, text, -1, extents);
-}
-void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
-    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
-        return;
-    _font_cache_font_extents(ctx->currentFont, extents);
+void vkvg_text_get_extents(VkvgText textRun, vkvg_text_extents_t* extents) {
+    *extents = textRun->extents;
 }
 
 void vkvg_save(VkvgContext ctx) {

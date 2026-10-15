@@ -117,14 +117,6 @@ TEST_F(PathDrawTest, CircleFillStrokeScaleDown10) {
 
     compareWithRefImage();
 }
-TEST_F(PathDrawTest, curved_rect) {
-    VkvgContext ctx = vkvg_create(surf);
-    vkvg_set_source_rgb(ctx, 0.8,0.8,0.8);
-    vkvg_paint(ctx);
-
-    vkvg_destroy(ctx);
-    compareWithRefImage();
-}
 TEST_F(PathDrawTest, CircleCurve) {
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_source_rgb(ctx, 0.8,0.8,0.8);
@@ -135,6 +127,54 @@ TEST_F(PathDrawTest, CircleCurve) {
     vkvg_fill_preserve(ctx);
     vkvg_set_source_rgb(ctx, 0, 0, 0);
     vkvg_set_line_width(ctx, 100);
+    vkvg_stroke(ctx);
+
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(PathDrawTest, CircleLargerStrokeThanR0) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgb(ctx, 0.8,0.8,0.8);
+    vkvg_paint(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_arc(ctx, 128, 128, 50.f, 0, M_PI * 1.5f);
+    vkvg_fill_preserve(ctx);
+    vkvg_set_source_rgba(ctx, 0, 1, 0, 0.3f);
+    vkvg_set_line_width(ctx, 150);
+    vkvg_stroke(ctx);
+
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(PathDrawTest, CircleLargerStrokeThanR1) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgb(ctx, 0.8,0.8,0.8);
+    vkvg_paint(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_arc(ctx, 128, 128, 10.f, 0, M_PI * 1.5f);
+    vkvg_fill_preserve(ctx);
+    vkvg_set_source_rgba(ctx, 0, 1, 0, 0.3f);
+    vkvg_set_line_width(ctx, 150);
+    vkvg_stroke(ctx);
+
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(PathDrawTest, CircleLargerStrokeThanR2) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgb(ctx, 0.8,0.8,0.8);
+    vkvg_paint(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_arc(ctx, 128, 128, 01.f, 0, M_PI * 1.5f);
+    vkvg_fill_preserve(ctx);
+    vkvg_set_source_rgba(ctx, 0, 1, 0, 0.3f);
+    vkvg_set_line_width(ctx, 150);
     vkvg_stroke(ctx);
 
     vkvg_destroy(ctx);
@@ -290,5 +330,13 @@ TEST_F(PathDrawTest, curve3) {
     vkvg_paint(ctx);
     vkvg_destroy(ctx);
 
+    compareWithRefImage();
+}
+TEST_F(PathDrawTest, curved_rect) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgb(ctx, 0.8,0.8,0.8);
+    vkvg_paint(ctx);
+
+    vkvg_destroy(ctx);
     compareWithRefImage();
 }
