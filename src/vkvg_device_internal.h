@@ -79,21 +79,11 @@ typedef struct _vkvg_device_t {
     bool            threadAware; /**< if true, mutex is created and guard device queue and caches access */
     VkhQueue        gQueue;      /**< Vulkan Queue with Graphic flag */
 
-    VkRenderPass renderPass;                /**< Vulkan render pass, common for all surfaces */
-    VkRenderPass renderPass_ClearStencil;   /**< Vulkan render pass for first draw with context, stencil has to be cleared */
-    VkRenderPass renderPass_ClearAll;       /**< Vulkan render pass for new surface, clear all attacments*/
-
     uint32_t        references; /**< Reference count, prevent destroying device if still in use */
     VkCommandPool   cmdPool;    /**< Global command pool for processing on surfaces without context */
     VkCommandBuffer cmd;        /**< Global command buffer */
     VkFence         fence; /**< this fence is kept signaled when idle, wait and reset are called before each recording. */
 
-    VkPipeline pipe_OVER; /**< default operator */
-    VkPipeline pipe_SUB;
-    VkPipeline pipe_CLEAR; /**< clear operator */
-
-    VkPipeline pipelinePolyFill; /**< even-odd polygon filling first step */
-    VkPipeline pipelineClipping; /**< draw on stencil to update clipping regions */
 
     VkPipelineCache       pipelineCache;  /**< speed up startup by caching configured pipelines on disk */
     VkPipelineLayout      pipelineLayout; /**< layout common to all pipelines */
@@ -101,13 +91,9 @@ typedef struct _vkvg_device_t {
     VkDescriptorSetLayout dslSrc;         /**< context source surface descriptors layout */
     VkDescriptorSetLayout dslGrad;        /**< context gradient descriptors layout */
 
-    int hdpi, /**< only used for FreeType fonts and svg loading */
-        vdpi;
-
     VkhDevice vkhDev; /**< old VkhDev created during vulkan context creation by @ref vkvg_device_create. */
 
-    VkhImage            emptyImg;        /**< prevent unbound descriptor to trigger Validation error 61 */
-    VkSampleCountFlags  samples;         /**< samples count common to all surfaces */
+    VkhImage            emptyImg;         /**< prevent unbound descriptor to trigger Validation error 61 */
     bool                deferredResolve; /**< if true, resolve only on context destruction and set as source */
 
     _font_cache_t*      fontCache; /**< Store everything relative to common font caching system */

@@ -4,6 +4,7 @@
 #include "vkvg_fonts.h"
 #include "vkvg_context_internal.h"
 #include "vkvg_device_internal.h"
+#include "vkvg_surface_internal.h"
 
 #include "vkh.h"
 
@@ -712,6 +713,8 @@ bool try_get_font_size (FontFace face, uint32_t pt26_6, signed long* coords, Vkv
     for (int i = 0; i < face->sizes.count; ++i) {
         VkvgFont f = face->sizes.elements[i];
         if (f->charSize == pt26_6) {
+            if (!coords)
+                return true;
             for (int axe = 0; axe < face->numAxis; ++axe) {
                 if (f->coords[axe] != coords[axe])
                     return false;
@@ -994,7 +997,7 @@ void* vkvg_font_get_face(VkvgFont font) {
 #endif
 }
 
-VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize, signed long* coords) {
+VkvgFont _create_font_from_face (VkvgSurface surf, FontFace face, float pointSize, signed long* coords) {
     VkvgFont font = (VkvgFont)calloc(1, sizeof(vkvg_font_t));
     if (!font) {
         LOGE("Create font failed, no memory\n");
@@ -1002,6 +1005,7 @@ VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize,
     }
 
     font->face = face;
+    VkvgDevice dev = surf->dev;
 
 #ifdef VKVG_USE_FREETYPE
     if (dev->threadAware)
@@ -1027,7 +1031,8 @@ VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize,
 
     FT_CHECK_RES(FT_New_Size (face->face, &font->ftSize));
     FT_CHECK_RES(FT_Activate_Size(font->ftSize));
-    FT_CHECK_RES(FT_Set_Char_Size(face->face, 0, font->charSize, dev->hdpi, dev->vdpi));
+    //TODO:handle fixed sizes
+    FT_CHECK_RES(FT_Set_Char_Size(face->face, 0, font->charSize, surf->hdpi, surf->vdpi));
     if (font->coords) {
         FT_Set_Var_Design_Coordinates(face->face, font->face->numAxis, font->coords);
         font->face->coords = font->coords;
@@ -1070,20 +1075,20 @@ VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize,
     return font;
 }
 
-VkvgFont vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, int faceIndex, float pointSize) {
+VkvgFont vkvg_font_create_from_file (VkvgSurface surf, const char* fontFilePath, int faceIndex, float pointSize) {
     FontFace face = NULL;
-    if (!try_create_font_face_from_path(dev, fontFilePath, faceIndex, &face) || !face) {
+    if (!try_create_font_face_from_path(surf->dev, fontFilePath, faceIndex, &face) || !face) {
         return NULL;
     }
-    return _create_font_from_face(dev, face, pointSize, NULL);
+    return _create_font_from_face(surf, face, pointSize, NULL);
 }
-VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
+VkvgFont vkvg_font_create (VkvgSurface surf, const char* query, float pointSize) {
     uint32_t pt26_6 = (uint32_t)(pointSize * 64.f);
     VkvgFont font = NULL;
     FontFace face = NULL;
     signed long* coords = NULL;
     unsigned int numAxis = 0;
-    if (try_get_or_create_font_face_from_query(dev, query, &face, &coords)) {
+    if (try_get_or_create_font_face_from_query(surf->dev, query, &face, &coords)) {
         if (try_get_font_size(face, pt26_6, coords, &font)) {
             vkvg_font_reference(font);
             return font;
@@ -1092,7 +1097,7 @@ VkvgFont vkvg_font_create (VkvgDevice dev, const char* query, float pointSize) {
     if (!face)
         return NULL;
 
-    return _create_font_from_face(dev, face, pointSize, coords);
+    return _create_font_from_face(surf, face, pointSize, coords);
 }
 VkvgFont vkvg_font_reference(VkvgFont font) {
     if (!vkvg_font_status(font))

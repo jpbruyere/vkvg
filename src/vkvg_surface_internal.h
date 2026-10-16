@@ -47,7 +47,17 @@ typedef struct _vkvg_surface_t {
 #else
     VkFence flushFence; // unsignaled idle.
 #endif
-
+    int hdpi,               /**< only used for FreeType fonts and svg loading */
+        vdpi;
+    VkSampleCountFlags samples; /**< samples count */
+    VkRenderPass renderPass;                /**< Vulkan render pass, common for all surfaces */
+    VkRenderPass renderPass_ClearStencil;   /**< Vulkan render pass for first draw with context, stencil has to be cleared */
+    VkRenderPass renderPass_ClearAll;       /**< Vulkan render pass for new surface, clear all attacments*/
+    VkPipeline pipe_OVER; /**< default operator */
+    VkPipeline pipe_SUB;
+    VkPipeline pipe_CLEAR; /**< clear operator */
+    VkPipeline pipelinePolyFill; /**< even-odd polygon filling first step */
+    VkPipeline pipelineClipping; /**< draw on stencil to update clipping regions */
 } vkvg_surface;
 
 #define LOCK_SURFACE(surf)                                                                                             \

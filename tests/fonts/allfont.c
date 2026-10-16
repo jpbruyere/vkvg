@@ -172,7 +172,7 @@ void draw(VkvgSurface surfFont) {
 
     char tmp[1024];
 
-    VkvgFont mono = vkvg_font_create(device, "mono", 12);
+    VkvgFont mono = vkvg_font_create(surf, "mono", 12);
 
     for (int i = curFontStartIdx; i < font_database->nfont; i++) {
         FcPattern* font_entry = font_database->fonts[i];
@@ -199,7 +199,7 @@ void draw(VkvgSurface surfFont) {
         if (onlyVariable && !variable)
             continue;
 
-        VkvgFont font = vkvg_font_create (device, tmp, fontSize);
+        VkvgFont font = vkvg_font_create (surf, tmp, fontSize);
         if (vkvg_font_status(font)) {
             printf("Error trying to load %s, from %s\n", tmp, file_path);
             fflush(stdout);
@@ -340,8 +340,8 @@ int main(int argc, char* argv[]) {
                                       e->gQFamIdx, 0, false };//, TESTS_DATA_ROOT "/fonts"};
 
     device = vkvg_device_create(&info);
-    vkvg_device_set_dpy(device, 96,96);
     surf = vkvg_surface_create(device, test_width, test_height);
+    vkvg_surface_set_dpy(surf, 96,96);
     VkvgSurface surfFont = vkvg_surface_create(device, test_width, test_height);
 
     vkh_presenter_build_blit_cmd(r, vkvg_surface_get_vk_image(surf), test_width, test_height);

@@ -46,7 +46,7 @@ void VkvgTest::initTest(SampleApp* app) {
 
     device = vkvg_device_create(&info);
     surf   = vkvg_surface_create(device, app->width, app->height);
-    vkvg_device_set_dpy(device, 96, 96);
+    vkvg_surface_set_dpy(surf, 96, 96);
 
     vkh_presenter_build_blit_cmd(app->renderer, vkvg_surface_get_vk_image(surf), app->width, app->height);
 

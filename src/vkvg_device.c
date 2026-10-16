@@ -68,13 +68,6 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     dev->vkDev    = info->vkdev;
     dev->phy      = info->phy;
     dev->instance = info->inst;
-    dev->hdpi     = 72;
-    dev->vdpi     = 72;
-    dev->samples  = info->samples;
-    if (dev->samples == VK_SAMPLE_COUNT_1_BIT)
-        dev->deferredResolve = false;
-    else
-        dev->deferredResolve = info->deferredResolve;
 
     dev->cachedContextMaxCount = VKVG_MAX_CACHED_CONTEXT_COUNT;
 
@@ -114,23 +107,7 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
 
     //_device_create_pipeline_cache(dev);
     _fonts_cache_create(dev, info->fontsDirectories);
-
-    if (dev->deferredResolve || dev->samples == VK_SAMPLE_COUNT_1_BIT) {
-        dev->renderPass =
-            _device_createRenderPassNoResolve(dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
-        dev->renderPass_ClearStencil =
-            _device_createRenderPassNoResolve(dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
-        dev->renderPass_ClearAll =
-            _device_createRenderPassNoResolve(dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
-    } else {
-        dev->renderPass = _device_createRenderPassMS(dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_LOAD);
-        dev->renderPass_ClearStencil =
-            _device_createRenderPassMS(dev, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_LOAD_OP_CLEAR);
-        dev->renderPass_ClearAll =
-            _device_createRenderPassMS(dev, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_CLEAR);
-    }
     _device_createDescriptorSetLayout(dev);
-    _device_setupPipelines(dev);
 
     _device_create_empty_texture(dev, format, dev->supportedTiling);
 
@@ -148,23 +125,11 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)dev->cmdPool, "Device Cmd Pool");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)dev->cmd, "Device Cmd Buff");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_FENCE, (uint64_t)dev->fence, "Device Fence");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass, "RP load img/stencil");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearStencil,
-                               "RP clear stencil");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)dev->renderPass_ClearAll, "RP clear all");
 
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
-
-#ifndef __APPLE__
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelinePolyFill, "PL Poly fill");
-#endif
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipelineClipping, "PL Clipping");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_OVER, "PL draw Over");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_SUB, "PL draw Substract");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)dev->pipe_CLEAR, "PL draw Clear");
 
     vkh_image_set_name(dev->emptyImg, "empty IMG");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(dev->emptyImg),
@@ -438,25 +403,9 @@ void vkvg_device_destroy(VkvgDevice dev) {
     vkDestroyDescriptorSetLayout(dev->vkDev, dev->dslGrad, NULL);
     vkDestroyDescriptorSetLayout(dev->vkDev, dev->dslFont, NULL);
     vkDestroyDescriptorSetLayout(dev->vkDev, dev->dslSrc, NULL);
-#ifndef __APPLE__
-    vkDestroyPipeline(dev->vkDev, dev->pipelinePolyFill, NULL);
-#endif
-    vkDestroyPipeline(dev->vkDev, dev->pipelineClipping, NULL);
-
-    vkDestroyPipeline(dev->vkDev, dev->pipe_OVER, NULL);
-    vkDestroyPipeline(dev->vkDev, dev->pipe_SUB, NULL);
-    vkDestroyPipeline(dev->vkDev, dev->pipe_CLEAR, NULL);
-
-#ifdef VKVG_WIRED_DEBUG
-    vkDestroyPipeline(dev->vkDev, dev->pipelineWired, NULL);
-    vkDestroyPipeline(dev->vkDev, dev->pipelineLineList, NULL);
-#endif
 
     vkDestroyPipelineLayout(dev->vkDev, dev->pipelineLayout, NULL);
     vkDestroyPipelineCache(dev->vkDev, dev->pipelineCache, NULL);
-    vkDestroyRenderPass(dev->vkDev, dev->renderPass, NULL);
-    vkDestroyRenderPass(dev->vkDev, dev->renderPass_ClearStencil, NULL);
-    vkDestroyRenderPass(dev->vkDev, dev->renderPass_ClearAll, NULL);
 
     vkWaitForFences(dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
     vkDestroyFence(dev->vkDev, dev->fence, NULL);
@@ -497,21 +446,7 @@ VkvgDevice    vkvg_device_reference(VkvgDevice dev) {
     return dev;
 }
 uint32_t vkvg_device_get_reference_count(VkvgDevice dev) { return vkvg_device_status(dev) ? 0 : dev->references; }
-// TODO dpy reorganisation
-void vkvg_device_set_dpy(VkvgDevice dev, int hdpy, int vdpy) {
-    if (vkvg_device_status(dev))
-        return;
-    dev->hdpi = hdpy;
-    dev->vdpi = vdpy;
 
-    // TODO: reset font cache
-}
-void vkvg_device_get_dpy(VkvgDevice dev, int* hdpy, int* vdpy) {
-    if (vkvg_device_status(dev))
-        return;
-    *hdpy = dev->hdpi;
-    *vdpy = dev->vdpi;
-}
 #if VKVG_DBG_STATS
 vkvg_debug_stats_t vkvg_device_get_stats(VkvgDevice dev) {
     return vkvg_device_status(dev) ? (vkvg_debug_stats_t){0} : dev->debug_stats;

@@ -14,15 +14,15 @@ class TextDrawTest : public DrawTestBase {
     }
 };
 TEST_F(TextDrawTest, References) {
-    VkvgFont font = vkvg_font_create(dev, "sans", 12);
+    VkvgFont font = vkvg_font_create(surf, "sans", 12);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_font_status(font));
     vkvg_font_destroy(font);
 
-    font = vkvg_font_create(dev, "Sans", 12);
+    font = vkvg_font_create(surf, "Sans", 12);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_font_status(font));
     vkvg_font_destroy(font);
 
-    font = vkvg_font_create(dev, "noto sans jp", 12);
+    font = vkvg_font_create(surf, "noto sans jp", 12);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_font_status(font));
     vkvg_font_destroy(font);
 
@@ -55,7 +55,7 @@ TEST_F(TextDrawTest, ShowText) {
 
     VkvgContext ctx = vkvg_create(surf);
     vkvg_paint(ctx);
-    VkvgFont font = vkvg_font_create(dev, "sans", 30);
+    VkvgFont font = vkvg_font_create(surf, "sans", 30);
     vkvg_set_font(ctx, font);
     vkvg_font_extents_t fe = {0};
     vkvg_font_extents(ctx, &fe);
@@ -67,7 +67,7 @@ TEST_F(TextDrawTest, ShowText) {
 
     vkvg_font_destroy(font);
 
-    font = vkvg_font_create(dev, "noto sans jp", 30);
+    font = vkvg_font_create(surf, "noto sans jp", 30);
     vkvg_set_font(ctx, font);
     vkvg_move_to(ctx, 40, penY);
     vkvg_show_text(ctx, "Galvanized by the quartz, The white rabbit just jumped on the red fox for the sake of the crows");

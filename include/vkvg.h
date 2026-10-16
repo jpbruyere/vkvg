@@ -333,21 +333,21 @@ typedef struct _vkvg_font_t* VkvgFont;
  * If fontconfig is enable, query strings with be parsed with fontconfig textural representation engine:
  *   <families>-<point sizes>:<name1>=<values1>:<name2>=<values2>...
  *
- * @param dev Each font instance will be bound to a @ref VkvgDevice which holds the font cache.
+ * @param surf Each font instance will be bound to a @ref VkvgDevice which holds the font cache.
  * @param queryString
  * @param pointSize The font size in point unit, 1/72 of an inch.
  * @return A new VkvgFont or null if an error occured.
  */
-vkvg_public VkvgFont        vkvg_font_create (VkvgDevice dev, const char* queryString, float pointSize);
+vkvg_public VkvgFont        vkvg_font_create (VkvgSurface surf, const char* queryString, float pointSize);
 /**
  * @brief Create a new @ref VkvgFont from the provided font file, face index and size.
- * @param dev VkvgDevice holding the font cache.
+ * @param surf VkvgDevice holding the font cache.
  * @param fontFilePath a valid font file path.
  * @param faceIndex Usually 0, except for variable fonts or font file with multiple faces.
  * @param pointSize The font size in point unit, 1/72 of an inch.
  * @return
  */
-vkvg_public VkvgFont        vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, int faceIndex, float pointSize);
+vkvg_public VkvgFont        vkvg_font_create_from_file (VkvgSurface surf, const char* fontFilePath, int faceIndex, float pointSize);
 /**
  * @brief Get underlying font face object pointer, if freetype is enable, the FT_Face will be returned.
  * @param font a valid VkvgFont.
@@ -715,25 +715,6 @@ vkvg_public VkvgDevice vkvg_device_reference(VkvgDevice dev);
  * @return The reference count on this device.
  */
 vkvg_public uint32_t vkvg_device_get_reference_count(VkvgDevice dev);
-/**
- * @brief Set the screen dot per inch for this device.
- *
- * Set the current values for horizontal and vertical dot per inch of the screen for this device.
- * @param dev The vkvg device to set the dpy for.
- * @param hdpy Horizontal dot per inch.
- * @param vdpy Vertical dot per inch.
- */
-vkvg_public void vkvg_device_set_dpy(VkvgDevice dev, int hdpy, int vdpy);
-/**
- * @brief Get the current dpy values.
- *
- * Get the current values for horizontal and vertical dot per inch of the screen for this device.
- * The default values for horizontal and vertical dpy on device creation is 96.
- * @param dev The vkvg device to get the dpy configuration for.
- * @param hdpy The current horizontal dot per inch.
- * @param vdpy The current vertical dot per inch.
- */
-vkvg_public void vkvg_device_get_dpy(VkvgDevice dev, int* hdpy, int* vdpy);
 
 /**
  * @brief query required instance extensions for vkvg.
@@ -870,6 +851,25 @@ vkvg_public uint32_t vkvg_surface_get_width(VkvgSurface surf);
  * @return The height in pixel of the surface.
  */
 vkvg_public uint32_t vkvg_surface_get_height(VkvgSurface surf);
+/**
+ * @brief Set the screen dot per inch for this surface.
+ *
+ * Set the current values for horizontal and vertical dot per inch of the screen for this device.
+ * @param surf The vkvg surface to set the dpy for.
+ * @param hdpy Horizontal dot per inch.
+ * @param vdpy Vertical dot per inch.
+ */
+vkvg_public void vkvg_surface_set_dpy(VkvgSurface surf, int hdpy, int vdpy);
+/**
+ * @brief Get the current dpy values.
+ *
+ * Get the current values for horizontal and vertical dot per inch of the screen for this surface.
+ * The default values for horizontal and vertical dpy on device creation is 72.
+ * @param surf The vkvg surface to get the dpy configuration for.
+ * @param hdpy The current horizontal dot per inch.
+ * @param vdpy The current vertical dot per inch.
+ */
+vkvg_public void vkvg_surface_get_dpy(VkvgSurface surf, int* hdpy, int* vdpy);
 /**
  * @brief Write surface content to a png file on disk.
  * @param surf The surface to save on disk.

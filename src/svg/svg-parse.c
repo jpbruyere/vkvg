@@ -1415,7 +1415,7 @@ void parse_font_size(svg_context *const svg, SvgPresentationAttributes *attribs)
                 attribs->font_size_pt *= lop.number * 0.01f;
             } else if (lop.units == svg_unit_px) {
                 int hdpy, vdpy;
-                vkvg_device_get_dpy(svg->dev, &hdpy, &vdpy);
+                vkvg_surface_get_dpy(svg->surf, &hdpy, &vdpy);
                 attribs->font_size_pt =  lop.number * (72.f / (float)vdpy);
             } else if (lop.units == svg_unit_em) {
                 attribs->font_size_pt *= lop.number;
@@ -1570,7 +1570,7 @@ void process_element(svg_context *const svg, SvgPresentationAttributes *const at
             if (attribs->font_family_len > 0) {
                 char fam[1024];
                 sprintf(fam, "%.*s", attribs->font_family_len, attribs->font_family);
-                font = vkvg_font_create(svg->dev, fam, attribs->font_size_pt);
+                font = vkvg_font_create(svg->surf, fam, attribs->font_size_pt);
                 vkvg_set_font(svg->ctx, font);
                 vkvg_font_destroy(font);
             }

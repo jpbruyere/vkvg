@@ -194,8 +194,8 @@ void simple_text() {
     vkvg_paint(ctx);
     vkvg_set_source_rgb(ctx, 1, 1, 1);
 
-    VkvgFont mono = vkvg_font_create(device, "mono", 12);
-    VkvgFont norm = vkvg_font_create_from_file(device, "data/Proto-Sinaitic15.ttf", 0, 24);
+    VkvgFont mono = vkvg_font_create(surf, "mono", 12);
+    VkvgFont norm = vkvg_font_create_from_file(surf, "data/Proto-Sinaitic15.ttf", 0, 24);
     vkvg_set_font (ctx, mono);
     vkvg_move_to(ctx, 20, 50);
     vkvg_show_text(ctx, "hwhy");
@@ -228,7 +228,7 @@ void variable_text() {
     vkvg_paint(ctx);
     vkvg_set_source_rgb(ctx, 1, 1, 1);
 
-    VkvgFont noto = vkvg_font_create(device, "Noto Sans JP:fontvariations=wght=150", 30);
+    VkvgFont noto = vkvg_font_create(surf, "Noto Sans JP:fontvariations=wght=150", 30);
 
     vkvg_set_font (ctx, noto);
     vkvg_move_to(ctx, 20, 50);
@@ -236,14 +236,14 @@ void variable_text() {
 
     vkvg_font_destroy(noto);
 
-    noto = vkvg_font_create(device, "Noto Sans JP:fontvariations=wght=900", 30);
+    noto = vkvg_font_create(surf, "Noto Sans JP:fontvariations=wght=900", 30);
     vkvg_set_font (ctx, noto);
     vkvg_move_to(ctx, 20, 150);
     vkvg_show_text(ctx, txt2);
 
     vkvg_font_destroy(noto);
 
-    noto = vkvg_font_create(device, "Cantarell:fontvariations=wght=900", 30);
+    noto = vkvg_font_create(surf, "Cantarell:fontvariations=wght=900", 30);
     vkvg_set_font (ctx, noto);
     vkvg_move_to(ctx, 20, 200);
     vkvg_show_text(ctx, txt);

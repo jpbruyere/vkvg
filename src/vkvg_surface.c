@@ -212,8 +212,27 @@ void vkvg_surface_destroy(VkvgSurface surf) {
 
     LOG(VKVG_LOG_INFO, "DESTROY Surface\n");
 
+    VkvgDevice dev = surf->dev;
+
+#ifndef __APPLE__
+    vkDestroyPipeline(dev->vkDev, surf->pipelinePolyFill, NULL);
+#endif
+    vkDestroyPipeline(dev->vkDev, surf->pipelineClipping, NULL);
+
+    vkDestroyPipeline(dev->vkDev, surf->pipe_OVER, NULL);
+    vkDestroyPipeline(dev->vkDev, surf->pipe_SUB, NULL);
+    vkDestroyPipeline(dev->vkDev, surf->pipe_CLEAR, NULL);
+
+#ifdef VKVG_WIRED_DEBUG
+    vkDestroyPipeline(dev->vkDev, surf->pipelineWired, NULL);
+    vkDestroyPipeline(dev->vkDev, surf->pipelineLineList, NULL);
+#endif
+
     vkDestroyCommandPool(surf->dev->vkDev, surf->cmdPool, NULL);
     vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
+    vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass, NULL);
+    vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass_ClearStencil, NULL);
+    vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass_ClearAll, NULL);
 
     if (!surf->img->imported)
         vkh_image_destroy(surf->img);
@@ -274,6 +293,18 @@ uint32_t vkvg_surface_get_height(VkvgSurface surf) {
     if (vkvg_surface_status(surf))
         return 0;
     return surf->height;
+}
+void vkvg_surface_set_dpy(VkvgSurface surf, int hdpy, int vdpy) {
+    if (vkvg_surface_status(surf))
+        return;
+    surf->hdpi = hdpy;
+    surf->vdpi = vdpy;
+}
+void vkvg_surface_get_dpy(VkvgSurface surf, int* hdpy, int* vdpy) {
+    if (vkvg_surface_status(surf))
+        return;
+    *hdpy = surf->hdpi;
+    *vdpy = surf->vdpi;
 }
 
 vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char* path) {

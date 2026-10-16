@@ -530,7 +530,7 @@ void _end_render_pass(VkvgContext ctx) {
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_cmd_label_end(ctx->cmd);
 #endif
-    ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass;
+    ctx->renderPassBeginInfo.renderPass = ctx->pSurf->renderPass;
 }
 
 void _check_vao_size(VkvgContext ctx) {
@@ -607,16 +607,16 @@ void _flush_cmd_buff(VkvgContext ctx) {
 void _bind_draw_pipeline(VkvgContext ctx) {
     switch (ctx->curOperator) {
     case VKVG_OPERATOR_OVER:
-        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipe_OVER);
+        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->pipe_OVER);
         break;
     case VKVG_OPERATOR_CLEAR:
-        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipe_CLEAR);
+        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->pipe_CLEAR);
         break;
     case VKVG_OPERATOR_DIFFERENCE:
-        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipe_SUB);
+        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->pipe_SUB);
         break;
     default:
-        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipe_OVER);
+        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->pipe_OVER);
         break;
     }
 }
@@ -1602,7 +1602,7 @@ void _poly_fill(VkvgContext ctx, vec4* bounds) {
         _ensure_renderpass_is_started(ctx);
     }
 
-    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelinePolyFill);
+    CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->pipelinePolyFill);
 
     Vertex   v          = {{0}, ctx->curColor, {0, 0, -1}};
     uint32_t ptrPath    = 0;
