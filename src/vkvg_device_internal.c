@@ -73,11 +73,22 @@ void _device_create_pipeline_cache(VkvgDevice dev) {
 }
 
 void _device_createDescriptorSetLayout(VkvgDevice dev) {
+    VkDescriptorBindingFlags bindingFlags[] = {
+        VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT // Allows empty/unbound slots in this binding
+    };
+    VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
+        .bindingCount = 1,
+        .pBindingFlags = bindingFlags
+    };
 
     VkDescriptorSetLayoutBinding    dsLayoutBinding    = {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
                                                           VK_SHADER_STAGE_FRAGMENT_BIT, NULL};
     VkDescriptorSetLayoutCreateInfo dsLayoutCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, .bindingCount = 1, .pBindings = &dsLayoutBinding};
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = &bindingFlagsInfo,
+        .bindingCount = 1,
+        .pBindings = &dsLayoutBinding};
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslSrc));
     dsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -189,23 +200,6 @@ bool _device_init_function_pointers(VkvgDevice dev) {
     return true;
 }
 
-void _device_create_empty_texture(VkvgDevice dev, VkFormat format, VkImageTiling tiling) {
-    // create empty image to bind to context source descriptor when not in use
-    dev->emptyImg = vkh_image_create((VkhDevice)&dev->vkDev, format, 16, 16, tiling, VKH_MEMORY_USAGE_GPU_ONLY,
-                                     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-    vkh_image_create_descriptor(dev->emptyImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
-                                VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-
-    _device_wait_and_reset_device_fence(dev);
-
-    vkh_cmd_begin(dev->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    vkh_image_set_layout(dev->cmd, dev->emptyImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                         VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-    vkh_cmd_end(dev->cmd);
-    _device_submit_cmd(dev, &dev->cmd, dev->fence);
-}
 void _device_check_best_image_tiling(VkvgDevice dev, VkFormat format) {
     VkFlags            stencilFormats[] = {VK_FORMAT_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT,
                                            VK_FORMAT_D32_SFLOAT_S8_UINT};

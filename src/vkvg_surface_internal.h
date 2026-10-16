@@ -26,13 +26,27 @@
 #include "vkvg.h"
 #include "vkh.h"
 
+typedef struct _surface_class {
+    atomic_int      references;
+    VkvgDevice      dev;
+    VkFormat        format;
+    VkSampleCountFlags samples;             /**< samples count */
+    VkRenderPass renderPass;                /**< Vulkan render pass, common for all surfaces */
+    VkRenderPass renderPass_ClearStencil;   /**< Vulkan render pass for first draw with context, stencil has to be cleared */
+    VkRenderPass renderPass_ClearAll;       /**< Vulkan render pass for new surface, clear all attacments*/
+    VkPipeline   pipe_OVER;                 /**< default operator */
+    VkPipeline   pipe_SUB;
+    VkPipeline   pipe_CLEAR;                /**< clear operator */
+    VkPipeline   pipelinePolyFill;          /**< even-odd polygon filling first step */
+    VkPipeline   pipelineClipping;          /**< draw on stencil to update clipping regions */
+} surface_class;
+
 typedef struct _vkvg_surface_t {
     vkvg_status_t   status; /**< Current status of surface, affected by last operation */
     atomic_int      references;
     VkvgDevice      dev;
     uint32_t        width;
     uint32_t        height;
-    VkFormat        format;
     VkFramebuffer   fb;
     VkhImage        img;
     VkhImage        imgMS;
@@ -49,15 +63,7 @@ typedef struct _vkvg_surface_t {
 #endif
     int hdpi,               /**< only used for FreeType fonts and svg loading */
         vdpi;
-    VkSampleCountFlags samples; /**< samples count */
-    VkRenderPass renderPass;                /**< Vulkan render pass, common for all surfaces */
-    VkRenderPass renderPass_ClearStencil;   /**< Vulkan render pass for first draw with context, stencil has to be cleared */
-    VkRenderPass renderPass_ClearAll;       /**< Vulkan render pass for new surface, clear all attacments*/
-    VkPipeline pipe_OVER; /**< default operator */
-    VkPipeline pipe_SUB;
-    VkPipeline pipe_CLEAR; /**< clear operator */
-    VkPipeline pipelinePolyFill; /**< even-odd polygon filling first step */
-    VkPipeline pipelineClipping; /**< draw on stencil to update clipping regions */
+    surface_class * surfClass;
 } vkvg_surface;
 
 #define LOCK_SURFACE(surf)                                                                                             \
@@ -76,8 +82,9 @@ void        _create_surface_main_image(VkvgSurface surf);
 void        _create_surface_secondary_images(VkvgSurface surf);
 void        _create_framebuffer(VkvgSurface surf);
 void        _create_surface_images(VkvgSurface surf);
-VkvgSurface _create_surface(VkvgDevice dev, VkFormat format);
+VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags samples);
+void        _surface_submit_cmd(VkvgSurface surf);
 
-void _surface_submit_cmd(VkvgSurface surf);
+void        _destroy_surface_class (surface_class* surf);
 // bool _surface_wait_cmd (VkvgSurface surf);
 #endif

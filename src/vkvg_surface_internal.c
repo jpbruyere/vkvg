@@ -94,7 +94,7 @@ void _clear_surface(VkvgSurface surf, VkImageAspectFlags aspect) {
         VkImageSubresourceRange range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
         VkhImage img = surf->imgMS;
-        if (surf->samples == VK_SAMPLE_COUNT_1_BIT)
+        if (surf->surfClass->samples == VK_SAMPLE_COUNT_1_BIT)
             img = surf->img;
 
         vkh_image_set_layout(cmd, img, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -128,7 +128,7 @@ void _clear_surface(VkvgSurface surf, VkImageAspectFlags aspect) {
 
     UNLOCK_SURFACE(surf)
 }
-VkRenderPass _createRenderPassNoResolve(VkvgSurface surf, VkAttachmentLoadOp loadOp,
+VkRenderPass _createRenderPassNoResolve(surface_class* surf, VkAttachmentLoadOp loadOp,
                                                VkAttachmentLoadOp stencilLoadOp) {
     VkAttachmentDescription attColor = {.format         = FB_COLOR_FORMAT,
                                         .samples        = surf->samples,
@@ -176,7 +176,7 @@ VkRenderPass _createRenderPassNoResolve(VkvgSurface surf, VkAttachmentLoadOp loa
     VK_CHECK_RESULT(vkCreateRenderPass(surf->dev->vkDev, &renderPassInfo, NULL, &rp));
     return rp;
 }
-VkRenderPass _createRenderPassMS(VkvgSurface surf, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp) {
+VkRenderPass _createRenderPassMS(surface_class* surf, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp) {
     VkAttachmentDescription attColor        = {.format         = FB_COLOR_FORMAT,
                                                .samples        = surf->samples,
                                                .loadOp         = loadOp,
@@ -233,7 +233,7 @@ VkRenderPass _createRenderPassMS(VkvgSurface surf, VkAttachmentLoadOp loadOp, Vk
     VK_CHECK_RESULT(vkCreateRenderPass(surf->dev->vkDev, &renderPassInfo, NULL, &rp));
     return rp;
 }
-void _setupPipelines(VkvgSurface surf) {
+void _setupPipelines(surface_class* surf) {
     VkvgDevice dev = surf->dev;
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {.sType      = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
                                                        .renderPass = surf->renderPass};
@@ -457,7 +457,7 @@ void _setupPipelines(VkvgSurface surf) {
 
 void _create_surface_main_image(VkvgSurface surf) {
     VkhDevice vkhd = (VkhDevice)&surf->dev->vkDev;
-    surf->img      = vkh_image_create(vkhd, surf->format, surf->width, surf->height, surf->dev->supportedTiling,
+    surf->img      = vkh_image_create(vkhd, surf->surfClass->format, surf->width, surf->height, surf->dev->supportedTiling,
                                       VKH_MEMORY_USAGE_GPU_ONLY,
                                       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
                                           VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
@@ -475,9 +475,9 @@ void _create_surface_main_image(VkvgSurface surf) {
 // create multisample color img if sample count > 1 and the stencil buffer multisampled or not
 void _create_surface_secondary_images(VkvgSurface surf) {
     VkhDevice vkhd = (VkhDevice)&surf->dev->vkDev;
-    if (surf->samples > VK_SAMPLE_COUNT_1_BIT) {
+    if (surf->surfClass->samples > VK_SAMPLE_COUNT_1_BIT) {
         surf->imgMS = vkh_image_ms_create(
-            vkhd, surf->format, surf->samples, surf->width, surf->height, VKH_MEMORY_USAGE_GPU_ONLY,
+            vkhd, surf->surfClass->format, surf->surfClass->samples, surf->width, surf->height, VKH_MEMORY_USAGE_GPU_ONLY,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
         vkh_image_create_descriptor(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
                                     VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
@@ -490,7 +490,7 @@ void _create_surface_secondary_images(VkvgSurface surf) {
                                    "SURF MS color SAMPLER");
 #endif
     }
-    surf->stencil = vkh_image_ms_create(vkhd, surf->dev->stencilFormat, surf->samples, surf->width, surf->height,
+    surf->stencil = vkh_image_ms_create(vkhd, surf->dev->stencilFormat, surf->surfClass->samples, surf->width, surf->height,
                                         VKH_MEMORY_USAGE_GPU_ONLY,
                                         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                             VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
@@ -512,13 +512,13 @@ void _create_framebuffer(VkvgSurface surf) {
         vkh_image_get_view(surf->imgMS),
     };
     VkFramebufferCreateInfo frameBufferCreateInfo = {.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-                                                     .renderPass      = surf->renderPass,
+                                                     .renderPass      = surf->surfClass->renderPass,
                                                      .attachmentCount = 3,
                                                      .pAttachments    = attachments,
                                                      .width           = surf->width,
                                                      .height          = surf->height,
                                                      .layers          = 1};
-    if (surf->samples == VK_SAMPLE_COUNT_1_BIT)
+    if (surf->surfClass->samples == VK_SAMPLE_COUNT_1_BIT)
         frameBufferCreateInfo.attachmentCount = 2;
     else if (surf->dev->deferredResolve) {
         attachments[0]                        = attachments[2];
@@ -541,30 +541,19 @@ void _create_surface_images(VkvgSurface surf) {
     vkh_image_set_name(surf->stencil, "surfStencil");
 #endif
 }
-VkvgSurface _create_surface(VkvgDevice dev, VkFormat format) {
-    LOG(VKVG_LOG_INFO, "CREATE Surface\n");
-    if (vkvg_device_status(dev)) {
-        LOGE("CREATE Surface failed, invalid Device\n");
-        return (VkvgSurface)&_vkvg_status_device_error;
-    }
 
-    VkvgSurface surf = (vkvg_surface*)calloc(1, sizeof(vkvg_surface));
+surface_class* _create_surface_class (VkvgDevice dev, VkFormat format, VkSampleCountFlags samples) {
+    surface_class* surf = (surface_class*)calloc(1, sizeof(surface_class));
     if (!surf) {
-        LOGE("CREATE Surface failed, no memory\n");
-        return (VkvgSurface)&_vkvg_status_no_memory;
+        LOGE("CREATE Surface class failed, no memory\n");
+        return NULL;
     }
 
-    atomic_init(&surf->references, 1);
+    VkhDevice vkhd = (VkhDevice)&dev->vkDev;
+
     surf->dev     = dev;
     surf->format  = format;
-    surf->hdpi    = 72;
-    surf->vdpi    = 72;
-    surf->samples = VK_SAMPLE_COUNT_1_BIT;
-
-    if (dev->threadAware)
-        mtx_init(&surf->mutex, mtx_plain);
-
-    VkhDevice vkhd = (VkhDevice)&surf->dev->vkDev;
+    surf->samples = samples;
 
     if (dev->deferredResolve || surf->samples == VK_SAMPLE_COUNT_1_BIT) {
         surf->renderPass =
@@ -584,18 +573,7 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format) {
 
     _setupPipelines(surf);
 
-    surf->cmdPool =
-        vkh_cmd_pool_create(vkhd, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    vkh_cmd_buffs_create(vkhd, surf->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1, &surf->cmd);
-
-#if VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-    surf->timeline = vkh_timeline_create(vkhd, 0);
-#else
-    surf->flushFence = vkh_fence_create(vkhd);
-#endif
-
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)surf->cmd, "vkvgSurfCmd");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)surf->renderPass, "RP load img/stencil");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)surf->renderPass_ClearStencil, "RP clear stencil");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_RENDER_PASS, (uint64_t)surf->renderPass_ClearAll, "RP clear all");
@@ -606,8 +584,90 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format) {
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)surf->pipe_OVER, "PL draw Over");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)surf->pipe_SUB, "PL draw Substract");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE, (uint64_t)surf->pipe_CLEAR, "PL draw Clear");
-
 #endif
+
+    atomic_init(&surf->references, 1);
+    return surf;
+}
+
+surface_class* _get_surface_class (VkvgDevice dev, VkFormat format, VkSampleCountFlags samples) {
+    for (int i = 0; i < dev->surfaceClasses.count; ++i) {
+        surface_class* sc = dev->surfaceClasses.elements[i];
+        if (sc->format == format && sc->samples == samples) {
+            atomic_fetch_add_explicit(&sc->references, 1, memory_order_relaxed);
+            return sc;
+        }
+    }
+    return _create_surface_class (dev, format, samples);
+}
+void _destroy_surface_class (surface_class* surf) {
+    if (atomic_fetch_sub_explicit(&surf->references, 1, memory_order_acq_rel) != 1)
+        return;
+
+    LOG(VKVG_LOG_INFO, "DESTROY Surface class.\n");
+
+    VkvgDevice dev = surf->dev;
+    array_del_SurfaceClass(&dev->surfaceClasses, surf);
+
+#ifndef __APPLE__
+    vkDestroyPipeline(dev->vkDev, surf->pipelinePolyFill, NULL);
+#endif
+    vkDestroyPipeline(dev->vkDev, surf->pipelineClipping, NULL);
+
+    vkDestroyPipeline(dev->vkDev, surf->pipe_OVER, NULL);
+    vkDestroyPipeline(dev->vkDev, surf->pipe_SUB, NULL);
+    vkDestroyPipeline(dev->vkDev, surf->pipe_CLEAR, NULL);
+
+#ifdef VKVG_WIRED_DEBUG
+    vkDestroyPipeline(dev->vkDev, surf->pipelineWired, NULL);
+    vkDestroyPipeline(dev->vkDev, surf->pipelineLineList, NULL);
+#endif
+
+    vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass, NULL);
+    vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass_ClearStencil, NULL);
+    vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass_ClearAll, NULL);
+
+    free(surf);
+}
+
+VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags samples) {
+    LOG(VKVG_LOG_INFO, "CREATE Surface\n");
+    if (vkvg_device_status(dev)) {
+        LOGE("CREATE Surface failed, invalid Device\n");
+        return (VkvgSurface)&_vkvg_status_device_error;
+    }
+
+    VkvgSurface surf = (vkvg_surface*)calloc(1, sizeof(vkvg_surface));
+    if (!surf) {
+        LOGE("CREATE Surface failed, no memory\n");
+        return (VkvgSurface)&_vkvg_status_no_memory;
+    }
+
+    surf->dev     = dev;
+    surf->hdpi    = 72;
+    surf->vdpi    = 72;
+
+    if (dev->threadAware)
+        mtx_init(&surf->mutex, mtx_plain);
+
+    VkhDevice vkhd = (VkhDevice)&surf->dev->vkDev;
+    surf->cmdPool =
+        vkh_cmd_pool_create(vkhd, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    vkh_cmd_buffs_create(vkhd, surf->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1, &surf->cmd);
+
+    surf->surfClass = _get_surface_class (dev, format, samples);
+
+#if VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
+    surf->timeline = vkh_timeline_create(vkhd, 0);
+#else
+    surf->flushFence = vkh_fence_create(vkhd);
+#endif
+
+#if defined(DEBUG) && defined(VKVG_DBG_UTILS)
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)surf->cmd, "vkvgSurfCmd");
+#endif
+
+    atomic_init(&surf->references, 1);
     vkvg_device_reference(surf->dev);
     return surf;
 }

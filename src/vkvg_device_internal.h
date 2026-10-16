@@ -58,6 +58,11 @@ typedef struct _cached_ctx {
     struct _cached_ctx* pNext;
 } _cached_ctx;
 
+typedef struct _surface_class* SurfaceClass;
+
+CTOR_ARRAY(SurfaceClass)
+ARRAY_DEL_ELT(SurfaceClass)
+
 typedef struct _vkvg_device_t {
     vkvg_status_t                    status;      /**< Current status of device, affected by last operation */
     VkDevice                         vkDev;       /**< Vulkan Logical Device */
@@ -93,7 +98,6 @@ typedef struct _vkvg_device_t {
 
     VkhDevice vkhDev; /**< old VkhDev created during vulkan context creation by @ref vkvg_device_create. */
 
-    VkhImage            emptyImg;         /**< prevent unbound descriptor to trigger Validation error 61 */
     bool                deferredResolve; /**< if true, resolve only on context destruction and set as source */
 
     _font_cache_t*      fontCache; /**< Store everything relative to common font caching system */
@@ -112,6 +116,7 @@ typedef struct _vkvg_device_t {
 #if VKVG_DBG_STATS
     vkvg_debug_stats_t debug_stats; /**< debug statistics on memory usage and vulkan ressources */
 #endif
+    array_SurfaceClass surfaceClasses;
 } vkvg_device;
 
 #define LOCK_DEVICE                                                                                                    \
@@ -130,11 +135,11 @@ void _device_create_pipeline_cache(VkvgDevice dev);
 VkRenderPass _device_createRenderPassMS(VkvgDevice dev, VkAttachmentLoadOp loadOp, VkAttachmentLoadOp stencilLoadOp);
 VkRenderPass _device_createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadOp loadOp,
                                                VkAttachmentLoadOp stencilLoadOp);
-void         _device_setupPipelines(VkvgDevice dev);
-void         _device_createDescriptorSetLayout(VkvgDevice dev);
-void         _device_wait_idle(VkvgDevice dev);
-void         _device_wait_and_reset_device_fence(VkvgDevice dev);
-void         _device_submit_cmd(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
+void  _device_setupPipelines(VkvgDevice dev);
+void  _device_createDescriptorSetLayout(VkvgDevice dev);
+void  _device_wait_idle(VkvgDevice dev);
+void  _device_wait_and_reset_device_fence(VkvgDevice dev);
+void  _device_submit_cmd(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);
 
 bool _device_try_get_cached_context(VkvgDevice dev, VkvgContext* pCtx);
 void _device_store_context(VkvgContext ctx);

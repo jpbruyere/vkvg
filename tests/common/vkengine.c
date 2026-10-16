@@ -195,7 +195,7 @@ vk_engine_t* vkengine_create(VkPhysicalDeviceType preferedGPU, VkPresentModeKHR 
     TRY_LOAD_DEVICE_EXT(VK_KHR_swapchain)
 
     VkPhysicalDeviceFeatures enabledFeatures = {0};
-    const void*              pNext           = vkvg_get_device_requirements(&enabledFeatures);
+    const void* pNext = vkvg_get_device_requirements(&enabledFeatures);
 
     VkDeviceCreateInfo device_info = {.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                       .queueCreateInfoCount    = qCount,

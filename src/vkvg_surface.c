@@ -40,7 +40,7 @@ void vkvg_surface_clear(VkvgSurface surf) {
 }
 
 VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height) {
-    VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
+    VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT, VK_SAMPLE_COUNT_1_BIT);
     if (surf->status)
         return surf;
 
@@ -55,7 +55,7 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
     return surf;
 }
 VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void* vkhImg) {
-    VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
+    VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT, VK_SAMPLE_COUNT_1_BIT);
     if (surf->status)
         return surf;
 
@@ -84,7 +84,7 @@ VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void* vkhImg) {
 }
 // TODO: it would be better to blit in original size and create ms final image with dest surf dims
 VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, uint32_t width, uint32_t height) {
-    VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT);
+    VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT, VK_SAMPLE_COUNT_1_BIT);
     if (surf->status)
         return surf;
     if (!img || width <= 0 || height <= 0) {
@@ -105,7 +105,7 @@ VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, 
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     // bgra bliting target
     VkhImage tmpImg =
-        vkh_image_create((VkhDevice)&surf->dev->vkDev, surf->format, surf->width, surf->height, VK_IMAGE_TILING_LINEAR,
+        vkh_image_create((VkhDevice)&surf->dev->vkDev, surf->surfClass->format, surf->width, surf->height, VK_IMAGE_TILING_LINEAR,
                          VKH_MEMORY_USAGE_GPU_ONLY, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     vkh_image_create_descriptor(tmpImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
                                 VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
@@ -214,25 +214,12 @@ void vkvg_surface_destroy(VkvgSurface surf) {
 
     VkvgDevice dev = surf->dev;
 
-#ifndef __APPLE__
-    vkDestroyPipeline(dev->vkDev, surf->pipelinePolyFill, NULL);
-#endif
-    vkDestroyPipeline(dev->vkDev, surf->pipelineClipping, NULL);
+    _destroy_surface_class (surf->surfClass);
 
-    vkDestroyPipeline(dev->vkDev, surf->pipe_OVER, NULL);
-    vkDestroyPipeline(dev->vkDev, surf->pipe_SUB, NULL);
-    vkDestroyPipeline(dev->vkDev, surf->pipe_CLEAR, NULL);
 
-#ifdef VKVG_WIRED_DEBUG
-    vkDestroyPipeline(dev->vkDev, surf->pipelineWired, NULL);
-    vkDestroyPipeline(dev->vkDev, surf->pipelineLineList, NULL);
-#endif
 
     vkDestroyCommandPool(surf->dev->vkDev, surf->cmdPool, NULL);
     vkDestroyFramebuffer(surf->dev->vkDev, surf->fb, NULL);
-    vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass, NULL);
-    vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass_ClearStencil, NULL);
-    vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass_ClearAll, NULL);
 
     if (!surf->img->imported)
         vkh_image_destroy(surf->img);
@@ -282,7 +269,7 @@ void vkvg_surface_resolve(VkvgSurface surf) {
 VkFormat vkvg_surface_get_vk_format(VkvgSurface surf) {
     if (vkvg_surface_status(surf))
         return VK_FORMAT_UNDEFINED;
-    return surf->format;
+    return surf->surfClass->format;
 }
 uint32_t vkvg_surface_get_width(VkvgSurface surf) {
     if (vkvg_surface_status(surf))

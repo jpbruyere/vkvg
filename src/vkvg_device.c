@@ -109,8 +109,6 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     _fonts_cache_create(dev, info->fontsDirectories);
     _device_createDescriptorSetLayout(dev);
 
-    _device_create_empty_texture(dev, format, dev->supportedTiling);
-
     if (dev->threadAware) {
         mtx_init(&dev->mutex, mtx_plain);
         mtx_init(&dev->fontCache->mutex, mtx_plain);
@@ -130,12 +128,6 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
-
-    vkh_image_set_name(dev->emptyImg, "empty IMG");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(dev->emptyImg),
-                               "empty IMG VIEW");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(dev->emptyImg),
-                               "empty IMG SAMPLER");
 #endif
 #endif
     dev->status = VKVG_STATUS_SUCCESS;
@@ -229,13 +221,13 @@ const void* vkvg_get_device_requirements(VkPhysicalDeviceFeatures* pEnabledFeatu
     static VkPhysicalDeviceVulkan12Features enabledFeatures12 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
 #ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
-        ,
-        .scalarBlockLayout = VK_TRUE
+        ,.scalarBlockLayout = VK_TRUE
 #endif
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
         ,
         .timelineSemaphore = VK_TRUE
 #endif
+        ,.descriptorBindingPartiallyBound = VK_TRUE
     };
     enabledFeatures12.pNext = pNext;
     pNext                   = &enabledFeatures12;
@@ -342,7 +334,7 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
         }
 
         VkPhysicalDeviceFeatures enabledFeatures = {0};
-        const void*              pNext           = vkvg_get_device_requirements(&enabledFeatures);
+        const void* pNext = vkvg_get_device_requirements(&enabledFeatures);
 
         VkDeviceCreateInfo device_info = {.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
                                           .queueCreateInfoCount    = qCount,
@@ -363,6 +355,8 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
     }
 
     _device_init(dev, info);
+
+    dev->surfaceClasses = array_create_SurfaceClass(2);
 
     atomic_init(&dev->references, 1);
 
@@ -393,7 +387,10 @@ void vkvg_device_destroy(VkvgDevice dev) {
 
     vkDeviceWaitIdle(dev->vkDev);
 
-    vkh_image_destroy(dev->emptyImg);
+    for (int i = 0; i < dev->surfaceClasses.count; ++i) {
+        //_surface_class_destroy (dev->surfaceClasses.elements[i]);
+    }
+    array_destroy_SurfaceClass(&dev->surfaceClasses);
 
     vkDestroyDescriptorSetLayout(dev->vkDev, dev->dslGrad, NULL);
     vkDestroyDescriptorSetLayout(dev->vkDev, dev->dslFont, NULL);
