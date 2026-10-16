@@ -269,8 +269,6 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
         return (VkvgDevice)&_vkvg_status_no_memory;
     }
 
-    dev->references = 1;
-
     dev->threadAware = info->threadAware;
 
     if (!info->vkdev) {
@@ -366,6 +364,8 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
 
     _device_init(dev, info);
 
+    atomic_init(&dev->references, 1);
+
     return dev;
 }
 
@@ -374,13 +374,8 @@ void vkvg_device_destroy(VkvgDevice dev) {
         LOGE("DESTROY Device failed, see Status for info");
         return;
     }
-    LOCK_DEVICE
-    dev->references--;
-    if (dev->references > 0) {
-        UNLOCK_DEVICE
+    if (atomic_fetch_sub_explicit(&dev->references, 1, memory_order_acq_rel) != 1)
         return;
-    }
-    UNLOCK_DEVICE
 
     LOG(VKVG_LOG_INFO, "DESTROY Device\n");
 
@@ -438,14 +433,15 @@ void vkvg_device_destroy(VkvgDevice dev) {
 
 vkvg_status_t vkvg_device_status(VkvgDevice dev) { return !dev ? VKVG_STATUS_NULL_POINTER : dev->status; }
 VkvgDevice    vkvg_device_reference(VkvgDevice dev) {
-    if (!vkvg_device_status(dev)) {
-        LOCK_DEVICE
-        dev->references++;
-        UNLOCK_DEVICE
-    }
+    if (!vkvg_device_status(dev))
+        atomic_fetch_add_explicit(&dev->references, 1, memory_order_relaxed);
     return dev;
 }
-uint32_t vkvg_device_get_reference_count(VkvgDevice dev) { return vkvg_device_status(dev) ? 0 : dev->references; }
+uint32_t vkvg_device_get_reference_count(VkvgDevice dev) {
+    if (vkvg_device_status(dev))
+        return 0;
+    return atomic_load_explicit(&dev->references, memory_order_relaxed);
+}
 
 #if VKVG_DBG_STATS
 vkvg_debug_stats_t vkvg_device_get_stats(VkvgDevice dev) {

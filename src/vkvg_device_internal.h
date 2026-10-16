@@ -79,7 +79,7 @@ typedef struct _vkvg_device_t {
     bool            threadAware; /**< if true, mutex is created and guard device queue and caches access */
     VkhQueue        gQueue;      /**< Vulkan Queue with Graphic flag */
 
-    uint32_t        references; /**< Reference count, prevent destroying device if still in use */
+    atomic_int      references; /**< Reference count, prevent destroying device if still in use */
     VkCommandPool   cmdPool;    /**< Global command pool for processing on surfaces without context */
     VkCommandBuffer cmd;        /**< Global command buffer */
     VkFence         fence; /**< this fence is kept signaled when idle, wait and reset are called before each recording. */

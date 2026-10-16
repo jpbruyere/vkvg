@@ -32,6 +32,7 @@ VkvgPattern vkvg_pattern_create_solid(float r, float g, float b, float a) {
     }
     pat->type   = VKVG_PATTERN_TYPE_SOLID;
     pat->extend = VKVG_EXTEND_NONE;
+    atomic_init(&pat->references, 1);
 
     return pat;
 }
