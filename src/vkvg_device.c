@@ -22,6 +22,7 @@
 
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
+#include "vkvg_surface_internal.h"
 #include "vkh_queue.h"
 #include "vkh_phyinfo.h"
 #include "vk_mem_alloc.h"
@@ -106,8 +107,8 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     dev->fence   = vkh_fence_create_signaled(vkhd);
 
     //_device_create_pipeline_cache(dev);
-    _fonts_cache_create(dev, info->fontsDirectories);
     _device_createDescriptorSetLayout(dev);
+    _fonts_cache_create(dev, info->fontsDirectories);
 
     if (dev->threadAware) {
         mtx_init(&dev->mutex, mtx_plain);
@@ -388,9 +389,11 @@ void vkvg_device_destroy(VkvgDevice dev) {
     vkDeviceWaitIdle(dev->vkDev);
 
     for (int i = 0; i < dev->surfaceClasses.count; ++i) {
-        //_surface_class_destroy (dev->surfaceClasses.elements[i]);
+        _destroy_surface_class (dev->surfaceClasses.elements[i]);
     }
     array_destroy_SurfaceClass(&dev->surfaceClasses);
+
+    vkDestroyDescriptorPool(dev->vkDev, dev->descriptorPool, NULL);
 
     vkDestroyDescriptorSetLayout(dev->vkDev, dev->dslGrad, NULL);
     vkDestroyDescriptorSetLayout(dev->vkDev, dev->dslFont, NULL);

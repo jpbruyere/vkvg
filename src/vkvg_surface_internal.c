@@ -24,7 +24,6 @@
 #include "vkvg_surface_internal.h"
 #include "vkvg_context_internal.h"
 
-#include "vkh_image.h"
 #include "vkh_queue.h"
 
 #include "shaders.h"
@@ -128,6 +127,7 @@ void _clear_surface(VkvgSurface surf, VkImageAspectFlags aspect) {
 
     UNLOCK_SURFACE(surf)
 }
+
 VkRenderPass _createRenderPassNoResolve(surface_class* surf, VkAttachmentLoadOp loadOp,
                                                VkAttachmentLoadOp stencilLoadOp) {
     VkAttachmentDescription attColor = {.format         = FB_COLOR_FORMAT,
@@ -324,7 +324,7 @@ void _setupPipelines(surface_class* surf) {
                                                        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO, .viewportCount = 1, .scissorCount = 1};
 
     VkPipelineMultisampleStateCreateInfo multisampleState = {
-                                                             .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT};
+                                                             .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, .rasterizationSamples = surf->samples};
     /*if (dev->samples != VK_SAMPLE_COUNT_1_BIT){
         multisampleState.sampleShadingEnable = VK_TRUE;
         multisampleState.minSampleShading = 0.5f;
@@ -589,17 +589,6 @@ surface_class* _create_surface_class (VkvgDevice dev, VkFormat format, VkSampleC
     atomic_init(&surf->references, 1);
     return surf;
 }
-
-surface_class* _get_surface_class (VkvgDevice dev, VkFormat format, VkSampleCountFlags samples) {
-    for (int i = 0; i < dev->surfaceClasses.count; ++i) {
-        surface_class* sc = dev->surfaceClasses.elements[i];
-        if (sc->format == format && sc->samples == samples) {
-            atomic_fetch_add_explicit(&sc->references, 1, memory_order_relaxed);
-            return sc;
-        }
-    }
-    return _create_surface_class (dev, format, samples);
-}
 void _destroy_surface_class (surface_class* surf) {
     if (atomic_fetch_sub_explicit(&surf->references, 1, memory_order_acq_rel) != 1)
         return;
@@ -628,6 +617,30 @@ void _destroy_surface_class (surface_class* surf) {
     vkDestroyRenderPass(surf->dev->vkDev, surf->renderPass_ClearAll, NULL);
 
     free(surf);
+}
+surface_class* _get_surface_class (VkvgDevice dev, VkFormat format, VkSampleCountFlags samples) {
+    for (int i = 0; i < dev->surfaceClasses.count; ++i) {
+        surface_class* sc = dev->surfaceClasses.elements[i];
+        if (sc->format == format && sc->samples == samples) {
+            atomic_fetch_add_explicit(&sc->references, 1, memory_order_relaxed);
+            return sc;
+        }
+    }
+    return _create_surface_class (dev, format, samples);
+}
+
+void _update_descriptor (VkvgSurface surf) {
+    vkh_image_create_sampler(surf->img, VK_FILTER_NEAREST, VK_FILTER_NEAREST,
+                             VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+
+    VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor(surf->img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    VkWriteDescriptorSet  writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                                                .dstSet          = surf->dsSrc,
+                                                .dstBinding      = 0,
+                                                .descriptorCount = 1,
+                                                .descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                                .pImageInfo      = &descSrcTex};
+    vkUpdateDescriptorSets(surf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
 
 VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags samples) {
@@ -663,8 +676,25 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags 
     surf->flushFence = vkh_fence_create(vkhd);
 #endif
 
+    const VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+                                                           .maxSets = 2,
+                                                           .flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+                                                           .poolSizeCount = 1,
+                                                           .pPoolSizes    = &descriptorPoolSize};
+    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &surf->descriptorPool));
+
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                                                             .descriptorPool     = surf->descriptorPool,
+                                                             .descriptorSetCount = 1,
+                                                             .pSetLayouts        = &dev->dslSrc};
+    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &surf->dsSrc));
+
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)surf->cmd, "vkvgSurfCmd");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)surf->descriptorPool,
+                               "Surf Descriptor Pool");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)surf->dsSrc, "Surf DescSet");
 #endif
 
     atomic_init(&surf->references, 1);

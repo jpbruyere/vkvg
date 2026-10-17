@@ -85,7 +85,7 @@ static inline uint32_t get_face_glyph_count (FontFace face) {
 }
 
 void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
-    _font_cache_t* cache = (_font_cache_t*)calloc(1, sizeof(_font_cache_t));
+    font_cache_t* cache = (font_cache_t*)calloc(1, sizeof(font_cache_t));
 
     if (dev->threadAware)
         mtx_init(&cache->mutex, mtx_plain);
@@ -162,6 +162,29 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
 
     cache->uploadFence = vkh_fence_create(vkhd);
 
+    const VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+                                                           .maxSets = 2,
+                                                           .flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+                                                           .poolSizeCount = 1,
+                                                           .pPoolSizes    = &descriptorPoolSize};
+    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &cache->descriptorPool));
+
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                                                             .descriptorPool     = cache->descriptorPool,
+                                                             .descriptorSetCount = 1,
+                                                             .pSetLayouts        = &dev->dslFont};
+    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &cache->dsFont));
+
+    VkDescriptorImageInfo descSrcTex         = vkh_image_get_descriptor(cache->texture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    VkWriteDescriptorSet  writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                                                .dstSet          = cache->dsFont,
+                                                .dstBinding      = 0,
+                                                .descriptorCount = 1,
+                                                .descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                                .pImageInfo      = &descSrcTex};
+    vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
+
     const uint32_t buffLength = FONT_PAGE_SIZE * FONT_PAGE_SIZE * cache->texPixelSize;
 
     vkh_buffer_init(vkhd, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU, buffLength, &cache->buff,
@@ -182,9 +205,15 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
 
     cache->fontBuffers = array_create_FontBuffer(4);
 
+#if defined(DEBUG) && defined(VKVG_DBG_UTILS)
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)cache->descriptorPool,
+                               "Font cache Descriptor Pool");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)cache->dsFont, "Cache DescSet FONT");
+#endif
+
     dev->fontCache = cache;
 }
-void _font_buffer_destroy (_font_cache_t* cache, FontBuffer fontBuffer) {
+void _font_buffer_destroy (font_cache_t* cache, FontBuffer fontBuffer) {
     LOG(VKVG_LOG_FONT, "FontBuffer destroy\n");
     free(fontBuffer->buffer);
     array_destroy_FontFace(&fontBuffer->faces);
@@ -213,7 +242,7 @@ void _font_face_destroy (VkvgFont font) {
     free(face);
 }
 void _font_cache_destroy(VkvgDevice dev) {
-    _font_cache_t* cache = (_font_cache_t*)dev->fontCache;
+    font_cache_t* cache = (font_cache_t*)dev->fontCache;
 
     free(cache->hostBuff);
 
@@ -228,6 +257,8 @@ void _font_cache_destroy(VkvgDevice dev) {
         }
     }
     array_destroy_FontBuffer(&cache->fontBuffers);
+
+    vkDestroyDescriptorPool(dev->vkDev, cache->descriptorPool, NULL);
 
     LOG(VKVG_LOG_FONT, "Font pages in cache: %d\n", cache->texPages.count);
     for (int i = 0; i < cache->texPages.count; ++i) {
@@ -267,7 +298,7 @@ void _font_cache_destroy(VkvgDevice dev) {
 void _increase_font_tex_array(VkvgDevice dev) {
     LOG(VKVG_LOG_FONT, "_increase_font_tex_array\n");
 
-    _font_cache_t* cache = dev->fontCache;
+    font_cache_t* cache = dev->fontCache;
 
     vkWaitForFences(dev->vkDev, 1, &cache->uploadFence, VK_TRUE, UINT64_MAX);
     ResetFences(dev->vkDev, 1, &cache->uploadFence);
@@ -276,10 +307,11 @@ void _increase_font_tex_array(VkvgDevice dev) {
 
     uint8_t oldSize = cache->texPages.count;
     for (int i = 0; i < FONT_CACHE_INIT_LAYERS; ++i) {
-        array_add_tex_page_t(&cache->texPages, (tex_page_t){array_create_TexRef(10), 0.f});
+        tex_page_t tp = (tex_page_t){array_create_TexRef(10), 0.f};
+        if (array_add_tex_page_t(&cache->texPages, tp) < 0)
+            array_destroy_TexRef(&tp.lines);
     }
     uint8_t newSize = cache->texPages.count;
-
 
     VkhImage newImg  = vkh_tex2d_array_create(
         (VkhDevice)&dev->vkDev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, newSize, VKH_MEMORY_USAGE_GPU_ONLY,
@@ -328,7 +360,7 @@ void _increase_font_tex_array(VkvgDevice dev) {
 // flush font stagging buffer to cache texture array
 // Trigger stagging buffer to be uploaded in font cache. Groupping upload improve performances.
 void _flush_chars_to_tex(VkvgFont f) {
-    _font_cache_t* cache = f->dev->fontCache;
+    font_cache_t* cache = f->dev->fontCache;
     if (cache->stagingX == 0) // no char in stagging buff to flush
         return;
     tex_ref_t l = *f->texLines.elements[f->texLines.count - 1];
@@ -373,7 +405,7 @@ void _flush_chars_to_tex(VkvgFont f) {
 
 /// Start a new line in font cache, increase texture layer count if needed.
 void _init_next_line_in_tex_cache(VkvgFont f) {
-    _font_cache_t* cache = f->dev->fontCache;
+    font_cache_t* cache = f->dev->fontCache;
 
     for (int i = 0; i < cache->texPages.count; ++i) {
         tex_page_t* page = &cache->texPages.elements[i];
@@ -408,7 +440,7 @@ void _init_next_line_in_tex_cache(VkvgFont f) {
     _increase_font_tex_array(f->dev);
     _init_next_line_in_tex_cache(f);
 }
-void _font_cache_update_context_descset(VkvgContext ctx) {
+/*void _font_cache_update_context_descset(VkvgContext ctx) {
     if (ctx->fontCacheImg)
         vkh_image_destroy(ctx->fontCacheImg);
 
@@ -420,7 +452,7 @@ void _font_cache_update_context_descset(VkvgContext ctx) {
     _update_descriptor_set(ctx, ctx->fontCacheImg, ctx->dsFont);
 
     UNLOCK_FONTCACHE(ctx->dev)
-}
+}*/
 // create a new char entry and put glyph in stagging buffer, ready for upload.
 glyph_ref _put_glyph_in_cache(VkvgDevice dev, VkvgFont font, uint32_t gindex) {
 #ifdef VKVG_USE_FREETYPE
@@ -520,7 +552,7 @@ vkvg_inline glyph_ref get_cached_glyph (VkvgDevice dev, VkvgFont font, uint32_t 
     return font->charLookup[gIndex];
 }
 
-bool try_get_font_face_from_query_hash(_font_cache_t* cache, uint64_t queryHash, FontFace *const face) {
+bool try_get_font_face_from_query_hash(font_cache_t* cache, uint64_t queryHash, FontFace *const face) {
     *face = NULL;
     FontBuffer* buffs = cache->fontBuffers.elements;
     for (int i = 0; i < cache->fontBuffers.count; ++i) {
@@ -537,7 +569,7 @@ bool try_get_font_face_from_query_hash(_font_cache_t* cache, uint64_t queryHash,
     }
     return false;
 }
-bool try_get_font_buffer_from_path_hash(_font_cache_t* cache, uint64_t pathHash, FontBuffer *const fontBuff) {
+bool try_get_font_buffer_from_path_hash(font_cache_t* cache, uint64_t pathHash, FontBuffer *const fontBuff) {
     *fontBuff = NULL;
     for (int i = 0; i < cache->fontBuffers.count; ++i) {
         if (cache->fontBuffers.elements[i]->fontPathHash == pathHash) {
@@ -549,7 +581,7 @@ bool try_get_font_buffer_from_path_hash(_font_cache_t* cache, uint64_t pathHash,
     return false;
 }
 bool try_create_font_face_from_path (VkvgDevice dev, const char *fontFile, int faceIndex, FontFace *const face) {
-    _font_cache_t* cache = dev->fontCache;
+    font_cache_t* cache = dev->fontCache;
     uint64_t fontFileHash = fnv1a_64_str(fontFile);
     FontBuffer buffPtr = NULL;
 
@@ -626,7 +658,7 @@ bool try_create_font_face_from_path (VkvgDevice dev, const char *fontFile, int f
 
 bool try_get_or_create_font_face_from_query (VkvgDevice dev, const char* queryString, FontFace *const face,
                                             signed long** pCoords) {
-    _font_cache_t* cache = dev->fontCache;
+    font_cache_t* cache = dev->fontCache;
     uint64_t queryHash = fnv1a_64_str(queryString);
     *face = NULL;
 
@@ -965,10 +997,10 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
     _flush_chars_to_tex(tr->font);
     UNLOCK_FONTCACHE(ctx->dev)
 
-    if (ctx->fontCacheImg != ctx->dev->fontCache->texture) {
+    /*if (ctx->fontCacheImg != ctx->dev->fontCache->texture) {
         vkvg_flush(ctx);
         _font_cache_update_context_descset(ctx);
-    }
+    }*/
 }
 
 #ifdef DEBUG

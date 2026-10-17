@@ -255,7 +255,7 @@ typedef struct _vkvg_font_t {
 
 
 // Font cache global structure, entry point for all font related operations.
-typedef struct {
+typedef struct _font_cache_t {
 #ifdef VKVG_USE_FREETYPE
     FT_Library library; /* FreeType library*/
 #else
@@ -272,6 +272,10 @@ typedef struct {
     VkCommandBuffer cmd;          /* vulkan command buffer for font textures upload */
     vkh_buffer_t    buff;         /* stagin buffer */
     VkhImage        texture;      /* 2d array texture used by contexts to draw characteres */
+
+    VkDescriptorPool descriptorPool;
+    VkDescriptorSet dsFont;       /* fonts glyphs texture atlas descriptor set */
+
     VkFormat        texFormat;    /* Format of the fonts texture array */
     uint8_t         texPixelSize; /* Size in byte of a single pixel in a font texture */
     VkFence         uploadFence;  /* Signaled when upload is finished */
@@ -279,7 +283,7 @@ typedef struct {
                                      vkvg_device_set_thread_aware) */
     array_FontBuffer fontBuffers;
     array_tex_page_t texPages;
-} _font_cache_t;
+} font_cache_t;
 
 #define LOCK_FONTCACHE(dev)                                                                                            \
     if (dev->threadAware)                                                                                              \

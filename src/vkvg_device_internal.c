@@ -108,7 +108,26 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
                                                            .pSetLayouts    = dsls};
     VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }
+void _device_allocalte_dummy_descriptors (VkvgDevice dev) {
+    const VkDescriptorPoolSize descriptorPoolSize[] = {
+                {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+                {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}
+    };
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+                                                           .maxSets = 2,
+                                                           .flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+                                                           .poolSizeCount = 2,
+                                                           .pPoolSizes    = descriptorPoolSize};
+    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &dev->descriptorPool));
 
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                                                             .descriptorPool     = dev->descriptorPool,
+                                                             .descriptorSetCount = 1,
+                                                             .pSetLayouts        = &dev->dslSrc};
+    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &dev->dummySrcSet));
+    descriptorSetAllocateInfo.pSetLayouts = &dev->dslGrad;
+    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &dev->dummyGradSet));
+}
 void _device_wait_idle(VkvgDevice dev) { vkDeviceWaitIdle(dev->vkDev); }
 void _device_wait_and_reset_device_fence(VkvgDevice dev) {
     vkWaitForFences(dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);

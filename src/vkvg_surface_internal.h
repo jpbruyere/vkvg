@@ -64,6 +64,9 @@ typedef struct _vkvg_surface_t {
     int hdpi,               /**< only used for FreeType fonts and svg loading */
         vdpi;
     surface_class * surfClass;
+
+    VkDescriptorPool descriptorPool;
+    VkDescriptorSet  dsSrc;          // source ds
 } vkvg_surface;
 
 #define LOCK_SURFACE(surf)                                                                                             \
@@ -84,6 +87,7 @@ void        _create_framebuffer(VkvgSurface surf);
 void        _create_surface_images(VkvgSurface surf);
 VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags samples);
 void        _surface_submit_cmd(VkvgSurface surf);
+void        _update_descriptor (VkvgSurface surf);
 
 void        _destroy_surface_class (surface_class* surf);
 // bool _surface_wait_cmd (VkvgSurface surf);

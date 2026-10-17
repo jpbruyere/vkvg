@@ -148,10 +148,10 @@ VkvgContext vkvg_create(VkvgSurface surf) {
     _create_vertices_buff(ctx);
     _create_gradient_buff(ctx);
     _create_cmd_buff(ctx);
-    _createDescriptorPool(ctx);
-    _init_descriptor_sets(ctx);
-    _font_cache_update_context_descset(ctx);
-    _update_gradient_desc_set(ctx);
+    //_createDescriptorPool(ctx);
+    //_init_descriptor_sets(ctx);
+    //_font_cache_update_context_descset(ctx);
+    //_update_gradient_desc_set(ctx);
 
     _clear_path(ctx);
 
@@ -171,11 +171,8 @@ VkvgContext vkvg_create(VkvgSurface surf) {
 #ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
 #endif
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)ctx->descriptorPool,
-                               "CTX Descriptor Pool");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc, "CTX DescSet SOURCE");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsFont, "CTX DescSet FONT");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsGrad, "CTX DescSet GRADIENT");
+    //vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsSrc, "CTX DescSet SOURCE");
+    //vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)ctx->dsGrad, "CTX DescSet GRADIENT");
 
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
@@ -1048,6 +1045,7 @@ void vkvg_set_source_rgb(VkvgContext ctx, float r, float g, float b) {
         return;
     RECORD(ctx, VKVG_CMD_SET_SOURCE_RGB, r, g, b);
     ctx->curColor = CreateRgbaf(r, g, b, 1);
+    _emit_draw_cmd_undrawn_vertices(ctx);
     _update_cur_pattern(ctx, NULL);
 }
 void vkvg_set_source_rgba(VkvgContext ctx, float r, float g, float b, float a) {
@@ -1061,10 +1059,18 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
     if (vkvg_status(ctx) || vkvg_surface_status(surf))
         return;
     RECORD(ctx, VKVG_CMD_SET_SOURCE_SURFACE, x, y, surf);
-    ctx->pushConsts.source.x = x;
-    ctx->pushConsts.source.y = y;
-    _update_cur_pattern(ctx, vkvg_pattern_create_for_surface(surf));
-    ctx->pushCstDirty = true;
+    ctx->pushConsts.source = (vec4) { x, y, (float)surf->width, (float)surf->height };
+    ctx->pushConsts.fsq_patternType = (ctx->pushConsts.fsq_patternType & FULLSCREEN_BIT) + VKVG_PATTERN_TYPE_SURFACE;
+    ctx->pushCstDirty               = true;
+
+    _ensure_renderpass_is_started(ctx);
+    /*vkh_image_set_layout(ctx->cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT,
+                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);*/
+
+    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
+                          1, 1, &surf->dsSrc, 0, NULL);
+
 }
 void vkvg_set_source(VkvgContext ctx, VkvgPattern pat) {
     if (vkvg_status(ctx) || vkvg_pattern_status(pat))

@@ -168,11 +168,12 @@ typedef struct _vkvg_context_t {
     VkCommandPool    cmdPool;        // local pools ensure thread safety
     VkCommandBuffer  cmdBuffers[2];  // double cmd buff for context operations
     VkCommandBuffer  cmd;            // current recording buffer
-    VkDescriptorPool descriptorPool; // one pool per thread
-    VkDescriptorSet  dsFont;         // fonts glyphs texture atlas descriptor (local for thread safety)
-    VkDescriptorSet  dsSrc;          // source ds
-    VkDescriptorSet  dsGrad;         // gradient uniform buffer
-    VkhImage         fontCacheImg;   // current font cache, may not be the last one, updated only if new glyphs are uploaded by the current context
+
+    //VkDescriptorPool descriptorPool; // one pool per thread
+
+    //VkDescriptorSet  dsGrad;         // gradient uniform buffer
+
+    //VkhImage         fontCacheImg;   // current font cache, may not be the last one, updated only if new glyphs are uploaded by the current context
     // vk buffers, holds data until flush
     vkh_buffer_t     uboGrad;        // uniform buff obj holdings gradient infos
     vkh_buffer_t     indices;        // index buffer with persistent map memory

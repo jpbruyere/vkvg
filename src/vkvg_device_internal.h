@@ -96,11 +96,15 @@ typedef struct _vkvg_device_t {
     VkDescriptorSetLayout dslSrc;         /**< context source surface descriptors layout */
     VkDescriptorSetLayout dslGrad;        /**< context gradient descriptors layout */
 
+    VkDescriptorPool      descriptorPool;
+    VkDescriptorSet       dummySrcSet;
+    VkDescriptorSet       dummyGradSet;
+
     VkhDevice vkhDev; /**< old VkhDev created during vulkan context creation by @ref vkvg_device_create. */
 
     bool                deferredResolve; /**< if true, resolve only on context destruction and set as source */
 
-    _font_cache_t*      fontCache; /**< Store everything relative to common font caching system */
+    font_cache_t*      fontCache; /**< Store everything relative to common font caching system */
 
     VkvgContext lastCtx; /**< last element of double linked list of context, used to trigger font caching system update
                             on all contexts*/
