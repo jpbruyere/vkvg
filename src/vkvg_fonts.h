@@ -274,7 +274,7 @@ typedef struct _font_cache_t {
     VkhImage        texture;      /* 2d array texture used by contexts to draw characteres */
 
     VkDescriptorPool descriptorPool;
-    VkDescriptorSet dsFont;       /* fonts glyphs texture atlas descriptor set */
+    VkDescriptorSet  dsFont;       /* fonts glyphs texture atlas descriptor set */
 
     VkFormat        texFormat;    /* Format of the fonts texture array */
     uint8_t         texPixelSize; /* Size in byte of a single pixel in a font texture */

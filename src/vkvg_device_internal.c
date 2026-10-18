@@ -39,8 +39,8 @@ PFN_vkCmdBindDescriptorSets CmdBindDescriptorSets;
 PFN_vkCmdBindIndexBuffer    CmdBindIndexBuffer;
 PFN_vkCmdBindVertexBuffers  CmdBindVertexBuffers;
 
-PFN_vkCmdDrawIndexed CmdDrawIndexed;
-PFN_vkCmdDraw        CmdDraw;
+PFN_vkCmdDrawIndexed        CmdDrawIndexed;
+PFN_vkCmdDraw               CmdDraw;
 
 PFN_vkCmdSetStencilCompareMask CmdSetStencilCompareMask;
 PFN_vkCmdSetStencilReference   CmdSetStencilReference;
@@ -50,7 +50,7 @@ PFN_vkCmdEndRenderPass         CmdEndRenderPass;
 PFN_vkCmdSetViewport           CmdSetViewport;
 PFN_vkCmdSetScissor            CmdSetScissor;
 
-PFN_vkCmdPushConstants CmdPushConstants;
+PFN_vkCmdPushConstants   CmdPushConstants;
 
 PFN_vkWaitForFences      WaitForFences;
 PFN_vkResetFences        ResetFences;
@@ -73,6 +73,16 @@ void _device_create_pipeline_cache(VkvgDevice dev) {
 }
 
 void _device_createDescriptorSetLayout(VkvgDevice dev) {
+    VkSamplerCreateInfo samplerInfo = {.sType         = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                                       .maxAnisotropy = 1.0,
+                                       .addressModeU  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                       .addressModeV  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                       .addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                       .magFilter     = VK_FILTER_NEAREST,
+                                       .minFilter     = VK_FILTER_NEAREST,
+                                       .mipmapMode    = VK_SAMPLER_MIPMAP_MODE_NEAREST};
+    vkCreateSampler(dev->vkDev, &samplerInfo, NULL, &dev->smpFont);
+
     VkDescriptorBindingFlags bindingFlags[] = {
         VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT // Allows empty/unbound slots in this binding
     };
@@ -83,13 +93,15 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
     };
 
     VkDescriptorSetLayoutBinding    dsLayoutBinding    = {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
-                                                          VK_SHADER_STAGE_FRAGMENT_BIT, NULL};
+                                                          VK_SHADER_STAGE_FRAGMENT_BIT, &dev->smpFont};
     VkDescriptorSetLayoutCreateInfo dsLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = &bindingFlagsInfo,
         .bindingCount = 1,
-        .pBindings = &dsLayoutBinding};
+        .pBindings = &dsLayoutBinding
+    };
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
+    dsLayoutBinding.pImmutableSamplers = NULL;
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslSrc));
     dsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslGrad));

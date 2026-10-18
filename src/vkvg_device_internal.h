@@ -95,10 +95,12 @@ typedef struct _vkvg_device_t {
     VkDescriptorSetLayout dslFont;        /**< font cache descriptors layout */
     VkDescriptorSetLayout dslSrc;         /**< context source surface descriptors layout */
     VkDescriptorSetLayout dslGrad;        /**< context gradient descriptors layout */
+    VkSampler             smpFont;        /**< font immutable sampler */
 
     VkDescriptorPool      descriptorPool;
     VkDescriptorSet       dummySrcSet;
     VkDescriptorSet       dummyGradSet;
+
 
     VkhDevice vkhDev; /**< old VkhDev created during vulkan context creation by @ref vkvg_device_create. */
 
@@ -141,6 +143,7 @@ VkRenderPass _device_createRenderPassNoResolve(VkvgDevice dev, VkAttachmentLoadO
                                                VkAttachmentLoadOp stencilLoadOp);
 void  _device_setupPipelines(VkvgDevice dev);
 void  _device_createDescriptorSetLayout(VkvgDevice dev);
+void  _device_allocalte_dummy_descriptors(VkvgDevice dev);
 void  _device_wait_idle(VkvgDevice dev);
 void  _device_wait_and_reset_device_fence(VkvgDevice dev);
 void  _device_submit_cmd(VkvgDevice dev, VkCommandBuffer* cmd, VkFence fence);

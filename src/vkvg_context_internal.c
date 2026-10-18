@@ -654,10 +654,8 @@ void _start_cmd_for_render_pass(VkvgContext ctx) {
     CmdSetViewport(ctx->cmd, 0, 1, &viewport);
     CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
-    /*VkDescriptorSet dss[] = {ctx->dev->fontCache->dsFont, NULL, NULL};
-    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout, 0, 3, dss, 0, NULL);*/
-    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
-                          0, 1, &ctx->dev->fontCache->dsFont, 0, NULL);
+    VkDescriptorSet dss[] = {ctx->dev->fontCache->dsFont, ctx->dev->dummySrcSet, ctx->dev->dummyGradSet};
+    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout, 0, 3, dss, 0, NULL);
 
     VkDeviceSize offsets[1] = {0};
     CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
@@ -697,13 +695,16 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
     ctx->pattern = pat;
 
     switch (newPatternType) {
-    //case VKVG_PATTERN_TYPE_SOLID:
+    case VKVG_PATTERN_TYPE_SOLID: {
         //_flush_cmd_buff(ctx);
         //if (!_wait_ctx_flush_end(ctx))
         //    return;
-        //if (lastPat->type == VKVG_PATTERN_TYPE_SURFACE) // unbind current source surface by replacing it with empty texture
-            //_update_descriptor_set(ctx, ctx->dev->emptyImg, ctx->dsSrc);
-//        break;
+        VkDescriptorSet dss[] = {ctx->dev->dummySrcSet, ctx->dev->dummyGradSet};
+        CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              ctx->dev->pipelineLayout, 1, 2, dss, 0, NULL);
+
+        break;
+    }
 /*    case VKVG_PATTERN_TYPE_SURFACE: {
         _emit_draw_cmd_undrawn_vertices(ctx);
 

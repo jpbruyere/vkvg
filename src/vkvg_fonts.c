@@ -156,9 +156,8 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
     cache->texture   = vkh_tex2d_array_create(
         vkhd, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, FONT_CACHE_INIT_LAYERS, VKH_MEMORY_USAGE_GPU_ONLY,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    vkh_image_create_descriptor(cache->texture, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT,
-                                VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+
+    vkh_image_create_view (cache->texture, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT);
 
     cache->uploadFence = vkh_fence_create(vkhd);
 
@@ -176,7 +175,7 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
                                                              .pSetLayouts        = &dev->dslFont};
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &cache->dsFont));
 
-    VkDescriptorImageInfo descSrcTex         = vkh_image_get_descriptor(cache->texture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor(cache->texture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     VkWriteDescriptorSet  writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                                                 .dstSet          = cache->dsFont,
                                                 .dstBinding      = 0,
@@ -316,9 +315,7 @@ void _increase_font_tex_array(VkvgDevice dev) {
     VkhImage newImg  = vkh_tex2d_array_create(
         (VkhDevice)&dev->vkDev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, newSize, VKH_MEMORY_USAGE_GPU_ONLY,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    vkh_image_create_descriptor(newImg, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
-                                VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+    vkh_image_create_view(newImg, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT);
 
     VkImageSubresourceRange subresNew = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, newSize};
     VkImageSubresourceRange subres    = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, oldSize};

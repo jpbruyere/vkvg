@@ -107,8 +107,9 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     dev->fence   = vkh_fence_create_signaled(vkhd);
 
     //_device_create_pipeline_cache(dev);
-    _device_createDescriptorSetLayout(dev);
-    _fonts_cache_create(dev, info->fontsDirectories);
+    _device_createDescriptorSetLayout (dev);
+    _fonts_cache_create (dev, info->fontsDirectories);
+    _device_allocalte_dummy_descriptors(dev);
 
     if (dev->threadAware) {
         mtx_init(&dev->mutex, mtx_plain);
@@ -401,6 +402,8 @@ void vkvg_device_destroy(VkvgDevice dev) {
 
     vkDestroyPipelineLayout(dev->vkDev, dev->pipelineLayout, NULL);
     vkDestroyPipelineCache(dev->vkDev, dev->pipelineCache, NULL);
+
+    vkDestroySampler(dev->vkDev, dev->smpFont, NULL);
 
     vkWaitForFences(dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
     vkDestroyFence(dev->vkDev, dev->fence, NULL);
