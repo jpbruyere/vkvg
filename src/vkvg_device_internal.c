@@ -80,7 +80,9 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
                                        .addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
                                        .magFilter     = VK_FILTER_NEAREST,
                                        .minFilter     = VK_FILTER_NEAREST,
-                                       .mipmapMode    = VK_SAMPLER_MIPMAP_MODE_NEAREST};
+                                       .mipmapMode    = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+                                       .unnormalizedCoordinates = VK_TRUE
+    };
     vkCreateSampler(dev->vkDev, &samplerInfo, NULL, &dev->smpFont);
 
     VkDescriptorBindingFlags bindingFlags[] = {

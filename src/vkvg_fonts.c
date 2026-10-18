@@ -83,9 +83,20 @@ static inline uint32_t get_face_glyph_count (FontFace face) {
     return face->stbInfo.numGlyphs;
 #endif
 }
-
+void _fonts_cache_update_font_descriptor_set (VkvgDevice dev) {
+    VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor(dev->fontCache->texture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    VkWriteDescriptorSet  writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                                                .dstSet          = dev->fontCache->dsFont,
+                                                .dstBinding      = 0,
+                                                .descriptorCount = 1,
+                                                .descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                                .pImageInfo      = &descSrcTex};
+    vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
+}
 void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
     font_cache_t* cache = (font_cache_t*)calloc(1, sizeof(font_cache_t));
+
+    dev->fontCache = cache;
 
     if (dev->threadAware)
         mtx_init(&cache->mutex, mtx_plain);
@@ -175,14 +186,7 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
                                                              .pSetLayouts        = &dev->dslFont};
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &cache->dsFont));
 
-    VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor(cache->texture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    VkWriteDescriptorSet  writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                                                .dstSet          = cache->dsFont,
-                                                .dstBinding      = 0,
-                                                .descriptorCount = 1,
-                                                .descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                                .pImageInfo      = &descSrcTex};
-    vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
+    _fonts_cache_update_font_descriptor_set(dev);
 
     const uint32_t buffLength = FONT_PAGE_SIZE * FONT_PAGE_SIZE * cache->texPixelSize;
 
@@ -209,8 +213,6 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
                                "Font cache Descriptor Pool");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)cache->dsFont, "Cache DescSet FONT");
 #endif
-
-    dev->fontCache = cache;
 }
 void _font_buffer_destroy (font_cache_t* cache, FontBuffer fontBuffer) {
     LOG(VKVG_LOG_FONT, "FontBuffer destroy\n");
@@ -353,6 +355,8 @@ void _increase_font_tex_array(VkvgDevice dev) {
     cache->texture   = newImg;
 
     _device_wait_idle(dev);
+
+    _fonts_cache_update_font_descriptor_set(dev);
 }
 // flush font stagging buffer to cache texture array
 // Trigger stagging buffer to be uploaded in font cache. Groupping upload improve performances.
@@ -528,7 +532,7 @@ glyph_ref _put_glyph_in_cache(VkvgDevice dev, VkvgFont font, uint32_t gindex) {
     cr.bmpDiff.y = (int16_t)-c_y1;
     cr.advance   = (vec2){(uint32_t)roundf(font->scale * advance) << 6, 0};
 #endif
-    vec4 uvBounds = {{(float)(penX + font->penX) / (float)FONT_PAGE_SIZE},
+    vec4 uvBounds = {{(float)(penX + font->penX)},
                      {0.f},
                      {(float)bmpPixelWidth},
                      {(float)bmpRows}};
@@ -953,8 +957,6 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
         if (vkvg_unlikely (f->status))
             break;
 
-        float uvWidth  = cr.bounds.width / (float)FONT_PAGE_SIZE;
-        float uvHeight = cr.bounds.height / (float)FONT_PAGE_SIZE;
         vec2  p0       = {pen.x + cr.bmpDiff.x + (tr->glyphs[i].x_offset >> 6),
                           pen.y - cr.bmpDiff.y + (tr->glyphs[i].y_offset >> 6)};
         v.pos          = p0;
@@ -962,7 +964,7 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
         VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
 
         TexRef l = cr.texRef;
-        float uvY = (float)l->penY / (float)FONT_PAGE_SIZE;
+        float uvY = (float)l->penY;
 
         v.uv.x = cr.bounds.x;
         v.uv.y = uvY; // + cr.bounds.y
@@ -970,17 +972,17 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
         _add_vertex(ctx, v);
 
         v.pos.y += cr.bounds.height;
-        v.uv.y += uvHeight;
+        v.uv.y += cr.bounds.height;
         _add_vertex(ctx, v);
 
         v.pos.x += cr.bounds.width;
         v.pos.y = p0.y;
-        v.uv.x += uvWidth;
+        v.uv.x += cr.bounds.width;
         v.uv.y = uvY; // + cr.bounds.y;
         _add_vertex(ctx, v);
 
         v.pos.y += cr.bounds.height;
-        v.uv.y += uvHeight;
+        v.uv.y += cr.bounds.height;
         _add_vertex(ctx, v);
 
         _add_tri_indices_for_rect(ctx, firstIdx);
