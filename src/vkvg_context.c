@@ -1070,7 +1070,7 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
 
     CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
                           1, 1, &surf->dsSrc, 0, NULL);
-
+    //vkvg_surface_reference(surf);
 }
 void vkvg_set_source(VkvgContext ctx, VkvgPattern pat) {
     if (vkvg_status(ctx) || vkvg_pattern_status(pat))

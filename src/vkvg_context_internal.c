@@ -790,9 +790,9 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
         ctx->pushConsts.source = bounds;
 
         // transform control point with current ctx matrix
-        vkvg_gradient_t grad = *(vkvg_gradient_t*)pat->data;
+        vkvg_gradient_t* grad = &((vkvg_gradient_pattern_t*)pat)->gradient;
 
-        if (grad.count < 2) {
+        if (grad->count < 2) {
             ctx->status = VKVG_STATUS_PATTERN_INVALID_GRADIENT;
             return;
         }
@@ -802,26 +802,26 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             vkvg_pattern_get_matrix(pat, &mat);
             /*if (vkvg_matrix_invert(&mat) != VKVG_STATUS_SUCCESS)
                 mat = VKVG_IDENTITY_MATRIX;*/
-            vkvg_matrix_transform_point(&mat, &grad.cp[0].x, &grad.cp[0].y);
+            vkvg_matrix_transform_point(&mat, &grad->cp[0].x, &grad->cp[0].y);
         }
 
-        vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].x, &grad.cp[0].y);
+        vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad->cp[0].x, &grad->cp[0].y);
         if (pat->type == VKVG_PATTERN_TYPE_LINEAR) {
             if (pat->hasMatrix)
-                vkvg_matrix_transform_point(&mat, &grad.cp[0].z, &grad.cp[0].w);
-            vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[0].z, &grad.cp[0].w);
+                vkvg_matrix_transform_point(&mat, &grad->cp[0].z, &grad->cp[0].w);
+            vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad->cp[0].z, &grad->cp[0].w);
         } else {
             if (pat->hasMatrix)
-                vkvg_matrix_transform_point(&mat, &grad.cp[1].x, &grad.cp[1].y);
-            vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad.cp[1].x, &grad.cp[1].y);
+                vkvg_matrix_transform_point(&mat, &grad->cp[1].x, &grad->cp[1].y);
+            vkvg_matrix_transform_point(&ctx->pushConsts.mat, &grad->cp[1].x, &grad->cp[1].y);
 
             // radii
             if (pat->hasMatrix) {
-                vkvg_matrix_transform_distance(&mat, &grad.cp[0].z, &grad.cp[0].w);
-                vkvg_matrix_transform_distance(&mat, &grad.cp[1].z, &grad.cp[0].w);
+                vkvg_matrix_transform_distance(&mat, &grad->cp[0].z, &grad->cp[0].w);
+                vkvg_matrix_transform_distance(&mat, &grad->cp[1].z, &grad->cp[0].w);
             }
-            vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad.cp[0].z, &grad.cp[0].w);
-            vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad.cp[1].z, &grad.cp[0].w);
+            vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad->cp[0].z, &grad->cp[0].w);
+            vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad->cp[1].z, &grad->cp[0].w);
         }
 
         memcpy(vkh_buffer_get_mapped_pointer(&ctx->uboGrad), &grad, sizeof(vkvg_gradient_t));
