@@ -39,8 +39,8 @@ void vkvg_surface_clear(VkvgSurface surf) {
     _clear_surface(surf, VK_IMAGE_ASPECT_STENCIL_BIT | VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
-VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height) {
-    VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT, VK_SAMPLE_COUNT_1_BIT);
+VkvgSurface vkvg_surface_create_ms(VkvgDevice dev, uint32_t width, uint32_t height, VkSampleCountFlags sampleCount) {
+    VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT, sampleCount);
     if (surf->status)
         return surf;
 
@@ -53,6 +53,10 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
 
     surf->status = VKVG_STATUS_SUCCESS;
     return surf;
+}
+
+VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height) {
+    return vkvg_surface_create_ms(dev, width, height, VK_SAMPLE_COUNT_1_BIT);
 }
 VkvgSurface vkvg_surface_create_for_VkhImage(VkvgDevice dev, void* vkhImg) {
     VkvgSurface surf = _create_surface(dev, FB_COLOR_FORMAT, VK_SAMPLE_COUNT_1_BIT);

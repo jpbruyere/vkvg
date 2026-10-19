@@ -758,6 +758,15 @@ vkvg_public const void* vkvg_get_device_requirements(VkPhysicalDeviceFeatures* p
  */
 vkvg_public VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height);
 /**
+ * @brief create mulstisample surface
+ * @param dev The vkvg device used for creating the surface.
+ * @param width Width in pixel of the surface to create.
+ * @param height Height in pixel of the surface to create.
+ * @param sampleCount sample count for the new surface.
+ * @return The new vkvg surface pointer, or null if an error occured.
+ */
+VkvgSurface vkvg_surface_create_ms(VkvgDevice dev, uint32_t width, uint32_t height, VkSampleCountFlags sampleCount);
+/**
  * @brief Create a new vkvg surface by loading an image file.
  * The resulting surface will have the same dimension as the supplied image.
  * This method will always return a valid pointer.
