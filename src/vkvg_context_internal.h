@@ -175,7 +175,6 @@ typedef struct _vkvg_context_t {
 
     //VkhImage         fontCacheImg;   // current font cache, may not be the last one, updated only if new glyphs are uploaded by the current context
     // vk buffers, holds data until flush
-    vkh_buffer_t     uboGrad;        // uniform buff obj holdings gradient infos
     vkh_buffer_t     indices;        // index buffer with persistent map memory
     vkh_buffer_t     vertices;       // vertex buffer with persistent mapped memory
 

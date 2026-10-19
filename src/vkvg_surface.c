@@ -49,7 +49,6 @@ VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint32_t height)
     surf->newSurf = true; // used to clear all attacments on first render pass
 
     _create_surface_images (surf);
-    _update_descriptor (surf);
     _transition_surf_images(surf);
 
     surf->status = VKVG_STATUS_SUCCESS;
@@ -104,13 +103,6 @@ VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, 
     VkhImage stagImg = vkh_image_create((VkhDevice)&surf->dev->vkDev, VK_FORMAT_R8G8B8A8_UNORM, surf->width,
                                         surf->height, VK_IMAGE_TILING_LINEAR, VKH_MEMORY_USAGE_GPU_ONLY,
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-    // bgra bliting target
-    VkhImage tmpImg =
-        vkh_image_create((VkhDevice)&surf->dev->vkDev, surf->surfClass->format, surf->width, surf->height, VK_IMAGE_TILING_LINEAR,
-                         VKH_MEMORY_USAGE_GPU_ONLY, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-    vkh_image_create_descriptor(tmpImg, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
-                                VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
     // staging buffer
     vkh_buffer_t buff = {0};
     vkh_buffer_init((VkhDevice)&dev->vkDev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU, imgSize,
@@ -134,7 +126,7 @@ VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, 
     vkh_image_set_layout(cmd, stagImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
                          VK_PIPELINE_STAGE_TRANSFER_BIT);
-    vkh_image_set_layout(cmd, tmpImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+    vkh_image_set_layout(cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                          VK_PIPELINE_STAGE_TRANSFER_BIT);
 
@@ -145,9 +137,9 @@ VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, 
         .dstOffsets[1]  = {(int32_t)surf->width, (int32_t)surf->height, 1},
     };
     vkCmdBlitImage(cmd, vkh_image_get_vkimage(stagImg), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   vkh_image_get_vkimage(tmpImg), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+                   vkh_image_get_vkimage(surf->img), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
-    vkh_image_set_layout(cmd, tmpImg, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    vkh_image_set_layout(cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
@@ -161,13 +153,13 @@ VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, 
     surf->newSurf = true;
 
     // create tmp context with rendering pipeline to create the multisample img
-    VkvgContext ctx = vkvg_create(surf);
+    //VkvgContext ctx = vkvg_create(surf);
 
     /*	  VkClearAttachment ca = {VK_IMAGE_ASPECT_COLOR_BIT,0, { 0.0f, 0.0f, 0.0f, 0.0f }};
         VkClearRect cr = {{{0,0},{surf->width,surf->height}},0,1};
         vkCmdClearAttachments(ctx->cmd, 1, &ca, 1, &cr);*/
 
-    vec4 srcRect                    = {.x = 0, .y = 0, .width = (float)surf->width, .height = (float)surf->height};
+    /*vec4 srcRect                    = {.x = 0, .y = 0, .width = (float)surf->width, .height = (float)surf->height};
     ctx->pushConsts.source          = srcRect;
     ctx->pushConsts.fsq_patternType = (ctx->pushConsts.fsq_patternType & FULLSCREEN_BIT) + VKVG_PATTERN_TYPE_SURFACE;
 
@@ -178,7 +170,7 @@ VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, 
     vkvg_paint(ctx);
     vkvg_destroy(ctx);
 
-    vkh_image_destroy(tmpImg);
+    vkh_image_destroy(tmpImg);*/
 
     surf->status = VKVG_STATUS_SUCCESS;
     return surf;
@@ -217,18 +209,17 @@ void vkvg_surface_destroy(VkvgSurface surf) {
 
     _destroy_surface_class (surf->surfClass);
 
-
+    vkDestroyDescriptorPool(dev->vkDev, surf->descPool, NULL);
 
     vkDestroyCommandPool(dev->vkDev, surf->cmdPool, NULL);
     vkDestroyFramebuffer(dev->vkDev, surf->fb, NULL);
-
-    vkDestroyDescriptorPool(dev->vkDev, surf->descriptorPool, NULL);
 
     if (!surf->img->imported)
         vkh_image_destroy(surf->img);
 
     vkh_image_destroy(surf->imgMS);
     vkh_image_destroy(surf->stencil);
+    vkh_buffer_reset(&surf->uboGrad);
 
     if (surf->dev->threadAware)
         mtx_destroy(&surf->mutex);

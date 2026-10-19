@@ -14,12 +14,17 @@ typedef struct _vkvg_pattern_t {
     vkvg_filter_t       filter;
     vkvg_matrix_t       matrix;
     bool                hasMatrix;
+
 } vkvg_pattern_t;
 
-typedef struct _vkvg_surface_pattern_t {
+typedef struct _surface_pattern_t {
     vkvg_pattern_t      base;
     VkvgSurface         surf;
-} vkvg_surface_pattern_t;
+    VkDescriptorPool    descPool;
+    VkDescriptorSet     dsSource;
+    VkSampler           sampler;
+    bool                samplerIsDirty;
+} surface_pattern_t;
 
 typedef struct _vkvg_gradient_t {
     vkvg_color_t colors[16];

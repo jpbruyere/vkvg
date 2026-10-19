@@ -64,7 +64,6 @@ CTOR_ARRAY(SurfaceClass)
 ARRAY_DEL_ELT(SurfaceClass)
 
 typedef struct _vkvg_device_t {
-    vkvg_status_t                    status;      /**< Current status of device, affected by last operation */
     VkDevice                         vkDev;       /**< Vulkan Logical Device */
     VkPhysicalDeviceMemoryProperties phyMemProps; /**< Vulkan Physical device memory properties */
     VkPhysicalDevice                 phy;         /**< Vulkan Physical device */
@@ -72,6 +71,7 @@ typedef struct _vkvg_device_t {
 #ifdef VKH_USE_VMA
     void* allocator; /**< Vulkan Memory allocator */
 #endif
+    vkvg_status_t                    status;      /**< Current status of device, affected by last operation */
 
     VkImageTiling      supportedTiling;   /**< Supported image tiling for surface, 0xFF=no support */
     VkFormat           stencilFormat;     /**< Supported vulkan image format for stencil */

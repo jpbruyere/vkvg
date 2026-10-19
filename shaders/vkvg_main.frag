@@ -9,8 +9,9 @@
     #extension GL_EXT_scalar_block_layout		: enable
 #endif
 
-layout (set=0, binding = 0) uniform sampler2DArray fontMap;
-layout (set=1, binding = 0) uniform sampler2D		source;
+layout (set=0, binding = 0) uniform sampler2DArray	fontMap;
+layout (set=1, binding = 0) uniform texture2D		source;
+layout (set=1, binding = 1) uniform sampler			sourceSampler;
 #if defined(GL_EXT_scalar_block_layout) && defined(VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
     layout (scalar, set=2, binding = 0) uniform _uboGrad {
 		vec4	colors[16];
@@ -54,13 +55,13 @@ void main()
 	case SURFACE:
 		vec2 p = (gl_FragCoord.xy - inSrc.xy);
 		vec2 uv = vec2(
-		        inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
+		    inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
 			inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
 		);
                 uv /= inSrc.zw;
                 /*if (uv.x < 0 || uv.y < 0 || uv.x > 1 || uv.y > 1)
                     discard;*/
-                c = texture (source, uv);
+				c = texture(sampler2D(source, sourceSampler), uv);
 		break;
 	case LINEAR:
 		float dist = 1;

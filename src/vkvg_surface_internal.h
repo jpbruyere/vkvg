@@ -25,20 +25,21 @@
 #include "vkvg_internal.h"
 #include "vkvg.h"
 #include "vkh.h"
+#include "vkh_buffer.h"
 
 typedef struct _surface_class {
     atomic_int      references;
     VkvgDevice      dev;
     VkFormat        format;
     VkSampleCountFlags samples;             /**< samples count */
-    VkRenderPass renderPass;                /**< Vulkan render pass, common for all surfaces */
-    VkRenderPass renderPass_ClearStencil;   /**< Vulkan render pass for first draw with context, stencil has to be cleared */
-    VkRenderPass renderPass_ClearAll;       /**< Vulkan render pass for new surface, clear all attacments*/
-    VkPipeline   pipe_OVER;                 /**< default operator */
-    VkPipeline   pipe_SUB;
-    VkPipeline   pipe_CLEAR;                /**< clear operator */
-    VkPipeline   pipelinePolyFill;          /**< even-odd polygon filling first step */
-    VkPipeline   pipelineClipping;          /**< draw on stencil to update clipping regions */
+    VkRenderPass    renderPass;                /**< Vulkan render pass, common for all surfaces */
+    VkRenderPass    renderPass_ClearStencil;   /**< Vulkan render pass for first draw with context, stencil has to be cleared */
+    VkRenderPass    renderPass_ClearAll;       /**< Vulkan render pass for new surface, clear all attacments*/
+    VkPipeline      pipe_OVER;                 /**< default operator */
+    VkPipeline      pipe_SUB;
+    VkPipeline      pipe_CLEAR;                /**< clear operator */
+    VkPipeline      pipelinePolyFill;          /**< even-odd polygon filling first step */
+    VkPipeline      pipelineClipping;          /**< draw on stencil to update clipping regions */
 } surface_class;
 
 typedef struct _vkvg_surface_t {
@@ -59,14 +60,14 @@ typedef struct _vkvg_surface_t {
     VkSemaphore timeline; /**< Timeline semaphore */
     uint64_t    timelineStep;
 #else
-    VkFence flushFence; // unsignaled idle.
+    VkFence             flushFence; // unsignaled idle.
 #endif
-    int hdpi,               /**< only used for FreeType fonts and svg loading */
+    int hdpi,                       // only used for FreeType fonts and svg loading */
         vdpi;
-    surface_class * surfClass;
-
-    VkDescriptorPool descriptorPool;
-    VkDescriptorSet  dsSrc;          // source ds
+    surface_class      *surfClass;
+    VkDescriptorPool    descPool;
+    VkDescriptorSet     dsGradient;
+    vkh_buffer_t        uboGrad;    // uniform buff obj holdings gradient infos
 } vkvg_surface;
 
 #define LOCK_SURFACE(surf)                                                                                             \
@@ -87,7 +88,6 @@ void        _create_framebuffer(VkvgSurface surf);
 void        _create_surface_images(VkvgSurface surf);
 VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags samples);
 void        _surface_submit_cmd(VkvgSurface surf);
-void        _update_descriptor (VkvgSurface surf);
 
 void        _destroy_surface_class (surface_class* surf);
 // bool _surface_wait_cmd (VkvgSurface surf);

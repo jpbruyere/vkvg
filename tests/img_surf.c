@@ -3,8 +3,8 @@
 const char* imgPath  = TESTS_DATA_ROOT "mirror.jpg";
 const char* imgPath2 = TESTS_DATA_ROOT "mirror.png";
 const char* imgPath3 = TESTS_DATA_ROOT "filled.png";
-const char* imgPath4 = TESTS_DATA_ROOT "mirfor2.png";
-const char* imgPath5 = TESTS_DATA_ROOT "mirfor2-64.png";
+const char* imgPath4 = TESTS_DATA_ROOT "mirror2.png";
+const char* imgPath5 = TESTS_DATA_ROOT "mirror2-64.png";
 
 void paint() {
     VkvgContext ctx     = vkvg_create(surf);
@@ -302,19 +302,15 @@ void imgTest4() {
 
     float arcSize = 70.f;
 
-    // vkvg_set_operator(ctx, VKVG_OPERATOR_OVER);
-    // vkvg_set_source_rgba(ctx, 1.0, 1.0, 1.0, 0.4);
 
     vkvg_set_source_surface(ctx, imgSurf2, 50, 50);
-    // vkvg_arc(ctx, arcSize, arcSize, 60.f, 0, 2.f * M_PIF);
+
     vkvg_rectangle(ctx, 50, 50, 120, 120);
     vkvg_paint(ctx);
 
     vkvg_set_source_rgba(ctx, 1.0f, 0.0f, 0.0f, 0.9f);
-    vkvg_arc(ctx, 200, 200, 21.f, 0, M_PIF * 2);
-    vkvg_fill(ctx);
-
-    // vkvg_set_line_width(ctx, 1);
+/*    vkvg_arc(ctx, 200, 200, 21.f, 0, M_PIF * 2);
+    vkvg_fill(ctx);*/
 
     vkvg_surface_destroy(imgSurf2);
     vkvg_surface_destroy(imgSurf);

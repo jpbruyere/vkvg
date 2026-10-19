@@ -86,26 +86,34 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
     vkCreateSampler(dev->vkDev, &samplerInfo, NULL, &dev->smpFont);
 
     VkDescriptorBindingFlags bindingFlags[] = {
-        VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT // Allows empty/unbound slots in this binding
+        VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT,  // Allows empty/unbound slots in this binding
+        VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT
     };
     VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
-        .bindingCount = 1,
+        .bindingCount = 2,
         .pBindingFlags = bindingFlags
     };
-
-    VkDescriptorSetLayoutBinding    dsLayoutBinding    = {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
-                                                          VK_SHADER_STAGE_FRAGMENT_BIT, &dev->smpFont};
+    VkDescriptorSetLayoutBinding    dsLayoutBinding[]    = {
+        {0, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT, NULL},
+        {1, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, NULL}
+    };
     VkDescriptorSetLayoutCreateInfo dsLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = &bindingFlagsInfo,
-        .bindingCount = 1,
-        .pBindings = &dsLayoutBinding
+        .bindingCount = 2,
+        .pBindings = dsLayoutBinding
     };
-    VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
-    dsLayoutBinding.pImmutableSamplers = NULL;
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslSrc));
-    dsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+    bindingFlagsInfo.bindingCount = 1;
+    dsLayoutCreateInfo.bindingCount = 1;
+    dsLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    dsLayoutBinding[0].pImmutableSamplers = &dev->smpFont;
+    VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
+
+    dsLayoutBinding[0].pImmutableSamplers = NULL;
+    dsLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslGrad));
 
     VkPushConstantRange pushConstantRange[] = {
@@ -114,12 +122,12 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
     };
     VkDescriptorSetLayout dsls[] = {dev->dslFont, dev->dslSrc, dev->dslGrad};
 
-    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-                                                           .pushConstantRangeCount = 1,
-                                                           .pPushConstantRanges =
-                                                               (VkPushConstantRange*)&pushConstantRange,
-                                                           .setLayoutCount = 3,
-                                                           .pSetLayouts    = dsls};
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges = (VkPushConstantRange*)&pushConstantRange,
+        .setLayoutCount = 3,
+        .pSetLayouts    = dsls};
     VK_CHECK_RESULT(vkCreatePipelineLayout(dev->vkDev, &pipelineLayoutCreateInfo, NULL, &dev->pipelineLayout));
 }
 void _device_allocalte_dummy_descriptors (VkvgDevice dev) {

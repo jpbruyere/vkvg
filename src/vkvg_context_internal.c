@@ -249,10 +249,6 @@ float _get_arc_step(VkvgContext ctx, float radius) {
         return fminf(M_PIF / 3.f, M_PIF / r);
     return fminf(M_PIF / 3.f, M_PIF / (r * 0.4f));
 }
-void _create_gradient_buff(VkvgContext ctx) {
-    vkh_buffer_init((VkhDevice)&ctx->dev->vkDev, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
-                    sizeof(vkvg_gradient_t), &ctx->uboGrad, true);
-}
 void _create_vertices_buff(VkvgContext ctx) {
     vkh_buffer_init((VkhDevice)&ctx->dev->vkDev, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
                     ctx->sizeVBO * sizeof(Vertex), &ctx->vertices, true);
@@ -692,76 +688,40 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
     } else
         newPatternType = pat->type;
 
+    if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE) {
+        //if lastpat has only one ref, descriptorSet would be destroyed, so flush context
+        if (vkvg_pattern_get_reference_count(lastPat) == 1)
+            vkvg_flush(ctx);
+    }
+
     ctx->pattern = pat;
 
     switch (newPatternType) {
     case VKVG_PATTERN_TYPE_SOLID: {
-        //_flush_cmd_buff(ctx);
-        //if (!_wait_ctx_flush_end(ctx))
-        //    return;
-        VkDescriptorSet dss[] = {ctx->dev->dummySrcSet, ctx->dev->dummyGradSet};
-        CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              ctx->dev->pipelineLayout, 1, 2, dss, 0, NULL);
-
+        if (ctx->cmdStarted && lastPat) {
+            switch (lastPat->type) {
+            case VKVG_PATTERN_TYPE_SURFACE:
+                CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                      ctx->dev->pipelineLayout, 1, 1, &ctx->dev->dummySrcSet, 0, NULL);
+                break;
+            case VKVG_PATTERN_TYPE_LINEAR:
+            case VKVG_PATTERN_TYPE_RADIAL:
+                CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                      ctx->dev->pipelineLayout, 2, 1, &ctx->dev->dummyGradSet, 0, NULL);
+                break;
+            }
+        }
         break;
     }
-/*    case VKVG_PATTERN_TYPE_SURFACE: {
-        _emit_draw_cmd_undrawn_vertices(ctx);
+    case VKVG_PATTERN_TYPE_SURFACE: {
+        surface_pattern_t* sp = (surface_pattern_t*)pat;
+        ctx->pushConsts.source.width = (float)sp->surf->width;
+        ctx->pushConsts.source.height = (float)sp->surf->height;
 
-        VkvgSurface surf = (VkvgSurface)pat->data;
+        _ensure_renderpass_is_started(ctx);
 
-        // flush ctx in two steps to add the src transitioning in the cmd buff
-        if (ctx->cmdStarted) { // transition of img without appropriate dependencies in subpass must be done outside
-                               // renderpass.
-            _end_render_pass(ctx);
-            _flush_vertices_caches(ctx);
-        } else {
-            vkh_cmd_begin(ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-            ctx->cmdStarted = true;
-        }
-
-        // transition source surface for sampling
-        vkh_image_set_layout(ctx->cmd, surf->img, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-
-        vkh_cmd_end(ctx->cmd);
-        _wait_and_submit_cmd(ctx);
-        if (!_wait_ctx_flush_end(ctx))
-            return;
-
-        VkSamplerAddressMode addrMode = 0;
-        VkFilter             filter   = VK_FILTER_NEAREST;
-        switch (pat->extend) {
-        case VKVG_EXTEND_NONE:
-            addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-            break;
-        case VKVG_EXTEND_PAD:
-            addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-            break;
-        case VKVG_EXTEND_REPEAT:
-            addrMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-            break;
-        case VKVG_EXTEND_REFLECT:
-            addrMode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-            break;
-        }
-        switch (pat->filter) {
-        case VKVG_FILTER_BILINEAR:
-        case VKVG_FILTER_BEST:
-            filter = VK_FILTER_LINEAR;
-            break;
-        default:
-            filter = VK_FILTER_NEAREST;
-            break;
-        }
-        vkh_image_create_sampler(surf->img, filter, filter, VK_SAMPLER_MIPMAP_MODE_NEAREST, addrMode);
-
-        //_update_descriptor_set(ctx, surf->img, ctx->dsSrc);
-
-        ctx->pushConsts.source.width  = (float)surf->width;
-        ctx->pushConsts.source.height = (float)surf->height;
-
+        CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
+                              1, 1, &sp->dsSource, 0, NULL);
         vkvg_matrix_t mat;
         if (pat->hasMatrix) {
             vkvg_pattern_get_matrix(pat, &mat);
@@ -771,17 +731,13 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             // vkvg_matrix_transform_distance(&mat, &ctx->pushConsts.source.width, &ctx->pushConsts.source.height);
             vkvg_matrix_multiply(&ctx->pushConsts.matInv, &ctx->pushConsts.matInv, &mat);
         }
-
         break;
-    }*/
+    }
     case VKVG_PATTERN_TYPE_LINEAR:
     case VKVG_PATTERN_TYPE_RADIAL:
         _flush_cmd_buff(ctx);
         if (!_wait_ctx_flush_end(ctx))
             return;
-
-        /*if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE)
-            _update_descriptor_set(ctx, ctx->dev->emptyImg, ctx->dsSrc);*/
 
         vec4 bounds            = {{(float)ctx->pSurf->width},
                                   {(float)ctx->pSurf->height},
@@ -800,8 +756,6 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
         vkvg_matrix_t mat;
         if (pat->hasMatrix) {
             vkvg_pattern_get_matrix(pat, &mat);
-            /*if (vkvg_matrix_invert(&mat) != VKVG_STATUS_SUCCESS)
-                mat = VKVG_IDENTITY_MATRIX;*/
             vkvg_matrix_transform_point(&mat, &grad->cp[0].x, &grad->cp[0].y);
         }
 
@@ -824,8 +778,12 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad->cp[1].z, &grad->cp[0].w);
         }
 
-        memcpy(vkh_buffer_get_mapped_pointer(&ctx->uboGrad), &grad, sizeof(vkvg_gradient_t));
-        vkh_buffer_flush(&ctx->uboGrad);
+        memcpy(vkh_buffer_get_mapped_pointer(&ctx->pSurf->uboGrad), grad, sizeof(vkvg_gradient_t));
+        vkh_buffer_flush(&ctx->pSurf->uboGrad);
+
+        _ensure_renderpass_is_started(ctx);
+        CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
+                              2, 1, &ctx->pSurf->dsGradient, 0, NULL);
         break;
     }
     ctx->pushConsts.fsq_patternType = (ctx->pushConsts.fsq_patternType & FULLSCREEN_BIT) + newPatternType;
@@ -833,63 +791,6 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
     if (lastPat)
         vkvg_pattern_destroy(lastPat);
 }
-/*void _update_descriptor_set(VkvgContext ctx, VkhImage img, VkDescriptorSet ds) {
-    VkDescriptorImageInfo descSrcTex         = vkh_image_get_descriptor(img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    VkWriteDescriptorSet  writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                                                .dstSet          = ds,
-                                                .dstBinding      = 0,
-                                                .descriptorCount = 1,
-                                                .descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                                .pImageInfo      = &descSrcTex};
-    vkUpdateDescriptorSets(ctx->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
-}*/
-
-/*void _update_gradient_desc_set(VkvgContext ctx) {
-    VkDescriptorBufferInfo dbi                = {ctx->uboGrad.buffer, 0, VK_WHOLE_SIZE};
-    VkWriteDescriptorSet   writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                                                 .dstSet          = ctx->dsGrad,
-                                                 .dstBinding      = 0,
-                                                 .descriptorCount = 1,
-                                                 .descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                                 .pBufferInfo     = &dbi};
-    vkUpdateDescriptorSets(ctx->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
-}*/
-/*
- * Reset currently bound descriptor which image could be destroyed
- */
-/*void _reset_src_descriptor_set (VkvgContext ctx){
-    VkvgDevice dev = ctx->pSurf->dev;
-    //VkDescriptorSet dss[] = {ctx->dsSrc};
-    vkFreeDescriptorSets	(dev->vkDev, ctx->descriptorPool, 1, &ctx->dsSrc);
-
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                                                              .descriptorPool = ctx->descriptorPool,
-                                                              .descriptorSetCount = 1,
-                                                              .pSetLayouts = &dev->dslSrc };
-    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
-}*/
-
-/*void _createDescriptorPool(VkvgContext ctx) {
-    VkvgDevice                 dev                      = ctx->dev;
-    const VkDescriptorPoolSize descriptorPoolSize[]     = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2},
-                                                           {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                                                           .maxSets = 3,
-                                                           .flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-                                                           .poolSizeCount = 2,
-                                                           .pPoolSizes    = descriptorPoolSize};
-    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &ctx->descriptorPool));
-}*/
-/*void _init_descriptor_sets(VkvgContext ctx) {
-    VkvgDevice                  dev                       = ctx->dev;
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                                                             .descriptorPool     = ctx->descriptorPool,
-                                                             .descriptorSetCount = 1,
-                                                             .pSetLayouts        = &dev->dslSrc};
-    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsSrc));
-    descriptorSetAllocateInfo.pSetLayouts = &dev->dslGrad;
-    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &ctx->dsGrad));
-}*/
 void _release_context_ressources(VkvgContext ctx) {
     VkDevice dev = ctx->dev->vkDev;
 
@@ -903,7 +804,6 @@ void _release_context_ressources(VkvgContext ctx) {
 //    VkDescriptorSet dss[] = {ctx->dsFont, ctx->dsSrc, ctx->dsGrad};
 //    vkFreeDescriptorSets(dev, ctx->descriptorPool, 3, dss);
 
-    vkh_buffer_reset(&ctx->uboGrad);
     vkh_buffer_reset(&ctx->indices);
     vkh_buffer_reset(&ctx->vertices);
 

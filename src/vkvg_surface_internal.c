@@ -23,6 +23,7 @@
 #include "vkvg_device_internal.h"
 #include "vkvg_surface_internal.h"
 #include "vkvg_context_internal.h"
+#include "vkvg_pattern.h"
 
 #include "vkh_queue.h"
 
@@ -461,15 +462,13 @@ void _create_surface_main_image(VkvgSurface surf) {
                                       VKH_MEMORY_USAGE_GPU_ONLY,
                                       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
                                           VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-    vkh_image_create_descriptor(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
-                                VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    vkh_image_create_view(surf->img, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_image_set_name(surf->img, "SURF main color");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(surf->img),
                                "SURF main color VIEW");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->img),
-                               "SURF main color SAMPLER");
+    /*vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->img),
+                               "SURF main color SAMPLER");*/
 #endif
 }
 // create multisample color img if sample count > 1 and the stencil buffer multisampled or not
@@ -479,30 +478,32 @@ void _create_surface_secondary_images(VkvgSurface surf) {
         surf->imgMS = vkh_image_ms_create(
             vkhd, surf->surfClass->format, surf->surfClass->samples, surf->width, surf->height, VKH_MEMORY_USAGE_GPU_ONLY,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-        vkh_image_create_descriptor(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
+        vkh_image_create_view(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT);
+        /*vkh_image_create_descriptor(surf->imgMS, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_FILTER_NEAREST,
                                     VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                    VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+                                    VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);*/
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
         vkh_image_set_name(surf->imgMS, "SURF MS color IMG");
         vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(surf->imgMS),
                                    "SURF MS color VIEW");
-        vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->imgMS),
-                                   "SURF MS color SAMPLER");
+        /*vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->imgMS),
+                                   "SURF MS color SAMPLER");*/
 #endif
     }
     surf->stencil = vkh_image_ms_create(vkhd, surf->dev->stencilFormat, surf->surfClass->samples, surf->width, surf->height,
                                         VKH_MEMORY_USAGE_GPU_ONLY,
                                         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                             VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    vkh_image_create_descriptor(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST,
+    vkh_image_create_view(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT);
+    /*vkh_image_create_descriptor(surf->stencil, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_STENCIL_BIT, VK_FILTER_NEAREST,
                                 VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+                                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);*/
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_image_set_name(surf->stencil, "SURF stencil");
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)vkh_image_get_view(surf->stencil),
                                "SURF stencil VIEW");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->stencil),
-                               "SURF stencil SAMPLER");
+    /*vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_SAMPLER, (uint64_t)vkh_image_get_sampler(surf->stencil),
+                               "SURF stencil SAMPLER");*/
 #endif
 }
 void _create_framebuffer(VkvgSurface surf) {
@@ -629,20 +630,6 @@ surface_class* _get_surface_class (VkvgDevice dev, VkFormat format, VkSampleCoun
     return _create_surface_class (dev, format, samples);
 }
 
-void _update_descriptor (VkvgSurface surf) {
-    vkh_image_create_sampler(surf->img, VK_FILTER_NEAREST, VK_FILTER_NEAREST,
-                             VK_SAMPLER_MIPMAP_MODE_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
-
-    VkDescriptorImageInfo descSrcTex = vkh_image_get_descriptor(surf->img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    VkWriteDescriptorSet  writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                                                .dstSet          = surf->dsSrc,
-                                                .dstBinding      = 0,
-                                                .descriptorCount = 1,
-                                                .descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                                .pImageInfo      = &descSrcTex};
-    vkUpdateDescriptorSets(surf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
-}
-
 VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags samples) {
     LOG(VKVG_LOG_INFO, "CREATE Surface\n");
     if (vkvg_device_status(dev)) {
@@ -676,28 +663,42 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags 
     surf->flushFence = vkh_fence_create(vkhd);
 #endif
 
-    const VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
+    const VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1};
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                                                           .maxSets = 2,
+                                                           .maxSets = 1,
                                                            .flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
                                                            .poolSizeCount = 1,
                                                            .pPoolSizes    = &descriptorPoolSize};
-    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &surf->descriptorPool));
+    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &surf->descPool));
 
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                                                             .descriptorPool     = surf->descriptorPool,
+                                                             .descriptorPool     = surf->descPool,
                                                              .descriptorSetCount = 1,
-                                                             .pSetLayouts        = &dev->dslSrc};
-    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &surf->dsSrc));
+                                                             .pSetLayouts        = &dev->dslGrad};
+    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &surf->dsGradient));
+
+    vkh_buffer_init((VkhDevice)dev, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
+                    sizeof(vkvg_gradient_t), &surf->uboGrad, true);
+
+    VkDescriptorBufferInfo dbi                = {surf->uboGrad.buffer, 0, VK_WHOLE_SIZE};
+    VkWriteDescriptorSet   writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                                                 .dstSet          = surf->dsGradient,
+                                                 .dstBinding      = 0,
+                                                 .descriptorCount = 1,
+                                                 .descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                                 .pBufferInfo     = &dbi};
+    vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)surf->cmd, "vkvgSurfCmd");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)surf->descriptorPool,
-                               "Surf Descriptor Pool");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)surf->dsSrc, "Surf DescSet");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)surf->descPool,
+                               "Surface Descriptor Pool");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)surf->dsGradient, "Gradient DescSet");
+    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_BUFFER, (uint64_t)surf->uboGrad.buffer, "CTX Index Buff");
 #endif
 
     atomic_init(&surf->references, 1);
+
     vkvg_device_reference(surf->dev);
     return surf;
 }

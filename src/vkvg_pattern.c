@@ -2,6 +2,95 @@
 //
 // This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 #include "vkvg_pattern.h"
+#include "vkvg_device_internal.h"
+#include "vkvg_surface_internal.h"
+
+void _update_descriptor (surface_pattern_t* pat) {
+    VkDescriptorImageInfo diiImg = vkh_image_get_descriptor(pat->surf->img, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    VkDescriptorImageInfo diiSampler = {pat->sampler};
+    VkWriteDescriptorSet  writeDescriptorSet[] = {
+        {
+            .sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet          = pat->dsSource,
+            .dstBinding      = 0,
+            .descriptorCount = 1,
+            .descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo      = &diiImg
+        },{
+            .sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet          = pat->dsSource,
+            .dstBinding      = 1,
+            .descriptorCount = 1,
+            .descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo      = &diiSampler
+        }
+    };
+    vkUpdateDescriptorSets(pat->surf->dev->vkDev, 2, writeDescriptorSet, 0, NULL);
+}
+
+void _surface_pattern_init (VkvgDevice dev, surface_pattern_t* pat) {
+    const VkDescriptorPoolSize descriptorPoolSize[] = {
+        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1},
+        {VK_DESCRIPTOR_TYPE_SAMPLER, 1}
+    };
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+                                                           .maxSets = 1,
+                                                           .flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+                                                           .poolSizeCount = 2,
+                                                           .pPoolSizes    = descriptorPoolSize};
+    VK_CHECK_RESULT(vkCreateDescriptorPool(dev->vkDev, &descriptorPoolCreateInfo, NULL, &pat->descPool));
+
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                                                             .descriptorPool     = pat->descPool,
+                                                             .descriptorSetCount = 1,
+                                                             .pSetLayouts        = &dev->dslSrc};
+    VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &pat->dsSource));
+
+#if defined(DEBUG) && defined(VKVG_DBG_UTILS)
+    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)pat->descPool,
+                               "Pattern Descriptor Pool");
+    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)pat->dsSource, "Pattern DescSet");
+#endif
+}
+void _create_sampler(surface_pattern_t* pat) {
+    if (pat->sampler != VK_NULL_HANDLE)
+        vkDestroySampler(pat->surf->dev->vkDev, pat->sampler, NULL);
+    VkSamplerAddressMode addrMode = 0;
+    VkFilter             filter   = VK_FILTER_NEAREST;
+    switch (pat->base.extend) {
+    case VKVG_EXTEND_NONE:
+        addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        break;
+    case VKVG_EXTEND_PAD:
+        addrMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        break;
+    case VKVG_EXTEND_REPEAT:
+        addrMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        break;
+    case VKVG_EXTEND_REFLECT:
+        addrMode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        break;
+    }
+    switch (pat->base.filter) {
+    case VKVG_FILTER_BILINEAR:
+    case VKVG_FILTER_BEST:
+        filter = VK_FILTER_LINEAR;
+        break;
+    default:
+        filter = VK_FILTER_NEAREST;
+        break;
+    }
+    VkSamplerCreateInfo samplerCreateInfo = {.sType         = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                                             .maxAnisotropy = 1.0,
+                                             .addressModeU  = addrMode,
+                                             .addressModeV  = addrMode,
+                                             .addressModeW  = addrMode,
+                                             .magFilter     = filter,
+                                             .minFilter     = filter,
+                                             .mipmapMode    = VK_SAMPLER_MIPMAP_MODE_NEAREST};
+    VK_CHECK_RESULT(vkCreateSampler(pat->surf->dev->vkDev, &samplerCreateInfo, NULL, &pat->sampler));
+    pat->samplerIsDirty = false;
+}
 
 VkvgPattern vkvg_pattern_create_solid(float r, float g, float b, float a) {
     VkvgPattern pat = (vkvg_pattern_t*)calloc(1, sizeof(vkvg_pattern_t));
@@ -10,15 +99,13 @@ VkvgPattern vkvg_pattern_create_solid(float r, float g, float b, float a) {
     }
     pat->type   = VKVG_PATTERN_TYPE_SOLID;
     pat->extend = VKVG_EXTEND_NONE;
+
     atomic_init(&pat->references, 1);
 
     return pat;
 }
 VkvgPattern vkvg_pattern_create_for_surface(VkvgSurface surf) {
-    if (!surf) {
-        return (VkvgPattern)&_vkvg_status_null_pointer;
-    }
-    vkvg_surface_pattern_t* pat = (vkvg_surface_pattern_t*)calloc(1, sizeof(vkvg_surface_pattern_t));
+    surface_pattern_t* pat = (surface_pattern_t*)calloc(1, sizeof(surface_pattern_t));
     if (!pat) {
         return (VkvgPattern)&_vkvg_status_no_memory;
     }
@@ -26,11 +113,17 @@ VkvgPattern vkvg_pattern_create_for_surface(VkvgSurface surf) {
     pat->base.type      = VKVG_PATTERN_TYPE_SURFACE;
     pat->base.extend    = VKVG_EXTEND_NONE;
     pat->surf           = surf;
-    atomic_init(&pat->base.references, 1);
 
     vkvg_surface_reference(surf);
-    if (vkvg_surface_status(surf))
+    if (vkvg_surface_status(surf)) {
         pat->base.status = VKVG_STATUS_INVALID_SURFACE;
+    } else {
+        _surface_pattern_init(surf->dev, pat);
+
+        _create_sampler(pat);
+        _update_descriptor(pat);
+    }
+    atomic_init(&pat->base.references, 1);
 
     return (VkvgPattern)pat;
 }
@@ -57,6 +150,7 @@ VkvgPattern vkvg_pattern_create_radial(float cx0, float cy0, float radius0, floa
     pat->base.extend = VKVG_EXTEND_NONE;
 
     vkvg_pattern_edit_radial((VkvgPattern)pat, cx0, cy0, radius0, cx1, cy1, radius1);
+
     atomic_init(&pat->base.references, 1);
 
     return (VkvgPattern)pat;
@@ -148,14 +242,18 @@ vkvg_status_t vkvg_pattern_add_color_stop(VkvgPattern pat, float offset, float r
     return VKVG_STATUS_SUCCESS;
 }
 void vkvg_pattern_set_extend(VkvgPattern pat, vkvg_extend_t extend) {
-    if (vkvg_pattern_status(pat))
+    if (vkvg_pattern_status(pat) || pat->extend == extend)
         return;
     pat->extend = extend;
+    if (pat->type == VKVG_PATTERN_TYPE_SURFACE)
+        ((surface_pattern_t*)pat)->samplerIsDirty = true;
 }
 void vkvg_pattern_set_filter(VkvgPattern pat, vkvg_filter_t filter) {
-    if (vkvg_pattern_status(pat))
+    if (vkvg_pattern_status(pat) || pat->filter == filter)
         return;
     pat->filter = filter;
+    if (pat->type == VKVG_PATTERN_TYPE_SURFACE)
+        ((surface_pattern_t*)pat)->samplerIsDirty = true;
 }
 
 vkvg_extend_t vkvg_pattern_get_extend(VkvgPattern pat) {
@@ -228,7 +326,10 @@ void vkvg_pattern_destroy(VkvgPattern pat) {
         return;
 
     if (pat->type == VKVG_PATTERN_TYPE_SURFACE) {
-        vkvg_surface_destroy(((vkvg_surface_pattern_t*)pat)->surf);
+        surface_pattern_t* sp = (surface_pattern_t*)pat;
+        vkDestroyDescriptorPool(sp->surf->dev->vkDev, sp->descPool, NULL);
+        vkDestroySampler(sp->surf->dev->vkDev, sp->sampler, NULL);
+        vkvg_surface_destroy(sp->surf);
     }
 
     free(pat);
