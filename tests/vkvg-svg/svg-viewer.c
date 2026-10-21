@@ -359,8 +359,8 @@ int main(int argc, char* argv[]) {
                 vkvg_paint(ctx);
                 vkvg_set_source_surface(ctx, surf, 0, 0);
                 vkvg_paint(ctx);
-                vkvg_surface_destroy(surf);
                 vkvg_destroy(ctx);
+                vkvg_surface_destroy(surf);
                 update = false;
             }
         }

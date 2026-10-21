@@ -1,24 +1,6 @@
-﻿/*
- * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+﻿// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 
 // credits for bezier algorithms to:
 //		Anti-Grain Geometry (AGG) - Version 2.5
@@ -250,9 +232,9 @@ float _get_arc_step(VkvgContext ctx, float radius) {
     return fminf(M_PIF / 3.f, M_PIF / (r * 0.4f));
 }
 void _create_vertices_buff(VkvgContext ctx) {
-    vkh_buffer_init((VkhDevice)&ctx->dev->vkDev, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
+    vkh_buffer_init(ctx->dev->vkhDev, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
                     ctx->sizeVBO * sizeof(Vertex), &ctx->vertices, true);
-    vkh_buffer_init((VkhDevice)&ctx->dev->vkDev, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
+    vkh_buffer_init(ctx->dev->vkhDev, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
                     ctx->sizeIBO * sizeof(VKVG_IBO_INDEX_TYPE), &ctx->indices, true);
 }
 void _resize_vbo(VkvgContext ctx, uint32_t new_size) {
@@ -392,10 +374,10 @@ void _ensure_renderpass_is_started(VkvgContext ctx) {
         _update_push_constants(ctx);
 }
 void _create_cmd_buff(VkvgContext ctx) {
-    vkh_cmd_buffs_create((VkhDevice)&ctx->dev->vkDev, ctx->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 2,
+    vkh_cmd_buffs_create(ctx->dev->vkhDev, ctx->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 2,
                          ctx->cmdBuffers);
 #if defined(DEBUG) && defined(ENABLE_VALIDATION)
-    vkh_device_set_object_name((VkhDevice)&ctx->pSurf->dev->vkDev, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
+    vkh_device_set_object_name(ctx->dev->vkhDev, VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT,
                                (uint64_t)ctx->cmd, "vkvgCtxCmd");
 #endif
 }
@@ -404,7 +386,7 @@ void _clear_attachment(VkvgContext ctx) {}
 bool _wait_ctx_flush_end(VkvgContext ctx) {
     LOG(VKVG_LOG_INFO, "CTX: _wait_flush_fence\n");
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-    if (vkh_timeline_wait((VkhDevice)&ctx->dev->vkDev, ctx->pSurf->timeline, ctx->timelineStep) == VK_SUCCESS)
+    if (vkh_timeline_wait(ctx->dev->vkhDev, ctx->pSurf->timeline, ctx->timelineStep) == VK_SUCCESS)
         return true;
 #else
     if (WaitForFences(ctx->dev->vkDev, 1, &ctx->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS)
@@ -424,7 +406,7 @@ bool _wait_and_submit_cmd(VkvgContext ctx) {
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
     VkvgSurface surf = ctx->pSurf;
     VkvgDevice  dev  = surf->dev;
-    // vkh_timeline_wait ((VkhDevice)&dev->vkDev, surf->timeline, ct->timelineStep);
+    // vkh_timeline_wait (dev->vkhDev, surf->timeline, ct->timelineStep);
     if (ctx->pattern && ctx->pattern->type == VKVG_PATTERN_TYPE_SURFACE) {
         // add source surface timeline sync.
         VkvgSurface source = (VkvgSurface)ctx->pattern->data;
@@ -688,29 +670,32 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
     } else
         newPatternType = pat->type;
 
-    if (lastPat && lastPat->type == VKVG_PATTERN_TYPE_SURFACE) {
-        //if lastpat has only one ref, descriptorSet would be destroyed, so flush context
-        if (vkvg_pattern_get_reference_count(lastPat) == 1)
-            vkvg_flush(ctx);
+    if (lastPat) {
+        if (ctx->cmdStarted) {
+            switch (lastPat->type) {
+            case VKVG_PATTERN_TYPE_SURFACE:
+                //if lastpat has only one ref, descriptorSet would be destroyed, so flush context
+                if (vkvg_pattern_get_reference_count(lastPat) == 1)
+                    vkvg_flush(ctx);
+                if (newPatternType != VKVG_PATTERN_TYPE_SURFACE)
+                    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                      ctx->dev->pipelineLayout, 1, 1, &ctx->dev->dummySrcSet, 0, NULL);
+                break;
+            case VKVG_PATTERN_TYPE_LINEAR:
+            case VKVG_PATTERN_TYPE_RADIAL:
+                if (newPatternType != VKVG_PATTERN_TYPE_LINEAR &&
+                    newPatternType != VKVG_PATTERN_TYPE_RADIAL)
+                    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                      ctx->dev->pipelineLayout, 2, 1, &ctx->dev->dummyGradSet, 0, NULL);
+                break;
+            }
+        }
     }
 
     ctx->pattern = pat;
 
     switch (newPatternType) {
     case VKVG_PATTERN_TYPE_SOLID: {
-        if (ctx->cmdStarted && lastPat) {
-            switch (lastPat->type) {
-            case VKVG_PATTERN_TYPE_SURFACE:
-                CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                      ctx->dev->pipelineLayout, 1, 1, &ctx->dev->dummySrcSet, 0, NULL);
-                break;
-            case VKVG_PATTERN_TYPE_LINEAR:
-            case VKVG_PATTERN_TYPE_RADIAL:
-                CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                      ctx->dev->pipelineLayout, 2, 1, &ctx->dev->dummyGradSet, 0, NULL);
-                break;
-            }
-        }
         break;
     }
     case VKVG_PATTERN_TYPE_SURFACE: {

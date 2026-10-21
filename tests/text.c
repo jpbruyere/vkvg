@@ -176,16 +176,17 @@ void test() {
 void single_font_and_size() {
     VkvgContext ctx = vkvg_create(surf);
     vkvg_clear(ctx);
+    VkvgFont font = vkvg_font_create(surf, "mono", 20);
     for (uint32_t i = 0; i < test_size; i++) {
         randomize_color(ctx);
         float x = rndf() * test_width;
         float y = rndf() * test_height;
-        vkvg_select_font_face(ctx, "mono");
-        vkvg_set_font_size(ctx, 20);
+        vkvg_set_font(ctx, font);
         vkvg_move_to(ctx, x, y);
         vkvg_show_text(ctx, "This is a test string!");
     }
     vkvg_destroy(ctx);
+    vkvg_font_destroy(font);
 }
 void simple_text() {
     VkvgContext ctx = vkvg_create(surf);
@@ -288,6 +289,7 @@ const char* const fonts[] = {"mono", "droid", "times", "arial", "times:bold"};
 void random_font_and_size() {
     VkvgContext ctx = vkvg_create(surf);
     vkvg_clear(ctx);
+    //vkvg_log_level = VKVG_LOG_FONT;
 
     for (uint32_t i = 0; i < test_size; i++) {
         randomize_color(ctx);
@@ -295,13 +297,13 @@ void random_font_and_size() {
         float    y = rndf() * test_height;
         uint32_t c = (uint32_t)(rndf() * 80) + 1;
         uint32_t f = (uint32_t)(rndf() * 4);
-
-        vkvg_set_font_size(ctx, c);
-        vkvg_select_font_face(ctx, fonts[f]);
+        VkvgFont font = vkvg_font_create(surf, fonts[f], c);
+        vkvg_set_font(ctx,font);
         vkvg_move_to(ctx, x, y);
         vkvg_show_text(ctx, "This is a test string!");
     }
     vkvg_destroy(ctx);
+
 }
 void proto_sinaitic() {
     VkvgContext ctx = vkvg_create(surf);
@@ -318,16 +320,16 @@ void proto_sinaitic() {
 int main(int argc, char* argv[]) {
     no_test_size = true;
     vkh_log_level = VKVG_LOG_INFO;
-    //PERFORM_TEST(simple_text, argc, argv);
+    PERFORM_TEST(simple_text, argc, argv);
     PERFORM_TEST(variable_text, argc, argv);
-    /*PERFORM_TEST(font_file_path, argc, argv);
+    PERFORM_TEST(font_file_path, argc, argv);
     PERFORM_TEST(single_font_and_size, argc, argv);
     PERFORM_TEST(random_size, argc, argv);
     PERFORM_TEST(random_font_and_size, argc, argv);
     PERFORM_TEST(test, argc, argv);
     PERFORM_TEST(test1, argc, argv);
     PERFORM_TEST(test2, argc, argv);
-    PERFORM_TEST(proto_sinaitic, argc, argv);*/
+    PERFORM_TEST(proto_sinaitic, argc, argv);
 
     return 0;
 }

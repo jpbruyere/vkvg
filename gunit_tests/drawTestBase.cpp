@@ -25,7 +25,7 @@ DrawTestBase::DrawTestBase() {
     info.samples = VK_SAMPLE_COUNT_4_BIT;
     fs::path fontDir = fs::path(GTEST_DATA_ROOT) / "fonts";
     info.fontsDirectories = fontDir.c_str();
-    dev          = vkvg_device_create(&info);
+    dev = vkvg_device_create(&info);
 }
 
 DrawTestBase::~DrawTestBase() { vkvg_device_destroy(dev); }

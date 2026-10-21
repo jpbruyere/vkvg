@@ -137,12 +137,11 @@ VkvgContext vkvg_create(VkvgSurface surf) {
 
     _init_ctx(ctx);
 
-    VkhDevice vkhd = (VkhDevice)&dev->vkDev;
     // for context to be thread safe, command pool and descriptor pool have to be created in the thread of the context.
-    ctx->cmdPool = vkh_cmd_pool_create(vkhd, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    ctx->cmdPool = vkh_cmd_pool_create(dev->vkhDev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 #ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-    ctx->flushFence = vkh_fence_create_signaled((VkhDevice)&ctx->dev->vkDev);
+    ctx->flushFence = vkh_fence_create_signaled(dev->vkhDev);
 #endif
 
     _create_vertices_buff(ctx);
@@ -160,14 +159,14 @@ VkvgContext vkvg_create(VkvgSurface surf) {
         ctx->sizeIBO);
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[0], "CTX Cmd Buff A");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1], "CTX Cmd Buff B");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)ctx->cmdPool, "CTX Cmd Pool");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[0], "CTX Cmd Buff A");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)ctx->cmdBuffers[1], "CTX Cmd Buff B");
 #ifndef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_FENCE, (uint64_t)ctx->flushFence, "CTX Flush Fence");
 #endif
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->indices.buffer, "CTX Index Buff");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_BUFFER, (uint64_t)ctx->vertices.buffer, "CTX Vertex Buff");
 #endif
 
     return ctx;
@@ -1171,8 +1170,10 @@ VkvgPattern vkvg_get_source(VkvgContext ctx) {
 void vkvg_set_font (VkvgContext ctx, VkvgFont font) {
     if (ctx->currentFont == font)
         return;
-    if (ctx->currentFont)
+    if (ctx->currentFont) {
+        _flush_cmd_buff(ctx);
         vkvg_font_destroy(ctx->currentFont);
+    }
     ctx->currentFont = font;
     vkvg_font_reference (font);
 }
@@ -1191,22 +1192,7 @@ void vkvg_load_font_from_path(VkvgContext ctx, const char* path, const char* nam
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-    /*vkvg_font_face_t* fid = _font_cache_add_font_identity(ctx, path, name);
-    if (!_font_cache_load_font_file_in_memory(fid)) {
-        ctx->status = VKVG_STATUS_FILE_NOT_FOUND;
-        return;
-    }
-    _select_font_face(ctx, name);*/
-}
-void vkvg_load_font_from_memory(VkvgContext ctx, unsigned char* fontBuffer, long fontBufferByteSize, const char* name) {
-    if (vkvg_status(ctx))
-        return;
-    // RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-    /*vkvg_font_face_t* fid = _font_cache_add_font_identity(ctx, NULL, name);
-    fid->fontBuffer            = fontBuffer;
-    fid->fontBufSize           = fontBufferByteSize;*/
-
-    //_select_font_face(ctx, name);
+    vkvg_set_font(ctx, vkvg_font_create_from_file(ctx->pSurf, path, 0, 12));
 }
 void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
     if (vkvg_status(ctx))
@@ -1245,9 +1231,8 @@ void vkvg_show_text(VkvgContext ctx, const char* text) {
         return;
     RECORD(ctx, VKVG_CMD_SHOW_TEXT, text);
     LOG(VKVG_LOG_INFO_CMD, "CMD: show_text:\n");
-    //_ensure_renderpass_is_started(ctx);
+    _ensure_renderpass_is_started(ctx);
     _font_cache_show_text(ctx, text);
-    //_flush_undrawn_vertices (ctx);
 }
 
 VkvgText vkvg_text_create(VkvgContext ctx, const char* text) {
@@ -1348,7 +1333,7 @@ void vkvg_save(VkvgContext ctx) {
             }
             ctx->savedStencils  = savedStencilsPtr;
             VkhImage savStencil = vkh_image_ms_create(
-                (VkhDevice)&ctx->dev->vkDev, dev->stencilFormat, ctx->pSurf->surfClass->samples, ctx->pSurf->width, ctx->pSurf->height,
+                ctx->dev->vkhDev, dev->stencilFormat, ctx->pSurf->surfClass->samples, ctx->pSurf->width, ctx->pSurf->height,
                 VKH_MEMORY_USAGE_GPU_ONLY, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
             ctx->savedStencils[curSaveStencil - 1] = savStencil;
 

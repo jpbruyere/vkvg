@@ -1,24 +1,6 @@
-/*
- * Copyright (c) 2018-2022 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 #ifndef VKVG_DEVICE_INTERNAL_H
 #define VKVG_DEVICE_INTERNAL_H
 
@@ -64,14 +46,14 @@ CTOR_ARRAY(SurfaceClass)
 ARRAY_DEL_ELT(SurfaceClass)
 
 typedef struct _vkvg_device_t {
+    vkvg_status_t                    status;      /**< Current status of device, affected by last operation */
     VkDevice                         vkDev;       /**< Vulkan Logical Device */
-    VkPhysicalDeviceMemoryProperties phyMemProps; /**< Vulkan Physical device memory properties */
     VkPhysicalDevice                 phy;         /**< Vulkan Physical device */
     VkInstance                       instance;    /**< Vulkan instance */
+    VkPhysicalDeviceMemoryProperties phyMemProps; /**< Vulkan Physical device memory properties */
 #ifdef VKH_USE_VMA
     void* allocator; /**< Vulkan Memory allocator */
 #endif
-    vkvg_status_t                    status;      /**< Current status of device, affected by last operation */
 
     VkImageTiling      supportedTiling;   /**< Supported image tiling for surface, 0xFF=no support */
     VkFormat           stencilFormat;     /**< Supported vulkan image format for stencil */
@@ -102,11 +84,12 @@ typedef struct _vkvg_device_t {
     VkDescriptorSet       dummyGradSet;
 
 
-    VkhDevice vkhDev; /**< old VkhDev created during vulkan context creation by @ref vkvg_device_create. */
+    VkhDevice             vkhDev;
+    bool                holdVkhDev;       /**< vkhDevice should be destroyed */
 
-    bool                deferredResolve; /**< if true, resolve only on context destruction and set as source */
+    bool                deferredResolve;  /**< if true, resolve only on context destruction and set as source */
 
-    font_cache_t*      fontCache; /**< Store everything relative to common font caching system */
+    font_cache_t*      fontCache;         /**< Store everything relative to common font caching system */
 
     VkvgContext lastCtx; /**< last element of double linked list of context, used to trigger font caching system update
                             on all contexts*/

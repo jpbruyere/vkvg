@@ -8,6 +8,7 @@
 
 #include "vkh.h"
 
+#include <stdlib.h>
 #include <locale.h>
 #include <string.h>
 #include <wchar.h>
@@ -109,6 +110,12 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
         return;
     }
     if (fontDirs) {
+        const char* minimal_blank_config =
+            "<?xml version=\"1.0\"?>"
+            "<!DOCTYPE fontconfig SYSTEM \"fonts.dtd\">"
+            "<fontconfig>"
+            "  <cachedir>/tmp/vkvg-fc-cache</cachedir>"
+            "</fontconfig>";
         cache->config = FcConfigCreate();
         if (!cache->config) {
             LOGE("Failed to create custom Fontconfig configuration.\n");
@@ -116,6 +123,14 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
             free(cache);
             return;
         }
+        if (!FcConfigParseAndLoadFromMemory(cache->config, (const FcChar8*)minimal_blank_config, FcTrue)) {
+            LOGE ("Error: Failed to scan fonts in directory.\n");
+            FcConfigDestroy(cache->config);
+            dev->status = VKVG_STATUS_DEVICE_ERROR;
+            free(cache);
+            return;
+        }
+
         const char *start = fontDirs;
         const char *end;
         char fontDir[1024];
@@ -124,12 +139,21 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
             end = strchr(start, ',');
             size_t len = end ? (size_t)(end - start) : strlen(start);
             strncpy(fontDir, start, len);
+            fontDir[len] = '\0';
 
             if (!FcConfigAppFontAddDir(cache->config, (FcChar8*)fontDir))
                 LOG(VKVG_LOG_DEBUG, "Failed to add '%s' to Fontconfig configuration.\n", fontDir);
 
             start = end ? end + 1 : NULL;
         }
+        if (!FcConfigBuildFonts(cache->config)) {
+            LOGE ("Error: Failed to scan fonts in directory.\n");
+            FcConfigDestroy(cache->config);
+            dev->status = VKVG_STATUS_DEVICE_ERROR;
+            free(cache);
+            return;
+        }
+
         FcConfigSetCurrent(cache->config);
     } else {
         cache->config = FcConfigGetCurrent();
@@ -158,19 +182,17 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
     cache->texPixelSize = 1;
 #endif
 
-    VkhDevice vkhd = (VkhDevice)&dev->vkDev;
-
     cache->texPages = array_create_tex_page_t(FONT_CACHE_INIT_LAYERS);
     for (int i = 0; i < FONT_CACHE_INIT_LAYERS; ++i) {
         array_add_tex_page_t(&cache->texPages, (tex_page_t){array_create_TexRef(10), 0.f});
     }
     cache->texture   = vkh_tex2d_array_create(
-        vkhd, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, FONT_CACHE_INIT_LAYERS, VKH_MEMORY_USAGE_GPU_ONLY,
+        dev->vkhDev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, FONT_CACHE_INIT_LAYERS, VKH_MEMORY_USAGE_GPU_ONLY,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
     vkh_image_create_view (cache->texture, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT);
 
-    cache->uploadFence = vkh_fence_create(vkhd);
+    cache->uploadFence = vkh_fence_create(dev->vkhDev);
 
     const VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1};
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
@@ -190,10 +212,10 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
 
     const uint32_t buffLength = FONT_PAGE_SIZE * FONT_PAGE_SIZE * cache->texPixelSize;
 
-    vkh_buffer_init(vkhd, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU, buffLength, &cache->buff,
+    vkh_buffer_init(dev->vkhDev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU, buffLength, &cache->buff,
                     true);
 
-    cache->cmd = vkh_cmd_buff_create(vkhd, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    cache->cmd = vkh_cmd_buff_create(dev->vkhDev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
     // Set texture cache initial layout to shaderReadOnly to prevent error msg if cache is not fill
     const VkImageSubresourceRange subres = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, FONT_CACHE_INIT_LAYERS};
@@ -209,9 +231,9 @@ void _fonts_cache_create(VkvgDevice dev, const char* fontDirs) {
     cache->fontBuffers = array_create_FontBuffer(4);
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)cache->descriptorPool,
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)cache->descriptorPool,
                                "Font cache Descriptor Pool");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)cache->dsFont, "Cache DescSet FONT");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)cache->dsFont, "Cache DescSet FONT");
 #endif
 }
 void _font_buffer_destroy (font_cache_t* cache, FontBuffer fontBuffer) {
@@ -253,7 +275,8 @@ void _font_cache_destroy(VkvgDevice dev) {
         for (int j = 0; j < buffs[i]->faces.count; ++j) {
             VkvgFont *fonts = faces[j]->sizes.elements;
             for (int k = 0; k < faces[j]->sizes.count; ++k) {
-                vkvg_font_destroy(fonts[k]);
+                //while (vkvg_font_get_reference_count(fonts[k]) > 0)
+                    vkvg_font_destroy(fonts[k]);
             }
         }
     }
@@ -315,7 +338,7 @@ void _increase_font_tex_array(VkvgDevice dev) {
     uint8_t newSize = cache->texPages.count;
 
     VkhImage newImg  = vkh_tex2d_array_create(
-        (VkhDevice)&dev->vkDev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, newSize, VKH_MEMORY_USAGE_GPU_ONLY,
+        dev->vkhDev, cache->texFormat, FONT_PAGE_SIZE, FONT_PAGE_SIZE, newSize, VKH_MEMORY_USAGE_GPU_ONLY,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
     vkh_image_create_view(newImg, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT);
 
@@ -671,8 +694,8 @@ bool try_get_or_create_font_face_from_query (VkvgDevice dev, const char* querySt
 
     //FcPatternAddBool(request, FC_SCALABLE, FcTrue);
     //FcPatternAddString(request, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
-    //FcConfigSubstitute(cache->config, request, FcMatchPattern);
-    //FcDefaultSubstitute(request);
+    FcConfigSubstitute(cache->config, request, FcMatchPattern);
+    FcDefaultSubstitute(request);
 
     FcResult   result;
     FcPattern* font = FcFontMatch(cache->config, request, &result);
@@ -746,13 +769,13 @@ bool try_get_font_size (FontFace face, uint32_t pt26_6, signed long* coords, Vkv
     for (int i = 0; i < face->sizes.count; ++i) {
         VkvgFont f = face->sizes.elements[i];
         if (f->charSize == pt26_6) {
-            if (!coords)
-                return true;
-            for (int axe = 0; axe < face->numAxis; ++axe) {
-                if (f->coords[axe] != coords[axe])
-                    return false;
+            if (coords) {
+                for (int axe = 0; axe < face->numAxis; ++axe) {
+                    if (f->coords[axe] != coords[axe])
+                        return false;
+                }
+                free(coords);//coords matche, free new coords
             }
-            free(coords);//coords matche, free new coords
             *font = f;
             return true;
         }
@@ -995,7 +1018,6 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
     _add_point(ctx, pen.x, pen.y);
     _flush_chars_to_tex(tr->font);
     UNLOCK_FONTCACHE(ctx->dev)
-
     /*if (ctx->fontCacheImg != ctx->dev->fontCache->texture) {
         vkvg_flush(ctx);
         _font_cache_update_context_descset(ctx);

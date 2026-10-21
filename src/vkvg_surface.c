@@ -1,28 +1,9 @@
-/*
- * Copyright (c) 2018-2020 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 
 #include "vkvg_surface_internal.h"
 #include "vkvg_device_internal.h"
-#include "vkvg_context_internal.h"
 
 #define STBI_ASSERT(x) ((void)0)
 #define STBIW_ASSERT(x) ((void)0)
@@ -104,12 +85,12 @@ VkvgSurface vkvg_surface_create_from_bitmap(VkvgDevice dev, unsigned char* img, 
     uint32_t                 imgSize         = width * height * 4;
     VkImageSubresourceLayers imgSubResLayers = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
     // original format image
-    VkhImage stagImg = vkh_image_create((VkhDevice)&surf->dev->vkDev, VK_FORMAT_R8G8B8A8_UNORM, surf->width,
+    VkhImage stagImg = vkh_image_create(dev->vkhDev, VK_FORMAT_R8G8B8A8_UNORM, surf->width,
                                         surf->height, VK_IMAGE_TILING_LINEAR, VKH_MEMORY_USAGE_GPU_ONLY,
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     // staging buffer
     vkh_buffer_t buff = {0};
-    vkh_buffer_init((VkhDevice)&dev->vkDev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU, imgSize,
+    vkh_buffer_init(dev->vkhDev, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU, imgSize,
                     &buff, true);
 
     memcpy(vkh_buffer_get_mapped_pointer(&buff), img, imgSize);
@@ -318,11 +299,11 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char* path) {
     VkhImage stagImg;
 
     if (dev->pngStagTiling == VK_IMAGE_TILING_LINEAR)
-        stagImg = vkh_image_create((VkhDevice)&surf->dev->vkDev, dev->pngStagFormat, surf->width, surf->height,
+        stagImg = vkh_image_create(dev->vkhDev, dev->pngStagFormat, surf->width, surf->height,
                                    dev->pngStagTiling, VKH_MEMORY_USAGE_GPU_TO_CPU,
                                    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
     else
-        stagImg = vkh_image_create((VkhDevice)&surf->dev->vkDev, dev->pngStagFormat, surf->width, surf->height,
+        stagImg = vkh_image_create(dev->vkhDev, dev->pngStagFormat, surf->width, surf->height,
                                    dev->pngStagTiling, VKH_MEMORY_USAGE_GPU_ONLY,
                                    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
@@ -351,7 +332,7 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char* path) {
     VkhImage stagImgLinear = stagImg;
 
     if (dev->pngStagTiling == VK_IMAGE_TILING_OPTIMAL) {
-        stagImgLinear   = vkh_image_create((VkhDevice)&surf->dev->vkDev, dev->pngStagFormat, surf->width, surf->height,
+        stagImgLinear   = vkh_image_create(dev->vkhDev, dev->pngStagFormat, surf->width, surf->height,
                                            VK_IMAGE_TILING_LINEAR, VKH_MEMORY_USAGE_GPU_TO_CPU,
                                            VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
         VkImageCopy cpy = {.srcSubresource = imgSubResLayers,
@@ -418,7 +399,7 @@ vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char* cons
     VkvgDevice               dev             = surf->dev;
 
     // RGBA to blit to, surf img is bgra
-    VkhImage stagImg = vkh_image_create((VkhDevice)&surf->dev->vkDev, VK_FORMAT_R8G8B8A8_UNORM, surf->width,
+    VkhImage stagImg = vkh_image_create(dev->vkhDev, VK_FORMAT_R8G8B8A8_UNORM, surf->width,
                                         surf->height, VK_IMAGE_TILING_LINEAR, VKH_MEMORY_USAGE_GPU_TO_CPU,
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 

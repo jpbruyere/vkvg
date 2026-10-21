@@ -1,24 +1,6 @@
-/*
- * Copyright (c) 2018-2020 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 
 #include "vkvg_device_internal.h"
 #include "vkvg_surface_internal.h"
@@ -457,7 +439,7 @@ void _setupPipelines(surface_class* surf) {
 }
 
 void _create_surface_main_image(VkvgSurface surf) {
-    VkhDevice vkhd = (VkhDevice)&surf->dev->vkDev;
+    VkhDevice vkhd = surf->dev->vkhDev;
     surf->img      = vkh_image_create(vkhd, surf->surfClass->format, surf->width, surf->height, surf->dev->supportedTiling,
                                       VKH_MEMORY_USAGE_GPU_ONLY,
                                       VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
@@ -473,7 +455,7 @@ void _create_surface_main_image(VkvgSurface surf) {
 }
 // create multisample color img if sample count > 1 and the stencil buffer multisampled or not
 void _create_surface_secondary_images(VkvgSurface surf) {
-    VkhDevice vkhd = (VkhDevice)&surf->dev->vkDev;
+    VkhDevice vkhd = surf->dev->vkhDev;
     if (surf->surfClass->samples > VK_SAMPLE_COUNT_1_BIT) {
         surf->imgMS = vkh_image_ms_create(
             vkhd, surf->surfClass->format, surf->surfClass->samples, surf->width, surf->height, VKH_MEMORY_USAGE_GPU_ONLY,
@@ -527,7 +509,7 @@ void _create_framebuffer(VkvgSurface surf) {
     }
     VK_CHECK_RESULT(vkCreateFramebuffer(surf->dev->vkDev, &frameBufferCreateInfo, NULL, &surf->fb));
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
-    vkh_device_set_object_name((VkhDevice)&surf->dev->vkDev, VK_OBJECT_TYPE_FRAMEBUFFER, (uint64_t)surf->fb, "SURF FB");
+    vkh_device_set_object_name(surf->dev->vkhDev, VK_OBJECT_TYPE_FRAMEBUFFER, (uint64_t)surf->fb, "SURF FB");
 #endif
 }
 void _create_surface_images(VkvgSurface surf) {
@@ -550,7 +532,7 @@ surface_class* _create_surface_class (VkvgDevice dev, VkFormat format, VkSampleC
         return NULL;
     }
 
-    VkhDevice vkhd = (VkhDevice)&dev->vkDev;
+    VkhDevice vkhd = dev->vkhDev;
 
     surf->dev     = dev;
     surf->format  = format;
@@ -650,7 +632,7 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags 
     if (dev->threadAware)
         mtx_init(&surf->mutex, mtx_plain);
 
-    VkhDevice vkhd = (VkhDevice)&surf->dev->vkDev;
+    VkhDevice vkhd = surf->dev->vkhDev;
     surf->cmdPool =
         vkh_cmd_pool_create(vkhd, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
     vkh_cmd_buffs_create(vkhd, surf->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1, &surf->cmd);
@@ -677,7 +659,7 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags 
                                                              .pSetLayouts        = &dev->dslGrad};
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &surf->dsGradient));
 
-    vkh_buffer_init((VkhDevice)dev, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
+    vkh_buffer_init(dev->vkhDev, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
                     sizeof(vkvg_gradient_t), &surf->uboGrad, true);
 
     VkDescriptorBufferInfo dbi                = {surf->uboGrad.buffer, 0, VK_WHOLE_SIZE};
@@ -706,7 +688,7 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags 
 /*bool _surface_wait_cmd (VkvgSurface surf) {
     LOG(VKVG_LOG_INFO, "SURF: _surface__wait_flush_fence\n");
 #ifdef VKVG_ENABLE_VK_TIMELINE_SEMAPHORE
-    if (vkh_timeline_wait ((VkhDevice)surf->dev, surf->timeline, surf->timelineStep) == VK_SUCCESS)
+    if (vkh_timeline_wait (surf->dev->vkhDev, surf->timeline, surf->timelineStep) == VK_SUCCESS)
         return true;
 #else
     if (WaitForFences (surf->dev->vkDev, 1, &surf->flushFence, VK_TRUE, VKVG_FENCE_TIMEOUT) == VK_SUCCESS) {
@@ -726,7 +708,7 @@ void _surface_submit_cmd(VkvgSurface surf) {
     vkh_cmd_submit_timelined(dev->gQueue, &surf->cmd, surf->timeline, surf->timelineStep, surf->timelineStep + 1);
     surf->timelineStep++;
     UNLOCK_DEVICE
-    vkh_timeline_wait((VkhDevice)&dev->vkDev, surf->timeline, surf->timelineStep);
+    vkh_timeline_wait(dev->vkhDev, surf->timeline, surf->timelineStep);
 #else
     LOCK_DEVICE
     vkh_cmd_submit(surf->dev->gQueue, &surf->cmd, surf->flushFence);

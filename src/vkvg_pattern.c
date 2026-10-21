@@ -47,9 +47,9 @@ void _surface_pattern_init (VkvgDevice dev, surface_pattern_t* pat) {
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &pat->dsSource));
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)pat->descPool,
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_POOL, (uint64_t)pat->descPool,
                                "Pattern Descriptor Pool");
-    vkh_device_set_object_name((VkhDevice)dev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)pat->dsSource, "Pattern DescSet");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET, (uint64_t)pat->dsSource, "Pattern DescSet");
 #endif
 }
 void _create_sampler(surface_pattern_t* pat) {

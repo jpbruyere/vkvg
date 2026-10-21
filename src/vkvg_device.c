@@ -1,24 +1,6 @@
-﻿/*
- * Copyright (c) 2018-2025 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+﻿// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
@@ -82,8 +64,6 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     if (dev->status != VKVG_STATUS_SUCCESS)
         return;
 
-    VkhDevice vkhd = (VkhDevice)&dev->vkDev;
-
     if (!_device_init_function_pointers(dev)) {
         dev->status = VKVG_STATUS_NULL_POINTER;
         return;
@@ -92,7 +72,7 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     VkhPhyInfo phyInfos = vkh_phyinfo_create(dev->phy, NULL);
 
     dev->phyMemProps = phyInfos->memProps;
-    dev->gQueue      = vkh_queue_create(vkhd, info->qFamIdx, info->qIndex);
+    dev->gQueue      = vkh_queue_create(dev->vkhDev, info->qFamIdx, info->qIndex);
     // mtx_init (&dev->gQMutex, mtx_plain);
 
     vkh_phyinfo_destroy(phyInfos);
@@ -102,9 +82,9 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     vmaCreateAllocator(&allocatorInfo, (VmaAllocator*)&dev->allocator);
 #endif
 
-    dev->cmdPool = vkh_cmd_pool_create(vkhd, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    dev->cmd     = vkh_cmd_buff_create(vkhd, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-    dev->fence   = vkh_fence_create_signaled(vkhd);
+    dev->cmdPool = vkh_cmd_pool_create(dev->vkhDev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    dev->cmd     = vkh_cmd_buff_create(dev->vkhDev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    dev->fence   = vkh_fence_create_signaled(dev->vkhDev);
 
     //_device_create_pipeline_cache(dev);
     _device_createDescriptorSetLayout (dev);
@@ -122,14 +102,14 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
     _linux_register_error_handler();
 #endif
 #ifdef VKVG_DBG_UTILS
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)dev->cmdPool, "Device Cmd Pool");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)dev->cmd, "Device Cmd Buff");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_FENCE, (uint64_t)dev->fence, "Device Fence");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_COMMAND_POOL, (uint64_t)dev->cmdPool, "Device Cmd Pool");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)dev->cmd, "Device Cmd Buff");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_FENCE, (uint64_t)dev->fence, "Device Fence");
 
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
-    vkh_device_set_object_name(vkhd, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
 #endif
 #endif
     dev->status = VKVG_STATUS_SUCCESS;
@@ -345,7 +325,8 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
                                           .ppEnabledExtensionNames = enabledExts,
                                           .pEnabledFeatures        = &enabledFeatures,
                                           .pNext                   = pNext};
-        dev->vkhDev                    = vkh_device_create(app, pi, &device_info);
+        dev->vkhDev = vkh_device_create(app, pi, &device_info);
+        dev->holdVkhDev = true;
 
         info->inst    = vkh_app_get_inst(app);
         info->phy     = vkh_device_get_phy(dev->vkhDev);
@@ -354,6 +335,8 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
         info->qIndex  = 0;
 
         vkh_app_free_phyinfos(phyCount, phys);
+    } else {
+        dev->vkhDev = vkh_device_import(info->inst, info->phy, info->vkdev);
     }
 
     _device_init(dev, info);
@@ -424,7 +407,7 @@ void vkvg_device_destroy(VkvgDevice dev) {
         mtx_destroy(&dev->fontCache->mutex);
     }
 
-    if (dev->vkhDev) {
+    if (dev->holdVkhDev) {
         VkhApp app = vkh_device_get_app(dev->vkhDev);
         vkh_device_destroy(dev->vkhDev);
         vkh_app_destroy(app);

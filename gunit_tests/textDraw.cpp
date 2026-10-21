@@ -78,9 +78,22 @@ TEST_F(TextDrawTest, ShowText) {
     vkvg_show_text(ctx, "いろはにほへと ちりぬるを わかよたれそ つねならむ");
     vkvg_font_extents(ctx, &fe);
     penY += fe.height;
+
     vkvg_set_text_direction(ctx, VKVG_VERTICAL);
     vkvg_move_to(ctx, 20, 60);
     vkvg_show_text(ctx, "石英に刺激され、白ウサギはカラスたちのために、赤ギツネの上に飛び乗った。");
+
+    vkvg_font_destroy(font);
+
+    vkvg_set_text_direction(ctx, VKVG_HORIZONTAL);
+    font = vkvg_font_create(surf, "Roboto:bold", 30);
+    vkvg_set_font(ctx, font);
+    vkvg_move_to(ctx, 40, penY);
+    vkvg_show_text(ctx, "Galvanized by the quartz, The white rabbit just jumped on the red fox for the sake of the crows");
+    vkvg_font_extents(ctx, &fe);
+    penY += fe.height;
+
+
 
 
     vkvg_destroy(ctx);

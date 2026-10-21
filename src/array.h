@@ -1,4 +1,7 @@
-﻿#ifndef ARRAY_H_INCLUDED
+﻿// Copyright (c) 2018-2026 Jean-Philippe Bruyère <jp_bruyere@hotmail.com>
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+#ifndef ARRAY_H_INCLUDED
 #define ARRAY_H_INCLUDED
 
 #include <stddef.h>
