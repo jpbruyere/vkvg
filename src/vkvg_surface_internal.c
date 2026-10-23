@@ -268,20 +268,20 @@ void _setupPipelines(surface_class* surf) {
                                         STENCIL_CLIP_BIT,
                                         STENCIL_FILL_BIT,
                                         0};
-    VkStencilOpState clipingOpState  = {VK_STENCIL_OP_ZERO,
-                                        VK_STENCIL_OP_REPLACE,
+    VkStencilOpState clipingOpState  = {VK_STENCIL_OP_KEEP,
+                                        VK_STENCIL_OP_INCREMENT_AND_CLAMP,
                                         VK_STENCIL_OP_KEEP,
-                                        VK_COMPARE_OP_EQUAL,
-                                        STENCIL_FILL_BIT,
+                                        VK_COMPARE_OP_LESS_OR_EQUAL,
                                         STENCIL_ALL_BIT,
-                                        0x2};
+                                        STENCIL_ALL_BIT,
+                                        0x0};
     VkStencilOpState stencilOpState  = {VK_STENCIL_OP_KEEP,
-                                        VK_STENCIL_OP_ZERO,
                                         VK_STENCIL_OP_KEEP,
-                                        VK_COMPARE_OP_EQUAL,
-                                        STENCIL_FILL_BIT,
-                                        STENCIL_FILL_BIT,
-                                        0x1};
+                                        VK_STENCIL_OP_KEEP,
+                                        VK_COMPARE_OP_LESS_OR_EQUAL,
+                                        STENCIL_ALL_BIT,
+                                        STENCIL_ALL_BIT,
+                                        0x0};
 
     VkPipelineDepthStencilStateCreateInfo dsStateCreateInfo = {
                                                                .sType             = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -395,11 +395,12 @@ void _setupPipelines(surface_class* surf) {
 
     dsStateCreateInfo.back = dsStateCreateInfo.front = stencilOpState;
     blendAttachmentState.colorWriteMask              = 0xf;
-    dynamicState.dynamicStateCount                   = 3;
+    dynamicState.dynamicStateCount                   = 5;
     pipelineCreateInfo.stageCount                    = 2;
     VK_CHECK_RESULT(
         vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &surf->pipe_OVER));
 
+    dynamicState.dynamicStateCount                   = 3;
     blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
     VK_CHECK_RESULT(
         vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &surf->pipe_SUB));

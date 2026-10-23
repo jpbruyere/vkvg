@@ -645,7 +645,9 @@ void _start_cmd_for_render_pass(VkvgContext ctx) {
     _update_push_constants(ctx);
 
     _bind_draw_pipeline(ctx);
-    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, 0xff);
+    CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
     ctx->cmdStarted = true;
 }
 // compute inverse mat used in shader when context matrix has changed

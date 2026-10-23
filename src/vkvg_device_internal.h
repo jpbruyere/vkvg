@@ -7,9 +7,9 @@
 #include "vkvg_fonts.h"
 #include "vkvg_internal.h"
 
-#define STENCIL_FILL_BIT              0x1
-#define STENCIL_CLIP_BIT              0x2
-#define STENCIL_ALL_BIT               0x3
+#define STENCIL_FILL_BIT              1 << 7
+#define STENCIL_CLIP_BIT              0xFF
+#define STENCIL_ALL_BIT               0xFF
 
 #define VKVG_MAX_CACHED_CONTEXT_COUNT 2
 

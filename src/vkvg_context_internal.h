@@ -100,6 +100,7 @@ typedef struct _vkvg_context_save_t {
     VkvgPattern             pattern;
     VkvgFont                currentFont;
     vkvg_clip_state_t       clippingState;
+    uint32_t                curClipRef;
 } vkvg_context_save_t;
 
 typedef struct _vkvg_context_t {
@@ -196,6 +197,9 @@ typedef struct _vkvg_context_t {
     uint8_t              ctxSaveCount;// saved ctx count
     uint8_t              curSavBit;    // current stencil bit used to save context, 6 bits used by stencil for save/restore
     vkvg_clip_state_t    curClipState;    // current clipping status relative to the previous saved one or clear state if
+
+    uint32_t             curClipRef;
+    uint32_t             savedClipOffset;
 
     VkhImage*            savedStencils;   // additional image for saving contexes once more than 6 save/restore are reached
     VkRenderPassBeginInfo renderPassBeginInfo;
