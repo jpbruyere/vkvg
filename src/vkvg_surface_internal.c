@@ -645,7 +645,7 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags 
     surf->flushFence = vkh_fence_create(vkhd);
 #endif
 
-    const VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1};
+    const VkDescriptorPoolSize descriptorPoolSize = {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1};
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
                                                            .maxSets = 1,
                                                            .flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
@@ -660,14 +660,14 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags 
     VK_CHECK_RESULT(vkAllocateDescriptorSets(dev->vkDev, &descriptorSetAllocateInfo, &surf->dsGradient));
 
     vkh_buffer_init(dev->vkhDev, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
-                    sizeof(vkvg_gradient_t), &surf->uboGrad, true);
+                    MAX_GRAD * sizeof(vkvg_gradient_t), &surf->uboGrad, true);
 
     VkDescriptorBufferInfo dbi                = {surf->uboGrad.buffer, 0, VK_WHOLE_SIZE};
     VkWriteDescriptorSet   writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                                                  .dstSet          = surf->dsGradient,
                                                  .dstBinding      = 0,
                                                  .descriptorCount = 1,
-                                                 .descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                                 .descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
                                                  .pBufferInfo     = &dbi};
     vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 

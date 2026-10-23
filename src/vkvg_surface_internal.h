@@ -9,6 +9,8 @@
 #include "vkh.h"
 #include "vkh_buffer.h"
 
+#define MAX_GRAD 5
+
 typedef struct _surface_class {
     atomic_int      references;
     VkvgDevice      dev;
@@ -50,6 +52,7 @@ typedef struct _vkvg_surface_t {
     VkDescriptorPool    descPool;
     VkDescriptorSet     dsGradient;
     vkh_buffer_t        uboGrad;    // uniform buff obj holdings gradient infos
+    uint32_t            gradCount;  // recorded grad draws in current command
 } vkvg_surface;
 
 #define LOCK_SURFACE(surf)                                                                                             \

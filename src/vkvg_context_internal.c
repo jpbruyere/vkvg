@@ -579,6 +579,7 @@ void _flush_cmd_buff(VkvgContext ctx) {
     vkh_cmd_end(ctx->cmd);
 
     _wait_and_submit_cmd(ctx);
+    ctx->pSurf->gradCount = 0;
 }
 
 // bind correct draw pipeline depending on current OPERATOR
@@ -633,7 +634,9 @@ void _start_cmd_for_render_pass(VkvgContext ctx) {
     CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
     VkDescriptorSet dss[] = {ctx->dev->fontCache->dsFont, ctx->dev->dummySrcSet, ctx->dev->dummyGradSet};
-    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout, 0, 3, dss, 0, NULL);
+    uint32_t offset = 0;
+
+    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout, 0, 3, dss, 1, &offset);
 
     VkDeviceSize offsets[1] = {0};
     CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
@@ -684,9 +687,11 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             case VKVG_PATTERN_TYPE_LINEAR:
             case VKVG_PATTERN_TYPE_RADIAL:
                 if (newPatternType != VKVG_PATTERN_TYPE_LINEAR &&
-                    newPatternType != VKVG_PATTERN_TYPE_RADIAL)
+                    newPatternType != VKVG_PATTERN_TYPE_RADIAL) {
+                    uint32_t offset = 0;
                     CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                      ctx->dev->pipelineLayout, 2, 1, &ctx->dev->dummyGradSet, 0, NULL);
+                                      ctx->dev->pipelineLayout, 2, 1, &ctx->dev->dummyGradSet, 1, &offset);
+                }
                 break;
             }
         }
@@ -762,13 +767,15 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad->cp[0].z, &grad->cp[0].w);
             vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad->cp[1].z, &grad->cp[0].w);
         }
-
-        memcpy(vkh_buffer_get_mapped_pointer(&ctx->pSurf->uboGrad), grad, sizeof(vkvg_gradient_t));
+        uint32_t offset = ctx->pSurf->gradCount * sizeof(vkvg_gradient_t);
+        memcpy(vkh_buffer_get_mapped_pointer(&ctx->pSurf->uboGrad) + offset,
+               grad, sizeof(vkvg_gradient_t));
         vkh_buffer_flush(&ctx->pSurf->uboGrad);
 
         _ensure_renderpass_is_started(ctx);
         CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
-                              2, 1, &ctx->pSurf->dsGradient, 0, NULL);
+                              2, 1, &ctx->pSurf->dsGradient, 1, &offset);
+        ctx->pSurf->gradCount++;
         break;
     }
     ctx->pushConsts.fsq_patternType = (ctx->pushConsts.fsq_patternType & FULLSCREEN_BIT) + newPatternType;

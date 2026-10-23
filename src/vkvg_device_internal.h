@@ -42,8 +42,12 @@ typedef struct _cached_ctx {
 
 typedef struct _surface_class* SurfaceClass;
 
+DIAGNOSTIC_DISABLE_UNUSED
+
 CTOR_ARRAY(SurfaceClass)
 ARRAY_DEL_ELT(SurfaceClass)
+
+DIAGNOSTIC_RESTORE_UNUSED
 
 typedef struct _vkvg_device_t {
     vkvg_status_t                    status;      /**< Current status of device, affected by last operation */
@@ -51,16 +55,14 @@ typedef struct _vkvg_device_t {
     VkPhysicalDevice                 phy;         /**< Vulkan Physical device */
     VkInstance                       instance;    /**< Vulkan instance */
     VkPhysicalDeviceMemoryProperties phyMemProps; /**< Vulkan Physical device memory properties */
-#ifdef VKH_USE_VMA
-    void* allocator; /**< Vulkan Memory allocator */
-#endif
 
-    VkImageTiling      supportedTiling;   /**< Supported image tiling for surface, 0xFF=no support */
-    VkFormat           stencilFormat;     /**< Supported vulkan image format for stencil */
-    VkImageAspectFlags stencilAspectFlag; /**< stencil only or depth stencil, could be solved by
-                                             VK_KHR_separate_depth_stencil_layouts*/
-    VkFormat        pngStagFormat;          /**< Supported vulkan image format png write staging img */
-    VkImageTiling   pngStagTiling;          /**< tiling for the blit operation */
+    VkDeviceSize       minUniformBufferOffsetAlignment; /**< stored for dynamic uniform buffer offsets */
+    VkImageTiling      supportedTiling;     /**< Supported image tiling for surface, 0xFF=no support */
+    VkFormat           stencilFormat;       /**< Supported vulkan image format for stencil */
+    VkImageAspectFlags stencilAspectFlag;   /**< stencil only or depth stencil, could be solved by
+                                                 VK_KHR_separate_depth_stencil_layouts*/
+    VkFormat           pngStagFormat;        /**< Supported vulkan image format png write staging img */
+    VkImageTiling      pngStagTiling;        /**< tiling for the blit operation */
 
     mtx_t           mutex;       /**< protect device access (queue, cahes, ...)from ctxs in separate threads */
     bool            threadAware; /**< if true, mutex is created and guard device queue and caches access */

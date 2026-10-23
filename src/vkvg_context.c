@@ -1434,7 +1434,7 @@ void vkvg_restore(VkvgContext ctx) {
 
             uint8_t curSaveBit = 1 << ((ctx->curSavBit - 1) % 6 + 2);
 
-            //ctx->renderPassBeginInfo.renderPass = ctx->dev->renderPass_ClearStencil;
+            ctx->renderPassBeginInfo.renderPass = ctx->pSurf->surfClass->renderPass_ClearStencil;
             _start_cmd_for_render_pass(ctx);
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)

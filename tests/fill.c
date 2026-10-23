@@ -1,7 +1,7 @@
 #include "test.h"
 
 void test() {
-    VkvgContext ctx = _initCtx(surf);
+    VkvgContext ctx = _initCtx();
 
     vkvg_set_source_rgba(ctx, 0.1f, 0.9f, 0.1f, 1.0f);
     vkvg_move_to(ctx, 100, 100);

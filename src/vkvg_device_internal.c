@@ -95,7 +95,7 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
 
     dsLayoutBinding[0].pImmutableSamplers = NULL;
-    dsLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    dsLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslGrad));
 
     VkPushConstantRange pushConstantRange[] = {

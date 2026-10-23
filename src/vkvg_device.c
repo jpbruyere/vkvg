@@ -73,14 +73,13 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
 
     dev->phyMemProps = phyInfos->memProps;
     dev->gQueue      = vkh_queue_create(dev->vkhDev, info->qFamIdx, info->qIndex);
+
+    VkPhysicalDeviceProperties phyProps = vkh_phyinfo_get_properties(phyInfos);
+    dev->minUniformBufferOffsetAlignment = phyProps.limits.minUniformBufferOffsetAlignment;
+
     // mtx_init (&dev->gQMutex, mtx_plain);
 
     vkh_phyinfo_destroy(phyInfos);
-
-#ifdef VKH_USE_VMA
-    VmaAllocatorCreateInfo allocatorInfo = {.physicalDevice = info->phy, .device = info->vkdev};
-    vmaCreateAllocator(&allocatorInfo, (VmaAllocator*)&dev->allocator);
-#endif
 
     dev->cmdPool = vkh_cmd_pool_create(dev->vkhDev, dev->gQueue->familyIndex, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
     dev->cmd     = vkh_cmd_buff_create(dev->vkhDev, dev->cmdPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -108,6 +107,7 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
 
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
+    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)dev->smpFont, "FONT Sampler");
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
 #endif
@@ -398,10 +398,6 @@ void vkvg_device_destroy(VkvgDevice dev) {
 
     _font_cache_destroy(dev);
 
-#ifdef VKH_USE_VMA
-    vmaDestroyAllocator(dev->allocator);
-#endif
-
     if (dev->threadAware) {
         mtx_destroy(&dev->mutex);
         mtx_destroy(&dev->fontCache->mutex);
@@ -411,6 +407,8 @@ void vkvg_device_destroy(VkvgDevice dev) {
         VkhApp app = vkh_device_get_app(dev->vkhDev);
         vkh_device_destroy(dev->vkhDev);
         vkh_app_destroy(app);
+    } else {
+        vkh_device_destroy(dev->vkhDev);
     }
 
     free(dev);
