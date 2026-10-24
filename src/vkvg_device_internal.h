@@ -7,8 +7,8 @@
 #include "vkvg_fonts.h"
 #include "vkvg_internal.h"
 
-#define STENCIL_FILL_BIT              1 << 7
-#define STENCIL_CLIP_BIT              0xFF
+#define STENCIL_FILL_MASK             0x80
+#define STENCIL_CLIP_MASK             0x7F
 #define STENCIL_ALL_BIT               0xFF
 
 #define VKVG_MAX_CACHED_CONTEXT_COUNT 2
@@ -21,9 +21,7 @@ extern PFN_vkCmdBindVertexBuffers  CmdBindVertexBuffers;
 extern PFN_vkCmdDrawIndexed CmdDrawIndexed;
 extern PFN_vkCmdDraw        CmdDraw;
 
-extern PFN_vkCmdSetStencilCompareMask CmdSetStencilCompareMask;
 extern PFN_vkCmdSetStencilReference   CmdSetStencilReference;
-extern PFN_vkCmdSetStencilWriteMask   CmdSetStencilWriteMask;
 extern PFN_vkCmdBeginRenderPass       CmdBeginRenderPass;
 extern PFN_vkCmdEndRenderPass         CmdEndRenderPass;
 extern PFN_vkCmdSetViewport           CmdSetViewport;

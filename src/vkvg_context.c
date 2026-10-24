@@ -842,37 +842,16 @@ void _clip_preserve(VkvgContext ctx) {
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_cmd_label_start(ctx->cmd, "clip", DBG_LAB_COLOR_CLIP);
 #endif
-
-    /*if (ctx->curFillRule == VKVG_FILL_RULE_EVEN_ODD) {
-        _poly_fill(ctx, NULL);
-        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->surfClass->pipelineClipping);
-    } else {
-        CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->surfClass->pipelineClipping);
-        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-        CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-        _fill_non_zero(ctx);
-        _emit_draw_cmd_undrawn_vertices(ctx);
-    }
-    CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
-    CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
-
-    _draw_full_screen_quad(ctx, NULL);*/
-
     CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->surfClass->pipelineClipping);
     CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
-    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
-    CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
+
     _fill_non_zero(ctx);
     _emit_draw_cmd_undrawn_vertices(ctx);
 
     ctx->curClipRef++;
+
     _bind_draw_pipeline(ctx);
     CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
-    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-    CmdSetStencilWriteMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_ALL_BIT);
-
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_cmd_label_end(ctx->cmd);
 #endif
@@ -892,9 +871,9 @@ void _fill_preserve(VkvgContext ctx) {
         vec4 bounds = {FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN};
         _poly_fill(ctx, &bounds);
         _bind_draw_pipeline(ctx);
-        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_BIT);
+        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_FILL_MASK);
         _draw_full_screen_quad(ctx, &bounds);
-        CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
+        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
         return;
     }
 
@@ -1157,13 +1136,15 @@ void vkvg_set_operator(VkvgContext ctx, vkvg_operator_t op) {
     if (op == ctx->curOperator)
         return;
 
-    _emit_draw_cmd_undrawn_vertices(
-        ctx); // draw call with different ops cant be combined, so emit draw cmd for previous vertices.
+    // draw call with different ops cant be combined, so emit draw cmd for previous vertices.
+    _emit_draw_cmd_undrawn_vertices(ctx);
 
     ctx->curOperator = op;
 
-    if (ctx->cmdStarted)
+    if (ctx->cmdStarted) {
         _bind_draw_pipeline(ctx);
+        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
+    }
 }
 void vkvg_set_fill_rule(VkvgContext ctx, vkvg_fill_rule_t fr) {
     if (vkvg_status(ctx))

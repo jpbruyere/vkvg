@@ -37,7 +37,7 @@ TEST_F(PatternDrawTest, References) {
     EXPECT_NO_FATAL_FAILURE(vkvg_pattern_reference(NULL));
 
     VkvgPattern pat = vkvg_pattern_create_for_surface(NULL);
-    EXPECT_EQ(VKVG_STATUS_NULL_POINTER, vkvg_pattern_status(pat));
+    EXPECT_EQ(VKVG_STATUS_INVALID_SURFACE, vkvg_pattern_status(pat));
 
     pat = vkvg_pattern_create_linear(0, 0, 0, 0);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_pattern_status(pat));

@@ -645,9 +645,8 @@ void _start_cmd_for_render_pass(VkvgContext ctx) {
     _update_push_constants(ctx);
 
     _bind_draw_pipeline(ctx);
-    //CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, STENCIL_CLIP_BIT);
-    CmdSetStencilCompareMask(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, 0xff);
     CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
+
     ctx->cmdStarted = true;
 }
 // compute inverse mat used in shader when context matrix has changed
@@ -682,7 +681,7 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
                 //if lastpat has only one ref, descriptorSet would be destroyed, so flush context
                 if (vkvg_pattern_get_reference_count(lastPat) == 1)
                     vkvg_flush(ctx);
-                if (newPatternType != VKVG_PATTERN_TYPE_SURFACE)
+                else if (newPatternType != VKVG_PATTERN_TYPE_SURFACE)
                     CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                       ctx->dev->pipelineLayout, 1, 1, &ctx->dev->dummySrcSet, 0, NULL);
                 break;
@@ -1494,6 +1493,7 @@ void _poly_fill(VkvgContext ctx, vec4* bounds) {
     }
 
     CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->surfClass->pipelinePolyFill);
+    CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
 
     Vertex   v          = {{0}, ctx->curColor, {0, 0, -1}};
     uint32_t ptrPath    = 0;

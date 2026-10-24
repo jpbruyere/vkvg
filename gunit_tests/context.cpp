@@ -270,7 +270,7 @@ TEST_F(ContextTest, CtxSaveRestore) {
 
     vkvg_restore(ctx);
 
-    VkvgPattern srcPat = vkvg_get_source(ctx);
+    //VkvgPattern srcPat = vkvg_get_source(ctx);
 
     /*vkvg_set_source_rgb(ctx, 0.4f, 0.5f, 0.6f);
     vkvg_set_source_rgba(ctx, 0.4f, 0.5f, 0.6f, 0.5f);

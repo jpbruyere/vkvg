@@ -264,23 +264,23 @@ void _setupPipelines(surface_class* surf) {
     VkStencilOpState polyFillOpState = {VK_STENCIL_OP_KEEP,
                                         VK_STENCIL_OP_INVERT,
                                         VK_STENCIL_OP_KEEP,
-                                        VK_COMPARE_OP_EQUAL,
-                                        STENCIL_CLIP_BIT,
-                                        STENCIL_FILL_BIT,
+                                        VK_COMPARE_OP_LESS_OR_EQUAL,
+                                        STENCIL_CLIP_MASK,
+                                        STENCIL_FILL_MASK,
                                         0};
     VkStencilOpState clipingOpState  = {VK_STENCIL_OP_KEEP,
                                         VK_STENCIL_OP_INCREMENT_AND_CLAMP,
                                         VK_STENCIL_OP_KEEP,
                                         VK_COMPARE_OP_LESS_OR_EQUAL,
-                                        STENCIL_ALL_BIT,
-                                        STENCIL_ALL_BIT,
+                                        STENCIL_CLIP_MASK,
+                                        STENCIL_CLIP_MASK,
                                         0x0};
     VkStencilOpState stencilOpState  = {VK_STENCIL_OP_KEEP,
-                                        VK_STENCIL_OP_KEEP,
+                                        VK_STENCIL_OP_ZERO,
                                         VK_STENCIL_OP_KEEP,
                                         VK_COMPARE_OP_LESS_OR_EQUAL,
                                         STENCIL_ALL_BIT,
-                                        STENCIL_ALL_BIT,
+                                        STENCIL_FILL_MASK,
                                         0x0};
 
     VkPipelineDepthStencilStateCreateInfo dsStateCreateInfo = {
@@ -295,12 +295,10 @@ void _setupPipelines(surface_class* surf) {
     VkDynamicState dynamicStateEnables[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,
-        VK_DYNAMIC_STATE_STENCIL_REFERENCE,
-        VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
+        VK_DYNAMIC_STATE_STENCIL_REFERENCE
     };
     VkPipelineDynamicStateCreateInfo dynamicState = {.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-                                                     .dynamicStateCount = 2,
+                                                     .dynamicStateCount = 3,
                                                      .pDynamicStates    = dynamicStateEnables};
 
     VkPipelineViewportStateCreateInfo viewportState = {
@@ -389,18 +387,15 @@ void _setupPipelines(surface_class* surf) {
 
     inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     dsStateCreateInfo.back = dsStateCreateInfo.front = clipingOpState;
-    dynamicState.dynamicStateCount                   = 5;
     VK_CHECK_RESULT(vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL,
                                               &surf->pipelineClipping));
 
     dsStateCreateInfo.back = dsStateCreateInfo.front = stencilOpState;
     blendAttachmentState.colorWriteMask              = 0xf;
-    dynamicState.dynamicStateCount                   = 5;
     pipelineCreateInfo.stageCount                    = 2;
     VK_CHECK_RESULT(
         vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &surf->pipe_OVER));
 
-    dynamicState.dynamicStateCount                   = 3;
     blendAttachmentState.alphaBlendOp = blendAttachmentState.colorBlendOp = VK_BLEND_OP_SUBTRACT;
     VK_CHECK_RESULT(
         vkCreateGraphicsPipelines(dev->vkDev, dev->pipelineCache, 1, &pipelineCreateInfo, NULL, &surf->pipe_SUB));

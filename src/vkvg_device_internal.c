@@ -209,9 +209,7 @@ bool _device_init_function_pointers(VkvgDevice dev) {
     CmdBindVertexBuffers     = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdBindVertexBuffers);
     CmdDrawIndexed           = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdDrawIndexed);
     CmdDraw                  = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdDraw);
-    CmdSetStencilCompareMask = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetStencilCompareMask);
     CmdSetStencilReference   = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetStencilReference);
-    CmdSetStencilWriteMask   = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetStencilWriteMask);
     CmdBeginRenderPass       = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdBeginRenderPass);
     CmdEndRenderPass         = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdEndRenderPass);
     CmdSetViewport           = GetVkProcAddress(dev->vkDev, dev->instance, vkCmdSetViewport);
