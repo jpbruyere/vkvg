@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['samples_0',['samples',['../structvkvg__device__create__info__t_a4658c880ee0c4c648d522f232305a389.html#a4658c880ee0c4c648d522f232305a389',1,'vkvg_device_create_info_t']]],
-  ['surface_1',['Surface',['../group__surface.html',1,'']]]
+  ['r_0',['r',['../structvkvg__color__t_a4788d82c901b9367dd5c0daff8a7616b.html#a4788d82c901b9367dd5c0daff8a7616b',1,'vkvg_color_t']]],
+  ['reference_1',['Path creation and manipulation reference.',['../group__path.html',1,'']]]
 ];

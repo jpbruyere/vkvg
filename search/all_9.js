@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['qfamidx_0',['qFamIdx',['../structvkvg__device__create__info__t_ad8d08690bdf3887b37411016532aae92.html#ad8d08690bdf3887b37411016532aae92',1,'vkvg_device_create_info_t']]],
-  ['qindex_1',['qIndex',['../structvkvg__device__create__info__t_a874c5da60e8293024ee8a2e5c151cc6b.html#a874c5da60e8293024ee8a2e5c151cc6b',1,'vkvg_device_create_info_t']]]
+  ['path_20creation_20and_20manipulation_20reference_0',['Path creation and manipulation reference.',['../group__path.html',1,'']]],
+  ['pattern_1',['Pattern',['../group__pattern.html',1,'']]],
+  ['phy_2',['phy',['../structvkvg__device__create__info__t_af504bf037ac40ec1597e18e0dd242321.html#af504bf037ac40ec1597e18e0dd242321',1,'vkvg_device_create_info_t']]]
 ];

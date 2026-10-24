@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['g_0',['g',['../structvkvg__color__t_a8cf17d727651616de6f2b79ef32170cd.html#a8cf17d727651616de6f2b79ef32170cd',1,'vkvg_color_t']]]
+  ['fontsdirectories_0',['fontsDirectories',['../structvkvg__device__create__info__t_a1de1357d964f2432b28e5bf3b2ac5f35.html#a1de1357d964f2432b28e5bf3b2ac5f35',1,'vkvg_device_create_info_t']]]
 ];

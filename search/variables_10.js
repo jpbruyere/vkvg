@@ -1,9 +1,9 @@
 var searchData=
 [
-  ['y0_0',['y0',['../structvkvg__matrix__t_adf19b8ba42d497d3093c3a51b1a32cca.html#adf19b8ba42d497d3093c3a51b1a32cca',1,'vkvg_matrix_t']]],
-  ['y_5fadvance_1',['y_advance',['../structvkvg__text__extents__t_a35b39603f2d8ae8c01b5cb9dfbfd20d3.html#a35b39603f2d8ae8c01b5cb9dfbfd20d3',1,'vkvg_text_extents_t::y_advance'],['../structvkvg__glyph__info__t_ac8b0caa49832b5e674589cba5d72b905.html#ac8b0caa49832b5e674589cba5d72b905',1,'vkvg_glyph_info_t::y_advance']]],
-  ['y_5fbearing_2',['y_bearing',['../structvkvg__text__extents__t_adb121426957cb2c536d442cb6fd1c90f.html#adb121426957cb2c536d442cb6fd1c90f',1,'vkvg_text_extents_t']]],
-  ['y_5foffset_3',['y_offset',['../structvkvg__glyph__info__t_a9ae348ed78a50e882b8167d83412d2b5.html#a9ae348ed78a50e882b8167d83412d2b5',1,'vkvg_glyph_info_t']]],
-  ['yx_4',['yx',['../structvkvg__matrix__t_a8e1608facba0c31efe99d65811fab570.html#a8e1608facba0c31efe99d65811fab570',1,'vkvg_matrix_t']]],
-  ['yy_5',['yy',['../structvkvg__matrix__t_a342cbf7f29a65a0d1a2949ef4675008e.html#a342cbf7f29a65a0d1a2949ef4675008e',1,'vkvg_matrix_t']]]
+  ['x0_0',['x0',['../structvkvg__matrix__t_a3c9556645d92e863376a4063a3ad7001.html#a3c9556645d92e863376a4063a3ad7001',1,'vkvg_matrix_t']]],
+  ['x_5fadvance_1',['x_advance',['../structvkvg__text__extents__t_ae83c02c42c97888eca5532a98ed4e2e4.html#ae83c02c42c97888eca5532a98ed4e2e4',1,'vkvg_text_extents_t::x_advance'],['../structvkvg__glyph__info__t_af4903d34c19de17bf3045668b429da05.html#af4903d34c19de17bf3045668b429da05',1,'vkvg_glyph_info_t::x_advance']]],
+  ['x_5fbearing_2',['x_bearing',['../structvkvg__text__extents__t_a36152a2d5302d6860e555e77a4a8b456.html#a36152a2d5302d6860e555e77a4a8b456',1,'vkvg_text_extents_t']]],
+  ['x_5foffset_3',['x_offset',['../structvkvg__glyph__info__t_a302cc6391db771808cf9137cddb15a8a.html#a302cc6391db771808cf9137cddb15a8a',1,'vkvg_glyph_info_t']]],
+  ['xx_4',['xx',['../structvkvg__matrix__t_a9fb9d00fbbf390e0263bcc204b03c7c8.html#a9fb9d00fbbf390e0263bcc204b03c7c8',1,'vkvg_matrix_t']]],
+  ['xy_5',['xy',['../structvkvg__matrix__t_a83a7590defc35766f789fbbf7fc41590.html#a83a7590defc35766f789fbbf7fc41590',1,'vkvg_matrix_t']]]
 ];
