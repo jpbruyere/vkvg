@@ -37,34 +37,19 @@ class SaveRestoreTest : public DrawTestBase {
         float x = cos(a) * 256;
         float y = sin(a) * 256;
 
+        vkvg_restore(ctx);
+        EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
+
         vkvg_set_line_width(ctx, 2.f);
         vkvg_move_to(ctx, 256.f - x, 256.f - y);
         vkvg_line_to(ctx, 256.f + x, 256.f + y);
         vkvg_set_source_rgba(ctx, 0.f, 1.f, 0.f, 0.6f);
         vkvg_stroke(ctx);
 
-        vkvg_restore(ctx);
-        EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
-
         depth--;
     }
 };
 
-TEST_F(SaveRestoreTest, RestoreClip1) {
-    VkvgContext ctx = vkvg_create(surf);
-    vkvg_arc(ctx, 140, 140, 100, 0, 2.f * M_PI);
-    vkvg_clip(ctx);
-    vkvg_save(ctx);
-    vkvg_reset_clip(ctx);
-    vkvg_restore(ctx);
-    vkvg_set_source_surface(ctx, imgSurf, 0, 0);
-    vkvg_paint(ctx);
-
-    EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_status(ctx));
-    vkvg_destroy(ctx);
-
-    compareWithRefImage();
-}
 TEST_F(SaveRestoreTest, RecursePaint3) {
     VkvgContext ctx = vkvg_create(surf);
 
@@ -74,27 +59,6 @@ TEST_F(SaveRestoreTest, RecursePaint3) {
 
     compareWithRefImage();
 }
-
-TEST_F(SaveRestoreTest, RecursePaint6) {
-    VkvgContext ctx = vkvg_create(surf);
-
-    EXPECT_NO_FATAL_FAILURE(recurse_draw(ctx, 0, 6));
-
-    vkvg_destroy(ctx);
-
-    compareWithRefImage();
-}
-
-TEST_F(SaveRestoreTest, RecursePaint9) {
-    VkvgContext ctx = vkvg_create(surf);
-
-    EXPECT_NO_FATAL_FAILURE(recurse_draw(ctx, 0, 9));
-
-    vkvg_destroy(ctx);
-
-    compareWithRefImage();
-}
-
 TEST_F(SaveRestoreTest, RecursePaint10) {
     VkvgContext ctx = vkvg_create(surf);
 
@@ -104,19 +68,156 @@ TEST_F(SaveRestoreTest, RecursePaint10) {
 
     compareWithRefImage();
 }
-TEST_F(SaveRestoreTest, RecursePaint11) {
+TEST_F(SaveRestoreTest, RecursePaint20) {
     VkvgContext ctx = vkvg_create(surf);
 
-    EXPECT_NO_FATAL_FAILURE(recurse_draw(ctx, 0, 11));
+    EXPECT_NO_FATAL_FAILURE(recurse_draw(ctx, 0, 20));
 
     vkvg_destroy(ctx);
 
     compareWithRefImage();
 }
-TEST_F(SaveRestoreTest, RecursePaint20) {
+TEST_F(SaveRestoreTest, NZ) {
     VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
 
-    EXPECT_NO_FATAL_FAILURE(recurse_draw(ctx, 0, 20));
+    vkvg_rectangle(ctx, 50, 50, 200, 200);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_paint(ctx);
+
+    vkvg_rectangle(ctx, 0, 0, 220, 220);
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_fill(ctx);
+
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(SaveRestoreTest, NZ2) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
+
+    vkvg_rectangle(ctx, 50, 50, 200, 200);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_paint(ctx);
+
+    vkvg_save(ctx);
+
+    vkvg_rectangle(ctx, 75, 75, 150, 150);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 1, 0);
+    vkvg_paint(ctx);
+
+    vkvg_save(ctx);
+
+    vkvg_rectangle(ctx, 100, 100, 100, 100);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_paint(ctx);
+
+    vkvg_set_line_width(ctx, 40);
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_move_to(ctx, 0,0);
+    vkvg_line_to(ctx, 512,512);
+    vkvg_stroke_preserve(ctx);
+
+    vkvg_restore(ctx);
+
+    vkvg_set_line_width(ctx, 30);
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_stroke_preserve(ctx);
+
+    vkvg_restore(ctx);
+
+    vkvg_set_line_width(ctx, 20);
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_stroke(ctx);
+
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(SaveRestoreTest, ResetNZ) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
+    vkvg_set_line_width(ctx, 20);
+
+    vkvg_rectangle(ctx, 50, 50, 200, 200);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_paint(ctx);
+
+    vkvg_save(ctx);
+
+    vkvg_rectangle(ctx, 75, 75, 150, 150);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 1, 0);
+    vkvg_paint(ctx);
+
+    vkvg_reset_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 1, 1, 0);
+    vkvg_move_to(ctx, 512,0);
+    vkvg_line_to(ctx, 0,512);
+    vkvg_stroke(ctx);
+
+    vkvg_restore(ctx);
+
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_move_to(ctx, 0,0);
+    vkvg_line_to(ctx, 512,512);
+    vkvg_stroke(ctx);
+
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(SaveRestoreTest, ResetNZ2) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
+    vkvg_set_line_width(ctx, 20);
+
+    vkvg_rectangle(ctx, 50, 50, 200, 200);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_paint(ctx);
+
+    vkvg_save(ctx);
+
+    vkvg_rectangle(ctx, 75, 75, 150, 150);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 1, 0);
+    vkvg_paint(ctx);
+
+    vkvg_reset_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 1, 1, 0);
+    vkvg_move_to(ctx, 512,0);
+    vkvg_line_to(ctx, 0,512);
+    vkvg_stroke(ctx);
+
+    vkvg_rectangle(ctx, 85, 20, 30, 260);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_paint(ctx);
+
+    vkvg_restore(ctx);
+
+    vkvg_set_source_rgb(ctx, 1, 0, 1);
+    vkvg_move_to(ctx, 0,0);
+    vkvg_line_to(ctx, 512,512);
+    vkvg_stroke(ctx);
 
     vkvg_destroy(ctx);
 

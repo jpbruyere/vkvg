@@ -38,13 +38,13 @@ void recurse_draw_clipped(VkvgContext ctx, int depth, int maxDepth) {
     float x = cos(a) * 256;
     float y = sin(a) * 256;
 
+    vkvg_restore(ctx);
+
     vkvg_set_line_width(ctx, 2.f);
     vkvg_move_to(ctx, 256.f - x, 256.f - y);
     vkvg_line_to(ctx, 256.f + x, 256.f + y);
     vkvg_set_source_rgba(ctx, 0.f, 1.f, 0.f, 0.6f);
     vkvg_stroke(ctx);
-
-    vkvg_restore(ctx);
 
     depth--;
 }
@@ -133,14 +133,83 @@ TEST(save_restrore_nz2) {
 
     vkvg_set_line_width(ctx, 20);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
-    vkvg_stroke_preserve(ctx);
-
-    /*vkvg_restore(ctx);
-
-    vkvg_set_line_width(ctx, 10);
-    vkvg_set_source_rgb(ctx, 1, 1, 0);
-    vkvg_stroke(ctx);*/
+    vkvg_stroke(ctx);
 
     vkvg_destroy(ctx);
 }
+TEST(save_restrore_clip_reset_nz) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
+    vkvg_set_line_width(ctx, 20);
 
+    vkvg_rectangle(ctx, 50, 50, 200, 200);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_paint(ctx);
+
+    vkvg_save(ctx);
+
+        vkvg_rectangle(ctx, 75, 75, 150, 150);
+        vkvg_clip(ctx);
+
+        vkvg_set_source_rgb(ctx, 0, 1, 0);
+        vkvg_paint(ctx);
+
+        vkvg_reset_clip(ctx);
+
+        vkvg_set_source_rgb(ctx, 1, 1, 0);
+        vkvg_move_to(ctx, 512,0);
+        vkvg_line_to(ctx, 0,512);
+        vkvg_stroke(ctx);
+
+    vkvg_restore(ctx);
+
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_move_to(ctx, 0,0);
+    vkvg_line_to(ctx, 512,512);
+    vkvg_stroke(ctx);
+
+    vkvg_destroy(ctx);
+}
+TEST(save_restrore_clip_reset2_nz) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
+    vkvg_set_line_width(ctx, 20);
+
+    vkvg_rectangle(ctx, 50, 50, 200, 200);
+    vkvg_clip(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 1);
+    vkvg_paint(ctx);
+
+    vkvg_save(ctx);
+
+        vkvg_rectangle(ctx, 75, 75, 150, 150);
+        vkvg_clip(ctx);
+
+        vkvg_set_source_rgb(ctx, 0, 1, 0);
+        vkvg_paint(ctx);
+
+        vkvg_reset_clip(ctx);
+
+        vkvg_set_source_rgb(ctx, 1, 1, 0);
+        vkvg_move_to(ctx, 512,0);
+        vkvg_line_to(ctx, 0,512);
+        vkvg_stroke(ctx);
+
+        vkvg_rectangle(ctx, 85, 20, 30, 260);
+        vkvg_clip(ctx);
+
+        vkvg_set_source_rgb(ctx, 1, 0, 0);
+        vkvg_paint(ctx);
+
+    vkvg_restore(ctx);
+
+    vkvg_set_source_rgb(ctx, 1, 0, 1);
+    vkvg_move_to(ctx, 0,0);
+    vkvg_line_to(ctx, 512,512);
+    vkvg_stroke(ctx);
+
+    vkvg_destroy(ctx);
+}

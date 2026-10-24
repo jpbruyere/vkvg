@@ -22,7 +22,7 @@ TEST(clipped_paint_eo) {
 
     vkvg_destroy(ctx);
 }
-TEST(clipped_paint2_nz) {
+TEST(clip_reset_nz) {
     VkvgContext ctx = vkvg_create(test->surf);
     vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_NON_ZERO);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
