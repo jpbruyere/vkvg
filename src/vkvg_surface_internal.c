@@ -522,6 +522,7 @@ void _create_surface_images(VkvgSurface surf) {
 }
 
 surface_class* _create_surface_class (VkvgDevice dev, VkFormat format, VkSampleCountFlags samples) {
+    LOG(VKVG_LOG_INFO, "CREATE Surface Class\n");
     surface_class* surf = (surface_class*)calloc(1, sizeof(surface_class));
     if (!surf) {
         LOGE("CREATE Surface class failed, no memory\n");
@@ -566,6 +567,8 @@ surface_class* _create_surface_class (VkvgDevice dev, VkFormat format, VkSampleC
 #endif
 
     atomic_init(&surf->references, 1);
+
+    array_add_SurfaceClass(&dev->surfaceClasses, surf);
     return surf;
 }
 void _destroy_surface_class (surface_class* surf) {

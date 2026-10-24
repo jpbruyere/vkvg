@@ -202,7 +202,8 @@ int main(int argc, char* argv[]) {
     if (!path)
         print_help_and_exit();
 
-    //vkh_log_level = VKVG_LOG_INFO;
+    /*vkh_log_level = VKVG_LOG_INFO;
+    vkvg_log_level = VKVG_LOG_INFO | VKVG_LOG_DBG_ARRAYS;*/
 
     DIR* pCurrentDir = NULL;
     struct stat sb;
@@ -273,8 +274,8 @@ int main(int argc, char* argv[]) {
         VkvgSurface svgSurf = vkvg_surface_create_from_svg(dev, width, height, path);
         vkvg_surface_write_to_png(svgSurf, output);
         vkvg_surface_destroy(svgSurf);
-        vkvg_surface_destroy(svgSurf);
         vkvg_device_destroy(dev);
+        exit(EXIT_SUCCESS);
     }
 
     VkEngine e = vkengine_create(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PRESENT_MODE_FIFO_KHR, width, height);
