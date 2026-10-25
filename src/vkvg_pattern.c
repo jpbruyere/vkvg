@@ -27,7 +27,6 @@ void _update_descriptor (surface_pattern_t* pat) {
     };
     vkUpdateDescriptorSets(pat->surf->dev->vkDev, 2, writeDescriptorSet, 0, NULL);
 }
-
 void _surface_pattern_init (VkvgDevice dev, surface_pattern_t* pat) {
     const VkDescriptorPoolSize descriptorPoolSize[] = {
         {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1},
@@ -90,6 +89,19 @@ void _create_sampler(surface_pattern_t* pat) {
                                              .mipmapMode    = VK_SAMPLER_MIPMAP_MODE_NEAREST};
     VK_CHECK_RESULT(vkCreateSampler(pat->surf->dev->vkDev, &samplerCreateInfo, NULL, &pat->sampler));
     pat->samplerIsDirty = false;
+}
+void _surface_pattern_update_sampler (surface_pattern_t* pat) {
+    _create_sampler(pat);
+    VkDescriptorImageInfo diiSampler = {pat->sampler};
+    VkWriteDescriptorSet  writeDescriptorSet = {
+             .sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+             .dstSet          = pat->dsSource,
+             .dstBinding      = 1,
+             .descriptorCount = 1,
+             .descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER,
+             .pImageInfo      = &diiSampler
+    };
+    vkUpdateDescriptorSets(pat->surf->dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
 
 VkvgPattern vkvg_pattern_create_solid(float r, float g, float b, float a) {

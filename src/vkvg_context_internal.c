@@ -446,6 +446,7 @@ bool _wait_and_submit_cmd(VkvgContext ctx) {
 
     ResetCommandBuffer(ctx->cmd, 0);
     ctx->cmdStarted = false;
+    ctx->pSurf->gradCount = 0;
     return true;
 }
 /*void _explicit_ms_resolve (VkvgContext ctx){//should init cmd before calling this (unused, using automatic resolve by
@@ -579,7 +580,6 @@ void _flush_cmd_buff(VkvgContext ctx) {
     vkh_cmd_end(ctx->cmd);
 
     _wait_and_submit_cmd(ctx);
-    ctx->pSurf->gradCount = 0;
 }
 
 // bind correct draw pipeline depending on current OPERATOR
@@ -734,6 +734,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             // vkvg_matrix_transform_distance(&mat, &ctx->pushConsts.source.width, &ctx->pushConsts.source.height);
             vkvg_matrix_multiply(&ctx->pushConsts.matInv, &ctx->pushConsts.matInv, &mat);
         }
+        if (sp->samplerIsDirty)
+            _surface_pattern_update_sampler(sp);
 
         if (ctx->cmdStarted)
             CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
@@ -742,9 +744,11 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
     }
     case VKVG_PATTERN_TYPE_LINEAR:
     case VKVG_PATTERN_TYPE_RADIAL:
-        _flush_cmd_buff(ctx);
-        if (!_wait_ctx_flush_end(ctx))
-            return;
+        if (ctx->pSurf->gradCount >= MAX_GRAD) {
+            _flush_cmd_buff(ctx);
+            if (!_wait_ctx_flush_end(ctx))
+                return;
+        }
 
         vec4 bounds            = {{(float)ctx->pSurf->width},
                                   {(float)ctx->pSurf->height},

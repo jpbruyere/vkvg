@@ -43,4 +43,5 @@ typedef struct _vkvg_gradient_pattern_t {
     vkvg_gradient_t     gradient;
 } vkvg_gradient_pattern_t;
 
+void _surface_pattern_update_sampler (surface_pattern_t* pat);
 #endif
