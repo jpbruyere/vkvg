@@ -604,7 +604,7 @@ const float DBG_LAB_COLOR_RP[4]  = {0, 0, 1, 1};
 const float DBG_LAB_COLOR_FSQ[4] = {1, 0, 0, 1};
 #endif
 
-void _start_cmd_for_render_pass(VkvgContext ctx) {
+void _start_cmd_for_render_pass2(VkvgContext ctx, bool bindPL) {
     LOG(VKVG_LOG_INFO, "START RENDER PASS: ctx = %p\n", ctx);
     vkh_cmd_begin(ctx->cmd, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -633,21 +633,35 @@ void _start_cmd_for_render_pass(VkvgContext ctx) {
     CmdSetViewport(ctx->cmd, 0, 1, &viewport);
     CmdSetScissor(ctx->cmd, 0, 1, &ctx->bounds);
 
-    VkDescriptorSet dss[] = {ctx->dev->fontCache->dsFont, ctx->dev->dummySrcSet, ctx->dev->dummyGradSet};
-    uint32_t offset = 0;
-
-    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout, 0, 3, dss, 1, &offset);
-
     VkDeviceSize offsets = 0;
     CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, &offsets);
     CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VKVG_VK_INDEX_TYPE);
 
     _update_push_constants(ctx);
 
-    _bind_draw_pipeline(ctx);
-    CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
+    VkDescriptorSet dss[] = {ctx->dev->fontCache->dsFont, ctx->dev->dummySrcSet, ctx->dev->dummyGradSet};
+    uint32_t offset = 0;
+    if (ctx->pattern) {
+        if (ctx->pattern->type == VKVG_PATTERN_TYPE_SURFACE) {
+            surface_pattern_t* sp = (surface_pattern_t*)ctx->pattern;
+            dss[1] = sp->dsSource;
+        } else {
+            vkvg_gradient_pattern_t* gradPat = (vkvg_gradient_pattern_t*)ctx->pattern;
+            offset = gradPat->offset;
+            dss[2] = ctx->pSurf->dsGradient;
+        }
+    }
+    CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout, 0, 3, dss, 1, &offset);
+
+    if (bindPL) {
+        _bind_draw_pipeline(ctx);
+        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
+    }
 
     ctx->cmdStarted = true;
+}
+void _start_cmd_for_render_pass(VkvgContext ctx) {
+    _start_cmd_for_render_pass2(ctx, true);
 }
 // compute inverse mat used in shader when context matrix has changed
 // then trigger push constants command
@@ -711,10 +725,6 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
         ctx->pushConsts.source.width = (float)sp->surf->width;
         ctx->pushConsts.source.height = (float)sp->surf->height;
 
-        _ensure_renderpass_is_started(ctx);
-
-        CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
-                              1, 1, &sp->dsSource, 0, NULL);
         vkvg_matrix_t mat;
         if (pat->hasMatrix) {
             vkvg_pattern_get_matrix(pat, &mat);
@@ -724,6 +734,10 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             // vkvg_matrix_transform_distance(&mat, &ctx->pushConsts.source.width, &ctx->pushConsts.source.height);
             vkvg_matrix_multiply(&ctx->pushConsts.matInv, &ctx->pushConsts.matInv, &mat);
         }
+
+        if (ctx->cmdStarted)
+            CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
+                              1, 1, &sp->dsSource, 0, NULL);
         break;
     }
     case VKVG_PATTERN_TYPE_LINEAR:
@@ -739,7 +753,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
         ctx->pushConsts.source = bounds;
 
         // transform control point with current ctx matrix
-        vkvg_gradient_t* grad = &((vkvg_gradient_pattern_t*)pat)->gradient;
+        vkvg_gradient_pattern_t* gradPat = (vkvg_gradient_pattern_t*)pat;
+        vkvg_gradient_t* grad = &(gradPat->gradient);
 
         if (grad->count < 2) {
             ctx->status = VKVG_STATUS_PATTERN_INVALID_GRADIENT;
@@ -770,14 +785,14 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad->cp[0].z, &grad->cp[0].w);
             vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad->cp[1].z, &grad->cp[0].w);
         }
-        uint32_t offset = ctx->pSurf->gradCount * sizeof(vkvg_gradient_t);
-        memcpy(vkh_buffer_get_mapped_pointer(&ctx->pSurf->uboGrad) + offset,
+        gradPat->offset = ctx->pSurf->gradCount * sizeof(vkvg_gradient_t);
+        memcpy(vkh_buffer_get_mapped_pointer(&ctx->pSurf->uboGrad) + gradPat->offset,
                grad, sizeof(vkvg_gradient_t));
-        vkh_buffer_flush(&ctx->pSurf->uboGrad);
+        //vkh_buffer_flush(&ctx->pSurf->uboGrad);
 
-        _ensure_renderpass_is_started(ctx);
-        CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
-                              2, 1, &ctx->pSurf->dsGradient, 1, &offset);
+        if (ctx->cmdStarted)
+            CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout,
+                                  2, 1, &ctx->pSurf->dsGradient, 1, &(gradPat->offset));
         ctx->pSurf->gradCount++;
         break;
     }
@@ -1488,10 +1503,13 @@ void _poly_fill(VkvgContext ctx, vec4* bounds) {
             _resize_vertex_cache(ctx, ctx->sizeVBO);
         }
 
-        _start_cmd_for_render_pass(ctx);
+        _start_cmd_for_render_pass2(ctx, false);
     } else {
         _ensure_vertex_cache_size(ctx, ctx->pointCount);
-        _ensure_renderpass_is_started(ctx);
+        if (!ctx->cmdStarted)
+            _start_cmd_for_render_pass2(ctx, false);
+        else if (ctx->pushCstDirty)
+            _update_push_constants(ctx);
     }
 
     CmdBindPipeline(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->pSurf->surfClass->pipelinePolyFill);

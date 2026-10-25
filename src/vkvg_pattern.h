@@ -39,6 +39,7 @@ typedef struct _vkvg_gradient_t {
 
 typedef struct _vkvg_gradient_pattern_t {
     vkvg_pattern_t      base;
+    uint32_t            offset; //descriptor offset for dyn uniform
     vkvg_gradient_t     gradient;
 } vkvg_gradient_pattern_t;
 

@@ -841,7 +841,10 @@ void _clip_preserve(VkvgContext ctx) {
 
     LOG(VKVG_LOG_INFO, "CLIP: ctx = %p; path cpt = %d;\n", ctx, ctx->pathPtr / 2);
 
-    _ensure_renderpass_is_started(ctx);
+    if (!ctx->cmdStarted)
+        _start_cmd_for_render_pass2(ctx, false);
+    else if (ctx->pushCstDirty)
+        _update_push_constants(ctx);
 
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_cmd_label_start(ctx->cmd, "clip", DBG_LAB_COLOR_CLIP);
@@ -856,11 +859,10 @@ void _clip_preserve(VkvgContext ctx) {
 
     _bind_draw_pipeline(ctx);
     CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
+
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     vkh_cmd_label_end(ctx->cmd);
 #endif
-
-    ctx->curClipState = vkvg_clip_state_clip;
 }
 void _fill_preserve(VkvgContext ctx) {
     _finish_path(ctx);
@@ -884,8 +886,10 @@ void _fill_preserve(VkvgContext ctx) {
     if (ctx->vertCount - ctx->curVertOffset + ctx->pointCount > VKVG_IBO_MAX)
         _emit_draw_cmd_undrawn_vertices(ctx); // limit draw call to addressable vx with choosen index type
 
-    if (ctx->pattern)
-        _ensure_renderpass_is_started(ctx);
+    //if (ctx->pattern && !ctx->cmdStarted) { //pattern must be correctly rebound
+    //    _start_cmd_for_render_pass2(ctx, false);
+    //}
+
     _fill_non_zero(ctx);
 }
 void _stroke_preserve(VkvgContext ctx) {

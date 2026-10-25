@@ -661,7 +661,7 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags 
     vkh_buffer_init(dev->vkhDev, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VKH_MEMORY_USAGE_CPU_TO_GPU,
                     MAX_GRAD * sizeof(vkvg_gradient_t), &surf->uboGrad, true);
 
-    VkDescriptorBufferInfo dbi                = {surf->uboGrad.buffer, 0, VK_WHOLE_SIZE};
+    VkDescriptorBufferInfo dbi                = {surf->uboGrad.buffer, 0, sizeof(vkvg_gradient_t)};
     VkWriteDescriptorSet   writeDescriptorSet = {.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                                                  .dstSet          = surf->dsGradient,
                                                  .dstBinding      = 0,

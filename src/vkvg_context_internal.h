@@ -289,6 +289,7 @@ void _update_push_constants(VkvgContext ctx);
 void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat);
 void _set_mat_inv_and_vkCmdPush(VkvgContext ctx);
 void _start_cmd_for_render_pass(VkvgContext ctx);
+void _start_cmd_for_render_pass2(VkvgContext ctx, bool bindPL);
 
 void _createDescriptorPool(VkvgContext ctx);
 void _init_descriptor_sets(VkvgContext ctx);

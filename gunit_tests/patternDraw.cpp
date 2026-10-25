@@ -177,6 +177,18 @@ TEST_F(PatternDrawTest, PaintImgPattern) {
 
     compareWithRefImage();
 }
+TEST_F(PatternDrawTest, PaintImgAfterFlush) {
+
+    VkvgContext ctx = vkvg_create(surf);
+    VkvgPattern pat = vkvg_pattern_create_for_surface(imgSurf);
+    vkvg_set_source(ctx, pat);
+    vkvg_flush(ctx);
+    vkvg_paint(ctx);
+    vkvg_pattern_destroy(pat);
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
 TEST_F(PatternDrawTest, FillImgPattern) {
 
     VkvgContext ctx = vkvg_create(surf);

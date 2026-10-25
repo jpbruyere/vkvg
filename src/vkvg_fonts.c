@@ -687,7 +687,11 @@ bool try_get_or_create_font_face_from_query (VkvgDevice dev, const char* querySt
     *face = NULL;
 
 #ifdef VKVG_USE_FONTCONFIG
-    if (try_get_font_face_from_query_hash(cache, queryHash, face) && (*face)->numAxis > 0)
+    if (try_get_font_face_from_query_hash(cache, queryHash, face)
+#ifdef VKVG_USE_FREETYPE
+        && (*face)->numAxis > 0
+#endif
+        )
         return true;
 
     FcPattern* request = FcNameParse((const FcChar8*)queryString);
@@ -769,6 +773,7 @@ bool try_get_font_size (FontFace face, uint32_t pt26_6, signed long* coords, Vkv
     for (int i = 0; i < face->sizes.count; ++i) {
         VkvgFont f = face->sizes.elements[i];
         if (f->charSize == pt26_6) {
+#ifdef VKVG_USE_FREETYPE
             if (coords) {
                 for (int axe = 0; axe < face->numAxis; ++axe) {
                     if (f->coords[axe] != coords[axe])
@@ -776,6 +781,7 @@ bool try_get_font_size (FontFace face, uint32_t pt26_6, signed long* coords, Vkv
                 }
                 free(coords);//coords matche, free new coords
             }
+#endif
             *font = f;
             return true;
         }
@@ -891,7 +897,7 @@ void text_run_init(VkvgText textRun, VkvgFont font, vkvg_direction_t textDirecti
 
     _font_lock_size(textRun->font);
 
-#ifdef VKVG_USE_HARFBUZZ
+#if defined(VKVG_USE_HARFBUZZ)
     textRun->hbBuf  = _get_hb_buffer(textRun, text, length);
     textRun->glyphs = hb_buffer_get_glyph_positions(textRun->hbBuf, &textRun->glyph_count);
 #else
@@ -1111,7 +1117,7 @@ VkvgFont _create_font_from_face (VkvgSurface surf, FontFace face, float pointSiz
     font->charSize       = pointSize;
     stbtt_GetFontVMetrics(&face->stbInfo, &font->ascent, &font->descent, &font->lineGap);
     font->charLookup     = (glyph_ref*)calloc(face->stbInfo.numGlyphs, sizeof(glyph_ref));
-    font->scale          = stbtt_ScaleForMappingEmToPixels(&face->stbInfo, font->charSize * dev->vdpi / 72.f);
+    font->scale          = stbtt_ScaleForMappingEmToPixels(&face->stbInfo, font->charSize * surf->vdpi / 72.f);
     font->height         = roundf(font->scale * (font->ascent - font->descent + font->lineGap));
     font->ascent         = roundf(font->scale * font->ascent);
     font->descent        = roundf(font->scale * font->descent);
