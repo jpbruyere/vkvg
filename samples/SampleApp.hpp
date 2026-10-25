@@ -61,6 +61,8 @@ class SampleApp {
     VkhDevice    vkhDev;
     VkhPresenter renderer;
     uint32_t     presentQIndex;
+    bool         offscreen;
+    bool         displayMode;
 
     void Init();
     void Run();
