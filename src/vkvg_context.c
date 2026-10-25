@@ -296,6 +296,7 @@ void vkvg_set_opacity(VkvgContext ctx, float opacity) {
         return;
 
     _emit_draw_cmd_undrawn_vertices(ctx);
+
     ctx->pushConsts.opacity = opacity;
     ctx->pushCstDirty       = true;
 }
@@ -728,12 +729,7 @@ vkvg_clip_state_t _get_previous_clip_state(VkvgContext ctx) {
 static const VkClearAttachment clearStencil     = {VK_IMAGE_ASPECT_STENCIL_BIT, 1, {{{0}}}};
 static const VkClearAttachment clearColorAttach = {VK_IMAGE_ASPECT_COLOR_BIT, 0, {{{0}}}};
 
-void _reset_clip(VkvgContext ctx) {
-    if (ctx->curClipRef == 0)
-        return; //nothing to do
-
-    _emit_draw_cmd_undrawn_vertices(ctx);
-
+void _save_stencil_if_required (VkvgContext ctx) {
     if (ctx->ctxSaveCount > 0) {
         vkvg_context_save_t* sav = &ctx->pSavedCtxs[ctx->ctxSaveCount - 1];
         if (sav->curClipRef > 0) {
@@ -776,6 +772,14 @@ void _reset_clip(VkvgContext ctx) {
             _wait_and_submit_cmd(ctx);
         }
     }
+}
+void _reset_clip(VkvgContext ctx) {
+    if (ctx->curClipRef == 0)
+        return; //nothing to do
+
+    _emit_draw_cmd_undrawn_vertices(ctx);
+
+    _save_stencil_if_required(ctx);
 
     ctx->curClipRef = 0;
 
@@ -812,20 +816,20 @@ void vkvg_clear(VkvgContext ctx) {
 
     RECORD(ctx, VKVG_CMD_CLEAR);
 
-    if (_get_previous_clip_state(ctx) == vkvg_clip_state_clear)
-        ctx->curClipState = vkvg_clip_state_none;
-    else
-        ctx->curClipState = vkvg_clip_state_clear;
-
     _emit_draw_cmd_undrawn_vertices(ctx);
+
+    _save_stencil_if_required(ctx);
+
     ctx->curClipRef = 0;
-    if (!ctx->cmdStarted) {
+
+    if (ctx->cmdStarted) {
+        VkClearAttachment ca[2] = {clearColorAttach, clearStencil};
+        vkCmdClearAttachments(ctx->cmd, 2, ca, 1, &ctx->clearRect);
+        CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
+    } else {
         ctx->renderPassBeginInfo.renderPass = ctx->pSurf->surfClass->renderPass_ClearAll;
         _start_cmd_for_render_pass(ctx);
-        return;
     }
-    VkClearAttachment ca[2] = {clearColorAttach, clearStencil};
-    vkCmdClearAttachments(ctx->cmd, 2, ca, 1, &ctx->clearRect);
 }
 void _clip_preserve(VkvgContext ctx) {
     _finish_path(ctx);
@@ -880,7 +884,7 @@ void _fill_preserve(VkvgContext ctx) {
     if (ctx->vertCount - ctx->curVertOffset + ctx->pointCount > VKVG_IBO_MAX)
         _emit_draw_cmd_undrawn_vertices(ctx); // limit draw call to addressable vx with choosen index type
 
-    if (ctx->pattern) // if not solid color, source img or gradient has to be bound
+    if (ctx->pattern)
         _ensure_renderpass_is_started(ctx);
     _fill_non_zero(ctx);
 }
@@ -1064,6 +1068,7 @@ void vkvg_paint(VkvgContext ctx) {
     }
 
     _ensure_renderpass_is_started(ctx);
+
     _draw_full_screen_quad(ctx, NULL);
 }
 void vkvg_set_source_color(VkvgContext ctx, uint32_t c) {
@@ -1078,7 +1083,6 @@ void vkvg_set_source_rgb(VkvgContext ctx, float r, float g, float b) {
         return;
     RECORD(ctx, VKVG_CMD_SET_SOURCE_RGB, r, g, b);
     ctx->curColor = CreateRgbaf(r, g, b, 1);
-    _emit_draw_cmd_undrawn_vertices(ctx);
     _update_cur_pattern(ctx, NULL);
 }
 void vkvg_set_source_rgba(VkvgContext ctx, float r, float g, float b, float a) {

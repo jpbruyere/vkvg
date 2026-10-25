@@ -77,7 +77,7 @@ __pragma(warning(disable : 4505))
 // 1. Check if we are in a POSIX environment that supports strncasecmp
 #if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L)
 #include <strings.h> /* Provides the native strncasecmp */
-#else
+#elif !defined(__APPLE__)
 /* 2. Fallback: Implement our own C11-compliant version */
 #include <ctype.h>
 

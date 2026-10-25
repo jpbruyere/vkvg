@@ -638,8 +638,8 @@ void _start_cmd_for_render_pass(VkvgContext ctx) {
 
     CmdBindDescriptorSets(ctx->cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx->dev->pipelineLayout, 0, 3, dss, 1, &offset);
 
-    VkDeviceSize offsets[1] = {0};
-    CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, offsets);
+    VkDeviceSize offsets = 0;
+    CmdBindVertexBuffers(ctx->cmd, 0, 1, &ctx->vertices.buffer, &offsets);
     CmdBindIndexBuffer(ctx->cmd, ctx->indices.buffer, 0, VKVG_VK_INDEX_TYPE);
 
     _update_push_constants(ctx);
@@ -673,6 +673,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
         return;
     } else
         newPatternType = pat->type;
+
+    _emit_draw_cmd_undrawn_vertices(ctx);
 
     if (lastPat) {
         if (ctx->cmdStarted) {
