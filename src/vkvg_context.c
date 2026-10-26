@@ -38,7 +38,7 @@ static const vkvg_context_save_t CTX_INIT = {
 };
 
 void _init_ctx(VkvgContext ctx) {
-    memcpy((void*)&(ctx->curColor), (void*)&CTX_INIT, (void*)&(ctx->indCount) - (void*)&(ctx->curColor));
+    memcpy((void*)&(ctx->curColor), (void*)&CTX_INIT, (uintptr_t)&(ctx->indCount) - (uintptr_t)&(ctx->curColor));
 
     ctx->cmdStarted                = false;
     ctx->curClipState              = vkvg_clip_state_none;
@@ -1240,11 +1240,11 @@ void vkvg_select_font_face(VkvgContext ctx, const char* name) {
     RECORD(ctx, VKVG_CMD_SET_FONT_FACE, name);
     vkvg_set_font(ctx, vkvg_font_create(ctx->pSurf, name, 12));
 }
-void vkvg_load_font_from_path(VkvgContext ctx, const char* path, const char* name) {
+void vkvg_load_font_from_path(VkvgContext ctx, const char* path, uint32_t size) {
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-    vkvg_set_font(ctx, vkvg_font_create_from_file(ctx->pSurf, path, 0, 12));
+    vkvg_set_font(ctx, vkvg_font_create_from_file(ctx->pSurf, path, 0, size));
 }
 void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
     if (vkvg_status(ctx))
@@ -1375,7 +1375,7 @@ void vkvg_save(VkvgContext ctx) {
     else
         sav->clippingState = vkvg_clip_state_clear;*/
 
-    memcpy((void*)sav, (void*)&(ctx->curColor), (void*)&(ctx->indCount) - (void*)&(ctx->curColor));
+    memcpy((void*)sav, (void*)&(ctx->curColor), (uintptr_t)&(ctx->indCount) - (uintptr_t)&(ctx->curColor));
 
     sav->curClipRef = ctx->curClipRef;
     if (ctx->pattern)
@@ -1448,7 +1448,7 @@ void vkvg_restore(VkvgContext ctx) {
     if (ctx->cmdStarted)
         CmdSetStencilReference(ctx->cmd, VK_STENCIL_FRONT_AND_BACK, ctx->curClipRef);
 
-    memcpy((void*)&(ctx->curColor), (void*)sav, (void*)&(ctx->pattern) - (void*)&(ctx->curColor));
+    memcpy((void*)&(ctx->curColor), (void*)sav, (uintptr_t)&(ctx->pattern) - (uintptr_t)&(ctx->curColor));
 
     ctx->pushCstDirty = true;
 

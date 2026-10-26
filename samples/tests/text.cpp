@@ -201,7 +201,7 @@ TEST(text_simple) {
     vkvg_paint(ctx);
     vkvg_set_source_rgb(ctx, 1, 1, 1);
 
-    vkvg_load_font_from_path(ctx, "data/DancingScript-Regular.ttf", "dancing");
+    vkvg_load_font_from_path(ctx, "data/DancingScript-Regular.ttf", 30);
     print_boxed(ctx, "abcdefghijklmnopqrstuvwxyz", 20, 60, 20);
     print_boxed(ctx, "ABC", 20, 160, 60);
     vkvg_select_font_face(ctx, "mono");
@@ -217,7 +217,7 @@ TEST(text_font_file_path) {
     vkvg_set_source_rgb(ctx, 0, 0, 0);
     vkvg_paint(ctx);
     vkvg_set_source_rgb(ctx, 1, 1, 1);
-    vkvg_load_font_from_path(ctx, "data/DancingScript-Regular.ttf", "droid");
+    vkvg_load_font_from_path(ctx, "data/DancingScript-Regular.ttf", 30);
     print_boxed(ctx, "This is a test string!", 50, 20, 12);
     print_boxed(ctx, "This is a test string!", 50, 50, 20);
     print_boxed(ctx, "ANOTHER ONE TO CHECK..", 50, 80, 20);
@@ -321,7 +321,7 @@ TEST(text_proto_sinaitic) {
     vkvg_paint(ctx);
     vkvg_set_source_rgb(ctx, 1, 1, 1);
 
-    vkvg_load_font_from_path(ctx, "data/Proto-Sinaitic15.ttf", "sinaitic");
+    vkvg_load_font_from_path(ctx, "data/Proto-Sinaitic15.ttf", 30);
     print_boxed(ctx, "hwhy", 100, 150, 60);
 
     vkvg_destroy(ctx);
