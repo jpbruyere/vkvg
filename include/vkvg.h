@@ -1710,9 +1710,9 @@ vkvg_public void vkvg_select_font_face(VkvgContext ctx, const char* name);
  *
  * @param ctx a valid vkvg @ref context
  * @param path A valid font file path.
- * @param name A short name to select this font afteward
+ * @param size Font size in point units.
  */
-vkvg_public void vkvg_load_font_from_path(VkvgContext ctx, const char* path, const char* name);
+vkvg_public void vkvg_load_font_from_path(VkvgContext ctx, const char* path, uint32_t size);
 /**
  * @brief Select a new font by providing a pointer on the font file loaded in memory and its size in byte.
  *
