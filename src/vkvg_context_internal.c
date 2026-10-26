@@ -790,8 +790,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             vkvg_matrix_transform_distance(&ctx->pushConsts.mat, &grad->cp[1].z, &grad->cp[0].w);
         }
         gradPat->offset = ctx->pSurf->gradCount * sizeof(vkvg_gradient_t);
-        memcpy(vkh_buffer_get_mapped_pointer(&ctx->pSurf->uboGrad) + gradPat->offset,
-               grad, sizeof(vkvg_gradient_t));
+        uintptr_t targetAddr = (uintptr_t)vkh_buffer_get_mapped_pointer(&ctx->pSurf->uboGrad) + gradPat->offset;
+        memcpy((void*)targetAddr, grad, sizeof(vkvg_gradient_t));
         //vkh_buffer_flush(&ctx->pSurf->uboGrad);
 
         if (ctx->cmdStarted)
