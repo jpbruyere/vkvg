@@ -55,6 +55,7 @@ typedef struct _vkvg_device_t {
     VkPhysicalDeviceMemoryProperties phyMemProps; /**< Vulkan Physical device memory properties */
 
     VkDeviceSize       minUniformBufferOffsetAlignment; /**< stored for dynamic uniform buffer offsets */
+    VkSampleCountFlags framebufferColorSampleCounts;
     VkImageTiling      supportedTiling;     /**< Supported image tiling for surface, 0xFF=no support */
     VkFormat           stencilFormat;       /**< Supported vulkan image format for stencil */
     VkImageAspectFlags stencilAspectFlag;   /**< stencil only or depth stencil, could be solved by
@@ -69,7 +70,7 @@ typedef struct _vkvg_device_t {
     atomic_int      references; /**< Reference count, prevent destroying device if still in use */
     VkCommandPool   cmdPool;    /**< Global command pool for processing on surfaces without context */
     VkCommandBuffer cmd;        /**< Global command buffer */
-    VkFence         fence; /**< this fence is kept signaled when idle, wait and reset are called before each recording. */
+    VkFence         fence;      /**< this fence is kept signaled when idle, wait and reset are called before each recording. */
 
 
     VkPipelineCache       pipelineCache;  /**< speed up startup by caching configured pipelines on disk */

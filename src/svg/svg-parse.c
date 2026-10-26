@@ -1646,7 +1646,7 @@ void process_svg(svg_context *const svg) {
         return;
     }
     if (!svg->ctx) {
-        svg->surf = vkvg_surface_create(svg->dev, surfW, surfH);
+        svg->surf = vkvg_surface_create_ms(svg->dev, surfW, surfH, VK_SAMPLE_COUNT_4_BIT);
         svg->ctx  = vkvg_create(svg->surf);
         vkvg_clear (svg->ctx);
         svg->ownContext = true;

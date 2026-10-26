@@ -624,6 +624,12 @@ VkvgSurface _create_surface(VkvgDevice dev, VkFormat format, VkSampleCountFlags 
         return (VkvgSurface)&_vkvg_status_no_memory;
     }
 
+    if (!(dev->framebufferColorSampleCounts & samples)) {
+        LOGE("CREATE Surface failed, sample count not supported: %d\n", samples);
+        surf->status = VKVG_STATUS_INVALID_SURFACE;
+        return surf;
+    }
+
     surf->dev     = dev;
     surf->hdpi    = 72;
     surf->vdpi    = 72;

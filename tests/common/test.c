@@ -154,7 +154,6 @@ void init_test(uint32_t width, uint32_t height) {
     vkengine_set_scroll_callback(e, scroll_callback);
 
     vkvg_device_create_info_t info = {
-        samples, false,
         vkh_app_get_inst(e->app),
         vkh_device_get_phy(e->dev),
         vkh_device_get_vkdev(e->dev),
@@ -472,7 +471,7 @@ void perform_test(void (*testfunc)(void), const char* testName, int argc, char* 
 
 void perform_test_offscreen(void (*testfunc)(void), const char* testName, int argc, char* argv[]) {
 
-    vkvg_device_create_info_t info = { samples };
+    vkvg_device_create_info_t info = {0};
     device = vkvg_device_create(&info);
     // vkvg_device_set_dpy(device, 96, 96);
     surf = vkvg_surface_create(device, test_width, test_height);

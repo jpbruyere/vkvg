@@ -148,11 +148,11 @@ int main(int argc, char* argv[]) {
     vkengine_set_scroll_callback(e, scroll_callback);
 
     vkvg_device_create_info_t info = {
-                                      samples, false,
-                                      vkh_app_get_inst(e->app),
-                                      vkh_device_get_phy(e->dev),
-                                      vkh_device_get_vkdev(e->dev),
-                                      e->gQFamIdx, 0};
+        vkh_app_get_inst(e->app),
+        vkh_device_get_phy(e->dev),
+        vkh_device_get_vkdev(e->dev),
+        e->gQFamIdx, 0
+    };
 
     device = vkvg_device_create(&info);
     surf = vkvg_surface_create(device, test_width, test_height);

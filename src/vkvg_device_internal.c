@@ -103,7 +103,6 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
         //{VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push_constants)}
     };
     VkDescriptorSetLayout dsls[] = {dev->dslFont, dev->dslSrc, dev->dslGrad};
-
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pushConstantRangeCount = 1,

@@ -76,6 +76,7 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
 
     VkPhysicalDeviceProperties phyProps = vkh_phyinfo_get_properties(phyInfos);
     dev->minUniformBufferOffsetAlignment = phyProps.limits.minUniformBufferOffsetAlignment;
+    dev->framebufferColorSampleCounts = phyProps.limits.framebufferColorSampleCounts;
 
     // mtx_init (&dev->gQMutex, mtx_plain);
 
@@ -287,17 +288,6 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
         if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, &pi))
             if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
                 pi = phys[0];
-
-        if (!info->samples) // if not set, default to 1 sample
-            info->samples = VK_SAMPLE_COUNT_1_BIT;
-
-        if (!(pi->properties.limits.framebufferColorSampleCounts & info->samples)) {
-            LOGE("CREATE Device failed: sample count not supported: %d\n", info->samples);
-            dev->status = VKVG_STATUS_DEVICE_ERROR;
-            vkh_app_free_phyinfos(phyCount, phys);
-            vkh_app_destroy(app);
-            return dev;
-        }
 
         uint32_t                qCount        = 0;
         float                   qPriorities[] = {0.0};

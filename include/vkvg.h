@@ -571,16 +571,6 @@ vkvg_public void          vkvg_matrix_get_scale(const vkvg_matrix_t* matrix, flo
  * #VkvgDevice is the starting point of a vkvg rendering infrastructure. It connects an
  * existing vulkan context with vkvg, or may create a new one.
  *
- * Most of the vulkan rendering component (pipelines, renderpass, ..) are part of the VkvgDevice,
- * their are shared among drawing contexts.
- *
- * Antialiasing level is configured when creating the device by selecting the sample count.
- * @ref vkvg_device_create will create a non-antialiased dev by selecting VK_SAMPLE_COUNT_1_BIT as sample count.
- * To create antialiased rendering device, call @ref vkvg_device_create_multisample with VkSampleCountFlags
- * greater than one.
- *
- * vkvg use a single frame buffer format for now: VK_FORMAT_B8G8R8A8_UNORM.
- *
  * Device holds the font cache so that each time a context draws text, the same cache is used.
  *
  * @{ */
@@ -592,24 +582,13 @@ vkvg_public void          vkvg_matrix_get_scale(const vkvg_matrix_t* matrix, flo
  * @code
  * @endcode
  *
- * @samples: sample count.
- * @inst: vulkan instance used to create device, may be null to create a new instance.
- * @phy: vulkan physical device to create vkvg device for, may be null.
- * @vkdev: vulkan logical device, may be null to create a new one.
- * @qFamIdx: graphic queue family index, ignored if vkdev is NULL.
- * @qIndex: queue index, ignored if vkdev is NULL.
- * @deferredResolve: If true, the final simple sampled image of the surface will only be resolved on demand
- * when calling @ref vkvg_surface_get_vk_image or by explicitly calling @ref vkvg_multisample_surface_resolve.
- * If false, multisampled image is resolved on each draw operation.
  */
 typedef struct {
-    VkSampleCountFlags samples;
-    bool               deferredResolve;
-    VkInstance         inst;
-    VkPhysicalDevice   phy;
-    VkDevice           vkdev;
-    uint32_t           qFamIdx;
-    uint32_t           qIndex;
+    VkInstance         inst;                /**< vulkan instance used to create device, may be null to create a new instance.*/
+    VkPhysicalDevice   phy;                 /**< vulkan physical device to create vkvg device for, may be null.*/
+    VkDevice           vkdev;               /**< vulkan logical device, may be null to create a new one.*/
+    uint32_t           qFamIdx;             /**< graphic queue family index, ignored if vkdev is NULL.*/
+    uint32_t           qIndex;              /**< queue index, ignored if vkdev is NULL.*/
     bool               threadAware;         /**< if true, mutex is created and guard device queue and caches access */
     const char*        fontsDirectories;    /**< Coma sepparated list of font directories to scan.
                                                  With font-config, leave empty for default system configuration.
