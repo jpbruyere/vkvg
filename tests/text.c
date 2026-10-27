@@ -176,7 +176,7 @@ void test() {
 void single_font_and_size() {
     VkvgContext ctx = vkvg_create(surf);
     vkvg_clear(ctx);
-    VkvgFont font = vkvg_font_create(surf, "mono", 20);
+    VkvgFont font = vkvg_font_create(device, "mono", 20);
     for (uint32_t i = 0; i < test_size; i++) {
         randomize_color(ctx);
         float x = rndf() * test_width;
@@ -195,8 +195,8 @@ void simple_text() {
     vkvg_paint(ctx);
     vkvg_set_source_rgb(ctx, 1, 1, 1);
 
-    VkvgFont mono = vkvg_font_create(surf, "mono", 12);
-    VkvgFont norm = vkvg_font_create_from_file(surf, "data/Proto-Sinaitic15.ttf", 0, 24);
+    VkvgFont mono = vkvg_font_create(device, "mono", 12);
+    VkvgFont norm = vkvg_font_create_from_file(device, "data/Proto-Sinaitic15.ttf", 0, 24);
     vkvg_set_font (ctx, mono);
     vkvg_move_to(ctx, 20, 50);
     vkvg_show_text(ctx, "hwhy");
@@ -229,7 +229,7 @@ void variable_text() {
     vkvg_paint(ctx);
     vkvg_set_source_rgb(ctx, 1, 1, 1);
 
-    VkvgFont noto = vkvg_font_create(surf, "Noto Sans JP:fontvariations=wght=150", 30);
+    VkvgFont noto = vkvg_font_create(device, "Noto Sans JP:fontvariations=wght=150", 30);
 
     vkvg_set_font (ctx, noto);
     vkvg_move_to(ctx, 20, 50);
@@ -237,14 +237,14 @@ void variable_text() {
 
     vkvg_font_destroy(noto);
 
-    noto = vkvg_font_create(surf, "Noto Sans JP:fontvariations=wght=900", 30);
+    noto = vkvg_font_create(device, "Noto Sans JP:fontvariations=wght=900", 30);
     vkvg_set_font (ctx, noto);
     vkvg_move_to(ctx, 20, 150);
     vkvg_show_text(ctx, txt2);
 
     vkvg_font_destroy(noto);
 
-    noto = vkvg_font_create(surf, "Cantarell:fontvariations=wght=900", 30);
+    noto = vkvg_font_create(device, "Cantarell:fontvariations=wght=900", 30);
     vkvg_set_font (ctx, noto);
     vkvg_move_to(ctx, 20, 200);
     vkvg_show_text(ctx, txt);
@@ -297,7 +297,7 @@ void random_font_and_size() {
         float    y = rndf() * test_height;
         uint32_t c = (uint32_t)(rndf() * 80) + 1;
         uint32_t f = (uint32_t)(rndf() * 4);
-        VkvgFont font = vkvg_font_create(surf, fonts[f], c);
+        VkvgFont font = vkvg_font_create(device, fonts[f], c);
         vkvg_set_font(ctx,font);
         vkvg_move_to(ctx, x, y);
         vkvg_show_text(ctx, "This is a test string!");

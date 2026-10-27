@@ -282,7 +282,7 @@ void draw(VkvgSurface surfFont) {
         FcPatternGetString (font, FC_FAMILY, 0, &family_name);
         FcPatternGetString (font, FC_STYLE, 0, &style_variant);
         FcPatternGetBool(font, FC_VARIABLE, 0, &var);
-        VkvgFont f = vkvg_font_create_from_file(surf, (char*)fontFile, index, fontSize);
+        VkvgFont f = vkvg_font_create_from_file(device, (char*)fontFile, index, fontSize);
         if (vkvg_font_status(f)) {
             printf("Error trying to load %s, from %s\n", txtBuffCopy, fontFile);
             fflush(stdout);
@@ -528,7 +528,7 @@ int main(int argc, char* argv[]) {
 
     strcpy (txtBuffer, "sans");
     txtBuffPtr = 4;
-    sans16 = vkvg_font_create(surf, "sans", 16);
+    sans16 = vkvg_font_create(device, "sans", 16);
 
     while (!vkengine_should_close(e)) {
         glfwPollEvents();

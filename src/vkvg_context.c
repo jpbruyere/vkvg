@@ -1238,13 +1238,13 @@ void vkvg_select_font_face(VkvgContext ctx, const char* name) {
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_FACE, name);
-    vkvg_set_font(ctx, vkvg_font_create(ctx->pSurf, name, 12));
+    vkvg_set_font(ctx, vkvg_font_create(ctx->dev, name, 12));
 }
 void vkvg_load_font_from_path(VkvgContext ctx, const char* path, uint32_t size) {
     if (vkvg_status(ctx))
         return;
     RECORD(ctx, VKVG_CMD_SET_FONT_PATH, name);
-    vkvg_set_font(ctx, vkvg_font_create_from_file(ctx->pSurf, path, 0, size));
+    vkvg_set_font(ctx, vkvg_font_create_from_file(ctx->dev, path, 0, size));
 }
 void vkvg_set_font_size(VkvgContext ctx, uint32_t size) {
     if (vkvg_status(ctx))
@@ -1276,7 +1276,7 @@ void vkvg_text_extents(VkvgContext ctx, const char* text, vkvg_text_extents_t* e
 void vkvg_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
     if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
         return;
-    _font_cache_font_extents(ctx->currentFont, extents);
+    _font_cache_font_extents(ctx, extents);
 }
 void vkvg_show_text(VkvgContext ctx, const char* text) {
     if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
@@ -1295,7 +1295,7 @@ VkvgText vkvg_text_create(VkvgContext ctx, const char* text) {
         LOGE("vkvg_text_create error, no memory\n");
         return NULL;
     }
-    text_run_init(tr, ctx->currentFont, ctx->textDirection, text, -1);
+    text_run_init(tr, ctx, text, -1);
     return tr;
 }
 VkvgText vkvg_text_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
@@ -1306,7 +1306,7 @@ VkvgText vkvg_text_create_with_length(VkvgContext ctx, const char* text, uint32_
         LOGE("vkvg_text_create error, no memory\n");
         return NULL;
     }
-    text_run_init(tr, ctx->currentFont, ctx->textDirection, text, length);
+    text_run_init(tr, ctx, text, length);
     return tr;
 }
 uint32_t vkvg_text_get_glyph_count(VkvgText textRun) {

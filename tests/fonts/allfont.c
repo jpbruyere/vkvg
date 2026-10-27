@@ -172,7 +172,7 @@ void draw(VkvgSurface surfFont) {
 
     char tmp[1024];
 
-    VkvgFont mono = vkvg_font_create(surf, "mono", 12);
+    VkvgFont mono = vkvg_font_create(device, "mono", 12);
 
     for (int i = curFontStartIdx; i < font_database->nfont; i++) {
         FcPattern* font_entry = font_database->fonts[i];
@@ -199,7 +199,7 @@ void draw(VkvgSurface surfFont) {
         if (onlyVariable && !variable)
             continue;
 
-        VkvgFont font = vkvg_font_create (surf, tmp, fontSize);
+        VkvgFont font = vkvg_font_create (device, tmp, fontSize);
         if (vkvg_font_status(font)) {
             printf("Error trying to load %s, from %s\n", tmp, file_path);
             fflush(stdout);

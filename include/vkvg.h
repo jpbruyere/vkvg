@@ -338,16 +338,16 @@ typedef struct _vkvg_font_t* VkvgFont;
  * @param pointSize The font size in point unit, 1/72 of an inch.
  * @return A new VkvgFont or null if an error occured.
  */
-vkvg_public VkvgFont        vkvg_font_create (VkvgSurface surf, const char* queryString, float pointSize);
+vkvg_public VkvgFont        vkvg_font_create (VkvgDevice dev, const char* queryString, float pointSize);
 /**
  * @brief Create a new @ref VkvgFont from the provided font file, face index and size.
- * @param surf VkvgDevice holding the font cache.
+ * @param dev VkvgDevice holding the font cache.
  * @param fontFilePath a valid font file path.
  * @param faceIndex Usually 0, except for variable fonts or font file with multiple faces.
  * @param pointSize The font size in point unit, 1/72 of an inch.
  * @return
  */
-vkvg_public VkvgFont        vkvg_font_create_from_file (VkvgSurface surf, const char* fontFilePath, int faceIndex, float pointSize);
+vkvg_public VkvgFont        vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, int faceIndex, float pointSize);
 /**
  * @brief Get underlying font face object pointer, if freetype is enable, the FT_Face will be returned.
  * @param font a valid VkvgFont.

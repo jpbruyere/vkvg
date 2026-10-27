@@ -243,7 +243,7 @@ void _device_check_best_image_tiling(VkvgDevice dev, VkFormat format) {
     }
 
     if (dev->pngStagFormat == VK_FORMAT_UNDEFINED)
-        LOG(VKVG_LOG_DEBUG, "vkvg create device warning: no suitable image format for png write\n");
+        LOGW("vkvg create device warning: no suitable image format for png write\n");
 
     dev->stencilFormat     = VK_FORMAT_UNDEFINED;
     dev->stencilAspectFlag = VK_IMAGE_ASPECT_STENCIL_BIT;

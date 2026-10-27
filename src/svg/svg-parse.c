@@ -1570,7 +1570,7 @@ void process_element(svg_context *const svg, SvgPresentationAttributes *const at
             if (attribs->font_family_len > 0) {
                 char fam[1024];
                 sprintf(fam, "%.*s", attribs->font_family_len, attribs->font_family);
-                font = vkvg_font_create(svg->surf, fam, attribs->font_size_pt);
+                font = vkvg_font_create(svg->dev, fam, attribs->font_size_pt);
                 vkvg_set_font(svg->ctx, font);
                 vkvg_font_destroy(font);
             }

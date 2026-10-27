@@ -152,8 +152,12 @@ static inline int get_utf8_char_length(uint8_t first_byte) {
     return utf8_len_table[first_byte];
 }
 
-typedef struct _tex_ref_t tex_ref_t;
-typedef struct _tex_ref_t* TexRef;
+typedef struct _tex_ref_t           tex_ref_t;//?
+typedef struct _tex_ref_t          *TexRef;
+typedef struct _vkvg_font_buffer_t *FontBuffer;
+typedef struct _vkvg_font_face_t   *FontFace;
+typedef struct _vkvg_font_size_t   *FontSize;
+
 // texture coordinates of one character in font cache array texture.
 typedef struct _char_ref {
     TexRef      texRef;    /* glyph bitmap ref */
@@ -182,15 +186,15 @@ CTOR_ARRAY(uint64_t)
 CTOR_ARRAY(VkvgFont)
 ARRAY_DEL_ELT(VkvgFont)
 
+CTOR_ARRAY(FontSize)
+ARRAY_DEL_ELT(FontSize)
+
 typedef struct _tex_page_t {
     array_TexRef    lines;
     float           penY;
 } tex_page_t;
 
 CTOR_ARRAY(tex_page_t)
-
-typedef struct _vkvg_font_buffer_t *FontBuffer;
-typedef struct _vkvg_font_face_t   *FontFace;
 
 /* Font identification structure */
 typedef struct _vkvg_font_face_t{
@@ -211,7 +215,7 @@ typedef struct _vkvg_font_face_t{
 #ifdef VKVG_USE_HARFBUZZ
     hb_font_t*      hb_font; /* HarfBuzz font instance*/
 #endif
-    array_VkvgFont  sizes;    /* loaded font size array */
+    array_FontSize  sizes;   /* loaded font size array */
 } vkvg_font_face_t;
 
 CTOR_ARRAY(FontFace)
@@ -229,14 +233,11 @@ ARRAY_DEL_ELT(FontBuffer)
 
 DIAGNOSTIC_RESTORE_UNUSED
 
-typedef struct _vkvg_font_t {
-    vkvg_status_t   status;
-    atomic_int      references; // reference count
-
+typedef struct _vkvg_font_size_t {
     FontFace        face;
     VkvgDevice      dev;        // to access font cache when required
+    float           pxSize;     // self computed pix size from pt with surface dpy used for size matching.
 #ifdef VKVG_USE_FREETYPE
-    FT_F26Dot6      charSize; /* Font size in Point as fixed float 26.6 */
     FT_Size         ftSize;   /* FT size rec */
     signed long*    coords;   /* Variable fonts axes coordinates */
 #else
@@ -246,12 +247,30 @@ typedef struct _vkvg_font_t {
     int             descent;
     int             lineGap;
 #endif
-
     glyph_ref*      charLookup;/* Lookup table of characteres in cache, if not found, upload is queued*/
     array_TexRef    texLines;  /* texture reference where to add new glyph bmp's in cache */
     int             penX;      /* Current X in cache for next char addition */
     float           height;    /* Height in pixel */
+} vkvg_font_size_t;
+
+typedef struct _vkvg_font_t {
+    vkvg_status_t   status;
+    atomic_int      references; // reference count
+
+    FontFace        face;
+    VkvgDevice      dev;        // to access font cache when required
+#ifdef VKVG_USE_FREETYPE
+    FT_F26Dot6      ptSize; /* Font size in Point as fixed float 26.6 */
+#else
+    float           charSize; /* Font size in pixel */
+    float           scale;    /* scale factor for the given size */
+    int             ascent;   /* unscalled stb font metrics */
+    int             descent;
+    int             lineGap;
+#endif
+    vkvg_font_size_t* curSize;
 } vkvg_font_t;
+
 
 
 // Font cache global structure, entry point for all font related operations.
@@ -261,20 +280,20 @@ typedef struct _font_cache_t {
 #else
 #endif
 #ifdef VKVG_USE_FONTCONFIG
-    FcConfig*       config;     /* Font config, used to find font files by font names*/
+    FcConfig*       config;       /* Font config, used to find font files by font names*/
     //FcPattern*      fcPattern;  /* patter used for all Font config queries */
-    FcObjectSet*    fcReqElts;  /* Font config requested metadata elements */
+    FcObjectSet*    fcReqElts;    /* Font config requested metadata elements */
 #endif
 
-    int             stagingX;   /* x pen in host buffer */
-    uint8_t*        hostBuff;   /* host memory where bitmaps are first loaded */
+    int             stagingX;     /* x pen in host buffer */
+    uint8_t*        hostBuff;     /* host memory where bitmaps are first loaded */
 
     VkCommandBuffer cmd;          /* vulkan command buffer for font textures upload */
     vkh_buffer_t    buff;         /* stagin buffer */
     VkhImage        texture;      /* 2d array texture used by contexts to draw characteres */
 
     VkDescriptorPool descriptorPool;
-    VkDescriptorSet  dsFont;       /* fonts glyphs texture atlas descriptor set */
+    VkDescriptorSet  dsFont;      /* fonts glyphs texture atlas descriptor set */
 
     VkFormat        texFormat;    /* Format of the fonts texture array */
     uint8_t         texPixelSize; /* Size in byte of a single pixel in a font texture */
@@ -294,7 +313,7 @@ typedef struct _font_cache_t {
 
 // Precompute everything necessary to measure and draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
-    VkvgFont                font;       /* vkvg font structure pointer */
+    FontSize                font;       /* vkvg font structure pointer */
     vkvg_direction_t        textDirection; /* horizontal or vertical */
     vkvg_text_extents_t     extents;    /* store computed text extends */
     const char*             text;       /* utf8 char array of text*/
@@ -313,10 +332,12 @@ void _font_cache_destroy(VkvgDevice dev);
 bool _font_cache_load_font_file_in_memory(vkvg_font_face_t* fontId);
 void _font_cache_show_text(VkvgContext ctx, const char* text);
 void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkvg_text_extents_t* extents);
-void _font_cache_font_extents(VkvgFont font, vkvg_font_extents_t* extents);
+void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents);
 void _font_cache_update_context_descset(VkvgContext ctx);
 
-void text_run_init(VkvgText textRun, VkvgFont font, vkvg_direction_t textDirection, const char* text, int length);
+void _font_size_destroy (FontSize font);
+
+void text_run_init(VkvgText textRun, VkvgContext ctx, const char* text, int length);
 void text_run_term(VkvgText textRun);
 void text_run_render(VkvgText tr, VkvgContext ctx); // Draw text run
 #endif

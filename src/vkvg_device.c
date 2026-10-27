@@ -299,6 +299,7 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
         enabledExtsCount = 0;
 
         if (vkvg_get_required_device_extensions(pi->phy, enabledExts, &enabledExtsCount) != VKVG_STATUS_SUCCESS) {
+            LOGE("CREATE Device failed, vkvg_get_required_device_extensions failure.\n");
             dev->status = VKVG_STATUS_DEVICE_ERROR;
             vkh_app_free_phyinfos(phyCount, phys);
             vkh_app_destroy(app);
