@@ -562,6 +562,7 @@ vkvg_public void vkvg_matrix_transform_point(const vkvg_matrix_t* matrix, float*
  */
 vkvg_public vkvg_status_t vkvg_matrix_invert(vkvg_matrix_t* matrix);
 vkvg_public void          vkvg_matrix_get_scale(const vkvg_matrix_t* matrix, float* sx, float* sy);
+vkvg_public bool          vkvg_matrix_has_scale(const vkvg_matrix_t* matrix);
 /** @}*/
 
 /*!

@@ -12,6 +12,7 @@
 #include <locale.h>
 #include <string.h>
 #include <wchar.h>
+#include <time.h>
 
 #ifdef VKVG_USE_FREETYPE
 #define CHECK_FACE_FLAG(flags, flag, buffer) \
@@ -76,6 +77,12 @@ do { \
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 #endif
+
+static inline uint64_t _get_ticks_ms() {
+    struct timespec ts;
+    timespec_get(&ts, TIME_MONOTONIC);
+    return ((uint64_t)ts.tv_sec * 1000ULL) + ((uint64_t)ts.tv_nsec / 1000000ULL);
+}
 
 static int defaultFontCharSize = 12 << 6;
 
@@ -806,11 +813,18 @@ exit_failed:
     return false;
 }
 
-bool try_get_or_create_font_size (VkvgSurface surf, VkvgFont font) {
+bool try_get_or_create_font_size (VkvgContext ctx, VkvgFont font) {
     if (font->curSize != NULL)
         return true;
     FontFace face = font->face;
-    uint32_t pxSize = (font->ptSize * surf->vdpi + 2304) / 4608;
+    uint32_t pxSize = (font->ptSize * ctx->pSurf->vdpi + 2304) / 4608;
+    if (vkvg_matrix_has_scale(&ctx->pushConsts.mat)) {
+        font->hasScale = true;
+        float sx, sy;
+        vkvg_matrix_get_scale(&ctx->pushConsts.mat, &sx, &sy);
+        font->scale = (sx + sy) * 0.5f;
+        pxSize = (uint32_t)((float)pxSize * font->scale + 0.5f);
+    }
 
     for (int i = 0; i < face->sizes.count; ++i) {
         FontSize f = face->sizes.elements[i];
@@ -835,7 +849,7 @@ bool try_get_or_create_font_size (VkvgSurface surf, VkvgFont font) {
         return false;
     }
     fntsize->face = face;
-    VkvgDevice dev = surf->dev;
+    VkvgDevice dev = ctx->dev;
 
 #ifdef VKVG_USE_FREETYPE
     if (dev->threadAware)
@@ -862,6 +876,7 @@ bool try_get_or_create_font_size (VkvgSurface surf, VkvgFont font) {
     FT_CHECK_SIZE(FT_New_Size (face->face, &fntsize->ftSize));
     FT_CHECK_SIZE(FT_Activate_Size(fntsize->ftSize));
     //TODO:handle fixed sizes
+    fntsize->pxSize = pxSize;
     FT_CHECK_SIZE(FT_Set_Pixel_Sizes(face->face, 0, pxSize));
 
     /*if (font->coords) {
@@ -949,7 +964,7 @@ void _font_lock_size (FontSize font) {
 // retrieve global font extends of context's current font as defined by FreeType
 void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
     VkvgFont font = ctx->currentFont;
-    if (!try_get_or_create_font_size(ctx->pSurf, font))
+    if (!try_get_or_create_font_size(ctx, font))
         return;
 #ifdef VKVG_USE_FREETYPE
     FT_Face face = font->face->face;
@@ -1013,10 +1028,11 @@ void _font_cache_show_text(VkvgContext ctx, const char* text) {
 // if length is < 0, text must be null terminated, else it contains glyph count
 void text_run_init(VkvgText textRun, VkvgContext ctx, const char* text, int length) {
     VkvgFont font = ctx->currentFont;
-
-    try_get_or_create_font_size(ctx->pSurf, font);
+    try_get_or_create_font_size(ctx, font);
 
     textRun->font = font->curSize;
+    textRun->hasScale = font->hasScale;
+    textRun->scale = font->scale;
     textRun->textDirection = ctx->textDirection;
 
     _font_lock_size(textRun->font);
@@ -1087,6 +1103,7 @@ void text_run_term(VkvgText textRun) {
 }
 
 void text_run_render(VkvgText tr, VkvgContext ctx) {
+    LOG (VKVG_LOG_FONT, "render text\n");
     unsigned int glyph_count;
 #ifdef VKVG_USE_HARFBUZZ
     hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos(tr->hbBuf, &glyph_count);
@@ -1100,6 +1117,16 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
 
     if (!_current_path_is_empty(ctx))
         pen = _get_current_position(ctx);
+
+    vkvg_matrix_t savedMat = ctx->pushConsts.mat;
+    if (tr->hasScale) {
+        LOG (VKVG_LOG_FONT, "render text with scale\n");
+        _emit_draw_cmd_undrawn_vertices(ctx);
+        ctx->pushConsts.mat = VKVG_IDENTITY_MATRIX;
+        _set_mat_inv_and_vkCmdPush(ctx);
+        _ensure_renderpass_is_started(ctx);
+        vkvg_matrix_transform_point(&savedMat, &pen.x, &pen.y);
+    }
 
     LOCK_FONTCACHE(ctx->dev)
 
@@ -1152,6 +1179,11 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
         vkvg_flush(ctx);
         _font_cache_update_context_descset(ctx);
     }*/
+    if (tr->hasScale) {
+        _emit_draw_cmd_undrawn_vertices(ctx);
+        ctx->pushConsts.mat = savedMat;
+        _set_mat_inv_and_vkCmdPush(ctx);
+    }
 }
 
 #ifdef DEBUG

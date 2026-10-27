@@ -236,7 +236,7 @@ DIAGNOSTIC_RESTORE_UNUSED
 typedef struct _vkvg_font_size_t {
     FontFace        face;
     VkvgDevice      dev;        // to access font cache when required
-    float           pxSize;     // self computed pix size from pt with surface dpy used for size matching.
+    uint32_t        pxSize;     // self computed pix size from pt with surface dpy used for size matching.
 #ifdef VKVG_USE_FREETYPE
     FT_Size         ftSize;   /* FT size rec */
     signed long*    coords;   /* Variable fonts axes coordinates */
@@ -251,6 +251,7 @@ typedef struct _vkvg_font_size_t {
     array_TexRef    texLines;  /* texture reference where to add new glyph bmp's in cache */
     int             penX;      /* Current X in cache for next char addition */
     float           height;    /* Height in pixel */
+    uint64_t        lastUse;   /* ms tick since last use */
 } vkvg_font_size_t;
 
 typedef struct _vkvg_font_t {
@@ -269,6 +270,8 @@ typedef struct _vkvg_font_t {
     int             lineGap;
 #endif
     vkvg_font_size_t* curSize;
+    bool              hasScale;
+    float             scale;
 } vkvg_font_t;
 
 
@@ -324,6 +327,8 @@ typedef struct _vkvg_text_run_t {
 #else
     vkvg_glyph_info_t*      glyphs;     /* computed glyph positions array */
 #endif
+    bool              hasScale; //was created with a scale in context
+    float             scale;
 } vkvg_text_run_t;
 
 

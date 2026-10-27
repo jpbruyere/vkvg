@@ -13,6 +13,8 @@ class TextDrawTest : public DrawTestBase {
         DrawTestBase::TearDown();
     }
 };
+static const char* txt = "Galvanized by the quartz, the white rabbit just jumped on the red fox for the sake of the crows";
+
 TEST_F(TextDrawTest, References) {
     VkvgFont font = vkvg_font_create(dev, "sans", 12);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_font_status(font));
@@ -62,7 +64,7 @@ TEST_F(TextDrawTest, ShowText) {
     vkvg_set_source_rgb(ctx,1,1,1);
     float penY = fe.ascent;
     vkvg_move_to(ctx, 40, penY);
-    vkvg_show_text(ctx, "Galvanized by the quartz, the white rabbit just jumped on the red fox for the sake of the crows");
+    vkvg_show_text(ctx, txt);
     penY += fe.height;
 
     vkvg_font_destroy(font);
@@ -70,7 +72,7 @@ TEST_F(TextDrawTest, ShowText) {
     font = vkvg_font_create(dev, "noto sans jp", 30);
     vkvg_set_font(ctx, font);
     vkvg_move_to(ctx, 40, penY);
-    vkvg_show_text(ctx, "Galvanized by the quartz, The white rabbit just jumped on the red fox for the sake of the crows");
+    vkvg_show_text(ctx, txt);
     vkvg_font_extents(ctx, &fe);
     penY += fe.height;
 
@@ -89,15 +91,48 @@ TEST_F(TextDrawTest, ShowText) {
     font = vkvg_font_create(dev, "Roboto:bold", 30);
     vkvg_set_font(ctx, font);
     vkvg_move_to(ctx, 40, penY);
-    vkvg_show_text(ctx, "Galvanized by the quartz, The white rabbit just jumped on the red fox for the sake of the crows");
+    vkvg_show_text(ctx, txt);
     vkvg_font_extents(ctx, &fe);
     penY += fe.height;
-
-
-
 
     vkvg_destroy(ctx);
 
     compareWithRefImage();
 }
 
+TEST_F(TextDrawTest, scale_up) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_clear(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(dev, "sans", 12);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 2, 15);
+    vkvg_scale(ctx, 10,10);
+    vkvg_show_text(ctx, txt);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+}
+TEST_F(TextDrawTest, scale_down) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_clear(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(dev, "sans", 60);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 2, 2);
+    vkvg_scale(ctx, 0.1f,0.1f);
+    vkvg_show_text(ctx, txt);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+}
