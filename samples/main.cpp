@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     app.logSeverity = program.get<std::vector<uint32_t>>("--severity");
 #endif
 
-    //vkvg_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN | VKVG_LOG_INFO;
+    //vkvg_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN | VKVG_LOG_FONT | VKVG_LOG_INFO;
 
     app.Init();
     app.Run();
