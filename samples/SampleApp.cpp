@@ -14,7 +14,7 @@
 
 bool SampleApp::try_get_phyinfo(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDeviceType gpuType, VkhPhyInfo* phy) {
     for (uint32_t i = 0; i < phyCount; i++) {
-        if (phys[i]->properties.deviceType == gpuType) {
+        if (vkh_phyinfo_get_properties(phys[i]).deviceType == gpuType) {
             *phy = phys[i];
             return true;
         }
