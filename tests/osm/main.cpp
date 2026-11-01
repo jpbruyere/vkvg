@@ -8,11 +8,11 @@ int main(int argc, char** argv) {
     argparse::ArgumentParser program("samples");
     program.add_argument("-w", "--width")
         .help("Output width")
-        .default_value<uint32_t>(512)
+        .default_value<uint32_t>(1024)
         .store_into<uint32_t>(app.width);
     program.add_argument("-h", "--height")
         .help("Output height")
-        .default_value<uint32_t>(512)
+        .default_value<uint32_t>(1024)
         .store_into<uint32_t>(app.height);
 #if defined(DEBUG) && defined(VKVG_DBG_UTILS)
     program.add_argument("--severity")

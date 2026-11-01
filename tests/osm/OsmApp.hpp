@@ -41,6 +41,7 @@ struct MapWay {
     RoadType road_type = RoadType::Unknown;
     bool is_building = false;
     bool is_water = false;
+    double min_x, max_x, min_y, max_y;
 };
 
 struct MapNode {
@@ -62,8 +63,8 @@ class OsmApp {
     VkPhysicalDeviceProperties       gpu_props;
 
   public:
-    uint32_t              width       = 512;
-    uint32_t              height      = 512;
+    uint32_t              width       = 1024;
+    uint32_t              height      = 1024;
     std::vector<uint32_t> logSeverity = {1};
     uint32_t              logType     = 0;
     bool                  listGpus    = false;
@@ -73,6 +74,9 @@ class OsmApp {
 
     VkPhysicalDeviceType  preferedGPU = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
     VkPresentModeKHR      presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+
+    VkvgDevice   device;
+    VkvgSurface  surf;
 
     GLFWwindow*  win;
     VkSurfaceKHR vkSurf;
@@ -99,15 +103,18 @@ class OsmApp {
     double max_merc_y = 0.0;
     double base_scale = 1.0;
 
+    struct ViewportBox {
+        double min_x, max_x, min_y, max_y;
+    };
+    ViewportBox get_current_viewport_bounds();
+
     std::vector<MapWay> parsed_ways;
     std::vector<MapNode> parsed_nodes;
-
-    VkvgDevice  device;
-    VkvgSurface surf;
 
     void Init();
     void Run();
     void CleanUp();
+    void InitOsmium ();
     void Render();
     void render_svg_icon(VkvgContext ctx, const std::string& type, double x, double y);
 };

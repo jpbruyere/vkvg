@@ -12,7 +12,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(argparse)
 
-set(OSM_DATA_ROOT "${CMAKE_SOURCE_DIR}/tests/osm" CACHE STRING "Data path for samples")
+set(OSM_DATA_ROOT "${CMAKE_SOURCE_DIR}/tests/vtzero/symbols" CACHE STRING "Data path for osm")
 
 file(GLOB OSM_SRC "*.cpp" "*.hpp")
 
@@ -21,6 +21,9 @@ add_executable("${PROJECT_NAME}" ${OSM_SRC})
 set_target_properties("${PROJECT_NAME}" PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
+)
+target_compile_definitions("${PROJECT_NAME}" PUBLIC
+    OSM_DATA_ROOT="${OSM_DATA_ROOT}"
 )
 target_include_directories("${PROJECT_NAME}" PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}"
