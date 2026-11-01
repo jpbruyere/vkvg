@@ -10,6 +10,46 @@
 #include <string>
 #include <iostream>
 
+#include "icon_registry.h"
+
+constexpr uint32_t fnv32(const char* str) {
+    uint32_t hash = 2166136261U;
+    while (*str) {
+        hash ^= static_cast<uint32_t>(*str++);
+        hash *= 16777619U;
+    }
+    return hash;
+}
+
+#define CreateRgbaf(r, g, b, a)                                                             \
+((((uint32_t)(a * 255.0f) & 0xFF) << 24) | (((uint32_t)(b * a * 255.0f) & 0xFF) << 16) |    \
+ (((uint32_t)(g * a * 255.0f) & 0xFF) << 8) | ((uint32_t)(r * a * 255.0f) & 0xFF))
+/*#define CreateArgb(a, r, g, b)                                                              \
+        ((0x##a & 0xFF) << 24) | ((((0x##b * 0x##a) >> 8) & 0xFF) << 16) |                  \
+        ((((0x##g * 0x##a) >> 8) & 0xFF) << 8) | ((((0x##r * 0x##a) >> 8) & 0xFF))*/
+#define CreateAbgr(a, r, g, b) \
+    (((uint32_t)(a) & 0xFF) << 24) | \
+    (((uint32_t)PREMULTIPLY(b, a) & 0xFF) << 16) | \
+    (((uint32_t)PREMULTIPLY(g, a) & 0xFF) << 8)  | \
+    ((uint32_t)PREMULTIPLY(r, a) & 0xFF)
+static std::pair<int, int> latlon_to_mbtiles(float lon, float lat, int zoom) {
+    // 1. Calculate Tile Column (X) - identical for XYZ and TMS
+    int tile_column = static_cast<int>(std::floor((lon + 180.0f) / 360.0f * std::pow(2.0f, zoom)));
+    float lat_rad = lat * M_PI / 180.0f;
+    int tile_row = static_cast<int>(std::floor((1.0f - std::log(std::tan(lat_rad) + (1.0f / std::cos(lat_rad))) / M_PI) / 2.0f * std::pow(2.0f, zoom)));
+    return {tile_column, tile_row};
+}
+static inline uint32_t _createAbgr(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
+    uint32_t prod_b = (uint32_t)b * a + 128;
+    uint32_t prod_g = (uint32_t)g * a + 128;
+    uint32_t prod_r = (uint32_t)r * a + 128;
+
+    return ((uint32_t)a << 24) |
+           (((prod_b + (prod_b >> 8)) >> 8) << 16) |
+           (((prod_g + (prod_g >> 8)) >> 8) << 8)  |
+           ((prod_r + (prod_r >> 8)) >> 8);
+}
+#define CreateAbgr(a, r, g, b) _createAbgr(0x##a, 0x##r, 0x##g, 0x##b)
 struct RenderPolygon {
     std::vector<std::vector<std::pair<float, float>>> rings; // Supports outer and inner hole rings
     float r, g, b;                                           // Pre-resolved colors
@@ -23,38 +63,25 @@ struct TrackedLine {
 };
 // The absolute correct polygon geometry template interface required by vtzero
 struct VkvgGeometryHandler {
-    std::vector<std::pair<float, float>> current_ring;
-    std::vector<std::vector<std::pair<float, float>>>& out_rings;
-
-           // Called at the start of every ring layer (outer boundary or inner hole)
-    void ring_begin(uint32_t count) {
-        current_ring.clear();
-        current_ring.reserve(count);
-    }
-
-           // Called for every coordinate pair inside the polygon ring
-    void ring_point(const vtzero::point p) {
-        current_ring.push_back({static_cast<float>(p.x), static_cast<float>(p.y)});
-    }
-
-           // Called at the end of every ring layer
-    void ring_end(vtzero::ring_type type) {
-        if (!current_ring.empty()) {
-            out_rings.push_back(std::move(current_ring));
-        }
-    }
-};
-struct VkvgLineHandler {
     VkvgContext ctx;
+    bool firstPoint;
 
-           // Called at the start of the entire feature parsing pass
+    std::pair<float, float> point;
+
+    void ring_begin(uint32_t count) {
+        firstPoint = true;
+    }
+    void ring_point(const vtzero::point p) {
+        if (firstPoint) {
+            vkvg_move_to(ctx, p.x, p.y);
+            firstPoint = false;
+        } else
+            vkvg_line_to(ctx, p.x, p.y);
+    }
+    void ring_end(vtzero::ring_type type) {
+        vkvg_close_path(ctx);
+    }
     void linestring_begin(uint32_t count) {}
-
-           // 1. CRITICAL: Called every time a new, separate road stroke starts!
-    void line_begin(uint32_t count) {}
-
-           // 2. CRITICAL: Handles points sequentially, lifting the pen if it's the start
-           // of a brand new disconnected road segment block
     void linestring_point(const vtzero::point p) {
         // We look at the internal vkvg path state to decide if we move or draw a segment line
         // vtzero tracks winding commands automatically under the hood
@@ -67,15 +94,12 @@ struct VkvgLineHandler {
             vkvg_line_to(ctx, static_cast<float>(p.x), static_cast<float>(p.y));
         }
     }
-
-           // 3. CRITICAL: Called when a separate sub-line ends
-    void line_end() {
-        // Reset the segment tracker state flag so the next line segment issues a fresh move_to
-        // instead of attaching a webbing string back across the forest!
-        // We will call the actual stroke command at the feature level
-    }
-
     void linestring_end() {}
+    void points_begin(uint32_t count) {}
+    void points_point(const vtzero::point p) {
+        point = std::pair<float,float>(static_cast<float>(p.x), static_cast<float>(p.y));
+    }
+    void points_end() {}
 };
 
 struct CachedTileSurface {
@@ -98,14 +122,17 @@ class vtzeroApp : public VkvgApp {
     std::vector<TrackedLine> road_network;
 
     std::vector<std::pair<int, int>> loaded_tiles;
+    IconRegistry *icons;
 
 public:
     VkvgFont font;
-
+    VkvgFont fontPlace;
     void Init ()  override {
         VkvgApp::Init();
+        icons = new IconRegistry(device);
 
         font = vkvg_font_create(device, "sans:bold", 20);
+        fontPlace = vkvg_font_create(device, "sans:bold", 50);
 
         if (sqlite3_open("/mnt/data/osm/bruxelles.mbtiles", &mbtiles_db) != SQLITE_OK) {
         //if (sqlite3_open("/mnt/data/osm/ciney.mbtiles", &mbtiles_db) != SQLITE_OK) {
@@ -113,13 +140,16 @@ public:
             return;
         }
 
-        offsetX = width * 0.5;
-        offsetY = height * 0.5;
+        offsetX = tileSize * 0.5;
+        offsetY = tileSize * 0.5;
 
-        /*tile_x = 8424;
-        tile_y = 5535;*/
-        /*tile_z = 14;*/
-        //LoadTileGeometry(tile_z, tile_x, tile_y);
+        std::pair<float, float> center = fetch_center_from_mbtiles(mbtiles_db);
+        std::pair<int, int> t = latlon_to_mbtiles(center.first, center.second, 14);
+
+        tile_x = t.first;
+        tile_y = t.second;
+        tile_z = 14;
+
         UpdateVisibleTiles();
     }
     void CleanUp () override {
@@ -129,6 +159,9 @@ public:
         sqlite3_close(mbtiles_db);
 
         vkvg_font_destroy(font);
+        vkvg_font_destroy(fontPlace);
+
+        delete(icons);
 
         VkvgApp::CleanUp();
     }
@@ -140,7 +173,6 @@ public:
         BakeTileToSurface(mbtiles_db, new_tile, z, tx, ty, device);
         tile_surface_cache.push_back(std::move(new_tile));
     }
-
     void UpdateVisibleTiles() {
         float localTileSize = static_cast<float>(tileSize);
 
@@ -172,6 +204,17 @@ public:
                 LoadTileSurfaceIntoCache(tile_z, tx, ty);
             }
         }
+#if VKVG_DBG_STATS
+        vkvg_debug_stats_t dbg = vkvg_device_get_stats(device);
+        std::cout << "==== Debug statistics ====" << std::endl;
+        std::cout << "sizePoints: " << dbg.sizePoints << std::endl;
+        std::cout << "sizePathes: " << dbg.sizePathes << std::endl;
+        std::cout << "sizeVertices: " << dbg.sizeVertices << std::endl;
+        std::cout << "sizeIndices: " << dbg.sizeIndices << std::endl;
+        std::cout << "sizeVBO: " << dbg.sizeVBO << std::endl;
+        std::cout << "sizeIbo: " << dbg.sizeIBO << std::endl;
+        std::cout << "==========================" << std::endl;
+#endif
     }
 
     void BakeTileToSurface(sqlite3* mbtiles_db, CachedTileSurface& cache, int z, int tx, int ty, VkvgDevice device) {
@@ -181,14 +224,11 @@ public:
         cache.ty = ty;
 
         VkvgContext ctx = vkvg_create(cache.surface);
-
-               // Transparent baseline canvas so layers blend over background cleanly
         vkvg_set_source_rgba(ctx, 0.0f, 0.0f, 0.0f, 0.0f);
         vkvg_paint(ctx);
 
-               // Set caps and joins to round for smooth connection intersections
-        /*vkvg_set_line_join(ctx, VKVG_LINE_JOIN_ROUND);
-        vkvg_set_line_cap(ctx, VKVG_LINE_CAP_ROUND);*/
+        vkvg_set_line_join(ctx, VKVG_LINE_JOIN_ROUND);
+        //vkvg_set_line_cap(ctx, VKVG_LINE_CAP_ROUND);
         vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
 
         // Scale down the internal MVT 0-4096 coordinate system natively inside the cache layout
@@ -204,8 +244,12 @@ public:
         std::vector<char> raw_mvt = decompress_gzip(compressed_blob);
         vtzero::vector_tile tile{raw_mvt.data(), raw_mvt.size()};
 
-        while (auto layer = tile.next_layer()) {
+        /*while (auto layer = tile.next_layer()) {
             std::cout << "Layer Name: " << layer.name().to_string() << "\n";
+            if (layer.name() != "poi")
+                continue;
+
+
         }
         if (auto boundary = tile.get_layer_by_name("boundary")) {
             while (auto feature = boundary.next_feature()) {
@@ -223,9 +267,9 @@ public:
                 }
             }
         }
-        vkvg_flush(ctx);
+        vkvg_flush(ctx);*/
         if (auto landuse = tile.get_layer_by_name("landuse")) {
-            std::cout << "landuse" << std::endl;
+            //std::cout << "landuse" << std::endl;
             while (auto feature = landuse.next_feature()) {
                 uint32_t c = 0xffb0cc9a;
                 while (auto property = feature.next_property()) {
@@ -233,43 +277,64 @@ public:
                     std::string prop_val{property.value().string_value()};
                     if (prop_name == "class") {
                         if (prop_val == "residential")
-                            c = 0xffccb18b;
+                            c = CreateAbgr (ff,cc,b1,8b);
                         else if (prop_val == "school" || prop_val == "college" || prop_val == "kindergarten" || prop_val == "university" || prop_val == "library")
-                            c = 0xffe39ccf;
+                            c = CreateAbgr (ff,e3,9c,cf);
                         else if (prop_val == "hospital")
-                            c = 0xffdf9ea5;
+                            c = CreateAbgr (ff,df,9e,a5);
                         else if (prop_val == "commercial" || prop_val == "retail")
-                            c = 0xffffe285;
+                            c = CreateAbgr (ff,ff,e2,85);
                         else if (prop_val == "track" || prop_val == "pitch")
-                            c = 0xffdddddd;
+                            c = CreateAbgr (ff,dd,dd,dd);
                         else if (prop_val == "playground" || prop_val == "stadium")
-                            c = 0xff8bccb3;
+                            c = CreateAbgr (ff,8b,cc,b3);
                         else if (prop_val == "industrial" || prop_val == "railway")
-                            c = 0xffb7b8cc;
+                            c = CreateAbgr (ff,b7,b8,cc);
                         else if (prop_val == "cemetery")
-                            c = 0xff8acb94;
+                            c = CreateAbgr (ff,8a,cb,94);
                         else if (prop_val == "neighbourhood" || prop_val == "garages")
-                            c = 0xff0000ff;
+                            c = CreateAbgr (ff,00,00,ff);
                         else if (prop_val == "military")
-                            c = 0xffb7b8cc;
+                            c = CreateAbgr (ff,b7,b8,cc);
                         else if (prop_val == "zoo")
-                            c = 0xffcc8bbf;
-                        else
-                            std::cout << "\t\tproperty:" << prop_name << " = " << prop_val << std::endl;
+                            c = CreateAbgr (ff,cc,8b,bf);
+                        /*else
+                            std::cout << "\t\tproperty:" << prop_name << " = " << prop_val << std::endl;*/
                     }
                 }
-                std::vector<std::vector<std::pair<float, float>>> rings;
-                VkvgGeometryHandler handler{{}, rings};
-                vtzero::decode_polygon_geometry(feature.geometry(), handler);
-
-                       //vkvg_set_source_rgb(ctx, r, g, b);
                 vkvg_set_source_color(ctx, c);
-                for (const auto& ring : rings) {
-                    if (ring.empty()) continue;
-                    vkvg_move_to(ctx, ring[0].first, ring[0].second);
-                    for (size_t i = 1; i < ring.size(); ++i) vkvg_line_to(ctx, ring[i].first, ring[i].second);
-                    vkvg_close_path(ctx);
+
+                VkvgGeometryHandler handler{ctx};
+                vtzero::decode_geometry(feature.geometry(), handler);
+                vkvg_fill(ctx);
+            }
+        }
+        vkvg_flush(ctx);
+        if (auto layer = tile.get_layer_by_name("landcover")) {
+            //std::cout << "landcover" << std::endl;
+            uint32_t c = 0xff0000ff;
+            while (auto feature = layer.next_feature()) {
+                while (auto property = feature.next_property()) {
+                    std::string prop_name{property.key()};
+                    std::string prop_val{property.value().string_value()};
+                    if (prop_name == "class") {
+                        if (prop_val == "grass")
+                            c = CreateAbgr (ff,9c,e6,9c);
+                        else if (prop_val == "farmland")
+                            c = CreateAbgr (ff,cc,8b,bf);
+                        else if (prop_val == "wetland")
+                            c = CreateAbgr (ff,96,f9,92);
+                        else if (prop_val == "wood")
+                            c = CreateAbgr (ff,8d,c5,6c);
+                        else if (prop_val == "military")
+                            c = CreateAbgr (ff,b7,b8,cc);
+                        /*else
+                            std::cout << "\t\tproperty:" << prop_name << " = " << prop_val << std::endl;*/
+                    }
                 }
+                vkvg_set_source_color(ctx, c);
+                VkvgGeometryHandler handler{ctx};
+                vtzero::decode_geometry(feature.geometry(), handler);
                 vkvg_fill(ctx);
             }
         }
@@ -277,34 +342,30 @@ public:
         if (auto layer = tile.get_layer_by_name("water")) {
             uint32_t c = 0xffb0cc9a;
             while (auto feature = layer.next_feature()) {
-                std::vector<std::vector<std::pair<float, float>>> rings;
-                VkvgGeometryHandler handler{{}, rings};
-                vtzero::decode_polygon_geometry(feature.geometry(), handler);
-
                 vkvg_set_source_rgb(ctx, 0.71f, 0.83f, 0.91f); // Map Blue
-                for (const auto& ring : rings) {
-                    if (ring.empty()) continue;
-                    vkvg_move_to(ctx, ring[0].first, ring[0].second);
-                    for (size_t i = 1; i < ring.size(); ++i) vkvg_line_to(ctx, ring[i].first, ring[i].second);
-                    vkvg_close_path(ctx);
-                }
+                VkvgGeometryHandler handler{ctx};
+                vtzero::decode_polygon_geometry(feature.geometry(), handler);
                 vkvg_fill(ctx);
             }
         }
         vkvg_flush(ctx);
         if (auto layer = tile.get_layer_by_name("transportation")) {
-            std::cout << "transportation" << std::endl;
-            uint32_t c = 0xffb0cc9a;
+            //std::cout << "transportation" << std::endl;
             while (auto feature = layer.next_feature()) {
                 std::string road_class = "";
+                std::string road_subclass = "";
+                std::string road_service = "";
                 while (auto property = feature.next_property()) {
                     std::string prop_name{property.key()};
                     switch (property.value().type()) {
                     case vtzero::property_value_type::string_value:
                         if (property.key() == "class") {
                             road_class = property.value().string_value().to_string();
+                        } else if (property.key() == "subclass") {
+                            road_subclass = property.value().string_value().to_string();
+                        } else if (property.key() == "service") {
+                            road_service = property.value().string_value().to_string();
                         }
-                        //std::cout << "\t\tproperty:" << prop_name << " = " << property.value().string_value().to_string() << std::endl;
                         break;
                     /*case vtzero::property_value_type::int_value:
                         std::cout << "\t\tproperty:" << prop_name << " = " << property.value().int_value() << std::endl;
@@ -316,93 +377,228 @@ public:
                 }
 
                 float width = 4.0f;
-                float r = 0.90f, g = 0.45f, b = 0.20f; // Highway Orange
 
+                uint32_t fg = CreateAbgr (ff,FD,D7,A1);
+                uint32_t bg = CreateAbgr (ff,33,33,33);
+
+                const float dashes[] = {4.0f,2.0f};
+                const float dashesRail[] = {16.0f,16.0f};
+                const float dashesTrack[] = {16.0f,6.0f,6.0f,6.0f};
+                int dashCount = 2;
+                float* curDash = NULL;
                 if (road_class == "motorway" || road_class == "trunk") {
-                    width = (z <= 11) ? 2.5f : (z <= 13) ? 4.0f : 8.0f;
-                    r = 0.90f; g = 0.45f; b = 0.20f;
-                } else if (road_class == "primary" || road_class == "secondary") {
-                    width = (z <= 11) ? 1.5f : (z <= 13) ? 3.0f : 6.0f;
-                    r = 0.95f; g = 0.70f; b = 0.30f;
+                    width = 18.0f;
+                    fg = CreateAbgr (ff,e9,90,a1);
+                } else if (road_class == "primary") {
+                    width = 16.0f;
+                    fg = CreateAbgr (ff,fd,d7,a1);
+                } else if (road_class == "secondary") {
+                    width = 14.0f;
+                    fg = CreateAbgr (ff,f6,fa,bb);
+                } else if (road_class == "tertiary" || road_class == "minor") {
+                    //std::cout << "\t\troad:" << road_class << "  " << road_subclass << " srv: " << road_service << std::endl;
+                    width = 16.0f;
+                    fg = CreateAbgr (ff,F1,EE,E8);
+                } else if (road_class == "path") {
+                    if (road_subclass == "footway" || road_subclass == "path") {
+                        width = 2.0f;
+                        fg = CreateAbgr (ff,69,64,DF);
+                        bg = 0;
+                        curDash = (float*)dashes;
+                    } else if (road_subclass == "pedestrian" || road_subclass == "steps" || road_subclass == "platform") {
+                        width = 8.0f;
+                        fg = CreateAbgr (ff,e7,dd,dd);
+                        bg = CreateAbgr (ff,a9,55,55);
+                    } else if (road_subclass == "cycleway" ) {
+                        width = 2.0f;
+                        fg = CreateAbgr (ff,ff,55,55);
+                        bg = 0;
+                        curDash = (float*)dashes;
+                    } else {
+                        width = 14.0f;
+                        fg = CreateAbgr (ff,00,00,ff);
+                        std::cout << "\t\troad:" << road_class << "  " << road_subclass << " srv: " << road_service << std::endl;
+                    }
+                } else if (road_class == "transit") {
+                    if (road_subclass == "tram") {
+                        width = 4.0f;
+                        fg = CreateAbgr (ff,ee,dd,dd);
+                        bg = 0;
+                    }else if (road_subclass == "subway") {
+                        width = 4.0f;
+                        fg = CreateAbgr (ff,aa,aa,aa);
+                        bg = 0;
+                    } else {
+                        width = 14.0f;
+                        fg = CreateAbgr (ff,00,00,ff);
+                        std::cout << "\t\troad:" << road_class << "  " << road_subclass << " srv: " << road_service << std::endl;
+                    }
+                } else if (road_class == "rail") {
+                    width = 6.0f;
+                    bg = CreateAbgr (ff,33,33,33);
+                    fg = CreateAbgr (ff,CC,CC,CC);
+                    curDash = (float*)dashesRail;
+                } else if (road_class == "service") {
+                    width = 8.0f;
+                    fg = CreateAbgr (ff,e7,dd,dd);
+                    bg = CreateAbgr (ff,a9,55,55);
+                    //width = 16.0f;
+                    //fg = 0xff00ff00;
+                } else if (road_class == "track") {
+                    width = 4.0f;
+                    bg = 0;
+                    fg = CreateAbgr (ff,27,83,ac);
+                    curDash = (float*)dashesTrack;
+                    dashCount = 4;
                 } else {
-                    width = (z <= 13) ? 1.0f : 10.f;
-                    r = 0.9f; g = 0.9f; b = 0.7f;
+                    std::cout << "\t\troad:" << road_class << "  " << road_subclass << " srv: " << road_service << std::endl;
+                    width = 10.f;
+                    fg = CreateAbgr (ff,00,00,ff);
+                    bg = 0;
                 }
 
-                       // Configure vector states directly on the master context
-                vkvg_set_source_rgb(ctx, r, g, b);
-                vkvg_set_line_width(ctx, width);
+                width /= pow(2, 14 - z);
 
-                       // Instantiate our new, direct pipeline handler
-                VkvgLineHandler handler{ ctx };
-
+                VkvgGeometryHandler handler{ ctx };
                 if (feature.geometry_type() == vtzero::GeomType::LINESTRING) {
-                    vtzero::decode_linestring_geometry(feature.geometry(), handler);
-                    vkvg_stroke(ctx);
+                    vtzero::decode_geometry(feature.geometry(), handler);
+                    if (bg) {
+                        vkvg_set_source_color(ctx, bg);
+                        vkvg_set_line_width(ctx, width + 2);
+                        vkvg_stroke_preserve(ctx);
+                    }
+                    vkvg_set_line_width(ctx, width);
+                    vkvg_set_source_color(ctx, fg);
+                    if (curDash) {
+                        vkvg_set_dash(ctx, curDash, dashCount, 0);
+                        vkvg_stroke(ctx);
+                        vkvg_set_dash(ctx, NULL, 0, 0);
+                    } else {
+                        vkvg_stroke(ctx);
+                    }
                 }
             }
         }
         vkvg_flush(ctx);
-        if (auto layer = tile.get_layer_by_name("landcover")) {
-            std::cout << "landcover" << std::endl;
-            uint32_t c = 0xff0000ff;
-            while (auto feature = layer.next_feature()) {
-                while (auto property = feature.next_property()) {
-                    std::string prop_name{property.key()};
-                    std::string prop_val{property.value().string_value()};
-                    if (prop_name == "class") {
-                        if (prop_val == "grass")
-                            c = 0xff9ce69c;
-                        else if (prop_val == "farmland")
-                            c = 0xffcc8bbf;
-                        else if (prop_val == "wetland")
-                            c = 0xff96f992;
-                        else if (prop_val == "wood")
-                            c = 0xff8dc56c;
-                        else if (prop_val == "military")
-                            c = 0xffb7b8cc;
-                        else
-                            std::cout << "\t\tproperty:" << prop_name << " = " << prop_val << std::endl;
-                    }
-                }
-                std::vector<std::vector<std::pair<float, float>>> rings;
-                VkvgGeometryHandler handler{{}, rings};
-                vtzero::decode_polygon_geometry(feature.geometry(), handler);
-
-                vkvg_set_source_color(ctx, c);
-                for (const auto& ring : rings) {
-                    if (ring.empty()) continue;
-                    vkvg_move_to(ctx, ring[0].first, ring[0].second);
-                    for (size_t i = 1; i < ring.size(); ++i) vkvg_line_to(ctx, ring[i].first, ring[i].second);
-                    vkvg_close_path(ctx);
-                }
-                vkvg_fill(ctx);
-            }
-        }
         if (auto layer = tile.get_layer_by_name("building")) {
-            uint32_t c = 0xff222222;
+            uint32_t fg = CreateAbgr (ff,22,22,22);
+            uint32_t bg = CreateAbgr (ff,cc,87,23);
             vkvg_set_line_width(ctx, 1);
             while (auto feature = layer.next_feature()) {
-                std::vector<std::vector<std::pair<float, float>>> rings;
-                VkvgGeometryHandler handler{{}, rings};
-                if (feature.geometry_type() == vtzero::GeomType::POLYGON)
-                    vtzero::decode_polygon_geometry(feature.geometry(), handler);
-                else
+                if (feature.geometry_type() != vtzero::GeomType::POLYGON)
                     continue;
-
-                vkvg_set_source_color(ctx, 0xff999999);
-                for (const auto& ring : rings) {
-                    if (ring.empty()) continue;
-                    vkvg_move_to(ctx, ring[0].first, ring[0].second);
-                    for (size_t i = 1; i < ring.size(); ++i) vkvg_line_to(ctx, ring[i].first, ring[i].second);
-                    vkvg_close_path(ctx);
-                }
+                vkvg_set_source_color(ctx, bg);
+                VkvgGeometryHandler handler{ctx};
+                vtzero::decode_geometry(feature.geometry(), handler);
                 vkvg_fill_preserve(ctx);
-                vkvg_set_source_color(ctx, 0xff222222);
+                vkvg_set_source_color(ctx, fg);
                 vkvg_stroke(ctx);
             }
         }
         vkvg_flush(ctx);
+        if (z == 14) {
+            if (auto layer = tile.get_layer_by_name("poi")) {
+                while (auto feature = layer.next_feature()) {
+                    std::string poi_class = "";
+                    std::string poi_subclass = "";
+                    std::string poi_name = "";
+                    while (auto property = feature.next_property()) {
+                        std::string prop_name{property.key()};
+                        switch (property.value().type()) {
+                        case vtzero::property_value_type::string_value:
+                            if (property.key() == "class") {
+                                poi_class = property.value().string_value().to_string();
+                            } else if (property.key() == "subclass") {
+                                poi_subclass = property.value().string_value().to_string();
+                            } else if (property.key() == "name") {
+                                poi_name = property.value().string_value().to_string();
+                            }
+                            break;
+                        /*case vtzero::property_value_type::int_value:
+                            std::cout << "\t\tproperty:" << prop_name << " = " << property.value().int_value() << std::endl;
+                            break;
+                        default:
+                            std::cout << "\t\tproperty:" << prop_name << " = " << (int)property.value().type() << std::endl;
+                            break;*/
+                        }
+                    }
+                    uint32_t fg = CreateAbgr (ff,ff,22,22);
+                    if (feature.geometry_type() != vtzero::GeomType::POINT)
+                        continue;
+
+                    VkvgGeometryHandler handler{ctx};
+                    vtzero::decode_geometry(feature.geometry(), handler);
+
+                    uint32_t current_class_hash = fnv32(poi_class.c_str());
+                    uint32_t current_subclass_hash = fnv32(poi_subclass.c_str());
+                    vkvg_set_line_width(ctx, 1);
+
+                    const SvgIcon* icon = icons->get_icon(current_class_hash, current_subclass_hash);
+                    std::pair<float, float> p{handler.point.first - icon_size / 2, handler.point.second - icon_size / 2};
+                    if (icon && icon->pat) {
+                        vkvg_save(ctx);
+                        vkvg_translate(ctx, p.first, p.second);
+                        //vkvg_set_source_with_offset(ctx, icon->pat, p.first, p.second);
+                        vkvg_set_source(ctx, icon->pat);
+                        vkvg_paint(ctx);
+                        vkvg_restore(ctx);
+                    } else {
+                        vkvg_set_source_color(ctx, fg);
+                        vkvg_rounded_rectangle(ctx, p.first, p.second, icon_size, icon_size, 10);
+                        vkvg_fill(ctx);
+                        std::cout << poi_class << ", " << poi_subclass << ", " << poi_name << std::endl;
+                    }
+                }
+            }
+        }
+        if (z > 11) {
+            if (auto layer = tile.get_layer_by_name("place")) {
+                vkvg_set_font(ctx, fontPlace);
+                while (auto feature = layer.next_feature()) {
+                    std::string poi_class = "";
+                    std::string poi_subclass = "";
+                    std::string poi_name = "";
+                    while (auto property = feature.next_property()) {
+                        std::string prop_name{property.key()};
+                        switch (property.value().type()) {
+                        case vtzero::property_value_type::string_value:
+                            if (property.key() == "class") {
+                                poi_class = property.value().string_value().to_string();
+                            } else if (property.key() == "subclass") {
+                                poi_subclass = property.value().string_value().to_string();
+                            } else if (property.key() == "name:latin") {
+                                poi_name = property.value().string_value().to_string();
+                            }
+                            break;
+                            /*case vtzero::property_value_type::int_value:
+                                std::cout << "\t\tproperty:" << prop_name << " = " << property.value().int_value() << std::endl;
+                                break;
+                            default:
+                                std::cout << "\t\tproperty:" << prop_name << " = " << (int)property.value().type() << std::endl;
+                                break;*/
+                        }
+                    }
+                    VkvgGeometryHandler handler{ctx};
+                    vtzero::decode_geometry(feature.geometry(), handler);
+
+                    if (feature.geometry_type() == vtzero::GeomType::POINT) {
+                        if (poi_class == "neighbourhood" || poi_class == "town" || poi_class == "locality" || poi_class == "city" || poi_class == "quarter" || poi_class == "village" || poi_class == "square") {
+                            VkvgText txt = vkvg_text_create(ctx, poi_name.c_str());
+                            vkvg_text_extents_t te = {0};
+                            vkvg_text_get_extents(txt, &te);
+                            std::pair<float, float> p{handler.point.first - te.width / 2, handler.point.second};
+                            vkvg_move_to(ctx, p.first + 2, p.second + 2);
+                            vkvg_set_source_rgb(ctx, 0,0,0);
+                            vkvg_text_render(ctx, txt);
+                            vkvg_move_to(ctx, p.first, p.second);
+                            vkvg_set_source_rgb(ctx, 1,1,1);
+                            vkvg_text_render(ctx, txt);
+                        } else
+                            std::cout << poi_class << ", " << poi_subclass << ", " << poi_name << std::endl;
+                    }
+                }
+            }
+        }
 
         vkvg_identity_matrix(ctx);
         vkvg_set_line_width(ctx,2);
@@ -442,7 +638,6 @@ public:
         double worldY = (ypos - offsetY) / zoom;
         std::cout << "mouse(" << xpos << "," << ypos << ") world(" << worldX << "," << worldY << ")" << std::endl;*/
     }
-
     void OnScroll(double xoffset, double yoffset) override {
         // 1. Capture exactly where the mouse pointer is sitting on the window right now
         double mouseX, mouseY;
@@ -457,20 +652,17 @@ public:
         zoom *= zoomFactor;
 
         bool zoom_changed = false;
-        int old_z = tile_z;
 
-               // --- SWAP TILE RESOLUTION LAYERS ---
+        // --- SWAP TILE RESOLUTION LAYERS ---
         if (zoom > 2.0 && tile_z < 14) {
             tile_z++;
-            zoom /= 2.0; // Reset local scale factor to prevent jumping
+            zoom /= 2.0;
             worldX *= 2.0;
             worldY *= 2.0;
-
             tile_x *= 2;
             tile_y *= 2;
             zoom_changed = true;
-        }
-        else if (zoom < 0.5 && tile_z > 10) {
+        } else if (zoom < 0.5 && tile_z > 10) {
             tile_z--;
             worldX /= 2.0;
             worldY /= 2.0;
@@ -480,27 +672,23 @@ public:
                 worldY += tileSize * zoom;
             tile_x /= 2;
             tile_y /= 2;
-            zoom *= 2.0; // Double local scale factor to keep things smooth
+            zoom *= 2.0;
             zoom_changed = true;
         }
 
         if (zoom_changed) {
-            offsetX = mouseX - (worldX * zoom);
-            offsetY = mouseY - (worldY * zoom);
-
             for (auto& tile : tile_surface_cache) {
                 if (tile.surface) vkvg_surface_destroy(tile.surface);
             }
             tile_surface_cache.clear();
-        } else {
-            offsetX = mouseX - (worldX * zoom);
-            offsetY = mouseY - (worldY * zoom);
         }
+
+        offsetX = mouseX - (worldX * zoom);
+        offsetY = mouseY - (worldY * zoom);
 
         UpdateVisibleTiles();
         refresh = true;
     }
-
 
     void Render() override {
         VkvgContext ctx = vkvg_create(surf);
@@ -511,14 +699,10 @@ public:
         vkvg_translate(ctx, offsetX, offsetY);
         vkvg_scale(ctx, zoom, zoom);
 
-               // Render each texture block side-by-side using the fast texture blit engine
-        //float localTileSize = 819.2f; // Corresponding exactly to your 0.2 scale bounds
         float localTileSize = static_cast<float> (tileSize);
 
         for (const auto& tile : tile_surface_cache) {
             if (!tile.surface) continue;
-
-                   // TOP-LEFT FIX: Simple delta spacing step
             float slot_x = (tile.tx - tile_x) * localTileSize;
             float slot_y = (tile.ty - tile_y) * localTileSize;
 
@@ -542,7 +726,6 @@ public:
         vkvg_destroy(ctx);
         refresh = false;
     }
-
 
     std::vector<char> decompress_gzip(const std::vector<char>& compressed_data) {
         if (compressed_data.empty()) {
@@ -615,12 +798,44 @@ public:
         sqlite3_finalize(stmt);
         return tile_data;
     }
+    std::pair<float, float> fetch_center_from_mbtiles(sqlite3* db) {
+        std::pair<float, float> center = {0.0f, 0.0f};
+        const char* sql = "SELECT value FROM metadata WHERE name = 'center';";
+        sqlite3_stmt* stmt;
+        if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+            std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+            return center;
+        }
+
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            // Retrieve raw string pointer (e.g., "-74.006,40.7128,12")
+            const unsigned char* raw_text = sqlite3_column_text(stmt, 0);
+            if (raw_text) {
+                std::string center_str(reinterpret_cast<const char*>(raw_text));
+
+                // 4. Parse the "lon,lat,zoom" string using stringstream
+                std::stringstream ss(center_str);
+                std::string lon_s, lat_s;
+
+                if (std::getline(ss, lon_s, ',') && std::getline(ss, lat_s, ',')) {
+                    try {
+                        center.first = std::stof(lon_s);  // Longitude
+                        center.second = std::stof(lat_s); // Latitude
+                    } catch (const std::exception& e) {
+                        std::cerr << "Error parsing float values: " << e.what() << std::endl;
+                    }
+                }
+            }
+        }
+        sqlite3_finalize(stmt);
+        return center;
+    }
 };
 
 int main(int argc, char** argv) {
     vtzeroApp app{};
 
-    argparse::ArgumentParser program("samples");
+    argparse::ArgumentParser program("vtzero");
     program.add_argument("-w", "--width")
         .help("Output width")
         .default_value<uint32_t>(1024)
@@ -640,23 +855,11 @@ int main(int argc, char** argv) {
         .default_value<uint32_t>(2)
         .store_into<uint32_t>(app.logType);
 #endif
-
-    program.add_argument("-t", "--test-indices")
-        .default_value<std::vector<uint32_t>>({})
-        .help("test indices to run")
-        .scan<'u', uint32_t>()
-        .nargs(argparse::nargs_pattern::at_least_one);
-
     program.add_argument("--png")
         .help("save last image to png")
         .default_value(false)
         .implicit_value(true)
         .store_into(app.save_img);
-
-    program.add_argument("--list-tests")
-        .help("Get tests list")
-        .default_value(false)
-        .implicit_value(true);
 
     program.add_argument("--list-gpus")
         .help("Get available GPU's, select with option '-g'")

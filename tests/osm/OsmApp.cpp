@@ -56,6 +56,7 @@ class CacheHandler : public osmium::handler::Handler {
         if (way.nodes().size() < 2) return;
 
         MapWay w;
+
         const char* highway = way.tags().get_value_by_key("highway");
         const char* building = way.tags().get_value_by_key("building");
         const char* natural = way.tags().get_value_by_key("natural");
@@ -89,56 +90,6 @@ bool OsmApp::try_get_phyinfo(VkhPhyInfo* phys, uint32_t phyCount, VkPhysicalDevi
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "vkengine: GLFW error %d: %s\n", error, description);
 }
-
-void OsmApp::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (action != GLFW_PRESS)
-        return;
-    switch (key) {
-    case GLFW_KEY_SPACE:
-        // paused = !paused;
-        break;
-    case GLFW_KEY_ESCAPE:
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-        break;
-    }
-}
-void OsmApp::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    OsmApp* app = reinterpret_cast<OsmApp*>(glfwGetWindowUserPointer(window));
-    double zoomFactor = (yoffset > 0) ? 1.15 : (1.0 / 1.15);
-
-    // Zoom centered roughly around current cursor position
-    double mouseX, mouseY;
-    glfwGetCursorPos(window, &mouseX, &mouseY);
-
-    app->offsetX = mouseX - (mouseX - app->offsetX) * zoomFactor;
-    app->offsetY = mouseY - (mouseY - app->offsetY) * zoomFactor;
-    app->zoom *= zoomFactor;
-    app->refresh = true;
-}
-void OsmApp::mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
-    OsmApp* app = reinterpret_cast<OsmApp*>(glfwGetWindowUserPointer(window));
-    if (app->isDragging) {
-        double deltaX = xpos - app->lastMouseX;
-        double deltaY = ypos - app->lastMouseY;
-        app->offsetX += deltaX;
-        app->offsetY += deltaY;
-        app->lastMouseX = xpos;
-        app->lastMouseY = ypos;
-        app->refresh = true;
-    }
-}
-void OsmApp::mouse_button_callback(GLFWwindow* window, int button, int action, int modif) {
-    OsmApp* app = reinterpret_cast<OsmApp*>(glfwGetWindowUserPointer(window));
-    if (button == GLFW_MOUSE_BUTTON_LEFT) {
-        if (action == GLFW_PRESS) {
-            app->isDragging = true;
-            glfwGetCursorPos(window, &app->lastMouseX, &app->lastMouseY);
-        } else if (action == GLFW_RELEASE) {
-            app->isDragging = false;
-        }
-    }
-}
-
 static bool is_desktop_environment_available(void) {
 #if defined(__ANDROID__)
         // Android always runs inside an active graphical framework handled by SurfaceFlinger.
@@ -436,7 +387,116 @@ void OsmApp::Init() {
 
     vkDeviceWaitIdle(vkh_device_get_vkdev(vkhDev));
 
+    InitOsmium();
+}
+void OsmApp::Run() {
+    if (displayMode)
+        fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+    else
+        glfwSetWindowTitle(win, "Open Street Map");
+
+    while (true) {
+        if (displayMode) {
+            char ch;
+            if (read(STDIN_FILENO, &ch, 1) > 0) {
+                if (ch == 'q') break;
+                printf("Key pressed: %c\r\n", ch);
+            }
+        } else {
+            glfwPollEvents();
+            if (glfwWindowShouldClose(win))
+                break;
+        }
+
+        if (refresh)
+            Render();
+
+        if (!vkh_presenter_draw(renderer)) {
+            vkh_presenter_get_size(renderer, &width, &height);
+            vkvg_surface_destroy(surf);
+            surf = vkvg_surface_create(device, width, height);
+            vkvg_surface_set_dpy(surf, 96, 96);
+            vkh_presenter_build_blit_cmd(renderer, vkvg_surface_get_vk_image(surf), width, height);
+            vkDeviceWaitIdle(vkh_device_get_vkdev(vkhDev));
+            refresh = true;
+            continue;
+        }
+    }
+}
+void OsmApp::CleanUp() {
+    if (save_img) {
+        std::string path = "output.png";
+        vkvg_surface_write_to_png(surf, path.c_str());
+    }
+    vkvg_surface_destroy(surf);
+    vkvg_device_destroy(device);
+
+    vkDeviceWaitIdle(vkh_device_get_vkdev(vkhDev));
+    vkh_presenter_destroy(renderer);
+    vkDestroySurfaceKHR(vkh_app_get_inst(app), vkSurf, NULL);
+
+    vkh_device_destroy(vkhDev);
+    if (displayMode) {
+        vkh_app_destroy(app);
+    } else {
+        glfwDestroyWindow(win);
+        vkh_app_destroy(app);
+        glfwTerminate();
+    }
+}
+
+void OsmApp::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action != GLFW_PRESS)
+        return;
+    switch (key) {
+    case GLFW_KEY_SPACE:
+        // paused = !paused;
+        break;
+    case GLFW_KEY_ESCAPE:
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+        break;
+    }
+}
+void OsmApp::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    OsmApp* app = reinterpret_cast<OsmApp*>(glfwGetWindowUserPointer(window));
+    double zoomFactor = (yoffset > 0) ? 1.15 : (1.0 / 1.15);
+
+           // Zoom centered roughly around current cursor position
+    double mouseX, mouseY;
+    glfwGetCursorPos(window, &mouseX, &mouseY);
+
+    app->offsetX = mouseX - (mouseX - app->offsetX) * zoomFactor;
+    app->offsetY = mouseY - (mouseY - app->offsetY) * zoomFactor;
+    app->zoom *= zoomFactor;
+    app->refresh = true;
+}
+void OsmApp::mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
+    OsmApp* app = reinterpret_cast<OsmApp*>(glfwGetWindowUserPointer(window));
+    if (app->isDragging) {
+        double deltaX = xpos - app->lastMouseX;
+        double deltaY = ypos - app->lastMouseY;
+        app->offsetX += deltaX;
+        app->offsetY += deltaY;
+        app->lastMouseX = xpos;
+        app->lastMouseY = ypos;
+        app->refresh = true;
+    }
+}
+void OsmApp::mouse_button_callback(GLFWwindow* window, int button, int action, int modif) {
+    OsmApp* app = reinterpret_cast<OsmApp*>(glfwGetWindowUserPointer(window));
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            app->isDragging = true;
+            glfwGetCursorPos(window, &app->lastMouseX, &app->lastMouseY);
+        } else if (action == GLFW_RELEASE) {
+            app->isDragging = false;
+        }
+    }
+}
+
+void OsmApp::InitOsmium () {
     // Append this PBF data-caching step to the bottom of Init():
+    //osmium::io::Reader reader{"/mnt/data/osm/cleaned_bruxelles.pbf"};
     osmium::io::Reader reader{"/mnt/data/osm/ciney.pbf"};
     osmium::io::Header header = reader.header();
     osmium::Box box = header.joined_boxes();
@@ -460,7 +520,6 @@ void OsmApp::Init() {
     osmium::apply(reader, location_handler, cache_handler);
     reader.close();
 }
-
 /*void OsmApp::Render () {
     VkvgContext ctx = vkvg_create(surf);
 
@@ -511,6 +570,7 @@ void OsmApp::Init() {
     vkvg_destroy(ctx);
     refresh = false;
 }*/
+
 void OsmApp::Render() {
     VkvgContext ctx = vkvg_create(surf);
 
@@ -532,7 +592,7 @@ void OsmApp::Render() {
         vkvg_set_source_rgba(ctx, 0.67f, 0.81f, 0.93f, 1.0f); // Soft Hydro Blue
         vkvg_fill(ctx);
     }
-
+    vkvg_flush(ctx);
            // --- PASS 3: MULTI-TIER HIGHWAY INFRASTRUCTURE ---
     for (const auto& way : parsed_ways) {
         if (way.road_type == RoadType::Unknown || way.points.empty()) continue;
@@ -567,6 +627,7 @@ void OsmApp::Render() {
         }
         vkvg_stroke(ctx);
     }
+    vkvg_flush(ctx);
     // BUILDINGS ---
     for (const auto& way : parsed_ways) {
         if (!way.is_building || way.points.empty()) continue;
@@ -581,9 +642,9 @@ void OsmApp::Render() {
         vkvg_set_line_width(ctx, 0.1);
         vkvg_stroke(ctx);
     }
-
+    vkvg_flush(ctx);
     // --- PASS 4: LANDMARK TEXT LABELS & ICON OVERLAYS ---
-    VkvgFont font = vkvg_font_create(surf, "sans-serif:bold", 12);
+    VkvgFont font = vkvg_font_create(device, "sans-serif", 0.5f);
     vkvg_set_font(ctx,font);
 
     // Only display smaller nodes and labels once the view is sufficiently zoomed in
@@ -595,9 +656,8 @@ void OsmApp::Render() {
             render_svg_icon(ctx, node.type, scr_x, scr_y);
 
             /*if (!node.name.empty()) {
-                vkvg_set_font_size(ctx, 11.0 / zoom);
+                //vkvg_set_font_size(ctx, 11.0 / zoom);
                 vkvg_set_source_rgba(ctx, 0.2f, 0.2f, 0.2f, 1.0f); // Charcoal clean font text
-
                 vkvg_move_to(ctx, scr_x + (5.0 / zoom), scr_y + (12.0 / zoom));
                 vkvg_show_text(ctx, node.name.c_str());
             }*/
@@ -611,62 +671,6 @@ void OsmApp::Render() {
 }
 
 void OsmApp::render_svg_icon(VkvgContext ctx, const std::string& type, double x, double y) {
-    printf("%s\n",type.c_str());
+    //printf("%s\n",type.c_str());
 }
 
-void OsmApp::Run() {
-    if (displayMode)
-        fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-    else
-        glfwSetWindowTitle(win, "Open Street Map");
-
-    while (true) {
-        if (displayMode) {
-            char ch;
-            if (read(STDIN_FILENO, &ch, 1) > 0) {
-                if (ch == 'q') break;
-                printf("Key pressed: %c\r\n", ch);
-            }
-        } else {
-            glfwPollEvents();
-            if (glfwWindowShouldClose(win))
-                break;
-        }
-
-        if (refresh)
-            Render();
-
-        if (!vkh_presenter_draw(renderer)) {
-            vkh_presenter_get_size(renderer, &width, &height);
-            vkvg_surface_destroy(surf);
-            surf = vkvg_surface_create(device, width, height);
-            vkvg_surface_set_dpy(surf, 96, 96);
-            vkh_presenter_build_blit_cmd(renderer, vkvg_surface_get_vk_image(surf), width, height);
-            vkDeviceWaitIdle(vkh_device_get_vkdev(vkhDev));
-            refresh = true;
-            continue;
-        }
-    }
-}
-
-void OsmApp::CleanUp() {
-    if (save_img) {
-        std::string path = "output.png";
-        vkvg_surface_write_to_png(surf, path.c_str());
-    }
-    vkvg_surface_destroy(surf);
-    vkvg_device_destroy(device);
-
-    vkDeviceWaitIdle(vkh_device_get_vkdev(vkhDev));
-    vkh_presenter_destroy(renderer);
-    vkDestroySurfaceKHR(vkh_app_get_inst(app), vkSurf, NULL);
-
-    vkh_device_destroy(vkhDev);
-    if (displayMode) {
-        vkh_app_destroy(app);
-    } else {
-        glfwDestroyWindow(win);
-        vkh_app_destroy(app);
-        glfwTerminate();
-    }
-}

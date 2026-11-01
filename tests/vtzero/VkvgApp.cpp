@@ -286,7 +286,7 @@ void VkvgApp::Init() {
     presentQIndex = gQFamIdx;
     vkh_phyinfo_destroy (pi);
 
-    VkFormat targetFormat = VK_FORMAT_B8G8R8A8_SRGB;
+    VkFormat targetFormat = VK_FORMAT_B8G8R8A8_UNORM;
     if (displayMode) {
         uint32_t formatCount = 0;
         vkGetPhysicalDeviceSurfaceFormatsKHR(phy, vkSurf, &formatCount, NULL);
@@ -312,7 +312,7 @@ void VkvgApp::Init() {
     };
 
     device = vkvg_device_create(&info);
-    surf   = vkvg_surface_create(device, width, height);
+    surf   = vkvg_surface_create_ms(device, width, height, VK_SAMPLE_COUNT_8_BIT);
     vkvg_surface_set_dpy(surf, 96, 96);
 
     vkh_presenter_build_blit_cmd(renderer, vkvg_surface_get_vk_image(surf), width, height);

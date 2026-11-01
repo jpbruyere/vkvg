@@ -11,9 +11,9 @@ FUNCTION (buildgame GAME_NAME)
         PRIVATE
             ${Vulkan_INCLUDE_DIRS}
             ${GLFW3_INCLUDE_DIR}
-            "${CMAKE_CURRENT_SOURCE_DIR}/../include"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../include"
             "${CMAKE_CURRENT_SOURCE_DIR}/common"
-            "${CMAKE_CURRENT_SOURCE_DIR}/../vkh/include"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../vkh/include"
     )
     TARGET_LINK_LIBRARIES(${GAME_NAME} PRIVATE
             vkvg
@@ -29,9 +29,9 @@ TARGET_INCLUDE_DIRECTORIES(game_common
     PRIVATE
         ${Vulkan_INCLUDE_DIRS}
         ${GLFW3_INCLUDE_DIR}
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../include"
         "${CMAKE_CURRENT_SOURCE_DIR}/common"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../vkh/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../vkh/include"
 )
 
 file(GLOB GAMES "*.cpp")
