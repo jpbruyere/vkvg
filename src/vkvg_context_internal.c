@@ -691,6 +691,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
     _emit_draw_cmd_undrawn_vertices(ctx);
 
     if (lastPat) {
+        if (lastPat == pat)
+            return;
         if (ctx->cmdStarted) {
             switch (lastPat->type) {
             case VKVG_PATTERN_TYPE_SURFACE:
@@ -749,12 +751,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             if (!_wait_ctx_flush_end(ctx))
                 return;
         }
-
-        vec4 bounds            = {{(float)ctx->pSurf->width},
-                                  {(float)ctx->pSurf->height},
-                                  {0},
-                                  {0}}; // store img bounds in unused source field
-        ctx->pushConsts.source = bounds;
+        ctx->pushConsts.source.width = (float)ctx->pSurf->width;
+        ctx->pushConsts.source.height = (float)ctx->pSurf->height;
 
         // transform control point with current ctx matrix
         vkvg_gradient_pattern_t* gradPat = (vkvg_gradient_pattern_t*)pat;

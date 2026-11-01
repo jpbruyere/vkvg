@@ -163,7 +163,7 @@ TEST_F(ContextTest, CtxDrawBasicNullContext) {
     EXPECT_NO_FATAL_FAILURE(vkvg_identity_matrix(ctx));
 
     EXPECT_NO_FATAL_FAILURE(vkvg_select_font_face(ctx, NULL));
-    EXPECT_NO_FATAL_FAILURE(vkvg_load_font_from_path(ctx, NULL, NULL));
+    EXPECT_NO_FATAL_FAILURE(vkvg_load_font_from_path(ctx, NULL, 0));
     EXPECT_NO_FATAL_FAILURE(vkvg_set_font_size(ctx, 0));
     EXPECT_NO_FATAL_FAILURE(vkvg_show_text(ctx, NULL));
     EXPECT_NO_FATAL_FAILURE(vkvg_text_extents(ctx, NULL, NULL));

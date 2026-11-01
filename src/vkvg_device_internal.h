@@ -78,7 +78,6 @@ typedef struct _vkvg_device_t {
     VkDescriptorSetLayout dslFont;        /**< font cache descriptors layout */
     VkDescriptorSetLayout dslSrc;         /**< context source surface descriptors layout */
     VkDescriptorSetLayout dslGrad;        /**< context gradient descriptors layout */
-    VkSampler             smpFont;        /**< font immutable sampler */
 
     VkDescriptorPool      descriptorPool;
     VkDescriptorSet       dummySrcSet;

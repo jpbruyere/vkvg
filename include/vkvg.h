@@ -1435,6 +1435,15 @@ vkvg_public void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, floa
  */
 vkvg_public void vkvg_set_source(VkvgContext ctx, VkvgPattern pat);
 /**
+ * @brief set supplied pattern as current source with an offset
+ *
+ * @param ctx a valid vkvg @ref context
+ * @param pat the new pattern to use as source for further drawing operations.
+ * @param x an x offset to apply for drawing operations using this pattern.
+ * @param y an y offset to apply for drawing operations using this pattern.
+ */
+vkvg_public void vkvg_set_source_with_offset(VkvgContext ctx, VkvgPattern pat, float x, float y);
+/**
  * @brief set line width for the next draw command.
  *
  * Set the current line width for the targeted context. All further calls to #vkvg_stroke on this context

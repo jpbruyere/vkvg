@@ -41,7 +41,7 @@ void vkvg_device_set_context_cache_size(VkvgDevice dev, uint32_t maxCount) {
     while (cur && dev->cachedContextCount > dev->cachedContextMaxCount) {
         _release_context_ressources(cur->ctx);
         _cached_ctx* prev = cur;
-        cur               = cur->pNext;
+        cur = cur->pNext;
         free(prev);
         dev->cachedContextCount--;
     }
@@ -108,7 +108,6 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
 
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
-    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)dev->smpFont, "FONT Sampler");
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
 #endif
@@ -341,7 +340,7 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
 
 void vkvg_device_destroy(VkvgDevice dev) {
     if (vkvg_device_status(dev)) {
-        LOGE("DESTROY Device failed, see Status for info");
+        LOGE("DESTROY Device failed, see Status for info\n");
         return;
     }
     if (atomic_fetch_sub_explicit(&dev->references, 1, memory_order_acq_rel) != 1)
@@ -376,8 +375,6 @@ void vkvg_device_destroy(VkvgDevice dev) {
 
     vkDestroyPipelineLayout(dev->vkDev, dev->pipelineLayout, NULL);
     vkDestroyPipelineCache(dev->vkDev, dev->pipelineCache, NULL);
-
-    vkDestroySampler(dev->vkDev, dev->smpFont, NULL);
 
     vkWaitForFences(dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
     vkDestroyFence(dev->vkDev, dev->fence, NULL);

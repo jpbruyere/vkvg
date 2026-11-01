@@ -108,7 +108,7 @@ void _fonts_cache_update_font_descriptor_set (VkvgDevice dev) {
                                                 .dstSet          = dev->fontCache->dsFont,
                                                 .dstBinding      = 0,
                                                 .descriptorCount = 1,
-                                                .descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                                .descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
                                                 .pImageInfo      = &descSrcTex};
     vkUpdateDescriptorSets(dev->vkDev, 1, &writeDescriptorSet, 0, NULL);
 }
@@ -839,6 +839,7 @@ bool try_get_or_create_font_size (VkvgContext ctx, VkvgFont font) {
             }*/
 #endif
             font->curSize = f;
+            f->lastUse = _get_ticks_ms();
             return true;
         }
     }
@@ -918,6 +919,7 @@ bool try_get_or_create_font_size (VkvgContext ctx, VkvgFont font) {
     _init_next_line_in_tex_cache(fntsize);
 
     font->curSize = fntsize;
+    fntsize->lastUse = _get_ticks_ms();
     return true;
 }
 

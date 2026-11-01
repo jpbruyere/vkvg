@@ -4,7 +4,7 @@
 #include "vkvg_device_internal.h"
 #include "vkvg_context_internal.h"
 #include "vkvg_surface_internal.h"
-//#include "vkvg_pattern.h"
+#include "vkvg_pattern.h"
 #include "vkh_queue.h"
 
 #ifdef DEBUG
@@ -1102,6 +1102,13 @@ void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, float x, float y
     RECORD(ctx, VKVG_CMD_SET_SOURCE_SURFACE, x, y, surf);
     ctx->pushConsts.source.x = x;
     ctx->pushConsts.source.y = y;
+    if (ctx->pattern && ctx->pattern->type == VKVG_PATTERN_TYPE_SURFACE
+            && ((surface_pattern_t*)ctx->pattern)->surf == surf) {
+        //only update x,y if current pattern is same surface
+        _emit_draw_cmd_undrawn_vertices(ctx);
+        ctx->pushCstDirty = true;
+        return;
+    }
 
     VkvgPattern pat = vkvg_pattern_create_for_surface(surf);
     _update_cur_pattern(ctx, pat);
@@ -1110,6 +1117,21 @@ void vkvg_set_source(VkvgContext ctx, VkvgPattern pat) {
     if (vkvg_status(ctx) || vkvg_pattern_status(pat))
         return;
     RECORD(ctx, VKVG_CMD_SET_SOURCE, pat);
+    _update_cur_pattern(ctx, pat);
+    vkvg_pattern_reference(pat);
+}
+void vkvg_set_source_with_offset(VkvgContext ctx, VkvgPattern pat, float x, float y) {
+    if (vkvg_status(ctx) || vkvg_pattern_status(pat))
+        return;
+    RECORD(ctx, VKVG_CMD_SET_SOURCE, pat);
+    ctx->pushConsts.source.x = x;
+    ctx->pushConsts.source.y = y;
+    if (pat && pat == ctx->pattern) {
+        //only update x,y if current pattern is same as current
+        _emit_draw_cmd_undrawn_vertices(ctx);
+        ctx->pushCstDirty = true;
+        return;
+    }
     _update_cur_pattern(ctx, pat);
     vkvg_pattern_reference(pat);
 }
