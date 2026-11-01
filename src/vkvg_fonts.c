@@ -80,7 +80,7 @@ do { \
 
 static inline uint64_t _get_ticks_ms() {
     struct timespec ts;
-    timespec_get(&ts, TIME_MONOTONIC);
+    timespec_get(&ts, CLOCK_MONOTONIC);
     return ((uint64_t)ts.tv_sec * 1000ULL) + ((uint64_t)ts.tv_nsec / 1000000ULL);
 }
 
