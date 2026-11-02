@@ -1352,9 +1352,18 @@ void vkvg_text_destroy(VkvgText textRun) {
     free(textRun);
 }
 void vkvg_text_render(VkvgContext ctx, VkvgText textRun) {
-    if (vkvg_status(ctx) || !textRun)
+    if (vkvg_status(ctx) || !textRun) {
+        LOGW ("render text failed\n");
         return;
+    }
     text_run_render(textRun, ctx);
+}
+void vkvg_text_render_on_path(VkvgContext ctx, VkvgText textRun) {
+    if (vkvg_status(ctx) || !textRun) {
+        LOGW ("render text on path failed\n");
+        return;
+    }
+    text_run_render_on_path(textRun, ctx);
 }
 void vkvg_text_get_extents(VkvgText textRun, vkvg_text_extents_t* extents) {
     *extents = textRun->extents;
@@ -1502,7 +1511,7 @@ void vkvg_translate(VkvgContext ctx, float dx, float dy) {
     LOG(VKVG_LOG_INFO_CMD, "CMD: translate: %f, %f\n", dx, dy);
     _emit_draw_cmd_undrawn_vertices(ctx);
     vkvg_matrix_translate(&ctx->pushConsts.mat, dx, dy);
-    _set_mat_inv_and_vkCmdPush(ctx);
+    _set_mat_inv_and_dirty_state(ctx);
 }
 void vkvg_scale(VkvgContext ctx, float sx, float sy) {
     if (vkvg_status(ctx))
@@ -1511,7 +1520,7 @@ void vkvg_scale(VkvgContext ctx, float sx, float sy) {
     LOG(VKVG_LOG_INFO_CMD, "CMD: scale: %f, %f\n", sx, sy);
     _emit_draw_cmd_undrawn_vertices(ctx);
     vkvg_matrix_scale(&ctx->pushConsts.mat, sx, sy);
-    _set_mat_inv_and_vkCmdPush(ctx);
+    _set_mat_inv_and_dirty_state(ctx);
 }
 void vkvg_rotate(VkvgContext ctx, float radians) {
     if (vkvg_status(ctx))
@@ -1520,7 +1529,7 @@ void vkvg_rotate(VkvgContext ctx, float radians) {
     LOG(VKVG_LOG_INFO_CMD, "CMD: rotate: %f\n", radians);
     _emit_draw_cmd_undrawn_vertices(ctx);
     vkvg_matrix_rotate(&ctx->pushConsts.mat, radians);
-    _set_mat_inv_and_vkCmdPush(ctx);
+    _set_mat_inv_and_dirty_state(ctx);
 }
 void vkvg_transform(VkvgContext ctx, const vkvg_matrix_t* matrix) {
     if (vkvg_status(ctx))
@@ -1532,7 +1541,7 @@ void vkvg_transform(VkvgContext ctx, const vkvg_matrix_t* matrix) {
     vkvg_matrix_t res;
     vkvg_matrix_multiply(&res, &ctx->pushConsts.mat, matrix);
     ctx->pushConsts.mat = res;
-    _set_mat_inv_and_vkCmdPush(ctx);
+    _set_mat_inv_and_dirty_state(ctx);
 }
 void vkvg_identity_matrix(VkvgContext ctx) {
     if (vkvg_status(ctx))
@@ -1542,7 +1551,7 @@ void vkvg_identity_matrix(VkvgContext ctx) {
     _emit_draw_cmd_undrawn_vertices(ctx);
     vkvg_matrix_t im    = VKVG_IDENTITY_MATRIX;
     ctx->pushConsts.mat = im;
-    _set_mat_inv_and_vkCmdPush(ctx);
+    _set_mat_inv_and_dirty_state(ctx);
 }
 void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t* matrix) {
     if (vkvg_status(ctx))
@@ -1552,7 +1561,7 @@ void vkvg_set_matrix(VkvgContext ctx, const vkvg_matrix_t* matrix) {
         matrix->x0, matrix->y0);
     _emit_draw_cmd_undrawn_vertices(ctx);
     ctx->pushConsts.mat = (*matrix);
-    _set_mat_inv_and_vkCmdPush(ctx);
+    _set_mat_inv_and_dirty_state(ctx);
 }
 void vkvg_get_matrix(VkvgContext ctx, vkvg_matrix_t* const matrix) {
     if (vkvg_status(ctx) || !matrix)

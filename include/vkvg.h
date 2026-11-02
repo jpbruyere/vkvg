@@ -1801,6 +1801,7 @@ vkvg_public void vkvg_text_destroy(VkvgText textRun);
  * @param textRun
  */
 vkvg_public void vkvg_text_render(VkvgContext ctx, VkvgText textRun);
+vkvg_public void vkvg_text_render_on_path(VkvgContext ctx, VkvgText textRun);
 /**
  * @brief
  *

@@ -287,7 +287,8 @@ bool _wait_ctx_flush_end(VkvgContext ctx);
 bool _wait_and_submit_cmd(VkvgContext ctx);
 void _update_push_constants(VkvgContext ctx);
 void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat);
-void _set_mat_inv_and_vkCmdPush(VkvgContext ctx);
+void _set_mat_inv_and_dirty_state(VkvgContext ctx);
+//void _set_mat_inv_and_push_cmd(VkvgContext ctx);
 void _start_cmd_for_render_pass(VkvgContext ctx);
 void _start_cmd_for_render_pass2(VkvgContext ctx, bool bindPL);
 

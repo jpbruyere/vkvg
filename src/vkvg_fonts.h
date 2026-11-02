@@ -345,4 +345,5 @@ void _font_size_destroy (FontSize font);
 void text_run_init(VkvgText textRun, VkvgContext ctx, const char* text, int length);
 void text_run_term(VkvgText textRun);
 void text_run_render(VkvgText tr, VkvgContext ctx); // Draw text run
+void text_run_render_on_path(VkvgText tr, VkvgContext ctx);
 #endif

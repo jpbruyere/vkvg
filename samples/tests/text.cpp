@@ -345,4 +345,114 @@ TEST(text_scalled_up) {
     vkvg_font_destroy(font);
     vkvg_destroy(ctx);
 }
+TEST(text_rotated) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_clear(ctx);
 
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(test->device, "sans", 12);
+
+    vkvg_rotate(ctx, 0.5);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 10, 10);
+    vkvg_show_text(ctx, txt);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+}
+TEST(text_rotated_scalled_up) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_clear(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(test->device, "sans", 12);
+
+    vkvg_rotate(ctx, 0.5);
+    vkvg_scale(ctx, 5,5);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 10, 10);
+    vkvg_show_text(ctx, txt);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+}
+TEST(text_on_straight_path) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(test->device, "times", 20);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 30, 200);
+    vkvg_line_to(ctx, 400, 200);
+
+    VkvgText tr = vkvg_text_create(ctx, txt);
+
+    vkvg_text_render_on_path(ctx, tr);
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_stroke(ctx);
+
+    vkvg_text_destroy(tr);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+}
+TEST(text_on_curved_path) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(test->device, "times", 20);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 30, 200);
+    vkvg_curve_to(ctx, 160,0, 300, 400, 450, 250);
+
+    VkvgText tr = vkvg_text_create(ctx, txt);
+
+    vkvg_text_render_on_path(ctx, tr);
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_stroke(ctx);
+
+    vkvg_text_destroy(tr);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+}
+TEST(text_on_path_with_rot) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    vkvg_rotate(ctx, -0.3f);
+    //vkvg_scale(ctx, 2,2);
+
+    VkvgFont font = vkvg_font_create(test->device, "times", 30);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 30, 200);
+    vkvg_curve_to(ctx, 160,0, 300, 400, 450, 250);
+
+    VkvgText tr = vkvg_text_create(ctx, txt);
+
+    vkvg_text_render_on_path(ctx, tr);
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_stroke(ctx);
+
+    vkvg_text_destroy(tr);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+}

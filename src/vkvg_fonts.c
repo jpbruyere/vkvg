@@ -1104,6 +1104,8 @@ void text_run_term(VkvgText textRun) {
     //vkvg_font_destroy(textRun->font);
 }
 
+#define IS_NOT_NULL(f) fabs(f) > 0.0001f
+
 void text_run_render(VkvgText tr, VkvgContext ctx) {
     LOG (VKVG_LOG_FONT, "render text\n");
     unsigned int glyph_count;
@@ -1124,8 +1126,17 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
     if (tr->hasScale) {
         LOG (VKVG_LOG_FONT, "render text with scale\n");
         _emit_draw_cmd_undrawn_vertices(ctx);
-        ctx->pushConsts.mat = VKVG_IDENTITY_MATRIX;
-        _set_mat_inv_and_vkCmdPush(ctx);
+        float sx, sy;
+        vkvg_matrix_get_scale(&ctx->pushConsts.mat, &sx, &sy);
+        if (IS_NOT_NULL(sx)) {
+            ctx->pushConsts.mat.xx /= sx;
+            ctx->pushConsts.mat.xy /= sx;
+        }
+        if (IS_NOT_NULL(sy)) {
+            ctx->pushConsts.mat.yx /= sy;
+            ctx->pushConsts.mat.yy /= sy;
+        }
+        _set_mat_inv_and_dirty_state(ctx);
         _ensure_renderpass_is_started(ctx);
         vkvg_matrix_transform_point(&savedMat, &pen.x, &pen.y);
     }
@@ -1176,7 +1187,9 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
     _finish_path(ctx);
     _add_point(ctx, pen.x, pen.y);
     _flush_chars_to_tex(tr->font);
+
     UNLOCK_FONTCACHE(ctx->dev)
+
     /*if (ctx->fontCacheImg != ctx->dev->fontCache->texture) {
         vkvg_flush(ctx);
         _font_cache_update_context_descset(ctx);
@@ -1184,10 +1197,169 @@ void text_run_render(VkvgText tr, VkvgContext ctx) {
     if (tr->hasScale) {
         _emit_draw_cmd_undrawn_vertices(ctx);
         ctx->pushConsts.mat = savedMat;
-        _set_mat_inv_and_vkCmdPush(ctx);
+        _set_mat_inv_and_dirty_state(ctx);
     }
 }
+static inline vec2 _rotate_around_point (vec2 p0, vec2 p1, float alpha) {
+    float dx = p1.x - p0.x;
+    float dy = p1.y - p0.y;
+    return (vec2) {
+        p0.x + dx * cos(alpha) - dy * sin(alpha),
+        p0.y + dx * sin(alpha) + dy * cos(alpha)
+    };
+}
+void text_run_render_on_path(VkvgText tr, VkvgContext ctx) {
+    LOG (VKVG_LOG_FONT, "render text on path\n");
 
+    _finish_path(ctx);
+    if (!ctx->pathPtr) //no path
+        return;
+
+    unsigned int glyph_count;
+#ifdef VKVG_USE_HARFBUZZ
+    hb_glyph_info_t* glyph_info = hb_buffer_get_glyph_infos(tr->hbBuf, &glyph_count);
+#else
+    vkvg_glyph_info_t* glyph_info = tr->glyphs;
+    glyph_count                   = tr->glyph_count;
+#endif
+
+    vkvg_matrix_t savedMat = ctx->pushConsts.mat;
+
+    if (tr->hasScale) {
+        LOG (VKVG_LOG_FONT, "render text on path with scale\n");
+        _emit_draw_cmd_undrawn_vertices(ctx);
+        float sx, sy;
+        vkvg_matrix_get_scale(&ctx->pushConsts.mat, &sx, &sy);
+        if (IS_NOT_NULL(sx)) {
+            ctx->pushConsts.mat.xx /= sx;
+            ctx->pushConsts.mat.xy /= sx;
+        }
+        if (IS_NOT_NULL(sy)) {
+            ctx->pushConsts.mat.yx /= sy;
+            ctx->pushConsts.mat.yy /= sy;
+        }
+        _set_mat_inv_and_dirty_state(ctx);
+    }
+    _ensure_renderpass_is_started(ctx);
+
+    LOCK_FONTCACHE(ctx->dev)
+    FontSize f = tr->font;
+    Vertex v   = {{0}, ctx->curColor, {0, 0, -1}};
+
+    uint32_t ptrPath    = 0;
+    uint32_t firstPtIdx = 0;
+    uint32_t pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+    uint32_t ptrPt = 0;
+    vec2 vSeg = {0};
+    float segLen = 0;
+    float accLen = 0;
+    float txtAdvance = 0;
+
+    VkvgDevice dev = tr->font->dev;
+
+    vec2 p0 = ctx->points[ptrPt];
+    vec2 curPt = p0;
+    vkvg_matrix_transform_point(&savedMat, &p0.x, &p0.y);
+    vec2 pen = p0;
+
+    for (uint32_t i = 0; i < glyph_count; ++i) {
+        glyph_ref cr = get_cached_glyph(dev, f, glyph_info[i].codepoint);
+
+        float glyphAdv =  (float)(tr->glyphs[i].x_advance >> 6);
+        float halfGlyphW = glyphAdv * 0.5f;
+
+        if (txtAdvance + halfGlyphW >= accLen + segLen) {
+            while (ptrPath < ctx->pathPtr) {
+                if (ptrPt < pathPointCount - 1) {
+                    curPt = ctx->points[ptrPt];
+                    vSeg = vec2_sub(ctx->points[ptrPt + 1], curPt);
+                    segLen = vec2_length(vSeg);
+                    if (txtAdvance + glyphAdv * 0.5f < accLen + segLen) {
+                        break;
+                    }
+                    accLen += segLen;
+                    ptrPt++;
+                    firstPtIdx += pathPointCount;
+                } else {
+                    if (_path_has_curves(ctx, ptrPath)) {
+                        // skip segments lengths used in stroke
+                        ptrPath++;
+                        uint32_t totPts = 0;
+                        while (totPts < pathPointCount)
+                            totPts += (ctx->pathes[ptrPath++] & PATH_ELT_MASK);
+                    } else
+                        ptrPath++;
+
+                    pathPointCount = ctx->pathes[ptrPath] & PATH_ELT_MASK;
+                    ptrPt = firstPtIdx;
+                }
+            }
+        }
+
+        float curOffset = txtAdvance - accLen + halfGlyphW;
+        vec2 vP = vec2_sub(curPt, p0);
+        vec2 vGlyphCenter = vec2_add(vP, vec2_mult_s(vSeg, (curOffset / segLen)));
+
+        pen = vec2_add(p0, vGlyphCenter);
+
+        vec2 pt = {pen.x - halfGlyphW + cr.bmpDiff.x + (tr->glyphs[i].x_offset >> 6),
+                   pen.y - cr.bmpDiff.y + (tr->glyphs[i].y_offset >> 6)};
+
+
+        float alpha = atan2(vSeg.y, vSeg.x);
+
+        vec2 vpos = pt;
+        v.pos = _rotate_around_point(pen, vpos, alpha);
+
+        VKVG_IBO_INDEX_TYPE firstIdx = (VKVG_IBO_INDEX_TYPE)(ctx->vertCount - ctx->curVertOffset);
+
+        TexRef l = cr.texRef;
+        float uvY = (float)l->penY;
+
+        v.uv.x = cr.bounds.x;
+        v.uv.y = uvY; // + cr.bounds.y
+        v.uv.z = l->pageIdx;
+        _add_vertex(ctx, v);
+
+        vpos.y += cr.bounds.height;
+        v.pos = _rotate_around_point(pen, vpos, alpha);
+        v.uv.y += cr.bounds.height;
+        _add_vertex(ctx, v);
+
+        vpos.x += cr.bounds.width;
+        vpos.y = pt.y;
+        v.pos = _rotate_around_point(pen, vpos, alpha);
+        v.uv.x += cr.bounds.width;
+        v.uv.y = uvY; // + cr.bounds.y;
+        _add_vertex(ctx, v);
+
+        vpos.y += cr.bounds.height;
+        v.pos = _rotate_around_point(pen, vpos, alpha);
+        v.uv.y += cr.bounds.height;
+        _add_vertex(ctx, v);
+
+        _add_tri_indices_for_rect(ctx, firstIdx);
+
+        txtAdvance += glyphAdv;
+    }
+
+
+    _finish_path(ctx);
+    _add_point(ctx, pen.x, pen.y);
+    _flush_chars_to_tex(tr->font);
+
+    UNLOCK_FONTCACHE(ctx->dev)
+
+    /*if (ctx->fontCacheImg != ctx->dev->fontCache->texture) {
+        vkvg_flush(ctx);
+        _font_cache_update_context_descset(ctx);
+    }*/
+    if (tr->hasScale) {
+        _emit_draw_cmd_undrawn_vertices(ctx);
+        ctx->pushConsts.mat = savedMat;
+        _set_mat_inv_and_dirty_state(ctx);
+    }
+}
 #ifdef DEBUG
 void _show_texture(vkvg_context* ctx) {
     Vertex vs[] = {{{0, 0}, 0, {0, 0, 0}},

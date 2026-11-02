@@ -665,11 +665,16 @@ void _start_cmd_for_render_pass(VkvgContext ctx) {
 }
 // compute inverse mat used in shader when context matrix has changed
 // then trigger push constants command
-void _set_mat_inv_and_vkCmdPush(VkvgContext ctx) {
+void _set_mat_inv_and_dirty_state(VkvgContext ctx) {
     ctx->pushConsts.matInv = ctx->pushConsts.mat;
     vkvg_matrix_invert(&ctx->pushConsts.matInv);
     ctx->pushCstDirty = true;
 }
+/*void _set_mat_inv_and_push_cmd(VkvgContext ctx) {
+    ctx->pushConsts.matInv = ctx->pushConsts.mat;
+    vkvg_matrix_invert(&ctx->pushConsts.matInv);
+    _update_push_constants(ctx);
+}*/
 void _update_push_constants(VkvgContext ctx) {
     CmdPushConstants(ctx->cmd, ctx->dev->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),
                      &ctx->pushConsts);
@@ -1527,7 +1532,7 @@ void _poly_fill(VkvgContext ctx, vec4* bounds) {
             VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
 
             for (uint32_t i = 0; i < pathPointCount; i++) {
-                v.pos                              = ctx->points[i + firstPtIdx];
+                v.pos = ctx->points[i + firstPtIdx];
                 ctx->vertexCache[ctx->vertCount++] = v;
                 if (!bounds)
                     continue;
