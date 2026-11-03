@@ -338,16 +338,16 @@ typedef struct _vkvg_font_t* VkvgFont;
  * @param pointSize The font size in point unit, 1/72 of an inch.
  * @return A new VkvgFont or null if an error occured.
  */
-vkvg_public VkvgFont        vkvg_font_create (VkvgSurface surf, const char* queryString, float pointSize);
+vkvg_public VkvgFont        vkvg_font_create (VkvgDevice dev, const char* queryString, float pointSize);
 /**
  * @brief Create a new @ref VkvgFont from the provided font file, face index and size.
- * @param surf VkvgDevice holding the font cache.
+ * @param dev VkvgDevice holding the font cache.
  * @param fontFilePath a valid font file path.
  * @param faceIndex Usually 0, except for variable fonts or font file with multiple faces.
  * @param pointSize The font size in point unit, 1/72 of an inch.
  * @return
  */
-vkvg_public VkvgFont        vkvg_font_create_from_file (VkvgSurface surf, const char* fontFilePath, int faceIndex, float pointSize);
+vkvg_public VkvgFont        vkvg_font_create_from_file (VkvgDevice dev, const char* fontFilePath, int faceIndex, float pointSize);
 /**
  * @brief Get underlying font face object pointer, if freetype is enable, the FT_Face will be returned.
  * @param font a valid VkvgFont.
@@ -562,6 +562,7 @@ vkvg_public void vkvg_matrix_transform_point(const vkvg_matrix_t* matrix, float*
  */
 vkvg_public vkvg_status_t vkvg_matrix_invert(vkvg_matrix_t* matrix);
 vkvg_public void          vkvg_matrix_get_scale(const vkvg_matrix_t* matrix, float* sx, float* sy);
+vkvg_public bool          vkvg_matrix_has_scale(const vkvg_matrix_t* matrix);
 /** @}*/
 
 /*!
@@ -570,16 +571,6 @@ vkvg_public void          vkvg_matrix_get_scale(const vkvg_matrix_t* matrix, flo
  *
  * #VkvgDevice is the starting point of a vkvg rendering infrastructure. It connects an
  * existing vulkan context with vkvg, or may create a new one.
- *
- * Most of the vulkan rendering component (pipelines, renderpass, ..) are part of the VkvgDevice,
- * their are shared among drawing contexts.
- *
- * Antialiasing level is configured when creating the device by selecting the sample count.
- * @ref vkvg_device_create will create a non-antialiased dev by selecting VK_SAMPLE_COUNT_1_BIT as sample count.
- * To create antialiased rendering device, call @ref vkvg_device_create_multisample with VkSampleCountFlags
- * greater than one.
- *
- * vkvg use a single frame buffer format for now: VK_FORMAT_B8G8R8A8_UNORM.
  *
  * Device holds the font cache so that each time a context draws text, the same cache is used.
  *
@@ -592,24 +583,13 @@ vkvg_public void          vkvg_matrix_get_scale(const vkvg_matrix_t* matrix, flo
  * @code
  * @endcode
  *
- * @samples: sample count.
- * @inst: vulkan instance used to create device, may be null to create a new instance.
- * @phy: vulkan physical device to create vkvg device for, may be null.
- * @vkdev: vulkan logical device, may be null to create a new one.
- * @qFamIdx: graphic queue family index, ignored if vkdev is NULL.
- * @qIndex: queue index, ignored if vkdev is NULL.
- * @deferredResolve: If true, the final simple sampled image of the surface will only be resolved on demand
- * when calling @ref vkvg_surface_get_vk_image or by explicitly calling @ref vkvg_multisample_surface_resolve.
- * If false, multisampled image is resolved on each draw operation.
  */
 typedef struct {
-    VkSampleCountFlags samples;
-    bool               deferredResolve;
-    VkInstance         inst;
-    VkPhysicalDevice   phy;
-    VkDevice           vkdev;
-    uint32_t           qFamIdx;
-    uint32_t           qIndex;
+    VkInstance         inst;                /**< vulkan instance used to create device, may be null to create a new instance.*/
+    VkPhysicalDevice   phy;                 /**< vulkan physical device to create vkvg device for, may be null.*/
+    VkDevice           vkdev;               /**< vulkan logical device, may be null to create a new one.*/
+    uint32_t           qFamIdx;             /**< graphic queue family index, ignored if vkdev is NULL.*/
+    uint32_t           qIndex;              /**< queue index, ignored if vkdev is NULL.*/
     bool               threadAware;         /**< if true, mutex is created and guard device queue and caches access */
     const char*        fontsDirectories;    /**< Coma sepparated list of font directories to scan.
                                                  With font-config, leave empty for default system configuration.
@@ -1455,6 +1435,15 @@ vkvg_public void vkvg_set_source_surface(VkvgContext ctx, VkvgSurface surf, floa
  */
 vkvg_public void vkvg_set_source(VkvgContext ctx, VkvgPattern pat);
 /**
+ * @brief set supplied pattern as current source with an offset
+ *
+ * @param ctx a valid vkvg @ref context
+ * @param pat the new pattern to use as source for further drawing operations.
+ * @param x an x offset to apply for drawing operations using this pattern.
+ * @param y an y offset to apply for drawing operations using this pattern.
+ */
+vkvg_public void vkvg_set_source_with_offset(VkvgContext ctx, VkvgPattern pat, float x, float y);
+/**
  * @brief set line width for the next draw command.
  *
  * Set the current line width for the targeted context. All further calls to #vkvg_stroke on this context
@@ -1812,6 +1801,7 @@ vkvg_public void vkvg_text_destroy(VkvgText textRun);
  * @param textRun
  */
 vkvg_public void vkvg_text_render(VkvgContext ctx, VkvgText textRun);
+vkvg_public void vkvg_text_render_on_path(VkvgContext ctx, VkvgText textRun, bool preservePath);
 /**
  * @brief
  *

@@ -28,7 +28,7 @@ layout (location = 0) in vec2	inPos;
 layout (location = 1) in vec4	inColor;
 layout (location = 2) in vec3	inUV;
 
-layout (location = 0) out vec3	outUV;
+layout (location = 0) centroid out vec3	outUV;
 layout (location = 1) out vec4	outSrc;
 layout (location = 2) out flat int outPatType;
 layout (location = 3) out flat float outOpacity;

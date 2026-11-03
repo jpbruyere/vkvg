@@ -282,7 +282,7 @@ void draw(VkvgSurface surfFont) {
         FcPatternGetString (font, FC_FAMILY, 0, &family_name);
         FcPatternGetString (font, FC_STYLE, 0, &style_variant);
         FcPatternGetBool(font, FC_VARIABLE, 0, &var);
-        VkvgFont f = vkvg_font_create_from_file(surf, (char*)fontFile, index, fontSize);
+        VkvgFont f = vkvg_font_create_from_file(device, (char*)fontFile, index, fontSize);
         if (vkvg_font_status(f)) {
             printf("Error trying to load %s, from %s\n", txtBuffCopy, fontFile);
             fflush(stdout);
@@ -499,11 +499,11 @@ int main(int argc, char* argv[]) {
     vkengine_set_char_callback(e, char_callback);
 
     vkvg_device_create_info_t info = {
-                                      1, false,
-                                      vkh_app_get_inst(e->app),
-                                      vkh_device_get_phy(e->dev),
-                                      vkh_device_get_vkdev(e->dev),
-                                      e->gQFamIdx, 0, false};//, TESTS_DATA_ROOT "/fonts"};
+        vkh_app_get_inst(e->app),
+        vkh_device_get_phy(e->dev),
+        vkh_device_get_vkdev(e->dev),
+        e->gQFamIdx, 0, false
+    };//, TESTS_DATA_ROOT "/fonts"};
 
     device = vkvg_device_create(&info);
     surf = vkvg_surface_create(device, test_width, test_height);
@@ -528,7 +528,7 @@ int main(int argc, char* argv[]) {
 
     strcpy (txtBuffer, "sans");
     txtBuffPtr = 4;
-    sans16 = vkvg_font_create(surf, "sans", 16);
+    sans16 = vkvg_font_create(device, "sans", 16);
 
     while (!vkengine_should_close(e)) {
         glfwPollEvents();

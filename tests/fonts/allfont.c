@@ -172,7 +172,7 @@ void draw(VkvgSurface surfFont) {
 
     char tmp[1024];
 
-    VkvgFont mono = vkvg_font_create(surf, "mono", 12);
+    VkvgFont mono = vkvg_font_create(device, "mono", 12);
 
     for (int i = curFontStartIdx; i < font_database->nfont; i++) {
         FcPattern* font_entry = font_database->fonts[i];
@@ -199,7 +199,7 @@ void draw(VkvgSurface surfFont) {
         if (onlyVariable && !variable)
             continue;
 
-        VkvgFont font = vkvg_font_create (surf, tmp, fontSize);
+        VkvgFont font = vkvg_font_create (device, tmp, fontSize);
         if (vkvg_font_status(font)) {
             printf("Error trying to load %s, from %s\n", tmp, file_path);
             fflush(stdout);
@@ -333,11 +333,11 @@ int main(int argc, char* argv[]) {
     vkengine_set_scroll_callback(e, scroll_callback);
 
     vkvg_device_create_info_t info = {
-                                      1, false,
-                                      vkh_app_get_inst(e->app),
-                                      vkh_device_get_phy(e->dev),
-                                      vkh_device_get_vkdev(e->dev),
-                                      e->gQFamIdx, 0, false };//, TESTS_DATA_ROOT "/fonts"};
+        vkh_app_get_inst(e->app),
+        vkh_device_get_phy(e->dev),
+        vkh_device_get_vkdev(e->dev),
+        e->gQFamIdx, 0, false
+    };//, TESTS_DATA_ROOT "/fonts"};
 
     device = vkvg_device_create(&info);
     surf = vkvg_surface_create(device, test_width, test_height);

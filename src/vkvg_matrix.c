@@ -43,6 +43,7 @@
 #include "vkvg_matrix.h"
 
 #define ISFINITE(x) ((x) * (x) >= 0.) /* check for NaNs */
+#define SCALE_EPSILON 0.0001f
 
 // matrix computations mainly taken from http://cairographics.org
 static void _vkvg_matrix_scalar_multiply(vkvg_matrix_t* matrix, float scalar) {
@@ -203,9 +204,11 @@ void vkvg_matrix_transform_point(const vkvg_matrix_t* matrix, float* x, float* y
 }
 void vkvg_matrix_get_scale(const vkvg_matrix_t* matrix, float* sx, float* sy) {
     *sx = sqrt(matrix->xx * matrix->xx + matrix->xy * matrix->xy);
-    /*if (matrix->xx < 0)
-     *sx = -*sx;*/
     *sy = sqrt(matrix->yx * matrix->yx + matrix->yy * matrix->yy);
-    /*if (matrix->yy < 0)
-     *sy = -*sy;*/
+}
+bool vkvg_matrix_has_scale(const vkvg_matrix_t* matrix) {
+    float len_sq_x = (matrix->xx * matrix->xx) + (matrix->xy * matrix->xy);
+    float len_sq_y = (matrix->yx * matrix->yx) + (matrix->yy * matrix->yy);
+    return (fabsf(len_sq_x - 1.0f) > SCALE_EPSILON) ||
+           (fabsf(len_sq_y - 1.0f) > SCALE_EPSILON);
 }

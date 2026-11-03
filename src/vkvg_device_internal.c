@@ -55,18 +55,6 @@ void _device_create_pipeline_cache(VkvgDevice dev) {
 }
 
 void _device_createDescriptorSetLayout(VkvgDevice dev) {
-    VkSamplerCreateInfo samplerInfo = {.sType         = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-                                       .maxAnisotropy = 1.0,
-                                       .addressModeU  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                                       .addressModeV  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                                       .addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                                       .magFilter     = VK_FILTER_NEAREST,
-                                       .minFilter     = VK_FILTER_NEAREST,
-                                       .mipmapMode    = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                       .unnormalizedCoordinates = VK_TRUE
-    };
-    vkCreateSampler(dev->vkDev, &samplerInfo, NULL, &dev->smpFont);
-
     VkDescriptorBindingFlags bindingFlags[] = {
         VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT,  // Allows empty/unbound slots in this binding
         VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT
@@ -90,11 +78,9 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
 
     bindingFlagsInfo.bindingCount = 1;
     dsLayoutCreateInfo.bindingCount = 1;
-    dsLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    dsLayoutBinding[0].pImmutableSamplers = &dev->smpFont;
+    dsLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslFont));
 
-    dsLayoutBinding[0].pImmutableSamplers = NULL;
     dsLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     VK_CHECK_RESULT(vkCreateDescriptorSetLayout(dev->vkDev, &dsLayoutCreateInfo, NULL, &dev->dslGrad));
 
@@ -103,7 +89,6 @@ void _device_createDescriptorSetLayout(VkvgDevice dev) {
         //{VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(push_constants)}
     };
     VkDescriptorSetLayout dsls[] = {dev->dslFont, dev->dslSrc, dev->dslGrad};
-
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pushConstantRangeCount = 1,
@@ -244,7 +229,7 @@ void _device_check_best_image_tiling(VkvgDevice dev, VkFormat format) {
     }
 
     if (dev->pngStagFormat == VK_FORMAT_UNDEFINED)
-        LOG(VKVG_LOG_DEBUG, "vkvg create device warning: no suitable image format for png write\n");
+        LOGW("vkvg create device warning: no suitable image format for png write\n");
 
     dev->stencilFormat     = VK_FORMAT_UNDEFINED;
     dev->stencilAspectFlag = VK_IMAGE_ASPECT_STENCIL_BIT;

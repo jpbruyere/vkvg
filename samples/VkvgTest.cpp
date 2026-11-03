@@ -35,17 +35,17 @@ VkvgTest::VkvgTest(VkvgTestFunc testFunc, std::string _name) {
 void VkvgTest::initTest(SampleApp* app) {
     this->app = app;
 
-    vkvg_device_create_info_t info = {app->samples,
-                                      false,
-                                      vkh_app_get_inst(app->app),
-                                      vkh_device_get_phy(app->vkhDev),
-                                      vkh_device_get_vkdev(app->vkhDev),
-                                      app->presentQIndex,
-                                      0,
-                                      false};
+    vkvg_device_create_info_t info = {
+        vkh_app_get_inst(app->app),
+        vkh_device_get_phy(app->vkhDev),
+        vkh_device_get_vkdev(app->vkhDev),
+        app->presentQIndex,
+        0,
+        false
+    };
 
     device = vkvg_device_create(&info);
-    surf   = vkvg_surface_create(device, app->width, app->height);
+    surf   = vkvg_surface_create_ms(device, app->width, app->height, VK_SAMPLE_COUNT_8_BIT);
     vkvg_surface_set_dpy(surf, 96, 96);
 
     vkh_presenter_build_blit_cmd(app->renderer, vkvg_surface_get_vk_image(surf), app->width, app->height);

@@ -1570,7 +1570,7 @@ void process_element(svg_context *const svg, SvgPresentationAttributes *const at
             if (attribs->font_family_len > 0) {
                 char fam[1024];
                 sprintf(fam, "%.*s", attribs->font_family_len, attribs->font_family);
-                font = vkvg_font_create(svg->surf, fam, attribs->font_size_pt);
+                font = vkvg_font_create(svg->dev, fam, attribs->font_size_pt);
                 vkvg_set_font(svg->ctx, font);
                 vkvg_font_destroy(font);
             }
@@ -1646,7 +1646,7 @@ void process_svg(svg_context *const svg) {
         return;
     }
     if (!svg->ctx) {
-        svg->surf = vkvg_surface_create(svg->dev, surfW, surfH);
+        svg->surf = vkvg_surface_create_ms(svg->dev, surfW, surfH, VK_SAMPLE_COUNT_4_BIT);
         svg->ctx  = vkvg_create(svg->surf);
         vkvg_clear (svg->ctx);
         svg->ownContext = true;
