@@ -22,8 +22,8 @@ DrawTestBase::DrawTestBase() {
         fs::create_directories(diffDir);
 
     vkvg_device_create_info_t info{};
-    fs::path fontDir = fs::path(GTEST_DATA_ROOT) / fs::path("fonts");
-    info.fontsDirectories = fontDir.string().c_str();
+    //fs::path fontDir = fs::path(GTEST_DATA_ROOT) / fs::path("fonts");
+    //info.fontsDirectories = fontDir.string().c_str();
     dev = vkvg_device_create(&info);
 }
 

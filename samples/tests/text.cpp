@@ -345,6 +345,22 @@ TEST(text_scalled_up) {
     vkvg_font_destroy(font);
     vkvg_destroy(ctx);
 }
+TEST(text_scale_down) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(test->device, "sans", 60);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 2, 2);
+    vkvg_scale(ctx, 0.1f,0.1f);
+    vkvg_show_text(ctx, txt);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+}
 TEST(text_rotated) {
     VkvgContext ctx = vkvg_create(test->surf);
     vkvg_clear(ctx);

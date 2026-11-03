@@ -117,6 +117,8 @@ TEST_F(TextDrawTest, scale_up) {
 
     vkvg_font_destroy(font);
     vkvg_destroy(ctx);
+
+    compareWithRefImage();
 }
 TEST_F(TextDrawTest, scale_down) {
     VkvgContext ctx = vkvg_create(surf);
@@ -129,10 +131,37 @@ TEST_F(TextDrawTest, scale_down) {
     VkvgFont font = vkvg_font_create(dev, "sans", 60);
 
     vkvg_set_font(ctx,font);
-    vkvg_move_to(ctx, 2, 2);
+    vkvg_move_to(ctx, 200, 200);
     vkvg_scale(ctx, 0.1f,0.1f);
     vkvg_show_text(ctx, txt);
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(TextDrawTest, text_on_path) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+    VkvgFont font = vkvg_font_create(dev, "sans", 20);
+
+    vkvg_rotate(ctx, -0.2f);
+    vkvg_scale(ctx, 1.5f,1.5f);
+    vkvg_set_font(ctx,font);
+
+    vkvg_move_to(ctx, 10, 250);
+    vkvg_curve_to(ctx, 140, 0, 200, 450, 450, 250);
+
+    VkvgText tr = vkvg_text_create(ctx, txt);
+    vkvg_text_render_on_path(ctx, tr, true);
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_stroke(ctx);
+
+    vkvg_text_destroy(tr);
 
     vkvg_font_destroy(font);
     vkvg_destroy(ctx);
+
+    compareWithRefImage();
 }
