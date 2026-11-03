@@ -1225,10 +1225,10 @@ void text_run_render_on_path(VkvgText tr, VkvgContext ctx) {
 
     vkvg_matrix_t savedMat = ctx->pushConsts.mat;
 
+    float sx = 1, sy = 1;
     if (tr->hasScale) {
         LOG (VKVG_LOG_FONT, "render text on path with scale\n");
         _emit_draw_cmd_undrawn_vertices(ctx);
-        float sx, sy;
         vkvg_matrix_get_scale(&ctx->pushConsts.mat, &sx, &sy);
         if (IS_NOT_NULL(sx)) {
             ctx->pushConsts.mat.xx /= sx;
@@ -1258,8 +1258,11 @@ void text_run_render_on_path(VkvgText tr, VkvgContext ctx) {
     VkvgDevice dev = tr->font->dev;
 
     vec2 p0 = ctx->points[ptrPt];
+    p0.x *= sx;
+    p0.y *= sy;
+    //vkvg_matrix_transform_point(&savedMat, &p0.x, &p0.y);
     vec2 curPt = p0;
-    vkvg_matrix_transform_point(&savedMat, &p0.x, &p0.y);
+    vec2 nextPt = {0};
     vec2 pen = p0;
 
     for (uint32_t i = 0; i < glyph_count; ++i) {
@@ -1271,14 +1274,17 @@ void text_run_render_on_path(VkvgText tr, VkvgContext ctx) {
         if (txtAdvance + halfGlyphW >= accLen + segLen) {
             while (ptrPath < ctx->pathPtr) {
                 if (ptrPt < pathPointCount - 1) {
-                    curPt = ctx->points[ptrPt];
-                    vSeg = vec2_sub(ctx->points[ptrPt + 1], curPt);
+                    nextPt = ctx->points[ptrPt + 1];
+                    nextPt.x *= sx;
+                    nextPt.y *= sy;
+                    vSeg = vec2_sub(nextPt, curPt);
                     segLen = vec2_length(vSeg);
                     if (txtAdvance + glyphAdv * 0.5f < accLen + segLen) {
                         break;
                     }
                     accLen += segLen;
                     ptrPt++;
+                    curPt = nextPt;
                     firstPtIdx += pathPointCount;
                 } else {
                     if (_path_has_curves(ctx, ptrPath)) {

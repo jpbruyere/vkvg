@@ -1358,12 +1358,14 @@ void vkvg_text_render(VkvgContext ctx, VkvgText textRun) {
     }
     text_run_render(textRun, ctx);
 }
-void vkvg_text_render_on_path(VkvgContext ctx, VkvgText textRun) {
+void vkvg_text_render_on_path(VkvgContext ctx, VkvgText textRun, bool preservePath) {
     if (vkvg_status(ctx) || !textRun) {
         LOGW ("render text on path failed\n");
         return;
     }
     text_run_render_on_path(textRun, ctx);
+    if (!preservePath)
+        _clear_path(ctx);
 }
 void vkvg_text_get_extents(VkvgText textRun, vkvg_text_extents_t* extents) {
     *extents = textRun->extents;
