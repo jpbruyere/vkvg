@@ -334,7 +334,7 @@ IF (VKVG_BUILD_TESTS)
     ADD_SUBDIRECTORY(tests)
     ADD_SUBDIRECTORY(tests/games)
     ADD_SUBDIRECTORY(samples)
-    #ADD_SUBDIRECTORY(tests/vtzero)
+    ADD_SUBDIRECTORY(tests/vtzero)
 ELSEIF (VKVG_BUILD_OFFSCREEN_TEST)
     ADD_EXECUTABLE(test_offscreen "${CMAKE_CURRENT_SOURCE_DIR}/tests/offscreen.c")
     TARGET_INCLUDE_DIRECTORIES(test_offscreen PRIVATE

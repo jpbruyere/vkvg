@@ -127,15 +127,17 @@ class vtzeroApp : public VkvgApp {
 public:
     VkvgFont font;
     VkvgFont fontPlace;
+    VkvgFont fontRoads;
     void Init ()  override {
         VkvgApp::Init();
         icons = new IconRegistry(device);
 
         font = vkvg_font_create(device, "sans:bold", 20);
         fontPlace = vkvg_font_create(device, "sans:bold", 50);
+        fontRoads = vkvg_font_create(device, "sans", 12);
 
-        if (sqlite3_open("/mnt/data/osm/bruxelles.mbtiles", &mbtiles_db) != SQLITE_OK) {
-        //if (sqlite3_open("/mnt/data/osm/ciney.mbtiles", &mbtiles_db) != SQLITE_OK) {
+        //if (sqlite3_open("/mnt/data/osm/bruxelles.mbtiles", &mbtiles_db) != SQLITE_OK) {
+        if (sqlite3_open("/mnt/data/osm/ciney.mbtiles", &mbtiles_db) != SQLITE_OK) {
             std::cerr << "Failed to open map database file.\n";
             return;
         }
@@ -160,6 +162,7 @@ public:
 
         vkvg_font_destroy(font);
         vkvg_font_destroy(fontPlace);
+        vkvg_font_destroy(fontRoads);
 
         delete(icons);
 
@@ -244,13 +247,13 @@ public:
         std::vector<char> raw_mvt = decompress_gzip(compressed_blob);
         vtzero::vector_tile tile{raw_mvt.data(), raw_mvt.size()};
 
-        /*while (auto layer = tile.next_layer()) {
+        while (auto layer = tile.next_layer()) {
             std::cout << "Layer Name: " << layer.name().to_string() << "\n";
             if (layer.name() != "poi")
                 continue;
 
 
-        }
+        }/*
         if (auto boundary = tile.get_layer_by_name("boundary")) {
             while (auto feature = boundary.next_feature()) {
                 float r = 0.68f, g = 0.82f, b = 0.65f; // Pale forest green
@@ -349,6 +352,7 @@ public:
             }
         }
         vkvg_flush(ctx);
+
         if (auto layer = tile.get_layer_by_name("transportation")) {
             //std::cout << "transportation" << std::endl;
             while (auto feature = layer.next_feature()) {
@@ -365,7 +369,8 @@ public:
                             road_subclass = property.value().string_value().to_string();
                         } else if (property.key() == "service") {
                             road_service = property.value().string_value().to_string();
-                        }
+                        } else
+                            std::cout << "\t\tproperty:" << prop_name << std::endl;
                         break;
                     /*case vtzero::property_value_type::int_value:
                         std::cout << "\t\tproperty:" << prop_name << " = " << property.value().int_value() << std::endl;
@@ -480,9 +485,49 @@ public:
             }
         }
         vkvg_flush(ctx);
+        vkvg_set_font(ctx, fontRoads);
+        vkvg_set_line_width(ctx, 2.0);
+        vkvg_set_source_rgb(ctx, 0.1f, 0.1f, 0.1f); // Dark gray text
+        if (auto layer = tile.get_layer_by_name("transportation_name")) {
+            while (auto feature = layer.next_feature()) {
+                std::string road_class = "";
+                std::string road_subclass = "";
+                std::string road_network = "";
+                std::string road_name = "";
+                while (auto property = feature.next_property()) {
+                    std::string prop_name{property.key()};
+                    switch (property.value().type()) {
+                    case vtzero::property_value_type::string_value:
+                        if (property.key() == "class") {
+                            road_class = property.value().string_value().to_string();
+                        } else if (property.key() == "subclass") {
+                            road_subclass = property.value().string_value().to_string();
+                        } else if (property.key() == "network") {
+                            road_network = property.value().string_value().to_string();
+                        } else if (property.key() == "name:latin") {
+                            road_name = property.value().string_value().to_string();
+                        } else
+                            std::cout << "\t\tproperty:" << prop_name << std::endl;
+                        break;
+                    }
+                }
+                VkvgGeometryHandler handler{ ctx };
+                if (feature.geometry_type() == vtzero::GeomType::LINESTRING) {
+                    vtzero::decode_geometry(feature.geometry(), handler);
+                    VkvgText txt = vkvg_text_create (ctx, road_name.c_str());
+                    //vkvg_set_source_rgb(ctx, 0.1f, 0.1f, 0.1f); // Dark gray text
+                    vkvg_text_render_on_path (ctx, txt, false);
+                    vkvg_text_destroy(txt);
+                    /*vkvg_set_source_rgb(ctx, 1.f, 0.1f, 0.1f); // Dark gray text
+                    vkvg_stroke(ctx);*/
+                }
+            }
+        }
+        vkvg_flush(ctx);
         if (auto layer = tile.get_layer_by_name("building")) {
             uint32_t fg = CreateAbgr (ff,22,22,22);
-            uint32_t bg = CreateAbgr (ff,cc,87,23);
+            //uint32_t bg = CreateAbgr (ff,cc,87,23);
+            uint32_t bg = CreateAbgr (ff,cc,cc,cc);
             vkvg_set_line_width(ctx, 1);
             while (auto feature = layer.next_feature()) {
                 if (feature.geometry_type() != vtzero::GeomType::POLYGON)
@@ -544,9 +589,9 @@ public:
                         vkvg_restore(ctx);
                     } else {
                         vkvg_set_source_color(ctx, fg);
-                        vkvg_rounded_rectangle(ctx, p.first, p.second, icon_size, icon_size, 10);
+                        vkvg_rounded_rectangle(ctx, p.first, p.second, icon_size / 2, icon_size / 2, 5);
                         vkvg_fill(ctx);
-                        std::cout << poi_class << ", " << poi_subclass << ", " << poi_name << std::endl;
+                        //std::cout << poi_class << ", " << poi_subclass << ", " << poi_name << std::endl;
                     }
                 }
             }
@@ -593,8 +638,8 @@ public:
                             vkvg_move_to(ctx, p.first, p.second);
                             vkvg_set_source_rgb(ctx, 1,1,1);
                             vkvg_text_render(ctx, txt);
-                        } else
-                            std::cout << poi_class << ", " << poi_subclass << ", " << poi_name << std::endl;
+                        } /*else
+                            std::cout << poi_class << ", " << poi_subclass << ", " << poi_name << std::endl;*/
                     }
                 }
             }

@@ -45,7 +45,7 @@ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
-ADD_LIBRARY(tests_common OBJECT common/vkengine.c common/test.c common/rnd.c common/tinycthread.c)
+ADD_LIBRARY(tests_common OBJECT common/vkengine.c common/test.c common/rnd.c common/tinycthread.c ../src/cross_os.c)
 
 TARGET_INCLUDE_DIRECTORIES(tests_common
  	PRIVATE
