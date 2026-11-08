@@ -394,8 +394,8 @@ typedef struct {
     uint32_t sizeIBO;      /**< maximum size of vulkan index buffer		*/
 } vkvg_debug_stats_t;
 
-vkvg_debug_stats_t vkvg_device_get_stats(VkvgDevice dev);
-void               vkvg_device_reset_stats(VkvgDevice dev);
+vkvg_public vkvg_debug_stats_t vkvg_device_get_stats(VkvgDevice dev);
+vkvg_public void               vkvg_device_reset_stats(VkvgDevice dev);
 #endif
 
 /**
@@ -744,7 +744,7 @@ vkvg_public VkvgSurface vkvg_surface_create(VkvgDevice dev, uint32_t width, uint
  * @param sampleCount sample count for the new surface.
  * @return The new vkvg surface pointer, or null if an error occured.
  */
-VkvgSurface vkvg_surface_create_ms(VkvgDevice dev, uint32_t width, uint32_t height, VkSampleCountFlags sampleCount);
+vkvg_public VkvgSurface vkvg_surface_create_ms(VkvgDevice dev, uint32_t width, uint32_t height, VkSampleCountFlags sampleCount);
 /**
  * @brief Create a new vkvg surface by loading an image file.
  * The resulting surface will have the same dimension as the supplied image.
