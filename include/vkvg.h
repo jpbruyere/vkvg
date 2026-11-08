@@ -140,7 +140,6 @@ typedef enum {
 } vkvg_status_t;
 
 typedef enum { VKVG_HORIZONTAL = 0, VKVG_VERTICAL = 1 } vkvg_direction_t;
-
 typedef enum { VKVG_FORMAT_ARGB32, VKVG_FORMAT_RGB24, VKVG_FORMAT_A8, VKVG_FORMAT_A1 } vkvg_format_t;
 /**
  * @brief pattern border policy
@@ -1801,7 +1800,15 @@ vkvg_public void vkvg_text_destroy(VkvgText textRun);
  * @param textRun
  */
 vkvg_public void vkvg_text_render(VkvgContext ctx, VkvgText textRun);
-vkvg_public void vkvg_text_render_on_path(VkvgContext ctx, VkvgText textRun, bool preservePath);
+/**
+ * @brief vkvg_text_render_on_path
+ * @param ctx
+ * @param textRun
+ * @param offsetX
+ * @param offsetY
+ * @param preservePath
+ */
+vkvg_public void vkvg_text_render_on_path(VkvgContext ctx, VkvgText textRun, float offsetX, float offsetY, bool preservePath);
 /**
  * @brief
  *

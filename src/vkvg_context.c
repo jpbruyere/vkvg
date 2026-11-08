@@ -1309,68 +1309,6 @@ void vkvg_show_text(VkvgContext ctx, const char* text) {
     _font_cache_show_text(ctx, text);
 }
 
-VkvgText vkvg_text_create(VkvgContext ctx, const char* text) {
-    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
-        return NULL;
-    VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    if (!tr) {
-        LOGE("vkvg_text_create error, no memory\n");
-        return NULL;
-    }
-    text_run_init(tr, ctx, text, -1);
-    return tr;
-}
-VkvgText vkvg_text_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
-    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
-        return NULL;
-    VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
-    if (!tr) {
-        LOGE("vkvg_text_create error, no memory\n");
-        return NULL;
-    }
-    text_run_init(tr, ctx, text, length);
-    return tr;
-}
-uint32_t vkvg_text_get_glyph_count(VkvgText textRun) {
-    return textRun ? textRun->glyph_count : 0;
-}
-vkvg_glyph_info_t vkvg_text_get_glyph_position(VkvgText textRun, uint32_t index) {
-    if (!textRun || index >= textRun->glyph_count) {
-        return (vkvg_glyph_info_t){0};
-    }
-#if VKVG_USE_HARFBUZZ
-    vkvg_glyph_info_t* tmp = (vkvg_glyph_info_t*)&textRun->glyphs[index];
-    return *tmp;
-#else
-    return textRun->glyphs[index];
-#endif
-}
-void vkvg_text_destroy(VkvgText textRun) {
-    if (!textRun)
-        return;
-    text_run_term(textRun);
-    free(textRun);
-}
-void vkvg_text_render(VkvgContext ctx, VkvgText textRun) {
-    if (vkvg_status(ctx) || !textRun) {
-        LOGW ("render text failed\n");
-        return;
-    }
-    text_run_render(textRun, ctx);
-}
-void vkvg_text_render_on_path(VkvgContext ctx, VkvgText textRun, bool preservePath) {
-    if (vkvg_status(ctx) || !textRun) {
-        LOGW ("render text on path failed\n");
-        return;
-    }
-    text_run_render_on_path(textRun, ctx);
-    if (!preservePath)
-        _clear_path(ctx);
-}
-void vkvg_text_get_extents(VkvgText textRun, vkvg_text_extents_t* extents) {
-    *extents = textRun->extents;
-}
-
 void vkvg_save(VkvgContext ctx) {
     if (vkvg_status(ctx))
         return;

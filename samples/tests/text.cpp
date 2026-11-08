@@ -414,7 +414,7 @@ TEST(text_on_straight_path) {
 
     VkvgText tr = vkvg_text_create(ctx, txt);
 
-    vkvg_text_render_on_path(ctx, tr, true);
+    vkvg_text_render_on_path(ctx, tr, 0, 0, true);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
     vkvg_stroke(ctx);
 
@@ -437,7 +437,7 @@ TEST(text_on_curved_path) {
 
     VkvgText tr = vkvg_text_create(ctx, txt);
 
-    vkvg_text_render_on_path(ctx, tr, true);
+    vkvg_text_render_on_path(ctx, tr, 0, 0, true);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
     vkvg_stroke(ctx);
 
@@ -462,7 +462,7 @@ TEST(text_on_path_with_transform) {
 
     VkvgText tr = vkvg_text_create(ctx, txt);
 
-    vkvg_text_render_on_path(ctx, tr, true);
+    vkvg_text_render_on_path(ctx, tr, 0, 0, true);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
     vkvg_stroke(ctx);
 
@@ -488,7 +488,30 @@ TEST(text_on_path_with_rot) {
 
     VkvgText tr = vkvg_text_create(ctx, txt);
 
-    vkvg_text_render_on_path(ctx, tr, true);
+    vkvg_text_render_on_path(ctx, tr, 0, 0, true);
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_stroke(ctx);
+
+    vkvg_text_destroy(tr);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+}
+TEST(text_on_path_offset) {
+    VkvgContext ctx = vkvg_create(test->surf);
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(test->device, "times", 20);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 30, 200);
+    vkvg_curve_to(ctx, 160,0, 300, 400, 450, 250);
+
+    VkvgText tr = vkvg_text_create(ctx, txt);
+
+    vkvg_text_render_on_path(ctx, tr, 50, 10, true);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
     vkvg_stroke(ctx);
 

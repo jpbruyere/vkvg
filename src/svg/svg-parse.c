@@ -10,6 +10,18 @@
 
 #include <immintrin.h>
 
+static inline const uint8_t* skip_separators(const uint8_t *buff, const uint8_t *const buff_end) {
+    while (buff < buff_end && (*buff == ' ' || *buff == '\t' || *buff == ',' || *buff == '\r' || *buff == '\n')) {
+        buff++;
+    }
+    return buff;
+}
+static inline const uint8_t* skip_whitespaces(const uint8_t *buff, const uint8_t *const buff_end) {
+    while (buff < buff_end && (*buff == ' ' || *buff == '\t' || *buff == '\r' || *buff == '\n')) {
+        buff++;
+    }
+    return buff;
+}
 
 
 //#define PREPROC_SVG
@@ -266,33 +278,42 @@
 #define SVG_ATT_COLOR       try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->color_type, &attribs->color);
 #define SVG_ATT_STROKE      try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->stroke_type, &attribs->stroke);
 #define SVG_ATT_FILL        try_parse_color(&svg->value, svg->value + svg->value_len, &attribs->fill_type, &attribs->fill);
-#define SVG_ATT_FILL_RULE                                               \
-    if (!strncasecmp ((char*)svg->value, "evenodd", svg->value_len))           \
-        vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_EVEN_ODD);          \
-    else if (!strncasecmp ((char*)svg->value, "nonzero", svg->value_len))      \
-        vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_NON_ZERO);          \
-    else {                                                              \
-        LOGE("Unrecognized fill-rule: %.*s", (int)svg->value_len, svg->value);\
+#define SVG_ATT_FILL_RULE                                                 \
+    const uint8_t* buff_end = svg->value + svg->value_len;                \
+    char* buff = skip_whitespaces(svg->value, buff_end);                  \
+    size_t value_len = buff_end - (uint8_t*)buff;                         \
+    if (!strncasecmp (buff, "evenodd", value_len))                        \
+        vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_EVEN_ODD);            \
+    else if (!strncasecmp (buff, "nonzero", value_len))                   \
+        vkvg_set_fill_rule(svg->ctx, VKVG_FILL_RULE_NON_ZERO);            \
+    else {                                                                \
+        LOGE("Unrecognized fill-rule: %.*s\n", (int)svg->value_len, svg->value);\
     }
-#define SVG_ATT_STROKE_LINECAP                                                  \
-    if (!strncasecmp ((char*)svg->value, "butt", svg->value_len))                      \
-        vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_BUTT);                        \
-    else if (!strncasecmp ((char*)svg->value, "round", svg->value_len))                \
-        vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_ROUND);                       \
-    else if (!strncasecmp ((char*)svg->value, "square", svg->value_len))               \
-        vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_SQUARE);                      \
-    else {                                                                      \
-        LOGE("Unrecognized stroke-linecap: %.*s", (int)svg->value_len, svg->value);   \
+#define SVG_ATT_STROKE_LINECAP                                            \
+    const uint8_t* buff_end = svg->value + svg->value_len;                \
+    char* buff = skip_whitespaces(svg->value, buff_end);                  \
+    size_t value_len = buff_end - (uint8_t*)buff;                         \
+    if (!strncasecmp (buff, "butt", value_len))                           \
+        vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_BUTT);                  \
+    else if (!strncasecmp (buff, "round", value_len))                     \
+        vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_ROUND);                 \
+    else if (!strncasecmp (buff, "square", value_len))                    \
+        vkvg_set_line_cap(svg->ctx, VKVG_LINE_CAP_SQUARE);                \
+    else {                                                                \
+        LOGE("Unrecognized stroke-linecap: %.*s\n", (int)svg->value_len, svg->value);   \
     }
-#define SVG_ATT_STROKE_LINEJOIN                                                 \
-    if (!strncasecmp ((char*)svg->value, "miter", svg->value_len))                     \
-        vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_MITER);                     \
-    else if (!strncasecmp ((char*)svg->value, "round", svg->value_len))                \
-        vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_ROUND);                     \
-    else if (!strncasecmp ((char*)svg->value, "bevel", svg->value_len))                \
-        vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_BEVEL);                     \
-    else {                                                                      \
-        LOGE("Unrecognized linejoin: %.*s", (int)svg->value_len, svg->value);    \
+#define SVG_ATT_STROKE_LINEJOIN                                           \
+    const uint8_t* buff_end = svg->value + svg->value_len;                \
+    char* buff = skip_whitespaces(svg->value, buff_end);                  \
+    size_t value_len = buff_end - (uint8_t*)buff;                         \
+    if (!strncasecmp (buff, "miter", value_len))                          \
+        vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_MITER);               \
+    else if (!strncasecmp (buff, "round", value_len))                     \
+        vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_ROUND);               \
+    else if (!strncasecmp (buff, "bevel", value_len))                     \
+        vkvg_set_line_join(svg->ctx, VKVG_LINE_JOIN_BEVEL);               \
+    else {                                                                \
+        LOGE("Unrecognized linejoin: %.*s\n", (int)svg->value_len, svg->value);    \
     }
 #define SVG_ATT_STROKE_WIDTH try_parse_length_or_percentage(svg, &attribs->stroke_width);
 
@@ -378,18 +399,6 @@ static const double POWERS_OF_10[] = {
 
 
 // Helper to skip SVG coordinate separators (spaces, commas, or multiple spaces)
-static inline const uint8_t* skip_separators(const uint8_t *buff, const uint8_t *const buff_end) {
-    while (buff < buff_end && (*buff == ' ' || *buff == '\t' || *buff == ',' || *buff == '\r' || *buff == '\n')) {
-        buff++;
-    }
-    return buff;
-}
-static inline const uint8_t* skip_whitespaces(const uint8_t *buff, const uint8_t *const buff_end) {
-    while (buff < buff_end && (*buff == ' ' || *buff == '\t' || *buff == '\r' || *buff == '\n')) {
-        buff++;
-    }
-    return buff;
-}
 /*static inline bool try_skip_separators(const uint8_t **buff_ptr, const uint8_t *const restrict buff_end) {
     const uint8_t *buff = *buff_ptr;
     while (buff < buff_end && (*buff == ' ' || *buff == ',' || *buff == '\t' || *buff == '\r' || *buff == '\n')) {
@@ -640,6 +649,7 @@ bool try_parse_color(const uint8_t **buff_ptr, const uint8_t *const buff_end, sv
     *colorValue = 0;
     *isEnabled = svg_paint_type_none;
 
+    ptr = skip_whitespaces(ptr, buff_end);
     if (ptr >= buff_end) {
         LOGE("Unexpected end of file while parsing color: %.*s\n", (int)(buff_end - *buff_ptr), *buff_ptr);
         return false;

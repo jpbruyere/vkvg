@@ -154,7 +154,7 @@ TEST_F(TextDrawTest, text_on_path) {
     vkvg_curve_to(ctx, 140, 0, 200, 450, 450, 250);
 
     VkvgText tr = vkvg_text_create(ctx, txt);
-    vkvg_text_render_on_path(ctx, tr, true);
+    vkvg_text_render_on_path(ctx, tr, 0, 0, true);
     vkvg_set_source_rgb(ctx, 1, 0, 0);
     vkvg_stroke(ctx);
 

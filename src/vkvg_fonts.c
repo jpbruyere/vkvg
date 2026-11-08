@@ -932,7 +932,7 @@ hb_buffer_t* _get_hb_buffer(VkvgText textRun, const char* text, int length) {
     hb_buffer_add_utf8 (buf, text, length, 0, length);
     hb_buffer_guess_segment_properties (buf);
 
-    if (textRun->textDirection == VKVG_VERTICAL)
+    if (textRun->direction == VKVG_VERTICAL)
         hb_buffer_set_direction(buf, HB_DIRECTION_TTB);
 
     hb_shape(font->face->hb_font, buf, NULL, 0);
@@ -997,6 +997,7 @@ void _font_cache_font_extents(VkvgContext ctx, vkvg_font_extents_t* extents) {
     extents->max_y_advance = 0;
 #endif
 }
+
 // compute text extends for provided string.
 void _font_cache_text_extents(VkvgContext ctx, const char* text, int length, vkvg_text_extents_t* extents) {
     if (text == NULL) {
@@ -1035,7 +1036,7 @@ void text_run_init(VkvgText textRun, VkvgContext ctx, const char* text, int leng
     textRun->font = font->curSize;
     textRun->hasScale = font->hasScale;
     textRun->scale = font->scale;
-    textRun->textDirection = ctx->textDirection;
+    textRun->direction = ctx->textDirection;
 
     _font_lock_size(textRun->font);
 
@@ -1106,6 +1107,37 @@ void text_run_term(VkvgText textRun) {
 
 #define IS_NOT_NULL(f) fabs(f) > 0.0001f
 
+vkvg_font_extents_t _get_text_font_extents(VkvgText tr) {
+    vkvg_font_extents_t extents = {0};
+#ifdef VKVG_USE_FREETYPE
+    FT_Face face = tr->font->face->face;
+    /*_font_lock_size(ctx, font);
+    if (face->size != font->ftSize) {
+        mtx_lock(&font->face->mutex);
+        FT_CHECK_RESULT(FT_Activate_Size(font->ftSize));
+    }*/
+    //FT_BBox*         bbox    = &face->bbox;
+    //FT_Size_Metrics* metrics = &face->size->metrics;
+    FT_Size_Metrics* metrics = &tr->font->ftSize->metrics;
+    extents.ascent  = (float)(FT_MulFix(face->ascender, metrics->y_scale) >> 6);   // metrics->ascender >> 6;
+    extents.descent = -(float)(FT_MulFix(face->descender, metrics->y_scale) >> 6); // metrics->descender >> 6;
+    extents.height  = (float)(FT_MulFix(face->height, metrics->y_scale) >> 6);     // metrics->height >> 6;
+    /*extents->max_x_advance = (float)(bbox->xMax >> 6);
+    extents->max_y_advance = (float)(bbox->yMax >> 6);*/
+    extents.max_x_advance = (float)(FT_MulFix(face->max_advance_width, metrics->x_scale) >> 6);
+    extents.max_y_advance = (float)(FT_MulFix(face->max_advance_height, metrics->y_scale) >> 6);
+
+    /*if (ctx->dev->threadAware)
+        mtx_unlock(&font->face->mutex);*/
+#else
+    extents.ascent  = font->ascent;
+    extents.descent = font->descent;
+    extents.height = font->ascent - font->descent + font->lineGap;
+    extents.max_x_advance = 0; // TODO
+    extents.max_y_advance = 0;
+#endif
+    return extents;
+}
 void text_run_render(VkvgText tr, VkvgContext ctx) {
     LOG (VKVG_LOG_FONT, "render text\n");
     unsigned int glyph_count;
@@ -1208,7 +1240,7 @@ static inline vec2 _rotate_around_point (vec2 p0, vec2 p1, float alpha) {
         p0.y + dx * sin(alpha) + dy * cos(alpha)
     };
 }
-void text_run_render_on_path(VkvgText tr, VkvgContext ctx) {
+void text_run_render_on_path(VkvgText tr, VkvgContext ctx, float offsetX, float offsetY) {
     LOG (VKVG_LOG_FONT, "render text on path\n");
 
     _finish_path(ctx);
@@ -1253,7 +1285,7 @@ void text_run_render_on_path(VkvgText tr, VkvgContext ctx) {
     vec2 vSeg = {0};
     float segLen = 0;
     float accLen = 0;
-    float txtAdvance = 0;
+    float txtAdvance = offsetX;
 
     VkvgDevice dev = tr->font->dev;
 
@@ -1309,7 +1341,7 @@ void text_run_render_on_path(VkvgText tr, VkvgContext ctx) {
         pen = vec2_add(p0, vGlyphCenter);
 
         vec2 pt = {pen.x - halfGlyphW + cr.bmpDiff.x + (tr->glyphs[i].x_offset >> 6),
-                   pen.y - cr.bmpDiff.y + (tr->glyphs[i].y_offset >> 6)};
+                   pen.y - cr.bmpDiff.y + (tr->glyphs[i].y_offset >> 6) + offsetY * sy};
 
 
         float alpha = atan2(vSeg.y, vSeg.x);
@@ -1392,7 +1424,67 @@ void* vkvg_font_get_face(VkvgFont font) {
 #endif
 }
 
-
+VkvgText vkvg_text_create(VkvgContext ctx, const char* text) {
+    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
+        return NULL;
+    VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
+    if (!tr) {
+        LOGE("vkvg_text_create error, no memory\n");
+        return NULL;
+    }
+    text_run_init(tr, ctx, text, -1);
+    return tr;
+}
+VkvgText vkvg_text_create_with_length(VkvgContext ctx, const char* text, uint32_t length) {
+    if (vkvg_status(ctx) || vkvg_font_status(ctx->currentFont))
+        return NULL;
+    VkvgText tr = (vkvg_text_run_t*)calloc(1, sizeof(vkvg_text_run_t));
+    if (!tr) {
+        LOGE("vkvg_text_create error, no memory\n");
+        return NULL;
+    }
+    text_run_init(tr, ctx, text, length);
+    return tr;
+}
+uint32_t vkvg_text_get_glyph_count(VkvgText textRun) {
+    return textRun ? textRun->glyph_count : 0;
+}
+vkvg_glyph_info_t vkvg_text_get_glyph_position(VkvgText textRun, uint32_t index) {
+    if (!textRun || index >= textRun->glyph_count) {
+        return (vkvg_glyph_info_t){0};
+    }
+#if VKVG_USE_HARFBUZZ
+    vkvg_glyph_info_t* tmp = (vkvg_glyph_info_t*)&textRun->glyphs[index];
+    return *tmp;
+#else
+    return textRun->glyphs[index];
+#endif
+}
+void vkvg_text_destroy(VkvgText textRun) {
+    if (!textRun)
+        return;
+    text_run_term(textRun);
+    free(textRun);
+}
+void vkvg_text_render(VkvgContext ctx, VkvgText textRun) {
+    if (vkvg_status(ctx) || !textRun) {
+        LOGW ("render text failed\n");
+        return;
+    }
+    text_run_render(textRun, ctx);
+}
+void vkvg_text_render_on_path(VkvgContext ctx, VkvgText textRun, float offsetX, float offsetY, bool preservePath) {
+    if (vkvg_status(ctx) || !textRun) {
+        LOGW ("render text on path failed\n");
+        return;
+    }
+    text_run_render_on_path(textRun, ctx, offsetX, offsetY);
+    if (!preservePath)
+        _clear_path(ctx);
+}
+void vkvg_text_get_extents(VkvgText textRun, vkvg_text_extents_t* extents) {
+    *extents = textRun->extents;
+}
 
 VkvgFont _create_font_from_face (VkvgDevice dev, FontFace face, float pointSize, signed long* coords) {
     VkvgFont font = (VkvgFont)calloc(1, sizeof(vkvg_font_t));

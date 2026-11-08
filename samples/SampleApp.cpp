@@ -336,8 +336,11 @@ void SampleApp::Run() {
 
     if (testsToRun.empty()) {
         curTest = (*it);
-    } else {
+    } else if (testsToRun[testIdx] < VkvgTest::tests.size()){
         curTest = VkvgTest::tests[testsToRun[testIdx]];
+    } else {
+        printf("test index out of bounds: %d\n", testsToRun[testIdx]);
+        return;
     }
 
     if (displayMode)

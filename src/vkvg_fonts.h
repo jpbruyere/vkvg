@@ -316,18 +316,18 @@ typedef struct _font_cache_t {
 
 // Precompute everything necessary to measure and draw one line of text, usefull to draw the same text multiple times.
 typedef struct _vkvg_text_run_t {
-    FontSize                font;       /* vkvg font structure pointer */
-    vkvg_direction_t        textDirection; /* horizontal or vertical */
-    vkvg_text_extents_t     extents;    /* store computed text extends */
-    const char*             text;       /* utf8 char array of text*/
-    unsigned int            glyph_count;/* Total glyph count */
+    FontSize                font;           /* vkvg font structure pointer */
+    vkvg_direction_t        direction;      /* horizontal or vertical */
+    vkvg_text_extents_t     extents;        /* store computed text extends */
+    const char*             text;           /* utf8 char array of text*/
+    unsigned int            glyph_count;    /* Total glyph count */
 #ifdef VKVG_USE_HARFBUZZ
-    hb_buffer_t*            hbBuf;      /* HarfBuzz buffer of text */
-    hb_glyph_position_t*    glyphs;     /* HarfBuzz computed glyph positions array */
+    hb_buffer_t*            hbBuf;          /* HarfBuzz buffer of text */
+    hb_glyph_position_t*    glyphs;         /* HarfBuzz computed glyph positions array */
 #else
-    vkvg_glyph_info_t*      glyphs;     /* computed glyph positions array */
+    vkvg_glyph_info_t*      glyphs;         /* computed glyph positions array */
 #endif
-    bool              hasScale; //was created with a scale in context
+    bool              hasScale;             //was created with a scale in context
     float             scale;
 } vkvg_text_run_t;
 
@@ -345,5 +345,5 @@ void _font_size_destroy (FontSize font);
 void text_run_init(VkvgText textRun, VkvgContext ctx, const char* text, int length);
 void text_run_term(VkvgText textRun);
 void text_run_render(VkvgText tr, VkvgContext ctx); // Draw text run
-void text_run_render_on_path(VkvgText tr, VkvgContext ctx);
+void text_run_render_on_path(VkvgText tr, VkvgContext ctx, float offsetX, float offsetY);
 #endif
