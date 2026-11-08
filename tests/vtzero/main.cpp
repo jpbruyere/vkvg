@@ -50,23 +50,32 @@ static inline uint32_t _createAbgr(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
            ((prod_r + (prod_r >> 8)) >> 8);
 }
 #define CreateAbgr(a, r, g, b) _createAbgr(0x##a, 0x##r, 0x##g, 0x##b)
+typedef struct point_t {
+    float x;
+    float y;
+    point_t() = default;
+    constexpr point_t(float x_, float y_) noexcept :
+       x(x_),
+       y(y_) { }
+} Point;
+
 struct RenderPolygon {
-    std::vector<std::vector<std::pair<float, float>>> rings; // Supports outer and inner hole rings
+    std::vector<Point> rings; // Supports outer and inner hole rings
     float r, g, b;                                           // Pre-resolved colors
     int tx, ty;
 };
 struct TrackedLine {
-    std::vector<std::pair<float, float>> points;
+    std::vector<Point> points;
     float width;
     float r, g, b;
     int tx, ty;
 };
 // The absolute correct polygon geometry template interface required by vtzero
-struct VkvgGeometryHandler {
+struct hndGeometryDrawer {
     VkvgContext ctx;
     bool firstPoint;
 
-    std::pair<float, float> point;
+    Point point;
 
     void ring_begin(uint32_t count) {
         firstPoint = true;
@@ -97,25 +106,67 @@ struct VkvgGeometryHandler {
     void linestring_end() {}
     void points_begin(uint32_t count) {}
     void points_point(const vtzero::point p) {
-        point = std::pair<float,float>(static_cast<float>(p.x), static_cast<float>(p.y));
+        point = Point(static_cast<float>(p.x), static_cast<float>(p.y));
     }
     void points_end() {}
 };
+struct hndGeometryRecorder {
+    bool firstPoint;
+
+    Point point;
+    std::vector<std::vector<Point>> lines;
+    std::vector<std::vector<Point>> rings;
+
+    std::vector<Point> points;
+
+    void ring_begin(uint32_t count) {
+        points.reserve(count);
+    }
+    void ring_point(const vtzero::point p) {
+        points.push_back(Point{(float)p.x, (float)p.y});
+    }
+    void ring_end(vtzero::ring_type type) {
+        rings.push_back(points);
+    }
+    void linestring_begin(uint32_t count) {
+        points.reserve(count);
+    }
+    void linestring_point(const vtzero::point p) {
+        points.push_back(Point{(float)p.x, (float)p.y});
+    }
+    void linestring_end() {
+        lines.push_back(points);
+    }
+    void points_begin(uint32_t count) {}
+    void points_point(const vtzero::point p) {
+        point = Point(static_cast<float>(p.x), static_cast<float>(p.y));
+    }
+    void points_end() {}
+};
+struct Place {
+    Point loc;
+    std::string name;
+};
+using PoiIconMap = std::unordered_map<const SvgIcon*, std::vector<Place>>;
 
 struct CachedTileSurface {
     VkvgSurface surface = nullptr; // The pre-rendered hardware texture layer
     int tx, ty;                    // Absolute tile coordinates
     bool fully_rendered = false;
+    std::vector<Place> TownsCities;
+    std::vector<Place> Vilages;
+    PoiIconMap pois_by_icon;
 };
 class vtzeroApp : public VkvgApp {
     sqlite3* mbtiles_db;
     std::vector<CachedTileSurface> tile_surface_cache;
 
-    static const uint32_t tileSize = 2048;
+    static const uint32_t tileSize = 4096;
+    static constexpr float tileSizeRatio = (float)4096 / (float)tileSize;
 
     int tile_x = 8388;
     int tile_y = 5495;
-    int tile_z = 14;
+    int tile_z = 12;
 
     std::vector<RenderPolygon> background_landuse; // Forests, woods, parks, etc.
     std::vector<RenderPolygon> water_bodies;       // Lakes, canals, rivers
@@ -127,13 +178,17 @@ class vtzeroApp : public VkvgApp {
 public:
     VkvgFont font;
     VkvgFont fontPlace;
+    VkvgFont fontPlaceM;
+    VkvgFont fontPlaceS;
     VkvgFont fontRoads;
     void Init ()  override {
         VkvgApp::Init();
         icons = new IconRegistry(device);
 
         font = vkvg_font_create(device, "sans:bold", 20);
-        fontPlace = vkvg_font_create(device, "sans:bold", 50);
+        fontPlace = vkvg_font_create(device, "sans:bold", 40);
+        fontPlaceM = vkvg_font_create(device, "sans:bold", 30);
+        fontPlaceS = vkvg_font_create(device, "sans:bold", 20);
         fontRoads = vkvg_font_create(device, "sans", 12);
 
         //if (sqlite3_open("/mnt/data/osm/bruxelles.mbtiles", &mbtiles_db) != SQLITE_OK) {
@@ -145,12 +200,11 @@ public:
         offsetX = tileSize * 0.5;
         offsetY = tileSize * 0.5;
 
-        std::pair<float, float> center = fetch_center_from_mbtiles(mbtiles_db);
-        std::pair<int, int> t = latlon_to_mbtiles(center.first, center.second, 14);
+        Point center = fetch_center_from_mbtiles(mbtiles_db);
+        std::pair<int, int> t = latlon_to_mbtiles(center.x, center.y, tile_z);
 
         tile_x = t.first;
         tile_y = t.second;
-        tile_z = 14;
 
         UpdateVisibleTiles();
     }
@@ -162,6 +216,8 @@ public:
 
         vkvg_font_destroy(font);
         vkvg_font_destroy(fontPlace);
+        vkvg_font_destroy(fontPlaceM);
+        vkvg_font_destroy(fontPlaceS);
         vkvg_font_destroy(fontRoads);
 
         delete(icons);
@@ -235,7 +291,7 @@ public:
         vkvg_set_fill_rule(ctx, VKVG_FILL_RULE_EVEN_ODD);
 
         // Scale down the internal MVT 0-4096 coordinate system natively inside the cache layout
-        vkvg_scale(ctx, 0.5f, 0.5f);
+        vkvg_scale(ctx, tileSizeRatio, tileSizeRatio);
 
         std::vector<char> compressed_blob = fetch_tile_from_mbtiles(mbtiles_db, z, tx, ty);
         if (compressed_blob.empty()) {
@@ -307,7 +363,7 @@ public:
                 }
                 vkvg_set_source_color(ctx, c);
 
-                VkvgGeometryHandler handler{ctx};
+                hndGeometryDrawer handler{ctx};
                 vtzero::decode_geometry(feature.geometry(), handler);
                 vkvg_fill(ctx);
             }
@@ -324,7 +380,7 @@ public:
                         if (prop_val == "grass")
                             c = CreateAbgr (ff,9c,e6,9c);
                         else if (prop_val == "farmland")
-                            c = CreateAbgr (ff,cc,8b,bf);
+                            c = CreateAbgr (ff,ee,f0,d6);
                         else if (prop_val == "wetland")
                             c = CreateAbgr (ff,96,f9,92);
                         else if (prop_val == "wood")
@@ -336,7 +392,7 @@ public:
                     }
                 }
                 vkvg_set_source_color(ctx, c);
-                VkvgGeometryHandler handler{ctx};
+                hndGeometryDrawer handler{ctx};
                 vtzero::decode_geometry(feature.geometry(), handler);
                 vkvg_fill(ctx);
             }
@@ -346,7 +402,7 @@ public:
             uint32_t c = 0xffb0cc9a;
             while (auto feature = layer.next_feature()) {
                 vkvg_set_source_rgb(ctx, 0.71f, 0.83f, 0.91f); // Map Blue
-                VkvgGeometryHandler handler{ctx};
+                hndGeometryDrawer handler{ctx};
                 vtzero::decode_polygon_geometry(feature.geometry(), handler);
                 vkvg_fill(ctx);
             }
@@ -369,13 +425,13 @@ public:
                             road_subclass = property.value().string_value().to_string();
                         } else if (property.key() == "service") {
                             road_service = property.value().string_value().to_string();
-                        } else
-                            std::cout << "\t\tproperty:" << prop_name << std::endl;
+                        } /*else
+                            std::cout << "\t\tproperty:" << prop_name << std::endl;*/
                         break;
-                    /*case vtzero::property_value_type::int_value:
+                    case vtzero::property_value_type::int_value:
                         std::cout << "\t\tproperty:" << prop_name << " = " << property.value().int_value() << std::endl;
                         break;
-                    default:
+                    /*default:
                         std::cout << "\t\tproperty:" << prop_name << " = " << (int)property.value().type() << std::endl;
                         break;*/
                     }
@@ -392,17 +448,17 @@ public:
                 int dashCount = 2;
                 float* curDash = NULL;
                 if (road_class == "motorway" || road_class == "trunk") {
-                    width = 18.0f;
-                    fg = CreateAbgr (ff,e9,90,a1);
+                    width = 50.0f;
+                    fg = CreateAbgr (ff,f9,b0,9a);
                 } else if (road_class == "primary") {
-                    width = 16.0f;
-                    fg = CreateAbgr (ff,fd,d7,a1);
+                    width = 50.0f;
+                    fg = CreateAbgr (ff,fc,d7,a6);
                 } else if (road_class == "secondary") {
-                    width = 14.0f;
-                    fg = CreateAbgr (ff,f6,fa,bb);
+                    width = 40.0f;
+                    fg = CreateAbgr (ff,f7,fa,bd);
                 } else if (road_class == "tertiary" || road_class == "minor") {
                     //std::cout << "\t\troad:" << road_class << "  " << road_subclass << " srv: " << road_service << std::endl;
-                    width = 16.0f;
+                    width = 24.0f;
                     fg = CreateAbgr (ff,F1,EE,E8);
                 } else if (road_class == "path") {
                     if (road_subclass == "footway" || road_subclass == "path") {
@@ -464,7 +520,7 @@ public:
 
                 width /= pow(2, 14 - z);
 
-                VkvgGeometryHandler handler{ ctx };
+                hndGeometryDrawer handler{ ctx };
                 if (feature.geometry_type() == vtzero::GeomType::LINESTRING) {
                     vtzero::decode_geometry(feature.geometry(), handler);
                     if (bg) {
@@ -486,6 +542,9 @@ public:
         }
         vkvg_flush(ctx);
         vkvg_set_font(ctx, fontRoads);
+        vkvg_font_extents_t fe;
+        vkvg_font_extents(ctx, &fe);
+        float offsetY = fe.ascent - fe.descent;
         vkvg_set_line_width(ctx, 2.0);
         vkvg_set_source_rgb(ctx, 0.1f, 0.1f, 0.1f); // Dark gray text
         if (auto layer = tile.get_layer_by_name("transportation_name")) {
@@ -511,12 +570,12 @@ public:
                         break;
                     }
                 }
-                VkvgGeometryHandler handler{ ctx };
+                hndGeometryDrawer handler{ ctx };
                 if (feature.geometry_type() == vtzero::GeomType::LINESTRING) {
                     vtzero::decode_geometry(feature.geometry(), handler);
                     VkvgText txt = vkvg_text_create (ctx, road_name.c_str());
                     //vkvg_set_source_rgb(ctx, 0.1f, 0.1f, 0.1f); // Dark gray text
-                    vkvg_text_render_on_path (ctx, txt, false);
+                    vkvg_text_render_on_path (ctx, txt, 0, offsetY, false);
                     vkvg_text_destroy(txt);
                     /*vkvg_set_source_rgb(ctx, 1.f, 0.1f, 0.1f); // Dark gray text
                     vkvg_stroke(ctx);*/
@@ -533,7 +592,7 @@ public:
                 if (feature.geometry_type() != vtzero::GeomType::POLYGON)
                     continue;
                 vkvg_set_source_color(ctx, bg);
-                VkvgGeometryHandler handler{ctx};
+                hndGeometryDrawer handler{ctx};
                 vtzero::decode_geometry(feature.geometry(), handler);
                 vkvg_fill_preserve(ctx);
                 vkvg_set_source_color(ctx, fg);
@@ -567,38 +626,38 @@ public:
                             break;*/
                         }
                     }
-                    uint32_t fg = CreateAbgr (ff,ff,22,22);
+
                     if (feature.geometry_type() != vtzero::GeomType::POINT)
                         continue;
 
-                    VkvgGeometryHandler handler{ctx};
+                    hndGeometryDrawer handler{ctx};
                     vtzero::decode_geometry(feature.geometry(), handler);
 
                     uint32_t current_class_hash = fnv32(poi_class.c_str());
                     uint32_t current_subclass_hash = fnv32(poi_subclass.c_str());
-                    vkvg_set_line_width(ctx, 1);
 
                     const SvgIcon* icon = icons->get_icon(current_class_hash, current_subclass_hash);
-                    std::pair<float, float> p{handler.point.first - icon_size / 2, handler.point.second - icon_size / 2};
+                    cache.pois_by_icon[icon].push_back(Place{handler.point, poi_name});
+                    /*Point p{handler.point.x - icon_size / 2, handler.point.y - icon_size / 2};
                     if (icon && icon->pat) {
                         vkvg_save(ctx);
-                        vkvg_translate(ctx, p.first, p.second);
+                        vkvg_translate(ctx, p.x, p.y);
                         //vkvg_set_source_with_offset(ctx, icon->pat, p.first, p.second);
                         vkvg_set_source(ctx, icon->pat);
                         vkvg_paint(ctx);
                         vkvg_restore(ctx);
                     } else {
                         vkvg_set_source_color(ctx, fg);
-                        vkvg_rounded_rectangle(ctx, p.first, p.second, icon_size / 2, icon_size / 2, 5);
+                        vkvg_rounded_rectangle(ctx, p.x, p.y, icon_size / 2, icon_size / 2, 5);
                         vkvg_fill(ctx);
                         //std::cout << poi_class << ", " << poi_subclass << ", " << poi_name << std::endl;
-                    }
+                    }*/
                 }
             }
         }
         if (z > 11) {
             if (auto layer = tile.get_layer_by_name("place")) {
-                vkvg_set_font(ctx, fontPlace);
+                vkvg_set_font(ctx, fontPlaceM);
                 while (auto feature = layer.next_feature()) {
                     std::string poi_class = "";
                     std::string poi_subclass = "";
@@ -623,22 +682,35 @@ public:
                                 break;*/
                         }
                     }
-                    VkvgGeometryHandler handler{ctx};
+                    hndGeometryDrawer handler{ctx};
                     vtzero::decode_geometry(feature.geometry(), handler);
 
                     if (feature.geometry_type() == vtzero::GeomType::POINT) {
-                        if (poi_class == "neighbourhood" || poi_class == "town" || poi_class == "locality" || poi_class == "city" || poi_class == "quarter" || poi_class == "village" || poi_class == "square") {
-                            VkvgText txt = vkvg_text_create(ctx, poi_name.c_str());
+                        if (poi_class == "town" || poi_class == "city") {
+                            if (tile_z < 13)
+                                cache.TownsCities.push_back(Place{handler.point, poi_name});
+                        } else if (poi_class == "village") {
+                            if (tile_z < 13)
+                                cache.Vilages.push_back(Place{handler.point, poi_name});
+                        } /*else if (poi_class == "square") {
+                            if (tile_z < 14)
+                                continue;
+                        } else if (poi_class == "quarter") {
+                            if (tile_z < 13)
+                                continue;
+                        }*/
+                            //poi_class == "neighbourhood" || poi_class == "locality" || || poi_class == "quarter"
+                        /*    VkvgText txt = vkvg_text_create(ctx, poi_name.c_str());
                             vkvg_text_extents_t te = {0};
                             vkvg_text_get_extents(txt, &te);
-                            std::pair<float, float> p{handler.point.first - te.width / 2, handler.point.second};
-                            vkvg_move_to(ctx, p.first + 2, p.second + 2);
-                            vkvg_set_source_rgb(ctx, 0,0,0);
+                            Point p{handler.point.x - te.width / 2, handler.point.y};
+                            vkvg_move_to(ctx, p.x, p.y);
+                            vkvg_set_source_rgb(ctx, 0.5,0.5,1);
                             vkvg_text_render(ctx, txt);
-                            vkvg_move_to(ctx, p.first, p.second);
-                            vkvg_set_source_rgb(ctx, 1,1,1);
-                            vkvg_text_render(ctx, txt);
-                        } /*else
+                            vkvg_set_source_rgb(ctx, 1,0,0);
+                            vkvg_arc(ctx, handler.point.x, handler.point.y, 20, 0, 2*M_PI);
+                            vkvg_fill(ctx);*/
+                        /*} else
                             std::cout << poi_class << ", " << poi_subclass << ", " << poi_name << std::endl;*/
                     }
                 }
@@ -734,7 +806,18 @@ public:
         UpdateVisibleTiles();
         refresh = true;
     }
-
+    void drawText(VkvgContext ctx, std::string text, Point point) {
+        VkvgText txt = vkvg_text_create(ctx, text.c_str());
+        vkvg_text_extents_t te = {0};
+        vkvg_text_get_extents(txt, &te);
+        Point p{point.x - te.width / 2, point.y};
+        vkvg_move_to(ctx, p.x + 2, p.y + 2);
+        vkvg_set_source_rgb(ctx, 0.3,0.3,0.3);
+        vkvg_text_render(ctx, txt);
+        vkvg_move_to(ctx, p.x, p.y);
+        vkvg_set_source_rgb(ctx, 0.9,0.9,0.9);
+        vkvg_text_render(ctx, txt);
+    }
     void Render() override {
         VkvgContext ctx = vkvg_create(surf);
 
@@ -756,6 +839,61 @@ public:
 
             vkvg_set_source_surface(ctx, tile.surface, 0, 0);
             vkvg_paint(ctx);
+
+            vkvg_identity_matrix(ctx);
+            vkvg_translate(ctx, offsetX, offsetY);
+            vkvg_translate(ctx, slot_x*zoom, slot_y*zoom);
+
+            vkvg_set_font(ctx, fontPlace);
+            //vkvg_set_font(ctx, fontPlaceM);
+            for (const auto& town : tile.TownsCities) {
+                Point screen_pos;
+                screen_pos.x = town.loc.x * tileSizeRatio * zoom;
+                screen_pos.y = town.loc.y * tileSizeRatio * zoom;
+                drawText(ctx, town.name, screen_pos);
+
+                /*vkvg_set_source_rgb(ctx, 0,1,0);
+                vkvg_arc(ctx, screen_pos.x, screen_pos.y, 5, 0, 2*M_PI);
+                vkvg_fill(ctx);*/
+            }
+            //vkvg_flush(ctx);
+            //vkvg_set_font(ctx, fontPlaceM);
+            vkvg_set_font(ctx, fontPlaceM);
+            for (const auto& village : tile.Vilages) {
+                Point screen_pos;
+                screen_pos.x = village.loc.x * tileSizeRatio * zoom;
+                screen_pos.y = village.loc.y * tileSizeRatio * zoom;
+                drawText(ctx, village.name, screen_pos);
+                /*vkvg_set_source_rgb(ctx, 0,0,1);
+                vkvg_arc(ctx, screen_pos.x, screen_pos.y, 5, 0, 2*M_PI);
+                vkvg_fill(ctx);*/
+            }
+            for (const auto& pair : tile.pois_by_icon) {
+                const SvgIcon* icon = pair.first;
+                const auto& instances = pair.second;
+                if (icon && icon->pat) {
+                    vkvg_set_source(ctx, icon->pat);
+                } else {
+                    uint32_t fallback_fg = CreateAbgr(ff, ff, 22, 22);
+                    vkvg_set_source_color(ctx, fallback_fg);
+                }
+                for (const auto& poi : instances) {
+                    Point screen_pos;
+                    screen_pos.x = poi.loc.x * tileSizeRatio * zoom - icon_size / 2.0f;
+                    screen_pos.y = poi.loc.y * tileSizeRatio * zoom - icon_size / 2.0f;
+                    vkvg_translate(ctx, screen_pos.x, screen_pos.y);
+
+                    if (icon && icon->pat) {
+                        vkvg_paint(ctx);
+                    } else {
+                        vkvg_set_line_width(ctx, 1);
+                        vkvg_rounded_rectangle(ctx, 0, 0, icon_size / 2.0f, icon_size / 2.0f, 5);
+                        vkvg_fill(ctx);
+                    }
+
+                    vkvg_translate(ctx, -screen_pos.x, -screen_pos.y);
+                }
+            }
 
             vkvg_restore(ctx);
         }
@@ -843,8 +981,8 @@ public:
         sqlite3_finalize(stmt);
         return tile_data;
     }
-    std::pair<float, float> fetch_center_from_mbtiles(sqlite3* db) {
-        std::pair<float, float> center = {0.0f, 0.0f};
+    Point  fetch_center_from_mbtiles(sqlite3* db) {
+        Point center = {0.0f, 0.0f};
         const char* sql = "SELECT value FROM metadata WHERE name = 'center';";
         sqlite3_stmt* stmt;
         if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -864,8 +1002,8 @@ public:
 
                 if (std::getline(ss, lon_s, ',') && std::getline(ss, lat_s, ',')) {
                     try {
-                        center.first = std::stof(lon_s);  // Longitude
-                        center.second = std::stof(lat_s); // Latitude
+                        center.x = std::stof(lon_s);  // Longitude
+                        center.y = std::stof(lat_s); // Latitude
                     } catch (const std::exception& e) {
                         std::cerr << "Error parsing float values: " << e.what() << std::endl;
                     }

@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-const int icon_size = 24;
+const int icon_size = 16;
 
 // Structure matching your SVG texture or data buffer payload
 struct SvgIcon {
