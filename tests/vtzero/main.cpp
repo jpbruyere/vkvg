@@ -544,7 +544,7 @@ public:
         vkvg_set_font(ctx, fontRoads);
         vkvg_font_extents_t fe;
         vkvg_font_extents(ctx, &fe);
-        float offsetY = fe.ascent - fe.descent;
+        float offsetY = (fe.ascent - fe.descent) * 0.5f;
         vkvg_set_line_width(ctx, 2.0);
         vkvg_set_source_rgb(ctx, 0.1f, 0.1f, 0.1f); // Dark gray text
         if (auto layer = tile.get_layer_by_name("transportation_name")) {
@@ -568,6 +568,9 @@ public:
                         } else
                             std::cout << "\t\tproperty:" << prop_name << std::endl;
                         break;
+                    default:
+                        std::cout << "\t\tproperty:" << prop_name << std::endl;
+                        break;
                     }
                 }
                 hndGeometryDrawer handler{ ctx };
@@ -577,7 +580,7 @@ public:
                     //vkvg_set_source_rgb(ctx, 0.1f, 0.1f, 0.1f); // Dark gray text
                     vkvg_text_render_on_path (ctx, txt, 0, offsetY, false);
                     vkvg_text_destroy(txt);
-                    /*vkvg_set_source_rgb(ctx, 1.f, 0.1f, 0.1f); // Dark gray text
+                    /*vkvg_set_source_rgb(ctx, 1.f, 0.1f, 0.1f);
                     vkvg_stroke(ctx);*/
                 }
             }
