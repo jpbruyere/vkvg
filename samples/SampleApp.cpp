@@ -322,6 +322,9 @@ void SampleApp::Init() {
 }
 
 void SampleApp::Run() {
+    if (!offscreen)
+        Init();
+
     uint32_t curIter = 0;
 
     if (VkvgTest::tests.empty())
@@ -340,28 +343,34 @@ void SampleApp::Run() {
         curTest = VkvgTest::tests[testsToRun[testIdx]];
     } else {
         printf("test index out of bounds: %d\n", testsToRun[testIdx]);
+        if (!offscreen)
+            CleanUp();
         return;
     }
 
-    if (displayMode)
-        fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-    else
-        glfwSetWindowTitle(win, curTest->name.c_str());
+    if (!offscreen) {
+        if (displayMode)
+            fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+        else
+            glfwSetWindowTitle(win, curTest->name.c_str());
+    }
 
     curTest->initTest(this);
     curTest->performTest(testIdx);//warm-up
 
     while (true) {
-        if (displayMode) {
-            char ch;
-            if (read(STDIN_FILENO, &ch, 1) > 0) {
-                if (ch == 'q') break;
-                printf("Key pressed: %c\r\n", ch);
+        if (!offscreen) {
+            if (displayMode) {
+                char ch;
+                if (read(STDIN_FILENO, &ch, 1) > 0) {
+                    if (ch == 'q') break;
+                    printf("Key pressed: %c\r\n", ch);
+                }
+            } else {
+                glfwPollEvents();
+                if (glfwWindowShouldClose(win))
+                    break;
             }
-        } else {
-            glfwPollEvents();
-            if (glfwWindowShouldClose(win))
-                break;
         }
 
         int idx = testIdx;
@@ -376,8 +385,7 @@ void SampleApp::Run() {
                                      elapsed).count();*/
         double elapsed_ms = std::chrono::duration<double, std::milli>(elapsed).count();
 
-
-        if (!vkh_presenter_draw(renderer)) {
+        if (!(offscreen || vkh_presenter_draw(renderer))) {
             vkh_presenter_get_size(renderer, &width, &height);
             curTest->cleanTest(0, nullptr);
             curTest->initTest(this);
@@ -411,7 +419,7 @@ void SampleApp::Run() {
                 run_time_values.clear();
                 run_time_values.reserve(iterations);
 
-                if (!displayMode)
+                if (!(offscreen || displayMode))
                     glfwSetWindowTitle(win, curTest->name.c_str());
 
                 curTest->initTest(this);
@@ -421,9 +429,13 @@ void SampleApp::Run() {
     }
     if (curTest != NULL)
         curTest->cleanTest(totTime, run_time_values.data());
+    if (!offscreen)
+        CleanUp();
 }
 
 void SampleApp::CleanUp() {
+    if (offscreen)
+        return;
     vkDeviceWaitIdle(vkh_device_get_vkdev(vkhDev));
     vkh_presenter_destroy(renderer);
     vkDestroySurfaceKHR(vkh_app_get_inst(app), vkSurf, NULL);
