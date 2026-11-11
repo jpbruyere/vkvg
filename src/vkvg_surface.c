@@ -365,12 +365,28 @@ vkvg_status_t vkvg_surface_write_to_png(VkvgSurface surf, const char* path) {
 #ifdef VKVG_PREMULT_ALPHA
     // unpremult alpha for saving on disk.
     for (int y = 0; y < surf->height; y++) {
+        unsigned char* row = img + y * stride;
         for (int x = 0; x < surf->width; x++) {
-            unsigned char* p     = img + y * stride + x * 4;
-            double         alpha = (double)p[3] / 255.f;
-            p[0]                 = (unsigned char)((double)p[0] / alpha);
-            p[1]                 = (unsigned char)((double)p[1] / alpha);
-            p[2]                 = (unsigned char)((double)p[2] / alpha);
+            unsigned char* p = row + x * 4;
+            unsigned char a = p[3];
+
+            if (a == 0) {
+                *((uint32_t*)p) = 0;
+                continue;
+            }
+
+            if (a == 255) {
+                continue;
+            }
+
+            float invAlpha = 255.0f / (float)a;
+            int r = (int)((float)p[0] * invAlpha + 0.5f);
+            int g = (int)((float)p[1] * invAlpha + 0.5f);
+            int b = (int)((float)p[2] * invAlpha + 0.5f);
+
+            p[0] = (unsigned char)(r > 255 ? 255 : r);
+            p[1] = (unsigned char)(g > 255 ? 255 : g);
+            p[2] = (unsigned char)(b > 255 ? 255 : b);
         }
     }
 #endif
@@ -434,12 +450,28 @@ vkvg_status_t vkvg_surface_write_to_memory(VkvgSurface surf, unsigned char* cons
 #ifdef VKVG_PREMULT_ALPHA
     // unpremult alpha for saving on disk.
     for (int y = 0; y < surf->height; y++) {
+        unsigned char* row = img + y * stride;
         for (int x = 0; x < surf->width; x++) {
-            unsigned char* p     = img + y * stride + x * 4;
-            double         alpha = (double)p[3] / 255.f;
-            p[0]                 = (unsigned char)((double)p[0] / alpha);
-            p[1]                 = (unsigned char)((double)p[1] / alpha);
-            p[2]                 = (unsigned char)((double)p[2] / alpha);
+            unsigned char* p = row + x * 4;
+            unsigned char a = p[3];
+
+            if (a == 0) {
+                *((uint32_t*)p) = 0;
+                continue;
+            }
+
+            if (a == 255) {
+                continue;
+            }
+
+            float invAlpha = 255.0f / (float)a;
+            int r = (int)((float)p[0] * invAlpha + 0.5f);
+            int g = (int)((float)p[1] * invAlpha + 0.5f);
+            int b = (int)((float)p[2] * invAlpha + 0.5f);
+
+            p[0] = (unsigned char)(r > 255 ? 255 : r);
+            p[1] = (unsigned char)(g > 255 ? 255 : g);
+            p[2] = (unsigned char)(b > 255 ? 255 : b);
         }
     }
 #endif

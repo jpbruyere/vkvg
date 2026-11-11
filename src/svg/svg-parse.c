@@ -329,6 +329,17 @@ static inline const uint8_t* skip_whitespaces(const uint8_t *buff, const uint8_t
 #define SVG_ATT_SVG_VIEWBOX svg->hasViewBox = try_parse_viewbox(svg);
 #define SVG_ATT_TRANSFORM   apply_transform(svg);
 
+#define SVG_ATT_STROKE_DASHARRAY                                                        \
+    array_float stroke_dasharray;                                                       \
+    parse_coordinate_list(svg->value, svg->value + svg->value_len, &stroke_dasharray);  \
+    vkvg_set_dash(svg->ctx, stroke_dasharray.elements, stroke_dasharray.count, 0);      \
+    array_destroy_float(&stroke_dasharray);
+
+#define SVG_ATT_STROKE_DASHOFFSET                           \
+    svg_length_or_percentage dashoffset;                    \
+    if (try_parse_length_or_percentage(svg, &dashoffset))   \
+        vkvg_set_dash_offset (svg->ctx, dashoffset.number);
+
 #define SVG_ATT_XML_SPACE                                                   \
     if (!strncasecmp ((char*)svg->value, "default", svg->value_len))        \
         attribs->space = XML_SPACE_DEFAULT;                                 \

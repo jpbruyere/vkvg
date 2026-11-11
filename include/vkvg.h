@@ -1522,6 +1522,15 @@ vkvg_public void vkvg_set_fill_rule(VkvgContext ctx, vkvg_fill_rule_t fr);
  */
 vkvg_public void vkvg_set_dash(VkvgContext ctx, const float* dashes, uint32_t num_dashes, float offset);
 /**
+ * @brief set the current dash offset.
+ *
+ * This method was added to handle smoothly the svg parsing.
+ *
+ * @param ctx a valid vkvg @ref context
+ * @param offset an offset into the dash pattern at which the stroke should start.
+ */
+vkvg_public void vkvg_set_dash_offset (VkvgContext ctx, float offset);
+/**
  * @brief get current dash settings.
  *
  * Get the current dash configuration for the supplied @ref context.

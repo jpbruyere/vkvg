@@ -1209,6 +1209,12 @@ void vkvg_set_dash(VkvgContext ctx, const float* dashes, uint32_t num_dashes, fl
         return;
     memcpy(ctx->dashes, dashes, sizeof(float) * ctx->dashCount);
 }
+void vkvg_set_dash_offset (VkvgContext ctx, float offset) {
+    if (vkvg_status(ctx))
+        return;
+    //RECORD(ctx, VKVG_CMD_SET_DASH, num_dashes, offset, dashes);
+    ctx->dashOffset = offset;
+}
 void vkvg_get_dash(VkvgContext ctx, const float* dashes, uint32_t* num_dashes, float* offset) {
     if (vkvg_status(ctx))
         return;
