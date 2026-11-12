@@ -119,8 +119,6 @@ static inline uint64_t fnv1a_64_str(const char *const restrict str) {
 #undef LOG
 #endif
 
-#define DEBUG_LOG
-
 #ifdef DEBUG_LOG
 #define LOG(level, ...) { if (vkvg_unlikely(vkvg_log_level & level)) { fprintf(stdout, CLR_RESET "[VKVG] " __VA_ARGS__); fflush(stdout); }}
 #else

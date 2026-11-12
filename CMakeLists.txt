@@ -45,7 +45,7 @@ if (MSVC)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    ADD_DEFINITIONS (-DDEBUG)
+    ADD_DEFINITIONS (-DDEBUG -DDEBUG_LOG)
     OPTION(ENABLE_VALIDATION "enable vulkan validation layer" ON)
     OPTION(VKVG_USE_MESA_OVERLAY "enable VK_LAYER_MESA_overlay if present." OFF)
     IF (VKVG_USE_MESA_OVERLAY)

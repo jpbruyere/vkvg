@@ -5,11 +5,12 @@
 
 #extension GL_ARB_separate_shader_objects	: enable
 #extension GL_ARB_shading_language_420pack	: enable
+#extension GL_EXT_samplerless_texture_functions : require
 #ifdef VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT
     #extension GL_EXT_scalar_block_layout		: enable
 #endif
 
-layout (set=0, binding = 0) uniform sampler2DArray	fontMap;
+layout (set=0, binding = 0) uniform texture2DArray	fontMap;
 layout (set=1, binding = 0) uniform texture2D		source;
 layout (set=1, binding = 1) uniform sampler			sourceSampler;
 #if defined(GL_EXT_scalar_block_layout) && defined(VKVG_ENABLE_VK_SCALAR_BLOCK_LAYOUT)
@@ -30,11 +31,11 @@ layout (set=1, binding = 1) uniform sampler			sourceSampler;
     #define COLORSTOP(i) uboGrad.stops[i].r
 #endif
 
-layout (location = 0) in vec3		inFontUV;	//if it is a text drawing, inFontUV.z hold fontMap layer
-layout (location = 1) in vec4		inSrc;		//source bounds or color depending on pattern type
-layout (location = 2) in flat int	inPatType;	//pattern type
-layout (location = 3) in flat float	inOpacity;
-layout (location = 4) in mat3x2		inMat;
+layout (location = 0) centroid in vec3	inFontUV;	//if it is a text drawing, inFontUV.z hold fontMap layer
+layout (location = 1) in vec4			inSrc;		//source bounds or color depending on pattern type
+layout (location = 2) in flat int		inPatType;	//pattern type
+layout (location = 3) in flat float		inOpacity;
+layout (location = 4) in mat3x2			inMat;
 
 layout (location = 0) out vec4 outFragColor;
 
@@ -58,16 +59,14 @@ void main()
 		    inMat[0][0] * p.x + inMat[1][0] * p.y + inMat[2][0],
 			inMat[0][1] * p.x + inMat[1][1] * p.y + inMat[2][1]
 		);
-                uv /= inSrc.zw;
-                /*if (uv.x < 0 || uv.y < 0 || uv.x > 1 || uv.y > 1)
-                    discard;*/
-				c = texture(sampler2D(source, sourceSampler), uv);
+		uv /= inSrc.zw;
+		c = texture(sampler2D(source, sourceSampler), uv);
 		break;
 	case LINEAR:
 		float dist = 1;
-		vec2 p0 = uboGrad.cp[0].xy / inSrc.xy;
-		vec2 p1 = uboGrad.cp[0].zw / inSrc.xy;
-		p = gl_FragCoord.xy / inSrc.xy;
+		vec2 p0 = uboGrad.cp[0].xy / inSrc.zw;
+		vec2 p1 = uboGrad.cp[0].zw / inSrc.zw;
+		p = (gl_FragCoord.xy - inSrc.xy) / inSrc.zw;
 
 		float l = length (p1 - p0);
 		vec2 u = normalize (p1 - p0);
@@ -90,12 +89,12 @@ void main()
 			c = mix(c, uboGrad.colors[i+1], smoothstep(COLORSTOP(i), COLORSTOP(i+1), dist));
 		break;
 	case RADIAL:
-		p = gl_FragCoord.xy / inSrc.xy;
+		p = (gl_FragCoord.xy - inSrc.xy) / inSrc.zw;
 
-		vec2 c0 = uboGrad.cp[0].xy / inSrc.xy;
-		vec2 c1 = uboGrad.cp[1].xy / inSrc.xy;
-		float r0 = uboGrad.cp[0].z / inSrc.x;
-		float r1 = uboGrad.cp[1].z / inSrc.x;
+		vec2 c0 = uboGrad.cp[0].xy / inSrc.zw;
+		vec2 c1 = uboGrad.cp[1].xy / inSrc.zw;
+		float r0 = uboGrad.cp[0].z / inSrc.z;
+		float r1 = uboGrad.cp[1].z / inSrc.z;
 
 		/// APPLY FOCUS MODIFIER
 		//project a point on the circle such that it passes through the focus and through the coord,
@@ -127,8 +126,10 @@ void main()
 		break;
 	}
 
-	if (inFontUV.z >= 0.0)
-		c *= textureLod(fontMap, inFontUV, 0.0).r;
+	if (inFontUV.z >= 0) {
+		ivec2 texelCoords = ivec2(floor(inFontUV.xy));
+		c *= texelFetch(fontMap, ivec3(texelCoords, int(inFontUV.z)), 0).r;
+	}
 
 #ifdef VKVG_PREMULT_ALPHA
 	c *= inOpacity;

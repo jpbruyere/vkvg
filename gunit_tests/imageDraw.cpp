@@ -63,6 +63,21 @@ TEST_F(ImageDrawTest, PaintImageOffset) {
 
     compareWithRefImage();
 }
+TEST_F(ImageDrawTest, PaintImageMultiOffset) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgb(ctx, 0.5f, 0.5f, 0.5f);
+    vkvg_paint(ctx);
+
+    vkvg_set_source_surface(ctx, imgSurf, 10, 10);
+    vkvg_paint(ctx);
+    vkvg_set_source_surface(ctx, imgSurf, 50, 50);
+    vkvg_paint(ctx);
+    vkvg_set_source_surface(ctx, imgSurf, 70, 60);
+    vkvg_paint(ctx);
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
 TEST_F(ImageDrawTest, PaintImageRotateOffset) {
     VkvgContext ctx = vkvg_create(surf);
     vkvg_set_source_rgb(ctx, 0.5f, 0.5f, 0.5f);

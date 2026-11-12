@@ -32,20 +32,26 @@ VkvgTest::VkvgTest(VkvgTestFunc testFunc, std::string _name) {
     this->index    = VkvgTest::tests.size();
     VkvgTest::tests.push_back(this);
 }
-void VkvgTest::initTest(SampleApp* app) {
+void VkvgTest::initTest(SampleApp *app) {
     this->app = app;
 
-    vkvg_device_create_info_t info = {app->samples,
-                                      false,
-                                      vkh_app_get_inst(app->app),
-                                      vkh_device_get_phy(app->vkhDev),
-                                      vkh_device_get_vkdev(app->vkhDev),
-                                      app->presentQIndex,
-                                      0,
-                                      false};
-
+    if (app->offscreen) {
+        vkvg_device_create_info_t info = {0};
+        device = vkvg_device_create(&info);
+        surf   = vkvg_surface_create_ms(device, app->width, app->height, VK_SAMPLE_COUNT_8_BIT);
+        vkvg_surface_set_dpy(surf, 96, 96);
+        return;
+    }
+    vkvg_device_create_info_t info = {
+        vkh_app_get_inst(app->app),
+        vkh_device_get_phy(app->vkhDev),
+        vkh_device_get_vkdev(app->vkhDev),
+        app->presentQIndex,
+        0,
+        false
+    };
     device = vkvg_device_create(&info);
-    surf   = vkvg_surface_create(device, app->width, app->height);
+    surf   = vkvg_surface_create_ms(device, app->width, app->height, VK_SAMPLE_COUNT_8_BIT);
     vkvg_surface_set_dpy(surf, 96, 96);
 
     vkh_presenter_build_blit_cmd(app->renderer, vkvg_surface_get_vk_image(surf), app->width, app->height);
@@ -57,7 +63,7 @@ int VkvgTest::performTest(int inst) {
     return inst;
 }
 void VkvgTest::cleanTest(double _totTime, double* run_time_values) {
-    vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
+    //vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
     if (this->app->save_img) {
         std::string path = this->name + ".png";
         vkvg_surface_write_to_png(surf, path.c_str());
@@ -85,7 +91,7 @@ void VkvgTest::cleanTest(double _totTime, double* run_time_values) {
         }
         std::cout << std::endl;*/
     }
-    vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
+    //vkDeviceWaitIdle(vkh_device_get_vkdev(app->vkhDev));
 }
 void draw_growing_circles(VkvgContext ctx, float y, int count) {
     float x = 2;

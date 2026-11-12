@@ -665,11 +665,16 @@ void _start_cmd_for_render_pass(VkvgContext ctx) {
 }
 // compute inverse mat used in shader when context matrix has changed
 // then trigger push constants command
-void _set_mat_inv_and_vkCmdPush(VkvgContext ctx) {
+void _set_mat_inv_and_dirty_state(VkvgContext ctx) {
     ctx->pushConsts.matInv = ctx->pushConsts.mat;
     vkvg_matrix_invert(&ctx->pushConsts.matInv);
     ctx->pushCstDirty = true;
 }
+/*void _set_mat_inv_and_push_cmd(VkvgContext ctx) {
+    ctx->pushConsts.matInv = ctx->pushConsts.mat;
+    vkvg_matrix_invert(&ctx->pushConsts.matInv);
+    _update_push_constants(ctx);
+}*/
 void _update_push_constants(VkvgContext ctx) {
     CmdPushConstants(ctx->cmd, ctx->dev->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_constants),
                      &ctx->pushConsts);
@@ -691,6 +696,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
     _emit_draw_cmd_undrawn_vertices(ctx);
 
     if (lastPat) {
+        if (lastPat == pat)
+            return;
         if (ctx->cmdStarted) {
             switch (lastPat->type) {
             case VKVG_PATTERN_TYPE_SURFACE:
@@ -749,12 +756,8 @@ void _update_cur_pattern(VkvgContext ctx, VkvgPattern pat) {
             if (!_wait_ctx_flush_end(ctx))
                 return;
         }
-
-        vec4 bounds            = {{(float)ctx->pSurf->width},
-                                  {(float)ctx->pSurf->height},
-                                  {0},
-                                  {0}}; // store img bounds in unused source field
-        ctx->pushConsts.source = bounds;
+        ctx->pushConsts.source.width = (float)ctx->pSurf->width;
+        ctx->pushConsts.source.height = (float)ctx->pSurf->height;
 
         // transform control point with current ctx matrix
         vkvg_gradient_pattern_t* gradPat = (vkvg_gradient_pattern_t*)pat;
@@ -1529,7 +1532,7 @@ void _poly_fill(VkvgContext ctx, vec4* bounds) {
             VKVG_IBO_INDEX_TYPE firstVertIdx = (VKVG_IBO_INDEX_TYPE)ctx->vertCount;
 
             for (uint32_t i = 0; i < pathPointCount; i++) {
-                v.pos                              = ctx->points[i + firstPtIdx];
+                v.pos = ctx->points[i + firstPtIdx];
                 ctx->vertexCache[ctx->vertCount++] = v;
                 if (!bounds)
                     continue;

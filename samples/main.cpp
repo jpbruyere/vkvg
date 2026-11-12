@@ -48,6 +48,12 @@ int main(int argc, char** argv) {
         .implicit_value(true)
         .store_into(app.save_img);
 
+    program.add_argument("-o", "--offscreen")
+        .help("perform tests offscreen")
+        .default_value(false)
+        .implicit_value(true)
+        .store_into(app.offscreen);
+
     program.add_argument("--list-tests")
         .help("Get tests list")
         .default_value(false)
@@ -84,6 +90,5 @@ int main(int argc, char** argv) {
 
     //vkvg_log_level = VKVG_LOG_ERR | VKVG_LOG_WARN | VKVG_LOG_INFO;
 
-    app.Init();
     app.Run();
 }

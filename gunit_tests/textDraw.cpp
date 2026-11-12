@@ -13,16 +13,18 @@ class TextDrawTest : public DrawTestBase {
         DrawTestBase::TearDown();
     }
 };
+static const char* txt = "Galvanized by the quartz, the white rabbit just jumped on the red fox for the sake of the crows";
+
 TEST_F(TextDrawTest, References) {
-    VkvgFont font = vkvg_font_create(surf, "sans", 12);
+    VkvgFont font = vkvg_font_create(dev, "sans", 12);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_font_status(font));
     vkvg_font_destroy(font);
 
-    font = vkvg_font_create(surf, "Sans", 12);
+    font = vkvg_font_create(dev, "Sans", 12);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_font_status(font));
     vkvg_font_destroy(font);
 
-    font = vkvg_font_create(surf, "noto sans jp", 12);
+    font = vkvg_font_create(dev, "noto sans jp", 12);
     EXPECT_EQ(VKVG_STATUS_SUCCESS, vkvg_font_status(font));
     vkvg_font_destroy(font);
 
@@ -55,22 +57,22 @@ TEST_F(TextDrawTest, ShowText) {
 
     VkvgContext ctx = vkvg_create(surf);
     vkvg_paint(ctx);
-    VkvgFont font = vkvg_font_create(surf, "sans", 30);
+    VkvgFont font = vkvg_font_create(dev, "sans", 30);
     vkvg_set_font(ctx, font);
     vkvg_font_extents_t fe = {0};
     vkvg_font_extents(ctx, &fe);
     vkvg_set_source_rgb(ctx,1,1,1);
     float penY = fe.ascent;
     vkvg_move_to(ctx, 40, penY);
-    vkvg_show_text(ctx, "Galvanized by the quartz, the white rabbit just jumped on the red fox for the sake of the crows");
+    vkvg_show_text(ctx, txt);
     penY += fe.height;
 
     vkvg_font_destroy(font);
 
-    font = vkvg_font_create(surf, "noto sans jp", 30);
+    font = vkvg_font_create(dev, "noto sans jp", 30);
     vkvg_set_font(ctx, font);
     vkvg_move_to(ctx, 40, penY);
-    vkvg_show_text(ctx, "Galvanized by the quartz, The white rabbit just jumped on the red fox for the sake of the crows");
+    vkvg_show_text(ctx, txt);
     vkvg_font_extents(ctx, &fe);
     penY += fe.height;
 
@@ -86,18 +88,80 @@ TEST_F(TextDrawTest, ShowText) {
     vkvg_font_destroy(font);
 
     vkvg_set_text_direction(ctx, VKVG_HORIZONTAL);
-    font = vkvg_font_create(surf, "Roboto:bold", 30);
+    font = vkvg_font_create(dev, "Roboto:bold", 30);
     vkvg_set_font(ctx, font);
     vkvg_move_to(ctx, 40, penY);
-    vkvg_show_text(ctx, "Galvanized by the quartz, The white rabbit just jumped on the red fox for the sake of the crows");
+    vkvg_show_text(ctx, txt);
     vkvg_font_extents(ctx, &fe);
     penY += fe.height;
-
-
-
 
     vkvg_destroy(ctx);
 
     compareWithRefImage();
 }
 
+TEST_F(TextDrawTest, scale_up) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_clear(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(dev, "sans", 12);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 2, 15);
+    vkvg_scale(ctx, 10,10);
+    vkvg_show_text(ctx, txt);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(TextDrawTest, scale_down) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_clear(ctx);
+
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+
+    VkvgFont font = vkvg_font_create(dev, "sans", 60);
+
+    vkvg_set_font(ctx,font);
+    vkvg_move_to(ctx, 200, 200);
+    vkvg_scale(ctx, 0.1f,0.1f);
+    vkvg_show_text(ctx, txt);
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}
+TEST_F(TextDrawTest, text_on_path) {
+    VkvgContext ctx = vkvg_create(surf);
+    vkvg_set_source_rgb(ctx, 0, 0, 0);
+    vkvg_paint(ctx);
+    vkvg_set_source_rgb(ctx, 1, 1, 1);
+    VkvgFont font = vkvg_font_create(dev, "sans", 20);
+
+    vkvg_rotate(ctx, -0.2f);
+    vkvg_scale(ctx, 1.5f,1.5f);
+    vkvg_set_font(ctx,font);
+
+    vkvg_move_to(ctx, 10, 250);
+    vkvg_curve_to(ctx, 140, 0, 200, 450, 450, 250);
+
+    VkvgText tr = vkvg_text_create(ctx, txt);
+    vkvg_text_render_on_path(ctx, tr, 0, 0, true);
+    vkvg_set_source_rgb(ctx, 1, 0, 0);
+    vkvg_stroke(ctx);
+
+    vkvg_text_destroy(tr);
+
+    vkvg_font_destroy(font);
+    vkvg_destroy(ctx);
+
+    compareWithRefImage();
+}

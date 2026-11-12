@@ -15,7 +15,7 @@ typedef struct _surface_class {
     atomic_int      references;
     VkvgDevice      dev;
     VkFormat        format;
-    VkSampleCountFlags samples;             /**< samples count */
+    VkSampleCountFlags samples;                 /**< samples count */
     VkRenderPass    renderPass;                /**< Vulkan render pass, common for all surfaces */
     VkRenderPass    renderPass_ClearStencil;   /**< Vulkan render pass for first draw with context, stencil has to be cleared */
     VkRenderPass    renderPass_ClearAll;       /**< Vulkan render pass for new surface, clear all attacments*/

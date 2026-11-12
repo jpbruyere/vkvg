@@ -20,6 +20,19 @@ TEST(img_paint_offset) {
     vkvg_surface_destroy(imgSurf);
     vkvg_destroy(ctx);
 }
+TEST(img_paint_multi_offset) {
+    VkvgContext ctx     = vkvg_create(test->surf);
+    VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));
+    vkvg_set_source_surface(ctx, imgSurf, 50, 50);
+    vkvg_paint(ctx);
+    vkvg_set_source_surface(ctx, imgSurf, 100, 100);
+    vkvg_paint(ctx);
+    vkvg_set_source_surface(ctx, imgSurf, 150, 150);
+    vkvg_paint(ctx);
+
+    vkvg_surface_destroy(imgSurf);
+    vkvg_destroy(ctx);
+}
 TEST(img_paint_with_scale) {
     VkvgContext ctx     = vkvg_create(test->surf);
     VkvgSurface imgSurf = vkvg_surface_create_from_image(test->device, GET_PATH("mirror.jpg"));

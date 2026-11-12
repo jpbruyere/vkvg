@@ -309,11 +309,7 @@ typedef struct {
     SvgShapeRendering    shape_rendering   : 2;
 
     SvgOverflow          overflow          : 2;
-    SvgBufferedRendering buffered_rend    : 2;
-
-    float*               stroke_dasharray;       // Ignored / NULL for basic demo
-    uint16_t             dasharray_count;
-    int16_t              stroke_dashoffset;
+    SvgBufferedRendering buffered_rend     : 2;
 } SvgPresentationAttributes;
 
 static inline uint32_t         _get_element_hash(void *elt) { return ((svg_element_header *)elt)->hash; }

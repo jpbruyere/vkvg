@@ -41,7 +41,7 @@ void vkvg_device_set_context_cache_size(VkvgDevice dev, uint32_t maxCount) {
     while (cur && dev->cachedContextCount > dev->cachedContextMaxCount) {
         _release_context_ressources(cur->ctx);
         _cached_ctx* prev = cur;
-        cur               = cur->pNext;
+        cur = cur->pNext;
         free(prev);
         dev->cachedContextCount--;
     }
@@ -76,6 +76,7 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
 
     VkPhysicalDeviceProperties phyProps = vkh_phyinfo_get_properties(phyInfos);
     dev->minUniformBufferOffsetAlignment = phyProps.limits.minUniformBufferOffsetAlignment;
+    dev->framebufferColorSampleCounts = phyProps.limits.framebufferColorSampleCounts;
 
     // mtx_init (&dev->gQMutex, mtx_plain);
 
@@ -107,7 +108,6 @@ void _device_init(VkvgDevice dev, const vkvg_device_create_info_t* info) {
 
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslSrc, "DSLayout SOURCE");
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslFont, "DSLayout FONT");
-    vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_SAMPLER, (uint64_t)dev->smpFont, "FONT Sampler");
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t)dev->dslGrad, "DSLayout GRADIENT");
     vkh_device_set_object_name(dev->vkhDev, VK_OBJECT_TYPE_PIPELINE_LAYOUT, (uint64_t)dev->pipelineLayout, "PLLayout dev");
 #endif
@@ -288,17 +288,6 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
             if (!_device_try_get_phyinfo(phys, phyCount, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, &pi))
                 pi = phys[0];
 
-        if (!info->samples) // if not set, default to 1 sample
-            info->samples = VK_SAMPLE_COUNT_1_BIT;
-
-        if (!(pi->properties.limits.framebufferColorSampleCounts & info->samples)) {
-            LOGE("CREATE Device failed: sample count not supported: %d\n", info->samples);
-            dev->status = VKVG_STATUS_DEVICE_ERROR;
-            vkh_app_free_phyinfos(phyCount, phys);
-            vkh_app_destroy(app);
-            return dev;
-        }
-
         uint32_t                qCount        = 0;
         float                   qPriorities[] = {0.0};
         VkDeviceQueueCreateInfo pQueueInfos[] = {{0}, {0}, {0}};
@@ -309,6 +298,7 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
         enabledExtsCount = 0;
 
         if (vkvg_get_required_device_extensions(pi->phy, enabledExts, &enabledExtsCount) != VKVG_STATUS_SUCCESS) {
+            LOGE("CREATE Device failed, vkvg_get_required_device_extensions failure.\n");
             dev->status = VKVG_STATUS_DEVICE_ERROR;
             vkh_app_free_phyinfos(phyCount, phys);
             vkh_app_destroy(app);
@@ -350,7 +340,7 @@ VkvgDevice vkvg_device_create(vkvg_device_create_info_t* info) {
 
 void vkvg_device_destroy(VkvgDevice dev) {
     if (vkvg_device_status(dev)) {
-        LOGE("DESTROY Device failed, see Status for info");
+        LOGE("DESTROY Device failed, see Status for info\n");
         return;
     }
     if (atomic_fetch_sub_explicit(&dev->references, 1, memory_order_acq_rel) != 1)
@@ -385,8 +375,6 @@ void vkvg_device_destroy(VkvgDevice dev) {
 
     vkDestroyPipelineLayout(dev->vkDev, dev->pipelineLayout, NULL);
     vkDestroyPipelineCache(dev->vkDev, dev->pipelineCache, NULL);
-
-    vkDestroySampler(dev->vkDev, dev->smpFont, NULL);
 
     vkWaitForFences(dev->vkDev, 1, &dev->fence, VK_TRUE, UINT64_MAX);
     vkDestroyFence(dev->vkDev, dev->fence, NULL);
